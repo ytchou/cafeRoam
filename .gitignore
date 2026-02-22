@@ -9,7 +9,9 @@ node_modules/
 .env.development.local
 .env.test.local
 .env.production.local
-PRIVATE_CONTEXT.md
+
+# Strategy docs — local only, not for public repos
+*.md
 
 # Next.js build output
 .next/
