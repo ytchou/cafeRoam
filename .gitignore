@@ -13,6 +13,7 @@ node_modules/
 # Strategy docs — local only, not for public repos
 *.md
 !README.md
+!.github/*.md
 
 # Next.js build output
 .next/
