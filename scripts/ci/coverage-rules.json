@@ -1,0 +1,35 @@
+{
+  "frontend": {
+    "display_prefix": "/caferoam/",
+    "stack_detection_paths": ["app/", "components/", "lib/", "workers/"],
+    "critical_paths": [
+      "lib/services/search.service.ts",
+      "lib/services/checkin.service.ts",
+      "lib/services/lists.service.ts",
+      "lib/providers/llm/anthropic.adapter.ts",
+      "lib/providers/embeddings/openai.adapter.ts",
+      "lib/providers/email/resend.adapter.ts",
+      "lib/providers/maps/mapbox.adapter.ts",
+      "lib/providers/analytics/posthog.adapter.ts",
+      "app/api/search/route.ts",
+      "app/api/checkin/route.ts",
+      "app/api/lists/route.ts",
+      "app/api/auth/route.ts"
+    ],
+    "critical_patterns": [
+      "lib/services/*.service.ts",
+      "lib/providers/**/*.adapter.ts",
+      "app/api/**/route.ts"
+    ],
+    "critical_threshold": 80,
+    "default_threshold": 45,
+    "exclude_patterns": [
+      "**/*.json",
+      "**/index.ts",
+      "**/*.d.ts",
+      "**/setup.ts",
+      "**/*.config.ts",
+      "**/middleware.ts"
+    ]
+  }
+}

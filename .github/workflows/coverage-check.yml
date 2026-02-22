@@ -1,0 +1,185 @@
+name: Coverage Check
+
+on:
+  workflow_run:
+    workflows: ['CafeRoam CI']
+    types: [completed]
+    branches: ['**']
+
+permissions:
+  checks: write
+  pull-requests: write
+  contents: read
+
+jobs:
+  coverage-analysis:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
+    steps:
+      - name: Find PR number
+        id: pr
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: pulls } = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              head: `${context.repo.owner}:${context.payload.workflow_run.head_branch}`
+            });
+            if (pulls.length > 0) {
+              core.setOutput('number', pulls[0].number);
+              core.setOutput('found', 'true');
+              console.log(`Found PR #${pulls[0].number}`);
+            } else {
+              core.setOutput('found', 'false');
+              console.log('No PR found for this branch');
+            }
+
+      - name: Create check run (in progress)
+        id: check
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const check = await github.rest.checks.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              name: 'Coverage Report',
+              head_sha: '${{ github.event.workflow_run.head_sha }}',
+              status: 'in_progress',
+              started_at: new Date().toISOString(),
+              output: { title: 'Analyzing coverage...', summary: 'Downloading coverage reports...' }
+            });
+            core.setOutput('check_id', check.data.id);
+
+      - uses: actions/checkout@v4
+
+      - name: Download coverage artifact
+        id: artifact
+        uses: dawidd6/action-download-artifact@v3
+        with:
+          workflow: backend-ci.yml
+          name: coverage-app
+          path: ./coverage-reports/
+          commit: ${{ github.event.workflow_run.head_sha }}
+        continue-on-error: true
+
+      - name: Check if artifact is available
+        id: artifacts-check
+        run: |
+          if [ -f ./coverage-reports/coverage-final.json ]; then
+            echo "available=true" >> $GITHUB_OUTPUT
+            echo "Coverage artifact found"
+          else
+            echo "available=false" >> $GITHUB_OUTPUT
+            echo "Coverage artifact NOT found"
+          fi
+
+      - name: Setup Python
+        if: steps.artifacts-check.outputs.available == 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install coverage script dependencies
+        if: steps.artifacts-check.outputs.available == 'true'
+        run: pip install defusedxml
+
+      - name: Run coverage check
+        id: coverage
+        if: steps.artifacts-check.outputs.available == 'true'
+        run: |
+          python scripts/ci/coverage-check.py \
+            --frontend ./coverage-reports/coverage-final.json \
+            --rules ./scripts/ci/coverage-rules.json \
+            --output ./coverage-summary.md
+        continue-on-error: true
+
+      - name: Read coverage summary
+        id: read-summary
+        if: steps.artifacts-check.outputs.available == 'true'
+        run: |
+          if [ -f ./coverage-summary.md ]; then
+            SUMMARY=$(cat ./coverage-summary.md)
+            echo "summary<<EOF" >> $GITHUB_OUTPUT
+            echo "$SUMMARY" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+            echo "has_summary=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_summary=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Update check run (completed)
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const checkId = ${{ steps.check.outputs.check_id }};
+            const coverageResult = '${{ steps.coverage.outcome }}';
+            const artifactAvailable = '${{ steps.artifacts-check.outputs.available }}' === 'true';
+
+            let summary = 'Coverage analysis completed.';
+            let title = 'Coverage Report';
+            let conclusion = 'success';
+
+            if (!artifactAvailable) {
+              summary = 'Coverage artifact not found. Check if tests ran successfully.';
+              conclusion = 'neutral';
+              title = 'Coverage Report (No Data)';
+            } else {
+              try {
+                summary = fs.readFileSync('./coverage-summary.md', 'utf8');
+              } catch (e) {
+                summary = 'Could not generate coverage report.';
+                conclusion = 'neutral';
+              }
+            }
+
+            if (coverageResult === 'failure') {
+              conclusion = 'failure';
+              title = 'Coverage Check Failed';
+            }
+
+            await github.rest.checks.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              check_run_id: checkId,
+              status: 'completed',
+              conclusion: conclusion,
+              completed_at: new Date().toISOString(),
+              output: { title: title, summary: summary.substring(0, 65535) }
+            });
+
+      - name: Post PR comment
+        if: steps.pr.outputs.found == 'true' && steps.read-summary.outputs.has_summary == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const summary = fs.readFileSync('./coverage-summary.md', 'utf8');
+            const prNumber = ${{ steps.pr.outputs.number }};
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber
+            });
+            const botComment = comments.find(c =>
+              c.user.type === 'Bot' && c.body.includes('## Test Coverage Report')
+            );
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: summary
+              });
+            } else {
+              await github.rest.issues.createComment({
+                issue_number: prNumber,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: summary
+              });
+            }
