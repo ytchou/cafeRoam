@@ -103,12 +103,9 @@ export function inferModes(
   }
 
   if (modes.length === 0) {
-    const fallback = originalMode === 'mixed' ? 'rest' : originalMode;
-    if (fallback !== 'mixed') {
-      modes.push(fallback as ShopMode);
-    } else {
-      modes.push('rest');
-    }
+    const fallback: ShopMode =
+      originalMode === 'mixed' ? 'rest' : originalMode;
+    modes.push(fallback);
   }
 
   return modes;

@@ -69,7 +69,7 @@ Must complete BEFORE starting Phase 1. These are FATAL risks from VALIDATION.md 
 - [x] Pass 3c: Multi-mode inference tests
 - [x] Update Pass 4 to read pass3c-processed.json
 - [x] Update Pass 5 to use multi-mode
-- [ ] Add pnpm script for pass3c
+- [x] Add pnpm script for pass3c
 
 **Chunk 4 — Search Validation:**
 
