@@ -23,6 +23,8 @@ export function composeEmbeddingText(
 ): string {
   const tagMap = new Map(taxonomy.map((t) => [t.id, t]));
 
+  // Tags are pre-sorted by distinctiveness descending from pass3c —
+  // distinctive tags appear first in the embedding text.
   const tagLabels = shop.enrichment.tags
     .map((t) => {
       const tag = tagMap.get(t.id);
