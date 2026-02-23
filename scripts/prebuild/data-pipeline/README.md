@@ -9,11 +9,11 @@ One-time scripts to collect and verify Taipei coffee shop data before building t
 
 ## Pipeline
 
-| Pass | Command | Cost | Input | Output |
-|------|---------|------|-------|--------|
-| 0 | `pnpm prebuild:pass0` | Free | Cafe Nomad API | `data/prebuild/pass0-seed.json` |
-| 1 | `pnpm prebuild:pass1` | ~$6.40 | Pass 0 output | `pass1-verified.json` + `pass1-review.json` + `pass1-unmatched.json` |
-| 2 | `pnpm prebuild:pass2` | ~$15-18 | Pass 1 verified output | `data/prebuild/pass2-full.json` |
+| Pass | Command               | Cost    | Input                  | Output                                                               |
+| ---- | --------------------- | ------- | ---------------------- | -------------------------------------------------------------------- |
+| 0    | `pnpm prebuild:pass0` | Free    | Cafe Nomad API         | `data/prebuild/pass0-seed.json`                                      |
+| 1    | `pnpm prebuild:pass1` | ~$6.40  | Pass 0 output          | `pass1-verified.json` + `pass1-review.json` + `pass1-unmatched.json` |
+| 2    | `pnpm prebuild:pass2` | ~$15-18 | Pass 1 verified output | `data/prebuild/pass2-full.json`                                      |
 
 ## Quick Start
 
@@ -38,16 +38,17 @@ pnpm prebuild:pass2
 
 Pass 1 routes each shop into one of three output files based on match confidence:
 
-| Tier | Confidence | File | Action |
-|------|------------|------|--------|
-| High | ≥ 0.75 | `pass1-verified.json` | Auto-proceed to Pass 2 |
-| Medium | 0.50–0.74 | `pass1-review.json` | Human review required |
-| Low / None | < 0.50 | `pass1-unmatched.json` | Manual lookup or skip |
+| Tier       | Confidence | File                   | Action                 |
+| ---------- | ---------- | ---------------------- | ---------------------- |
+| High       | ≥ 0.75     | `pass1-verified.json`  | Auto-proceed to Pass 2 |
+| Medium     | 0.50–0.74  | `pass1-review.json`    | Human review required  |
+| Low / None | < 0.50     | `pass1-unmatched.json` | Manual lookup or skip  |
 
 ### Why 3 tiers?
 
 Taiwan has 524 路易莎, 500 Starbucks, and 435 85°C locations. With multiple chain stores
 within 200m of each other, a 2-tier matched/unmatched system cannot distinguish:
+
 - Same shop, slightly different name rendering → high confidence
 - Same brand, different branch → should be rejected (chain-aware logic handles this)
 - Partial match (name similarity 0.50–0.74) → medium tier, human review

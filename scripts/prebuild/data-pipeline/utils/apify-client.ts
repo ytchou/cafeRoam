@@ -73,9 +73,7 @@ export async function scrapePlaces(
     url: `https://www.google.com/maps/place/?q=place_id:${id}`,
   }));
 
-  console.log(
-    `[apify] Starting full scrape for ${startUrls.length} places...`
-  );
+  console.log(`[apify] Starting full scrape for ${startUrls.length} places...`);
 
   const { defaultDatasetId } = await client.actor(ACTOR_ID).call({
     startUrls,

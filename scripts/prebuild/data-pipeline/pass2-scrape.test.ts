@@ -50,8 +50,18 @@ function makeFullApifyResult(
     temporarilyClosed: false,
     url: 'https://maps.google.com/?cid=123',
     reviews: [
-      { text: '好喝的咖啡', stars: 5, publishAt: '2026-01-15', language: 'zh-TW' },
-      { text: 'Great latte', stars: 4, publishAt: '2026-01-10', language: 'en' },
+      {
+        text: '好喝的咖啡',
+        stars: 5,
+        publishAt: '2026-01-15',
+        language: 'zh-TW',
+      },
+      {
+        text: 'Great latte',
+        stars: 4,
+        publishAt: '2026-01-10',
+        language: 'en',
+      },
     ],
     imageUrls: [
       'https://lh5.googleusercontent.com/menu1',
@@ -93,7 +103,10 @@ describe('categorizePhotos', () => {
   });
 
   it('limits to 5 photos', () => {
-    const urls = Array.from({ length: 10 }, (_, i) => `https://example.com/${i}`);
+    const urls = Array.from(
+      { length: 10 },
+      (_, i) => `https://example.com/${i}`
+    );
     const photos = categorizePhotos(urls);
     expect(photos).toHaveLength(5);
   });
@@ -151,7 +164,12 @@ describe('mergeFullData', () => {
     const result = makeFullApifyResult({
       reviews: [
         { text: null, stars: 3, publishAt: '2026-01-01' },
-        { text: 'Good coffee', stars: 4, publishAt: '2026-01-02', language: 'en' },
+        {
+          text: 'Good coffee',
+          stars: 4,
+          publishAt: '2026-01-02',
+          language: 'en',
+        },
       ],
     });
     const merged = mergeFullData(shop, result);

@@ -8,10 +8,18 @@ declare module 'fuzzball' {
   export function ratio(s1: string, s2: string, options?: FuzzOptions): number;
 
   /** Partial ratio (best substring match), 0–100 */
-  export function partial_ratio(s1: string, s2: string, options?: FuzzOptions): number;
+  export function partial_ratio(
+    s1: string,
+    s2: string,
+    options?: FuzzOptions
+  ): number;
 
   /** Token sort ratio (sorts tokens then compares), 0–100 */
-  export function token_sort_ratio(s1: string, s2: string, options?: FuzzOptions): number;
+  export function token_sort_ratio(
+    s1: string,
+    s2: string,
+    options?: FuzzOptions
+  ): number;
 
   /**
    * Token set ratio: computes intersection of token sets, then scores the best
@@ -23,7 +31,11 @@ declare module 'fuzzball' {
    *
    * Returns 0–100.
    */
-  export function token_set_ratio(s1: string, s2: string, options?: FuzzOptions): number;
+  export function token_set_ratio(
+    s1: string,
+    s2: string,
+    options?: FuzzOptions
+  ): number;
 
   export default {
     ratio,

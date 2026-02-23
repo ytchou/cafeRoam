@@ -1,5 +1,12 @@
 import { describe, it, expectTypeOf } from 'vitest';
-import type { Shop, User, List, CheckIn, Stamp, TaxonomyTag } from '@/lib/types';
+import type {
+  Shop,
+  User,
+  List,
+  CheckIn,
+  Stamp,
+  TaxonomyTag,
+} from '@/lib/types';
 
 describe('Domain types', () => {
   it('Shop has required fields', () => {

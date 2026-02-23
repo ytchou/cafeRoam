@@ -31,7 +31,7 @@ export interface MatchResult {
 
 function confidenceToTier(confidence: number): MatchTier {
   if (confidence >= 0.75) return 'high';
-  if (confidence >= 0.50) return 'medium';
+  if (confidence >= 0.5) return 'medium';
   return 'low';
 }
 

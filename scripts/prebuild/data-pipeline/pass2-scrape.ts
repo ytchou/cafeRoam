@@ -42,7 +42,10 @@ export function categorizePhotos(urls: string[] | undefined): PhotoData[] {
 
   categorized.sort((a, b) => {
     const order = { menu: 0, food: 1, general: 2 };
-    return order[a.category as keyof typeof order] - order[b.category as keyof typeof order];
+    return (
+      order[a.category as keyof typeof order] -
+      order[b.category as keyof typeof order]
+    );
   });
 
   return categorized.slice(0, MAX_PHOTOS);
@@ -96,7 +99,9 @@ export function mergeFullData(
 async function main() {
   console.log('[pass2] Reading Pass 1 verified output...');
   const shops: Pass1Shop[] = JSON.parse(readFileSync(INPUT_FILE, 'utf-8'));
-  console.log(`[pass2] Loaded ${shops.length} verified shops from ${INPUT_FILE}`);
+  console.log(
+    `[pass2] Loaded ${shops.length} verified shops from ${INPUT_FILE}`
+  );
 
   const placeIds = shops.map((s) => s.google_place_id);
 

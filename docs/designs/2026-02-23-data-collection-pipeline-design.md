@@ -23,6 +23,7 @@ Each pass reads the previous pass's JSON output from `data/prebuild/`. The pipel
 **Source:** Cafe Nomad API (public, no auth) — `https://cafenomad.tw/api/v1.2/cafes/taipei`
 
 **Filters applied:**
+
 1. Known-closed keywords in name: `已歇業`, `暫停營業`, `已關`, `已結束`
 2. Shell entries: missing name, address, or coordinates; latitude/longitude = 0
 3. Out-of-bounds: coordinates outside greater Taipei bounding box (lat 24.95–25.22, lng 121.40–121.65)
@@ -35,12 +36,14 @@ Each pass reads the previous pass's JSON output from `data/prebuild/`. The pipel
 **Source:** Apify `compass/crawler-google-places` actor (places-only mode, no reviews/photos)
 
 **Matching algorithm:**
+
 - Search term: `{shop_name} {shop_address}`
 - Distance threshold: 200m
 - Name similarity: Sørensen-Dice coefficient ≥ 0.5
 - Confidence = nameScore × 0.6 + distanceScore × 0.4
 
 **Outputs:**
+
 - `pass1-verified.json`: shops matched to Google Maps with confidence score
 - `pass1-unmatched.json`: shops that couldn't be matched (for manual review)
 
@@ -51,6 +54,7 @@ Each pass reads the previous pass's JSON output from `data/prebuild/`. The pipel
 **Source:** Same Apify actor, full scrape mode with Google Place IDs (deterministic)
 
 **Data collected per shop:**
+
 - 20 reviews (text, stars, published_at, language — no reviewer PII)
 - 5 photos (menu-prioritized by URL pattern matching)
 - Menu URL, price range, description
@@ -60,6 +64,7 @@ Each pass reads the previous pass's JSON output from `data/prebuild/`. The pipel
 ## Data Quality Notes
 
 From Cafe Nomad spot-checks:
+
 - ~75% of entries missing opening hours
 - ~29% zero-rating shells
 - ~15+ known-closed shops in the dataset
@@ -68,6 +73,7 @@ From Cafe Nomad spot-checks:
 ## Handoff to Enrichment
 
 `pass2-full.json` is the input to the Claude Haiku enrichment step, which will:
+
 - Generate a semantic description combining reviews and categories
 - Classify the shop into work/rest/social modes
 - Generate embedding vectors for semantic search

@@ -16,19 +16,20 @@ Chosen over manual setup because Tailwind v4's CSS-based configuration and shadc
 
 ## Decisions
 
-| Decision | Choice | Rationale |
-|----------|--------|-----------|
-| Tailwind version | v4 | Latest engine, CSS-based config, shadcn/ui v4 support |
-| Route structure | Full skeleton | Stub all route groups now for architecture visibility |
-| Provider stubs | Interfaces + adapters + services | Maximum upfront architecture visibility |
-| ESLint config | Flat config (`eslint.config.mjs`) | Next.js 15 default, modern standard |
-| tsconfig strategy | Extend existing | Single config file, add Next.js-specific options |
+| Decision          | Choice                            | Rationale                                             |
+| ----------------- | --------------------------------- | ----------------------------------------------------- |
+| Tailwind version  | v4                                | Latest engine, CSS-based config, shadcn/ui v4 support |
+| Route structure   | Full skeleton                     | Stub all route groups now for architecture visibility |
+| Provider stubs    | Interfaces + adapters + services  | Maximum upfront architecture visibility               |
+| ESLint config     | Flat config (`eslint.config.mjs`) | Next.js 15 default, modern standard                   |
+| tsconfig strategy | Extend existing                   | Single config file, add Next.js-specific options      |
 
 ## Architecture
 
 ### 1. Scaffold Generation
 
 **Step 1:** Run `pnpm create next-app` in a temp directory, copy generated config files:
+
 - `next.config.ts`
 - `app/layout.tsx`, `app/page.tsx`, `app/globals.css`
 - `postcss.config.mjs`
@@ -39,6 +40,7 @@ Chosen over manual setup because Tailwind v4's CSS-based configuration and shadc
 **Step 3:** Run `npx shadcn@latest init` to generate `components.json` and `lib/utils.ts`.
 
 shadcn/ui `components.json` config for Tailwind v4:
+
 ```json
 {
   "tailwind": { "config": "", "css": "app/globals.css" },
@@ -114,6 +116,7 @@ lib/
 ```
 
 **Provider pattern:** Each provider directory contains:
+
 - `*.interface.ts` — TypeScript interface defining the contract
 - `*.adapter.ts` — Concrete implementation (stubs with `throw new Error("Not implemented")`)
 - `index.ts` — Factory that reads env var and returns the appropriate adapter
@@ -121,12 +124,14 @@ lib/
 ### 4. Config File Updates
 
 **tsconfig.json:**
+
 - Add `jsx: "preserve"`, `lib: ["dom", "dom.iterable", "esnext"]`
 - Add `plugins: [{ name: "next" }]`
 - Expand `include` to `["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"]`
 - Keep `strict: true`, `moduleResolution: "bundler"`, path alias `@/*`
 
 **package.json:**
+
 - Add: `next@15`, `react@19`, `react-dom@19`, Tailwind v4, shadcn/ui deps
 - Add: `@supabase/supabase-js`, `@supabase/ssr`
 - Add dev: `@testing-library/react`, `eslint-config-next`, `prettier`, `prettier-plugin-tailwindcss`
@@ -147,6 +152,7 @@ lib/
 ## Verification
 
 After implementation, verify:
+
 1. `pnpm install` succeeds without errors
 2. `pnpm dev` starts and shows placeholder landing page at localhost:3000
 3. `pnpm build` produces a successful production build

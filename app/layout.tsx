@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: 'CafeRoam 啡遊',
   description:
-    'Discover Taiwan\'s best independent coffee shops with AI-powered semantic search.',
+    "Discover Taiwan's best independent coffee shops with AI-powered semantic search.",
 };
 
 export default function RootLayout({

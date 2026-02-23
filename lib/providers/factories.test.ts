@@ -21,8 +21,11 @@ describe('Provider factories', () => {
 
   it('Embeddings factory throws when provider is unknown', async () => {
     vi.stubEnv('EMBEDDINGS_PROVIDER', 'unknown');
-    const { getEmbeddingsProvider } = await import('@/lib/providers/embeddings');
-    expect(() => getEmbeddingsProvider()).toThrow('Unknown embeddings provider: unknown');
+    const { getEmbeddingsProvider } =
+      await import('@/lib/providers/embeddings');
+    expect(() => getEmbeddingsProvider()).toThrow(
+      'Unknown embeddings provider: unknown'
+    );
   });
 
   it('Email factory throws when provider is unknown', async () => {
@@ -40,6 +43,8 @@ describe('Provider factories', () => {
   it('Analytics factory throws when provider is unknown', async () => {
     vi.stubEnv('ANALYTICS_PROVIDER', 'unknown');
     const { getAnalyticsProvider } = await import('@/lib/providers/analytics');
-    expect(() => getAnalyticsProvider()).toThrow('Unknown analytics provider: unknown');
+    expect(() => getAnalyticsProvider()).toThrow(
+      'Unknown analytics provider: unknown'
+    );
   });
 });

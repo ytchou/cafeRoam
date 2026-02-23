@@ -9,7 +9,13 @@ export interface AnalyticsTraits {
 }
 
 export interface IAnalyticsProvider {
-  track(event: string, properties?: Record<string, string | number | boolean>): void;
+  track(
+    event: string,
+    properties?: Record<string, string | number | boolean>
+  ): void;
   identify(userId: string, traits?: AnalyticsTraits): void;
-  page(name?: string, properties?: Record<string, string | number | boolean>): void;
+  page(
+    name?: string,
+    properties?: Record<string, string | number | boolean>
+  ): void;
 }

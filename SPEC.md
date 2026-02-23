@@ -7,20 +7,20 @@
 
 ## 1. Tech Stack
 
-| Layer | Choice | Notes |
-|-------|--------|-------|
-| Framework | Next.js 16 (App Router) | SSR/SSG for SEO, mobile-first, shareable URLs |
-| Language | TypeScript (strict) | Full-stack including workers |
-| Database | Supabase (Postgres 15 + pgvector) | Vector search, auth, storage in one platform |
-| Auth | Supabase Auth | Email/password + social login options |
-| Hosting | Railway | Next.js app + background workers, single platform, ~$5/mo |
-| Styling | Tailwind CSS + shadcn/ui | Fast iteration, mobile-first design |
-| Testing | Vitest + Testing Library | Unit + integration tests |
-| Maps | Mapbox GL JS | Abstracted behind IMapsProvider interface |
-| Storage | Supabase Storage | Check-in photos, menu photos; RLS enforced |
-| Error tracking | Sentry | Frontend + backend, free tier at launch |
-| Analytics | PostHog | Via IAnalyticsProvider abstraction |
-| Uptime | UptimeRobot | 5-minute checks, email alerts |
+| Layer          | Choice                            | Notes                                                     |
+| -------------- | --------------------------------- | --------------------------------------------------------- |
+| Framework      | Next.js 16 (App Router)           | SSR/SSG for SEO, mobile-first, shareable URLs             |
+| Language       | TypeScript (strict)               | Full-stack including workers                              |
+| Database       | Supabase (Postgres 15 + pgvector) | Vector search, auth, storage in one platform              |
+| Auth           | Supabase Auth                     | Email/password + social login options                     |
+| Hosting        | Railway                           | Next.js app + background workers, single platform, ~$5/mo |
+| Styling        | Tailwind CSS + shadcn/ui          | Fast iteration, mobile-first design                       |
+| Testing        | Vitest + Testing Library          | Unit + integration tests                                  |
+| Maps           | Mapbox GL JS                      | Abstracted behind IMapsProvider interface                 |
+| Storage        | Supabase Storage                  | Check-in photos, menu photos; RLS enforced                |
+| Error tracking | Sentry                            | Frontend + backend, free tier at launch                   |
+| Analytics      | PostHog                           | Via IAnalyticsProvider abstraction                        |
+| Uptime         | UptimeRobot                       | 5-minute checks, email alerts                             |
 
 **Full rationale for each choice:** see `docs/decisions/`
 
@@ -28,20 +28,20 @@
 
 ## 2. System Modules
 
-| Module | Responsibility | Phase |
-|--------|---------------|-------|
-| Data pipeline | One-time data collection (Cafe Nomad seed → Apify/Google Maps verify + scrape) + ongoing enrichment (Claude Haiku + embedding generation) | 1 |
-| Taxonomy system | Canonical tag database; powers filter UI and search ranking | 1 |
-| Auth system | Supabase Auth, session management, route protection, PDPA consent | 1 |
-| Provider abstractions | ILLMProvider, IEmbeddingsProvider, IEmailProvider, IMapsProvider, IAnalyticsProvider | 1 |
-| Admin/ops | Internal data quality dashboard, manual enrichment and verification UI | 1 |
-| Background workers | Railway workers: Apify triggers, embedding refresh, weekly email cron | 1 |
-| Shop directory | List view + map view toggle, geolocation, multi-dimension filters | 2 |
-| Semantic search | pgvector similarity + taxonomy boost, chatbox UI on landing page | 2 |
-| User lists | Create/edit/delete (max 3), add/remove shops | 2 |
-| Check-in system | Photo upload, optional text + menu photo, stamp generation | 2 |
-| User profile | Private profile page: check-in history, stamps earned, lists | 2 |
-| Retention | Weekly curated email (fixed schedule), stamp collection display | 3 |
+| Module                | Responsibility                                                                                                                            | Phase |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ----- |
+| Data pipeline         | One-time data collection (Cafe Nomad seed → Apify/Google Maps verify + scrape) + ongoing enrichment (Claude Haiku + embedding generation) | 1     |
+| Taxonomy system       | Canonical tag database; powers filter UI and search ranking                                                                               | 1     |
+| Auth system           | Supabase Auth, session management, route protection, PDPA consent                                                                         | 1     |
+| Provider abstractions | ILLMProvider, IEmbeddingsProvider, IEmailProvider, IMapsProvider, IAnalyticsProvider                                                      | 1     |
+| Admin/ops             | Internal data quality dashboard, manual enrichment and verification UI                                                                    | 1     |
+| Background workers    | Railway workers: Apify triggers, embedding refresh, weekly email cron                                                                     | 1     |
+| Shop directory        | List view + map view toggle, geolocation, multi-dimension filters                                                                         | 2     |
+| Semantic search       | pgvector similarity + taxonomy boost, chatbox UI on landing page                                                                          | 2     |
+| User lists            | Create/edit/delete (max 3), add/remove shops                                                                                              | 2     |
+| Check-in system       | Photo upload, optional text + menu photo, stamp generation                                                                                | 2     |
+| User profile          | Private profile page: check-in history, stamps earned, lists                                                                              | 2     |
+| Retention             | Weekly curated email (fixed schedule), stamp collection display                                                                           | 3     |
 
 ---
 
@@ -85,16 +85,16 @@ lib/providers/
 
 Things that must exist for this product to ship. If any of these slip, the timeline slips.
 
-| Dependency | Type | Provider Abstracted | Risk if unavailable |
-|------------|------|--------------------|--------------------|
-| Supabase | Database + Auth + Storage | No (core infrastructure) | Complete block |
-| Railway | App hosting + worker runtime | No (infrastructure) | Deployment blocked |
-| Apify | Google Maps data scraping | Lightweight wrapper | Data pipeline blocked |
-| Claude Haiku (Anthropic) | LLM enrichment + taxonomy tagging | Yes — ILLMProvider | Enrichment quality degraded; fallback to manual |
-| OpenAI text-embedding-3-small | Vector embeddings for search | Yes — IEmbeddingsProvider | Semantic search blocked |
-| Mapbox GL JS | Map rendering | Yes — IMapsProvider | Map view unavailable; list view unaffected |
-| Resend (default) | Transactional email | Yes — IEmailProvider | Weekly email blocked |
-| PostHog | Product analytics | Yes — IAnalyticsProvider | Analytics blind; product still functional |
+| Dependency                    | Type                              | Provider Abstracted       | Risk if unavailable                             |
+| ----------------------------- | --------------------------------- | ------------------------- | ----------------------------------------------- |
+| Supabase                      | Database + Auth + Storage         | No (core infrastructure)  | Complete block                                  |
+| Railway                       | App hosting + worker runtime      | No (infrastructure)       | Deployment blocked                              |
+| Apify                         | Google Maps data scraping         | Lightweight wrapper       | Data pipeline blocked                           |
+| Claude Haiku (Anthropic)      | LLM enrichment + taxonomy tagging | Yes — ILLMProvider        | Enrichment quality degraded; fallback to manual |
+| OpenAI text-embedding-3-small | Vector embeddings for search      | Yes — IEmbeddingsProvider | Semantic search blocked                         |
+| Mapbox GL JS                  | Map rendering                     | Yes — IMapsProvider       | Map view unavailable; list view unaffected      |
+| Resend (default)              | Transactional email               | Yes — IEmailProvider      | Weekly email blocked                            |
+| PostHog                       | Product analytics                 | Yes — IAnalyticsProvider  | Analytics blind; product still functional       |
 
 **LLM enrichment rationale:** Claude Haiku chosen over GPT-4o for structured extraction with constrained output (taxonomy mapping). Claude consistently outperforms on instruction-following when output is constrained to a predefined list — critical for clean taxonomy tagging. Fast and cheap for batch processing. User maintains separate Anthropic service account for CafeRoam.
 

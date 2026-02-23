@@ -28,11 +28,7 @@ export interface TaxonomyTag {
   labelZh: string;
 }
 
-export type TaxonomyDimension =
-  | 'functionality'
-  | 'time'
-  | 'ambience'
-  | 'mode';
+export type TaxonomyDimension = 'functionality' | 'time' | 'ambience' | 'mode';
 
 export interface User {
   id: string;
