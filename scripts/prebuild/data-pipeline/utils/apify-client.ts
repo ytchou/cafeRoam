@@ -8,10 +8,10 @@ const ACTOR_ID = 'compass/crawler-google-places';
 // ─── Client ────────────────────────────────────────────────────
 
 function getClient(): ApifyClient {
-  const token = process.env.APIFY_TOKEN;
+  const token = process.env.APIFY_API_TOKEN;
   if (!token) {
     throw new Error(
-      'APIFY_TOKEN environment variable is required. Get one at https://console.apify.com/account/integrations'
+      'APIFY_API_TOKEN environment variable is required. Get one at https://console.apify.com/account/integrations'
     );
   }
   return new ApifyClient({ token });
