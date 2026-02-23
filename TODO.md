@@ -67,7 +67,7 @@ Must complete BEFORE starting Phase 1. These are FATAL risks from VALIDATION.md 
 - [x] Add ProcessedShop types (distinctiveness, multi-mode)
 - [x] Pass 3c: IDF computation + tag distinctiveness scoring (TDD)
 - [x] Pass 3c: Multi-mode inference tests
-- [ ] Update Pass 4 to read pass3c-processed.json
+- [x] Update Pass 4 to read pass3c-processed.json
 - [ ] Update Pass 5 to use multi-mode
 - [ ] Add pnpm script for pass3c
 
