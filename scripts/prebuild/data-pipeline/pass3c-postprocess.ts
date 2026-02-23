@@ -48,8 +48,9 @@ export function computeTagIdf(
   const df = new Map<string, number>();
 
   for (const e of enrichments) {
-    for (const tag of e.tags) {
-      df.set(tag.id, (df.get(tag.id) ?? 0) + 1);
+    const uniqueTagIds = new Set(e.tags.map((t) => t.id));
+    for (const tagId of uniqueTagIds) {
+      df.set(tagId, (df.get(tagId) ?? 0) + 1);
     }
   }
 

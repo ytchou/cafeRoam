@@ -56,6 +56,29 @@ describe('computeTagIdf', () => {
     const idf = computeTagIdf(enrichments);
     expect(idf.get('only_tag')).toBeCloseTo(0, 2);
   });
+
+  it('counts document frequency per shop, not per tag occurrence (no negative IDF)', () => {
+    // Shop 1 has duplicate tag IDs (e.g., LLM returned same tag twice at different confidence)
+    const enrichments: EnrichmentData[] = [
+      {
+        tags: [
+          { id: 'cozy', confidence: 0.9 },
+          { id: 'cozy', confidence: 0.7 }, // duplicate
+        ],
+        summary: 'Test',
+        topReviews: [],
+        mode: 'rest',
+        enrichedAt: '2026-02-23T00:00:00Z',
+        modelId: 'test-model',
+      },
+      makeEnrichment(['cozy']),
+    ];
+
+    const idf = computeTagIdf(enrichments);
+    // 'cozy' appears in 2/2 shops → idf should be 0, never negative
+    expect(idf.get('cozy')).toBeGreaterThanOrEqual(0);
+    expect(idf.get('cozy')).toBeCloseTo(0, 2);
+  });
 });
 
 // ─── scoreTagDistinctiveness ──────────────────────────────────
