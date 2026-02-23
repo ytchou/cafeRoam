@@ -54,6 +54,8 @@ jobs:
             core.setOutput('check_id', check.data.id);
 
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
 
       - name: Download coverage artifact
         id: artifact
