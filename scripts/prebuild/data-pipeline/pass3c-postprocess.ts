@@ -7,6 +7,34 @@ import type {
   ShopMode,
 } from './types';
 
+// ─── Helpers ───────────────────────────────────────────────────
+
+/**
+ * Normalizes topReviews to a string array.
+ * Claude occasionally returns a stringified array instead of a native array.
+ * When the string contains unescaped double quotes (e.g. "香料熱紅酒"), JSON.parse
+ * fails — so we fall back to line-by-line extraction of the array literal.
+ */
+export function normalizeTopReviews(value: string[] | unknown): string[] {
+  if (Array.isArray(value)) return value as string[];
+  const raw = value as string;
+  try {
+    return JSON.parse(raw);
+  } catch {
+    // Line-by-line extraction: each review occupies exactly one line in the
+    // form `  "...content...",` — strip the leading `  "` and trailing `"` or `",`.
+    return raw
+      .split('\n')
+      .filter((line) => line.startsWith('  "'))
+      .map((line) => {
+        const content = line.slice(3); // strip leading `  "`
+        return content.endsWith('",')
+          ? content.slice(0, -2)
+          : content.slice(0, -1);
+      });
+  }
+}
+
 // ─── Constants ─────────────────────────────────────────────────
 
 const ENRICHED_FILE = 'data/prebuild/pass3-enriched.json';
@@ -138,7 +166,7 @@ async function main() {
       enrichment: {
         tags: scoredTags,
         summary: shop.enrichment.summary,
-        topReviews: shop.enrichment.topReviews,
+        topReviews: normalizeTopReviews(shop.enrichment.topReviews),
         modes,
         enrichedAt: shop.enrichment.enrichedAt,
         modelId: shop.enrichment.modelId,

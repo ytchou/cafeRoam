@@ -157,9 +157,11 @@ export interface ApifyReview {
 
 export interface TaxonomyTag {
   id: string;
-  dimension: 'functionality' | 'time' | 'ambience' | 'mode';
+  dimension: 'functionality' | 'time' | 'ambience' | 'mode' | 'coffee';
   label: string;
   labelZh: string;
+  /** Short keywords for query-time boost matching (Chinese and/or English). */
+  aliases?: string[];
 }
 
 export interface TaxonomyProposal {

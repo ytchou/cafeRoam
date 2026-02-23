@@ -22,11 +22,30 @@ const BOOST_PER_TAG = 0.05;
 
 // ─── Pure Functions (exported for testing) ─────────────────────
 
+const NEGATION_PREFIXES = ['不', '無', '非', '沒有', '不要'];
+
+/**
+ * Returns true if `term` appears in `query` but is NOT preceded by a
+ * negation character (不/無/非/沒有/不要).  Handles the "不限時 contains 限時"
+ * false-positive case.
+ */
+function chineseTermMatches(query: string, term: string): boolean {
+  const idx = query.indexOf(term);
+  if (idx === -1) return false;
+  for (const prefix of NEGATION_PREFIXES) {
+    if (query.slice(Math.max(0, idx - prefix.length), idx) === prefix) {
+      return false;
+    }
+  }
+  return true;
+}
+
 /**
  * Compute taxonomy boost for a query against a shop's tags.
- * Chinese labels use substring matching (no word boundaries in Chinese).
- * English labels use word-boundary matching to avoid false positives
- * (e.g. tag "work" must not match "network").
+ *
+ * Matching strategy (in priority order):
+ *   1. Chinese: labelZh + aliases — substring match with negation guard
+ *   2. English: label + aliases — word-boundary regex match
  */
 export function computeTaxonomyBoost(
   query: string,
@@ -42,11 +61,22 @@ export function computeTaxonomyBoost(
     const tag = tagMap.get(shopTag.id);
     if (!tag) continue;
 
-    const chineseMatch = query.includes(tag.labelZh);
-    const escapedLabel = tag.label
-      .toLowerCase()
-      .replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const englishMatch = new RegExp(`\\b${escapedLabel}\\b`).test(queryLower);
+    const chineseTerms = [
+      tag.labelZh,
+      ...(tag.aliases ?? []).filter((a) => /[\u4e00-\u9fff]/.test(a)),
+    ];
+    const chineseMatch = chineseTerms.some((term) =>
+      chineseTermMatches(query, term)
+    );
+
+    const englishTerms = [
+      tag.label,
+      ...(tag.aliases ?? []).filter((a) => !/[\u4e00-\u9fff]/.test(a)),
+    ];
+    const englishMatch = englishTerms.some((term) => {
+      const escaped = term.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      return new RegExp(`\\b${escaped}\\b`).test(queryLower);
+    });
 
     if (chineseMatch || englishMatch) {
       matchedTags.push(tag.id);
