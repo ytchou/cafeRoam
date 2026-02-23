@@ -3,7 +3,7 @@ import type { CheckIn } from '@/lib/types';
 export interface CreateCheckInInput {
   shopId: string;
   userId: string;
-  photoUrls: string[];
+  photoUrls: [string, ...string[]];
   menuPhotoUrl?: string;
   note?: string;
 }

@@ -56,7 +56,7 @@ export interface CheckIn {
   id: string;
   userId: string;
   shopId: string;
-  photoUrls: string[];
+  photoUrls: [string, ...string[]];
   menuPhotoUrl: string | null;
   note: string | null;
   createdAt: string;
