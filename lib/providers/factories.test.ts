@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 describe('Provider factories', () => {
   beforeEach(() => {
+    vi.resetModules();
     vi.unstubAllEnvs();
   });
 
