@@ -46,7 +46,7 @@ Must complete BEFORE starting Phase 1. These are FATAL risks from VALIDATION.md 
 
 **Chunk 1 — Foundation (Wave 1-2):**
 
-- [ ] Install SDK dependencies (@anthropic-ai/sdk, openai) and extend pipeline types
+- [x] Install SDK dependencies (@anthropic-ai/sdk, openai) and extend pipeline types
 - [ ] Retry utility with exponential backoff (TDD)
 - [ ] Cosine similarity utility (TDD)
 - [ ] Anthropic client wrapper (tool use)

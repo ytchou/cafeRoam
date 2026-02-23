@@ -152,3 +152,65 @@ export interface ApifyReview {
   publishAt: string;
   language?: string;
 }
+
+// ─── Pass 3: Enrichment ────────────────────────────────────────
+
+export interface TaxonomyTag {
+  id: string;
+  dimension: 'functionality' | 'time' | 'ambience' | 'mode';
+  label: string;
+  labelZh: string;
+}
+
+export interface TaxonomyProposal {
+  functionality: Array<{ id: string; label: string; labelZh: string }>;
+  time: Array<{ id: string; label: string; labelZh: string }>;
+  ambience: Array<{ id: string; label: string; labelZh: string }>;
+  mode: Array<{ id: string; label: string; labelZh: string }>;
+}
+
+export interface EnrichmentData {
+  tags: Array<{ id: string; confidence: number }>;
+  summary: string;
+  topReviews: string[];
+  mode: 'work' | 'rest' | 'social' | 'mixed';
+  enrichedAt: string;
+  modelId: string;
+}
+
+export interface EnrichedShop extends Pass2Shop {
+  enrichment: EnrichmentData;
+}
+
+// ─── Pass 4: Embeddings ────────────────────────────────────────
+
+export interface ShopEmbedding {
+  cafenomad_id: string;
+  google_place_id: string;
+  name: string;
+  embedding: number[];
+  embeddedText: string;
+  modelId: string;
+  embeddedAt: string;
+}
+
+// ─── Pass 5: Search Test ───────────────────────────────────────
+
+export interface SearchQuery {
+  id: string;
+  query: string;
+  category: 'attribute' | 'vibe' | 'specific' | 'mixed' | 'mode';
+  expectedTraits: string[];
+}
+
+export interface SearchTestResult {
+  query: string;
+  category: string;
+  results: Array<{
+    rank: number;
+    name: string;
+    score: number;
+    boostedScore: number;
+    matchedTags: string[];
+  }>;
+}
