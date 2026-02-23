@@ -1,4 +1,6 @@
-const RETRYABLE_STATUSES = new Set([429, 529]);
+// HTTP status codes that indicate a transient provider error worth retrying.
+// 429/529 = rate-limited; 500/503 = transient server errors.
+const RETRYABLE_STATUSES = new Set([429, 500, 503, 529]);
 
 export async function withRetry<T>(
   fn: () => Promise<T>,
@@ -11,10 +13,14 @@ export async function withRetry<T>(
       if (attempt === maxRetries) throw error;
 
       const status = (error as { status?: number })?.status;
-      if (!status || !RETRYABLE_STATUSES.has(status)) throw error;
+      // Throw immediately on known non-retryable HTTP errors (e.g. 400, 401, 403, 404).
+      // Retry on retryable status codes OR when status is undefined (network-level errors:
+      // ECONNRESET, ETIMEDOUT, DNS failures, etc.).
+      if (status !== undefined && !RETRYABLE_STATUSES.has(status)) throw error;
 
       const delay = baseDelayMs * 2 ** attempt;
-      console.log(`  Rate limited (${status}), retrying in ${delay}ms (attempt ${attempt + 1}/${maxRetries})...`);
+      const label = status !== undefined ? `HTTP ${status}` : 'Network error';
+      console.log(`  ${label}, retrying in ${delay}ms (attempt ${attempt + 1}/${maxRetries})...`);
       await new Promise((resolve) => setTimeout(resolve, delay));
     }
   }

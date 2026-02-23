@@ -31,6 +31,29 @@ describe('withRetry', () => {
     expect(fn).toHaveBeenCalledTimes(2);
   });
 
+  it('retries on 500 (transient server error)', async () => {
+    const error500 = Object.assign(new Error('Internal Server Error'), { status: 500 });
+    const fn = vi.fn()
+      .mockRejectedValueOnce(error500)
+      .mockResolvedValue('ok');
+
+    const result = await withRetry(fn, { maxRetries: 3, baseDelayMs: 1 });
+    expect(result).toBe('ok');
+    expect(fn).toHaveBeenCalledTimes(2);
+  });
+
+  it('retries on network errors (no status property)', async () => {
+    const networkError = new Error('ECONNRESET');
+    // No status property — simulates DNS failure, connection reset, timeout, etc.
+    const fn = vi.fn()
+      .mockRejectedValueOnce(networkError)
+      .mockResolvedValue('ok');
+
+    const result = await withRetry(fn, { maxRetries: 3, baseDelayMs: 1 });
+    expect(result).toBe('ok');
+    expect(fn).toHaveBeenCalledTimes(2);
+  });
+
   it('throws non-retryable errors immediately', async () => {
     const error400 = Object.assign(new Error('Bad request'), { status: 400 });
     const fn = vi.fn().mockRejectedValue(error400);
