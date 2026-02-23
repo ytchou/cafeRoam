@@ -9,7 +9,7 @@
 
 | Layer | Choice | Notes |
 |-------|--------|-------|
-| Framework | Next.js 15 (App Router) | SSR/SSG for SEO, mobile-first, shareable URLs |
+| Framework | Next.js 16 (App Router) | SSR/SSG for SEO, mobile-first, shareable URLs |
 | Language | TypeScript (strict) | Full-stack including workers |
 | Database | Supabase (Postgres 15 + pgvector) | Vector search, auth, storage in one platform |
 | Auth | Supabase Auth | Email/password + social login options |
