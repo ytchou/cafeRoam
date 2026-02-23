@@ -7,7 +7,7 @@ import { withRetry } from './retry';
 // Model ID map — update these if the API rejects them.
 // Check https://docs.anthropic.com/en/docs/about-claude/models for current IDs.
 export const MODELS = {
-  sonnet: 'claude-sonnet-4-6-20250514',
+  sonnet: 'claude-sonnet-4-6',
   haiku: 'claude-haiku-4-5-20251001',
 } as const;
 
