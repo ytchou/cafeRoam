@@ -62,11 +62,11 @@ Core infrastructure everything else depends on. No user-facing product yet.
 
 **Chunk 2 — Routes & Architecture:**
 - [ ] Route group skeleton (auth, protected, API stubs)
-- [ ] Domain types (Shop, User, List, CheckIn, Stamp, Taxonomy)
-- [ ] Provider interfaces (LLM, Embeddings, Email, Maps, Analytics)
+- [x] Domain types (Shop, User, List, CheckIn, Stamp, Taxonomy)
+- [x] Provider interfaces (LLM, Embeddings, Email, Maps, Analytics)
 - [ ] Provider adapter stubs + env-based factories
 - [ ] Service interface stubs (Search, CheckIn, Lists)
-- [ ] Supabase client factory (browser + server)
+- [x] Supabase client factory (browser + server)
 
 **Chunk 3 — Verification:**
 - [ ] Full test suite passes
