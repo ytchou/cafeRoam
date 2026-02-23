@@ -70,6 +70,10 @@ const CHAINS: ChainEntry[] = [
 
 // ─── Helpers ────────────────────────────────────────────────────
 
+// Intentionally does NOT reuse normalizeName from name-normalizer.ts.
+// normalizeName strips noise suffixes like 咖啡館 and cafe, which would
+// break alias matching — "85度C咖啡蛋糕烘焙專賣店" is a valid alias that
+// must be detected as-is. Chain detection needs the raw suffix present.
 function normalizeForDetection(s: string): string {
   return s
     .replace(/[\uFF01-\uFF5E]/g, (ch) => String.fromCharCode(ch.charCodeAt(0) - 0xfee0))
