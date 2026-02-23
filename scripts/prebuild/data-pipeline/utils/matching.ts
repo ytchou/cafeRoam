@@ -102,15 +102,21 @@ export function findBestMatch(
     let nameScore: number;
 
     if (shopChain && shopDecomposed) {
-      // Chain-aware matching: require brand match, score on branch
+      // Chain-aware matching: require brand match, then score on branch.
       const resultChain = detectChain(result.title);
       if (!resultChain || resultChain.brand !== shopChain.brand) continue;
 
-      const resultDecomposed = decomposeBrandBranch(result.title);
-      const shopBranch = shopDecomposed.branch || shopDecomposed.brand;
-      const resultBranch = resultDecomposed?.branch || resultDecomposed?.brand || result.title;
-
-      nameScore = fuzzyNameScore(shopBranch, resultBranch);
+      if (shopDecomposed.branch) {
+        // Both sides have branch info — compare branches only.
+        // This is the core discrimination: 中山店 vs 信義店 → no match.
+        const resultDecomposed = decomposeBrandBranch(result.title);
+        const resultBranch = resultDecomposed?.branch || result.title;
+        nameScore = fuzzyNameScore(shopDecomposed.branch, resultBranch);
+      } else {
+        // Shop has no branch suffix (e.g., Cafe Nomad lists just "cama cafe").
+        // We know the brand matches — fall back to full-name comparison.
+        nameScore = fuzzyNameScore(shop.name, result.title);
+      }
     } else {
       nameScore = fuzzyNameScore(shop.name, result.title);
     }

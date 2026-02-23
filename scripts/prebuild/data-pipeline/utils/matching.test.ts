@@ -189,4 +189,28 @@ describe('findBestMatch', () => {
     expect(match).not.toBeNull();
     expect(match!.placeId).toBe('ChIJ_louisa_zhongshan');
   });
+
+  it('matches chain shop with no branch suffix using full-name comparison', () => {
+    // Cafe Nomad lists "cama cafe" (no branch); Google Maps has "cama cafe 大安店".
+    // The empty branch fallback uses full-name comparison — brand already matches,
+    // so the overall score is acceptable.
+    const shop = makePass0Shop({
+      name: 'cama cafe',
+      latitude: 25.05,
+      longitude: 121.52,
+    });
+    const results = [
+      makeApifyResult({
+        title: 'cama cafe 大安店',
+        placeId: 'ChIJ_cama_daan',
+        location: { lat: 25.0502, lng: 121.5202 },
+      }),
+    ];
+
+    // Should match (not silently drop to unmatched) — the brand is the same
+    // and there's no branch info to discriminate on.
+    const match = findBestMatch(shop, results);
+    expect(match).not.toBeNull();
+    expect(match!.placeId).toBe('ChIJ_cama_daan');
+  });
 });
