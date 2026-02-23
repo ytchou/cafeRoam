@@ -1,0 +1,46 @@
+import OpenAI from 'openai';
+import { withRetry } from './retry';
+
+const DEFAULT_MODEL = 'text-embedding-3-small';
+
+function getClient(): OpenAI {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) {
+    throw new Error(
+      'OPENAI_API_KEY environment variable is required. Get one at https://platform.openai.com/api-keys'
+    );
+  }
+  return new OpenAI({ apiKey });
+}
+
+/**
+ * Embed a single text string. Returns a 1536-dimension vector.
+ */
+export async function embedText(
+  text: string,
+  model: string = DEFAULT_MODEL
+): Promise<number[]> {
+  const [embedding] = await embedTexts([text], model);
+  return embedding;
+}
+
+/**
+ * Embed multiple texts in a single API call. Returns vectors in input order.
+ * OpenAI supports up to 2048 inputs per batch.
+ */
+export async function embedTexts(
+  texts: string[],
+  model: string = DEFAULT_MODEL
+): Promise<number[][]> {
+  if (texts.length === 0) return [];
+
+  const client = getClient();
+
+  const response = await withRetry(() =>
+    client.embeddings.create({ model, input: texts })
+  );
+
+  return response.data
+    .sort((a, b) => a.index - b.index)
+    .map((d) => d.embedding);
+}
