@@ -55,3 +55,6 @@ supabase/.temp
 .idea/
 *.swp
 *.swo
+
+# Pre-build pipeline data (large JSON files)
+data/
