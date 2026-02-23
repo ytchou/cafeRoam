@@ -7,5 +7,4 @@ export interface GeocodingResult {
 export interface IMapsProvider {
   geocode(address: string): Promise<GeocodingResult | null>;
   reverseGeocode(lat: number, lng: number): Promise<string | null>;
-  readonly accessToken: string;
 }
