@@ -9,6 +9,7 @@ export default defineConfig({
       'lib/**/*.test.ts',
       'app/**/*.test.ts',
       'app/**/*.test.tsx',
+      'components/**/*.test.tsx',
     ],
     environment: 'jsdom',
   },
