@@ -55,7 +55,7 @@ Must complete BEFORE starting Phase 1. These are FATAL risks from VALIDATION.md 
 **Chunk 2 — Enrichment Pipeline (Wave 3):**
 
 - [x] Pass 3a: Taxonomy seed generator — Claude proposes tags from reviews (TDD)
-- [ ] ✋ Manual: Run pass3a, curate taxonomy-proposed.json → taxonomy.json
+- [x] ✋ Manual: Run pass3a, curate taxonomy-proposed.json → taxonomy.json
 - [x] Pass 3b: Enrichment worker — Claude classifies shops against taxonomy (TDD)
 - [x] Pass 4: Embedding generator — OpenAI text-embedding-3-small (TDD)
 
@@ -76,7 +76,7 @@ Must complete BEFORE starting Phase 1. These are FATAL risks from VALIDATION.md 
 - [x] Search queries config (10 test queries)
 - [x] Pass 5: Search prototype — cosine similarity + taxonomy boost (TDD)
 - [x] Add pnpm scripts for all passes
-- [ ] ✋ Manual: Run pass3c → pass4 → pass5, score results — 7/10 gate
+- [x] ✋ Manual: Run pass3c → pass4 → pass5, score results — 7/10 gate (10/10 achieved 2026-02-23)
 
 **Pre-build is done when:** 7+ of 10 test queries return useful, relevant results. Beta user reaction (10 people): "this is better than Google Maps." If <7/10 succeed, stop and rethink the data enrichment approach before building the full product.
 
@@ -126,8 +126,11 @@ Core infrastructure everything else depends on. No user-facing product yet.
 ### Data Pipeline
 
 - [ ] Taxonomy system: canonical tag table, seeded with 60-100 initial tags across all dimensions
-- [ ] Data pipeline: Cafe Nomad importer + Apify scraper integration + Claude Haiku enrichment + embedding generation
+- [ ] Data pipeline: Cafe Nomad importer + Apify scraper integration + Claude Sonnet enrichment + embedding generation (see [ADR](docs/decisions/2026-02-24-enrichment-model-sonnet-over-haiku.md))
 - [ ] 200+ Taipei shops enriched, tagged, and embedded in Supabase
+- [ ] Enrichment staleness tracking: store `enrichedAt` per shop, background job flags shops older than 90 days for re-enrichment
+- [ ] Incremental tag classification: re-classify only delta tags when taxonomy grows, not full re-enrichment (build before catalog exceeds 500 shops)
+- [ ] Embedding regeneration trigger: re-embed only when enrichment actually changes (diff tags/summary), not on every pipeline run
 
 ### Provider Abstractions
 
