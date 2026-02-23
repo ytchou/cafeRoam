@@ -15,6 +15,7 @@ Known errors, their symptoms, causes, and fixes. Add an entry every time you hit
 **Root cause:** [Why it happens]
 
 **Fix:**
+
 ```bash
 # Commands or steps to fix it
 ```
@@ -30,6 +31,7 @@ Known errors, their symptoms, causes, and fixes. Add an entry every time you hit
 **Root cause:** Local migration history is out of sync with what's been applied to the database, usually from running raw SQL in the Supabase dashboard instead of through migrations.
 
 **Fix:**
+
 ```bash
 supabase db diff           # See what's different
 supabase db reset          # Nuclear option: reset local DB entirely and reapply all migrations
@@ -46,6 +48,7 @@ supabase db reset          # Nuclear option: reset local DB entirely and reapply
 **Root cause:** pgvector extension not enabled in local Supabase instance.
 
 **Fix:**
+
 ```sql
 -- Add to migration file or run manually once:
 CREATE EXTENSION IF NOT EXISTS vector;
@@ -62,6 +65,7 @@ CREATE EXTENSION IF NOT EXISTS vector;
 **Root cause:** RLS policy missing or incorrectly written for the table being queried. Common mistake: forgetting `auth.uid()` check on user-scoped tables.
 
 **Fix:**
+
 ```sql
 -- Check existing policies:
 SELECT * FROM pg_policies WHERE tablename = '[table_name]';
@@ -75,4 +79,4 @@ CREATE POLICY "Users can read own data" ON [table]
 
 ---
 
-*Add entries here as you discover them.*
+_Add entries here as you discover them._

@@ -18,6 +18,7 @@ CafeRoam depends on multiple external providers whose quality and cost character
 ## Rationale
 
 The Adapter pattern with TypeScript interfaces enforces the abstraction at the type level. The pattern:
+
 1. `[service].interface.ts` — defines the contract (e.g., `IEmailProvider.send(to, subject, body)`)
 2. `[provider].adapter.ts` — implements the interface using the provider's SDK
 3. `index.ts` — factory function reads env var (`EMAIL_PROVIDER=resend`) and returns the active adapter

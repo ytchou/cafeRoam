@@ -97,12 +97,12 @@ These will NOT be built in V1. Any scope change requires an explicit decision an
 
 **Pricing tiers:**
 
-| Tier | Price | What's included |
-|------|-------|-----------------|
-| User — Free | $0 | Full directory, semantic search (auth-gated), lists, check-ins, profile |
-| Shop — Basic | Free | Auto-listed from data pipeline |
-| Shop — Sponsored | NT$500-1,000/mo | Featured placement in search results (Phase 2, 6+ months) |
-| Shop — Premium | NT$300-1,000/mo | Analytics, menu management, review response (Year 2) |
+| Tier             | Price           | What's included                                                         |
+| ---------------- | --------------- | ----------------------------------------------------------------------- |
+| User — Free      | $0              | Full directory, semantic search (auth-gated), lists, check-ins, profile |
+| Shop — Basic     | Free            | Auto-listed from data pipeline                                          |
+| Shop — Sponsored | NT$500-1,000/mo | Featured placement in search results (Phase 2, 6+ months)               |
+| Shop — Premium   | NT$300-1,000/mo | Analytics, menu management, review response (Year 2)                    |
 
 **Cost structure (rough):** Railway ~$5/mo, Supabase Free → Pro $25/mo, Apify ~$10-30/mo (scraping), Claude Haiku ~$5-20/mo (enrichment), OpenAI embeddings ~$2-5/mo. Total: ~$50-80/month at launch.
 
@@ -121,11 +121,13 @@ These will NOT be built in V1. Any scope change requires an explicit decision an
 ## 10. Success Metrics (Quantified)
 
 **North Star Metric:** Weekly Active Users (WAU)
+
 - 50+ WAU by end of beta (week 2)
 - 300+ WAU by end of month 1
 - 1,000+ WAU by month 6
 
 **Supporting metrics:**
+
 - Semantic search "wow rate": 70%+ of beta users say results are better than Google Maps/Cafe Nomad
 - Check-in rate: 20%+ of logged-in users check in at least once per month
 - Email open rate: 30%+ (industry average 20%)

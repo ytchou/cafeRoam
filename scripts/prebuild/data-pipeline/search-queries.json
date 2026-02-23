@@ -1,0 +1,62 @@
+[
+  {
+    "id": "q1",
+    "query": "有插座可以工作的安靜咖啡廳",
+    "category": "attribute",
+    "expectedTraits": ["has_outlets", "quiet", "work"]
+  },
+  {
+    "id": "q2",
+    "query": "適合讀書的咖啡廳，不限時",
+    "category": "attribute",
+    "expectedTraits": ["no_time_limit", "quiet", "reading"]
+  },
+  {
+    "id": "q3",
+    "query": "文青風的拍照咖啡廳",
+    "category": "vibe",
+    "expectedTraits": ["photogenic", "aesthetic"]
+  },
+  {
+    "id": "q4",
+    "query": "深夜還開著的咖啡廳",
+    "category": "attribute",
+    "expectedTraits": ["late_night"]
+  },
+  {
+    "id": "q5",
+    "query": "cozy cafe good for a date near MRT",
+    "category": "mixed",
+    "expectedTraits": ["cozy", "date"]
+  },
+  {
+    "id": "q6",
+    "query": "適合跟朋友聊天聚會的咖啡廳",
+    "category": "mode",
+    "expectedTraits": ["social", "group_hangout"]
+  },
+  {
+    "id": "q7",
+    "query": "有好喝手沖咖啡的自烘店",
+    "category": "specific",
+    "expectedTraits": ["specialty_coffee", "pour_over"]
+  },
+  {
+    "id": "q8",
+    "query": "有貓的咖啡廳",
+    "category": "vibe",
+    "expectedTraits": ["has_cats"]
+  },
+  {
+    "id": "q9",
+    "query": "便宜平價的咖啡廳，適合學生",
+    "category": "attribute",
+    "expectedTraits": ["budget_friendly"]
+  },
+  {
+    "id": "q10",
+    "query": "quiet place to work alone with good wifi",
+    "category": "mixed",
+    "expectedTraits": ["quiet", "wifi", "deep_work"]
+  }
+]

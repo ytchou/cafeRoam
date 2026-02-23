@@ -34,20 +34,37 @@ Must complete BEFORE starting Phase 1. These are FATAL risks from VALIDATION.md 
 
 **Validation (30-shop subset):**
 
-- [ ] Run Pass 0 on full dataset, pick 30 diverse shops
-- [ ] Run Pass 1 on 30 shops, verify >80% match rate
-- [ ] Run Pass 2 on confirmed shops, inspect data quality
-- [ ] Check: reviews present, photos present, some menu URLs found
+- [x] Run Pass 0 on full dataset, pick 30 diverse shops
+- [x] Run Pass 1 on 30 shops, verify >80% match rate
+- [x] Run Pass 2 on confirmed shops, inspect data quality
+- [x] Check: reviews present, photos present, some menu URLs found
 
 ### Enrichment & Embeddings
 
-- [ ] Run Claude Haiku enrichment pipeline → extract taxonomy tags from reviews
-- [ ] Generate embeddings for 30 enriched shops (OpenAI text-embedding-3-small)
+> **Design Doc:** [docs/designs/2026-02-23-enrichment-embeddings-design.md](docs/designs/2026-02-23-enrichment-embeddings-design.md)
+> **Plan:** [docs/plans/2026-02-23-enrichment-embeddings-plan.md](docs/plans/2026-02-23-enrichment-embeddings-plan.md)
 
-### Search Prototype
+**Chunk 1 — Foundation (Wave 1-2):**
 
-- [ ] Build minimal pgvector search prototype
-- [ ] Test 10 natural language queries against the prototype
+- [x] Install SDK dependencies (@anthropic-ai/sdk, openai) and extend pipeline types
+- [x] Retry utility with exponential backoff (TDD)
+- [x] Cosine similarity utility (TDD)
+- [x] Anthropic client wrapper (tool use)
+- [x] OpenAI embeddings client wrapper
+
+**Chunk 2 — Enrichment Pipeline (Wave 3):**
+
+- [x] Pass 3a: Taxonomy seed generator — Claude proposes tags from reviews (TDD)
+- [ ] ✋ Manual: Curate taxonomy-proposed.json → taxonomy.json
+- [x] Pass 3b: Enrichment worker — Claude classifies shops against taxonomy (TDD)
+- [x] Pass 4: Embedding generator — OpenAI text-embedding-3-small (TDD)
+
+**Chunk 3 — Search Validation (Wave 4-5):**
+
+- [x] Search queries config (10 test queries)
+- [x] Pass 5: Search prototype — cosine similarity + taxonomy boost (TDD)
+- [x] Add pnpm scripts for all passes
+- [ ] ✋ Manual: Score search results — 7/10 gate
 
 **Pre-build is done when:** 7+ of 10 test queries return useful, relevant results. Beta user reaction (10 people): "this is better than Google Maps." If <7/10 succeed, stop and rethink the data enrichment approach before building the full product.
 

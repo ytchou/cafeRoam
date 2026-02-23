@@ -16,9 +16,14 @@
     "prebuild:pass0": "tsx scripts/prebuild/data-pipeline/pass0-seed.ts",
     "prebuild:pass1": "tsx scripts/prebuild/data-pipeline/pass1-verify.ts",
     "prebuild:pass2": "tsx scripts/prebuild/data-pipeline/pass2-scrape.ts",
-    "prebuild:all": "pnpm prebuild:pass0 && pnpm prebuild:pass1 && pnpm prebuild:pass2"
+    "prebuild:pass3a": "tsx scripts/prebuild/data-pipeline/pass3a-taxonomy-seed.ts",
+    "prebuild:pass3b": "tsx scripts/prebuild/data-pipeline/pass3b-enrich.ts",
+    "prebuild:pass4": "tsx scripts/prebuild/data-pipeline/pass4-embed.ts",
+    "prebuild:pass5": "tsx scripts/prebuild/data-pipeline/pass5-search-test.ts",
+    "prebuild:all": "pnpm prebuild:pass0 && pnpm prebuild:pass1 && pnpm prebuild:pass2 && echo 'Run pass3a, curate taxonomy, then pass3b-pass5 manually'"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.78.0",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.97.0",
     "apify-client": "^2.11.0",
@@ -27,6 +32,7 @@
     "fuzzball": "^2.2.3",
     "lucide-react": "^0.575.0",
     "next": "16.1.6",
+    "openai": "^6.22.0",
     "radix-ui": "^1.4.3",
     "react": "19.2.3",
     "react-dom": "19.2.3",
