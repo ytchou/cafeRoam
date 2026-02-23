@@ -32,8 +32,10 @@
       "**/*.config.mjs",
       "**/middleware.ts",
       "**/scripts/prebuild/**",
-      "lib/services/*.service.ts",
-      "lib/providers/**/*.interface.ts"
+      "*.service.ts",
+      "*.interface.ts",
+      "layout.tsx",
+      "components/ui/*.tsx"
     ]
   }
 }
