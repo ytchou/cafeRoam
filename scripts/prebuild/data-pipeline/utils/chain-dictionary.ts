@@ -121,7 +121,7 @@ export function decomposeBrandBranch(
         return { brand: chain.canonical, branch: '' };
       }
       if (normalized.startsWith(normalizedAlias + ' ')) {
-        const branch = name.slice(alias.length).trim();
+        const branch = normalized.slice(normalizedAlias.length).trim();
         return { brand: chain.canonical, branch };
       }
     }
