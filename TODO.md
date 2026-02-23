@@ -57,8 +57,8 @@ Core infrastructure everything else depends on. No user-facing product yet.
 **Chunk 1 — Scaffold & Config:**
 - [x] Generate Next.js 15 scaffold (temp dir)
 - [x] Copy configs, merge package.json, install deps
-- [ ] App shell: root layout + landing page + Tailwind v4 globals
-- [ ] Initialize shadcn/ui
+- [x] App shell: root layout + landing page + Tailwind v4 globals
+- [x] Initialize shadcn/ui
 
 **Chunk 2 — Routes & Architecture:**
 - [ ] Route group skeleton (auth, protected, API stubs)
