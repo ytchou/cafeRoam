@@ -72,9 +72,19 @@ jobs:
         with:
           version: 9
 
+      - name: Check for package.json
+        id: check
+        run: |
+          if [ ! -f package.json ]; then
+            echo "skip=true" >> $GITHUB_OUTPUT
+            echo "No package.json found — skipping dependency audit"
+          fi
+
       - name: Install dependencies
+        if: steps.check.outputs.skip != 'true'
         run: pnpm install --frozen-lockfile
 
       - name: Audit dependencies
+        if: steps.check.outputs.skip != 'true'
         run: pnpm audit --audit-level=high
         continue-on-error: true
