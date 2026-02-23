@@ -9,6 +9,7 @@ const TAXONOMY_FILE = 'data/prebuild/taxonomy.json';
 const OUTPUT_DIR = 'data/prebuild';
 const OUTPUT_FILE = `${OUTPUT_DIR}/pass4-embeddings.json`;
 const EMBEDDING_MODEL = 'text-embedding-3-small';
+const BATCH_SIZE = 100; // OpenAI allows up to 2048; stay well under token limits
 
 // ─── Pure Functions (exported for testing) ─────────────────────
 
@@ -52,23 +53,49 @@ async function main() {
   const taxonomy: TaxonomyTag[] = JSON.parse(readFileSync(TAXONOMY_FILE, 'utf-8'));
   console.log(`[pass4] Loaded ${shops.length} enriched shops, ${taxonomy.length} taxonomy tags`);
 
-  const texts = shops.map((shop) => composeEmbeddingText(shop, taxonomy));
+  // Load existing results for resume support — skip already-embedded shops
+  let output: ShopEmbedding[] = [];
+  try {
+    output = JSON.parse(readFileSync(OUTPUT_FILE, 'utf-8'));
+    console.log(`[pass4] Loaded ${output.length} existing embeddings for resume`);
+  } catch {
+    // No existing results — start fresh
+  }
 
-  console.log(`[pass4] Embedding ${texts.length} texts with ${EMBEDDING_MODEL}...`);
-  const embeddings = await embedTexts(texts, EMBEDDING_MODEL);
+  const embeddedIds = new Set(output.map((e) => e.cafenomad_id));
+  const toEmbed = shops.filter((s) => !embeddedIds.has(s.cafenomad_id));
 
-  const output: ShopEmbedding[] = shops.map((shop, i) => ({
-    cafenomad_id: shop.cafenomad_id,
-    google_place_id: shop.google_place_id,
-    name: shop.name,
-    embedding: embeddings[i],
-    embeddedText: texts[i],
-    modelId: EMBEDDING_MODEL,
-    embeddedAt: new Date().toISOString(),
-  }));
+  if (toEmbed.length === 0) {
+    console.log('[pass4] All shops already embedded. Nothing to do.');
+  } else {
+    const totalBatches = Math.ceil(toEmbed.length / BATCH_SIZE);
+    console.log(`[pass4] Embedding ${toEmbed.length} shops in ${totalBatches} batch(es) of ${BATCH_SIZE}...`);
 
-  mkdirSync(OUTPUT_DIR, { recursive: true });
-  writeFileSync(OUTPUT_FILE, JSON.stringify(output, null, 2));
+    for (let i = 0; i < toEmbed.length; i += BATCH_SIZE) {
+      const batch = toEmbed.slice(i, i + BATCH_SIZE);
+      const batchTexts = batch.map((shop) => composeEmbeddingText(shop, taxonomy));
+      const batchNum = Math.floor(i / BATCH_SIZE) + 1;
+      console.log(`  Batch ${batchNum}/${totalBatches} (${batch.length} shops)...`);
+
+      const batchEmbeddings = await embedTexts(batchTexts, EMBEDDING_MODEL);
+
+      const batchOutput: ShopEmbedding[] = batch.map((shop, j) => ({
+        cafenomad_id: shop.cafenomad_id,
+        google_place_id: shop.google_place_id,
+        name: shop.name,
+        embedding: batchEmbeddings[j],
+        embeddedText: batchTexts[j],
+        modelId: EMBEDDING_MODEL,
+        embeddedAt: new Date().toISOString(),
+      }));
+
+      output.push(...batchOutput);
+
+      // Save after each batch for interrupt safety
+      mkdirSync(OUTPUT_DIR, { recursive: true });
+      writeFileSync(OUTPUT_FILE, JSON.stringify(output, null, 2));
+    }
+  }
 
   console.log('[pass4] Embedding complete:');
   console.log(`  Shops:      ${output.length}`);
