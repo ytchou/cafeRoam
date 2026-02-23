@@ -61,11 +61,11 @@ Core infrastructure everything else depends on. No user-facing product yet.
 - [x] Initialize shadcn/ui
 
 **Chunk 2 — Routes & Architecture:**
-- [ ] Route group skeleton (auth, protected, API stubs)
+- [x] Route group skeleton (auth, protected, API stubs)
 - [x] Domain types (Shop, User, List, CheckIn, Stamp, Taxonomy)
 - [x] Provider interfaces (LLM, Embeddings, Email, Maps, Analytics)
-- [ ] Provider adapter stubs + env-based factories
-- [ ] Service interface stubs (Search, CheckIn, Lists)
+- [x] Provider adapter stubs + env-based factories
+- [x] Service interface stubs (Search, CheckIn, Lists)
 - [x] Supabase client factory (browser + server)
 
 **Chunk 3 — Verification:**
