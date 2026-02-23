@@ -201,7 +201,7 @@ async function main() {
       console.log(`    -> ${validated.tags.length} tags, mode: ${validated.mode}`);
     } catch (err) {
       console.error(`    x Failed: ${err instanceof Error ? err.message : err}`);
-      console.error(`    Skipping. Resume later with --start-from ${args.startFrom + i}`);
+      console.error(`    Skipping. Re-run to resume — already-enriched shops are skipped automatically.`);
     }
   }
 
