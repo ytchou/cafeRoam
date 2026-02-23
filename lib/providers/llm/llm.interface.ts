@@ -1,5 +1,7 @@
+import type { TaxonomyTag } from '@/lib/types';
+
 export interface EnrichmentResult {
-  tags: Array<{ id: string; dimension: string; label: string; labelZh: string }>;
+  tags: TaxonomyTag[];
   summary: string;
   confidence: number;
 }
