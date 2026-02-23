@@ -55,7 +55,7 @@ Must complete BEFORE starting Phase 1. These are FATAL risks from VALIDATION.md 
 **Chunk 2 — Enrichment Pipeline (Wave 3):**
 
 - [x] Pass 3a: Taxonomy seed generator — Claude proposes tags from reviews (TDD)
-- [ ] ✋ Manual: Curate taxonomy-proposed.json → taxonomy.json
+- [ ] ✋ Manual: Run pass3a, curate taxonomy-proposed.json → taxonomy.json
 - [x] Pass 3b: Enrichment worker — Claude classifies shops against taxonomy (TDD)
 - [x] Pass 4: Embedding generator — OpenAI text-embedding-3-small (TDD)
 
@@ -64,7 +64,7 @@ Must complete BEFORE starting Phase 1. These are FATAL risks from VALIDATION.md 
 - [x] Search queries config (10 test queries)
 - [x] Pass 5: Search prototype — cosine similarity + taxonomy boost (TDD)
 - [x] Add pnpm scripts for all passes
-- [ ] ✋ Manual: Score search results — 7/10 gate
+- [ ] ✋ Manual: Run pass3b → pass4 → pass5, score results — 7/10 gate
 
 **Pre-build is done when:** 7+ of 10 test queries return useful, relevant results. Beta user reaction (10 people): "this is better than Google Maps." If <7/10 succeed, stop and rethink the data enrichment approach before building the full product.
 
