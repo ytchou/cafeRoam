@@ -69,8 +69,8 @@ Core infrastructure everything else depends on. No user-facing product yet.
 - [x] Supabase client factory (browser + server)
 
 **Chunk 3 — Verification:**
-- [ ] Full test suite passes
-- [ ] Lint + type-check + production build pass
+- [x] Full test suite passes
+- [x] Lint + type-check + production build pass
 - [ ] All routes accessible in browser
 
 ### Database & Infrastructure
