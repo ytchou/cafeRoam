@@ -29,8 +29,11 @@
       "**/*.d.ts",
       "**/setup.ts",
       "**/*.config.ts",
+      "**/*.config.mjs",
       "**/middleware.ts",
-      "**/scripts/prebuild/**"
+      "**/scripts/prebuild/**",
+      "lib/services/*.service.ts",
+      "lib/providers/**/*.interface.ts"
     ]
   }
 }
