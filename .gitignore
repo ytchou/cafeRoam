@@ -47,6 +47,9 @@ supabase/.temp
 # Railway
 .railway/
 
+# Worktrees
+.worktrees/
+
 # Editor
 .vscode/
 .idea/
