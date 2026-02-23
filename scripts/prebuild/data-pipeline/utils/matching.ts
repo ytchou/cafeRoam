@@ -35,15 +35,6 @@ function confidenceToTier(confidence: number): MatchTier {
   return 'low';
 }
 
-/**
- * Normalizes a name for fuzzy comparison: applies normalizeName then
- * strips all remaining internal spaces so that "好 咖啡" and "好咖啡"
- * are treated as identical by the scorer.
- */
-function prepareForScoring(name: string): string {
-  return normalizeName(name).replace(/\s+/g, '');
-}
-
 // ─── Fuzzy Name Matching ───────────────────────────────────────
 
 /**
@@ -58,12 +49,19 @@ function prepareForScoring(name: string): string {
  *
  * IMPORTANT: force_ascii: false is required — the default (true) strips
  * all non-ASCII characters, destroying CJK input.
+ *
+ * Spaces are preserved when passed to token_set_ratio so the tokenizer
+ * can split on them. The identity check uses space-stripped versions to
+ * treat "好 咖啡" and "好咖啡" as equal.
  */
 export function fuzzyNameScore(a: string, b: string): number {
-  const na = prepareForScoring(a);
-  const nb = prepareForScoring(b);
+  const na = normalizeName(a);
+  const nb = normalizeName(b);
 
-  if (na === nb) return 1.0;
+  // Treat names as identical when they differ only by internal whitespace.
+  // This is checked separately so that spaces are still present when
+  // token_set_ratio tokenizes (preserving its subset/reorder advantage).
+  if (na.replace(/\s+/g, '') === nb.replace(/\s+/g, '')) return 1.0;
   if (na.length === 0 || nb.length === 0) return 0.0;
 
   return token_set_ratio(na, nb, FUZZ_OPTIONS) / 100;
