@@ -144,6 +144,11 @@ async function main() {
   mkdirSync(OUTPUT_DIR, { recursive: true });
   writeFileSync(OUTPUT_FILE, JSON.stringify(processed, null, 2));
 
+  if (processed.length === 0) {
+    console.log('[pass3c] No shops to process. Output file written (empty array).');
+    return;
+  }
+
   // Print stats
   const allTags = processed.flatMap((s) => s.enrichment.tags);
   const avgTags = allTags.length / processed.length;
