@@ -24,7 +24,13 @@ const MODE_SIGNALS: Record<ShopMode, string[]> = {
     'no_time_limit',
     'late_night_work',
   ],
-  rest: ['reading', 'solo_time', 'slow_morning', 'healing_therapeutic', 'quiet'],
+  rest: [
+    'reading',
+    'solo_time',
+    'slow_morning',
+    'healing_therapeutic',
+    'quiet',
+  ],
   social: [
     'catch_up_friends',
     'small_group',
@@ -104,8 +110,7 @@ export function inferModes(
   }
 
   if (modes.length === 0) {
-    const fallback: ShopMode =
-      originalMode === 'mixed' ? 'rest' : originalMode;
+    const fallback: ShopMode = originalMode === 'mixed' ? 'rest' : originalMode;
     modes.push(fallback);
   }
 
@@ -145,7 +150,9 @@ async function main() {
   writeFileSync(OUTPUT_FILE, JSON.stringify(processed, null, 2));
 
   if (processed.length === 0) {
-    console.log('[pass3c] No shops to process. Output file written (empty array).');
+    console.log(
+      '[pass3c] No shops to process. Output file written (empty array).'
+    );
     return;
   }
 

@@ -160,17 +160,13 @@ describe('inferModes', () => {
   });
 
   it('falls back to original mode when no signals match', () => {
-    const tags = [
-      { id: 'some_unrelated_tag', confidence: 0.9 },
-    ];
+    const tags = [{ id: 'some_unrelated_tag', confidence: 0.9 }];
     const modes = inferModes(tags, 'social');
     expect(modes).toEqual(['social']);
   });
 
   it('falls back to rest when original mode is mixed and no signals match', () => {
-    const tags = [
-      { id: 'some_unrelated_tag', confidence: 0.9 },
-    ];
+    const tags = [{ id: 'some_unrelated_tag', confidence: 0.9 }];
     const modes = inferModes(tags, 'mixed');
     expect(modes).toEqual(['rest']);
   });

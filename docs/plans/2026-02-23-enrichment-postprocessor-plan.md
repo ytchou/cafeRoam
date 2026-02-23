@@ -19,6 +19,7 @@
 ### Task 1: Add processed enrichment types
 
 **Files:**
+
 - Modify: `scripts/prebuild/data-pipeline/types.ts`
 
 No test needed — type-only definitions.
@@ -64,6 +65,7 @@ git commit -m "feat(pipeline): add ProcessedShop types for pass3c post-processin
 ### Task 2: Pass 3c — IDF computation and tag distinctiveness
 
 **Files:**
+
 - Create: `scripts/prebuild/data-pipeline/pass3c-postprocess.ts`
 - Create: `scripts/prebuild/data-pipeline/pass3c-postprocess.test.ts`
 
@@ -72,12 +74,19 @@ git commit -m "feat(pipeline): add ProcessedShop types for pass3c post-processin
 ```typescript
 // scripts/prebuild/data-pipeline/pass3c-postprocess.test.ts
 import { describe, it, expect } from 'vitest';
-import { computeTagIdf, scoreTagDistinctiveness, inferModes } from './pass3c-postprocess';
+import {
+  computeTagIdf,
+  scoreTagDistinctiveness,
+  inferModes,
+} from './pass3c-postprocess';
 import type { EnrichedShop, EnrichmentData, ShopMode } from './types';
 
 // ─── Fixtures ──────────────────────────────────────────────────
 
-function makeEnrichment(tagIds: string[], mode: EnrichmentData['mode'] = 'mixed'): EnrichmentData {
+function makeEnrichment(
+  tagIds: string[],
+  mode: EnrichmentData['mode'] = 'mixed'
+): EnrichmentData {
   return {
     tags: tagIds.map((id) => ({ id, confidence: 0.8 })),
     summary: 'Test summary',
@@ -117,9 +126,7 @@ describe('computeTagIdf', () => {
   });
 
   it('handles single-shop case without division by zero', () => {
-    const enrichments: EnrichmentData[] = [
-      makeEnrichment(['only_tag']),
-    ];
+    const enrichments: EnrichmentData[] = [makeEnrichment(['only_tag'])];
 
     const idf = computeTagIdf(enrichments);
     expect(idf.get('only_tag')).toBeCloseTo(0, 2);
@@ -197,9 +204,29 @@ const OUTPUT_FILE = `${OUTPUT_DIR}/pass3c-processed.json`;
 const MODE_CONFIDENCE_THRESHOLD = 0.5;
 
 const MODE_SIGNALS: Record<ShopMode, string[]> = {
-  work: ['deep_work', 'casual_work', 'laptop_friendly', 'power_outlets', 'wifi_available', 'no_time_limit', 'late_night_work'],
-  rest: ['reading', 'solo_time', 'slow_morning', 'healing_therapeutic', 'quiet'],
-  social: ['catch_up_friends', 'small_group', 'date', 'lively', 'community_vibe'],
+  work: [
+    'deep_work',
+    'casual_work',
+    'laptop_friendly',
+    'power_outlets',
+    'wifi_available',
+    'no_time_limit',
+    'late_night_work',
+  ],
+  rest: [
+    'reading',
+    'solo_time',
+    'slow_morning',
+    'healing_therapeutic',
+    'quiet',
+  ],
+  social: [
+    'catch_up_friends',
+    'small_group',
+    'date',
+    'lively',
+    'community_vibe',
+  ],
   coffee: ['specialty_coffee_focused', 'coffee_tasting', 'roastery_onsite'],
 };
 
@@ -209,7 +236,9 @@ const MODE_SIGNALS: Record<ShopMode, string[]> = {
  * Compute IDF (inverse document frequency) for each tag across all shops.
  * idf(tag) = log(N / df(tag))
  */
-export function computeTagIdf(enrichments: EnrichmentData[]): Map<string, number> {
+export function computeTagIdf(
+  enrichments: EnrichmentData[]
+): Map<string, number> {
   const N = enrichments.length;
   const df = new Map<string, number>();
 
@@ -258,7 +287,10 @@ export function inferModes(
   const tagMap = new Map(tags.map((t) => [t.id, t.confidence]));
   const modes: ShopMode[] = [];
 
-  for (const [mode, signals] of Object.entries(MODE_SIGNALS) as [ShopMode, string[]][]) {
+  for (const [mode, signals] of Object.entries(MODE_SIGNALS) as [
+    ShopMode,
+    string[],
+  ][]) {
     const hasSignal = signals.some((s) => (tagMap.get(s) ?? 0) >= threshold);
     if (hasSignal) {
       modes.push(mode);
@@ -282,7 +314,9 @@ export function inferModes(
 
 async function main() {
   console.log('[pass3c] Reading enriched data...');
-  const shops: EnrichedShop[] = JSON.parse(readFileSync(ENRICHED_FILE, 'utf-8'));
+  const shops: EnrichedShop[] = JSON.parse(
+    readFileSync(ENRICHED_FILE, 'utf-8')
+  );
   console.log(`[pass3c] Loaded ${shops.length} shops`);
 
   // Compute IDF across all shops
@@ -368,6 +402,7 @@ git commit -m "feat(pipeline): add pass3c IDF computation and tag distinctivenes
 ### Task 3: Pass 3c — Multi-mode inference
 
 **Files:**
+
 - Modify: `scripts/prebuild/data-pipeline/pass3c-postprocess.test.ts` (add inferModes tests)
 
 **Step 1: Write the failing tests for inferModes**
@@ -410,17 +445,13 @@ describe('inferModes', () => {
   });
 
   it('falls back to original mode when no signals match', () => {
-    const tags = [
-      { id: 'some_unrelated_tag', confidence: 0.9 },
-    ];
+    const tags = [{ id: 'some_unrelated_tag', confidence: 0.9 }];
     const modes = inferModes(tags, 'social');
     expect(modes).toEqual(['social']);
   });
 
   it('falls back to rest when original mode is mixed and no signals match', () => {
-    const tags = [
-      { id: 'some_unrelated_tag', confidence: 0.9 },
-    ];
+    const tags = [{ id: 'some_unrelated_tag', confidence: 0.9 }];
     const modes = inferModes(tags, 'mixed');
     expect(modes).toEqual(['rest']);
   });
@@ -458,6 +489,7 @@ git commit -m "test(pipeline): add comprehensive inferModes tests for pass3c"
 ### Task 4: Update pass4 to read processed data
 
 **Files:**
+
 - Modify: `scripts/prebuild/data-pipeline/pass4-embed.ts`
 - Modify: `scripts/prebuild/data-pipeline/pass4-embed.test.ts`
 
@@ -471,7 +503,9 @@ import { composeEmbeddingText } from './pass4-embed';
 import type { ProcessedShop, TaxonomyTag } from './types';
 
 // Replace makeEnrichedShop fixture:
-function makeProcessedShop(overrides: Partial<ProcessedShop> = {}): ProcessedShop {
+function makeProcessedShop(
+  overrides: Partial<ProcessedShop> = {}
+): ProcessedShop {
   return {
     cafenomad_id: 'test-id',
     google_place_id: 'test-place',
@@ -565,6 +599,7 @@ git commit -m "feat(pipeline): update pass4 to read pass3c-processed.json with P
 ### Task 5: Update pass5 to use multi-mode
 
 **Files:**
+
 - Modify: `scripts/prebuild/data-pipeline/pass5-search-test.ts`
 
 No test changes needed — pass5 tests only cover `computeTaxonomyBoost` and `rankResults`, which work on `shopTags` arrays (unchanged shape: `{ id, confidence }`). The `modes` field is only used in the CLI main function for display, not in the tested pure functions.
@@ -614,6 +649,7 @@ git commit -m "feat(pipeline): update pass5 to read pass3c-processed.json"
 ### Task 6: Add pnpm script and run full verification
 
 **Files:**
+
 - Modify: `package.json`
 
 No test needed — configuration change, verified by running all tests.
@@ -677,17 +713,21 @@ graph TD
 ```
 
 **Wave 1** (no dependencies):
+
 - Task 1: Add processed enrichment types
 
 **Wave 2** (depends on Wave 1):
+
 - Task 2: Pass 3c — IDF computation and tag distinctiveness ← Task 1
 
 **Wave 3** (parallel — depends on Wave 2):
+
 - Task 3: Pass 3c — inferModes comprehensive tests ← Task 2
 - Task 4: Update pass4 to read processed data ← Tasks 1, 2
 - Task 5: Update pass5 to use multi-mode ← Task 2
 
 **Wave 4** (depends on all):
+
 - Task 6: Add pnpm script and run full verification
 
 ---

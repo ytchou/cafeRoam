@@ -14,7 +14,9 @@ const taxonomy: TaxonomyTag[] = [
   { id: 'quiet', dimension: 'ambience', label: 'Quiet', labelZh: '安靜' },
 ];
 
-function makeProcessedShop(overrides: Partial<ProcessedShop> = {}): ProcessedShop {
+function makeProcessedShop(
+  overrides: Partial<ProcessedShop> = {}
+): ProcessedShop {
   return {
     cafenomad_id: 'test-id',
     google_place_id: 'test-place',

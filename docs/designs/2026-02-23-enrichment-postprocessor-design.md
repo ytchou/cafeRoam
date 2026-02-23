@@ -33,6 +33,7 @@ distinctiveness = confidence × idf(tag)
 Tags are kept but sorted by distinctiveness descending. High-IDF tags differentiate; low-IDF tags are still available but ranked lower. Search/filter layers decide what to surface.
 
 Example with 29 shops:
+
 - `cozy` in 25/29 → IDF = 0.15 → low distinctiveness
 - `roastery_onsite` in 8/29 → IDF = 1.29 → high distinctiveness
 - `store_cat` in 2/29 → IDF = 2.67 → very high distinctiveness
@@ -43,9 +44,29 @@ Map existing taxonomy tags to modes:
 
 ```typescript
 const MODE_SIGNALS: Record<string, string[]> = {
-  work: ['deep_work', 'casual_work', 'laptop_friendly', 'power_outlets', 'wifi_available', 'no_time_limit', 'late_night_work'],
-  rest: ['reading', 'solo_time', 'slow_morning', 'healing_therapeutic', 'quiet'],
-  social: ['catch_up_friends', 'small_group', 'date', 'lively', 'community_vibe'],
+  work: [
+    'deep_work',
+    'casual_work',
+    'laptop_friendly',
+    'power_outlets',
+    'wifi_available',
+    'no_time_limit',
+    'late_night_work',
+  ],
+  rest: [
+    'reading',
+    'solo_time',
+    'slow_morning',
+    'healing_therapeutic',
+    'quiet',
+  ],
+  social: [
+    'catch_up_friends',
+    'small_group',
+    'date',
+    'lively',
+    'community_vibe',
+  ],
   coffee: ['specialty_coffee_focused', 'coffee_tasting', 'roastery_onsite'],
 };
 ```
