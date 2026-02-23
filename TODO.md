@@ -55,8 +55,8 @@ Core infrastructure everything else depends on. No user-facing product yet.
 > **Plan:** [docs/plans/2026-02-23-project-setup-plan.md](docs/plans/2026-02-23-project-setup-plan.md)
 
 **Chunk 1 — Scaffold & Config:**
-- [ ] Generate Next.js 15 scaffold (temp dir)
-- [ ] Copy configs, merge package.json, install deps
+- [x] Generate Next.js 15 scaffold (temp dir)
+- [x] Copy configs, merge package.json, install deps
 - [ ] App shell: root layout + landing page + Tailwind v4 globals
 - [ ] Initialize shadcn/ui
 
