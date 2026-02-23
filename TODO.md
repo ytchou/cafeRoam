@@ -56,7 +56,7 @@ Must complete BEFORE starting Phase 1. These are FATAL risks from VALIDATION.md 
 
 - [x] Pass 3a: Taxonomy seed generator — Claude proposes tags from reviews (TDD)
 - [ ] ✋ Manual: Curate taxonomy-proposed.json → taxonomy.json
-- [ ] Pass 3b: Enrichment worker — Claude classifies shops against taxonomy (TDD)
+- [x] Pass 3b: Enrichment worker — Claude classifies shops against taxonomy (TDD)
 - [ ] Pass 4: Embedding generator — OpenAI text-embedding-3-small (TDD)
 
 **Chunk 3 — Search Validation (Wave 4-5):**
