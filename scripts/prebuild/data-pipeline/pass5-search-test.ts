@@ -36,6 +36,7 @@ export function computeTaxonomyBoost(
 ): { boost: number; matchedTags: string[] } {
   const tagMap = new Map(taxonomy.map((t) => [t.id, t]));
   const matchedTags: string[] = [];
+  const queryLower = query.toLowerCase();
 
   for (const shopTag of shopTags) {
     const tag = tagMap.get(shopTag.id);
@@ -43,7 +44,7 @@ export function computeTaxonomyBoost(
 
     const chineseMatch = query.includes(tag.labelZh);
     const escapedLabel = tag.label.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const englishMatch = new RegExp(`\\b${escapedLabel}\\b`).test(query.toLowerCase());
+    const englishMatch = new RegExp(`\\b${escapedLabel}\\b`).test(queryLower);
 
     if (chineseMatch || englishMatch) {
       matchedTags.push(tag.id);

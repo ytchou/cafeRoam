@@ -1,3 +1,6 @@
+// PREBUILD ONLY — This file is used exclusively by scripts/prebuild/ for one-time
+// data generation. Do NOT import from lib/ or app/. Production enrichment workers
+// should implement the ILLMProvider interface in lib/providers/llm/ instead.
 import Anthropic from '@anthropic-ai/sdk';
 import { withRetry } from './retry';
 
@@ -45,6 +48,8 @@ export async function callClaudeWithTool<T>(options: {
 
   const response = await withRetry(() =>
     client.messages.create({
+      // Prototype default: Sonnet for quality ceiling. CLAUDE.md specifies Haiku for
+      // production enrichment workers. Pass --model haiku to test cost vs quality tradeoff.
       model: options.model ?? MODELS.sonnet,
       max_tokens: options.maxTokens ?? 8192,
       system: options.systemPrompt,

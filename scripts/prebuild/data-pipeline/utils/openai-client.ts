@@ -1,3 +1,6 @@
+// PREBUILD ONLY — This file is used exclusively by scripts/prebuild/ for one-time
+// data generation. Do NOT import from lib/ or app/. Production embedding workers
+// should implement the IEmbeddingsProvider interface in lib/providers/embeddings/ instead.
 import OpenAI from 'openai';
 import { withRetry } from './retry';
 

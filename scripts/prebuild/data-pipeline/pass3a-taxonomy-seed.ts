@@ -139,6 +139,7 @@ const TAXONOMY_TOOL: Anthropic.Tool = {
 async function main() {
   const { values } = parseArgs({
     options: {
+      // Default: sonnet for quality ceiling. Production spec uses haiku — pass --model haiku to compare.
       model: { type: 'string', default: 'sonnet' },
       'per-shop': { type: 'string', default: String(DEFAULT_PER_SHOP) },
     },

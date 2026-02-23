@@ -20,6 +20,7 @@ export interface CliArgs {
 }
 
 export function parseCliArgs(argv: string[]): CliArgs {
+  // Default model: sonnet for quality ceiling. Production spec uses haiku — pass --model haiku to compare.
   const args: CliArgs = { model: 'sonnet', startFrom: 0, dryRun: false };
   for (let i = 0; i < argv.length; i++) {
     switch (argv[i]) {
@@ -27,6 +28,9 @@ export function parseCliArgs(argv: string[]): CliArgs {
         args.model = argv[++i] ?? 'sonnet';
         break;
       case '--start-from':
+        // Performance optimization only — skips the first N shops in the array.
+        // NOT a resume flag. For resume after failures, just re-run without this
+        // flag; already-enriched shops are skipped automatically via ID lookup.
         args.startFrom = parseInt(argv[++i] ?? '0', 10);
         break;
       case '--dry-run':
@@ -79,9 +83,12 @@ export function validateEnrichmentResult(
   const mode = VALID_MODES.has(raw.mode) ? raw.mode : 'mixed';
 
   return {
-    ...raw,
     tags,
+    summary: raw.summary,
+    topReviews: raw.topReviews,
     mode: mode as EnrichmentData['mode'],
+    enrichedAt: raw.enrichedAt,
+    modelId: raw.modelId,
   };
 }
 
