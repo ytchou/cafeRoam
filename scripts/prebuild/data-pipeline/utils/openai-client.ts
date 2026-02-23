@@ -3,14 +3,19 @@ import { withRetry } from './retry';
 
 const DEFAULT_MODEL = 'text-embedding-3-small';
 
+let _client: OpenAI | null = null;
+
 function getClient(): OpenAI {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    throw new Error(
-      'OPENAI_API_KEY environment variable is required. Get one at https://platform.openai.com/api-keys'
-    );
+  if (!_client) {
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      throw new Error(
+        'OPENAI_API_KEY environment variable is required. Get one at https://platform.openai.com/api-keys'
+      );
+    }
+    _client = new OpenAI({ apiKey });
   }
-  return new OpenAI({ apiKey });
+  return _client;
 }
 
 /**

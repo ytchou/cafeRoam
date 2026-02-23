@@ -10,14 +10,19 @@ export const MODELS = {
 
 export type ModelAlias = keyof typeof MODELS;
 
+let _client: Anthropic | null = null;
+
 function getClient(): Anthropic {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    throw new Error(
-      'ANTHROPIC_API_KEY environment variable is required. Get one at https://console.anthropic.com/'
-    );
+  if (!_client) {
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) {
+      throw new Error(
+        'ANTHROPIC_API_KEY environment variable is required. Get one at https://console.anthropic.com/'
+      );
+    }
+    _client = new Anthropic({ apiKey });
   }
-  return new Anthropic({ apiKey });
+  return _client;
 }
 
 export interface ToolCallResult<T = unknown> {
