@@ -72,7 +72,7 @@ export interface UnmatchedShop {
   address: string;
   latitude: number;
   longitude: number;
-  reason: 'no_match' | 'permanently_closed' | 'temporarily_closed';
+  reason: 'no_match' | 'permanently_closed' | 'temporarily_closed' | 'low_confidence';
 }
 
 // ─── Pass 2: Full Scrape ───────────────────────────────────────

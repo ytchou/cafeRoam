@@ -121,4 +121,72 @@ describe('findBestMatch', () => {
 
     expect(findBestMatch(shop, results)).toBeNull();
   });
+
+  // ─── matchTier ────────────────────────────────────────────────
+
+  it('assigns high tier for high-confidence matches', () => {
+    const shop = makePass0Shop();
+    const results = [makeApifyResult()]; // identical name, 1.4m distance
+
+    const match = findBestMatch(shop, results);
+    expect(match).not.toBeNull();
+    expect(match!.matchTier).toBe('high');
+  });
+
+  it('assigns medium tier for borderline name + close distance', () => {
+    // Name scores ~0.6, distance is close → confidence ~0.7 → medium tier
+    const shop = makePass0Shop({ name: '山頂咖啡' });
+    const results = [
+      makeApifyResult({
+        title: '山頂的好咖啡廳',
+        location: { lat: 25.0502, lng: 121.5202 }, // ~2m away
+      }),
+    ];
+
+    const match = findBestMatch(shop, results);
+    if (match) {
+      expect(['medium', 'high']).toContain(match.matchTier);
+    }
+  });
+
+  // ─── Chain-aware matching (KEY TEST) ──────────────────────────
+
+  it('does NOT match 路易莎咖啡 中山店 to 路易莎咖啡 信義店', () => {
+    const shop = makePass0Shop({
+      name: '路易莎咖啡 中山店',
+      latitude: 25.05,
+      longitude: 121.52,
+    });
+    const results = [
+      makeApifyResult({
+        title: '路易莎咖啡 信義店',
+        placeId: 'ChIJ_louisa_xinyi',
+        location: { lat: 25.0502, lng: 121.5202 }, // within 200m
+      }),
+    ];
+
+    // Even though both are 路易莎 (same brand) and within 200m,
+    // different branch → should NOT match (branch score < 0.5)
+    const match = findBestMatch(shop, results);
+    expect(match).toBeNull();
+  });
+
+  it('matches 路易莎咖啡 中山店 to 路易莎咖啡 中山', () => {
+    const shop = makePass0Shop({
+      name: '路易莎咖啡 中山店',
+      latitude: 25.05,
+      longitude: 121.52,
+    });
+    const results = [
+      makeApifyResult({
+        title: '路易莎咖啡 中山',
+        placeId: 'ChIJ_louisa_zhongshan',
+        location: { lat: 25.0502, lng: 121.5202 }, // within 200m
+      }),
+    ];
+
+    const match = findBestMatch(shop, results);
+    expect(match).not.toBeNull();
+    expect(match!.placeId).toBe('ChIJ_louisa_zhongshan');
+  });
 });

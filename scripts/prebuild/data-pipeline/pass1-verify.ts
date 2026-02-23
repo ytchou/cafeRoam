@@ -8,6 +8,7 @@ import type { Pass0Shop, Pass1Shop, UnmatchedShop, ApifyPlaceResult } from './ty
 const INPUT_FILE = 'data/prebuild/pass0-seed.json';
 const OUTPUT_DIR = 'data/prebuild';
 const OUTPUT_VERIFIED = `${OUTPUT_DIR}/pass1-verified.json`;
+const OUTPUT_REVIEW = `${OUTPUT_DIR}/pass1-review.json`;
 const OUTPUT_UNMATCHED = `${OUTPUT_DIR}/pass1-unmatched.json`;
 
 // ─── Exported Functions (testable) ─────────────────────────────
@@ -55,6 +56,7 @@ export function mergeMatch(
 
 async function runPass1(shops: Pass0Shop[]): Promise<{
   verified: Pass1Shop[];
+  review: Pass1Shop[];
   unmatched: UnmatchedShop[];
 }> {
   const searchTerms = buildSearchTerms(shops);
@@ -68,14 +70,18 @@ async function runPass1(shops: Pass0Shop[]): Promise<{
   );
 
   const verified: Pass1Shop[] = [];
+  const review: Pass1Shop[] = [];
   const unmatched: UnmatchedShop[] = [];
 
   for (const shop of shops) {
     const match = findBestMatch(shop, apifyResults);
 
-    if (match) {
+    if (match && match.matchTier === 'high') {
       const result = apifyResults.find((r) => r.placeId === match.placeId)!;
       verified.push(mergeMatch(shop, result, match.confidence));
+    } else if (match && match.matchTier === 'medium') {
+      const result = apifyResults.find((r) => r.placeId === match.placeId)!;
+      review.push(mergeMatch(shop, result, match.confidence));
     } else {
       const closestResult = apifyResults.find((r) => {
         const nameMatch = r.title.includes(shop.name) || shop.name.includes(r.title);
@@ -83,7 +89,8 @@ async function runPass1(shops: Pass0Shop[]): Promise<{
       });
 
       let reason: UnmatchedShop['reason'] = 'no_match';
-      if (closestResult?.permanentlyClosed) reason = 'permanently_closed';
+      if (match?.matchTier === 'low') reason = 'low_confidence';
+      else if (closestResult?.permanentlyClosed) reason = 'permanently_closed';
       else if (closestResult?.temporarilyClosed) reason = 'temporarily_closed';
 
       unmatched.push({
@@ -97,7 +104,7 @@ async function runPass1(shops: Pass0Shop[]): Promise<{
     }
   }
 
-  return { verified, unmatched };
+  return { verified, review, unmatched };
 }
 
 // ─── CLI Entry Point ───────────────────────────────────────────
@@ -107,18 +114,18 @@ async function main() {
   const shops: Pass0Shop[] = JSON.parse(readFileSync(INPUT_FILE, 'utf-8'));
   console.log(`[pass1] Loaded ${shops.length} shops from ${INPUT_FILE}`);
 
-  const { verified, unmatched } = await runPass1(shops);
+  const { verified, review, unmatched } = await runPass1(shops);
 
   mkdirSync(OUTPUT_DIR, { recursive: true });
   writeFileSync(OUTPUT_VERIFIED, JSON.stringify(verified, null, 2));
+  writeFileSync(OUTPUT_REVIEW, JSON.stringify(review, null, 2));
   writeFileSync(OUTPUT_UNMATCHED, JSON.stringify(unmatched, null, 2));
 
   console.log('[pass1] Pipeline complete:');
   console.log(`  Input:      ${shops.length}`);
-  console.log(`  Verified:   ${verified.length}`);
-  console.log(`  Unmatched:  ${unmatched.length}`);
-  console.log(`  Saved to:   ${OUTPUT_VERIFIED}`);
-  console.log(`  Review:     ${OUTPUT_UNMATCHED}`);
+  console.log(`  Verified:   ${verified.length}   → ${OUTPUT_VERIFIED}`);
+  console.log(`  Review:     ${review.length}   → ${OUTPUT_REVIEW}`);
+  console.log(`  Unmatched:  ${unmatched.length}   → ${OUTPUT_UNMATCHED}`);
 }
 
 const isDirectRun = process.argv[1]?.includes('pass1-verify');
