@@ -59,12 +59,24 @@ Must complete BEFORE starting Phase 1. These are FATAL risks from VALIDATION.md 
 - [x] Pass 3b: Enrichment worker — Claude classifies shops against taxonomy (TDD)
 - [x] Pass 4: Embedding generator — OpenAI text-embedding-3-small (TDD)
 
-**Chunk 3 — Search Validation (Wave 4-5):**
+**Chunk 3 — Enrichment Post-Processing:**
+
+> **Design Doc:** [docs/designs/2026-02-23-enrichment-postprocessor-design.md](docs/designs/2026-02-23-enrichment-postprocessor-design.md)
+> **Plan:** [docs/plans/2026-02-23-enrichment-postprocessor-plan.md](docs/plans/2026-02-23-enrichment-postprocessor-plan.md)
+
+- [ ] Add ProcessedShop types (distinctiveness, multi-mode)
+- [ ] Pass 3c: IDF computation + tag distinctiveness scoring (TDD)
+- [ ] Pass 3c: Multi-mode inference tests
+- [ ] Update Pass 4 to read pass3c-processed.json
+- [ ] Update Pass 5 to use multi-mode
+- [ ] Add pnpm script for pass3c
+
+**Chunk 4 — Search Validation:**
 
 - [x] Search queries config (10 test queries)
 - [x] Pass 5: Search prototype — cosine similarity + taxonomy boost (TDD)
 - [x] Add pnpm scripts for all passes
-- [ ] ✋ Manual: Run pass3b → pass4 → pass5, score results — 7/10 gate
+- [ ] ✋ Manual: Run pass3c → pass4 → pass5, score results — 7/10 gate
 
 **Pre-build is done when:** 7+ of 10 test queries return useful, relevant results. Beta user reaction (10 people): "this is better than Google Maps." If <7/10 succeed, stop and rethink the data enrichment approach before building the full product.
 
