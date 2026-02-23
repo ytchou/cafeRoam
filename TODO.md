@@ -63,7 +63,7 @@ Must complete BEFORE starting Phase 1. These are FATAL risks from VALIDATION.md 
 
 - [x] Search queries config (10 test queries)
 - [x] Pass 5: Search prototype — cosine similarity + taxonomy boost (TDD)
-- [ ] Add pnpm scripts for all passes
+- [x] Add pnpm scripts for all passes
 - [ ] ✋ Manual: Score search results — 7/10 gate
 
 **Pre-build is done when:** 7+ of 10 test queries return useful, relevant results. Beta user reaction (10 people): "this is better than Google Maps." If <7/10 succeed, stop and rethink the data enrichment approach before building the full product.
