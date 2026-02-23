@@ -36,7 +36,12 @@ describe('Provider adapter stubs', () => {
   it('AnthropicAdapter.enrichShop throws Not implemented', async () => {
     const adapter = new AnthropicAdapter();
     await expect(
-      adapter.enrichShop({ name: '', reviews: [], description: null, categories: [] })
+      adapter.enrichShop({
+        name: '',
+        reviews: [],
+        description: null,
+        categories: [],
+      })
     ).rejects.toThrow('Not implemented');
   });
 
@@ -47,7 +52,9 @@ describe('Provider adapter stubs', () => {
 
   it('OpenAIEmbeddingsAdapter.embedBatch throws Not implemented', async () => {
     const adapter = new OpenAIEmbeddingsAdapter();
-    await expect(adapter.embedBatch(['a', 'b'])).rejects.toThrow('Not implemented');
+    await expect(adapter.embedBatch(['a', 'b'])).rejects.toThrow(
+      'Not implemented'
+    );
   });
 
   it('OpenAIEmbeddingsAdapter exposes dimensions and modelId', () => {
@@ -65,12 +72,16 @@ describe('Provider adapter stubs', () => {
 
   it('MapboxAdapter.geocode throws Not implemented', async () => {
     const adapter = new MapboxAdapter();
-    await expect(adapter.geocode('Taipei 101')).rejects.toThrow('Not implemented');
+    await expect(adapter.geocode('Taipei 101')).rejects.toThrow(
+      'Not implemented'
+    );
   });
 
   it('MapboxAdapter.reverseGeocode throws Not implemented', async () => {
     const adapter = new MapboxAdapter();
-    await expect(adapter.reverseGeocode(25.03, 121.56)).rejects.toThrow('Not implemented');
+    await expect(adapter.reverseGeocode(25.03, 121.56)).rejects.toThrow(
+      'Not implemented'
+    );
   });
 
   it('PostHogAdapter.track throws Not implemented', () => {
