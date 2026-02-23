@@ -89,7 +89,7 @@ describe('findBestMatch', () => {
     const shop = makePass0Shop();
     const results = [
       makeApifyResult({
-        location: { lat: 25.10, lng: 121.60 },
+        location: { lat: 25.1, lng: 121.6 },
       }),
     ];
 

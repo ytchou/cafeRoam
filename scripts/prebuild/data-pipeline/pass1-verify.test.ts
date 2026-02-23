@@ -82,7 +82,11 @@ describe('mergeMatch', () => {
   });
 
   it('preserves Cafe Nomad fields (mrt, limited_time, socket)', () => {
-    const shop = makePass0Shop({ mrt: '松山', limited_time: 'yes', socket: 'no' });
+    const shop = makePass0Shop({
+      mrt: '松山',
+      limited_time: 'yes',
+      socket: 'no',
+    });
     const result = makeApifyResult();
     const merged = mergeMatch(shop, result, 0.9);
 

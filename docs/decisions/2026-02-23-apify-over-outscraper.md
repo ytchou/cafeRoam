@@ -10,16 +10,16 @@ Use Apify (`compass/crawler-google-places`) instead of Outscraper.
 
 ## Comparison
 
-| Factor | Apify | Outscraper |
-|--------|-------|------------|
-| Cost (1,672 shops, places + reviews) | ~$26 | ~$101 |
-| Per-query pricing | ~$4/1,000 searches | ~$3/1,000 places + ~$14/1,000 reviews |
-| API flexibility | Full control via Actor input | REST API with fixed parameters |
-| Review scraping | Same actor, `maxReviews` param | Separate endpoint, separate billing |
-| Photo scraping | Same actor, `maxImages` param | Not supported in base tier |
-| Menu URL | Included in output | Included in output |
-| Free tier | $5 platform credit/month | 100 places/month |
-| SDK | `apify-client` (TypeScript) | REST-only (no official SDK) |
+| Factor                               | Apify                          | Outscraper                            |
+| ------------------------------------ | ------------------------------ | ------------------------------------- |
+| Cost (1,672 shops, places + reviews) | ~$26                           | ~$101                                 |
+| Per-query pricing                    | ~$4/1,000 searches             | ~$3/1,000 places + ~$14/1,000 reviews |
+| API flexibility                      | Full control via Actor input   | REST API with fixed parameters        |
+| Review scraping                      | Same actor, `maxReviews` param | Separate endpoint, separate billing   |
+| Photo scraping                       | Same actor, `maxImages` param  | Not supported in base tier            |
+| Menu URL                             | Included in output             | Included in output                    |
+| Free tier                            | $5 platform credit/month       | 100 places/month                      |
+| SDK                                  | `apify-client` (TypeScript)    | REST-only (no official SDK)           |
 
 ## Rationale
 

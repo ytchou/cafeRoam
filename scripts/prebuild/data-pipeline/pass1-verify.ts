@@ -1,7 +1,12 @@
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { searchPlaces } from './utils/apify-client';
 import { findBestMatch } from './utils/matching';
-import type { Pass0Shop, Pass1Shop, UnmatchedShop, ApifyPlaceResult } from './types';
+import type {
+  Pass0Shop,
+  Pass1Shop,
+  UnmatchedShop,
+  ApifyPlaceResult,
+} from './types';
 
 // ─── Constants ─────────────────────────────────────────────────
 
@@ -84,7 +89,8 @@ async function runPass1(shops: Pass0Shop[]): Promise<{
       review.push(mergeMatch(shop, result, match.confidence));
     } else {
       const closestResult = apifyResults.find((r) => {
-        const nameMatch = r.title.includes(shop.name) || shop.name.includes(r.title);
+        const nameMatch =
+          r.title.includes(shop.name) || shop.name.includes(r.title);
         return nameMatch;
       });
 

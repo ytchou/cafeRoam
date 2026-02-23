@@ -1,5 +1,10 @@
 import { writeFileSync, mkdirSync } from 'node:fs';
-import { isKnownClosed, isShellEntry, isOutOfBounds, findDuplicates } from './utils/filters';
+import {
+  isKnownClosed,
+  isShellEntry,
+  isOutOfBounds,
+  findDuplicates,
+} from './utils/filters';
 import type { CafeNomadEntry, Pass0Shop } from './types';
 
 // ─── Constants ─────────────────────────────────────────────────
@@ -97,7 +102,9 @@ async function main() {
   const response = await fetch(CAFENOMAD_API);
 
   if (!response.ok) {
-    throw new Error(`Cafe Nomad API returned ${response.status}: ${response.statusText}`);
+    throw new Error(
+      `Cafe Nomad API returned ${response.status}: ${response.statusText}`
+    );
   }
 
   const entries: CafeNomadEntry[] = await response.json();

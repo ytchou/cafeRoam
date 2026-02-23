@@ -23,7 +23,13 @@ const CHAINS: ChainEntry[] = [
   },
   {
     canonical: '星巴克',
-    aliases: ['Starbucks', 'Starbucks Coffee', '統一星巴克', 'starbucks', 'starbucks coffee'],
+    aliases: [
+      'Starbucks',
+      'Starbucks Coffee',
+      '統一星巴克',
+      'starbucks',
+      'starbucks coffee',
+    ],
     storeCount: 500,
   },
   {
@@ -48,7 +54,14 @@ const CHAINS: ChainEntry[] = [
   },
   {
     canonical: '伯朗咖啡館',
-    aliases: ['伯朗', 'Mr. Brown', 'Mr. Brown Coffee', 'mr. brown', 'mr. brown coffee', 'mr brown'],
+    aliases: [
+      '伯朗',
+      'Mr. Brown',
+      'Mr. Brown Coffee',
+      'mr. brown',
+      'mr. brown coffee',
+      'mr brown',
+    ],
     storeCount: 30,
   },
   {
@@ -76,7 +89,9 @@ const CHAINS: ChainEntry[] = [
 // must be detected as-is. Chain detection needs the raw suffix present.
 function normalizeForDetection(s: string): string {
   return s
-    .replace(/[\uFF01-\uFF5E]/g, (ch) => String.fromCharCode(ch.charCodeAt(0) - 0xfee0))
+    .replace(/[\uFF01-\uFF5E]/g, (ch) =>
+      String.fromCharCode(ch.charCodeAt(0) - 0xfee0)
+    )
     .toLowerCase()
     .replace(/\s+/g, ' ')
     .trim();
@@ -96,7 +111,11 @@ export function detectChain(name: string): ChainInfo | null {
     const allNames = [chain.canonical, ...chain.aliases];
     for (const alias of allNames) {
       const normalizedAlias = normalizeForDetection(alias);
-      if (normalized === normalizedAlias || normalized.startsWith(normalizedAlias + ' ') || normalized.startsWith(normalizedAlias + '　')) {
+      if (
+        normalized === normalizedAlias ||
+        normalized.startsWith(normalizedAlias + ' ') ||
+        normalized.startsWith(normalizedAlias + '　')
+      ) {
         return { brand: chain.canonical, storeCount: chain.storeCount };
       }
     }

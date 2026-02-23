@@ -115,7 +115,7 @@ describe('isOutOfBounds', () => {
   });
 
   it('returns false for boundary edge values (inclusive)', () => {
-    expect(isOutOfBounds(24.95, 121.40)).toBe(false);
+    expect(isOutOfBounds(24.95, 121.4)).toBe(false);
     expect(isOutOfBounds(25.22, 121.65)).toBe(false);
   });
 });
@@ -133,8 +133,13 @@ describe('findDuplicates', () => {
 
   it('flags the second entry when same name is within 50m', () => {
     const shops = [
-      { name: '好咖啡', latitude: 25.050000, longitude: 121.520000, cafenomad_id: '1' },
-      { name: '好咖啡', latitude: 25.050001, longitude: 121.520001, cafenomad_id: '2' },
+      { name: '好咖啡', latitude: 25.05, longitude: 121.52, cafenomad_id: '1' },
+      {
+        name: '好咖啡',
+        latitude: 25.050001,
+        longitude: 121.520001,
+        cafenomad_id: '2',
+      },
     ];
     const dupes = findDuplicates(shops);
     expect(dupes.has('2')).toBe(true);
@@ -151,8 +156,13 @@ describe('findDuplicates', () => {
 
   it('does not flag nearby shops with different names', () => {
     const shops = [
-      { name: 'Shop A', latitude: 25.050000, longitude: 121.520000, cafenomad_id: '1' },
-      { name: 'Shop B', latitude: 25.050001, longitude: 121.520001, cafenomad_id: '2' },
+      { name: 'Shop A', latitude: 25.05, longitude: 121.52, cafenomad_id: '1' },
+      {
+        name: 'Shop B',
+        latitude: 25.050001,
+        longitude: 121.520001,
+        cafenomad_id: '2',
+      },
     ];
     expect(findDuplicates(shops)).toEqual(new Set());
   });

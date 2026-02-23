@@ -7,7 +7,7 @@ const CLOSED_KEYWORDS = ['已歇業', '暫停營業', '已關', '已結束'];
 /** Greater Taipei bounding box */
 const TAIPEI_BOUNDS = {
   lat: { min: 24.95, max: 25.22 },
-  lng: { min: 121.40, max: 121.65 },
+  lng: { min: 121.4, max: 121.65 },
 } as const;
 
 /** Maximum distance (meters) for two shops to be considered duplicates */
@@ -48,7 +48,12 @@ export function isOutOfBounds(lat: number, lng: number): boolean {
  * Returns a Set of cafenomad_ids to remove (keeps the first occurrence).
  */
 export function findDuplicates(
-  shops: { name: string; latitude: number; longitude: number; cafenomad_id: string }[]
+  shops: {
+    name: string;
+    latitude: number;
+    longitude: number;
+    cafenomad_id: string;
+  }[]
 ): Set<string> {
   const duplicateIds = new Set<string>();
 
