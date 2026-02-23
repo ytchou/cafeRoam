@@ -1,0 +1,22 @@
+{
+  "name": "caferoam",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "prebuild:pass0": "tsx scripts/prebuild/data-pipeline/pass0-seed.ts",
+    "prebuild:pass1": "tsx scripts/prebuild/data-pipeline/pass1-verify.ts",
+    "prebuild:pass2": "tsx scripts/prebuild/data-pipeline/pass2-scrape.ts",
+    "prebuild:all": "pnpm prebuild:pass0 && pnpm prebuild:pass1 && pnpm prebuild:pass2",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0",
+    "tsx": "^4.19.0",
+    "vitest": "^3.0.0"
+  },
+  "dependencies": {
+    "apify-client": "^2.11.0"
+  }
+}
