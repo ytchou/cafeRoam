@@ -62,7 +62,7 @@ Must complete BEFORE starting Phase 1. These are FATAL risks from VALIDATION.md 
 **Chunk 3 — Search Validation (Wave 4-5):**
 
 - [x] Search queries config (10 test queries)
-- [ ] Pass 5: Search prototype — cosine similarity + taxonomy boost (TDD)
+- [x] Pass 5: Search prototype — cosine similarity + taxonomy boost (TDD)
 - [ ] Add pnpm scripts for all passes
 - [ ] ✋ Manual: Score search results — 7/10 gate
 
