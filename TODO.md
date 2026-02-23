@@ -48,7 +48,7 @@ Must complete BEFORE starting Phase 1. These are FATAL risks from VALIDATION.md 
 
 - [x] Install SDK dependencies (@anthropic-ai/sdk, openai) and extend pipeline types
 - [x] Retry utility with exponential backoff (TDD)
-- [ ] Cosine similarity utility (TDD)
+- [x] Cosine similarity utility (TDD)
 - [ ] Anthropic client wrapper (tool use)
 - [ ] OpenAI embeddings client wrapper
 
