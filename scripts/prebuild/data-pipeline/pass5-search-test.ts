@@ -3,7 +3,7 @@ import { embedText } from './utils/openai-client';
 import { cosineSimilarity } from './utils/cosine';
 import type {
   ShopEmbedding,
-  EnrichedShop,
+  ProcessedShop,
   TaxonomyTag,
   SearchQuery,
   SearchTestResult,
@@ -12,7 +12,7 @@ import type {
 // ─── Constants ─────────────────────────────────────────────────
 
 const EMBEDDINGS_FILE = 'data/prebuild/pass4-embeddings.json';
-const ENRICHED_FILE = 'data/prebuild/pass3-enriched.json';
+const ENRICHED_FILE = 'data/prebuild/pass3c-processed.json';
 const TAXONOMY_FILE = 'data/prebuild/taxonomy.json';
 const QUERIES_FILE = 'scripts/prebuild/data-pipeline/search-queries.json';
 const OUTPUT_DIR = 'data/prebuild';
@@ -106,7 +106,7 @@ async function main() {
   const shopEmbeddings: ShopEmbedding[] = JSON.parse(
     readFileSync(EMBEDDINGS_FILE, 'utf-8')
   );
-  const enrichedShops: EnrichedShop[] = JSON.parse(
+  const enrichedShops: ProcessedShop[] = JSON.parse(
     readFileSync(ENRICHED_FILE, 'utf-8')
   );
   const taxonomy: TaxonomyTag[] = JSON.parse(
