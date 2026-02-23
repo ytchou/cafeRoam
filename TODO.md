@@ -71,7 +71,7 @@ Core infrastructure everything else depends on. No user-facing product yet.
 **Chunk 3 — Verification:**
 - [x] Full test suite passes
 - [x] Lint + type-check + production build pass
-- [ ] All routes accessible in browser
+- [x] All routes accessible in browser
 
 ### Database & Infrastructure
 - [ ] Supabase setup: Postgres schema, pgvector extension enabled, RLS policies on all tables
