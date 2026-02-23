@@ -29,7 +29,8 @@
       "**/*.d.ts",
       "**/setup.ts",
       "**/*.config.ts",
-      "**/middleware.ts"
+      "**/middleware.ts",
+      "**/scripts/prebuild/**"
     ]
   }
 }
