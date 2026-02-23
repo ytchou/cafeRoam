@@ -24,7 +24,9 @@ const BOOST_PER_TAG = 0.05;
 
 /**
  * Compute taxonomy boost for a query against a shop's tags.
- * Checks if query text contains any of the shop's tag labels (Chinese or English).
+ * Chinese labels use substring matching (no word boundaries in Chinese).
+ * English labels use word-boundary matching to avoid false positives
+ * (e.g. tag "work" must not match "network").
  */
 export function computeTaxonomyBoost(
   query: string,
@@ -32,7 +34,6 @@ export function computeTaxonomyBoost(
   taxonomy: TaxonomyTag[],
   boostPerTag: number = BOOST_PER_TAG
 ): { boost: number; matchedTags: string[] } {
-  const queryLower = query.toLowerCase();
   const tagMap = new Map(taxonomy.map((t) => [t.id, t]));
   const matchedTags: string[] = [];
 
@@ -40,7 +41,11 @@ export function computeTaxonomyBoost(
     const tag = tagMap.get(shopTag.id);
     if (!tag) continue;
 
-    if (queryLower.includes(tag.label.toLowerCase()) || query.includes(tag.labelZh)) {
+    const chineseMatch = query.includes(tag.labelZh);
+    const escapedLabel = tag.label.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const englishMatch = new RegExp(`\\b${escapedLabel}\\b`).test(query.toLowerCase());
+
+    if (chineseMatch || englishMatch) {
       matchedTags.push(tag.id);
     }
   }

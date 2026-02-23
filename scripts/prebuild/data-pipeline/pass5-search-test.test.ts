@@ -50,6 +50,13 @@ describe('computeTaxonomyBoost', () => {
     expect(result.matchedTags).toHaveLength(0);
     expect(result.boost).toBe(0);
   });
+
+  it('does not false-positive on English substrings (word boundary)', () => {
+    // "quiet" is in shopTags, but "quite" is a different word — should not match
+    const result = computeTaxonomyBoost('quite good coffee', shopTags, taxonomy);
+    expect(result.matchedTags).not.toContain('quiet');
+    expect(result.boost).toBe(0);
+  });
 });
 
 // ─── rankResults ───────────────────────────────────────────────
