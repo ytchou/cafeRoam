@@ -54,8 +54,13 @@ jobs:
             core.setOutput('check_id', check.data.id);
 
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Fetch coverage-rules from PR branch
+        run: |
+          gh api "repos/${{ github.repository }}/contents/scripts/ci/coverage-rules.json?ref=${{ github.event.workflow_run.head_sha }}" \
+            --jq '.content' | base64 -d > scripts/ci/coverage-rules.json
+        env:
+          GH_TOKEN: ${{ github.token }}
 
       - name: Download coverage artifact
         id: artifact
