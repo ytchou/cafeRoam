@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { composeEmbeddingText } from './pass4-embed';
-import type { EnrichedShop, TaxonomyTag } from './types';
+import type { ProcessedShop, TaxonomyTag } from './types';
 
 // ─── Fixtures ──────────────────────────────────────────────────
 
@@ -14,7 +14,9 @@ const taxonomy: TaxonomyTag[] = [
   { id: 'quiet', dimension: 'ambience', label: 'Quiet', labelZh: '安靜' },
 ];
 
-function makeEnrichedShop(overrides: Partial<EnrichedShop> = {}): EnrichedShop {
+function makeProcessedShop(
+  overrides: Partial<ProcessedShop> = {}
+): ProcessedShop {
   return {
     cafenomad_id: 'test-id',
     google_place_id: 'test-place',
@@ -40,12 +42,12 @@ function makeEnrichedShop(overrides: Partial<EnrichedShop> = {}): EnrichedShop {
     photos: [],
     enrichment: {
       tags: [
-        { id: 'has_outlets', confidence: 0.9 },
-        { id: 'quiet', confidence: 0.7 },
+        { id: 'has_outlets', confidence: 0.9, distinctiveness: 1.8 },
+        { id: 'quiet', confidence: 0.7, distinctiveness: 0.5 },
       ],
       summary: 'A quiet cafe with outlets perfect for working.',
       topReviews: ['很安靜適合工作', '咖啡很好喝，環境舒適'],
-      mode: 'work',
+      modes: ['work'],
       enrichedAt: '2026-02-23T00:00:00Z',
       modelId: 'test-model',
     },
@@ -57,7 +59,7 @@ function makeEnrichedShop(overrides: Partial<EnrichedShop> = {}): EnrichedShop {
 
 describe('composeEmbeddingText', () => {
   it('includes name, summary, tags, and reviews in correct order', () => {
-    const text = composeEmbeddingText(makeEnrichedShop(), taxonomy);
+    const text = composeEmbeddingText(makeProcessedShop(), taxonomy);
     const nameIdx = text.indexOf('Test Cafe 測試咖啡');
     const summaryIdx = text.indexOf('A quiet cafe with outlets');
     const tagsIdx = text.indexOf('Tags:');
@@ -69,7 +71,7 @@ describe('composeEmbeddingText', () => {
   });
 
   it('resolves tag IDs to labels', () => {
-    const text = composeEmbeddingText(makeEnrichedShop(), taxonomy);
+    const text = composeEmbeddingText(makeProcessedShop(), taxonomy);
     expect(text).toContain('Has outlets');
     expect(text).toContain('有插座');
     expect(text).toContain('Quiet');
@@ -77,9 +79,9 @@ describe('composeEmbeddingText', () => {
   });
 
   it('handles shops with no tags gracefully', () => {
-    const shop = makeEnrichedShop({
+    const shop = makeProcessedShop({
       enrichment: {
-        ...makeEnrichedShop().enrichment,
+        ...makeProcessedShop().enrichment,
         tags: [],
       },
     });
@@ -89,9 +91,9 @@ describe('composeEmbeddingText', () => {
   });
 
   it('handles shops with empty topReviews', () => {
-    const shop = makeEnrichedShop({
+    const shop = makeProcessedShop({
       enrichment: {
-        ...makeEnrichedShop().enrichment,
+        ...makeProcessedShop().enrichment,
         topReviews: [],
       },
     });

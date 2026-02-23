@@ -1,10 +1,10 @@
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { embedTexts } from './utils/openai-client';
-import type { EnrichedShop, TaxonomyTag, ShopEmbedding } from './types';
+import type { ProcessedShop, TaxonomyTag, ShopEmbedding } from './types';
 
 // ─── Constants ─────────────────────────────────────────────────
 
-const ENRICHED_FILE = 'data/prebuild/pass3-enriched.json';
+const ENRICHED_FILE = 'data/prebuild/pass3c-processed.json';
 const TAXONOMY_FILE = 'data/prebuild/taxonomy.json';
 const OUTPUT_DIR = 'data/prebuild';
 const OUTPUT_FILE = `${OUTPUT_DIR}/pass4-embeddings.json`;
@@ -18,11 +18,13 @@ const BATCH_SIZE = 100; // OpenAI allows up to 2048; stay well under token limit
  * Structure: name → summary → tags (bilingual) → top reviews.
  */
 export function composeEmbeddingText(
-  shop: EnrichedShop,
+  shop: ProcessedShop,
   taxonomy: TaxonomyTag[]
 ): string {
   const tagMap = new Map(taxonomy.map((t) => [t.id, t]));
 
+  // Tags are pre-sorted by distinctiveness descending from pass3c —
+  // distinctive tags appear first in the embedding text.
   const tagLabels = shop.enrichment.tags
     .map((t) => {
       const tag = tagMap.get(t.id);
@@ -52,7 +54,7 @@ export function composeEmbeddingText(
 
 async function main() {
   console.log(`[pass4] Reading enriched data...`);
-  const shops: EnrichedShop[] = JSON.parse(
+  const shops: ProcessedShop[] = JSON.parse(
     readFileSync(ENRICHED_FILE, 'utf-8')
   );
   const taxonomy: TaxonomyTag[] = JSON.parse(

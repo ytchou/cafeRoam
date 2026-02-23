@@ -182,6 +182,29 @@ export interface EnrichedShop extends Pass2Shop {
   enrichment: EnrichmentData;
 }
 
+// ─── Pass 3c: Post-Processing ─────────────────────────────────
+
+export type ShopMode = 'work' | 'rest' | 'social' | 'coffee';
+
+export interface ProcessedTag {
+  id: string;
+  confidence: number;
+  distinctiveness: number;
+}
+
+export interface ProcessedEnrichmentData {
+  tags: ProcessedTag[];
+  summary: string;
+  topReviews: string[];
+  modes: ShopMode[];
+  enrichedAt: string;
+  modelId: string;
+}
+
+export interface ProcessedShop extends Pass2Shop {
+  enrichment: ProcessedEnrichmentData;
+}
+
 // ─── Pass 4: Embeddings ────────────────────────────────────────
 
 export interface ShopEmbedding {

@@ -55,16 +55,28 @@ Must complete BEFORE starting Phase 1. These are FATAL risks from VALIDATION.md 
 **Chunk 2 — Enrichment Pipeline (Wave 3):**
 
 - [x] Pass 3a: Taxonomy seed generator — Claude proposes tags from reviews (TDD)
-- [ ] ✋ Manual: Curate taxonomy-proposed.json → taxonomy.json
+- [ ] ✋ Manual: Run pass3a, curate taxonomy-proposed.json → taxonomy.json
 - [x] Pass 3b: Enrichment worker — Claude classifies shops against taxonomy (TDD)
 - [x] Pass 4: Embedding generator — OpenAI text-embedding-3-small (TDD)
 
-**Chunk 3 — Search Validation (Wave 4-5):**
+**Chunk 3 — Enrichment Post-Processing:**
+
+> **Design Doc:** [docs/designs/2026-02-23-enrichment-postprocessor-design.md](docs/designs/2026-02-23-enrichment-postprocessor-design.md)
+> **Plan:** [docs/plans/2026-02-23-enrichment-postprocessor-plan.md](docs/plans/2026-02-23-enrichment-postprocessor-plan.md)
+
+- [x] Add ProcessedShop types (distinctiveness, multi-mode)
+- [x] Pass 3c: IDF computation + tag distinctiveness scoring (TDD)
+- [x] Pass 3c: Multi-mode inference tests
+- [x] Update Pass 4 to read pass3c-processed.json
+- [x] Update Pass 5 to use multi-mode
+- [x] Add pnpm script for pass3c
+
+**Chunk 4 — Search Validation:**
 
 - [x] Search queries config (10 test queries)
 - [x] Pass 5: Search prototype — cosine similarity + taxonomy boost (TDD)
 - [x] Add pnpm scripts for all passes
-- [ ] ✋ Manual: Score search results — 7/10 gate
+- [ ] ✋ Manual: Run pass3c → pass4 → pass5, score results — 7/10 gate
 
 **Pre-build is done when:** 7+ of 10 test queries return useful, relevant results. Beta user reaction (10 people): "this is better than Google Maps." If <7/10 succeed, stop and rethink the data enrichment approach before building the full product.
 
