@@ -39,8 +39,18 @@ describe('sampleReviews', () => {
     const shop = makeShop({
       reviews: [
         { text: 'short', stars: 5, published_at: '', language: 'unknown' },
-        { text: 'this is a much longer review with details', stars: 4, published_at: '', language: 'unknown' },
-        { text: 'medium length review', stars: 3, published_at: '', language: 'unknown' },
+        {
+          text: 'this is a much longer review with details',
+          stars: 4,
+          published_at: '',
+          language: 'unknown',
+        },
+        {
+          text: 'medium length review',
+          stars: 3,
+          published_at: '',
+          language: 'unknown',
+        },
       ],
     });
 
@@ -55,7 +65,12 @@ describe('sampleReviews', () => {
       reviews: [
         { text: '', stars: 5, published_at: '', language: 'unknown' },
         { text: '  ', stars: 4, published_at: '', language: 'unknown' },
-        { text: 'actual review text', stars: 3, published_at: '', language: 'unknown' },
+        {
+          text: 'actual review text',
+          stars: 3,
+          published_at: '',
+          language: 'unknown',
+        },
       ],
     });
 
@@ -66,7 +81,12 @@ describe('sampleReviews', () => {
   it('handles shops with fewer reviews than perShop', () => {
     const shop = makeShop({
       reviews: [
-        { text: 'only one review', stars: 5, published_at: '', language: 'unknown' },
+        {
+          text: 'only one review',
+          stars: 5,
+          published_at: '',
+          language: 'unknown',
+        },
       ],
     });
 
@@ -78,13 +98,23 @@ describe('sampleReviews', () => {
     const shop1 = makeShop({
       name: 'Shop A',
       reviews: [
-        { text: 'review from shop A', stars: 5, published_at: '', language: 'unknown' },
+        {
+          text: 'review from shop A',
+          stars: 5,
+          published_at: '',
+          language: 'unknown',
+        },
       ],
     });
     const shop2 = makeShop({
       name: 'Shop B',
       reviews: [
-        { text: 'review from shop B', stars: 4, published_at: '', language: 'unknown' },
+        {
+          text: 'review from shop B',
+          stars: 4,
+          published_at: '',
+          language: 'unknown',
+        },
       ],
     });
 
@@ -100,7 +130,9 @@ describe('sampleReviews', () => {
 describe('flattenProposalToTags', () => {
   it('flattens all dimensions into a single TaxonomyTag array', () => {
     const proposal: TaxonomyProposal = {
-      functionality: [{ id: 'has_outlets', label: 'Has outlets', labelZh: '有插座' }],
+      functionality: [
+        { id: 'has_outlets', label: 'Has outlets', labelZh: '有插座' },
+      ],
       time: [{ id: 'late_night', label: 'Late night', labelZh: '深夜營業' }],
       ambience: [{ id: 'quiet', label: 'Quiet', labelZh: '安靜' }],
       mode: [{ id: 'deep_work', label: 'Deep work', labelZh: '專注工作' }],
@@ -108,9 +140,29 @@ describe('flattenProposalToTags', () => {
 
     const tags = flattenProposalToTags(proposal);
     expect(tags).toHaveLength(4);
-    expect(tags[0]).toEqual({ id: 'has_outlets', dimension: 'functionality', label: 'Has outlets', labelZh: '有插座' });
-    expect(tags[1]).toEqual({ id: 'late_night', dimension: 'time', label: 'Late night', labelZh: '深夜營業' });
-    expect(tags[2]).toEqual({ id: 'quiet', dimension: 'ambience', label: 'Quiet', labelZh: '安靜' });
-    expect(tags[3]).toEqual({ id: 'deep_work', dimension: 'mode', label: 'Deep work', labelZh: '專注工作' });
+    expect(tags[0]).toEqual({
+      id: 'has_outlets',
+      dimension: 'functionality',
+      label: 'Has outlets',
+      labelZh: '有插座',
+    });
+    expect(tags[1]).toEqual({
+      id: 'late_night',
+      dimension: 'time',
+      label: 'Late night',
+      labelZh: '深夜營業',
+    });
+    expect(tags[2]).toEqual({
+      id: 'quiet',
+      dimension: 'ambience',
+      label: 'Quiet',
+      labelZh: '安靜',
+    });
+    expect(tags[3]).toEqual({
+      id: 'deep_work',
+      dimension: 'mode',
+      label: 'Deep work',
+      labelZh: '專注工作',
+    });
   });
 });

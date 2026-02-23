@@ -20,7 +20,9 @@ export async function withRetry<T>(
 
       const delay = baseDelayMs * 2 ** attempt;
       const label = status !== undefined ? `HTTP ${status}` : 'Network error';
-      console.log(`  ${label}, retrying in ${delay}ms (attempt ${attempt + 1}/${maxRetries})...`);
+      console.log(
+        `  ${label}, retrying in ${delay}ms (attempt ${attempt + 1}/${maxRetries})...`
+      );
       await new Promise((resolve) => setTimeout(resolve, delay));
     }
   }

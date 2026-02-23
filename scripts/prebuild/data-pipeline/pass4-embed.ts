@@ -17,7 +17,10 @@ const BATCH_SIZE = 100; // OpenAI allows up to 2048; stay well under token limit
  * Compose the text that will be embedded for a single shop.
  * Structure: name → summary → tags (bilingual) → top reviews.
  */
-export function composeEmbeddingText(shop: EnrichedShop, taxonomy: TaxonomyTag[]): string {
+export function composeEmbeddingText(
+  shop: EnrichedShop,
+  taxonomy: TaxonomyTag[]
+): string {
   const tagMap = new Map(taxonomy.map((t) => [t.id, t]));
 
   const tagLabels = shop.enrichment.tags
@@ -49,15 +52,23 @@ export function composeEmbeddingText(shop: EnrichedShop, taxonomy: TaxonomyTag[]
 
 async function main() {
   console.log(`[pass4] Reading enriched data...`);
-  const shops: EnrichedShop[] = JSON.parse(readFileSync(ENRICHED_FILE, 'utf-8'));
-  const taxonomy: TaxonomyTag[] = JSON.parse(readFileSync(TAXONOMY_FILE, 'utf-8'));
-  console.log(`[pass4] Loaded ${shops.length} enriched shops, ${taxonomy.length} taxonomy tags`);
+  const shops: EnrichedShop[] = JSON.parse(
+    readFileSync(ENRICHED_FILE, 'utf-8')
+  );
+  const taxonomy: TaxonomyTag[] = JSON.parse(
+    readFileSync(TAXONOMY_FILE, 'utf-8')
+  );
+  console.log(
+    `[pass4] Loaded ${shops.length} enriched shops, ${taxonomy.length} taxonomy tags`
+  );
 
   // Load existing results for resume support — skip already-embedded shops
   let output: ShopEmbedding[] = [];
   try {
     output = JSON.parse(readFileSync(OUTPUT_FILE, 'utf-8'));
-    console.log(`[pass4] Loaded ${output.length} existing embeddings for resume`);
+    console.log(
+      `[pass4] Loaded ${output.length} existing embeddings for resume`
+    );
   } catch {
     // No existing results — start fresh
   }
@@ -69,13 +80,19 @@ async function main() {
     console.log('[pass4] All shops already embedded. Nothing to do.');
   } else {
     const totalBatches = Math.ceil(toEmbed.length / BATCH_SIZE);
-    console.log(`[pass4] Embedding ${toEmbed.length} shops in ${totalBatches} batch(es) of ${BATCH_SIZE}...`);
+    console.log(
+      `[pass4] Embedding ${toEmbed.length} shops in ${totalBatches} batch(es) of ${BATCH_SIZE}...`
+    );
 
     for (let i = 0; i < toEmbed.length; i += BATCH_SIZE) {
       const batch = toEmbed.slice(i, i + BATCH_SIZE);
-      const batchTexts = batch.map((shop) => composeEmbeddingText(shop, taxonomy));
+      const batchTexts = batch.map((shop) =>
+        composeEmbeddingText(shop, taxonomy)
+      );
       const batchNum = Math.floor(i / BATCH_SIZE) + 1;
-      console.log(`  Batch ${batchNum}/${totalBatches} (${batch.length} shops)...`);
+      console.log(
+        `  Batch ${batchNum}/${totalBatches} (${batch.length} shops)...`
+      );
 
       const batchEmbeddings = await embedTexts(batchTexts, EMBEDDING_MODEL);
 

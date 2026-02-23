@@ -6,6 +6,6 @@ Every change to PRD.md must be logged here immediately after the edit is made.
 
 ---
 
-| Date | Section | Change | Rationale |
-|------|---------|--------|-----------|
+| Date       | Section | Change                             | Rationale               |
+| ---------- | ------- | ---------------------------------- | ----------------------- |
 | 2026-02-23 | Initial | PRD.md created from /scope session | Initial project scoping |

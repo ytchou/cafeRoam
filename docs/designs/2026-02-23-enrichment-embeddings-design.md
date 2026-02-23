@@ -69,18 +69,20 @@ pass2-full.json (29 shops, reviews, photos)
 **Purpose:** Extract a proposed taxonomy from real review data for user curation.
 
 **Process:**
+
 1. Sample ~50-60 diverse reviews across all 29 shops (stratified by rating, length, language)
 2. Send to Claude with prompt: analyze Taiwan coffee shop reviews, propose taxonomy tags across 4 dimensions
 3. Output: `taxonomy-proposed.json` (raw LLM output)
 4. User curates → `taxonomy.json` (canonical list for enrichment)
 
 **Taxonomy schema:**
+
 ```typescript
 interface TaxonomyTag {
-  id: string;                    // e.g., "has_outlets"
-  dimension: TaxonomyDimension;  // 'functionality' | 'time' | 'ambience' | 'mode'
-  label: string;                 // "Has power outlets"
-  labelZh: string;               // "有插座"
+  id: string; // e.g., "has_outlets"
+  dimension: TaxonomyDimension; // 'functionality' | 'time' | 'ambience' | 'mode'
+  label: string; // "Has power outlets"
+  labelZh: string; // "有插座"
 }
 ```
 
@@ -93,20 +95,22 @@ interface TaxonomyTag {
 **Input per shop:** name, categories, description, all non-empty reviews, the curated taxonomy
 
 **Output per shop:**
+
 ```typescript
 interface EnrichedShop extends Pass2Shop {
   enrichment: {
     tags: Array<{ id: string; confidence: number }>;
-    summary: string;           // 2-3 sentence natural language profile
-    topReviews: string[];      // 3-5 most informative review excerpts
+    summary: string; // 2-3 sentence natural language profile
+    topReviews: string[]; // 3-5 most informative review excerpts
     mode: 'work' | 'rest' | 'social' | 'mixed';
-    enrichedAt: string;        // ISO timestamp
-    modelId: string;           // e.g., "claude-sonnet-4-6"
+    enrichedAt: string; // ISO timestamp
+    modelId: string; // e.g., "claude-sonnet-4-6"
   };
 }
 ```
 
 **Prompt strategy:**
+
 - System prompt: structured extraction with constrained output
 - Full taxonomy provided — model selects only from this list
 - Each tag gets a confidence score (0-1) for filtering low-confidence tags later
@@ -114,12 +118,14 @@ interface EnrichedShop extends Pass2Shop {
 - `topReviews` selected as most informative for visit decisions
 
 **Error handling:**
+
 - Retry with exponential backoff on rate limits (429)
 - Skip and log on persistent failures
 - Save partial results on interrupt (resume via `--start-from` flag)
 - `--dry-run` flag to test prompt on 1 shop
 
 **CLI flags:**
+
 - `--model <id>`: Select Claude model (default: sonnet)
 - `--start-from <index>`: Resume from a specific shop index
 - `--dry-run`: Process only the first shop
@@ -131,6 +137,7 @@ interface EnrichedShop extends Pass2Shop {
 **Purpose:** Generate vector embeddings for each enriched shop.
 
 **Embedding input composition per shop:**
+
 ```
 {name}
 
@@ -147,14 +154,15 @@ Selected reviews:
 **Rationale:** Structured layout puts the most searchable content (name, summary, tags) first, then authentic user language from reviews. Mirrors how users search — by attribute or by vibe.
 
 **Output per shop:**
+
 ```typescript
 interface ShopEmbedding {
   cafenomad_id: string;
   google_place_id: string;
   name: string;
-  embedding: number[];       // 1536 dimensions
-  embeddedText: string;      // the composed text (for debugging)
-  modelId: string;           // "text-embedding-3-small"
+  embedding: number[]; // 1536 dimensions
+  embeddedText: string; // the composed text (for debugging)
+  modelId: string; // "text-embedding-3-small"
   embeddedAt: string;
 }
 ```
@@ -168,6 +176,7 @@ interface ShopEmbedding {
 **Purpose:** Test 10 natural language queries against 29-shop embeddings. Validate the 7/10 gate.
 
 **Process:**
+
 1. Load test queries from `search-queries.json` (10 queries, mix of attribute/vibe/specific/mixed-language)
 2. Embed each query via OpenAI (same model)
 3. Compute cosine similarity against all 29 shop vectors
@@ -175,6 +184,7 @@ interface ShopEmbedding {
 5. Return top-5 ranked results per query
 
 **Test query categories:**
+
 - Attribute: "有插座可以工作的咖啡廳" (cafe with outlets for working)
 - Vibe: "安靜適合讀書的地方" (quiet place for reading)
 - Specific: "有好喝拿鐵的咖啡廳" (cafe with good lattes)
@@ -182,20 +192,22 @@ interface ShopEmbedding {
 - Mode: "適合跟朋友聊天的咖啡廳" (cafe for chatting with friends)
 
 **Taxonomy boost algorithm:**
+
 1. Embed the query
 2. Tag-matching step: check if query text contains taxonomy tag labels (substring match or embedding similarity > threshold)
 3. For shops with matching tags, add boost to cosine similarity score
 4. Re-rank
 
 **Output per query:**
+
 ```typescript
 interface SearchTestResult {
   query: string;
   results: Array<{
     rank: number;
     name: string;
-    score: number;           // raw cosine similarity
-    boostedScore: number;    // after taxonomy boost
+    score: number; // raw cosine similarity
+    boostedScore: number; // after taxonomy boost
     matchedTags: string[];
   }>;
 }
@@ -207,14 +219,14 @@ interface SearchTestResult {
 
 ## Cost Estimate
 
-| Component | Model | Estimated Cost |
-|-----------|-------|---------------|
-| Pass 3a (taxonomy seed) | Claude Sonnet | ~$0.05 |
-| Pass 3b (enrichment, Sonnet) | Claude Sonnet | ~$0.50 |
-| Pass 3b (enrichment, Haiku comparison) | Claude Haiku | ~$0.04-0.17 |
-| Pass 4 (embeddings) | OpenAI text-embedding-3-small | ~$0.001 |
-| Pass 5 (query embeddings) | OpenAI text-embedding-3-small | ~$0.0001 |
-| **Total** | | **~$0.60-0.80** |
+| Component                              | Model                         | Estimated Cost  |
+| -------------------------------------- | ----------------------------- | --------------- |
+| Pass 3a (taxonomy seed)                | Claude Sonnet                 | ~$0.05          |
+| Pass 3b (enrichment, Sonnet)           | Claude Sonnet                 | ~$0.50          |
+| Pass 3b (enrichment, Haiku comparison) | Claude Haiku                  | ~$0.04-0.17     |
+| Pass 4 (embeddings)                    | OpenAI text-embedding-3-small | ~$0.001         |
+| Pass 5 (query embeddings)              | OpenAI text-embedding-3-small | ~$0.0001        |
+| **Total**                              |                               | **~$0.60-0.80** |
 
 ## Testing Strategy
 

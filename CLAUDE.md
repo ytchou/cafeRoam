@@ -27,6 +27,7 @@
 ## Commands
 
 ### App (Next.js)
+
 ```bash
 pnpm install                   # Install dependencies
 pnpm dev                       # Dev server :3000
@@ -39,6 +40,7 @@ pnpm test:coverage             # vitest run --coverage
 ```
 
 ### Database (Supabase)
+
 ```bash
 supabase start                 # Start local Supabase (requires Docker)
 supabase db diff               # Check migration state BEFORE pushing
@@ -48,6 +50,7 @@ supabase db reset              # Reset local DB + reseed
 ```
 
 ### Workers
+
 ```bash
 pnpm workers:enrich            # Run enrichment worker locally
 pnpm workers:embed             # Run embedding generation locally
@@ -73,12 +76,14 @@ pnpm workers:embed             # Run embedding generation locally
 ## Coding Standards
 
 ### Provider Abstraction
+
 - Define interface first: `lib/providers/[service]/[service].interface.ts`
 - Implement adapter: `lib/providers/[service]/[provider].adapter.ts`
 - Wire via factory from env var: `lib/providers/[service]/index.ts`
 - Never call provider SDK from outside `lib/providers/`
 
 ### Database
+
 - Always run `supabase db diff` before `supabase db push`
 - RLS policies required on all user-facing tables
 - Never store user PII outside Supabase (no logs, no analytics events with email or raw user IDs)
@@ -88,6 +93,7 @@ pnpm workers:embed             # Run embedding generation locally
 ## Testing
 
 Critical paths requiring tests:
+
 - `lib/services/search.service.ts` — semantic search + taxonomy boost logic
 - `lib/services/checkin.service.ts` — photo upload, stamp generation
 - `lib/services/lists.service.ts` — list CRUD, 3-list cap enforcement

@@ -5,9 +5,19 @@ import type { TaxonomyTag } from './types';
 // ─── Fixtures ──────────────────────────────────────────────────
 
 const taxonomy: TaxonomyTag[] = [
-  { id: 'has_outlets', dimension: 'functionality', label: 'Has outlets', labelZh: '有插座' },
+  {
+    id: 'has_outlets',
+    dimension: 'functionality',
+    label: 'Has outlets',
+    labelZh: '有插座',
+  },
   { id: 'quiet', dimension: 'ambience', label: 'Quiet', labelZh: '安靜' },
-  { id: 'late_night', dimension: 'time', label: 'Late night', labelZh: '深夜營業' },
+  {
+    id: 'late_night',
+    dimension: 'time',
+    label: 'Late night',
+    labelZh: '深夜營業',
+  },
 ];
 
 const shopTags = [
@@ -53,7 +63,11 @@ describe('computeTaxonomyBoost', () => {
 
   it('does not false-positive on English substrings (word boundary)', () => {
     // "quiet" is in shopTags, but "quite" is a different word — should not match
-    const result = computeTaxonomyBoost('quite good coffee', shopTags, taxonomy);
+    const result = computeTaxonomyBoost(
+      'quite good coffee',
+      shopTags,
+      taxonomy
+    );
     expect(result.matchedTags).not.toContain('quiet');
     expect(result.boost).toBe(0);
   });
@@ -62,10 +76,29 @@ describe('computeTaxonomyBoost', () => {
 // ─── rankResults ───────────────────────────────────────────────
 
 describe('rankResults', () => {
-  const mockEmbeddings: Array<{ name: string; score: number; shopTags: Array<{ id: string; confidence: number }> }> = [
-    { name: 'Shop A', score: 0.8, shopTags: [{ id: 'has_outlets', confidence: 0.9 }] },
-    { name: 'Shop B', score: 0.85, shopTags: [{ id: 'quiet', confidence: 0.7 }] },
-    { name: 'Shop C', score: 0.7, shopTags: [{ id: 'has_outlets', confidence: 0.9 }, { id: 'quiet', confidence: 0.7 }] },
+  const mockEmbeddings: Array<{
+    name: string;
+    score: number;
+    shopTags: Array<{ id: string; confidence: number }>;
+  }> = [
+    {
+      name: 'Shop A',
+      score: 0.8,
+      shopTags: [{ id: 'has_outlets', confidence: 0.9 }],
+    },
+    {
+      name: 'Shop B',
+      score: 0.85,
+      shopTags: [{ id: 'quiet', confidence: 0.7 }],
+    },
+    {
+      name: 'Shop C',
+      score: 0.7,
+      shopTags: [
+        { id: 'has_outlets', confidence: 0.9 },
+        { id: 'quiet', confidence: 0.7 },
+      ],
+    },
   ];
 
   it('ranks by boosted score descending', () => {

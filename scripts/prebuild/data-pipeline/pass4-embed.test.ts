@@ -5,7 +5,12 @@ import type { EnrichedShop, TaxonomyTag } from './types';
 // ─── Fixtures ──────────────────────────────────────────────────
 
 const taxonomy: TaxonomyTag[] = [
-  { id: 'has_outlets', dimension: 'functionality', label: 'Has outlets', labelZh: '有插座' },
+  {
+    id: 'has_outlets',
+    dimension: 'functionality',
+    label: 'Has outlets',
+    labelZh: '有插座',
+  },
   { id: 'quiet', dimension: 'ambience', label: 'Quiet', labelZh: '安靜' },
 ];
 

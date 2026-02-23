@@ -1,7 +1,16 @@
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
-import { callClaudeWithTool, MODELS, type ModelAlias } from './utils/anthropic-client';
+import {
+  callClaudeWithTool,
+  MODELS,
+  type ModelAlias,
+} from './utils/anthropic-client';
 import type Anthropic from '@anthropic-ai/sdk';
-import type { Pass2Shop, TaxonomyTag, EnrichmentData, EnrichedShop } from './types';
+import type {
+  Pass2Shop,
+  TaxonomyTag,
+  EnrichmentData,
+  EnrichedShop,
+} from './types';
 
 // ─── Constants ─────────────────────────────────────────────────
 
@@ -41,7 +50,10 @@ export function parseCliArgs(argv: string[]): CliArgs {
   return args;
 }
 
-export function buildEnrichmentPrompt(shop: Pass2Shop, taxonomy: TaxonomyTag[]): string {
+export function buildEnrichmentPrompt(
+  shop: Pass2Shop,
+  taxonomy: TaxonomyTag[]
+): string {
   const nonEmptyReviews = shop.reviews
     .filter((r) => r.text.trim().length > 0)
     .map((r, i) => `[${i + 1}] (${r.stars}★) ${r.text}`);
@@ -105,7 +117,8 @@ Rules:
 
 const ENRICHMENT_TOOL: Anthropic.Tool = {
   name: 'classify_shop',
-  description: 'Classify a coffee shop based on its reviews using the provided taxonomy',
+  description:
+    'Classify a coffee shop based on its reviews using the provided taxonomy',
   input_schema: {
     type: 'object' as const,
     properties: {
@@ -114,8 +127,14 @@ const ENRICHMENT_TOOL: Anthropic.Tool = {
         items: {
           type: 'object',
           properties: {
-            id: { type: 'string', description: 'Tag ID from the taxonomy list' },
-            confidence: { type: 'number', description: 'Confidence score 0.0-1.0' },
+            id: {
+              type: 'string',
+              description: 'Tag ID from the taxonomy list',
+            },
+            confidence: {
+              type: 'number',
+              description: 'Confidence score 0.0-1.0',
+            },
           },
           required: ['id', 'confidence'],
         },
@@ -151,20 +170,28 @@ async function main() {
   console.log(`[pass3b] Dry run: ${args.dryRun}`);
 
   const shops: Pass2Shop[] = JSON.parse(readFileSync(PASS2_FILE, 'utf-8'));
-  const taxonomy: TaxonomyTag[] = JSON.parse(readFileSync(TAXONOMY_FILE, 'utf-8'));
-  console.log(`[pass3b] Loaded ${shops.length} shops, ${taxonomy.length} taxonomy tags`);
+  const taxonomy: TaxonomyTag[] = JSON.parse(
+    readFileSync(TAXONOMY_FILE, 'utf-8')
+  );
+  console.log(
+    `[pass3b] Loaded ${shops.length} shops, ${taxonomy.length} taxonomy tags`
+  );
 
   // Load existing results for resume support
   let enriched: EnrichedShop[] = [];
   try {
     enriched = JSON.parse(readFileSync(OUTPUT_FILE, 'utf-8'));
-    console.log(`[pass3b] Loaded ${enriched.length} existing results for resume`);
+    console.log(
+      `[pass3b] Loaded ${enriched.length} existing results for resume`
+    );
   } catch {
     // No existing results — start fresh
   }
 
   const enrichedIds = new Set(enriched.map((s) => s.cafenomad_id));
-  const toProcess = args.dryRun ? shops.slice(0, 1) : shops.slice(args.startFrom);
+  const toProcess = args.dryRun
+    ? shops.slice(0, 1)
+    : shops.slice(args.startFrom);
 
   let totalIn = 0;
   let totalOut = 0;
@@ -172,11 +199,15 @@ async function main() {
   for (let i = 0; i < toProcess.length; i++) {
     const shop = toProcess[i];
     if (enrichedIds.has(shop.cafenomad_id)) {
-      console.log(`  [${args.startFrom + i + 1}/${shops.length}] ${shop.name} — skipped (already enriched)`);
+      console.log(
+        `  [${args.startFrom + i + 1}/${shops.length}] ${shop.name} — skipped (already enriched)`
+      );
       continue;
     }
 
-    console.log(`  [${args.startFrom + i + 1}/${shops.length}] ${shop.name}...`);
+    console.log(
+      `  [${args.startFrom + i + 1}/${shops.length}] ${shop.name}...`
+    );
 
     try {
       const prompt = buildEnrichmentPrompt(shop, taxonomy);
@@ -205,10 +236,16 @@ async function main() {
       mkdirSync(OUTPUT_DIR, { recursive: true });
       writeFileSync(OUTPUT_FILE, JSON.stringify(enriched, null, 2));
 
-      console.log(`    -> ${validated.tags.length} tags, mode: ${validated.mode}`);
+      console.log(
+        `    -> ${validated.tags.length} tags, mode: ${validated.mode}`
+      );
     } catch (err) {
-      console.error(`    x Failed: ${err instanceof Error ? err.message : err}`);
-      console.error(`    Skipping. Re-run to resume — already-enriched shops are skipped automatically.`);
+      console.error(
+        `    x Failed: ${err instanceof Error ? err.message : err}`
+      );
+      console.error(
+        `    Skipping. Re-run to resume — already-enriched shops are skipped automatically.`
+      );
     }
   }
 

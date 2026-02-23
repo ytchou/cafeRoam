@@ -27,6 +27,7 @@
 ### Task 1: Project Setup
 
 **Files:**
+
 - Create: `package.json`
 - Create: `tsconfig.json`
 - Create: `vitest.config.ts`
@@ -132,6 +133,7 @@ No test needed — configuration only.
 ### Task 2: Type Definitions
 
 **Files:**
+
 - Create: `scripts/prebuild/data-pipeline/types.ts`
 
 **Why:** All three passes share types. Defining them upfront prevents interface drift between passes. These types define the contract between pipeline stages.
@@ -305,6 +307,7 @@ No test needed — type definitions only.
 ### Task 3: Filters — Tests + Implementation
 
 **Files:**
+
 - Create: `scripts/prebuild/data-pipeline/utils/filters.ts`
 - Create: `scripts/prebuild/data-pipeline/utils/filters.test.ts`
 
@@ -431,7 +434,7 @@ describe('isOutOfBounds', () => {
   });
 
   it('returns false for boundary edge values (inclusive)', () => {
-    expect(isOutOfBounds(24.95, 121.40)).toBe(false);
+    expect(isOutOfBounds(24.95, 121.4)).toBe(false);
     expect(isOutOfBounds(25.22, 121.65)).toBe(false);
   });
 });
@@ -449,8 +452,13 @@ describe('findDuplicates', () => {
 
   it('flags the second entry when same name is within 50m', () => {
     const shops = [
-      { name: '好咖啡', latitude: 25.050000, longitude: 121.520000, cafenomad_id: '1' },
-      { name: '好咖啡', latitude: 25.050001, longitude: 121.520001, cafenomad_id: '2' }, // ~0.1m away
+      { name: '好咖啡', latitude: 25.05, longitude: 121.52, cafenomad_id: '1' },
+      {
+        name: '好咖啡',
+        latitude: 25.050001,
+        longitude: 121.520001,
+        cafenomad_id: '2',
+      }, // ~0.1m away
     ];
     const dupes = findDuplicates(shops);
     expect(dupes.has('2')).toBe(true);
@@ -467,8 +475,13 @@ describe('findDuplicates', () => {
 
   it('does not flag nearby shops with different names', () => {
     const shops = [
-      { name: 'Shop A', latitude: 25.050000, longitude: 121.520000, cafenomad_id: '1' },
-      { name: 'Shop B', latitude: 25.050001, longitude: 121.520001, cafenomad_id: '2' },
+      { name: 'Shop A', latitude: 25.05, longitude: 121.52, cafenomad_id: '1' },
+      {
+        name: 'Shop B',
+        latitude: 25.050001,
+        longitude: 121.520001,
+        cafenomad_id: '2',
+      },
     ];
     expect(findDuplicates(shops)).toEqual(new Set());
   });
@@ -493,7 +506,7 @@ const CLOSED_KEYWORDS = ['已歇業', '暫停營業', '已關', '已結束'];
 /** Greater Taipei bounding box */
 const TAIPEI_BOUNDS = {
   lat: { min: 24.95, max: 25.22 },
-  lng: { min: 121.40, max: 121.65 },
+  lng: { min: 121.4, max: 121.65 },
 } as const;
 
 /** Maximum distance (meters) for two shops to be considered duplicates */
@@ -534,7 +547,12 @@ export function isOutOfBounds(lat: number, lng: number): boolean {
  * Returns a Set of cafenomad_ids to remove (keeps the first occurrence).
  */
 export function findDuplicates(
-  shops: { name: string; latitude: number; longitude: number; cafenomad_id: string }[]
+  shops: {
+    name: string;
+    latitude: number;
+    longitude: number;
+    cafenomad_id: string;
+  }[]
 ): Set<string> {
   const duplicateIds = new Set<string>();
 
@@ -604,6 +622,7 @@ Taipei bounding box, and same-name-within-50m deduplication."
 ### Task 4: Matching — Tests + Implementation
 
 **Files:**
+
 - Create: `scripts/prebuild/data-pipeline/utils/matching.ts`
 - Create: `scripts/prebuild/data-pipeline/utils/matching.test.ts`
 
@@ -705,7 +724,7 @@ describe('findBestMatch', () => {
     const shop = makePass0Shop();
     const results = [
       makeApifyResult({
-        location: { lat: 25.10, lng: 121.60 }, // ~10km away
+        location: { lat: 25.1, lng: 121.6 }, // ~10km away
       }),
     ];
 
@@ -779,8 +798,7 @@ export interface MatchResult {
  * whitespace and lowercasing). Works well for CJK + Latin mixed names.
  */
 export function fuzzyNameScore(a: string, b: string): number {
-  const normalize = (s: string) =>
-    s.replace(/\s+/g, '').toLowerCase();
+  const normalize = (s: string) => s.replace(/\s+/g, '').toLowerCase();
 
   const na = normalize(a);
   const nb = normalize(b);
@@ -867,6 +885,7 @@ Jaccard index on character sets for CJK-friendly name matching.
 ### Task 5: Apify Client Wrapper
 
 **Files:**
+
 - Create: `scripts/prebuild/data-pipeline/utils/apify-client.ts`
 
 **Why:** Thin wrapper around `apify-client` to encapsulate the actor ID and input schema. NOT a provider abstraction — these are one-time prebuild scripts.
@@ -951,9 +970,7 @@ export async function scrapePlaces(
     url: `https://www.google.com/maps/place/?q=place_id:${id}`,
   }));
 
-  console.log(
-    `[apify] Starting full scrape for ${startUrls.length} places...`
-  );
+  console.log(`[apify] Starting full scrape for ${startUrls.length} places...`);
 
   const { defaultDatasetId } = await client.actor(ACTOR_ID).call({
     startUrls,
@@ -990,6 +1007,7 @@ No test needed — thin integration wrapper with no business logic.
 ### Task 6: Pass 0 — Cafe Nomad Seed Script
 
 **Files:**
+
 - Create: `scripts/prebuild/data-pipeline/pass0-seed.ts`
 - Create: `scripts/prebuild/data-pipeline/pass0-seed.test.ts`
 
@@ -1106,7 +1124,12 @@ Expected: FAIL — `Cannot find module './pass0-seed'` or `runPass0 is not a fun
 ```typescript
 // scripts/prebuild/data-pipeline/pass0-seed.ts
 import { writeFileSync, mkdirSync } from 'node:fs';
-import { isKnownClosed, isShellEntry, isOutOfBounds, findDuplicates } from './utils/filters';
+import {
+  isKnownClosed,
+  isShellEntry,
+  isOutOfBounds,
+  findDuplicates,
+} from './utils/filters';
 import type { CafeNomadEntry, Pass0Shop } from './types';
 
 // ─── Constants ─────────────────────────────────────────────────
@@ -1204,7 +1227,9 @@ async function main() {
   const response = await fetch(CAFENOMAD_API);
 
   if (!response.ok) {
-    throw new Error(`Cafe Nomad API returned ${response.status}: ${response.statusText}`);
+    throw new Error(
+      `Cafe Nomad API returned ${response.status}: ${response.statusText}`
+    );
   }
 
   const entries: CafeNomadEntry[] = await response.json();
@@ -1255,6 +1280,7 @@ outputs cleaned seed JSON. Expected ~1,500-1,650 shops from ~1,672 input."
 ### Task 7: Pass 1 — Verify Open Status Script
 
 **Files:**
+
 - Create: `scripts/prebuild/data-pipeline/pass1-verify.ts`
 - Create: `scripts/prebuild/data-pipeline/pass1-verify.test.ts`
 
@@ -1348,7 +1374,11 @@ describe('mergeMatch', () => {
   });
 
   it('preserves Cafe Nomad fields (mrt, limited_time, socket)', () => {
-    const shop = makePass0Shop({ mrt: '松山', limited_time: 'yes', socket: 'no' });
+    const shop = makePass0Shop({
+      mrt: '松山',
+      limited_time: 'yes',
+      socket: 'no',
+    });
     const result = makeApifyResult();
     const merged = mergeMatch(shop, result, 0.9);
 
@@ -1395,7 +1425,12 @@ Expected: FAIL — `Cannot find module './pass1-verify'`
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { searchPlaces } from './utils/apify-client';
 import { findBestMatch } from './utils/matching';
-import type { Pass0Shop, Pass1Shop, UnmatchedShop, ApifyPlaceResult } from './types';
+import type {
+  Pass0Shop,
+  Pass1Shop,
+  UnmatchedShop,
+  ApifyPlaceResult,
+} from './types';
 
 // ─── Constants ─────────────────────────────────────────────────
 
@@ -1474,7 +1509,8 @@ async function runPass1(shops: Pass0Shop[]): Promise<{
     } else {
       // Determine reason
       const closestResult = apifyResults.find((r) => {
-        const nameMatch = r.title.includes(shop.name) || shop.name.includes(r.title);
+        const nameMatch =
+          r.title.includes(shop.name) || shop.name.includes(r.title);
         return nameMatch;
       });
 
@@ -1546,6 +1582,7 @@ outputs verified shops + unmatched list for manual review."
 ### Task 8: Pass 2 — Full Scrape Script
 
 **Files:**
+
 - Create: `scripts/prebuild/data-pipeline/pass2-scrape.ts`
 - Create: `scripts/prebuild/data-pipeline/pass2-scrape.test.ts`
 
@@ -1607,8 +1644,18 @@ function makeFullApifyResult(
     temporarilyClosed: false,
     url: 'https://maps.google.com/?cid=123',
     reviews: [
-      { text: '好喝的咖啡', stars: 5, publishAt: '2026-01-15', language: 'zh-TW' },
-      { text: 'Great latte', stars: 4, publishAt: '2026-01-10', language: 'en' },
+      {
+        text: '好喝的咖啡',
+        stars: 5,
+        publishAt: '2026-01-15',
+        language: 'zh-TW',
+      },
+      {
+        text: 'Great latte',
+        stars: 4,
+        publishAt: '2026-01-10',
+        language: 'en',
+      },
     ],
     imageUrls: [
       'https://lh5.googleusercontent.com/menu1',
@@ -1650,7 +1697,10 @@ describe('categorizePhotos', () => {
   });
 
   it('limits to 5 photos', () => {
-    const urls = Array.from({ length: 10 }, (_, i) => `https://example.com/${i}`);
+    const urls = Array.from(
+      { length: 10 },
+      (_, i) => `https://example.com/${i}`
+    );
     const photos = categorizePhotos(urls);
     expect(photos).toHaveLength(5);
   });
@@ -1708,7 +1758,12 @@ describe('mergeFullData', () => {
     const result = makeFullApifyResult({
       reviews: [
         { text: null, stars: 3, publishAt: '2026-01-01' },
-        { text: 'Good coffee', stars: 4, publishAt: '2026-01-02', language: 'en' },
+        {
+          text: 'Good coffee',
+          stars: 4,
+          publishAt: '2026-01-02',
+          language: 'en',
+        },
       ],
     });
     const merged = mergeFullData(shop, result);
@@ -1773,7 +1828,10 @@ export function categorizePhotos(urls: string[] | undefined): PhotoData[] {
   // Sort: menu first, then food, then general
   categorized.sort((a, b) => {
     const order = { menu: 0, food: 1, general: 2 };
-    return order[a.category as keyof typeof order] - order[b.category as keyof typeof order];
+    return (
+      order[a.category as keyof typeof order] -
+      order[b.category as keyof typeof order]
+    );
   });
 
   return categorized.slice(0, MAX_PHOTOS);
@@ -1827,7 +1885,9 @@ export function mergeFullData(
 async function main() {
   console.log('[pass2] Reading Pass 1 verified output...');
   const shops: Pass1Shop[] = JSON.parse(readFileSync(INPUT_FILE, 'utf-8'));
-  console.log(`[pass2] Loaded ${shops.length} verified shops from ${INPUT_FILE}`);
+  console.log(
+    `[pass2] Loaded ${shops.length} verified shops from ${INPUT_FILE}`
+  );
 
   const placeIds = shops.map((s) => s.google_place_id);
 
@@ -1905,6 +1965,7 @@ Scrapes by Google Place ID (deterministic). Extracts 20 reviews
 ### Task 9: Documentation
 
 **Files:**
+
 - Create: `docs/designs/2026-02-23-data-collection-pipeline-design.md`
 - Create: `docs/decisions/2026-02-23-apify-over-outscraper.md`
 - Create: `scripts/prebuild/data-pipeline/README.md`
@@ -1934,16 +1995,16 @@ Use Apify (`compass/crawler-google-places`) instead of Outscraper.
 
 ## Comparison
 
-| Factor | Apify | Outscraper |
-|--------|-------|------------|
-| Cost (1,672 shops, places + reviews) | ~$26 | ~$101 |
-| Per-query pricing | ~$4/1,000 searches | ~$3/1,000 places + ~$14/1,000 reviews |
-| API flexibility | Full control via Actor input | REST API with fixed parameters |
-| Review scraping | Same actor, `maxReviews` param | Separate endpoint, separate billing |
-| Photo scraping | Same actor, `maxImages` param | Not supported in base tier |
-| Menu URL | Included in output | Included in output |
-| Free tier | $5 platform credit/month | 100 places/month |
-| SDK | `apify-client` (TypeScript) | REST-only (no official SDK) |
+| Factor                               | Apify                          | Outscraper                            |
+| ------------------------------------ | ------------------------------ | ------------------------------------- |
+| Cost (1,672 shops, places + reviews) | ~$26                           | ~$101                                 |
+| Per-query pricing                    | ~$4/1,000 searches             | ~$3/1,000 places + ~$14/1,000 reviews |
+| API flexibility                      | Full control via Actor input   | REST API with fixed parameters        |
+| Review scraping                      | Same actor, `maxReviews` param | Separate endpoint, separate billing   |
+| Photo scraping                       | Same actor, `maxImages` param  | Not supported in base tier            |
+| Menu URL                             | Included in output             | Included in output                    |
+| Free tier                            | $5 platform credit/month       | 100 places/month                      |
+| SDK                                  | `apify-client` (TypeScript)    | REST-only (no official SDK)           |
 
 ## Rationale
 
@@ -1960,7 +2021,7 @@ Use Apify (`compass/crawler-google-places`) instead of Outscraper.
 
 **Step 3: Create pipeline README**
 
-```markdown
+````markdown
 # Data Collection Pipeline
 
 One-time scripts to collect and verify Taipei coffee shop data before building the app.
@@ -1972,11 +2033,11 @@ One-time scripts to collect and verify Taipei coffee shop data before building t
 
 ## Pipeline
 
-| Pass | Command | Cost | Input | Output |
-|------|---------|------|-------|--------|
-| 0 | `pnpm prebuild:pass0` | Free | Cafe Nomad API | `data/prebuild/pass0-seed.json` |
-| 1 | `pnpm prebuild:pass1` | ~$6.40 | Pass 0 output | `data/prebuild/pass1-verified.json` + `pass1-unmatched.json` |
-| 2 | `pnpm prebuild:pass2` | ~$15-18 | Pass 1 output | `data/prebuild/pass2-full.json` |
+| Pass | Command               | Cost    | Input          | Output                                                       |
+| ---- | --------------------- | ------- | -------------- | ------------------------------------------------------------ |
+| 0    | `pnpm prebuild:pass0` | Free    | Cafe Nomad API | `data/prebuild/pass0-seed.json`                              |
+| 1    | `pnpm prebuild:pass1` | ~$6.40  | Pass 0 output  | `data/prebuild/pass1-verified.json` + `pass1-unmatched.json` |
+| 2    | `pnpm prebuild:pass2` | ~$15-18 | Pass 1 output  | `data/prebuild/pass2-full.json`                              |
 
 ## Quick Start
 
@@ -1994,6 +2055,7 @@ pnpm prebuild:pass1
 # Pass 2: Full scrape with reviews + photos (~$15-18, 3-6 hours)
 pnpm prebuild:pass2
 ```
+````
 
 ## Validation Subset (recommended first run)
 
@@ -2023,6 +2085,7 @@ scripts/prebuild/data-pipeline/
 │   └── matching.ts        # Name fuzzy match + coordinate proximity
 └── README.md
 ```
+
 ```
 
 **Step 4: Update DISCOVERY-NOTES.md**
@@ -2030,7 +2093,9 @@ scripts/prebuild/data-pipeline/
 Under `## Open Questions`, change the "Apify vs Outscraper" row's Status from `Open` to `Resolved`:
 
 ```
+
 | Apify vs Outscraper for Google Maps scraping — cost and data quality comparison | Founder | Resolved → Apify ($26 vs $101). See `docs/decisions/2026-02-23-apify-over-outscraper.md` |
+
 ```
 
 **Step 5: Update ASSUMPTIONS.md**
@@ -2046,15 +2111,19 @@ Update Assumption #7:
 
 In §2 System Modules, update the Data pipeline row's Responsibility:
 ```
+
 Data pipeline | One-time data collection (Cafe Nomad seed → Apify/Google Maps verify + scrape) + ongoing enrichment (Claude Haiku + embedding generation) | 1 |
+
 ```
 
 **Step 7: Update SPEC_CHANGELOG.md**
 
 Append:
 ```
+
 2026-02-23 | §2 System Modules | Clarified data pipeline as one-time collection (Cafe Nomad seed + Apify scrape) vs ongoing enrichment (Claude Haiku + embeddings) | Design doc produced for 3-pass data collection pipeline
-```
+
+````
 
 **Step 8: Commit**
 
@@ -2070,7 +2139,7 @@ git commit -m "docs: add data collection pipeline design, ADR, and spec updates
 - DISCOVERY-NOTES: resolve Apify vs Outscraper question
 - ASSUMPTIONS: update #2 confidence Low→Medium, #7 with data quality findings
 - SPEC: clarify one-time collection vs ongoing enrichment"
-```
+````
 
 No test needed — documentation only.
 
@@ -2079,6 +2148,7 @@ No test needed — documentation only.
 ### Task 10: Update TODO.md
 
 **Files:**
+
 - Modify: `TODO.md`
 
 **Step 1: Replace the Data Collection section**
@@ -2087,24 +2157,29 @@ In `TODO.md`, under `## Pre-Build: Validate Fatal Assumptions (Week 0)`, replace
 
 ```markdown
 ### Data Collection
+
 > **Design Doc:** [docs/designs/2026-02-23-data-collection-pipeline-design.md](docs/designs/2026-02-23-data-collection-pipeline-design.md)
 > **Plan:** [docs/plans/2026-02-23-data-collection-pipeline-plan.md](docs/plans/2026-02-23-data-collection-pipeline-plan.md)
 
 **Pipeline Setup:**
+
 - [ ] Project setup (package.json, tsconfig, vitest, .gitignore)
 - [ ] Type definitions (CafeNomadEntry, Pass0/1/2Shop)
 
 **Pipeline Utilities:**
+
 - [ ] Filters with TDD (closed, shell, bounds, dedup)
 - [ ] Matching with TDD (fuzzy name + coordinate proximity)
 - [ ] Apify client wrapper
 
 **Pipeline Scripts:**
+
 - [ ] Pass 0: Cafe Nomad seed (free, ~30s)
 - [ ] Pass 1: Verify open status via Apify (~$6.40)
 - [ ] Pass 2: Full scrape with reviews + photos (~$15-18)
 
 **Validation (30-shop subset):**
+
 - [ ] Run Pass 0 on full dataset, pick 30 diverse shops
 - [ ] Run Pass 1 on 30 shops, verify >80% match rate
 - [ ] Run Pass 2 on confirmed shops, inspect data quality
@@ -2166,23 +2241,29 @@ graph TD
 ```
 
 **Wave 1** (parallel — no dependencies):
+
 - Task 1: Project setup (package.json, tsconfig, vitest)
 - Task 2: Type definitions
 
 **Wave 2** (parallel — depends on Wave 1):
+
 - Task 3: Filters with TDD ← Tasks 1, 2
 - Task 4: Matching with TDD ← Tasks 1, 2
 - Task 5: Apify client wrapper ← Task 1
 
 **Wave 3** (sequential — depends on Wave 2):
+
 - Task 6: Pass 0 seed script ← Task 3
 
 **Wave 4** (sequential — depends on Waves 2, 3):
+
 - Task 7: Pass 1 verify script ← Tasks 4, 5, 6
 
 **Wave 5** (parallel — depends on Wave 4):
+
 - Task 8: Pass 2 scrape script ← Tasks 5, 7
 - Task 9: Documentation (independent of code)
 
 **Wave 6** (sequential — depends on Wave 5):
+
 - Task 10: Update TODO.md ← Task 9

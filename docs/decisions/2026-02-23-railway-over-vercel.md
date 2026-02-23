@@ -19,6 +19,7 @@ CafeRoam requires two types of deployed services: (1) the Next.js web applicatio
 ## Rationale
 
 Railway supports Node.js persistent services (not serverless), which means:
+
 - No cold starts on API routes
 - No timeout limits on long-running enrichment workers
 - Native cron job support for the weekly email

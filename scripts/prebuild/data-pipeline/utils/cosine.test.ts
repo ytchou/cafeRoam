@@ -22,7 +22,9 @@ describe('cosineSimilarity', () => {
   });
 
   it('throws on mismatched vector lengths', () => {
-    expect(() => cosineSimilarity([1, 2], [1, 2, 3])).toThrow('length mismatch');
+    expect(() => cosineSimilarity([1, 2], [1, 2, 3])).toThrow(
+      'length mismatch'
+    );
   });
 
   it('returns 0 for zero vector', () => {

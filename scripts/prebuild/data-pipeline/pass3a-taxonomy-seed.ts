@@ -1,6 +1,10 @@
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { parseArgs } from 'node:util';
-import { callClaudeWithTool, MODELS, type ModelAlias } from './utils/anthropic-client';
+import {
+  callClaudeWithTool,
+  MODELS,
+  type ModelAlias,
+} from './utils/anthropic-client';
 import type Anthropic from '@anthropic-ai/sdk';
 import type { Pass2Shop, TaxonomyTag, TaxonomyProposal } from './types';
 
@@ -17,7 +21,10 @@ const DEFAULT_PER_SHOP = 2;
  * Sample the longest non-empty reviews from each shop.
  * Returns an array of review texts.
  */
-export function sampleReviews(shops: Pass2Shop[], perShop: number = DEFAULT_PER_SHOP): string[] {
+export function sampleReviews(
+  shops: Pass2Shop[],
+  perShop: number = DEFAULT_PER_SHOP
+): string[] {
   const samples: string[] = [];
 
   for (const shop of shops) {
@@ -33,7 +40,9 @@ export function sampleReviews(shops: Pass2Shop[], perShop: number = DEFAULT_PER_
 /**
  * Flatten a TaxonomyProposal (grouped by dimension) into a flat TaxonomyTag array.
  */
-export function flattenProposalToTags(proposal: TaxonomyProposal): TaxonomyTag[] {
+export function flattenProposalToTags(
+  proposal: TaxonomyProposal
+): TaxonomyTag[] {
   const dimensions = ['functionality', 'time', 'ambience', 'mode'] as const;
   const tags: TaxonomyTag[] = [];
 
@@ -77,7 +86,8 @@ ${reviewBlock}`;
 
 const TAXONOMY_TOOL: Anthropic.Tool = {
   name: 'propose_taxonomy',
-  description: 'Propose a taxonomy of tags for classifying coffee shops, organized by dimension',
+  description:
+    'Propose a taxonomy of tags for classifying coffee shops, organized by dimension',
   input_schema: {
     type: 'object' as const,
     properties: {
@@ -86,9 +96,15 @@ const TAXONOMY_TOOL: Anthropic.Tool = {
         items: {
           type: 'object',
           properties: {
-            id: { type: 'string', description: 'snake_case English identifier' },
+            id: {
+              type: 'string',
+              description: 'snake_case English identifier',
+            },
             label: { type: 'string', description: 'English label' },
-            labelZh: { type: 'string', description: 'Traditional Chinese label' },
+            labelZh: {
+              type: 'string',
+              description: 'Traditional Chinese label',
+            },
           },
           required: ['id', 'label', 'labelZh'],
         },
@@ -155,7 +171,9 @@ async function main() {
   console.log(`[pass3a] Loaded ${shops.length} shops`);
 
   const reviews = sampleReviews(shops, perShop);
-  console.log(`[pass3a] Sampled ${reviews.length} reviews (${perShop} per shop)`);
+  console.log(
+    `[pass3a] Sampled ${reviews.length} reviews (${perShop} per shop)`
+  );
 
   console.log(`[pass3a] Calling Claude (${modelId})...`);
   const result = await callClaudeWithTool<TaxonomyProposal>({
@@ -184,10 +202,16 @@ async function main() {
   console.log(`  ambience:      ${counts.ambience} tags`);
   console.log(`  mode:          ${counts.mode} tags`);
   console.log(`  TOTAL:         ${tags.length} tags`);
-  console.log(`  Tokens:        ${result.usage.inputTokens} in / ${result.usage.outputTokens} out`);
+  console.log(
+    `  Tokens:        ${result.usage.inputTokens} in / ${result.usage.outputTokens} out`
+  );
   console.log(`  Saved to:      ${OUTPUT_FILE}`);
-  console.log('\n[pass3a] NEXT STEP: Review and curate taxonomy-proposed.json → taxonomy.json');
-  console.log('  Copy the file, remove/rename tags as needed, then run pass3b.');
+  console.log(
+    '\n[pass3a] NEXT STEP: Review and curate taxonomy-proposed.json → taxonomy.json'
+  );
+  console.log(
+    '  Copy the file, remove/rename tags as needed, then run pass3b.'
+  );
 }
 
 const isDirectRun = process.argv[1]?.includes('pass3a-taxonomy-seed');

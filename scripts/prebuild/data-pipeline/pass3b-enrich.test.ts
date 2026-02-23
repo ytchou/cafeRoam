@@ -9,9 +9,19 @@ import type { Pass2Shop, TaxonomyTag, EnrichmentData } from './types';
 // ─── Fixtures ──────────────────────────────────────────────────
 
 const taxonomy: TaxonomyTag[] = [
-  { id: 'has_outlets', dimension: 'functionality', label: 'Has outlets', labelZh: '有插座' },
+  {
+    id: 'has_outlets',
+    dimension: 'functionality',
+    label: 'Has outlets',
+    labelZh: '有插座',
+  },
   { id: 'quiet', dimension: 'ambience', label: 'Quiet', labelZh: '安靜' },
-  { id: 'deep_work', dimension: 'mode', label: 'Deep work', labelZh: '專注工作' },
+  {
+    id: 'deep_work',
+    dimension: 'mode',
+    label: 'Deep work',
+    labelZh: '專注工作',
+  },
 ];
 
 function makeShop(overrides: Partial<Pass2Shop> = {}): Pass2Shop {
@@ -37,9 +47,19 @@ function makeShop(overrides: Partial<Pass2Shop> = {}): Pass2Shop {
     socket: 'yes',
     social_url: '',
     reviews: [
-      { text: '很安靜適合工作', stars: 5, published_at: '3 個月前', language: 'unknown' },
+      {
+        text: '很安靜適合工作',
+        stars: 5,
+        published_at: '3 個月前',
+        language: 'unknown',
+      },
       { text: '', stars: 4, published_at: '1 年前', language: 'unknown' },
-      { text: '咖啡很好喝', stars: 5, published_at: '6 個月前', language: 'unknown' },
+      {
+        text: '咖啡很好喝',
+        stars: 5,
+        published_at: '6 個月前',
+        language: 'unknown',
+      },
     ],
     photos: [],
     ...overrides,
@@ -81,7 +101,10 @@ describe('buildEnrichmentPrompt', () => {
 
 describe('validateEnrichmentResult', () => {
   const validResult: EnrichmentData = {
-    tags: [{ id: 'has_outlets', confidence: 0.9 }, { id: 'quiet', confidence: 0.7 }],
+    tags: [
+      { id: 'has_outlets', confidence: 0.9 },
+      { id: 'quiet', confidence: 0.7 },
+    ],
     summary: 'A quiet cafe with outlets, perfect for working.',
     topReviews: ['很安靜適合工作'],
     mode: 'work',
@@ -90,7 +113,9 @@ describe('validateEnrichmentResult', () => {
   };
 
   it('accepts valid enrichment result', () => {
-    expect(validateEnrichmentResult(validResult, taxonomy)).toEqual(validResult);
+    expect(validateEnrichmentResult(validResult, taxonomy)).toEqual(
+      validResult
+    );
   });
 
   it('filters out unknown tag IDs', () => {
@@ -100,13 +125,18 @@ describe('validateEnrichmentResult', () => {
     };
     const result = validateEnrichmentResult(withUnknown, taxonomy);
     expect(result.tags).toHaveLength(2);
-    expect(result.tags.every((t) => taxonomy.some((tx) => tx.id === t.id))).toBe(true);
+    expect(
+      result.tags.every((t) => taxonomy.some((tx) => tx.id === t.id))
+    ).toBe(true);
   });
 
   it('clamps confidence to [0, 1] range', () => {
     const withBadConfidence = {
       ...validResult,
-      tags: [{ id: 'has_outlets', confidence: 1.5 }, { id: 'quiet', confidence: -0.2 }],
+      tags: [
+        { id: 'has_outlets', confidence: 1.5 },
+        { id: 'quiet', confidence: -0.2 },
+      ],
     };
     const result = validateEnrichmentResult(withBadConfidence, taxonomy);
     expect(result.tags[0].confidence).toBe(1.0);
@@ -114,7 +144,10 @@ describe('validateEnrichmentResult', () => {
   });
 
   it('validates mode is one of the allowed values', () => {
-    const withBadMode = { ...validResult, mode: 'invalid' as EnrichmentData['mode'] };
+    const withBadMode = {
+      ...validResult,
+      mode: 'invalid' as EnrichmentData['mode'],
+    };
     const result = validateEnrichmentResult(withBadMode, taxonomy);
     expect(result.mode).toBe('mixed'); // fallback
   });

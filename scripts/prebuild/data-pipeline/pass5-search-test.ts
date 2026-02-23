@@ -43,7 +43,9 @@ export function computeTaxonomyBoost(
     if (!tag) continue;
 
     const chineseMatch = query.includes(tag.labelZh);
-    const escapedLabel = tag.label.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const escapedLabel = tag.label
+      .toLowerCase()
+      .replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const englishMatch = new RegExp(`\\b${escapedLabel}\\b`).test(queryLower);
 
     if (chineseMatch || englishMatch) {
@@ -76,7 +78,11 @@ export function rankResults(
   matchedTags: string[];
 }> {
   const scored = candidates.map((c) => {
-    const { boost, matchedTags } = computeTaxonomyBoost(query, c.shopTags, taxonomy);
+    const { boost, matchedTags } = computeTaxonomyBoost(
+      query,
+      c.shopTags,
+      taxonomy
+    );
     return {
       name: c.name,
       score: c.score,
@@ -97,12 +103,22 @@ export function rankResults(
 
 async function main() {
   console.log('[pass5] Loading data...');
-  const shopEmbeddings: ShopEmbedding[] = JSON.parse(readFileSync(EMBEDDINGS_FILE, 'utf-8'));
-  const enrichedShops: EnrichedShop[] = JSON.parse(readFileSync(ENRICHED_FILE, 'utf-8'));
-  const taxonomy: TaxonomyTag[] = JSON.parse(readFileSync(TAXONOMY_FILE, 'utf-8'));
-  const queries: SearchQuery[] = JSON.parse(readFileSync(QUERIES_FILE, 'utf-8'));
+  const shopEmbeddings: ShopEmbedding[] = JSON.parse(
+    readFileSync(EMBEDDINGS_FILE, 'utf-8')
+  );
+  const enrichedShops: EnrichedShop[] = JSON.parse(
+    readFileSync(ENRICHED_FILE, 'utf-8')
+  );
+  const taxonomy: TaxonomyTag[] = JSON.parse(
+    readFileSync(TAXONOMY_FILE, 'utf-8')
+  );
+  const queries: SearchQuery[] = JSON.parse(
+    readFileSync(QUERIES_FILE, 'utf-8')
+  );
 
-  console.log(`[pass5] ${shopEmbeddings.length} shops, ${queries.length} queries, ${taxonomy.length} tags`);
+  console.log(
+    `[pass5] ${shopEmbeddings.length} shops, ${queries.length} queries, ${taxonomy.length} tags`
+  );
 
   // Build a map from cafenomad_id → enrichment tags
   const enrichmentMap = new Map(
@@ -132,10 +148,11 @@ async function main() {
     });
 
     for (const r of topK) {
-      const boostStr = r.matchedTags.length > 0
-        ? ` (+${r.matchedTags.join(', ')})`
-        : '';
-      console.log(`  ${r.rank}. ${r.name} — ${r.boostedScore.toFixed(4)}${boostStr}`);
+      const boostStr =
+        r.matchedTags.length > 0 ? ` (+${r.matchedTags.join(', ')})` : '';
+      console.log(
+        `  ${r.rank}. ${r.name} — ${r.boostedScore.toFixed(4)}${boostStr}`
+      );
     }
   }
 
@@ -145,7 +162,9 @@ async function main() {
   console.log(`\n[pass5] Search test complete:`);
   console.log(`  Queries:  ${results.length}`);
   console.log(`  Saved to: ${OUTPUT_FILE}`);
-  console.log('\n[pass5] NEXT STEP: Review results manually. Score each query pass/fail.');
+  console.log(
+    '\n[pass5] NEXT STEP: Review results manually. Score each query pass/fail.'
+  );
   console.log('  Gate: 7/10 queries must return sensible top-3 results.');
 }
 

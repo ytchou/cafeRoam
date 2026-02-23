@@ -19,6 +19,7 @@
 ### Task 1: Install SDK dependencies and extend pipeline types
 
 **Files:**
+
 - Modify: `package.json` (add dependencies)
 - Modify: `scripts/prebuild/data-pipeline/types.ts` (add enrichment types)
 
@@ -109,6 +110,7 @@ git commit -m "feat(pipeline): install AI SDKs and add enrichment/embedding type
 ### Task 2: Retry utility with exponential backoff
 
 **Files:**
+
 - Create: `scripts/prebuild/data-pipeline/utils/retry.ts`
 - Create: `scripts/prebuild/data-pipeline/utils/retry.test.ts`
 
@@ -129,9 +131,7 @@ describe('withRetry', () => {
 
   it('retries on 429 status', async () => {
     const error429 = Object.assign(new Error('Rate limited'), { status: 429 });
-    const fn = vi.fn()
-      .mockRejectedValueOnce(error429)
-      .mockResolvedValue('ok');
+    const fn = vi.fn().mockRejectedValueOnce(error429).mockResolvedValue('ok');
 
     const result = await withRetry(fn, { maxRetries: 3, baseDelayMs: 1 });
     expect(result).toBe('ok');
@@ -140,9 +140,7 @@ describe('withRetry', () => {
 
   it('retries on 529 (Anthropic overloaded) status', async () => {
     const error529 = Object.assign(new Error('Overloaded'), { status: 529 });
-    const fn = vi.fn()
-      .mockRejectedValueOnce(error529)
-      .mockResolvedValue('ok');
+    const fn = vi.fn().mockRejectedValueOnce(error529).mockResolvedValue('ok');
 
     const result = await withRetry(fn, { maxRetries: 3, baseDelayMs: 1 });
     expect(result).toBe('ok');
@@ -153,7 +151,9 @@ describe('withRetry', () => {
     const error400 = Object.assign(new Error('Bad request'), { status: 400 });
     const fn = vi.fn().mockRejectedValue(error400);
 
-    await expect(withRetry(fn, { baseDelayMs: 1 })).rejects.toThrow('Bad request');
+    await expect(withRetry(fn, { baseDelayMs: 1 })).rejects.toThrow(
+      'Bad request'
+    );
     expect(fn).toHaveBeenCalledTimes(1);
   });
 
@@ -161,20 +161,26 @@ describe('withRetry', () => {
     const error429 = Object.assign(new Error('Rate limited'), { status: 429 });
     const fn = vi.fn().mockRejectedValue(error429);
 
-    await expect(withRetry(fn, { maxRetries: 2, baseDelayMs: 1 })).rejects.toThrow('Rate limited');
+    await expect(
+      withRetry(fn, { maxRetries: 2, baseDelayMs: 1 })
+    ).rejects.toThrow('Rate limited');
     expect(fn).toHaveBeenCalledTimes(3); // initial + 2 retries
   });
 
   it('uses exponential backoff delays', async () => {
     const error429 = Object.assign(new Error('Rate limited'), { status: 429 });
-    const fn = vi.fn()
+    const fn = vi
+      .fn()
       .mockRejectedValueOnce(error429)
       .mockRejectedValueOnce(error429)
       .mockResolvedValue('ok');
 
     const delays: number[] = [];
     const originalSetTimeout = globalThis.setTimeout;
-    vi.spyOn(globalThis, 'setTimeout').mockImplementation(((cb: () => void, ms: number) => {
+    vi.spyOn(globalThis, 'setTimeout').mockImplementation(((
+      cb: () => void,
+      ms: number
+    ) => {
       delays.push(ms);
       return originalSetTimeout(cb, 0); // skip real delays in tests
     }) as typeof setTimeout);
@@ -214,7 +220,9 @@ export async function withRetry<T>(
       if (!status || !RETRYABLE_STATUSES.has(status)) throw error;
 
       const delay = baseDelayMs * 2 ** attempt;
-      console.log(`  Rate limited (${status}), retrying in ${delay}ms (attempt ${attempt + 1}/${maxRetries})...`);
+      console.log(
+        `  Rate limited (${status}), retrying in ${delay}ms (attempt ${attempt + 1}/${maxRetries})...`
+      );
       await new Promise((resolve) => setTimeout(resolve, delay));
     }
   }
@@ -239,6 +247,7 @@ git commit -m "feat(pipeline): add retry utility with exponential backoff"
 ### Task 3: Cosine similarity utility
 
 **Files:**
+
 - Create: `scripts/prebuild/data-pipeline/utils/cosine.ts`
 - Create: `scripts/prebuild/data-pipeline/utils/cosine.test.ts`
 
@@ -270,7 +279,9 @@ describe('cosineSimilarity', () => {
   });
 
   it('throws on mismatched vector lengths', () => {
-    expect(() => cosineSimilarity([1, 2], [1, 2, 3])).toThrow('length mismatch');
+    expect(() => cosineSimilarity([1, 2], [1, 2, 3])).toThrow(
+      'length mismatch'
+    );
   });
 
   it('returns 0 for zero vector', () => {
@@ -328,6 +339,7 @@ git commit -m "feat(pipeline): add cosine similarity utility"
 ### Task 4: Anthropic client wrapper
 
 **Files:**
+
 - Create: `scripts/prebuild/data-pipeline/utils/anthropic-client.ts`
 
 No test needed — thin SDK wrapper following existing pattern (`utils/apify-client.ts` has no dedicated tests). Business logic tested through pass script integration tests.
@@ -421,6 +433,7 @@ git commit -m "feat(pipeline): add Anthropic client wrapper with tool use"
 ### Task 5: OpenAI embeddings client wrapper
 
 **Files:**
+
 - Create: `scripts/prebuild/data-pipeline/utils/openai-client.ts`
 
 No test needed — thin SDK wrapper. Tested through pass script integration tests.
@@ -489,6 +502,7 @@ git commit -m "feat(pipeline): add OpenAI embeddings client wrapper"
 ### Task 6: Pass 3a — Taxonomy seed generator
 
 **Files:**
+
 - Create: `scripts/prebuild/data-pipeline/pass3a-taxonomy-seed.ts`
 - Create: `scripts/prebuild/data-pipeline/pass3a-taxonomy-seed.test.ts`
 
@@ -537,8 +551,18 @@ describe('sampleReviews', () => {
     const shop = makeShop({
       reviews: [
         { text: 'short', stars: 5, published_at: '', language: 'unknown' },
-        { text: 'this is a much longer review with details', stars: 4, published_at: '', language: 'unknown' },
-        { text: 'medium length review', stars: 3, published_at: '', language: 'unknown' },
+        {
+          text: 'this is a much longer review with details',
+          stars: 4,
+          published_at: '',
+          language: 'unknown',
+        },
+        {
+          text: 'medium length review',
+          stars: 3,
+          published_at: '',
+          language: 'unknown',
+        },
       ],
     });
 
@@ -553,7 +577,12 @@ describe('sampleReviews', () => {
       reviews: [
         { text: '', stars: 5, published_at: '', language: 'unknown' },
         { text: '  ', stars: 4, published_at: '', language: 'unknown' },
-        { text: 'actual review text', stars: 3, published_at: '', language: 'unknown' },
+        {
+          text: 'actual review text',
+          stars: 3,
+          published_at: '',
+          language: 'unknown',
+        },
       ],
     });
 
@@ -564,7 +593,12 @@ describe('sampleReviews', () => {
   it('handles shops with fewer reviews than perShop', () => {
     const shop = makeShop({
       reviews: [
-        { text: 'only one review', stars: 5, published_at: '', language: 'unknown' },
+        {
+          text: 'only one review',
+          stars: 5,
+          published_at: '',
+          language: 'unknown',
+        },
       ],
     });
 
@@ -576,13 +610,23 @@ describe('sampleReviews', () => {
     const shop1 = makeShop({
       name: 'Shop A',
       reviews: [
-        { text: 'review from shop A', stars: 5, published_at: '', language: 'unknown' },
+        {
+          text: 'review from shop A',
+          stars: 5,
+          published_at: '',
+          language: 'unknown',
+        },
       ],
     });
     const shop2 = makeShop({
       name: 'Shop B',
       reviews: [
-        { text: 'review from shop B', stars: 4, published_at: '', language: 'unknown' },
+        {
+          text: 'review from shop B',
+          stars: 4,
+          published_at: '',
+          language: 'unknown',
+        },
       ],
     });
 
@@ -598,7 +642,9 @@ describe('sampleReviews', () => {
 describe('flattenProposalToTags', () => {
   it('flattens all dimensions into a single TaxonomyTag array', () => {
     const proposal: TaxonomyProposal = {
-      functionality: [{ id: 'has_outlets', label: 'Has outlets', labelZh: '有插座' }],
+      functionality: [
+        { id: 'has_outlets', label: 'Has outlets', labelZh: '有插座' },
+      ],
       time: [{ id: 'late_night', label: 'Late night', labelZh: '深夜營業' }],
       ambience: [{ id: 'quiet', label: 'Quiet', labelZh: '安靜' }],
       mode: [{ id: 'deep_work', label: 'Deep work', labelZh: '專注工作' }],
@@ -606,10 +652,30 @@ describe('flattenProposalToTags', () => {
 
     const tags = flattenProposalToTags(proposal);
     expect(tags).toHaveLength(4);
-    expect(tags[0]).toEqual({ id: 'has_outlets', dimension: 'functionality', label: 'Has outlets', labelZh: '有插座' });
-    expect(tags[1]).toEqual({ id: 'late_night', dimension: 'time', label: 'Late night', labelZh: '深夜營業' });
-    expect(tags[2]).toEqual({ id: 'quiet', dimension: 'ambience', label: 'Quiet', labelZh: '安靜' });
-    expect(tags[3]).toEqual({ id: 'deep_work', dimension: 'mode', label: 'Deep work', labelZh: '專注工作' });
+    expect(tags[0]).toEqual({
+      id: 'has_outlets',
+      dimension: 'functionality',
+      label: 'Has outlets',
+      labelZh: '有插座',
+    });
+    expect(tags[1]).toEqual({
+      id: 'late_night',
+      dimension: 'time',
+      label: 'Late night',
+      labelZh: '深夜營業',
+    });
+    expect(tags[2]).toEqual({
+      id: 'quiet',
+      dimension: 'ambience',
+      label: 'Quiet',
+      labelZh: '安靜',
+    });
+    expect(tags[3]).toEqual({
+      id: 'deep_work',
+      dimension: 'mode',
+      label: 'Deep work',
+      labelZh: '專注工作',
+    });
   });
 });
 ```
@@ -625,7 +691,11 @@ Expected: FAIL — cannot find module / functions not exported
 // scripts/prebuild/data-pipeline/pass3a-taxonomy-seed.ts
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { parseArgs } from 'node:util';
-import { callClaudeWithTool, MODELS, type ModelAlias } from './utils/anthropic-client';
+import {
+  callClaudeWithTool,
+  MODELS,
+  type ModelAlias,
+} from './utils/anthropic-client';
 import type Anthropic from '@anthropic-ai/sdk';
 import type { Pass2Shop, TaxonomyTag, TaxonomyProposal } from './types';
 
@@ -642,7 +712,10 @@ const DEFAULT_PER_SHOP = 2;
  * Sample the longest non-empty reviews from each shop.
  * Returns an array of review texts.
  */
-export function sampleReviews(shops: Pass2Shop[], perShop: number = DEFAULT_PER_SHOP): string[] {
+export function sampleReviews(
+  shops: Pass2Shop[],
+  perShop: number = DEFAULT_PER_SHOP
+): string[] {
   const samples: string[] = [];
 
   for (const shop of shops) {
@@ -658,7 +731,9 @@ export function sampleReviews(shops: Pass2Shop[], perShop: number = DEFAULT_PER_
 /**
  * Flatten a TaxonomyProposal (grouped by dimension) into a flat TaxonomyTag array.
  */
-export function flattenProposalToTags(proposal: TaxonomyProposal): TaxonomyTag[] {
+export function flattenProposalToTags(
+  proposal: TaxonomyProposal
+): TaxonomyTag[] {
   const dimensions = ['functionality', 'time', 'ambience', 'mode'] as const;
   const tags: TaxonomyTag[] = [];
 
@@ -702,7 +777,8 @@ ${reviewBlock}`;
 
 const TAXONOMY_TOOL: Anthropic.Tool = {
   name: 'propose_taxonomy',
-  description: 'Propose a taxonomy of tags for classifying coffee shops, organized by dimension',
+  description:
+    'Propose a taxonomy of tags for classifying coffee shops, organized by dimension',
   input_schema: {
     type: 'object' as const,
     properties: {
@@ -711,9 +787,15 @@ const TAXONOMY_TOOL: Anthropic.Tool = {
         items: {
           type: 'object',
           properties: {
-            id: { type: 'string', description: 'snake_case English identifier' },
+            id: {
+              type: 'string',
+              description: 'snake_case English identifier',
+            },
             label: { type: 'string', description: 'English label' },
-            labelZh: { type: 'string', description: 'Traditional Chinese label' },
+            labelZh: {
+              type: 'string',
+              description: 'Traditional Chinese label',
+            },
           },
           required: ['id', 'label', 'labelZh'],
         },
@@ -779,7 +861,9 @@ async function main() {
   console.log(`[pass3a] Loaded ${shops.length} shops`);
 
   const reviews = sampleReviews(shops, perShop);
-  console.log(`[pass3a] Sampled ${reviews.length} reviews (${perShop} per shop)`);
+  console.log(
+    `[pass3a] Sampled ${reviews.length} reviews (${perShop} per shop)`
+  );
 
   console.log(`[pass3a] Calling Claude (${modelId})...`);
   const result = await callClaudeWithTool<TaxonomyProposal>({
@@ -808,10 +892,16 @@ async function main() {
   console.log(`  ambience:      ${counts.ambience} tags`);
   console.log(`  mode:          ${counts.mode} tags`);
   console.log(`  TOTAL:         ${tags.length} tags`);
-  console.log(`  Tokens:        ${result.usage.inputTokens} in / ${result.usage.outputTokens} out`);
+  console.log(
+    `  Tokens:        ${result.usage.inputTokens} in / ${result.usage.outputTokens} out`
+  );
   console.log(`  Saved to:      ${OUTPUT_FILE}`);
-  console.log('\n[pass3a] NEXT STEP: Review and curate taxonomy-proposed.json → taxonomy.json');
-  console.log('  Copy the file, remove/rename tags as needed, then run pass3b.');
+  console.log(
+    '\n[pass3a] NEXT STEP: Review and curate taxonomy-proposed.json → taxonomy.json'
+  );
+  console.log(
+    '  Copy the file, remove/rename tags as needed, then run pass3b.'
+  );
 }
 
 const isDirectRun = process.argv[1]?.includes('pass3a-taxonomy-seed');
@@ -840,6 +930,7 @@ git commit -m "feat(pipeline): add Pass 3a taxonomy seed generator"
 ### Task 7: Pass 3b — Enrichment worker
 
 **Files:**
+
 - Create: `scripts/prebuild/data-pipeline/pass3b-enrich.ts`
 - Create: `scripts/prebuild/data-pipeline/pass3b-enrich.test.ts`
 
@@ -858,9 +949,19 @@ import type { Pass2Shop, TaxonomyTag, EnrichmentData } from './types';
 // ─── Fixtures ──────────────────────────────────────────────────
 
 const taxonomy: TaxonomyTag[] = [
-  { id: 'has_outlets', dimension: 'functionality', label: 'Has outlets', labelZh: '有插座' },
+  {
+    id: 'has_outlets',
+    dimension: 'functionality',
+    label: 'Has outlets',
+    labelZh: '有插座',
+  },
   { id: 'quiet', dimension: 'ambience', label: 'Quiet', labelZh: '安靜' },
-  { id: 'deep_work', dimension: 'mode', label: 'Deep work', labelZh: '專注工作' },
+  {
+    id: 'deep_work',
+    dimension: 'mode',
+    label: 'Deep work',
+    labelZh: '專注工作',
+  },
 ];
 
 function makeShop(overrides: Partial<Pass2Shop> = {}): Pass2Shop {
@@ -886,9 +987,19 @@ function makeShop(overrides: Partial<Pass2Shop> = {}): Pass2Shop {
     socket: 'yes',
     social_url: '',
     reviews: [
-      { text: '很安靜適合工作', stars: 5, published_at: '3 個月前', language: 'unknown' },
+      {
+        text: '很安靜適合工作',
+        stars: 5,
+        published_at: '3 個月前',
+        language: 'unknown',
+      },
       { text: '', stars: 4, published_at: '1 年前', language: 'unknown' },
-      { text: '咖啡很好喝', stars: 5, published_at: '6 個月前', language: 'unknown' },
+      {
+        text: '咖啡很好喝',
+        stars: 5,
+        published_at: '6 個月前',
+        language: 'unknown',
+      },
     ],
     photos: [],
     ...overrides,
@@ -930,7 +1041,10 @@ describe('buildEnrichmentPrompt', () => {
 
 describe('validateEnrichmentResult', () => {
   const validResult: EnrichmentData = {
-    tags: [{ id: 'has_outlets', confidence: 0.9 }, { id: 'quiet', confidence: 0.7 }],
+    tags: [
+      { id: 'has_outlets', confidence: 0.9 },
+      { id: 'quiet', confidence: 0.7 },
+    ],
     summary: 'A quiet cafe with outlets, perfect for working.',
     topReviews: ['很安靜適合工作'],
     mode: 'work',
@@ -939,7 +1053,9 @@ describe('validateEnrichmentResult', () => {
   };
 
   it('accepts valid enrichment result', () => {
-    expect(validateEnrichmentResult(validResult, taxonomy)).toEqual(validResult);
+    expect(validateEnrichmentResult(validResult, taxonomy)).toEqual(
+      validResult
+    );
   });
 
   it('filters out unknown tag IDs', () => {
@@ -949,13 +1065,18 @@ describe('validateEnrichmentResult', () => {
     };
     const result = validateEnrichmentResult(withUnknown, taxonomy);
     expect(result.tags).toHaveLength(2);
-    expect(result.tags.every((t) => taxonomy.some((tx) => tx.id === t.id))).toBe(true);
+    expect(
+      result.tags.every((t) => taxonomy.some((tx) => tx.id === t.id))
+    ).toBe(true);
   });
 
   it('clamps confidence to [0, 1] range', () => {
     const withBadConfidence = {
       ...validResult,
-      tags: [{ id: 'has_outlets', confidence: 1.5 }, { id: 'quiet', confidence: -0.2 }],
+      tags: [
+        { id: 'has_outlets', confidence: 1.5 },
+        { id: 'quiet', confidence: -0.2 },
+      ],
     };
     const result = validateEnrichmentResult(withBadConfidence, taxonomy);
     expect(result.tags[0].confidence).toBe(1.0);
@@ -963,7 +1084,10 @@ describe('validateEnrichmentResult', () => {
   });
 
   it('validates mode is one of the allowed values', () => {
-    const withBadMode = { ...validResult, mode: 'invalid' as EnrichmentData['mode'] };
+    const withBadMode = {
+      ...validResult,
+      mode: 'invalid' as EnrichmentData['mode'],
+    };
     const result = validateEnrichmentResult(withBadMode, taxonomy);
     expect(result.mode).toBe('mixed'); // fallback
   });
@@ -1006,9 +1130,18 @@ Expected: FAIL — cannot find module / functions not exported
 ```typescript
 // scripts/prebuild/data-pipeline/pass3b-enrich.ts
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
-import { callClaudeWithTool, MODELS, type ModelAlias } from './utils/anthropic-client';
+import {
+  callClaudeWithTool,
+  MODELS,
+  type ModelAlias,
+} from './utils/anthropic-client';
 import type Anthropic from '@anthropic-ai/sdk';
-import type { Pass2Shop, TaxonomyTag, EnrichmentData, EnrichedShop } from './types';
+import type {
+  Pass2Shop,
+  TaxonomyTag,
+  EnrichmentData,
+  EnrichedShop,
+} from './types';
 
 // ─── Constants ─────────────────────────────────────────────────
 
@@ -1044,7 +1177,10 @@ export function parseCliArgs(argv: string[]): CliArgs {
   return args;
 }
 
-export function buildEnrichmentPrompt(shop: Pass2Shop, taxonomy: TaxonomyTag[]): string {
+export function buildEnrichmentPrompt(
+  shop: Pass2Shop,
+  taxonomy: TaxonomyTag[]
+): string {
   const nonEmptyReviews = shop.reviews
     .filter((r) => r.text.trim().length > 0)
     .map((r, i) => `[${i + 1}] (${r.stars}★) ${r.text}`);
@@ -1105,7 +1241,8 @@ Rules:
 
 const ENRICHMENT_TOOL: Anthropic.Tool = {
   name: 'classify_shop',
-  description: 'Classify a coffee shop based on its reviews using the provided taxonomy',
+  description:
+    'Classify a coffee shop based on its reviews using the provided taxonomy',
   input_schema: {
     type: 'object' as const,
     properties: {
@@ -1114,8 +1251,14 @@ const ENRICHMENT_TOOL: Anthropic.Tool = {
         items: {
           type: 'object',
           properties: {
-            id: { type: 'string', description: 'Tag ID from the taxonomy list' },
-            confidence: { type: 'number', description: 'Confidence score 0.0-1.0' },
+            id: {
+              type: 'string',
+              description: 'Tag ID from the taxonomy list',
+            },
+            confidence: {
+              type: 'number',
+              description: 'Confidence score 0.0-1.0',
+            },
           },
           required: ['id', 'confidence'],
         },
@@ -1151,20 +1294,28 @@ async function main() {
   console.log(`[pass3b] Dry run: ${args.dryRun}`);
 
   const shops: Pass2Shop[] = JSON.parse(readFileSync(PASS2_FILE, 'utf-8'));
-  const taxonomy: TaxonomyTag[] = JSON.parse(readFileSync(TAXONOMY_FILE, 'utf-8'));
-  console.log(`[pass3b] Loaded ${shops.length} shops, ${taxonomy.length} taxonomy tags`);
+  const taxonomy: TaxonomyTag[] = JSON.parse(
+    readFileSync(TAXONOMY_FILE, 'utf-8')
+  );
+  console.log(
+    `[pass3b] Loaded ${shops.length} shops, ${taxonomy.length} taxonomy tags`
+  );
 
   // Load existing results for resume support
   let enriched: EnrichedShop[] = [];
   try {
     enriched = JSON.parse(readFileSync(OUTPUT_FILE, 'utf-8'));
-    console.log(`[pass3b] Loaded ${enriched.length} existing results for resume`);
+    console.log(
+      `[pass3b] Loaded ${enriched.length} existing results for resume`
+    );
   } catch {
     // No existing results — start fresh
   }
 
   const enrichedIds = new Set(enriched.map((s) => s.cafenomad_id));
-  const toProcess = args.dryRun ? shops.slice(0, 1) : shops.slice(args.startFrom);
+  const toProcess = args.dryRun
+    ? shops.slice(0, 1)
+    : shops.slice(args.startFrom);
 
   let totalIn = 0;
   let totalOut = 0;
@@ -1172,11 +1323,15 @@ async function main() {
   for (let i = 0; i < toProcess.length; i++) {
     const shop = toProcess[i];
     if (enrichedIds.has(shop.cafenomad_id)) {
-      console.log(`  [${args.startFrom + i + 1}/${shops.length}] ${shop.name} — skipped (already enriched)`);
+      console.log(
+        `  [${args.startFrom + i + 1}/${shops.length}] ${shop.name} — skipped (already enriched)`
+      );
       continue;
     }
 
-    console.log(`  [${args.startFrom + i + 1}/${shops.length}] ${shop.name}...`);
+    console.log(
+      `  [${args.startFrom + i + 1}/${shops.length}] ${shop.name}...`
+    );
 
     try {
       const prompt = buildEnrichmentPrompt(shop, taxonomy);
@@ -1205,10 +1360,16 @@ async function main() {
       mkdirSync(OUTPUT_DIR, { recursive: true });
       writeFileSync(OUTPUT_FILE, JSON.stringify(enriched, null, 2));
 
-      console.log(`    → ${validated.tags.length} tags, mode: ${validated.mode}`);
+      console.log(
+        `    → ${validated.tags.length} tags, mode: ${validated.mode}`
+      );
     } catch (err) {
-      console.error(`    ✗ Failed: ${err instanceof Error ? err.message : err}`);
-      console.error(`    Skipping. Resume later with --start-from ${args.startFrom + i}`);
+      console.error(
+        `    ✗ Failed: ${err instanceof Error ? err.message : err}`
+      );
+      console.error(
+        `    Skipping. Resume later with --start-from ${args.startFrom + i}`
+      );
     }
   }
 
@@ -1244,6 +1405,7 @@ git commit -m "feat(pipeline): add Pass 3b enrichment worker with Claude tool us
 ### Task 8: Pass 4 — Embedding generator
 
 **Files:**
+
 - Create: `scripts/prebuild/data-pipeline/pass4-embed.ts`
 - Create: `scripts/prebuild/data-pipeline/pass4-embed.test.ts`
 
@@ -1258,7 +1420,12 @@ import type { EnrichedShop, EnrichmentData, TaxonomyTag } from './types';
 // ─── Fixtures ──────────────────────────────────────────────────
 
 const taxonomy: TaxonomyTag[] = [
-  { id: 'has_outlets', dimension: 'functionality', label: 'Has outlets', labelZh: '有插座' },
+  {
+    id: 'has_outlets',
+    dimension: 'functionality',
+    label: 'Has outlets',
+    labelZh: '有插座',
+  },
   { id: 'quiet', dimension: 'ambience', label: 'Quiet', labelZh: '安靜' },
 ];
 
@@ -1377,7 +1544,10 @@ const EMBEDDING_MODEL = 'text-embedding-3-small';
  * Compose the text that will be embedded for a single shop.
  * Structure: name → summary → tags (bilingual) → top reviews.
  */
-export function composeEmbeddingText(shop: EnrichedShop, taxonomy: TaxonomyTag[]): string {
+export function composeEmbeddingText(
+  shop: EnrichedShop,
+  taxonomy: TaxonomyTag[]
+): string {
   const tagMap = new Map(taxonomy.map((t) => [t.id, t]));
 
   const tagLabels = shop.enrichment.tags
@@ -1409,13 +1579,21 @@ export function composeEmbeddingText(shop: EnrichedShop, taxonomy: TaxonomyTag[]
 
 async function main() {
   console.log(`[pass4] Reading enriched data...`);
-  const shops: EnrichedShop[] = JSON.parse(readFileSync(ENRICHED_FILE, 'utf-8'));
-  const taxonomy: TaxonomyTag[] = JSON.parse(readFileSync(TAXONOMY_FILE, 'utf-8'));
-  console.log(`[pass4] Loaded ${shops.length} enriched shops, ${taxonomy.length} taxonomy tags`);
+  const shops: EnrichedShop[] = JSON.parse(
+    readFileSync(ENRICHED_FILE, 'utf-8')
+  );
+  const taxonomy: TaxonomyTag[] = JSON.parse(
+    readFileSync(TAXONOMY_FILE, 'utf-8')
+  );
+  console.log(
+    `[pass4] Loaded ${shops.length} enriched shops, ${taxonomy.length} taxonomy tags`
+  );
 
   const texts = shops.map((shop) => composeEmbeddingText(shop, taxonomy));
 
-  console.log(`[pass4] Embedding ${texts.length} texts with ${EMBEDDING_MODEL}...`);
+  console.log(
+    `[pass4] Embedding ${texts.length} texts with ${EMBEDDING_MODEL}...`
+  );
   const embeddings = await embedTexts(texts, EMBEDDING_MODEL);
 
   const output: ShopEmbedding[] = shops.map((shop, i) => ({
@@ -1463,6 +1641,7 @@ git commit -m "feat(pipeline): add Pass 4 embedding generator"
 ### Task 9: Search queries config file
 
 **Files:**
+
 - Create: `scripts/prebuild/data-pipeline/search-queries.json`
 
 No test needed — static configuration file.
@@ -1548,6 +1727,7 @@ git commit -m "feat(pipeline): add 10 search test queries for validation gate"
 ### Task 10: Pass 5 — Search prototype
 
 **Files:**
+
 - Create: `scripts/prebuild/data-pipeline/pass5-search-test.ts`
 - Create: `scripts/prebuild/data-pipeline/pass5-search-test.test.ts`
 
@@ -1562,9 +1742,19 @@ import type { TaxonomyTag, ShopEmbedding } from './types';
 // ─── Fixtures ──────────────────────────────────────────────────
 
 const taxonomy: TaxonomyTag[] = [
-  { id: 'has_outlets', dimension: 'functionality', label: 'Has outlets', labelZh: '有插座' },
+  {
+    id: 'has_outlets',
+    dimension: 'functionality',
+    label: 'Has outlets',
+    labelZh: '有插座',
+  },
   { id: 'quiet', dimension: 'ambience', label: 'Quiet', labelZh: '安靜' },
-  { id: 'late_night', dimension: 'time', label: 'Late night', labelZh: '深夜營業' },
+  {
+    id: 'late_night',
+    dimension: 'time',
+    label: 'Late night',
+    labelZh: '深夜營業',
+  },
 ];
 
 const shopTags = [
@@ -1612,10 +1802,29 @@ describe('computeTaxonomyBoost', () => {
 // ─── rankResults ───────────────────────────────────────────────
 
 describe('rankResults', () => {
-  const mockEmbeddings: Array<{ name: string; score: number; shopTags: Array<{ id: string; confidence: number }> }> = [
-    { name: 'Shop A', score: 0.8, shopTags: [{ id: 'has_outlets', confidence: 0.9 }] },
-    { name: 'Shop B', score: 0.85, shopTags: [{ id: 'quiet', confidence: 0.7 }] },
-    { name: 'Shop C', score: 0.7, shopTags: [{ id: 'has_outlets', confidence: 0.9 }, { id: 'quiet', confidence: 0.7 }] },
+  const mockEmbeddings: Array<{
+    name: string;
+    score: number;
+    shopTags: Array<{ id: string; confidence: number }>;
+  }> = [
+    {
+      name: 'Shop A',
+      score: 0.8,
+      shopTags: [{ id: 'has_outlets', confidence: 0.9 }],
+    },
+    {
+      name: 'Shop B',
+      score: 0.85,
+      shopTags: [{ id: 'quiet', confidence: 0.7 }],
+    },
+    {
+      name: 'Shop C',
+      score: 0.7,
+      shopTags: [
+        { id: 'has_outlets', confidence: 0.9 },
+        { id: 'quiet', confidence: 0.7 },
+      ],
+    },
   ];
 
   it('ranks by boosted score descending', () => {
@@ -1691,7 +1900,10 @@ export function computeTaxonomyBoost(
     const tag = tagMap.get(shopTag.id);
     if (!tag) continue;
 
-    if (queryLower.includes(tag.label.toLowerCase()) || query.includes(tag.labelZh)) {
+    if (
+      queryLower.includes(tag.label.toLowerCase()) ||
+      query.includes(tag.labelZh)
+    ) {
       matchedTags.push(tag.id);
     }
   }
@@ -1721,7 +1933,11 @@ export function rankResults(
   matchedTags: string[];
 }> {
   const scored = candidates.map((c) => {
-    const { boost, matchedTags } = computeTaxonomyBoost(query, c.shopTags, taxonomy);
+    const { boost, matchedTags } = computeTaxonomyBoost(
+      query,
+      c.shopTags,
+      taxonomy
+    );
     return {
       name: c.name,
       score: c.score,
@@ -1742,12 +1958,22 @@ export function rankResults(
 
 async function main() {
   console.log('[pass5] Loading data...');
-  const shopEmbeddings: ShopEmbedding[] = JSON.parse(readFileSync(EMBEDDINGS_FILE, 'utf-8'));
-  const enrichedShops: EnrichedShop[] = JSON.parse(readFileSync(ENRICHED_FILE, 'utf-8'));
-  const taxonomy: TaxonomyTag[] = JSON.parse(readFileSync(TAXONOMY_FILE, 'utf-8'));
-  const queries: SearchQuery[] = JSON.parse(readFileSync(QUERIES_FILE, 'utf-8'));
+  const shopEmbeddings: ShopEmbedding[] = JSON.parse(
+    readFileSync(EMBEDDINGS_FILE, 'utf-8')
+  );
+  const enrichedShops: EnrichedShop[] = JSON.parse(
+    readFileSync(ENRICHED_FILE, 'utf-8')
+  );
+  const taxonomy: TaxonomyTag[] = JSON.parse(
+    readFileSync(TAXONOMY_FILE, 'utf-8')
+  );
+  const queries: SearchQuery[] = JSON.parse(
+    readFileSync(QUERIES_FILE, 'utf-8')
+  );
 
-  console.log(`[pass5] ${shopEmbeddings.length} shops, ${queries.length} queries, ${taxonomy.length} tags`);
+  console.log(
+    `[pass5] ${shopEmbeddings.length} shops, ${queries.length} queries, ${taxonomy.length} tags`
+  );
 
   // Build a map from cafenomad_id → enrichment tags
   const enrichmentMap = new Map(
@@ -1777,10 +2003,11 @@ async function main() {
     });
 
     for (const r of topK) {
-      const boostStr = r.matchedTags.length > 0
-        ? ` (+${r.matchedTags.join(', ')})`
-        : '';
-      console.log(`  ${r.rank}. ${r.name} — ${r.boostedScore.toFixed(4)}${boostStr}`);
+      const boostStr =
+        r.matchedTags.length > 0 ? ` (+${r.matchedTags.join(', ')})` : '';
+      console.log(
+        `  ${r.rank}. ${r.name} — ${r.boostedScore.toFixed(4)}${boostStr}`
+      );
     }
   }
 
@@ -1790,7 +2017,9 @@ async function main() {
   console.log(`\n[pass5] Search test complete:`);
   console.log(`  Queries:  ${results.length}`);
   console.log(`  Saved to: ${OUTPUT_FILE}`);
-  console.log('\n[pass5] NEXT STEP: Review results manually. Score each query pass/fail.');
+  console.log(
+    '\n[pass5] NEXT STEP: Review results manually. Score each query pass/fail.'
+  );
   console.log('  Gate: 7/10 queries must return sensible top-3 results.');
 }
 
@@ -1820,6 +2049,7 @@ git commit -m "feat(pipeline): add Pass 5 search prototype with taxonomy boost"
 ### Task 11: Add pnpm scripts and final verification
 
 **Files:**
+
 - Modify: `package.json` (add scripts)
 
 No test needed — configuration change, verified by running tests.
@@ -1906,24 +2136,29 @@ graph TD
 ```
 
 **Wave 1** (parallel — no dependencies):
+
 - Task 1: Install SDK dependencies and extend pipeline types
 - Task 2: Retry utility with exponential backoff
 - Task 3: Cosine similarity utility
 - Task 9: Search queries config file
 
 **Wave 2** (parallel — depends on Wave 1):
+
 - Task 4: Anthropic client wrapper ← Tasks 1, 2
 - Task 5: OpenAI embeddings client wrapper ← Tasks 1, 2
 
 **Wave 3** (parallel — depends on Wave 2):
+
 - Task 6: Pass 3a taxonomy seed generator ← Tasks 1, 4
 - Task 7: Pass 3b enrichment worker ← Tasks 1, 4
 - Task 8: Pass 4 embedding generator ← Tasks 1, 5
 
 **Wave 4** (depends on Waves 1, 2, 3):
+
 - Task 10: Pass 5 search prototype ← Tasks 3, 5
 
 **Wave 5** (depends on all):
+
 - Task 11: Add pnpm scripts and final verification
 
 ---
