@@ -101,3 +101,66 @@ describe('scoreTagDistinctiveness', () => {
     expect(scored[0].distinctiveness).toBe(0);
   });
 });
+
+// ─── inferModes ────────────────────────────────────────────────
+
+describe('inferModes', () => {
+  it('infers work mode from work signal tags', () => {
+    const tags = [
+      { id: 'deep_work', confidence: 0.9 },
+      { id: 'power_outlets', confidence: 0.8 },
+    ];
+    const modes = inferModes(tags, 'mixed');
+    expect(modes).toContain('work');
+  });
+
+  it('infers multiple modes when signals overlap', () => {
+    const tags = [
+      { id: 'deep_work', confidence: 0.9 },
+      { id: 'catch_up_friends', confidence: 0.7 },
+      { id: 'specialty_coffee_focused', confidence: 0.8 },
+    ];
+    const modes = inferModes(tags, 'mixed');
+    expect(modes).toContain('work');
+    expect(modes).toContain('social');
+    expect(modes).toContain('coffee');
+  });
+
+  it('ignores signal tags below confidence threshold', () => {
+    const tags = [
+      { id: 'deep_work', confidence: 0.3 }, // below 0.5 threshold
+      { id: 'catch_up_friends', confidence: 0.7 },
+    ];
+    const modes = inferModes(tags, 'mixed');
+    expect(modes).not.toContain('work');
+    expect(modes).toContain('social');
+  });
+
+  it('falls back to original mode when no signals match', () => {
+    const tags = [
+      { id: 'some_unrelated_tag', confidence: 0.9 },
+    ];
+    const modes = inferModes(tags, 'social');
+    expect(modes).toEqual(['social']);
+  });
+
+  it('falls back to rest when original mode is mixed and no signals match', () => {
+    const tags = [
+      { id: 'some_unrelated_tag', confidence: 0.9 },
+    ];
+    const modes = inferModes(tags, 'mixed');
+    expect(modes).toEqual(['rest']);
+  });
+
+  it('returns modes in consistent order: work, rest, social, coffee', () => {
+    const tags = [
+      { id: 'specialty_coffee_focused', confidence: 0.8 },
+      { id: 'deep_work', confidence: 0.9 },
+      { id: 'quiet', confidence: 0.7 },
+      { id: 'catch_up_friends', confidence: 0.6 },
+    ];
+    const modes = inferModes(tags, 'mixed');
+    // Order follows MODE_SIGNALS iteration: work, rest, social, coffee
+    expect(modes).toEqual(['work', 'rest', 'social', 'coffee']);
+  });
+});
