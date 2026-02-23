@@ -51,8 +51,27 @@ Must complete BEFORE starting Phase 1. These are FATAL risks from VALIDATION.md 
 Core infrastructure everything else depends on. No user-facing product yet.
 
 ### Project Setup
-- [ ] Project scaffold: Next.js 15 + TypeScript strict + Tailwind CSS + shadcn/ui
-- [ ] `.env.example` complete, `pnpm setup` script working end-to-end
+> **Design Doc:** [docs/designs/2026-02-23-project-setup-design.md](docs/designs/2026-02-23-project-setup-design.md)
+> **Plan:** [docs/plans/2026-02-23-project-setup-plan.md](docs/plans/2026-02-23-project-setup-plan.md)
+
+**Chunk 1 — Scaffold & Config:**
+- [ ] Generate Next.js 15 scaffold (temp dir)
+- [ ] Copy configs, merge package.json, install deps
+- [ ] App shell: root layout + landing page + Tailwind v4 globals
+- [ ] Initialize shadcn/ui
+
+**Chunk 2 — Routes & Architecture:**
+- [ ] Route group skeleton (auth, protected, API stubs)
+- [ ] Domain types (Shop, User, List, CheckIn, Stamp, Taxonomy)
+- [ ] Provider interfaces (LLM, Embeddings, Email, Maps, Analytics)
+- [ ] Provider adapter stubs + env-based factories
+- [ ] Service interface stubs (Search, CheckIn, Lists)
+- [ ] Supabase client factory (browser + server)
+
+**Chunk 3 — Verification:**
+- [ ] Full test suite passes
+- [ ] Lint + type-check + production build pass
+- [ ] All routes accessible in browser
 
 ### Database & Infrastructure
 - [ ] Supabase setup: Postgres schema, pgvector extension enabled, RLS policies on all tables
