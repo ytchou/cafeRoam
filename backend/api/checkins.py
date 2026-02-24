@@ -1,6 +1,6 @@
 from typing import Any
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
 from api.deps import get_current_user
@@ -25,14 +25,17 @@ async def create_checkin(
     """Create a check-in. Auth required."""
     db = get_supabase_client()
     service = CheckInService(db=db)
-    result = await service.create(
-        user_id=user["id"],
-        shop_id=body.shop_id,
-        photo_urls=body.photo_urls,
-        menu_photo_url=body.menu_photo_url,
-        note=body.note,
-    )
-    return result.model_dump()
+    try:
+        result = await service.create(
+            user_id=user["id"],
+            shop_id=body.shop_id,
+            photo_urls=body.photo_urls,
+            menu_photo_url=body.menu_photo_url,
+            note=body.note,
+        )
+        return result.model_dump()
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from None
 
 
 @router.get("/")

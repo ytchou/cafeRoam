@@ -28,6 +28,6 @@ export async function proxyToBackend(
   const res = await fetch(backendUrl, init);
   return new Response(res.body, {
     status: res.status,
-    headers: { "Content-Type": "application/json" },
+    headers: res.headers,
   });
 }

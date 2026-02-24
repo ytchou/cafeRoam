@@ -33,7 +33,7 @@ class SearchService:
 
         results: list[SearchResult] = []
         for row in rows:
-            similarity = row.pop("similarity", 0.0)
+            similarity = row.get("similarity", 0.0)
             taxonomy_boost = self._compute_taxonomy_boost(row, query)
 
             eligible_keys = Shop.model_fields.keys() - _SHOP_FIELDS_HANDLED_SEPARATELY
@@ -59,4 +59,5 @@ class SearchService:
         """Compute taxonomy boost based on tag overlap with query filters."""
         if not query.filters or not query.filters.dimensions:
             return 0.0
+        # TODO: implement taxonomy boost — compare row["taxonomy_tags"] against query.filters.dimensions
         return 0.0

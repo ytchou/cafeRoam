@@ -23,7 +23,7 @@ async def get_current_user(request: Request) -> dict[str, Any]:
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid or expired token",
             )
-        return {"id": response.user.id, "email": response.user.email}
+        return {"id": response.user.id}
     except HTTPException:
         raise
     except Exception:
@@ -45,6 +45,6 @@ async def get_optional_user(request: Request) -> dict[str, Any] | None:
         response = client.auth.get_user(token)
         if response is None or response.user is None:
             return None
-        return {"id": response.user.id, "email": response.user.email}
+        return {"id": response.user.id}
     except Exception:
         return None
