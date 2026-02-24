@@ -1,10 +1,9 @@
 from typing import Any, cast
 
+from postgrest.exceptions import APIError
 from supabase import Client
 
 from models.types import List, ListItem
-
-MAX_LISTS_PER_USER = 3
 
 
 class ListsService:
@@ -23,53 +22,27 @@ class ListsService:
         return [List(**row) for row in rows]
 
     async def create(self, user_id: str, name: str) -> List:
-        """Create a new list. Enforces max 3 lists per user at the API level."""
-        existing = (
-            self._db.table("lists")
-            .select("id")
-            .eq("user_id", user_id)
-            .execute()
-        )
-        existing_rows = cast("list[dict[str, Any]]", existing.data)
-        if len(existing_rows) >= MAX_LISTS_PER_USER:
-            raise ValueError(
-                f"Maximum {MAX_LISTS_PER_USER} lists per user. "
-                "Delete an existing list before creating a new one."
+        """Create a new list. DB trigger enforces max 3 lists per user."""
+        try:
+            response = (
+                self._db.table("lists")
+                .insert({"user_id": user_id, "name": name})
+                .execute()
             )
-
-        response = (
-            self._db.table("lists")
-            .insert({"user_id": user_id, "name": name})
-            .execute()
-        )
+        except APIError as e:
+            if "check_violation" in str(e) or "Maximum of 3 lists" in str(e):
+                raise ValueError("Maximum of 3 lists allowed") from None
+            raise
         rows = cast("list[dict[str, Any]]", response.data)
         return List(**rows[0])
 
-    async def delete(self, list_id: str, user_id: str) -> None:
-        """Delete a list owned by the user. Verifies ownership before deleting items."""
-        self._verify_ownership(list_id, user_id)
+    async def delete(self, list_id: str) -> None:
+        """Delete a list. RLS ensures only the owner can delete."""
         self._db.table("list_items").delete().eq("list_id", list_id).execute()
-        self._db.table("lists").delete().eq("id", list_id).eq(
-            "user_id", user_id
-        ).execute()
+        self._db.table("lists").delete().eq("id", list_id).execute()
 
-    def _verify_ownership(self, list_id: str, user_id: str) -> None:
-        """Raise ValueError if list does not belong to user_id."""
-        response = (
-            self._db.table("lists")
-            .select("id")
-            .eq("id", list_id)
-            .eq("user_id", user_id)
-            .execute()
-        )
-        if not response.data:
-            raise ValueError("List not found or access denied")
-
-    async def add_shop(
-        self, list_id: str, shop_id: str, user_id: str
-    ) -> ListItem:
-        """Add a shop to a list. Verifies ownership before inserting."""
-        self._verify_ownership(list_id, user_id)
+    async def add_shop(self, list_id: str, shop_id: str) -> ListItem:
+        """Add a shop to a list. RLS enforces ownership via parent list."""
         response = (
             self._db.table("list_items")
             .insert({"list_id": list_id, "shop_id": shop_id})
@@ -78,11 +51,8 @@ class ListsService:
         rows = cast("list[dict[str, Any]]", response.data)
         return ListItem(**rows[0])
 
-    async def remove_shop(
-        self, list_id: str, shop_id: str, user_id: str
-    ) -> None:
-        """Remove a shop from a list. Verifies ownership before deleting."""
-        self._verify_ownership(list_id, user_id)
+    async def remove_shop(self, list_id: str, shop_id: str) -> None:
+        """Remove a shop from a list. RLS enforces ownership via parent list."""
         (
             self._db.table("list_items")
             .delete()

@@ -53,7 +53,7 @@ async def delete_list(
     """Delete a list. Auth required."""
     service = ListsService(db=db)
     try:
-        await service.delete(list_id=list_id, user_id=user["id"])
+        await service.delete(list_id=list_id)
         return {"ok": True}
     except ValueError as e:
         raise HTTPException(status_code=403, detail=str(e)) from None
@@ -70,7 +70,7 @@ async def add_shop_to_list(
     service = ListsService(db=db)
     try:
         result = await service.add_shop(
-            list_id=list_id, shop_id=body.shop_id, user_id=user["id"]
+            list_id=list_id, shop_id=body.shop_id
         )
         return result.model_dump()
     except ValueError as e:
@@ -87,7 +87,7 @@ async def remove_shop_from_list(
     """Remove a shop from a list. Auth required."""
     service = ListsService(db=db)
     try:
-        await service.remove_shop(list_id=list_id, shop_id=shop_id, user_id=user["id"])
+        await service.remove_shop(list_id=list_id, shop_id=shop_id)
         return {"ok": True}
     except ValueError as e:
         raise HTTPException(status_code=403, detail=str(e)) from None

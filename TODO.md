@@ -130,8 +130,8 @@ Core infrastructure everything else depends on. No user-facing product yet.
 
 **Chunk 3 — Service Simplification (Wave 5-6):**
 - [x] Simplify CheckInService (trigger handles stamp + job)
-- [ ] Simplify ListsService (trigger cap + RLS ownership)
-- [ ] Update list route handlers for simplified signatures
+- [x] Simplify ListsService (trigger cap + RLS ownership)
+- [x] Update list route handlers for simplified signatures
 
 **Chunk 4 — Verification (Wave 7):**
 - [ ] All tests pass, lint, type-check, build

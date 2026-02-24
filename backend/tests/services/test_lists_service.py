@@ -2,10 +2,9 @@ from datetime import datetime
 from unittest.mock import MagicMock
 
 import pytest
+from postgrest.exceptions import APIError
 
 from services.lists_service import ListsService
-
-MAX_LISTS = 3
 
 
 @pytest.fixture
@@ -20,56 +19,57 @@ def lists_service(mock_supabase):
 
 
 class TestListsService:
-    async def test_create_list_succeeds_when_under_cap(self, lists_service, mock_supabase):
-        # User has 1 existing list
+    async def test_create_list_succeeds(self, lists_service, mock_supabase):
+        """create() just inserts — no manual count check."""
         mock_supabase.table = MagicMock(return_value=MagicMock(
-            select=MagicMock(return_value=MagicMock(
-                eq=MagicMock(return_value=MagicMock(
-                    execute=MagicMock(return_value=MagicMock(data=[{"id": "l1"}], count=1))
-                ))
-            )),
             insert=MagicMock(return_value=MagicMock(
                 execute=MagicMock(return_value=MagicMock(data=[{
-                    "id": "l2",
+                    "id": "l1",
                     "user_id": "user-1",
                     "name": "Favorites",
                     "created_at": datetime.now().isoformat(),
                     "updated_at": datetime.now().isoformat(),
                 }]))
-            )),
+            ))
         ))
         result = await lists_service.create(user_id="user-1", name="Favorites")
         assert result.name == "Favorites"
+        # Should only call insert — no SELECT count query
+        table_calls = [c[0][0] for c in mock_supabase.table.call_args_list]
+        assert table_calls == ["lists"]
 
-    async def test_create_list_fails_at_cap(self, lists_service, mock_supabase):
-        # User already has 3 lists
+    async def test_create_list_catches_trigger_violation(self, lists_service, mock_supabase):
+        """DB trigger raises check_violation when >= 3 lists. Service catches and re-raises."""
         mock_supabase.table = MagicMock(return_value=MagicMock(
-            select=MagicMock(return_value=MagicMock(
-                eq=MagicMock(return_value=MagicMock(
-                    execute=MagicMock(return_value=MagicMock(
-                        data=[{"id": "l1"}, {"id": "l2"}, {"id": "l3"}],
-                        count=3,
-                    ))
-                ))
+            insert=MagicMock(return_value=MagicMock(
+                execute=MagicMock(side_effect=APIError({
+                    "message": "Maximum of 3 lists allowed",
+                    "code": "23514",
+                    "details": None,
+                    "hint": None,
+                }))
             ))
         ))
-        with pytest.raises(ValueError, match="Maximum 3 lists"):
+        with pytest.raises(ValueError, match="Maximum of 3 lists"):
             await lists_service.create(user_id="user-1", name="Fourth")
 
-    async def test_delete_list_owned_by_user(self, lists_service, mock_supabase):
-        mock_supabase.table = MagicMock(return_value=MagicMock(
-            delete=MagicMock(return_value=MagicMock(
-                eq=MagicMock(return_value=MagicMock(
-                    eq=MagicMock(return_value=MagicMock(
-                        execute=MagicMock(return_value=MagicMock(data=[{"id": "l1"}]))
-                    ))
-                ))
+    async def test_delete_list_no_manual_ownership_check(self, lists_service, mock_supabase):
+        """delete() relies on RLS — no _verify_ownership call."""
+        mock_delete = MagicMock(return_value=MagicMock(
+            eq=MagicMock(return_value=MagicMock(
+                execute=MagicMock(return_value=MagicMock(data=[]))
             ))
         ))
-        await lists_service.delete(list_id="l1", user_id="user-1")
-        mock_supabase.table.assert_called()
+        mock_supabase.table = MagicMock(return_value=MagicMock(
+            delete=mock_delete,
+        ))
+        await lists_service.delete(list_id="l1")
+        # Should delete list_items then lists — but no SELECT for ownership
+        table_calls = [c[0][0] for c in mock_supabase.table.call_args_list]
+        assert "lists" in table_calls
 
-    async def test_add_shop_to_list(self, lists_service, mock_supabase):
+    async def test_add_shop_no_user_id_param(self, lists_service, mock_supabase):
+        """add_shop() no longer takes user_id — RLS enforces ownership."""
         mock_supabase.table = MagicMock(return_value=MagicMock(
             insert=MagicMock(return_value=MagicMock(
                 execute=MagicMock(return_value=MagicMock(data=[{
@@ -79,7 +79,23 @@ class TestListsService:
                 }]))
             ))
         ))
-        await lists_service.add_shop(list_id="l1", shop_id="s1", user_id="user-1")
+        # Note: no user_id parameter
+        result = await lists_service.add_shop(list_id="l1", shop_id="s1")
+        assert result.shop_id == "s1"
+
+    async def test_remove_shop_no_user_id_param(self, lists_service, mock_supabase):
+        """remove_shop() no longer takes user_id — RLS enforces ownership."""
+        mock_supabase.table = MagicMock(return_value=MagicMock(
+            delete=MagicMock(return_value=MagicMock(
+                eq=MagicMock(return_value=MagicMock(
+                    eq=MagicMock(return_value=MagicMock(
+                        execute=MagicMock(return_value=MagicMock(data=[]))
+                    ))
+                ))
+            ))
+        ))
+        # Note: no user_id parameter
+        await lists_service.remove_shop(list_id="l1", shop_id="s1")
 
     async def test_get_by_user(self, lists_service, mock_supabase):
         mock_supabase.table = MagicMock(return_value=MagicMock(
