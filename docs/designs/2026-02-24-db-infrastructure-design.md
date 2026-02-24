@@ -11,6 +11,7 @@
 Pre-build is complete (10/10 search validation). Project scaffold is done. This design covers the next Phase 1 section: **Database & Infrastructure** + **Background Worker Infrastructure**, designed together because data flows end-to-end from workers through the DB to the app.
 
 **Decisions made:**
+
 - Local Supabase only (no cloud project yet)
 - DB-as-Queue pattern (Postgres `job_queue` table, no Redis)
 - Hybrid triggers: cron for batch work + DB triggers for real-time events
@@ -220,28 +221,28 @@ CREATE TRIGGER trg_checkin_menu_photo
 
 ### Public read (directory browsing without auth)
 
-| Table | Policy | Rule |
-|-------|--------|------|
-| `shops` | `shops_public_read` | `SELECT` for all |
-| `shop_photos` | `shop_photos_public_read` | `SELECT` for all |
-| `shop_reviews` | `shop_reviews_public_read` | `SELECT` for all |
+| Table           | Policy                      | Rule             |
+| --------------- | --------------------------- | ---------------- |
+| `shops`         | `shops_public_read`         | `SELECT` for all |
+| `shop_photos`   | `shop_photos_public_read`   | `SELECT` for all |
+| `shop_reviews`  | `shop_reviews_public_read`  | `SELECT` for all |
 | `taxonomy_tags` | `taxonomy_tags_public_read` | `SELECT` for all |
-| `shop_tags` | `shop_tags_public_read` | `SELECT` for all |
+| `shop_tags`     | `shop_tags_public_read`     | `SELECT` for all |
 
 ### User-owned data (authenticated only, own data)
 
-| Table | Operations | Rule |
-|-------|-----------|------|
-| `profiles` | SELECT, INSERT, UPDATE | `auth.uid() = id` |
-| `lists` | SELECT, INSERT, UPDATE, DELETE | `auth.uid() = user_id` |
-| `list_items` | SELECT, INSERT, DELETE | Owner of parent list (`EXISTS` subquery) |
-| `check_ins` | SELECT, INSERT | `auth.uid() = user_id` |
-| `stamps` | SELECT | `auth.uid() = user_id` |
+| Table        | Operations                     | Rule                                     |
+| ------------ | ------------------------------ | ---------------------------------------- |
+| `profiles`   | SELECT, INSERT, UPDATE         | `auth.uid() = id`                        |
+| `lists`      | SELECT, INSERT, UPDATE, DELETE | `auth.uid() = user_id`                   |
+| `list_items` | SELECT, INSERT, DELETE         | Owner of parent list (`EXISTS` subquery) |
+| `check_ins`  | SELECT, INSERT                 | `auth.uid() = user_id`                   |
+| `stamps`     | SELECT                         | `auth.uid() = user_id`                   |
 
 ### No client access
 
-| Table | Reason |
-|-------|--------|
+| Table       | Reason                                      |
+| ----------- | ------------------------------------------- |
 | `job_queue` | Workers use service role key (bypasses RLS) |
 
 ---
@@ -286,6 +287,7 @@ CREATE INDEX idx_job_queue_failed
 ```
 
 **Index rationale:**
+
 - **HNSW over IVFFlat**: Better recall at 200-500 shop scale. Self-maintaining (no periodic rebuild).
 - **`vector_cosine_ops`**: Matches prebuild search prototype.
 - **Partial indexes on mode scores**: Only index non-null values.
@@ -323,10 +325,10 @@ workers/
 
 ### 5.3 Cron Schedule
 
-| Job | Schedule | Description |
-|-----|----------|-------------|
+| Job               | Schedule                  | Description                                                                |
+| ----------------- | ------------------------- | -------------------------------------------------------------------------- |
 | `staleness_sweep` | Daily 3:00 AM TWN (UTC+8) | Find shops with `enriched_at` older than 90 days, queue `enrich_shop` jobs |
-| `weekly_email` | Monday 9:00 AM TWN | Queue email send for all opted-in users |
+| `weekly_email`    | Monday 9:00 AM TWN        | Queue email send for all opted-in users                                    |
 
 ### 5.4 Job Claiming SQL
 
@@ -349,11 +351,11 @@ RETURNING *;
 
 Workers require these adapters to function:
 
-| Provider | Adapter | SDK | Purpose |
-|----------|---------|-----|---------|
-| `ILLMProvider` | `anthropic.adapter.ts` | `@anthropic-ai/sdk` | Shop enrichment + menu photo extraction |
-| `IEmbeddingsProvider` | `openai.adapter.ts` | `openai` | Vector generation (text-embedding-3-small) |
-| `IEmailProvider` | `resend.adapter.ts` | `resend` | Weekly curated email |
+| Provider              | Adapter                | SDK                 | Purpose                                    |
+| --------------------- | ---------------------- | ------------------- | ------------------------------------------ |
+| `ILLMProvider`        | `anthropic.adapter.ts` | `@anthropic-ai/sdk` | Shop enrichment + menu photo extraction    |
+| `IEmbeddingsProvider` | `openai.adapter.ts`    | `openai`            | Vector generation (text-embedding-3-small) |
+| `IEmailProvider`      | `resend.adapter.ts`    | `resend`            | Weekly curated email                       |
 
 Maps and Analytics adapters are frontend-only; not needed for workers.
 
@@ -386,6 +388,7 @@ supabase db push                       # Applies all migrations
 ```
 
 Environment variables for `.env.local`:
+
 ```
 NEXT_PUBLIC_SUPABASE_URL=http://localhost:54321
 NEXT_PUBLIC_SUPABASE_ANON_KEY=<from supabase start output>
@@ -396,15 +399,15 @@ SUPABASE_SERVICE_ROLE_KEY=<from supabase start output>
 
 ## 9. Testing Strategy
 
-| What | How | Priority |
-|------|-----|----------|
-| Schema validity | `supabase db push` succeeds | P0 |
-| RLS policies | Integration tests: user A can't read user B's data | P0 |
-| PDPA cascade | Delete auth user, verify all dependent data gone | P0 |
-| Job queue trigger | Insert check-in with menu photo, verify job row created | P1 |
-| Vector search | Insert shop with embedding, run cosine similarity | P1 |
-| Worker handlers | Unit tests with mocked providers | P1 |
-| 3-list cap | API rejects 4th list creation | P1 |
+| What              | How                                                     | Priority |
+| ----------------- | ------------------------------------------------------- | -------- |
+| Schema validity   | `supabase db push` succeeds                             | P0       |
+| RLS policies      | Integration tests: user A can't read user B's data      | P0       |
+| PDPA cascade      | Delete auth user, verify all dependent data gone        | P0       |
+| Job queue trigger | Insert check-in with menu photo, verify job row created | P1       |
+| Vector search     | Insert shop with embedding, run cosine similarity       | P1       |
+| Worker handlers   | Unit tests with mocked providers                        | P1       |
+| 3-list cap        | API rejects 4th list creation                           | P1       |
 
 ---
 

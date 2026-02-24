@@ -8,9 +8,7 @@
       "app/api/lists/route.ts",
       "app/api/auth/route.ts"
     ],
-    "critical_patterns": [
-      "app/api/**/route.ts"
-    ],
+    "critical_patterns": ["app/api/**/route.ts"],
     "critical_threshold": 80,
     "default_threshold": 45,
     "exclude_patterns": [

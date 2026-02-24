@@ -92,31 +92,31 @@ Communication: Next.js proxy routes forward requests to the Python backend via R
 
 ## Python Tech Stack
 
-| Component | Choice | Notes |
-|-----------|--------|-------|
-| Web framework | FastAPI >= 0.115 | Async-first, auto OpenAPI docs, Pydantic validation |
-| ASGI server | uvicorn[standard] >= 0.34 | Production server for FastAPI |
-| Database | supabase-py >= 2.0 | Supabase Python SDK, RLS works out of the box |
-| Validation | Pydantic >= 2.0 | Data models + settings management |
-| Config | pydantic-settings >= 2.0 | Env var configuration |
-| LLM | anthropic >= 0.40 | Claude API for shop enrichment |
-| Embeddings | openai >= 1.50 | text-embedding-3-small for vector search |
-| Scheduler | APScheduler >= 3.10 | Replaces node-cron, runs within FastAPI process |
-| Email | resend >= 2.0 | Transactional email |
-| HTTP client | httpx >= 0.27 | Async HTTP for provider calls + test client |
-| Error tracking | sentry-sdk[fastapi] >= 2.0 | Frontend + backend error tracking |
-| Logging | structlog >= 24.0 | Structured JSON logging |
-| Python version | >= 3.12 | Pattern matching, performance improvements |
+| Component      | Choice                     | Notes                                               |
+| -------------- | -------------------------- | --------------------------------------------------- |
+| Web framework  | FastAPI >= 0.115           | Async-first, auto OpenAPI docs, Pydantic validation |
+| ASGI server    | uvicorn[standard] >= 0.34  | Production server for FastAPI                       |
+| Database       | supabase-py >= 2.0         | Supabase Python SDK, RLS works out of the box       |
+| Validation     | Pydantic >= 2.0            | Data models + settings management                   |
+| Config         | pydantic-settings >= 2.0   | Env var configuration                               |
+| LLM            | anthropic >= 0.40          | Claude API for shop enrichment                      |
+| Embeddings     | openai >= 1.50             | text-embedding-3-small for vector search            |
+| Scheduler      | APScheduler >= 3.10        | Replaces node-cron, runs within FastAPI process     |
+| Email          | resend >= 2.0              | Transactional email                                 |
+| HTTP client    | httpx >= 0.27              | Async HTTP for provider calls + test client         |
+| Error tracking | sentry-sdk[fastapi] >= 2.0 | Frontend + backend error tracking                   |
+| Logging        | structlog >= 24.0          | Structured JSON logging                             |
+| Python version | >= 3.12                    | Pattern matching, performance improvements          |
 
 ### Dev Dependencies
 
-| Tool | Purpose |
-|------|---------|
-| pytest >= 8.0 | Test runner |
-| pytest-asyncio >= 0.24 | Async test support |
-| pytest-cov >= 6.0 | Coverage reporting |
-| ruff >= 0.8 | Linting + formatting (replaces ESLint + Prettier) |
-| mypy >= 1.13 | Static type checking |
+| Tool                   | Purpose                                           |
+| ---------------------- | ------------------------------------------------- |
+| pytest >= 8.0          | Test runner                                       |
+| pytest-asyncio >= 0.24 | Async test support                                |
+| pytest-cov >= 6.0      | Coverage reporting                                |
+| ruff >= 0.8            | Linting + formatting (replaces ESLint + Prettier) |
+| mypy >= 1.13           | Static type checking                              |
 
 ---
 
@@ -185,8 +185,8 @@ const BACKEND_URL = process.env.BACKEND_INTERNAL_URL;
 export async function GET(request: NextRequest) {
   const res = await fetch(`${BACKEND_URL}/shops${request.nextUrl.search}`, {
     headers: {
-      Authorization: request.headers.get("Authorization") ?? "",
-      "Content-Type": "application/json",
+      Authorization: request.headers.get('Authorization') ?? '',
+      'Content-Type': 'application/json',
     },
   });
   return new Response(res.body, { status: res.status, headers: res.headers });
@@ -195,17 +195,17 @@ export async function GET(request: NextRequest) {
 
 ### Route Map
 
-| Route | Method | Auth | Purpose |
-|-------|--------|:----:|---------|
-| `/shops` | GET | No | List/filter shops |
-| `/shops/:id` | GET | No | Shop detail |
-| `/search` | GET | Yes | Semantic search |
-| `/checkins` | POST | Yes | Create check-in |
-| `/checkins` | GET | Yes | User's check-ins |
-| `/lists` | POST | Yes | Create list (3-cap enforced) |
-| `/lists` | GET | Yes | User's lists |
-| `/stamps` | GET | Yes | User's stamps |
-| `/auth/callback` | POST | - | Auth callback |
+| Route            | Method | Auth | Purpose                      |
+| ---------------- | ------ | :--: | ---------------------------- |
+| `/shops`         | GET    |  No  | List/filter shops            |
+| `/shops/:id`     | GET    |  No  | Shop detail                  |
+| `/search`        | GET    | Yes  | Semantic search              |
+| `/checkins`      | POST   | Yes  | Create check-in              |
+| `/checkins`      | GET    | Yes  | User's check-ins             |
+| `/lists`         | POST   | Yes  | Create list (3-cap enforced) |
+| `/lists`         | GET    | Yes  | User's lists                 |
+| `/stamps`        | GET    | Yes  | User's stamps                |
+| `/auth/callback` | POST   |  -   | Auth callback                |
 
 ### Auth Flow
 

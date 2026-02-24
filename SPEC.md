@@ -7,23 +7,23 @@
 
 ## 1. Tech Stack
 
-| Layer            | Choice                            | Notes                                                     |
-| ---------------- | --------------------------------- | --------------------------------------------------------- |
-| Frontend         | Next.js 16 (App Router)           | SSR/SSG for SEO, mobile-first, shareable URLs             |
-| Frontend lang    | TypeScript (strict)               | Frontend + prebuild data pipeline only                    |
-| Backend          | FastAPI (Python 3.12+)            | API + workers + business logic                            |
-| Backend lang     | Python (typed, mypy-checked)      | All backend services, providers, workers                  |
-| Database         | Supabase (Postgres 15 + pgvector) | Vector search, auth, storage in one platform              |
-| Auth             | Supabase Auth                     | Email/password + social login options                     |
-| Hosting          | Railway (two services)            | Next.js frontend + Python API/workers, same monorepo      |
-| Styling          | Tailwind CSS + shadcn/ui          | Fast iteration, mobile-first design                       |
-| Frontend testing | Vitest + Testing Library          | Frontend unit + integration tests                         |
-| Backend testing  | pytest + pytest-asyncio           | API + service + worker tests                              |
-| Maps             | Mapbox GL JS                      | Abstracted behind MapsProvider protocol                   |
-| Storage          | Supabase Storage                  | Check-in photos, menu photos; RLS enforced                |
-| Error tracking   | Sentry                            | Frontend + backend, free tier at launch                   |
-| Analytics        | PostHog                           | Via AnalyticsProvider protocol abstraction                |
-| Uptime           | UptimeRobot                       | 5-minute checks, email alerts                             |
+| Layer            | Choice                            | Notes                                                |
+| ---------------- | --------------------------------- | ---------------------------------------------------- |
+| Frontend         | Next.js 16 (App Router)           | SSR/SSG for SEO, mobile-first, shareable URLs        |
+| Frontend lang    | TypeScript (strict)               | Frontend + prebuild data pipeline only               |
+| Backend          | FastAPI (Python 3.12+)            | API + workers + business logic                       |
+| Backend lang     | Python (typed, mypy-checked)      | All backend services, providers, workers             |
+| Database         | Supabase (Postgres 15 + pgvector) | Vector search, auth, storage in one platform         |
+| Auth             | Supabase Auth                     | Email/password + social login options                |
+| Hosting          | Railway (two services)            | Next.js frontend + Python API/workers, same monorepo |
+| Styling          | Tailwind CSS + shadcn/ui          | Fast iteration, mobile-first design                  |
+| Frontend testing | Vitest + Testing Library          | Frontend unit + integration tests                    |
+| Backend testing  | pytest + pytest-asyncio           | API + service + worker tests                         |
+| Maps             | Mapbox GL JS                      | Abstracted behind MapsProvider protocol              |
+| Storage          | Supabase Storage                  | Check-in photos, menu photos; RLS enforced           |
+| Error tracking   | Sentry                            | Frontend + backend, free tier at launch              |
+| Analytics        | PostHog                           | Via AnalyticsProvider protocol abstraction           |
+| Uptime           | UptimeRobot                       | 5-minute checks, email alerts                        |
 
 **Full rationale for each choice:** see `docs/decisions/`
 
@@ -36,9 +36,9 @@
 | Data pipeline         | One-time data collection (Cafe Nomad seed → Apify/Google Maps verify + scrape) + ongoing enrichment (Claude Haiku + embedding generation) | 1     |
 | Taxonomy system       | Canonical tag database; powers filter UI and search ranking                                                                               | 1     |
 | Auth system           | Supabase Auth, session management, route protection, PDPA consent                                                                         | 1     |
-| Provider abstractions | LLMProvider, EmbeddingsProvider, EmailProvider, MapsProvider, AnalyticsProvider (Python Protocol classes)                                  | 1     |
+| Provider abstractions | LLMProvider, EmbeddingsProvider, EmailProvider, MapsProvider, AnalyticsProvider (Python Protocol classes)                                 | 1     |
 | Admin/ops             | Internal data quality dashboard, manual enrichment and verification UI                                                                    | 1     |
-| Background workers    | FastAPI embedded workers (APScheduler): enrichment, embedding refresh, weekly email cron                                                   | 1     |
+| Background workers    | FastAPI embedded workers (APScheduler): enrichment, embedding refresh, weekly email cron                                                  | 1     |
 | Shop directory        | List view + map view toggle, geolocation, multi-dimension filters                                                                         | 2     |
 | Semantic search       | pgvector similarity + taxonomy boost, chatbox UI on landing page                                                                          | 2     |
 | User lists            | Create/edit/delete (max 3), add/remove shops                                                                                              | 2     |

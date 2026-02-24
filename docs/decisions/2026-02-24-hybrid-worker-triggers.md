@@ -9,6 +9,7 @@ Background workers use a hybrid trigger model: `node-cron` for scheduled batch j
 ## Context
 
 CafeRoam needs two categories of background work:
+
 1. **Scheduled batch work**: staleness sweep (daily), weekly curated email (Monday)
 2. **Event-driven work**: when a user uploads a menu photo during check-in, enrichment should run soon after
 

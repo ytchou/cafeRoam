@@ -21,6 +21,7 @@
 ## Task 1: Python Project Scaffolding
 
 **Files:**
+
 - Create: `backend/pyproject.toml`
 - Create: `backend/__init__.py`
 - Create: `backend/core/__init__.py`
@@ -97,7 +98,7 @@ warn_return_any = true
 warn_unused_configs = true
 ```
 
-**Step 2: Create directory structure with __init__.py files**
+**Step 2: Create directory structure with **init**.py files**
 
 Create all directories and empty `__init__.py` files as listed above.
 
@@ -178,6 +179,7 @@ def mock_supabase():
 **Step 5: Install dependencies and verify**
 
 Run:
+
 ```bash
 cd /Users/ytchou/Project/caferoam/backend && uv sync --all-extras
 ```
@@ -187,6 +189,7 @@ Expected: All dependencies install successfully.
 **Step 6: Verify pytest runs (empty suite)**
 
 Run:
+
 ```bash
 cd /Users/ytchou/Project/caferoam/backend && python -m pytest --co
 ```
@@ -196,6 +199,7 @@ Expected: "no tests ran" (clean, no import errors).
 **Step 7: Verify ruff and mypy pass on config**
 
 Run:
+
 ```bash
 cd /Users/ytchou/Project/caferoam/backend && ruff check . && mypy core/config.py
 ```
@@ -214,6 +218,7 @@ git commit -m "feat(backend): scaffold Python project with FastAPI + pytest"
 ## Task 2: Pydantic Domain Models
 
 **Files:**
+
 - Create: `backend/models/types.py`
 - Create: `backend/tests/models/__init__.py`
 - Create: `backend/tests/models/test_types.py`
@@ -353,6 +358,7 @@ class TestSearchQuery:
 **Step 2: Run test to verify it fails**
 
 Run:
+
 ```bash
 cd /Users/ytchou/Project/caferoam/backend && python -m pytest tests/models/test_types.py -v
 ```
@@ -547,6 +553,7 @@ class Job(BaseModel):
 **Step 4: Run test to verify it passes**
 
 Run:
+
 ```bash
 cd /Users/ytchou/Project/caferoam/backend && python -m pytest tests/models/test_types.py -v
 ```
@@ -565,6 +572,7 @@ git commit -m "feat(backend): add Pydantic domain models"
 ## Task 3: Supabase Python Client
 
 **Files:**
+
 - Create: `backend/db/supabase_client.py`
 - Create: `backend/tests/db/__init__.py`
 - Create: `backend/tests/db/test_supabase_client.py`
@@ -606,6 +614,7 @@ class TestSupabaseClient:
 **Step 2: Run test to verify it fails**
 
 Run:
+
 ```bash
 cd /Users/ytchou/Project/caferoam/backend && python -m pytest tests/db/test_supabase_client.py -v
 ```
@@ -639,6 +648,7 @@ def get_service_role_client() -> Client:
 **Step 4: Run test to verify it passes**
 
 Run:
+
 ```bash
 cd /Users/ytchou/Project/caferoam/backend && python -m pytest tests/db/test_supabase_client.py -v
 ```
@@ -657,6 +667,7 @@ git commit -m "feat(backend): add Supabase Python client with singleton caching"
 ## Task 4: Provider Protocols + Factory Functions
 
 **Files:**
+
 - Create: `backend/providers/llm/interface.py`
 - Create: `backend/providers/embeddings/interface.py`
 - Create: `backend/providers/email/interface.py`
@@ -747,6 +758,7 @@ class TestProviderFactories:
 **Step 2: Run test to verify it fails**
 
 Run:
+
 ```bash
 cd /Users/ytchou/Project/caferoam/backend && python -m pytest tests/providers/test_factories.py -v
 ```
@@ -1060,6 +1072,7 @@ def get_maps_provider() -> MapsProvider:
 **Step 5: Run test to verify it passes**
 
 Run:
+
 ```bash
 cd /Users/ytchou/Project/caferoam/backend && python -m pytest tests/providers/test_factories.py -v
 ```
@@ -1078,6 +1091,7 @@ git commit -m "feat(backend): add provider protocols, adapters, and factory func
 ## Task 5: Search Service
 
 **Files:**
+
 - Create: `backend/services/search_service.py`
 - Create: `backend/tests/services/__init__.py`
 - Create: `backend/tests/services/test_search_service.py`
@@ -1172,6 +1186,7 @@ class TestSearchService:
 **Step 2: Run test to verify it fails**
 
 Run:
+
 ```bash
 cd /Users/ytchou/Project/caferoam/backend && python -m pytest tests/services/test_search_service.py -v
 ```
@@ -1249,6 +1264,7 @@ class SearchService:
 **Step 4: Run test to verify it passes**
 
 Run:
+
 ```bash
 cd /Users/ytchou/Project/caferoam/backend && python -m pytest tests/services/test_search_service.py -v
 ```
@@ -1267,6 +1283,7 @@ git commit -m "feat(backend): add search service with vector similarity + taxono
 ## Task 6: Check-in Service
 
 **Files:**
+
 - Create: `backend/services/checkin_service.py`
 - Create: `backend/tests/services/test_checkin_service.py`
 
@@ -1379,6 +1396,7 @@ class TestCheckInService:
 **Step 2: Run test to verify it fails**
 
 Run:
+
 ```bash
 cd /Users/ytchou/Project/caferoam/backend && python -m pytest tests/services/test_checkin_service.py -v
 ```
@@ -1472,6 +1490,7 @@ class CheckInService:
 **Step 4: Run test to verify it passes**
 
 Run:
+
 ```bash
 cd /Users/ytchou/Project/caferoam/backend && python -m pytest tests/services/test_checkin_service.py -v
 ```
@@ -1490,6 +1509,7 @@ git commit -m "feat(backend): add check-in service with stamp award and menu pho
 ## Task 7: Lists Service
 
 **Files:**
+
 - Create: `backend/services/lists_service.py`
 - Create: `backend/tests/services/test_lists_service.py`
 
@@ -1597,6 +1617,7 @@ class TestListsService:
 **Step 2: Run test to verify it fails**
 
 Run:
+
 ```bash
 cd /Users/ytchou/Project/caferoam/backend && python -m pytest tests/services/test_lists_service.py -v
 ```
@@ -1681,6 +1702,7 @@ class ListsService:
 **Step 4: Run test to verify it passes**
 
 Run:
+
 ```bash
 cd /Users/ytchou/Project/caferoam/backend && python -m pytest tests/services/test_lists_service.py -v
 ```
@@ -1699,6 +1721,7 @@ git commit -m "feat(backend): add lists service with 3-list cap enforcement"
 ## Task 8: FastAPI App + Auth Dependency
 
 **Files:**
+
 - Create: `backend/main.py`
 - Create: `backend/api/deps.py`
 - Create: `backend/tests/api/__init__.py`
@@ -1766,6 +1789,7 @@ class TestAuth:
 **Step 2: Run test to verify it fails**
 
 Run:
+
 ```bash
 cd /Users/ytchou/Project/caferoam/backend && python -m pytest tests/api/test_auth.py -v
 ```
@@ -1859,6 +1883,7 @@ async def health_check():
 **Step 4: Run test to verify it passes**
 
 Run:
+
 ```bash
 cd /Users/ytchou/Project/caferoam/backend && python -m pytest tests/api/test_auth.py -v
 ```
@@ -1877,6 +1902,7 @@ git commit -m "feat(backend): add FastAPI app entry point and JWT auth dependenc
 ## Task 9: API Routes
 
 **Files:**
+
 - Create: `backend/api/shops.py`
 - Create: `backend/api/search.py`
 - Create: `backend/api/checkins.py`
@@ -2029,6 +2055,7 @@ class TestListsAPI:
 **Step 2: Run tests to verify they fail**
 
 Run:
+
 ```bash
 cd /Users/ytchou/Project/caferoam/backend && python -m pytest tests/api/test_shops.py tests/api/test_search.py tests/api/test_checkins.py tests/api/test_lists.py -v
 ```
@@ -2265,6 +2292,7 @@ app.include_router(stamps_router)
 **Step 5: Run tests to verify they pass**
 
 Run:
+
 ```bash
 cd /Users/ytchou/Project/caferoam/backend && python -m pytest tests/api/ -v
 ```
@@ -2283,6 +2311,7 @@ git commit -m "feat(backend): add all FastAPI API routes (shops, search, checkin
 ## Task 10: Job Queue Consumer
 
 **Files:**
+
 - Create: `backend/workers/queue.py`
 - Create: `backend/tests/workers/__init__.py`
 - Create: `backend/tests/workers/test_queue.py`
@@ -2390,6 +2419,7 @@ class TestJobQueue:
 **Step 2: Run test to verify it fails**
 
 Run:
+
 ```bash
 cd /Users/ytchou/Project/caferoam/backend && python -m pytest tests/workers/test_queue.py -v
 ```
@@ -2480,6 +2510,7 @@ class JobQueue:
 **Step 4: Run test to verify it passes**
 
 Run:
+
 ```bash
 cd /Users/ytchou/Project/caferoam/backend && python -m pytest tests/workers/test_queue.py -v
 ```
@@ -2498,6 +2529,7 @@ git commit -m "feat(backend): add Postgres job queue consumer with atomic claimi
 ## Task 11: Worker Handlers + Scheduler
 
 **Files:**
+
 - Create: `backend/workers/scheduler.py`
 - Create: `backend/workers/handlers/enrich_shop.py`
 - Create: `backend/workers/handlers/generate_embedding.py`
@@ -2628,6 +2660,7 @@ class TestScheduler:
 **Step 2: Run tests to verify they fail**
 
 Run:
+
 ```bash
 cd /Users/ytchou/Project/caferoam/backend && python -m pytest tests/workers/test_handlers.py tests/workers/test_scheduler.py -v
 ```
@@ -2941,6 +2974,7 @@ async def lifespan(app: FastAPI):
 **Step 6: Run tests to verify they pass**
 
 Run:
+
 ```bash
 cd /Users/ytchou/Project/caferoam/backend && python -m pytest tests/workers/ -v
 ```
@@ -2959,6 +2993,7 @@ git commit -m "feat(backend): add worker handlers, job queue consumer, and APSch
 ## Task 12: Next.js Proxy Routes
 
 **Files:**
+
 - Modify: `app/api/shops/route.ts`
 - Modify: `app/api/search/route.ts`
 - Modify: `app/api/auth/route.ts`
@@ -2972,22 +3007,22 @@ No test needed — these are thin HTTP proxies. Correctness depends on the Pytho
 
 ```typescript
 // lib/api/proxy.ts
-const BACKEND_URL = process.env.BACKEND_INTERNAL_URL || "http://localhost:8000";
+const BACKEND_URL = process.env.BACKEND_INTERNAL_URL || 'http://localhost:8000';
 
 export async function proxyToBackend(
   request: Request,
-  path: string,
+  path: string
 ): Promise<Response> {
   const url = new URL(request.url);
   const backendUrl = `${BACKEND_URL}${path}${url.search}`;
 
   const headers: HeadersInit = {
-    "Content-Type": "application/json",
+    'Content-Type': 'application/json',
   };
 
-  const authHeader = request.headers.get("Authorization");
+  const authHeader = request.headers.get('Authorization');
   if (authHeader) {
-    headers["Authorization"] = authHeader;
+    headers['Authorization'] = authHeader;
   }
 
   const init: RequestInit = {
@@ -2995,14 +3030,14 @@ export async function proxyToBackend(
     headers,
   };
 
-  if (request.method !== "GET" && request.method !== "HEAD") {
+  if (request.method !== 'GET' && request.method !== 'HEAD') {
     init.body = await request.text();
   }
 
   const res = await fetch(backendUrl, init);
   return new Response(res.body, {
     status: res.status,
-    headers: { "Content-Type": "application/json" },
+    headers: { 'Content-Type': 'application/json' },
   });
 }
 ```
@@ -3011,22 +3046,22 @@ export async function proxyToBackend(
 
 ```typescript
 // app/api/shops/route.ts
-import { NextRequest } from "next/server";
-import { proxyToBackend } from "@/lib/api/proxy";
+import { NextRequest } from 'next/server';
+import { proxyToBackend } from '@/lib/api/proxy';
 
 export async function GET(request: NextRequest) {
-  return proxyToBackend(request, "/shops");
+  return proxyToBackend(request, '/shops');
 }
 ```
 
 ```typescript
 // app/api/shops/[id]/route.ts
-import { NextRequest } from "next/server";
-import { proxyToBackend } from "@/lib/api/proxy";
+import { NextRequest } from 'next/server';
+import { proxyToBackend } from '@/lib/api/proxy';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
   return proxyToBackend(request, `/shops/${id}`);
@@ -3035,55 +3070,56 @@ export async function GET(
 
 ```typescript
 // app/api/search/route.ts
-import { NextRequest } from "next/server";
-import { proxyToBackend } from "@/lib/api/proxy";
+import { NextRequest } from 'next/server';
+import { proxyToBackend } from '@/lib/api/proxy';
 
 export async function GET(request: NextRequest) {
-  return proxyToBackend(request, "/search");
+  return proxyToBackend(request, '/search');
 }
 ```
 
 ```typescript
 // app/api/checkins/route.ts
-import { NextRequest } from "next/server";
-import { proxyToBackend } from "@/lib/api/proxy";
+import { NextRequest } from 'next/server';
+import { proxyToBackend } from '@/lib/api/proxy';
 
 export async function GET(request: NextRequest) {
-  return proxyToBackend(request, "/checkins");
+  return proxyToBackend(request, '/checkins');
 }
 
 export async function POST(request: NextRequest) {
-  return proxyToBackend(request, "/checkins");
+  return proxyToBackend(request, '/checkins');
 }
 ```
 
 ```typescript
 // app/api/lists/route.ts
-import { NextRequest } from "next/server";
-import { proxyToBackend } from "@/lib/api/proxy";
+import { NextRequest } from 'next/server';
+import { proxyToBackend } from '@/lib/api/proxy';
 
 export async function GET(request: NextRequest) {
-  return proxyToBackend(request, "/lists");
+  return proxyToBackend(request, '/lists');
 }
 
 export async function POST(request: NextRequest) {
-  return proxyToBackend(request, "/lists");
+  return proxyToBackend(request, '/lists');
 }
 ```
 
 ```typescript
 // app/api/stamps/route.ts
-import { NextRequest } from "next/server";
-import { proxyToBackend } from "@/lib/api/proxy";
+import { NextRequest } from 'next/server';
+import { proxyToBackend } from '@/lib/api/proxy';
 
 export async function GET(request: NextRequest) {
-  return proxyToBackend(request, "/stamps");
+  return proxyToBackend(request, '/stamps');
 }
 ```
 
 **Step 3: Verify frontend still builds**
 
 Run:
+
 ```bash
 cd /Users/ytchou/Project/caferoam && pnpm type-check && pnpm build
 ```
@@ -3102,6 +3138,7 @@ git commit -m "feat(frontend): rewrite API routes as thin proxies to Python back
 ## Task 13: Delete Old TypeScript Backend + Deployment Config
 
 **Files:**
+
 - Delete: `lib/providers/` (entire directory)
 - Delete: `lib/services/` (entire directory)
 - Delete: `lib/db/supabase.ts`
@@ -3122,6 +3159,7 @@ rm -rf workers/
 **Step 2: Verify frontend still builds without deleted code**
 
 Run:
+
 ```bash
 cd /Users/ytchou/Project/caferoam && pnpm type-check && pnpm build
 ```
@@ -3158,10 +3196,12 @@ CMD ["uv", "run", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
 **Step 4: Update package.json — remove backend-only scripts**
 
 Remove these scripts from `package.json`:
+
 - `workers:enrich`
 - `workers:embed`
 
 Add:
+
 ```json
 "backend:dev": "cd backend && uvicorn main:app --reload --port 8000",
 "backend:test": "cd backend && python -m pytest -v"
@@ -3170,6 +3210,7 @@ Add:
 **Step 5: Update .env.example**
 
 Add to `.env.example`:
+
 ```bash
 # Backend (for Next.js proxy routes)
 BACKEND_INTERNAL_URL=http://localhost:8000
@@ -3178,6 +3219,7 @@ BACKEND_INTERNAL_URL=http://localhost:8000
 **Step 6: Verify everything works**
 
 Run:
+
 ```bash
 cd /Users/ytchou/Project/caferoam && pnpm type-check && pnpm build
 cd /Users/ytchou/Project/caferoam/backend && python -m pytest -v
@@ -3249,16 +3291,20 @@ graph TD
 ```
 
 **Wave 1** (no dependencies):
+
 - Task 1: Python project scaffolding
 
 **Wave 2** (parallel — depends on Wave 1):
+
 - Task 2: Pydantic domain models ← Task 1
 - Task 3: Supabase Python client ← Task 1
 
 **Wave 3** (depends on Wave 2):
+
 - Task 4: Provider protocols + factory functions ← Task 2, Task 3
 
 **Wave 4** (parallel — depends on Wave 3):
+
 - Task 5: Search service ← Task 4
 - Task 6: Check-in service ← Task 4
 - Task 7: Lists service ← Task 4
@@ -3266,11 +3312,14 @@ graph TD
 - Task 10: Job queue consumer ← Task 4
 
 **Wave 5** (parallel — depends on Wave 4):
+
 - Task 9: API routes ← Task 5, 6, 7, 8
 - Task 11: Worker handlers + scheduler ← Task 10
 
 **Wave 6** (depends on Wave 5):
+
 - Task 12: Next.js proxy routes ← Task 9
 
 **Wave 7** (depends on Wave 5, 6):
+
 - Task 13: Delete old TypeScript + Dockerfile ← Task 11, Task 12

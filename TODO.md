@@ -166,6 +166,44 @@ Core infrastructure everything else depends on. No user-facing product yet.
 - [x] Frontend build passes (pnpm build)
 - [x] ruff + mypy pass on backend
 
+### Code Review Fixes (Python Backend)
+
+> **Design Doc:** [docs/designs/2026-02-24-code-review-fixes-design.md](docs/designs/2026-02-24-code-review-fixes-design.md)
+> **Plan:** [docs/plans/2026-02-24-code-review-fixes-plan.md](docs/plans/2026-02-24-code-review-fixes-plan.md)
+
+**Chunk 1 — Auth/Authorization (Critical) — Deferred:**
+
+- [ ] Supabase client refactor (per-request JWT + service role singleton)
+- [ ] Add get_user_db FastAPI dependency
+- [ ] Wire all API routes to per-request JWT client
+
+**Chunk 2 — Transaction Safety (Critical/Important) — Deferred:**
+
+- [ ] DB migrations (check-in trigger + list cap trigger)
+- [ ] Simplify CheckInService (remove stamp + job inserts)
+- [ ] Simplify ListsService (remove TOCTOU cap, drop ownership params)
+
+**Chunk 3 — Data Integrity (Critical):**
+
+- [x] Job queue retry with exponential backoff
+- [x] Fix enriched_at string literal to real timestamp
+
+**Chunk 4 — Infrastructure (Important):**
+
+- [x] Resend email adapter: async thread wrapper + fix global state
+- [x] Job.payload type widen to Any + search row.pop fix
+- [x] Proxy content type forwarding
+- [x] Missing list sub-resource proxy routes
+- [x] Auth route (backend + frontend)
+- [x] Dockerfile uv.lock fix + posthog dependency
+
+**Chunk 5 — Tests + Verification:**
+
+- [x] Missing handler tests (enrich_menu_photo, weekly_email)
+- [x] All backend tests pass (pytest)
+- [x] All frontend tests pass (vitest)
+- [x] ruff + mypy pass
+
 ### Auth & Privacy
 
 - [ ] Auth system: signup (with PDPA consent), login, session management, protected routes
