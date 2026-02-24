@@ -25,11 +25,11 @@ class TestListsAPI:
         """Creating beyond the 3-list cap must return 400 with a clear message."""
         app.dependency_overrides[get_current_user] = lambda: {"id": "user-1"}
         try:
-            with patch("api.lists.ListsService") as MockService, \
+            with patch("api.lists.ListsService") as mock_cls, \
                  patch("api.lists.get_supabase_client", return_value=MagicMock()):
                 mock_svc = AsyncMock()
                 mock_svc.create.side_effect = ValueError("Maximum 3 lists per user.")
-                MockService.return_value = mock_svc
+                mock_cls.return_value = mock_svc
                 response = client.post("/lists/", json={"name": "Fourth List"})
             assert response.status_code == 400
             assert "3" in response.json()["detail"] or "Maximum" in response.json()["detail"]

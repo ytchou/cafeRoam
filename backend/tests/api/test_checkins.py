@@ -24,11 +24,13 @@ class TestCheckinsAPI:
         """Empty photo_urls must return 400, not 500 (ValueError caught in route)."""
         app.dependency_overrides[get_current_user] = lambda: {"id": "user-1"}
         try:
-            with patch("api.checkins.CheckInService") as MockService, \
+            with patch("api.checkins.CheckInService") as mock_cls, \
                  patch("api.checkins.get_supabase_client", return_value=MagicMock()):
                 mock_svc = AsyncMock()
-                mock_svc.create.side_effect = ValueError("At least one photo is required for check-in")
-                MockService.return_value = mock_svc
+                mock_svc.create.side_effect = ValueError(
+                    "At least one photo is required for check-in"
+                )
+                mock_cls.return_value = mock_svc
                 response = client.post("/checkins/", json={
                     "shop_id": "shop-1",
                     "photo_urls": [],

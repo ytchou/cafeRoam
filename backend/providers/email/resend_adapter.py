@@ -12,7 +12,7 @@ class ResendEmailAdapter:
         self._default_from = default_from
 
     async def send(self, message: EmailMessage) -> EmailSendResult:
-        params = {
+        params: resend_sdk.Emails.SendParams = {
             "from": message.from_address or self._default_from,
             "to": message.to,
             "subject": message.subject,

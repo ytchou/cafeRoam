@@ -59,5 +59,6 @@ class SearchService:
         """Compute taxonomy boost based on tag overlap with query filters."""
         if not query.filters or not query.filters.dimensions:
             return 0.0
-        # TODO: implement taxonomy boost — compare row["taxonomy_tags"] against query.filters.dimensions
+        # TODO: implement taxonomy boost — compare row["taxonomy_tags"] against
+        # query.filters.dimensions
         return 0.0

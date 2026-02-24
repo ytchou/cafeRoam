@@ -71,7 +71,7 @@ class JobQueue:
         }).eq("id", job_id).execute()
 
     async def fail(self, job_id: str, error: str) -> None:
-        """Mark a job as failed. If under max_attempts, reset to pending with exponential backoff."""
+        """Mark a job as failed. If under max_attempts, reset to pending with backoff."""
         response = (
             self._db.table("job_queue")
             .select("attempts, max_attempts")
