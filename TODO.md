@@ -115,8 +115,43 @@ Core infrastructure everything else depends on. No user-facing product yet.
 
 ### Database & Infrastructure
 
-- [ ] Supabase setup: Postgres schema, pgvector extension enabled, RLS policies on all tables
-- [ ] Background worker infrastructure: Railway worker setup + cron job scaffold
+> **Design Doc:** [docs/designs/2026-02-24-db-infrastructure-design.md](docs/designs/2026-02-24-db-infrastructure-design.md)
+> **Plan:** [docs/plans/2026-02-24-db-infrastructure-plan.md](docs/plans/2026-02-24-db-infrastructure-plan.md)
+
+**Chunk 1 — Supabase Setup & Schema:**
+
+- [ ] Supabase CLI init + config
+- [ ] Update domain types (coffee dimension, List→ListItem, job queue types, ILLMProvider)
+- [ ] Write schema migrations (8 files: extensions, shops, taxonomy, users, job queue, indexes, RLS)
+- [ ] Generate taxonomy seed + validate schema
+- [ ] Seed data + dev scripts + .env.example
+
+**Chunk 2 — Worker Infrastructure:**
+
+- [ ] Worker Supabase client + structured logger
+- [ ] Job queue client with TDD (claim, complete, fail, enqueue)
+- [ ] Worker scheduler with TDD (staleness sweep cron, weekly email cron)
+- [ ] Worker entry point (poll loop + graceful shutdown)
+
+**Chunk 3 — Provider Adapters:**
+
+- [ ] Anthropic LLM adapter with TDD (enrichShop, extractMenuData)
+- [ ] OpenAI Embeddings adapter with TDD (embed, embedBatch)
+- [ ] Resend Email adapter with TDD (send)
+
+**Chunk 4 — Worker Handlers:**
+
+- [ ] Enrich shop handler with TDD
+- [ ] Generate embedding handler with TDD
+- [ ] Enrich menu photo handler with TDD
+- [ ] Staleness sweep handler with TDD
+- [ ] Weekly email handler with TDD
+
+**Chunk 5 — Verification:**
+
+- [ ] Full test suite passes
+- [ ] Lint + type-check + production build pass
+- [ ] Supabase migrations apply cleanly
 
 ### Auth & Privacy
 
