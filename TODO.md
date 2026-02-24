@@ -148,7 +148,7 @@ Core infrastructure everything else depends on. No user-facing product yet.
 
 **Chunk 4 — API & Workers (Wave 4-5):**
 
-- [ ] FastAPI app + JWT auth dependency with TDD
+- [x] FastAPI app + JWT auth dependency with TDD
 - [ ] API routes (shops, search, checkins, lists, stamps)
 - [ ] Job queue consumer with TDD (FOR UPDATE SKIP LOCKED)
 - [ ] Worker handlers + APScheduler (enrich, embed, menu, staleness, email)
