@@ -124,7 +124,7 @@ class EnrichmentResult(BaseModel):
 
 
 class MenuExtractionResult(BaseModel):
-    items: list[dict]
+    items: list[dict[str, str | int | float | bool | None]]
     raw_text: str | None = None
 
 
@@ -166,7 +166,7 @@ class JobStatus(StrEnum):
 class Job(BaseModel):
     id: str
     job_type: JobType
-    payload: dict
+    payload: dict[str, str | int | float | bool | None]
     status: JobStatus
     priority: int = 0
     attempts: int = 0

@@ -21,7 +21,9 @@
     "prebuild:pass3c": "tsx scripts/prebuild/data-pipeline/pass3c-postprocess.ts",
     "prebuild:pass4": "tsx --env-file=.env.local scripts/prebuild/data-pipeline/pass4-embed.ts",
     "prebuild:pass5": "tsx --env-file=.env.local scripts/prebuild/data-pipeline/pass5-search-test.ts",
-    "prebuild:all": "pnpm prebuild:pass0 && pnpm prebuild:pass1 && pnpm prebuild:pass2 && echo 'Run pass3a, curate taxonomy, then pass3b → pass3c → pass4 → pass5 manually'"
+    "prebuild:all": "pnpm prebuild:pass0 && pnpm prebuild:pass1 && pnpm prebuild:pass2 && echo 'Run pass3a, curate taxonomy, then pass3b → pass3c → pass4 → pass5 manually'",
+    "backend:dev": "cd backend && uv run uvicorn main:app --reload --port 8000",
+    "backend:test": "cd backend && uv run python -m pytest -v"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",

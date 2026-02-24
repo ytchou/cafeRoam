@@ -156,15 +156,15 @@ Core infrastructure everything else depends on. No user-facing product yet.
 **Chunk 5 — Frontend Proxies & Cleanup (Wave 6-7):**
 
 - [x] Rewrite Next.js API routes as thin proxies
-- [ ] Delete old TypeScript backend code (lib/providers, lib/services, lib/db, workers)
-- [ ] Backend Dockerfile + update package.json scripts
+- [x] Delete old TypeScript backend code (lib/providers, lib/services, lib/db, workers)
+- [x] Backend Dockerfile + update package.json scripts
 
 **Chunk 6 — Verification:**
 
-- [ ] All backend tests pass (pytest)
-- [ ] All frontend tests pass (vitest)
-- [ ] Frontend build passes (pnpm build)
-- [ ] ruff + mypy pass on backend
+- [x] All backend tests pass (pytest)
+- [x] All frontend tests pass (vitest)
+- [x] Frontend build passes (pnpm build)
+- [x] ruff + mypy pass on backend
 
 ### Auth & Privacy
 
