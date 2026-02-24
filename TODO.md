@@ -120,7 +120,7 @@ Core infrastructure everything else depends on. No user-facing product yet.
 > **Original DB Design:** [docs/designs/2026-02-24-db-infrastructure-design.md](docs/designs/2026-02-24-db-infrastructure-design.md)
 
 **Chunk 1 — Migration Files (Wave 1):**
-- [ ] Copy 9 migration files from feat/db-infrastructure (fix job_queue columns, triggers, RPC)
+- [x] Copy 9 migration files from feat/db-infrastructure (fix job_queue columns, triggers, RPC)
 - [ ] Add DEAD_LETTER to JobStatus enum + widen Job.payload
 
 **Chunk 2 — Per-Request JWT Auth (Wave 2-4):**
