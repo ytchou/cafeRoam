@@ -125,7 +125,7 @@ Core infrastructure everything else depends on. No user-facing product yet.
 
 **Chunk 2 — Per-Request JWT Auth (Wave 2-4):**
 - [x] Refactor supabase_client.py (per-request JWT + service role singleton)
-- [ ] Add get_user_db FastAPI dependency
+- [x] Add get_user_db FastAPI dependency
 - [ ] Wire all auth routes to per-request JWT client
 
 **Chunk 3 — Service Simplification (Wave 5-6):**

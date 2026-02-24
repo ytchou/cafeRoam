@@ -1,8 +1,25 @@
 from typing import Any
 
 from fastapi import HTTPException, Request, status
+from supabase import Client
 
-from db.supabase_client import get_supabase_client
+from db.supabase_client import get_user_client
+
+
+async def get_user_db(request: Request) -> Client:
+    """Extract JWT from Authorization header and return an authenticated Supabase client.
+
+    This client has auth.uid() set in PostgREST, so RLS policies
+    automatically enforce row-level ownership.
+    """
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing or invalid Authorization header",
+        )
+    token = auth_header.removeprefix("Bearer ")
+    return get_user_client(token)
 
 
 async def get_current_user(request: Request) -> dict[str, Any]:
@@ -16,7 +33,7 @@ async def get_current_user(request: Request) -> dict[str, Any]:
 
     token = auth_header.removeprefix("Bearer ")
     try:
-        client = get_supabase_client()
+        client = get_user_client(token)
         response = client.auth.get_user(token)
         if response is None or response.user is None:
             raise HTTPException(
@@ -41,7 +58,7 @@ async def get_optional_user(request: Request) -> dict[str, Any] | None:
 
     token = auth_header.removeprefix("Bearer ")
     try:
-        client = get_supabase_client()
+        client = get_user_client(token)
         response = client.auth.get_user(token)
         if response is None or response.user is None:
             return None
