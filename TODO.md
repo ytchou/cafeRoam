@@ -134,7 +134,7 @@ Core infrastructure everything else depends on. No user-facing product yet.
 - [x] Update list route handlers for simplified signatures
 
 **Chunk 4 — Verification (Wave 7):**
-- [ ] All tests pass, lint, type-check, build
+- [x] All tests pass, lint, type-check, build
 
 ### Python Backend Migration
 

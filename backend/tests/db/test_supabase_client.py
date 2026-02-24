@@ -24,9 +24,9 @@ class TestSupabaseClient:
             mock_settings.supabase_url = "http://localhost:54321"
             mock_settings.supabase_anon_key = "test-anon-key"
             mock_create.return_value = "client-1"
-            c1 = get_user_client("token-1")
+            get_user_client("token-1")
             mock_create.return_value = "client-2"
-            c2 = get_user_client("token-2")
+            get_user_client("token-2")
             assert mock_create.call_count == 2
 
     def test_get_service_role_client_returns_client(self):

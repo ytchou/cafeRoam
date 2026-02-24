@@ -126,7 +126,7 @@ class TestSearchQuery:
 class TestJobStatus:
     def test_dead_letter_status_exists(self):
         """DB has dead_letter status — Python enum must match."""
-        assert JobStatus.DEAD_LETTER == "dead_letter"
+        assert JobStatus.DEAD_LETTER == "dead_letter"  # type: ignore[comparison-overlap]
 
     def test_all_db_statuses_covered(self):
         """Every status in the DB CHECK constraint must have a Python enum value."""
