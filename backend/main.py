@@ -9,16 +9,23 @@ from api.search import router as search_router
 from api.shops import router as shops_router
 from api.stamps import router as stamps_router
 from core.config import settings
+from workers.scheduler import create_scheduler
 
 logger = structlog.get_logger()
+
+scheduler = create_scheduler()
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Startup and shutdown events."""
     logger.info("Starting CafeRoam API", environment=settings.environment)
-    # Workers/scheduler will be started here in Task 11
+    if settings.environment != "test":
+        scheduler.start()
+        logger.info("Scheduler started")
     yield
+    if settings.environment != "test":
+        scheduler.shutdown()
     logger.info("Shutting down CafeRoam API")
 
 

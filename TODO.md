@@ -151,7 +151,7 @@ Core infrastructure everything else depends on. No user-facing product yet.
 - [x] FastAPI app + JWT auth dependency with TDD
 - [x] API routes (shops, search, checkins, lists, stamps)
 - [x] Job queue consumer with TDD (FOR UPDATE SKIP LOCKED)
-- [ ] Worker handlers + APScheduler (enrich, embed, menu, staleness, email)
+- [x] Worker handlers + APScheduler (enrich, embed, menu, staleness, email)
 
 **Chunk 5 — Frontend Proxies & Cleanup (Wave 6-7):**
 
