@@ -129,7 +129,7 @@ Core infrastructure everything else depends on. No user-facing product yet.
 - [x] Wire all auth routes to per-request JWT client
 
 **Chunk 3 — Service Simplification (Wave 5-6):**
-- [ ] Simplify CheckInService (trigger handles stamp + job)
+- [x] Simplify CheckInService (trigger handles stamp + job)
 - [ ] Simplify ListsService (trigger cap + RLS ownership)
 - [ ] Update list route handlers for simplified signatures
 
