@@ -121,7 +121,7 @@ Core infrastructure everything else depends on. No user-facing product yet.
 
 **Chunk 1 — Migration Files (Wave 1):**
 - [x] Copy 9 migration files from feat/db-infrastructure (fix job_queue columns, triggers, RPC)
-- [ ] Add DEAD_LETTER to JobStatus enum + widen Job.payload
+- [x] Add DEAD_LETTER to JobStatus enum + widen Job.payload
 
 **Chunk 2 — Per-Request JWT Auth (Wave 2-4):**
 - [ ] Refactor supabase_client.py (per-request JWT + service role singleton)
