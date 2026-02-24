@@ -1,14 +1,23 @@
 from functools import lru_cache
 
-from supabase import Client, create_client
+from supabase import Client, ClientOptions, create_client
 
 from core.config import settings
 
 
-@lru_cache(maxsize=1)
-def get_supabase_client() -> Client:
-    """Get Supabase client using anon key (respects RLS)."""
-    return create_client(settings.supabase_url, settings.supabase_anon_key)
+def get_user_client(token: str) -> Client:
+    """Create a per-request Supabase client authenticated with the user's JWT.
+
+    This makes auth.uid() available in RLS policies, so Postgres can enforce
+    row-level ownership checks without application-level verification.
+    """
+    return create_client(
+        settings.supabase_url,
+        settings.supabase_anon_key,
+        options=ClientOptions(
+            headers={"Authorization": f"Bearer {token}"}
+        ),
+    )
 
 
 @lru_cache(maxsize=1)

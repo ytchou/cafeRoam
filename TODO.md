@@ -124,7 +124,7 @@ Core infrastructure everything else depends on. No user-facing product yet.
 - [x] Add DEAD_LETTER to JobStatus enum + widen Job.payload
 
 **Chunk 2 — Per-Request JWT Auth (Wave 2-4):**
-- [ ] Refactor supabase_client.py (per-request JWT + service role singleton)
+- [x] Refactor supabase_client.py (per-request JWT + service role singleton)
 - [ ] Add get_user_db FastAPI dependency
 - [ ] Wire all auth routes to per-request JWT client
 
