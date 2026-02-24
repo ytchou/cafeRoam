@@ -10,15 +10,17 @@
 
 ## Tech Stack Quick Reference
 
-- **Framework:** Next.js 16 (App Router), TypeScript (strict)
+- **Frontend:** Next.js 16 (App Router), TypeScript (strict)
+- **Backend:** FastAPI (Python 3.12+), Pydantic, uvicorn
 - **Styling:** Tailwind CSS + shadcn/ui
 - **Database:** Supabase (Postgres 15 + pgvector)
 - **Auth:** Supabase Auth (JWT sessions)
-- **Hosting:** Railway (Next.js app + background workers)
+- **Hosting:** Railway (two services: Next.js frontend + Python API/workers)
 - **Storage:** Supabase Storage (check-in photos, menu photos)
-- **Maps:** Mapbox GL JS (via IMapsProvider abstraction)
-- **Testing:** Vitest + Testing Library
-- **Key integrations:** Claude Haiku (enrichment), OpenAI text-embedding-3-small (vectors), Resend (email), PostHog (analytics), Sentry (errors)
+- **Maps:** Mapbox GL JS (via MapsProvider protocol)
+- **Frontend testing:** Vitest + Testing Library
+- **Backend testing:** pytest + pytest-asyncio
+- **Key integrations:** Claude (enrichment), OpenAI text-embedding-3-small (vectors), Resend (email), PostHog (analytics), Sentry (errors)
 
 **Full technical architecture:** [SPEC.md](SPEC.md)
 
@@ -26,10 +28,10 @@
 
 ## Commands
 
-### App (Next.js)
+### Frontend (Next.js)
 
 ```bash
-pnpm install                   # Install dependencies
+pnpm install                   # Install frontend dependencies
 pnpm dev                       # Dev server :3000
 pnpm build                     # Production build
 pnpm lint                      # next lint
@@ -37,6 +39,18 @@ pnpm format:check              # prettier --check .
 pnpm type-check                # tsc --noEmit
 pnpm test                      # vitest run
 pnpm test:coverage             # vitest run --coverage
+```
+
+### Backend (FastAPI)
+
+```bash
+cd backend && uv sync          # Install Python dependencies
+uvicorn main:app --reload --port 8000  # Dev server :8000
+pytest                         # Run backend tests
+pytest --cov                   # Backend test coverage
+ruff check .                   # Lint Python code
+ruff format .                  # Format Python code
+mypy .                         # Type check Python code
 ```
 
 ### Database (Supabase)
@@ -47,13 +61,6 @@ supabase db diff               # Check migration state BEFORE pushing
 supabase db push               # Apply migrations to local
 pnpm db:seed                   # Import ~50 Taipei shops from Cafe Nomad API
 supabase db reset              # Reset local DB + reseed
-```
-
-### Workers
-
-```bash
-pnpm workers:enrich            # Run enrichment worker locally
-pnpm workers:embed             # Run embedding generation locally
 ```
 
 **See [ERROR-PREVENTION.md](ERROR-PREVENTION.md)** for common migration errors.
@@ -69,18 +76,18 @@ pnpm workers:embed             # Run embedding generation locally
 3. **Check-in requires photo:** At least one photo upload is mandatory. Text note and menu photo are optional.
 4. **Stamps are per-shop:** One stamp design per shop. Multiple check-ins at the same shop earn duplicate stamps (intended collection mechanic).
 5. **PDPA cascade on deletion:** Account deletion must cascade all personal data — check-in photos (Supabase Storage), text notes, lists, stamps, profile. Non-negotiable. Build before launch.
-6. **Provider abstraction:** Never import provider SDKs in business logic. Always use interfaces from `lib/providers/`.
+6. **Provider abstraction:** Never import provider SDKs in business logic. Always use Protocol classes from `backend/providers/`.
 
 ---
 
 ## Coding Standards
 
-### Provider Abstraction
+### Provider Abstraction (Python Backend)
 
-- Define interface first: `lib/providers/[service]/[service].interface.ts`
-- Implement adapter: `lib/providers/[service]/[provider].adapter.ts`
-- Wire via factory from env var: `lib/providers/[service]/index.ts`
-- Never call provider SDK from outside `lib/providers/`
+- Define protocol first: `backend/providers/[service]/interface.py`
+- Implement adapter: `backend/providers/[service]/[provider]_adapter.py`
+- Wire via factory + FastAPI Depends: `backend/providers/[service]/__init__.py`
+- Never call provider SDK from outside `backend/providers/`
 
 ### Database
 
@@ -94,11 +101,12 @@ pnpm workers:embed             # Run embedding generation locally
 
 Critical paths requiring tests:
 
-- `lib/services/search.service.ts` — semantic search + taxonomy boost logic
-- `lib/services/checkin.service.ts` — photo upload, stamp generation
-- `lib/services/lists.service.ts` — list CRUD, 3-list cap enforcement
-- `lib/providers/` — all provider adapters
-- `app/api/` — all API route handlers (auth validation, input validation)
+- `backend/services/search_service.py` — semantic search + taxonomy boost logic
+- `backend/services/checkin_service.py` — photo upload, stamp generation
+- `backend/services/lists_service.py` — list CRUD, 3-list cap enforcement
+- `backend/providers/` — all provider adapters
+- `backend/api/` — all API route handlers (auth validation, input validation)
+- `app/` — frontend component tests (Vitest + Testing Library)
 
 ---
 
