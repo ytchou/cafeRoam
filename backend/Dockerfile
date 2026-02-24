@@ -17,5 +17,8 @@ COPY . .
 # Expose port
 EXPOSE 8000
 
+# Run as non-root for security
+USER nobody
+
 # Run with uvicorn
 CMD ["uv", "run", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
