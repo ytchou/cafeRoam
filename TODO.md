@@ -113,45 +113,58 @@ Core infrastructure everything else depends on. No user-facing product yet.
 - [x] Lint + type-check + production build pass
 - [x] All routes accessible in browser
 
-### Database & Infrastructure
+### Database Schema (SQL Migrations)
 
 > **Design Doc:** [docs/designs/2026-02-24-db-infrastructure-design.md](docs/designs/2026-02-24-db-infrastructure-design.md)
-> **Plan:** [docs/plans/2026-02-24-db-infrastructure-plan.md](docs/plans/2026-02-24-db-infrastructure-plan.md)
-
-**Chunk 1 — Supabase Setup & Schema:**
+> **Plan:** [docs/plans/2026-02-24-db-infrastructure-plan.md](docs/plans/2026-02-24-db-infrastructure-plan.md) (Tasks 1, 3, 4, 5 — SQL only)
 
 - [ ] Supabase CLI init + config
-- [ ] Update domain types (coffee dimension, List→ListItem, job queue types, ILLMProvider)
 - [ ] Write schema migrations (8 files: extensions, shops, taxonomy, users, job queue, indexes, RLS)
 - [ ] Generate taxonomy seed + validate schema
 - [ ] Seed data + dev scripts + .env.example
 
-**Chunk 2 — Worker Infrastructure:**
+### Python Backend Migration
 
-- [ ] Worker Supabase client + structured logger
-- [ ] Job queue client with TDD (claim, complete, fail, enqueue)
-- [ ] Worker scheduler with TDD (staleness sweep cron, weekly email cron)
-- [ ] Worker entry point (poll loop + graceful shutdown)
+> **Design Doc:** [docs/designs/2026-02-24-python-backend-migration-design.md](docs/designs/2026-02-24-python-backend-migration-design.md)
+> **Plan:** [docs/plans/2026-02-24-python-backend-migration-plan.md](docs/plans/2026-02-24-python-backend-migration-plan.md)
+> **Supersedes:** DB Infrastructure Plan Tasks 6+ (TypeScript workers, providers, handlers)
 
-**Chunk 3 — Provider Adapters:**
+**Chunk 1 — Python Project Foundation (Wave 1-2):**
 
-- [ ] Anthropic LLM adapter with TDD (enrichShop, extractMenuData)
-- [ ] OpenAI Embeddings adapter with TDD (embed, embedBatch)
-- [ ] Resend Email adapter with TDD (send)
+- [ ] Python project scaffolding (pyproject.toml, config, test infra)
+- [ ] Pydantic domain models (translate TypeScript types)
+- [ ] Supabase Python client (singleton with service role)
 
-**Chunk 4 — Worker Handlers:**
+**Chunk 2 — Provider Layer (Wave 3):**
 
-- [ ] Enrich shop handler with TDD
-- [ ] Generate embedding handler with TDD
-- [ ] Enrich menu photo handler with TDD
-- [ ] Staleness sweep handler with TDD
-- [ ] Weekly email handler with TDD
+- [ ] Provider protocols (LLM, Embeddings, Email, Analytics, Maps)
+- [ ] Provider adapters + factory functions with TDD
 
-**Chunk 5 — Verification:**
+**Chunk 3 — Services (Wave 4):**
 
-- [ ] Full test suite passes
-- [ ] Lint + type-check + production build pass
-- [ ] Supabase migrations apply cleanly
+- [ ] Search service with TDD (vector similarity + taxonomy boost)
+- [ ] Check-in service with TDD (photo requirement, stamp award, menu photo queue)
+- [ ] Lists service with TDD (3-list cap enforcement)
+
+**Chunk 4 — API & Workers (Wave 4-5):**
+
+- [ ] FastAPI app + JWT auth dependency with TDD
+- [ ] API routes (shops, search, checkins, lists, stamps)
+- [ ] Job queue consumer with TDD (FOR UPDATE SKIP LOCKED)
+- [ ] Worker handlers + APScheduler (enrich, embed, menu, staleness, email)
+
+**Chunk 5 — Frontend Proxies & Cleanup (Wave 6-7):**
+
+- [ ] Rewrite Next.js API routes as thin proxies
+- [ ] Delete old TypeScript backend code (lib/providers, lib/services, lib/db, workers)
+- [ ] Backend Dockerfile + update package.json scripts
+
+**Chunk 6 — Verification:**
+
+- [ ] All backend tests pass (pytest)
+- [ ] All frontend tests pass (vitest)
+- [ ] Frontend build passes (pnpm build)
+- [ ] ruff + mypy pass on backend
 
 ### Auth & Privacy
 
@@ -169,7 +182,7 @@ Core infrastructure everything else depends on. No user-facing product yet.
 
 ### Provider Abstractions
 
-- [ ] Provider abstraction layer: ILLMProvider, IEmbeddingsProvider, IEmailProvider, IMapsProvider, IAnalyticsProvider
+- [ ] Provider abstraction layer: LLMProvider, EmbeddingsProvider, EmailProvider, MapsProvider, AnalyticsProvider (Python Protocol classes — covered in Python Backend Migration above)
 
 ### Observability & Ops
 
