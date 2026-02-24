@@ -143,7 +143,7 @@ Core infrastructure everything else depends on. No user-facing product yet.
 **Chunk 3 — Services (Wave 4):**
 
 - [x] Search service with TDD (vector similarity + taxonomy boost)
-- [ ] Check-in service with TDD (photo requirement, stamp award, menu photo queue)
+- [x] Check-in service with TDD (photo requirement, stamp award, menu photo queue)
 - [ ] Lists service with TDD (3-list cap enforcement)
 
 **Chunk 4 — API & Workers (Wave 4-5):**
