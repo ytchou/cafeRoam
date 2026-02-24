@@ -44,7 +44,7 @@ class TestTaxonomyTag:
         for dim in ["functionality", "time", "ambience", "mode", "coffee"]:
             tag = TaxonomyTag(
                 id=f"tag-{dim}",
-                dimension=dim,
+                dimension=dim,  # type: ignore[arg-type]
                 label=f"test-{dim}",
                 label_zh=f"測試-{dim}",
             )
@@ -54,7 +54,7 @@ class TestTaxonomyTag:
         with pytest.raises(ValueError):
             TaxonomyTag(
                 id="tag-bad",
-                dimension="invalid",
+                dimension="invalid",  # type: ignore[arg-type]
                 label="bad",
                 label_zh="壞",
             )
@@ -118,4 +118,5 @@ class TestSearchQuery:
             ),
             limit=10,
         )
+        assert q.filters is not None
         assert q.filters.radius_km == 2.0

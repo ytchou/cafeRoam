@@ -1,3 +1,5 @@
+from typing import Any, cast
+
 from supabase import Client
 
 from models.types import SearchQuery, SearchResult, Shop
@@ -16,7 +18,7 @@ class SearchService:
         query_embedding = await self._embeddings.embed(query.text)
 
         limit = query.limit or 20
-        rpc_params: dict = {
+        rpc_params: dict[str, Any] = {
             "query_embedding": query_embedding,
             "match_count": limit,
         }
@@ -27,9 +29,10 @@ class SearchService:
             rpc_params["filter_radius_km"] = query.filters.radius_km or 5.0
 
         response = self._db.rpc("search_shops", rpc_params).execute()
+        rows = cast("list[dict[str, Any]]", response.data)
 
         results: list[SearchResult] = []
-        for row in response.data:
+        for row in rows:
             similarity = row.pop("similarity", 0.0)
             taxonomy_boost = self._compute_taxonomy_boost(row, query)
 
@@ -52,7 +55,7 @@ class SearchService:
         results.sort(key=lambda r: r.total_score, reverse=True)
         return results
 
-    def _compute_taxonomy_boost(self, row: dict, query: SearchQuery) -> float:
+    def _compute_taxonomy_boost(self, row: dict[str, Any], query: SearchQuery) -> float:
         """Compute taxonomy boost based on tag overlap with query filters."""
         if not query.filters or not query.filters.dimensions:
             return 0.0

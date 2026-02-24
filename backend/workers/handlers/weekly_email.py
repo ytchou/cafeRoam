@@ -1,4 +1,7 @@
+from typing import Any, cast
+
 import structlog
+from supabase import Client
 
 from models.types import EmailMessage
 from providers.email.interface import EmailProvider
@@ -6,13 +9,13 @@ from providers.email.interface import EmailProvider
 logger = structlog.get_logger()
 
 
-async def handle_weekly_email(db, email: EmailProvider) -> None:
+async def handle_weekly_email(db: Client, email: EmailProvider) -> None:
     """Send weekly curated email to opted-in users."""
     logger.info("Sending weekly email digest")
 
     # Get opted-in users
     response = db.table("profiles").select("id, email").eq("email_opted_in", True).execute()
-    users = response.data
+    users = cast("list[dict[str, Any]]", response.data)
 
     # Build email content (same for all users in V1)
     html_content = "<h1>This Week's CafeRoam Picks</h1><p>Coming soon...</p>"

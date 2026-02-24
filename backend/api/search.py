@@ -1,3 +1,5 @@
+from typing import Any
+
 from fastapi import APIRouter, Depends, Query
 
 from api.deps import get_current_user
@@ -13,8 +15,8 @@ router = APIRouter(tags=["search"])
 async def search(
     text: str = Query(..., min_length=1),
     limit: int = Query(20, ge=1, le=50),
-    user: dict = Depends(get_current_user),  # noqa: B008
-):
+    user: dict[str, Any] = Depends(get_current_user),  # noqa: B008
+) -> list[dict[str, Any]]:
     """Semantic search. Auth required."""
     db = get_supabase_client()
     embeddings = get_embeddings_provider()

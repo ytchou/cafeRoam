@@ -1,3 +1,5 @@
+from typing import Any
+
 from fastapi import APIRouter, Depends
 
 from api.deps import get_current_user
@@ -7,7 +9,7 @@ router = APIRouter(prefix="/stamps", tags=["stamps"])
 
 
 @router.get("/")
-async def get_my_stamps(user: dict = Depends(get_current_user)):  # noqa: B008
+async def get_my_stamps(user: dict[str, Any] = Depends(get_current_user)) -> list[Any]:  # noqa: B008
     """Get current user's stamps. Auth required."""
     db = get_supabase_client()
     response = (

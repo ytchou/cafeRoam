@@ -1,4 +1,5 @@
 from datetime import UTC, datetime
+from typing import Any, cast
 
 from supabase import Client
 
@@ -29,7 +30,8 @@ class CheckInService:
             "note": note,
         }
         response = self._db.table("check_ins").insert(checkin_data).execute()
-        checkin_row = response.data[0]
+        rows = cast("list[dict[str, Any]]", response.data)
+        checkin_row = rows[0]
 
         stamp_data = {
             "user_id": user_id,
@@ -61,7 +63,8 @@ class CheckInService:
             .order("created_at", desc=True)
             .execute()
         )
-        return [CheckIn(**row) for row in response.data]
+        rows = cast("list[dict[str, Any]]", response.data)
+        return [CheckIn(**row) for row in rows]
 
     async def get_by_shop(self, shop_id: str) -> list[CheckIn]:
         response = (
@@ -71,4 +74,5 @@ class CheckInService:
             .order("created_at", desc=True)
             .execute()
         )
-        return [CheckIn(**row) for row in response.data]
+        rows = cast("list[dict[str, Any]]", response.data)
+        return [CheckIn(**row) for row in rows]

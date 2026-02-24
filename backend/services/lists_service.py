@@ -1,3 +1,5 @@
+from typing import Any, cast
+
 from supabase import Client
 
 from models.types import List, ListItem
@@ -17,7 +19,8 @@ class ListsService:
             .order("created_at", desc=True)
             .execute()
         )
-        return [List(**row) for row in response.data]
+        rows = cast("list[dict[str, Any]]", response.data)
+        return [List(**row) for row in rows]
 
     async def create(self, user_id: str, name: str) -> List:
         """Create a new list. Enforces max 3 lists per user at the API level."""
@@ -27,7 +30,8 @@ class ListsService:
             .eq("user_id", user_id)
             .execute()
         )
-        if len(existing.data) >= MAX_LISTS_PER_USER:
+        existing_rows = cast("list[dict[str, Any]]", existing.data)
+        if len(existing_rows) >= MAX_LISTS_PER_USER:
             raise ValueError(
                 f"Maximum {MAX_LISTS_PER_USER} lists per user. "
                 "Delete an existing list before creating a new one."
@@ -38,7 +42,8 @@ class ListsService:
             .insert({"user_id": user_id, "name": name})
             .execute()
         )
-        return List(**response.data[0])
+        rows = cast("list[dict[str, Any]]", response.data)
+        return List(**rows[0])
 
     async def delete(self, list_id: str, user_id: str) -> None:
         """Delete a list owned by the user. Also deletes all list items."""
@@ -56,7 +61,8 @@ class ListsService:
             .insert({"list_id": list_id, "shop_id": shop_id})
             .execute()
         )
-        return ListItem(**response.data[0])
+        rows = cast("list[dict[str, Any]]", response.data)
+        return ListItem(**rows[0])
 
     async def remove_shop(
         self, list_id: str, shop_id: str, user_id: str

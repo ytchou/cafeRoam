@@ -1,4 +1,5 @@
 from datetime import UTC, datetime
+from typing import Any, cast
 
 from supabase import Client
 
@@ -14,7 +15,7 @@ class JobQueue:
     async def enqueue(
         self,
         job_type: JobType,
-        payload: dict,
+        payload: dict[str, Any],
         priority: int = 0,
         scheduled_at: datetime | None = None,
     ) -> str:
@@ -33,7 +34,8 @@ class JobQueue:
             })
             .execute()
         )
-        return response.data[0]["id"]
+        rows = cast("list[dict[str, Any]]", response.data)
+        return str(rows[0]["id"])
 
     async def claim(self, job_type: JobType | None = None) -> Job | None:
         """Atomically claim the next pending job using FOR UPDATE SKIP LOCKED.
@@ -53,14 +55,15 @@ class JobQueue:
             )
             RETURNING *;
         """
-        params: dict = {"p_job_type": job_type.value if job_type else None}
+        params: dict[str, str | None] = {"p_job_type": job_type.value if job_type else None}
         response = self._db.rpc("claim_job", params).execute()
 
         if not response.data:
             return None
-        return Job(**response.data[0])
+        rows = cast("list[dict[str, Any]]", response.data)
+        return Job(**rows[0])
 
-    async def complete(self, job_id: str, result: dict | None = None) -> None:
+    async def complete(self, job_id: str, result: dict[str, Any] | None = None) -> None:
         """Mark a job as completed."""
         self._db.table("job_queue").update({
             "status": JobStatus.COMPLETED.value,

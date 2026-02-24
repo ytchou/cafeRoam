@@ -1,4 +1,7 @@
+from typing import Any
+
 import structlog
+from supabase import Client
 
 from providers.llm.interface import LLMProvider
 
@@ -6,8 +9,8 @@ logger = structlog.get_logger()
 
 
 async def handle_enrich_menu_photo(
-    payload: dict,
-    db,
+    payload: dict[str, Any],
+    db: Client,
     llm: LLMProvider,
 ) -> None:
     """Extract menu data from a check-in photo."""

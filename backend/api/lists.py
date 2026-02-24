@@ -1,3 +1,5 @@
+from typing import Any
+
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
@@ -17,7 +19,7 @@ class AddShopRequest(BaseModel):
 
 
 @router.get("/")
-async def get_my_lists(user: dict = Depends(get_current_user)):  # noqa: B008
+async def get_my_lists(user: dict[str, Any] = Depends(get_current_user)) -> list[dict[str, Any]]:  # noqa: B008
     """Get current user's lists. Auth required."""
     db = get_supabase_client()
     service = ListsService(db=db)
@@ -28,8 +30,8 @@ async def get_my_lists(user: dict = Depends(get_current_user)):  # noqa: B008
 @router.post("/")
 async def create_list(
     body: CreateListRequest,
-    user: dict = Depends(get_current_user),  # noqa: B008
-):
+    user: dict[str, Any] = Depends(get_current_user),  # noqa: B008
+) -> dict[str, Any]:
     """Create a new list. Auth required. Max 3 lists per user."""
     db = get_supabase_client()
     service = ListsService(db=db)
@@ -41,7 +43,10 @@ async def create_list(
 
 
 @router.delete("/{list_id}")
-async def delete_list(list_id: str, user: dict = Depends(get_current_user)):  # noqa: B008
+async def delete_list(
+    list_id: str,
+    user: dict[str, Any] = Depends(get_current_user),  # noqa: B008
+) -> dict[str, bool]:
     """Delete a list. Auth required."""
     db = get_supabase_client()
     service = ListsService(db=db)
@@ -53,8 +58,8 @@ async def delete_list(list_id: str, user: dict = Depends(get_current_user)):  # 
 async def add_shop_to_list(
     list_id: str,
     body: AddShopRequest,
-    user: dict = Depends(get_current_user),  # noqa: B008
-):
+    user: dict[str, Any] = Depends(get_current_user),  # noqa: B008
+) -> dict[str, Any]:
     """Add a shop to a list. Auth required."""
     db = get_supabase_client()
     service = ListsService(db=db)
@@ -68,8 +73,8 @@ async def add_shop_to_list(
 async def remove_shop_from_list(
     list_id: str,
     shop_id: str,
-    user: dict = Depends(get_current_user),  # noqa: B008
-):
+    user: dict[str, Any] = Depends(get_current_user),  # noqa: B008
+) -> dict[str, bool]:
     """Remove a shop from a list. Auth required."""
     db = get_supabase_client()
     service = ListsService(db=db)

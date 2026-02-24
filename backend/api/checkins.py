@@ -1,3 +1,5 @@
+from typing import Any
+
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
@@ -18,8 +20,8 @@ class CreateCheckInRequest(BaseModel):
 @router.post("/")
 async def create_checkin(
     body: CreateCheckInRequest,
-    user: dict = Depends(get_current_user),  # noqa: B008
-):
+    user: dict[str, Any] = Depends(get_current_user),  # noqa: B008
+) -> dict[str, Any]:
     """Create a check-in. Auth required."""
     db = get_supabase_client()
     service = CheckInService(db=db)
@@ -34,7 +36,7 @@ async def create_checkin(
 
 
 @router.get("/")
-async def get_my_checkins(user: dict = Depends(get_current_user)):  # noqa: B008
+async def get_my_checkins(user: dict[str, Any] = Depends(get_current_user)) -> list[dict[str, Any]]:  # noqa: B008
     """Get current user's check-ins. Auth required."""
     db = get_supabase_client()
     service = CheckInService(db=db)

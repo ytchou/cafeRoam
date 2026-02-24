@@ -16,7 +16,7 @@ from workers.queue import JobQueue
 logger = structlog.get_logger()
 
 
-async def process_job_queue():
+async def process_job_queue() -> None:
     """Poll the job queue and process one job per iteration."""
     db = get_service_role_client()
     queue = JobQueue(db=db)
@@ -59,14 +59,14 @@ async def process_job_queue():
         await queue.fail(job.id, error=str(e))
 
 
-async def run_staleness_sweep():
+async def run_staleness_sweep() -> None:
     """Cron wrapper: enqueue a staleness sweep job."""
     db = get_service_role_client()
     queue = JobQueue(db=db)
     await queue.enqueue(job_type=JobType.STALENESS_SWEEP, payload={})
 
 
-async def run_weekly_email():
+async def run_weekly_email() -> None:
     """Cron wrapper: enqueue a weekly email job."""
     db = get_service_role_client()
     queue = JobQueue(db=db)

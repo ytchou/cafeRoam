@@ -1,4 +1,7 @@
+from typing import Any, cast
+
 import structlog
+from supabase import Client
 
 from models.types import JobType
 from providers.llm.interface import LLMProvider
@@ -8,8 +11,8 @@ logger = structlog.get_logger()
 
 
 async def handle_enrich_shop(
-    payload: dict,
-    db,
+    payload: dict[str, Any],
+    db: Client,
     llm: LLMProvider,
     queue: JobQueue,
 ) -> None:
@@ -18,11 +21,13 @@ async def handle_enrich_shop(
     logger.info("Enriching shop", shop_id=shop_id)
 
     # Load shop data
-    shop = db.table("shops").select("*").eq("id", shop_id).single().execute().data
+    shop_response = db.table("shops").select("*").eq("id", shop_id).single().execute()
+    shop = cast("dict[str, Any]", shop_response.data)
 
     # Load reviews
     reviews_response = db.table("shop_reviews").select("text").eq("shop_id", shop_id).execute()
-    reviews = [r["text"] for r in reviews_response.data if r.get("text")]
+    review_rows = cast("list[dict[str, Any]]", reviews_response.data)
+    reviews = [r["text"] for r in review_rows if r.get("text")]
 
     # Call LLM for enrichment
     result = await llm.enrich_shop(
