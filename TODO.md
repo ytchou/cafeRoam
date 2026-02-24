@@ -137,8 +137,8 @@ Core infrastructure everything else depends on. No user-facing product yet.
 
 **Chunk 2 — Provider Layer (Wave 3):**
 
-- [ ] Provider protocols (LLM, Embeddings, Email, Analytics, Maps)
-- [ ] Provider adapters + factory functions with TDD
+- [x] Provider protocols (LLM, Embeddings, Email, Analytics, Maps)
+- [x] Provider adapters + factory functions with TDD
 
 **Chunk 3 — Services (Wave 4):**
 
