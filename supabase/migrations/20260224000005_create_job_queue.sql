@@ -38,7 +38,7 @@ BEGIN
 
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 CREATE TRIGGER trg_checkin_after_insert
   AFTER INSERT ON check_ins
@@ -51,6 +51,9 @@ RETURNS TRIGGER AS $$
 DECLARE
   list_count INTEGER;
 BEGIN
+  -- Serialize concurrent list creation for the same user to prevent TOCTOU race
+  PERFORM pg_advisory_xact_lock(hashtext(NEW.user_id::text)::bigint);
+
   SELECT COUNT(*) INTO list_count
   FROM lists WHERE user_id = NEW.user_id;
 

@@ -22,6 +22,7 @@ CREATE POLICY "shop_tags_public_read" ON shop_tags FOR SELECT USING (true);
 CREATE POLICY "profiles_own_read" ON profiles FOR SELECT USING (auth.uid() = id);
 CREATE POLICY "profiles_own_insert" ON profiles FOR INSERT WITH CHECK (auth.uid() = id);
 CREATE POLICY "profiles_own_update" ON profiles FOR UPDATE USING (auth.uid() = id);
+CREATE POLICY "profiles_own_delete" ON profiles FOR DELETE USING (auth.uid() = id);
 
 -- LISTS: users own their lists
 CREATE POLICY "lists_own_read" ON lists FOR SELECT USING (auth.uid() = user_id);
