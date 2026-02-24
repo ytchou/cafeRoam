@@ -133,7 +133,7 @@ Core infrastructure everything else depends on. No user-facing product yet.
 
 - [x] Python project scaffolding (pyproject.toml, config, test infra)
 - [x] Pydantic domain models (translate TypeScript types)
-- [ ] Supabase Python client (singleton with service role)
+- [x] Supabase Python client (singleton with service role)
 
 **Chunk 2 — Provider Layer (Wave 3):**
 
