@@ -1,4 +1,4 @@
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Any, cast
 
 from supabase import Client
@@ -71,8 +71,28 @@ class JobQueue:
         }).eq("id", job_id).execute()
 
     async def fail(self, job_id: str, error: str) -> None:
-        """Mark a job as failed. If under max_attempts, reset to pending for retry."""
-        self._db.table("job_queue").update({
-            "status": JobStatus.FAILED.value,
-            "last_error": error,
-        }).eq("id", job_id).execute()
+        """Mark a job as failed. If under max_attempts, reset to pending with exponential backoff."""
+        response = (
+            self._db.table("job_queue")
+            .select("attempts, max_attempts")
+            .eq("id", job_id)
+            .single()
+            .execute()
+        )
+        job_data = cast("dict[str, Any]", response.data)
+        attempts = job_data.get("attempts", 0)
+        max_attempts = job_data.get("max_attempts", 3)
+
+        if attempts < max_attempts:
+            backoff_seconds = 60 * (2 ** (attempts - 1))  # 60s, 120s, 240s
+            scheduled_at = (datetime.now(UTC) + timedelta(seconds=backoff_seconds)).isoformat()
+            self._db.table("job_queue").update({
+                "status": JobStatus.PENDING.value,
+                "last_error": error,
+                "scheduled_at": scheduled_at,
+            }).eq("id", job_id).execute()
+        else:
+            self._db.table("job_queue").update({
+                "status": JobStatus.FAILED.value,
+                "last_error": error,
+            }).eq("id", job_id).execute()

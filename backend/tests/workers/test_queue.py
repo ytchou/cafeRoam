@@ -83,13 +83,48 @@ class TestJobQueue:
         await job_queue.complete("job-1", result={"tags": 5})
         mock_supabase.table.assert_called_with("job_queue")
 
-    async def test_fail_increments_attempts(self, job_queue, mock_supabase):
+    async def test_fail_resets_to_pending_when_under_max_attempts(self, job_queue, mock_supabase):
+        """Under max_attempts: status resets to PENDING with exponential backoff."""
+        select_response = MagicMock(data={"attempts": 1, "max_attempts": 3})
+        update_response = MagicMock(data=[])
         mock_supabase.table = MagicMock(return_value=MagicMock(
+            select=MagicMock(return_value=MagicMock(
+                eq=MagicMock(return_value=MagicMock(
+                    single=MagicMock(return_value=MagicMock(
+                        execute=MagicMock(return_value=select_response)
+                    ))
+                ))
+            )),
             update=MagicMock(return_value=MagicMock(
                 eq=MagicMock(return_value=MagicMock(
-                    execute=MagicMock(return_value=MagicMock(data=[]))
+                    execute=MagicMock(return_value=update_response)
                 ))
-            ))
+            )),
         ))
         await job_queue.fail("job-1", error="API timeout")
-        mock_supabase.table.assert_called_with("job_queue")
+        update_call = mock_supabase.table.return_value.update.call_args[0][0]
+        assert update_call["status"] == JobStatus.PENDING.value
+        assert "scheduled_at" in update_call
+
+    async def test_fail_marks_permanently_failed_at_max_attempts(self, job_queue, mock_supabase):
+        """At max_attempts: status is set to FAILED permanently."""
+        select_response = MagicMock(data={"attempts": 3, "max_attempts": 3})
+        update_response = MagicMock(data=[])
+        mock_supabase.table = MagicMock(return_value=MagicMock(
+            select=MagicMock(return_value=MagicMock(
+                eq=MagicMock(return_value=MagicMock(
+                    single=MagicMock(return_value=MagicMock(
+                        execute=MagicMock(return_value=select_response)
+                    ))
+                ))
+            )),
+            update=MagicMock(return_value=MagicMock(
+                eq=MagicMock(return_value=MagicMock(
+                    execute=MagicMock(return_value=update_response)
+                ))
+            )),
+        ))
+        await job_queue.fail("job-1", error="Final failure")
+        update_call = mock_supabase.table.return_value.update.call_args[0][0]
+        assert update_call["status"] == JobStatus.FAILED.value
+        assert "scheduled_at" not in update_call

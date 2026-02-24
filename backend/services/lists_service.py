@@ -46,16 +46,30 @@ class ListsService:
         return List(**rows[0])
 
     async def delete(self, list_id: str, user_id: str) -> None:
-        """Delete a list owned by the user. Also deletes all list items."""
+        """Delete a list owned by the user. Verifies ownership before deleting items."""
+        self._verify_ownership(list_id, user_id)
         self._db.table("list_items").delete().eq("list_id", list_id).execute()
         self._db.table("lists").delete().eq("id", list_id).eq(
             "user_id", user_id
         ).execute()
 
+    def _verify_ownership(self, list_id: str, user_id: str) -> None:
+        """Raise ValueError if list does not belong to user_id."""
+        response = (
+            self._db.table("lists")
+            .select("id")
+            .eq("id", list_id)
+            .eq("user_id", user_id)
+            .execute()
+        )
+        if not response.data:
+            raise ValueError("List not found or access denied")
+
     async def add_shop(
         self, list_id: str, shop_id: str, user_id: str
     ) -> ListItem:
-        """Add a shop to a list."""
+        """Add a shop to a list. Verifies ownership before inserting."""
+        self._verify_ownership(list_id, user_id)
         response = (
             self._db.table("list_items")
             .insert({"list_id": list_id, "shop_id": shop_id})
@@ -67,7 +81,8 @@ class ListsService:
     async def remove_shop(
         self, list_id: str, shop_id: str, user_id: str
     ) -> None:
-        """Remove a shop from a list."""
+        """Remove a shop from a list. Verifies ownership before deleting."""
+        self._verify_ownership(list_id, user_id)
         (
             self._db.table("list_items")
             .delete()

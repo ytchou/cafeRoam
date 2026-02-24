@@ -1,3 +1,4 @@
+from datetime import UTC, datetime
 from typing import Any, cast
 
 import structlog
@@ -40,7 +41,7 @@ async def handle_enrich_shop(
     # Write enrichment result
     db.table("shops").update({
         "description": result.summary,
-        "enriched_at": "now()",
+        "enriched_at": datetime.now(UTC).isoformat(),
     }).eq("id", shop_id).execute()
 
     # Queue embedding generation
