@@ -11,7 +11,7 @@
 ## Tech Stack Quick Reference
 
 - **Frontend:** Next.js 16 (App Router), TypeScript (strict)
-- **Backend:** FastAPI (Python 3.12+), Pydantic, uvicorn
+- **Backend:** FastAPI (Python 3.12+), Pydantic, uvicorn — [ADR: why Python over TypeScript](docs/decisions/2026-02-24-python-backend-over-typescript.md)
 - **Styling:** Tailwind CSS + shadcn/ui
 - **Database:** Supabase (Postgres 15 + pgvector)
 - **Auth:** Supabase Auth (JWT sessions)
