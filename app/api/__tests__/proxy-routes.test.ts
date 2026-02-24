@@ -8,10 +8,7 @@ vi.mock('@/lib/api/proxy', () => ({
 
 import { proxyToBackend } from '@/lib/api/proxy';
 import { GET as authGET, POST as authPOST } from '../auth/route';
-import {
-  GET as checkinsGET,
-  POST as checkinsPOST,
-} from '../checkins/route';
+import { GET as checkinsGET, POST as checkinsPOST } from '../checkins/route';
 import { DELETE as listShopDELETE } from '../lists/[listId]/shops/[shopId]/route';
 import { POST as listShopsPOST } from '../lists/[listId]/shops/route';
 import { DELETE as listDELETE } from '../lists/[listId]/route';
@@ -54,12 +51,18 @@ describe('search route', () => {
 describe('checkins route', () => {
   it('GET proxies to /checkins', async () => {
     await checkinsGET(makeRequest());
-    expect(mockProxy).toHaveBeenCalledWith(expect.any(NextRequest), '/checkins');
+    expect(mockProxy).toHaveBeenCalledWith(
+      expect.any(NextRequest),
+      '/checkins'
+    );
   });
 
   it('POST proxies to /checkins', async () => {
     await checkinsPOST(makeRequest());
-    expect(mockProxy).toHaveBeenCalledWith(expect.any(NextRequest), '/checkins');
+    expect(mockProxy).toHaveBeenCalledWith(
+      expect.any(NextRequest),
+      '/checkins'
+    );
   });
 });
 
