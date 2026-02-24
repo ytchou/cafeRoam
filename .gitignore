@@ -65,5 +65,13 @@ supabase/.temp
 *.swp
 *.swo
 
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+
 # Pre-build pipeline data (large JSON files)
 data/

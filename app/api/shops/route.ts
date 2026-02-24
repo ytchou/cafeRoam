@@ -1,5 +1,6 @@
-import { NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+import { proxyToBackend } from '@/lib/api/proxy';
 
-export async function GET() {
-  return NextResponse.json({ status: 'not_implemented' }, { status: 501 });
+export async function GET(request: NextRequest) {
+  return proxyToBackend(request, '/shops');
 }

@@ -113,10 +113,96 @@ Core infrastructure everything else depends on. No user-facing product yet.
 - [x] Lint + type-check + production build pass
 - [x] All routes accessible in browser
 
-### Database & Infrastructure
+### Database Schema (SQL Migrations)
 
-- [ ] Supabase setup: Postgres schema, pgvector extension enabled, RLS policies on all tables
-- [ ] Background worker infrastructure: Railway worker setup + cron job scaffold
+> **Design Doc:** [docs/designs/2026-02-24-db-infrastructure-design.md](docs/designs/2026-02-24-db-infrastructure-design.md)
+> **Plan:** [docs/plans/2026-02-24-db-infrastructure-plan.md](docs/plans/2026-02-24-db-infrastructure-plan.md) (Tasks 1, 3, 4, 5 — SQL only)
+
+- [ ] Supabase CLI init + config
+- [ ] Write schema migrations (8 files: extensions, shops, taxonomy, users, job queue, indexes, RLS)
+- [ ] Generate taxonomy seed + validate schema
+- [ ] Seed data + dev scripts + .env.example
+
+### Python Backend Migration
+
+> **Design Doc:** [docs/designs/2026-02-24-python-backend-migration-design.md](docs/designs/2026-02-24-python-backend-migration-design.md)
+> **Plan:** [docs/plans/2026-02-24-python-backend-migration-plan.md](docs/plans/2026-02-24-python-backend-migration-plan.md)
+> **Supersedes:** DB Infrastructure Plan Tasks 6+ (TypeScript workers, providers, handlers)
+
+**Chunk 1 — Python Project Foundation (Wave 1-2):**
+
+- [x] Python project scaffolding (pyproject.toml, config, test infra)
+- [x] Pydantic domain models (translate TypeScript types)
+- [x] Supabase Python client (singleton with service role)
+
+**Chunk 2 — Provider Layer (Wave 3):**
+
+- [x] Provider protocols (LLM, Embeddings, Email, Analytics, Maps)
+- [x] Provider adapters + factory functions with TDD
+
+**Chunk 3 — Services (Wave 4):**
+
+- [x] Search service with TDD (vector similarity + taxonomy boost)
+- [x] Check-in service with TDD (photo requirement, stamp award, menu photo queue)
+- [x] Lists service with TDD (3-list cap enforcement)
+
+**Chunk 4 — API & Workers (Wave 4-5):**
+
+- [x] FastAPI app + JWT auth dependency with TDD
+- [x] API routes (shops, search, checkins, lists, stamps)
+- [x] Job queue consumer with TDD (FOR UPDATE SKIP LOCKED)
+- [x] Worker handlers + APScheduler (enrich, embed, menu, staleness, email)
+
+**Chunk 5 — Frontend Proxies & Cleanup (Wave 6-7):**
+
+- [x] Rewrite Next.js API routes as thin proxies
+- [x] Delete old TypeScript backend code (lib/providers, lib/services, lib/db, workers)
+- [x] Backend Dockerfile + update package.json scripts
+
+**Chunk 6 — Verification:**
+
+- [x] All backend tests pass (pytest)
+- [x] All frontend tests pass (vitest)
+- [x] Frontend build passes (pnpm build)
+- [x] ruff + mypy pass on backend
+
+### Code Review Fixes (Python Backend)
+
+> **Design Doc:** [docs/designs/2026-02-24-code-review-fixes-design.md](docs/designs/2026-02-24-code-review-fixes-design.md)
+> **Plan:** [docs/plans/2026-02-24-code-review-fixes-plan.md](docs/plans/2026-02-24-code-review-fixes-plan.md)
+
+**Chunk 1 — Auth/Authorization (Critical) — Deferred:**
+
+- [ ] Supabase client refactor (per-request JWT + service role singleton)
+- [ ] Add get_user_db FastAPI dependency
+- [ ] Wire all API routes to per-request JWT client
+
+**Chunk 2 — Transaction Safety (Critical/Important) — Deferred:**
+
+- [ ] DB migrations (check-in trigger + list cap trigger)
+- [ ] Simplify CheckInService (remove stamp + job inserts)
+- [ ] Simplify ListsService (remove TOCTOU cap, drop ownership params)
+
+**Chunk 3 — Data Integrity (Critical):**
+
+- [x] Job queue retry with exponential backoff
+- [x] Fix enriched_at string literal to real timestamp
+
+**Chunk 4 — Infrastructure (Important):**
+
+- [x] Resend email adapter: async thread wrapper + fix global state
+- [x] Job.payload type widen to Any + search row.pop fix
+- [x] Proxy content type forwarding
+- [x] Missing list sub-resource proxy routes
+- [x] Auth route (backend + frontend)
+- [x] Dockerfile uv.lock fix + posthog dependency
+
+**Chunk 5 — Tests + Verification:**
+
+- [x] Missing handler tests (enrich_menu_photo, weekly_email)
+- [x] All backend tests pass (pytest)
+- [x] All frontend tests pass (vitest)
+- [x] ruff + mypy pass
 
 ### Auth & Privacy
 
@@ -134,7 +220,7 @@ Core infrastructure everything else depends on. No user-facing product yet.
 
 ### Provider Abstractions
 
-- [ ] Provider abstraction layer: ILLMProvider, IEmbeddingsProvider, IEmailProvider, IMapsProvider, IAnalyticsProvider
+- [ ] Provider abstraction layer: LLMProvider, EmbeddingsProvider, EmailProvider, MapsProvider, AnalyticsProvider (Python Protocol classes — covered in Python Backend Migration above)
 
 ### Observability & Ops
 

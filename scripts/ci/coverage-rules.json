@@ -1,26 +1,14 @@
 {
   "frontend": {
     "display_prefix": "/caferoam/",
-    "stack_detection_paths": ["app/", "components/", "lib/", "workers/"],
+    "stack_detection_paths": ["app/", "components/", "lib/"],
     "critical_paths": [
-      "lib/services/search.service.ts",
-      "lib/services/checkin.service.ts",
-      "lib/services/lists.service.ts",
-      "lib/providers/llm/anthropic.adapter.ts",
-      "lib/providers/embeddings/openai.adapter.ts",
-      "lib/providers/email/resend.adapter.ts",
-      "lib/providers/maps/mapbox.adapter.ts",
-      "lib/providers/analytics/posthog.adapter.ts",
       "app/api/search/route.ts",
-      "app/api/checkin/route.ts",
+      "app/api/checkins/route.ts",
       "app/api/lists/route.ts",
       "app/api/auth/route.ts"
     ],
-    "critical_patterns": [
-      "lib/services/*.service.ts",
-      "lib/providers/**/*.adapter.ts",
-      "app/api/**/route.ts"
-    ],
+    "critical_patterns": ["app/api/**/route.ts"],
     "critical_threshold": 80,
     "default_threshold": 45,
     "exclude_patterns": [
@@ -32,10 +20,40 @@
       "**/*.config.mjs",
       "**/middleware.ts",
       "**/scripts/prebuild/**",
-      "*.service.ts",
-      "*.interface.ts",
       "layout.tsx",
       "components/ui/*.tsx"
+    ]
+  },
+  "backend": {
+    "display_prefix": "/backend/",
+    "stack_detection_paths": ["backend/"],
+    "critical_paths": [
+      "backend/services/search_service.py",
+      "backend/services/checkin_service.py",
+      "backend/services/lists_service.py",
+      "backend/providers/llm/anthropic_adapter.py",
+      "backend/providers/embeddings/openai_adapter.py",
+      "backend/providers/email/resend_adapter.py",
+      "backend/providers/maps/mapbox_adapter.py",
+      "backend/providers/analytics/posthog_adapter.py",
+      "backend/api/shops.py",
+      "backend/api/search.py",
+      "backend/api/checkins.py",
+      "backend/api/lists.py",
+      "backend/api/stamps.py"
+    ],
+    "critical_patterns": [
+      "backend/services/*.py",
+      "backend/providers/**/*_adapter.py",
+      "backend/api/*.py"
+    ],
+    "critical_threshold": 80,
+    "default_threshold": 45,
+    "exclude_patterns": [
+      "**/__init__.py",
+      "**/conftest.py",
+      "backend/tests/**",
+      "backend/.venv/**"
     ]
   }
 }

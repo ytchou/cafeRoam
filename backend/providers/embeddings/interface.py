@@ -1,0 +1,13 @@
+from typing import Protocol
+
+
+class EmbeddingsProvider(Protocol):
+    @property
+    def dimensions(self) -> int: ...
+
+    @property
+    def model_id(self) -> str: ...
+
+    async def embed(self, text: str) -> list[float]: ...
+
+    async def embed_batch(self, texts: list[str]) -> list[list[float]]: ...

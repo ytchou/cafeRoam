@@ -1,26 +1,29 @@
 # Technical Specification: CafeRoam (啡遊)
 
-> Last updated: 2026-02-23
+> Last updated: 2026-02-24
 > For complete product requirements: see PRD.md
 
 ---
 
 ## 1. Tech Stack
 
-| Layer          | Choice                            | Notes                                                     |
-| -------------- | --------------------------------- | --------------------------------------------------------- |
-| Framework      | Next.js 16 (App Router)           | SSR/SSG for SEO, mobile-first, shareable URLs             |
-| Language       | TypeScript (strict)               | Full-stack including workers                              |
-| Database       | Supabase (Postgres 15 + pgvector) | Vector search, auth, storage in one platform              |
-| Auth           | Supabase Auth                     | Email/password + social login options                     |
-| Hosting        | Railway                           | Next.js app + background workers, single platform, ~$5/mo |
-| Styling        | Tailwind CSS + shadcn/ui          | Fast iteration, mobile-first design                       |
-| Testing        | Vitest + Testing Library          | Unit + integration tests                                  |
-| Maps           | Mapbox GL JS                      | Abstracted behind IMapsProvider interface                 |
-| Storage        | Supabase Storage                  | Check-in photos, menu photos; RLS enforced                |
-| Error tracking | Sentry                            | Frontend + backend, free tier at launch                   |
-| Analytics      | PostHog                           | Via IAnalyticsProvider abstraction                        |
-| Uptime         | UptimeRobot                       | 5-minute checks, email alerts                             |
+| Layer            | Choice                            | Notes                                                |
+| ---------------- | --------------------------------- | ---------------------------------------------------- |
+| Frontend         | Next.js 16 (App Router)           | SSR/SSG for SEO, mobile-first, shareable URLs        |
+| Frontend lang    | TypeScript (strict)               | Frontend + prebuild data pipeline only               |
+| Backend          | FastAPI (Python 3.12+)            | API + workers + business logic                       |
+| Backend lang     | Python (typed, mypy-checked)      | All backend services, providers, workers             |
+| Database         | Supabase (Postgres 15 + pgvector) | Vector search, auth, storage in one platform         |
+| Auth             | Supabase Auth                     | Email/password + social login options                |
+| Hosting          | Railway (two services)            | Next.js frontend + Python API/workers, same monorepo |
+| Styling          | Tailwind CSS + shadcn/ui          | Fast iteration, mobile-first design                  |
+| Frontend testing | Vitest + Testing Library          | Frontend unit + integration tests                    |
+| Backend testing  | pytest + pytest-asyncio           | API + service + worker tests                         |
+| Maps             | Mapbox GL JS                      | Abstracted behind MapsProvider protocol              |
+| Storage          | Supabase Storage                  | Check-in photos, menu photos; RLS enforced           |
+| Error tracking   | Sentry                            | Frontend + backend, free tier at launch              |
+| Analytics        | PostHog                           | Via AnalyticsProvider protocol abstraction           |
+| Uptime           | UptimeRobot                       | 5-minute checks, email alerts                        |
 
 **Full rationale for each choice:** see `docs/decisions/`
 
@@ -33,9 +36,9 @@
 | Data pipeline         | One-time data collection (Cafe Nomad seed → Apify/Google Maps verify + scrape) + ongoing enrichment (Claude Haiku + embedding generation) | 1     |
 | Taxonomy system       | Canonical tag database; powers filter UI and search ranking                                                                               | 1     |
 | Auth system           | Supabase Auth, session management, route protection, PDPA consent                                                                         | 1     |
-| Provider abstractions | ILLMProvider, IEmbeddingsProvider, IEmailProvider, IMapsProvider, IAnalyticsProvider                                                      | 1     |
+| Provider abstractions | LLMProvider, EmbeddingsProvider, EmailProvider, MapsProvider, AnalyticsProvider (Python Protocol classes)                                 | 1     |
 | Admin/ops             | Internal data quality dashboard, manual enrichment and verification UI                                                                    | 1     |
-| Background workers    | Railway workers: Apify triggers, embedding refresh, weekly email cron                                                                     | 1     |
+| Background workers    | FastAPI embedded workers (APScheduler): enrichment, embedding refresh, weekly email cron                                                  | 1     |
 | Shop directory        | List view + map view toggle, geolocation, multi-dimension filters                                                                         | 2     |
 | Semantic search       | pgvector similarity + taxonomy boost, chatbox UI on landing page                                                                          | 2     |
 | User lists            | Create/edit/delete (max 3), add/remove shops                                                                                              | 2     |
@@ -47,36 +50,38 @@
 
 ## 3. Architecture Overview
 
-CafeRoam is a Next.js monorepo deployed on Railway with Supabase as the data backend. Two main deployment targets: the Next.js web app (SSR/SSG pages + API routes) and Railway background workers (long-running processes for data enrichment and cron jobs).
+CafeRoam is a monorepo with two Railway services: a Next.js frontend (TypeScript) and a FastAPI backend (Python). Supabase provides the data backend (Postgres + pgvector, auth, storage). The Next.js frontend handles SSR/SSG pages and thin API proxy routes. The Python backend handles all business logic, provider integrations, and background workers.
 
-**Semantic search flow:** User query → Next.js API route → embed query via IEmbeddingsProvider (OpenAI text-embedding-3-small) → pgvector similarity search on Supabase → taxonomy tag boost (structured component) → ranked results → response. This hybrid approach (vector similarity + taxonomy boost) handles both natural language queries and attribute-specific queries ("must have outlets") better than pure vector search.
+**Frontend → Backend communication:** Next.js API routes act as thin proxies, forwarding requests (with auth headers) to the Python backend via Railway's internal network. The Python API is not publicly exposed.
 
-**Check-in flow:** User uploads photo → Next.js API route → validate auth + photo → Supabase Storage → stamp awarded → optional: menu photo queued for enrichment worker → Claude Haiku extracts structured menu data → merged into shop record.
+**Semantic search flow:** User query → Next.js proxy → FastAPI route → embed query via EmbeddingsProvider (OpenAI text-embedding-3-small) → pgvector similarity search on Supabase → taxonomy tag boost (structured component) → ranked results → response. This hybrid approach (vector similarity + taxonomy boost) handles both natural language queries and attribute-specific queries ("must have outlets") better than pure vector search.
 
-**Provider abstraction pattern:** All external services (LLM, embeddings, email, maps, analytics) are accessed via TypeScript interfaces. Business logic imports only interfaces — never provider SDKs. Environment variables select the active provider via factory functions. This enables swapping providers (e.g., Resend → SendGrid) with zero business logic changes.
+**Check-in flow:** User uploads photo → Next.js proxy → FastAPI route → validate auth + photo → Supabase Storage → stamp awarded → optional: menu photo queued for enrichment worker → Claude extracts structured menu data → merged into shop record.
+
+**Provider abstraction pattern:** All external services (LLM, embeddings, email, maps, analytics) are accessed via Python `Protocol` classes. Business logic imports only protocols — never provider SDKs. Factory functions select the active provider from env vars and are wired via FastAPI's `Depends()` system for dependency injection and test mocking.
 
 ```
-lib/providers/
+backend/providers/
 ├── llm/
-│   ├── llm.interface.ts          # ILLMProvider
-│   ├── anthropic.adapter.ts      # Claude Haiku (default)
-│   └── index.ts                  # factory: reads LLM_PROVIDER env var
+│   ├── interface.py              # LLMProvider protocol
+│   ├── anthropic_adapter.py      # Claude (default)
+│   └── __init__.py               # factory: get_llm_provider()
 ├── embeddings/
-│   ├── embeddings.interface.ts   # IEmbeddingsProvider
-│   ├── openai.adapter.ts         # text-embedding-3-small (default)
-│   └── index.ts
+│   ├── interface.py              # EmbeddingsProvider protocol
+│   ├── openai_adapter.py         # text-embedding-3-small (default)
+│   └── __init__.py
 ├── email/
-│   ├── email.interface.ts        # IEmailProvider
-│   ├── resend.adapter.ts         # Resend (default)
-│   └── index.ts
+│   ├── interface.py              # EmailProvider protocol
+│   ├── resend_adapter.py         # Resend (default)
+│   └── __init__.py
 ├── maps/
-│   ├── maps.interface.ts         # IMapsProvider
-│   ├── mapbox.adapter.ts         # Mapbox GL JS (default)
-│   └── index.ts
+│   ├── interface.py              # MapsProvider protocol
+│   ├── mapbox_adapter.py         # Mapbox GL JS (default)
+│   └── __init__.py
 └── analytics/
-    ├── analytics.interface.ts    # IAnalyticsProvider
-    ├── posthog.adapter.ts        # PostHog (default)
-    └── index.ts
+    ├── interface.py              # AnalyticsProvider protocol
+    ├── posthog_adapter.py        # PostHog (default)
+    └── __init__.py
 ```
 
 ---
@@ -127,7 +132,7 @@ Things that must exist for this product to ship. If any of these slip, the timel
 ## 7. Dev Environment
 
 - **Target setup time:** Under 15 minutes from `git clone` to running app
-- **Prerequisites:** Node.js 20+, pnpm, Docker Desktop, Supabase CLI, Railway CLI
+- **Prerequisites:** Node.js 20+, pnpm, Python 3.12+, uv (Python package manager), Docker Desktop, Supabase CLI, Railway CLI
 
 ```bash
 git clone <repo> && cd caferoam
@@ -135,15 +140,17 @@ cp .env.example .env.local     # Fill in API keys (~2 min)
 pnpm setup                     # Runs all steps automatically
 
 # What pnpm setup does:
-# 1. pnpm install                        (~2 min)
-# 2. supabase start                      (~3 min first time — pulls Docker images)
-# 3. supabase db push                    (~30 sec)
-# 4. pnpm db:seed                        (~1 min — imports ~50 Taipei shops)
-# 5. pnpm dev                            (starts Next.js on :3000)
+# 1. pnpm install                        (~2 min — frontend deps)
+# 2. cd backend && uv sync               (~1 min — Python backend deps)
+# 3. supabase start                      (~3 min first time — pulls Docker images)
+# 4. supabase db push                    (~30 sec)
+# 5. pnpm db:seed                        (~1 min — imports ~50 Taipei shops)
+# 6. pnpm dev                            (starts Next.js on :3000 + FastAPI on :8000)
 ```
 
-- **Makefile shortcuts:** `make migrate`, `make seed`, `make reset-db`, `make workers`
+- **Makefile shortcuts:** `make migrate`, `make seed`, `make reset-db`, `make backend`, `make test-backend`
 - **Local Supabase:** Full Postgres + pgvector + auth + storage runs in Docker — no cloud credentials needed for local development.
+- **Backend dev server:** `cd backend && uvicorn main:app --reload --port 8000`
 
 ---
 
@@ -154,6 +161,7 @@ pnpm setup                     # Runs all steps automatically
 - **Map performance on low-end devices:** Mapbox GL JS can be heavy on older Android devices common in Taiwan. Mitigation: lazy-load the map, only render pins in viewport, provide list view as fallback.
 - **Data freshness:** Enriched data degrades as shops change menus, hours, or close. Check-in menu photos partially automate refresh, but periodic manual verification is an ongoing maintenance task.
 - **Railway vs serverless:** Railway runs as persistent services (not serverless functions), which means no cold starts and no timeout limits on long-running enrichment jobs — a deliberate choice for the data pipeline.
+- **Two-language stack:** TypeScript (frontend) + Python (backend) means two dependency systems and two testing frameworks. Accepted: team productivity in Python and access to the Python AI/ML ecosystem outweigh the overhead. The prebuild data pipeline stays in TypeScript as it's already working.
 - **Solo dev timeline:** 2-4 weeks is aggressive. The 30-shop data enrichment + semantic search prototype (week 0) must prove the wedge before investing in full build.
 
 ---
@@ -172,5 +180,5 @@ pnpm setup                     # Runs all steps automatically
 - **Profile is private:** The user profile page is only accessible to the authenticated user who owns it. Not publicly viewable in V1.
 - **Weekly email:** Fixed schedule. All opted-in users receive the same curated content in V1. No personalization until usage data exists.
 - **PDPA data deletion:** Account deletion must cascade all personal data: check-in photos (Supabase Storage), text notes, lists, stamps, profile data. Must complete within 30 days of request. Non-negotiable — must be built before launch.
-- **Provider abstraction:** Business logic never imports provider SDKs directly. All external services accessed via interfaces in `lib/providers/`.
+- **Provider abstraction:** Business logic never imports provider SDKs directly. All external services accessed via Python Protocol classes in `backend/providers/`.
 - **Taxonomy is canonical:** Filter UI options and LLM enrichment prompts both derive from the taxonomy table. Adding a new tag to the taxonomy automatically makes it available in filters and future enrichment runs.

@@ -1,0 +1,16 @@
+{
+  "$schema": "https://railway.app/railway.schema.json",
+  "services": {
+    "web": {
+      "builder": "NIXPACKS",
+      "buildCommand": "pnpm install && pnpm build",
+      "startCommand": "pnpm start",
+      "healthcheckPath": "/"
+    },
+    "api": {
+      "builder": "DOCKERFILE",
+      "dockerfilePath": "backend/Dockerfile",
+      "healthcheckPath": "/health"
+    }
+  }
+}
