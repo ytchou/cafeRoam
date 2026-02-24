@@ -3,6 +3,11 @@ from contextlib import asynccontextmanager
 import structlog
 from fastapi import FastAPI
 
+from api.checkins import router as checkins_router
+from api.lists import router as lists_router
+from api.search import router as search_router
+from api.shops import router as shops_router
+from api.stamps import router as stamps_router
 from core.config import settings
 
 logger = structlog.get_logger()
@@ -30,4 +35,8 @@ async def health_check():
     return {"status": "ok"}
 
 
-# Routers will be included here in Task 9
+app.include_router(shops_router)
+app.include_router(search_router)
+app.include_router(checkins_router)
+app.include_router(lists_router)
+app.include_router(stamps_router)
