@@ -3,7 +3,8 @@ import { updateSession } from '@/lib/supabase/middleware';
 
 // Routes that don't require authentication
 const PUBLIC_ROUTES = ['/', '/login', '/signup', '/auth/callback', '/privacy'];
-const PUBLIC_PREFIXES = ['/shops'];
+// /api routes handle their own JWT auth via FastAPI — do not redirect them
+const PUBLIC_PREFIXES = ['/shops', '/api'];
 
 // Routes that require session but NOT pdpa consent
 const ONBOARDING_ROUTES = ['/onboarding/consent'];
