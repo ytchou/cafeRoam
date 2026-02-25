@@ -59,7 +59,9 @@ class TestDeleteExpiredAccounts:
 
         # Check-in photos bucket
         mock_db.storage.from_.assert_any_call("checkin-photos")
-        mock_db.storage.from_.return_value.list.assert_called_once_with(path="user-expired")
+        mock_db.storage.from_.return_value.list.assert_called_once_with(
+            path="user-expired", options={"limit": 10000}
+        )
         mock_db.auth.admin.delete_user.assert_called_once_with("user-expired")
 
     @pytest.mark.asyncio

@@ -55,8 +55,9 @@ def _delete_user_storage(db, user_id: str) -> None:  # type: ignore[no-untyped-d
     uid_prefix = user_id[:8]
 
     # 1. Delete check-in photos (organised by user_id folder prefix in checkin-photos bucket)
+    # Use a high limit to avoid the default 100-item page cap (PDPA requires complete deletion)
     checkin_bucket = db.storage.from_("checkin-photos")
-    files = checkin_bucket.list(path=user_id)
+    files = checkin_bucket.list(path=user_id, options={"limit": 10000})
     if files:
         file_paths = [f"{user_id}/{f['name']}" for f in files]
         checkin_bucket.remove(file_paths)
