@@ -37,9 +37,13 @@ class TestSupabaseClient:
             assert client is not None
 
     def test_service_role_client_is_singleton(self):
-        with patch("db.supabase_client.settings") as mock_settings:
+        get_service_role_client.cache_clear()
+        with patch("db.supabase_client.create_client") as mock_create, \
+             patch("db.supabase_client.settings") as mock_settings:
             mock_settings.supabase_url = "http://localhost:54321"
             mock_settings.supabase_service_role_key = "test-service-key"
+            mock_create.return_value = object()
             c1 = get_service_role_client()
             c2 = get_service_role_client()
             assert c1 is c2
+            assert mock_create.call_count == 1
