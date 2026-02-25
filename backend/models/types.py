@@ -50,6 +50,7 @@ class User(BaseModel):
     display_name: str | None = None
     avatar_url: str | None = None
     pdpa_consent_at: datetime
+    deletion_requested_at: datetime | None = None
     created_at: datetime
 
 

@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 import structlog
 from fastapi import FastAPI
 
+from api.auth import router as auth_router
 from api.checkins import router as checkins_router
 from api.lists import router as lists_router
 from api.search import router as search_router
@@ -43,6 +44,7 @@ async def health_check() -> dict[str, str]:
     return {"status": "ok"}
 
 
+app.include_router(auth_router)
 app.include_router(shops_router)
 app.include_router(search_router)
 app.include_router(checkins_router)

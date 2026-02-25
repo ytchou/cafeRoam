@@ -219,9 +219,9 @@ Core infrastructure everything else depends on. No user-facing product yet.
 - [x] Custom JWT claim hook for PDPA consent + deletion status
 
 **Chunk 2 — Backend Auth Routes (Wave 3):**
-- [ ] `POST /auth/consent` — record PDPA consent with TDD
-- [ ] `DELETE /auth/account` — initiate 30-day soft delete with TDD
-- [ ] `POST /auth/cancel-deletion` — cancel within grace period with TDD
+- [x] `POST /auth/consent` — record PDPA consent with TDD
+- [x] `DELETE /auth/account` — initiate 30-day soft delete with TDD
+- [x] `POST /auth/cancel-deletion` — cancel within grace period with TDD
 - [ ] Account deletion scheduler (daily cleanup job) with TDD
 
 **Chunk 3 — Frontend Infra (Wave 3-4):**
