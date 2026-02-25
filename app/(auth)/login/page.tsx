@@ -8,7 +8,8 @@ import { createClient } from '@/lib/supabase/client';
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const returnTo = searchParams.get('returnTo') ?? '/';
+  const raw = searchParams.get('returnTo') ?? '/';
+  const returnTo = raw.startsWith('/') && !raw.startsWith('//') ? raw : '/';
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -32,11 +33,10 @@ function LoginForm() {
     router.push(returnTo);
   }
 
-  async function handleOAuthLogin(provider: 'google' | 'kakao') {
+  async function handleOAuthLogin(provider: 'google' | 'line_oidc') {
     const supabase = createClient();
-    const providerMap = { google: 'google', kakao: 'kakao' } as const;
     await supabase.auth.signInWithOAuth({
-      provider: providerMap[provider],
+      provider,
       options: {
         redirectTo: `${window.location.origin}/auth/callback?returnTo=${encodeURIComponent(returnTo)}`,
       },
@@ -104,7 +104,7 @@ function LoginForm() {
           </button>
           <button
             type="button"
-            onClick={() => handleOAuthLogin('kakao')}
+            onClick={() => handleOAuthLogin('line_oidc')}
             className="w-full rounded border px-4 py-2"
           >
             Continue with LINE
