@@ -229,9 +229,9 @@ Core infrastructure everything else depends on. No user-facing product yet.
 - [x] Next.js middleware (route guards: public / onboarding / protected / recovery)
 
 **Chunk 4 — Frontend Auth Pages (Wave 5):**
-- [ ] Login page (email/password + Google + LINE) with tests
-- [ ] Signup page (email/password + PDPA checkbox) with tests
-- [ ] Auth callback route (code exchange + consent check)
+- [x] Login page (email/password + Google + LINE) with tests
+- [x] Signup page (email/password + PDPA checkbox) with tests
+- [x] Auth callback route (code exchange + consent check)
 - [ ] PDPA consent page with tests
 - [ ] Account recovery page with tests
 - [ ] Settings page (logout + account deletion)
