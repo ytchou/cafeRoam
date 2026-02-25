@@ -93,12 +93,17 @@ def _delete_storage_objects_by_url(db, urls: list[str]) -> None:  # type: ignore
         if len(parts) < 2:
             # Log only scheme+host to avoid exposing user_id embedded in the URL path
             safe_origin = f"{parsed.scheme}://{parsed.netloc}/..."
-            logger.error("Unrecognized storage URL format — aborting PDPA deletion", url=safe_origin)
+            logger.error(
+                "Unrecognized storage URL format — aborting PDPA deletion", url=safe_origin
+            )
             raise RuntimeError(f"Unrecognized storage URL format: {safe_origin}")
         bucket_name, _, obj_path = parts[1].partition("/")
         if not bucket_name or not obj_path:
             safe_origin = f"{parsed.scheme}://{parsed.netloc}/..."
-            logger.error("Could not extract bucket/path from storage URL — aborting PDPA deletion", url=safe_origin)
+            logger.error(
+                "Could not extract bucket/path from storage URL — aborting PDPA deletion",
+                url=safe_origin,
+            )
             raise RuntimeError(f"Could not extract bucket/path from storage URL: {safe_origin}")
         by_bucket.setdefault(bucket_name, []).append(obj_path)
 
