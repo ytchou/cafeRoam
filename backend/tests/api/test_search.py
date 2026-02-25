@@ -17,14 +17,16 @@ class TestSearchAPI:
     def test_search_uses_user_db(self):
         """Search route must use per-request JWT client."""
         mock_db = MagicMock()
-        mock_db.rpc = MagicMock(return_value=MagicMock(
-            execute=MagicMock(return_value=MagicMock(data=[]))
-        ))
+        mock_db.rpc = MagicMock(
+            return_value=MagicMock(execute=MagicMock(return_value=MagicMock(data=[])))
+        )
         app.dependency_overrides[get_current_user] = lambda: {"id": "user-1"}
         app.dependency_overrides[get_user_db] = lambda: mock_db
         try:
-            with patch("api.search.get_embeddings_provider") as mock_emb_factory, \
-                 patch("api.search.SearchService") as mock_cls:
+            with (
+                patch("api.search.get_embeddings_provider") as mock_emb_factory,
+                patch("api.search.SearchService") as mock_cls,
+            ):
                 mock_emb = AsyncMock()
                 mock_emb.embed = AsyncMock(return_value=[0.1] * 1536)
                 mock_emb.dimensions = 1536

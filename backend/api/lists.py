@@ -69,9 +69,7 @@ async def add_shop_to_list(
     """Add a shop to a list. Auth required."""
     service = ListsService(db=db)
     try:
-        result = await service.add_shop(
-            list_id=list_id, shop_id=body.shop_id
-        )
+        result = await service.add_shop(list_id=list_id, shop_id=body.shop_id)
         return result.model_dump()
     except ValueError as e:
         raise HTTPException(status_code=403, detail=str(e)) from None

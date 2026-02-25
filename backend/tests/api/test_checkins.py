@@ -10,10 +10,13 @@ client = TestClient(app)
 
 class TestCheckinsAPI:
     def test_create_checkin_requires_auth(self):
-        response = client.post("/checkins", json={
-            "shop_id": "shop-1",
-            "photo_urls": ["https://example.com/photo.jpg"],
-        })
+        response = client.post(
+            "/checkins",
+            json={
+                "shop_id": "shop-1",
+                "photo_urls": ["https://example.com/photo.jpg"],
+            },
+        )
         assert response.status_code == 401
 
     def test_get_user_checkins_requires_auth(self):
@@ -32,10 +35,13 @@ class TestCheckinsAPI:
                     "At least one photo is required for check-in"
                 )
                 mock_cls.return_value = mock_svc
-                response = client.post("/checkins/", json={
-                    "shop_id": "shop-1",
-                    "photo_urls": [],
-                })
+                response = client.post(
+                    "/checkins/",
+                    json={
+                        "shop_id": "shop-1",
+                        "photo_urls": [],
+                    },
+                )
             assert response.status_code == 400
             assert "photo" in response.json()["detail"].lower()
         finally:
@@ -49,14 +55,15 @@ class TestCheckinsAPI:
         try:
             with patch("api.checkins.CheckInService") as mock_cls:
                 mock_svc = AsyncMock()
-                mock_svc.create.return_value = MagicMock(
-                    model_dump=lambda: {"id": "ci-1"}
-                )
+                mock_svc.create.return_value = MagicMock(model_dump=lambda: {"id": "ci-1"})
                 mock_cls.return_value = mock_svc
-                client.post("/checkins/", json={
-                    "shop_id": "shop-1",
-                    "photo_urls": ["https://example.com/photo.jpg"],
-                })
+                client.post(
+                    "/checkins/",
+                    json={
+                        "shop_id": "shop-1",
+                        "photo_urls": ["https://example.com/photo.jpg"],
+                    },
+                )
                 # Verify service was constructed with the user's DB client
                 mock_cls.assert_called_once_with(db=mock_db)
         finally:

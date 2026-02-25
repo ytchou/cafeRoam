@@ -12,11 +12,13 @@ class TestShopsAPI:
         """GET /shops should not require auth."""
         with patch("api.shops.get_anon_client") as mock_sb:
             mock_client = MagicMock()
-            mock_client.table = MagicMock(return_value=MagicMock(
-                select=MagicMock(return_value=MagicMock(
-                    execute=MagicMock(return_value=MagicMock(data=[]))
-                ))
-            ))
+            mock_client.table = MagicMock(
+                return_value=MagicMock(
+                    select=MagicMock(
+                        return_value=MagicMock(execute=MagicMock(return_value=MagicMock(data=[])))
+                    )
+                )
+            )
             mock_sb.return_value = mock_client
             response = client.get("/shops")
             assert response.status_code == 200
@@ -25,17 +27,27 @@ class TestShopsAPI:
         """GET /shops/{id} should not require auth."""
         with patch("api.shops.get_anon_client") as mock_sb:
             mock_client = MagicMock()
-            mock_client.table = MagicMock(return_value=MagicMock(
-                select=MagicMock(return_value=MagicMock(
-                    eq=MagicMock(return_value=MagicMock(
-                        single=MagicMock(return_value=MagicMock(
-                            execute=MagicMock(return_value=MagicMock(data={
-                                "id": "shop-1", "name": "Test Cafe"
-                            }))
-                        ))
-                    ))
-                ))
-            ))
+            mock_client.table = MagicMock(
+                return_value=MagicMock(
+                    select=MagicMock(
+                        return_value=MagicMock(
+                            eq=MagicMock(
+                                return_value=MagicMock(
+                                    single=MagicMock(
+                                        return_value=MagicMock(
+                                            execute=MagicMock(
+                                                return_value=MagicMock(
+                                                    data={"id": "shop-1", "name": "Test Cafe"}
+                                                )
+                                            )
+                                        )
+                                    )
+                                )
+                            )
+                        )
+                    )
+                )
+            )
             mock_sb.return_value = mock_client
             response = client.get("/shops/shop-1")
             assert response.status_code == 200

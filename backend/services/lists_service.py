@@ -24,11 +24,7 @@ class ListsService:
     async def create(self, user_id: str, name: str) -> List:
         """Create a new list. DB trigger enforces max 3 lists per user."""
         try:
-            response = (
-                self._db.table("lists")
-                .insert({"user_id": user_id, "name": name})
-                .execute()
-            )
+            response = self._db.table("lists").insert({"user_id": user_id, "name": name}).execute()
         except APIError as e:
             if "check_violation" in str(e) or "Maximum of 3 lists" in str(e):
                 raise ValueError("Maximum of 3 lists allowed") from None
@@ -49,9 +45,7 @@ class ListsService:
     async def add_shop(self, list_id: str, shop_id: str) -> ListItem:
         """Add a shop to a list. RLS enforces ownership via parent list."""
         response = (
-            self._db.table("list_items")
-            .insert({"list_id": list_id, "shop_id": shop_id})
-            .execute()
+            self._db.table("list_items").insert({"list_id": list_id, "shop_id": shop_id}).execute()
         )
         rows = cast("list[dict[str, Any]]", response.data)
         return ListItem(**rows[0])

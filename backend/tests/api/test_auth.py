@@ -39,14 +39,10 @@ class TestAuth:
         with patch("api.deps.get_user_client") as mock_sb:
             mock_client = MagicMock()
             mock_client.auth.get_user = MagicMock(
-                return_value=MagicMock(
-                    user=MagicMock(id="user-1", email="test@example.com")
-                )
+                return_value=MagicMock(user=MagicMock(id="user-1", email="test@example.com"))
             )
             mock_sb.return_value = mock_client
-            response = client.get(
-                "/protected", headers={"Authorization": "Bearer valid-jwt"}
-            )
+            response = client.get("/protected", headers={"Authorization": "Bearer valid-jwt"})
             assert response.status_code == 200
             assert response.json()["user_id"] == "user-1"
 

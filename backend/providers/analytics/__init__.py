@@ -12,6 +12,4 @@ def get_analytics_provider() -> AnalyticsProvider:
                 host=settings.posthog_host,
             )
         case _:
-            raise ValueError(
-                f"Unknown analytics provider: {settings.analytics_provider}"
-            )
+            raise ValueError(f"Unknown analytics provider: {settings.analytics_provider}")

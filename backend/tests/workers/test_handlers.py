@@ -11,32 +11,58 @@ class TestEnrichShopHandler:
     async def test_loads_shop_calls_llm_writes_result(self):
         db = MagicMock()
         llm = AsyncMock()
-        llm.enrich_shop = AsyncMock(return_value=MagicMock(
-            tags=[], summary="A cozy cafe", confidence=0.9, mode_scores=None,
-            model_dump=MagicMock(return_value={
-                "tags": [], "summary": "A cozy cafe", "confidence": 0.9, "mode_scores": None,
-            }),
-        ))
+        llm.enrich_shop = AsyncMock(
+            return_value=MagicMock(
+                tags=[],
+                summary="A cozy cafe",
+                confidence=0.9,
+                mode_scores=None,
+                model_dump=MagicMock(
+                    return_value={
+                        "tags": [],
+                        "summary": "A cozy cafe",
+                        "confidence": 0.9,
+                        "mode_scores": None,
+                    }
+                ),
+            )
+        )
         queue = AsyncMock()
 
-        db.table = MagicMock(return_value=MagicMock(
-            select=MagicMock(return_value=MagicMock(
-                eq=MagicMock(return_value=MagicMock(
-                    single=MagicMock(return_value=MagicMock(
-                        execute=MagicMock(return_value=MagicMock(data={
-                            "id": "shop-1",
-                            "name": "Test Cafe",
-                            "description": None,
-                        }))
-                    ))
-                ))
-            )),
-            update=MagicMock(return_value=MagicMock(
-                eq=MagicMock(return_value=MagicMock(
-                    execute=MagicMock(return_value=MagicMock(data=[]))
-                ))
-            )),
-        ))
+        db.table = MagicMock(
+            return_value=MagicMock(
+                select=MagicMock(
+                    return_value=MagicMock(
+                        eq=MagicMock(
+                            return_value=MagicMock(
+                                single=MagicMock(
+                                    return_value=MagicMock(
+                                        execute=MagicMock(
+                                            return_value=MagicMock(
+                                                data={
+                                                    "id": "shop-1",
+                                                    "name": "Test Cafe",
+                                                    "description": None,
+                                                }
+                                            )
+                                        )
+                                    )
+                                )
+                            )
+                        )
+                    )
+                ),
+                update=MagicMock(
+                    return_value=MagicMock(
+                        eq=MagicMock(
+                            return_value=MagicMock(
+                                execute=MagicMock(return_value=MagicMock(data=[]))
+                            )
+                        )
+                    )
+                ),
+            )
+        )
 
         await handle_enrich_shop(
             payload={"shop_id": "shop-1"},
@@ -54,24 +80,40 @@ class TestGenerateEmbeddingHandler:
         embeddings = AsyncMock()
         embeddings.embed = AsyncMock(return_value=[0.1] * 1536)
 
-        db.table = MagicMock(return_value=MagicMock(
-            select=MagicMock(return_value=MagicMock(
-                eq=MagicMock(return_value=MagicMock(
-                    single=MagicMock(return_value=MagicMock(
-                        execute=MagicMock(return_value=MagicMock(data={
-                            "id": "shop-1",
-                            "name": "Test Cafe",
-                            "description": "A cozy cafe",
-                        }))
-                    ))
-                ))
-            )),
-            update=MagicMock(return_value=MagicMock(
-                eq=MagicMock(return_value=MagicMock(
-                    execute=MagicMock(return_value=MagicMock(data=[]))
-                ))
-            )),
-        ))
+        db.table = MagicMock(
+            return_value=MagicMock(
+                select=MagicMock(
+                    return_value=MagicMock(
+                        eq=MagicMock(
+                            return_value=MagicMock(
+                                single=MagicMock(
+                                    return_value=MagicMock(
+                                        execute=MagicMock(
+                                            return_value=MagicMock(
+                                                data={
+                                                    "id": "shop-1",
+                                                    "name": "Test Cafe",
+                                                    "description": "A cozy cafe",
+                                                }
+                                            )
+                                        )
+                                    )
+                                )
+                            )
+                        )
+                    )
+                ),
+                update=MagicMock(
+                    return_value=MagicMock(
+                        eq=MagicMock(
+                            return_value=MagicMock(
+                                execute=MagicMock(return_value=MagicMock(data=[]))
+                            )
+                        )
+                    )
+                ),
+            )
+        )
 
         await handle_generate_embedding(
             payload={"shop_id": "shop-1"},
@@ -87,12 +129,18 @@ class TestStalenessSweepHandler:
         queue = AsyncMock()
 
         # Return 2 stale shops
-        db.rpc = MagicMock(return_value=MagicMock(
-            execute=MagicMock(return_value=MagicMock(data=[
-                {"id": "shop-1"},
-                {"id": "shop-2"},
-            ]))
-        ))
+        db.rpc = MagicMock(
+            return_value=MagicMock(
+                execute=MagicMock(
+                    return_value=MagicMock(
+                        data=[
+                            {"id": "shop-1"},
+                            {"id": "shop-2"},
+                        ]
+                    )
+                )
+            )
+        )
 
         await handle_staleness_sweep(db=db, queue=queue)
         assert queue.enqueue.call_count == 2
@@ -102,16 +150,24 @@ class TestEnrichMenuPhotoHandler:
     async def test_calls_llm_and_updates_shop_menu_data(self):
         db = MagicMock()
         llm = AsyncMock()
-        llm.extract_menu_data = AsyncMock(return_value=MagicMock(
-            items=["Cappuccino", "Latte"],
-        ))
-        db.table = MagicMock(return_value=MagicMock(
-            update=MagicMock(return_value=MagicMock(
-                eq=MagicMock(return_value=MagicMock(
-                    execute=MagicMock(return_value=MagicMock(data=[]))
-                ))
-            ))
-        ))
+        llm.extract_menu_data = AsyncMock(
+            return_value=MagicMock(
+                items=["Cappuccino", "Latte"],
+            )
+        )
+        db.table = MagicMock(
+            return_value=MagicMock(
+                update=MagicMock(
+                    return_value=MagicMock(
+                        eq=MagicMock(
+                            return_value=MagicMock(
+                                execute=MagicMock(return_value=MagicMock(data=[]))
+                            )
+                        )
+                    )
+                )
+            )
+        )
 
         await handle_enrich_menu_photo(
             payload={"shop_id": "shop-1", "image_url": "https://example.com/menu.jpg"},
@@ -138,16 +194,26 @@ class TestWeeklyEmailHandler:
     async def test_sends_email_to_all_opted_in_users(self):
         db = MagicMock()
         email = AsyncMock()
-        db.table = MagicMock(return_value=MagicMock(
-            select=MagicMock(return_value=MagicMock(
-                eq=MagicMock(return_value=MagicMock(
-                    execute=MagicMock(return_value=MagicMock(data=[
-                        {"id": "user-1", "email": "user1@example.com"},
-                        {"id": "user-2", "email": "user2@example.com"},
-                    ]))
-                ))
-            ))
-        ))
+        db.table = MagicMock(
+            return_value=MagicMock(
+                select=MagicMock(
+                    return_value=MagicMock(
+                        eq=MagicMock(
+                            return_value=MagicMock(
+                                execute=MagicMock(
+                                    return_value=MagicMock(
+                                        data=[
+                                            {"id": "user-1", "email": "user1@example.com"},
+                                            {"id": "user-2", "email": "user2@example.com"},
+                                        ]
+                                    )
+                                )
+                            )
+                        )
+                    )
+                )
+            )
+        )
 
         await handle_weekly_email(db=db, email=email)
         assert email.send.call_count == 2
@@ -157,16 +223,26 @@ class TestWeeklyEmailHandler:
         db = MagicMock()
         email = AsyncMock()
         email.send.side_effect = [Exception("SMTP error"), None]
-        db.table = MagicMock(return_value=MagicMock(
-            select=MagicMock(return_value=MagicMock(
-                eq=MagicMock(return_value=MagicMock(
-                    execute=MagicMock(return_value=MagicMock(data=[
-                        {"id": "user-1", "email": "fail@example.com"},
-                        {"id": "user-2", "email": "ok@example.com"},
-                    ]))
-                ))
-            ))
-        ))
+        db.table = MagicMock(
+            return_value=MagicMock(
+                select=MagicMock(
+                    return_value=MagicMock(
+                        eq=MagicMock(
+                            return_value=MagicMock(
+                                execute=MagicMock(
+                                    return_value=MagicMock(
+                                        data=[
+                                            {"id": "user-1", "email": "fail@example.com"},
+                                            {"id": "user-2", "email": "ok@example.com"},
+                                        ]
+                                    )
+                                )
+                            )
+                        )
+                    )
+                )
+            )
+        )
 
         await handle_weekly_email(db=db, email=email)
         assert email.send.call_count == 2  # Both attempted despite first failure

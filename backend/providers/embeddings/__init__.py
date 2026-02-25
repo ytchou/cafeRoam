@@ -12,6 +12,4 @@ def get_embeddings_provider() -> EmbeddingsProvider:
                 model=settings.openai_embedding_model,
             )
         case _:
-            raise ValueError(
-                f"Unknown embeddings provider: {settings.embeddings_provider}"
-            )
+            raise ValueError(f"Unknown embeddings provider: {settings.embeddings_provider}")
