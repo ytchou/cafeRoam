@@ -114,4 +114,14 @@ describe('SettingsPage', () => {
     expect(screen.queryByPlaceholderText(/type delete/i)).not.toBeInTheDocument();
     expect(mockFetch).not.toHaveBeenCalled();
   });
+
+  it('redirects to /login when session is null without calling API', async () => {
+    mockGetSession.mockResolvedValue({ data: { session: null } });
+    render(<SettingsPage />);
+    await userEvent.click(screen.getByRole('button', { name: /delete account/i }));
+    await userEvent.type(screen.getByPlaceholderText(/type delete/i), 'DELETE');
+    await userEvent.click(screen.getByRole('button', { name: /confirm delete/i }));
+    await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/login'));
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
 });

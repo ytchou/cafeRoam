@@ -19,6 +19,11 @@ export default function RecoverPage() {
         data: { session },
       } = await supabase.auth.getSession();
 
+      if (!session) {
+        router.push('/login');
+        return;
+      }
+
       const res = await fetch('/api/auth/cancel-deletion', {
         method: 'POST',
         headers: {

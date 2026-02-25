@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
@@ -10,13 +10,13 @@ vi.mock('next/navigation', () => ({
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
+const mockGetSession = vi.fn();
+const mockRefreshSession = vi.fn();
 vi.mock('@/lib/supabase/client', () => ({
   createClient: () => ({
     auth: {
-      getSession: vi.fn().mockResolvedValue({
-        data: { session: { access_token: 'test-jwt' } },
-      }),
-      refreshSession: vi.fn().mockResolvedValue({}),
+      getSession: mockGetSession,
+      refreshSession: mockRefreshSession,
     },
   }),
 }));
@@ -26,6 +26,10 @@ import RecoverPage from '../recover/page';
 describe('RecoverPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockGetSession.mockResolvedValue({
+      data: { session: { access_token: 'test-jwt' } },
+    });
+    mockRefreshSession.mockResolvedValue({});
   });
 
   it('renders recovery message', () => {
@@ -46,5 +50,13 @@ describe('RecoverPage', () => {
       '/api/auth/cancel-deletion',
       expect.objectContaining({ method: 'POST' })
     );
+  });
+
+  it('redirects to /login when session is null without calling API', async () => {
+    mockGetSession.mockResolvedValue({ data: { session: null } });
+    render(<RecoverPage />);
+    await userEvent.click(screen.getByRole('button', { name: /cancel|取消刪除/i }));
+    await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/login'));
+    expect(mockFetch).not.toHaveBeenCalled();
   });
 });

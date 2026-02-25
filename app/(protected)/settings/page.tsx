@@ -29,6 +29,11 @@ export default function SettingsPage() {
         data: { session },
       } = await supabase.auth.getSession();
 
+      if (!session) {
+        router.push('/login');
+        return;
+      }
+
       const res = await fetch('/api/auth/account', {
         method: 'DELETE',
         headers: {
