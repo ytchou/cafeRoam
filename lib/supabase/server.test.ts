@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const mockCreateServerClient = vi.hoisted(() => vi.fn().mockReturnValue({ type: 'server-client' }));
+const mockCreateServerClient = vi.hoisted(() =>
+  vi.fn().mockReturnValue({ type: 'server-client' })
+);
 vi.mock('@supabase/ssr', () => ({
   createServerClient: mockCreateServerClient,
 }));
@@ -20,7 +22,9 @@ describe('createClient (server)', () => {
     vi.clearAllMocks();
     process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://test.supabase.co';
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'test-anon-key';
-    mockCookieStore.getAll.mockReturnValue([{ name: 'sb-token', value: 'abc' }]);
+    mockCookieStore.getAll.mockReturnValue([
+      { name: 'sb-token', value: 'abc' },
+    ]);
     mockCookieStore.set.mockReset();
   });
 
