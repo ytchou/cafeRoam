@@ -222,7 +222,7 @@ Core infrastructure everything else depends on. No user-facing product yet.
 - [x] `POST /auth/consent` — record PDPA consent with TDD
 - [x] `DELETE /auth/account` — initiate 30-day soft delete with TDD
 - [x] `POST /auth/cancel-deletion` — cancel within grace period with TDD
-- [ ] Account deletion scheduler (daily cleanup job) with TDD
+- [x] Account deletion scheduler (daily cleanup job) with TDD
 
 **Chunk 3 — Frontend Infra (Wave 3-4):**
 - [ ] Supabase SSR client setup (browser, server, middleware helpers)
