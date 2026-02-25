@@ -1,12 +1,11 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { Suspense, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 
-export default function SignupPage() {
-  const router = useRouter();
+function SignupForm() {
   const searchParams = useSearchParams();
   const returnTo = searchParams.get('returnTo') ?? '/';
 
@@ -138,5 +137,13 @@ export default function SignupPage() {
         </p>
       </div>
     </main>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense>
+      <SignupForm />
+    </Suspense>
   );
 }

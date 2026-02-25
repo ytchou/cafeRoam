@@ -238,9 +238,9 @@ Core infrastructure everything else depends on. No user-facing product yet.
 - [x] Auth proxy routes (consent, delete, cancel-deletion)
 
 **Chunk 5 — Verification (Wave 6):**
-- [ ] All backend tests pass (pytest)
-- [ ] All frontend tests pass (vitest)
-- [ ] Frontend lint, type-check, build pass
+- [x] All backend tests pass (pytest)
+- [x] All frontend tests pass (vitest)
+- [x] Frontend lint, type-check, build pass
 
 ### Data Pipeline
 
