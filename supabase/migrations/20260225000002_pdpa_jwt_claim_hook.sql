@@ -4,7 +4,7 @@
 CREATE OR REPLACE FUNCTION public.custom_access_token_hook(event JSONB)
 RETURNS JSONB
 LANGUAGE plpgsql
-STABLE
+VOLATILE
 AS $$
 DECLARE
   claims JSONB;
