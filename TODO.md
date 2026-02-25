@@ -235,7 +235,7 @@ Core infrastructure everything else depends on. No user-facing product yet.
 - [x] PDPA consent page with tests
 - [x] Account recovery page with tests
 - [x] Settings page (logout + account deletion)
-- [ ] Auth proxy routes (consent, delete, cancel-deletion)
+- [x] Auth proxy routes (consent, delete, cancel-deletion)
 
 **Chunk 5 — Verification (Wave 6):**
 - [ ] All backend tests pass (pytest)
