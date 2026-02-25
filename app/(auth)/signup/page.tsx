@@ -7,7 +7,8 @@ import { createClient } from '@/lib/supabase/client';
 
 function SignupForm() {
   const searchParams = useSearchParams();
-  const returnTo = searchParams.get('returnTo') ?? '/';
+  const raw = searchParams.get('returnTo') ?? '/';
+  const returnTo = raw.startsWith('/') && !raw.startsWith('//') ? raw : '/';
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -28,8 +29,8 @@ function SignupForm() {
       options: {
         emailRedirectTo: `${window.location.origin}/auth/callback?returnTo=${encodeURIComponent(returnTo)}`,
         data: {
-          pdpa_consented: true,
-          pdpa_consented_at: new Date().toISOString(),
+          pdpa_consented: pdpaConsented,
+          pdpa_consented_at: pdpaConsented ? new Date().toISOString() : null,
         },
       },
     });
