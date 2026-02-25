@@ -37,9 +37,14 @@ class ListsService:
         return List(**rows[0])
 
     async def delete(self, list_id: str) -> None:
-        """Delete a list. RLS ensures only the owner can delete."""
-        self._db.table("list_items").delete().eq("list_id", list_id).execute()
-        self._db.table("lists").delete().eq("id", list_id).execute()
+        """Delete a list. RLS ensures only the owner can delete.
+
+        ON DELETE CASCADE on list_items handles child row cleanup.
+        Raises ValueError if the list is not found or the caller doesn't own it.
+        """
+        response = self._db.table("lists").delete().eq("id", list_id).execute()
+        if not response.data:
+            raise ValueError("List not found or access denied")
 
     async def add_shop(self, list_id: str, shop_id: str) -> ListItem:
         """Add a shop to a list. RLS enforces ownership via parent list."""

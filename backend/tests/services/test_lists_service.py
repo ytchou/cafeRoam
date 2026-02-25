@@ -53,20 +53,29 @@ class TestListsService:
         with pytest.raises(ValueError, match="Maximum of 3 lists"):
             await lists_service.create(user_id="user-1", name="Fourth")
 
-    async def test_delete_list_no_manual_ownership_check(self, lists_service, mock_supabase):
-        """delete() relies on RLS — no _verify_ownership call."""
+    async def test_delete_list_succeeds(self, lists_service, mock_supabase):
+        """delete() only touches lists table (CASCADE handles list_items), no ownership SELECT."""
+        mock_delete = MagicMock(return_value=MagicMock(
+            eq=MagicMock(return_value=MagicMock(
+                execute=MagicMock(return_value=MagicMock(data=[{"id": "l1"}]))
+            ))
+        ))
+        mock_supabase.table = MagicMock(return_value=MagicMock(delete=mock_delete))
+        await lists_service.delete(list_id="l1")
+        # Should only touch lists — CASCADE handles list_items, no SELECT for ownership
+        table_calls = [c[0][0] for c in mock_supabase.table.call_args_list]
+        assert table_calls == ["lists"]
+
+    async def test_delete_list_raises_if_not_found_or_unauthorized(self, lists_service, mock_supabase):
+        """delete() raises ValueError when RLS blocks the delete (0 rows affected)."""
         mock_delete = MagicMock(return_value=MagicMock(
             eq=MagicMock(return_value=MagicMock(
                 execute=MagicMock(return_value=MagicMock(data=[]))
             ))
         ))
-        mock_supabase.table = MagicMock(return_value=MagicMock(
-            delete=mock_delete,
-        ))
-        await lists_service.delete(list_id="l1")
-        # Should delete list_items then lists — but no SELECT for ownership
-        table_calls = [c[0][0] for c in mock_supabase.table.call_args_list]
-        assert "lists" in table_calls
+        mock_supabase.table = MagicMock(return_value=MagicMock(delete=mock_delete))
+        with pytest.raises(ValueError, match="not found or access denied"):
+            await lists_service.delete(list_id="l1")
 
     async def test_add_shop_no_user_id_param(self, lists_service, mock_supabase):
         """add_shop() no longer takes user_id — RLS enforces ownership."""
