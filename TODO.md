@@ -211,8 +211,36 @@ Core infrastructure everything else depends on. No user-facing product yet.
 
 ### Auth & Privacy
 
-- [ ] Auth system: signup (with PDPA consent), login, session management, protected routes
-- [ ] PDPA: consent flow at signup, account deletion endpoint (cascades all user data)
+> **Design Doc:** [docs/designs/2026-02-25-auth-privacy-design.md](docs/designs/2026-02-25-auth-privacy-design.md)
+> **Plan:** [docs/plans/2026-02-25-auth-privacy-plan.md](docs/plans/2026-02-25-auth-privacy-plan.md)
+
+**Chunk 1 — DB Migrations (Wave 1-2):**
+- [ ] Add `deletion_requested_at` column to profiles
+- [ ] Custom JWT claim hook for PDPA consent + deletion status
+
+**Chunk 2 — Backend Auth Routes (Wave 3):**
+- [ ] `POST /auth/consent` — record PDPA consent with TDD
+- [ ] `DELETE /auth/account` — initiate 30-day soft delete with TDD
+- [ ] `POST /auth/cancel-deletion` — cancel within grace period with TDD
+- [ ] Account deletion scheduler (daily cleanup job) with TDD
+
+**Chunk 3 — Frontend Infra (Wave 3-4):**
+- [ ] Supabase SSR client setup (browser, server, middleware helpers)
+- [ ] Next.js middleware (route guards: public / onboarding / protected / recovery)
+
+**Chunk 4 — Frontend Auth Pages (Wave 5):**
+- [ ] Login page (email/password + Google + LINE) with tests
+- [ ] Signup page (email/password + PDPA checkbox) with tests
+- [ ] Auth callback route (code exchange + consent check)
+- [ ] PDPA consent page with tests
+- [ ] Account recovery page with tests
+- [ ] Settings page (logout + account deletion)
+- [ ] Auth proxy routes (consent, delete, cancel-deletion)
+
+**Chunk 5 — Verification (Wave 6):**
+- [ ] All backend tests pass (pytest)
+- [ ] All frontend tests pass (vitest)
+- [ ] Frontend lint, type-check, build pass
 
 ### Data Pipeline
 
