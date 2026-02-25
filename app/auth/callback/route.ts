@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-
-function safeReturnTo(value: string | null): string {
-  if (!value || !value.startsWith('/') || value.startsWith('//')) return '/';
-  return value;
-}
+import { safeReturnTo } from '@/lib/utils';
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = request.nextUrl;

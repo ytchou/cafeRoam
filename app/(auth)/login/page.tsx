@@ -4,12 +4,12 @@ import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
+import { safeReturnTo } from '@/lib/utils';
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const raw = searchParams.get('returnTo') ?? '/';
-  const returnTo = raw.startsWith('/') && !raw.startsWith('//') ? raw : '/';
+  const returnTo = safeReturnTo(searchParams.get('returnTo'));
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

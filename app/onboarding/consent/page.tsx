@@ -4,6 +4,7 @@ import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
+import { safeReturnTo } from '@/lib/utils';
 
 const DISCLOSURE_ITEMS = [
   { label: '帳號資訊', detail: '（Email 或社群帳號 ID）' },
@@ -25,8 +26,7 @@ const RIGHTS_ITEMS = [
 function ConsentForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const raw = searchParams.get('returnTo') ?? '/';
-  const returnTo = raw.startsWith('/') && !raw.startsWith('//') ? raw : '/';
+  const returnTo = safeReturnTo(searchParams.get('returnTo'));
   const [agreed, setAgreed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
