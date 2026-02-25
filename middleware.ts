@@ -56,10 +56,11 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // No PDPA consent — redirect to onboarding
+  // No PDPA consent — redirect to onboarding, preserving the intended destination
   if (!pdpaConsented) {
     const url = request.nextUrl.clone();
     url.pathname = '/onboarding/consent';
+    url.searchParams.set('returnTo', pathname);
     return NextResponse.redirect(url);
   }
 

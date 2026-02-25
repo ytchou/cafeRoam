@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { Suspense, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 
@@ -22,8 +22,11 @@ const RIGHTS_ITEMS = [
   '撤回同意並申請刪除帳號',
 ];
 
-export default function ConsentPage() {
+function ConsentForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const raw = searchParams.get('returnTo') ?? '/';
+  const returnTo = raw.startsWith('/') && !raw.startsWith('//') ? raw : '/';
   const [agreed, setAgreed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -57,7 +60,7 @@ export default function ConsentPage() {
       }
 
       await supabase.auth.refreshSession();
-      router.push('/');
+      router.push(returnTo);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
@@ -141,5 +144,13 @@ export default function ConsentPage() {
         {submitting ? '處理中...' : '確認並繼續'}
       </button>
     </main>
+  );
+}
+
+export default function ConsentPage() {
+  return (
+    <Suspense>
+      <ConsentForm />
+    </Suspense>
   );
 }

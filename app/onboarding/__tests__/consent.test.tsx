@@ -1,10 +1,12 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const mockPush = vi.fn();
+const mockSearchParamsGet = vi.hoisted(() => vi.fn().mockReturnValue(null));
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: mockPush }),
+  useSearchParams: () => ({ get: mockSearchParamsGet }),
 }));
 
 // Mock fetch for the consent API call
@@ -50,7 +52,7 @@ describe('ConsentPage', () => {
     expect(button).toBeEnabled();
   });
 
-  it('calls consent API and redirects on confirm', async () => {
+  it('calls consent API and redirects to / when no returnTo', async () => {
     mockFetch.mockResolvedValue({ ok: true, json: async () => ({ ok: true }) });
     render(<ConsentPage />);
     await userEvent.click(screen.getByRole('checkbox'));
@@ -61,5 +63,17 @@ describe('ConsentPage', () => {
       '/api/auth/consent',
       expect.objectContaining({ method: 'POST' })
     );
+    await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/'));
+  });
+
+  it('redirects to returnTo destination after consent', async () => {
+    mockSearchParamsGet.mockReturnValue('/search');
+    mockFetch.mockResolvedValue({ ok: true, json: async () => ({ ok: true }) });
+    render(<ConsentPage />);
+    await userEvent.click(screen.getByRole('checkbox'));
+    await userEvent.click(
+      screen.getByRole('button', { name: /確認並繼續|confirm/i })
+    );
+    await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/search'));
   });
 });

@@ -70,13 +70,15 @@ describe('middleware route guards', () => {
   });
 
   describe('authenticated users without PDPA consent', () => {
-    it('redirects to /onboarding/consent on protected routes', async () => {
+    it('redirects to /onboarding/consent with returnTo on protected routes', async () => {
       mockUpdateSession.mockResolvedValue({
         user: makeUser({ pdpa_consented: false }),
         supabaseResponse: passThroughResponse,
       });
       const res = await middleware(makeRequest('/settings'));
-      expect(res.headers.get('location')).toContain('/onboarding/consent');
+      const location = res.headers.get('location') ?? '';
+      expect(location).toContain('/onboarding/consent');
+      expect(location).toContain('returnTo=%2Fsettings');
     });
 
     it('/onboarding/consent itself passes through without consent', async () => {
