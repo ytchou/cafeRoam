@@ -225,7 +225,7 @@ Core infrastructure everything else depends on. No user-facing product yet.
 - [x] Account deletion scheduler (daily cleanup job) with TDD
 
 **Chunk 3 — Frontend Infra (Wave 3-4):**
-- [ ] Supabase SSR client setup (browser, server, middleware helpers)
+- [x] Supabase SSR client setup (browser, server, middleware helpers)
 - [ ] Next.js middleware (route guards: public / onboarding / protected / recovery)
 
 **Chunk 4 — Frontend Auth Pages (Wave 5):**
