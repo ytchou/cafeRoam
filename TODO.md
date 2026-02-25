@@ -215,7 +215,7 @@ Core infrastructure everything else depends on. No user-facing product yet.
 > **Plan:** [docs/plans/2026-02-25-auth-privacy-plan.md](docs/plans/2026-02-25-auth-privacy-plan.md)
 
 **Chunk 1 — DB Migrations (Wave 1-2):**
-- [ ] Add `deletion_requested_at` column to profiles
+- [x] Add `deletion_requested_at` column to profiles
 - [ ] Custom JWT claim hook for PDPA consent + deletion status
 
 **Chunk 2 — Backend Auth Routes (Wave 3):**
