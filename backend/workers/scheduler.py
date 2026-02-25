@@ -32,17 +32,24 @@ async def process_job_queue() -> None:
             case JobType.ENRICH_SHOP:
                 llm = get_llm_provider()
                 await handle_enrich_shop(
-                    payload=job.payload, db=db, llm=llm, queue=queue,
+                    payload=job.payload,
+                    db=db,
+                    llm=llm,
+                    queue=queue,
                 )
             case JobType.GENERATE_EMBEDDING:
                 embeddings = get_embeddings_provider()
                 await handle_generate_embedding(
-                    payload=job.payload, db=db, embeddings=embeddings,
+                    payload=job.payload,
+                    db=db,
+                    embeddings=embeddings,
                 )
             case JobType.ENRICH_MENU_PHOTO:
                 llm = get_llm_provider()
                 await handle_enrich_menu_photo(
-                    payload=job.payload, db=db, llm=llm,
+                    payload=job.payload,
+                    db=db,
+                    llm=llm,
                 )
             case JobType.STALENESS_SWEEP:
                 await handle_staleness_sweep(db=db, queue=queue)
@@ -79,15 +86,25 @@ def create_scheduler() -> AsyncIOScheduler:
 
     # Cron jobs
     scheduler.add_job(
-        run_staleness_sweep, "cron", hour=3, id="staleness_sweep",
+        run_staleness_sweep,
+        "cron",
+        hour=3,
+        id="staleness_sweep",
     )
     scheduler.add_job(
-        run_weekly_email, "cron", day_of_week="mon", hour=9, id="weekly_email",
+        run_weekly_email,
+        "cron",
+        day_of_week="mon",
+        hour=9,
+        id="weekly_email",
     )
 
     # Job queue polling (every 30 seconds)
     scheduler.add_job(
-        process_job_queue, "interval", seconds=30, id="process_queue",
+        process_job_queue,
+        "interval",
+        seconds=30,
+        id="process_queue",
     )
 
     return scheduler

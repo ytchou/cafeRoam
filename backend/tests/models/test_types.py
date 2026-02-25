@@ -4,6 +4,7 @@ import pytest
 
 from models.types import (
     CheckIn,
+    JobStatus,
     List,
     ListItem,
     SearchFilters,
@@ -120,3 +121,15 @@ class TestSearchQuery:
         )
         assert q.filters is not None
         assert q.filters.radius_km == 2.0
+
+
+class TestJobStatus:
+    def test_dead_letter_status_exists(self):
+        """DB has dead_letter status — Python enum must match."""
+        assert JobStatus.DEAD_LETTER == "dead_letter"  # type: ignore[comparison-overlap]
+
+    def test_all_db_statuses_covered(self):
+        """Every status in the DB CHECK constraint must have a Python enum value."""
+        db_statuses = {"pending", "claimed", "completed", "failed", "dead_letter"}
+        enum_values = {s.value for s in JobStatus}
+        assert db_statuses == enum_values

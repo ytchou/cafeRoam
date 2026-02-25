@@ -1,22 +1,35 @@
 from typing import Any
 
-from fastapi import HTTPException, Request, status
+from fastapi import Depends, HTTPException, Request, status
+from supabase import Client
 
-from db.supabase_client import get_supabase_client
+from db.supabase_client import get_user_client
 
 
-async def get_current_user(request: Request) -> dict[str, Any]:
-    """Extract and validate JWT from Authorization header. Raises 401 if invalid."""
+def _get_bearer_token(request: Request) -> str:
+    """Extract Bearer token from Authorization header. Raises 401 if missing or malformed."""
     auth_header = request.headers.get("Authorization")
     if not auth_header or not auth_header.startswith("Bearer "):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Missing or invalid Authorization header",
         )
+    return auth_header.removeprefix("Bearer ")
 
-    token = auth_header.removeprefix("Bearer ")
+
+async def get_user_db(token: str = Depends(_get_bearer_token)) -> Client:  # noqa: B008
+    """Return an authenticated Supabase client for the current request.
+
+    This client has auth.uid() set in PostgREST, so RLS policies
+    automatically enforce row-level ownership.
+    """
+    return get_user_client(token)
+
+
+async def get_current_user(token: str = Depends(_get_bearer_token)) -> dict[str, Any]:  # noqa: B008
+    """Validate JWT and return the authenticated user. Raises 401 if invalid."""
     try:
-        client = get_supabase_client()
+        client = get_user_client(token)
         response = client.auth.get_user(token)
         if response is None or response.user is None:
             raise HTTPException(
@@ -41,7 +54,7 @@ async def get_optional_user(request: Request) -> dict[str, Any] | None:
 
     token = auth_header.removeprefix("Bearer ")
     try:
-        client = get_supabase_client()
+        client = get_user_client(token)
         response = client.auth.get_user(token)
         if response is None or response.user is None:
             return None

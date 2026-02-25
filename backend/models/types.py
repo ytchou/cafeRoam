@@ -1,6 +1,6 @@
 from datetime import datetime
 from enum import StrEnum
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, field_validator
 
@@ -161,12 +161,13 @@ class JobStatus(StrEnum):
     CLAIMED = "claimed"
     COMPLETED = "completed"
     FAILED = "failed"
+    DEAD_LETTER = "dead_letter"
 
 
 class Job(BaseModel):
     id: str
     job_type: JobType
-    payload: dict[str, str | int | float | bool | None]
+    payload: dict[str, Any]
     status: JobStatus
     priority: int = 0
     attempts: int = 0

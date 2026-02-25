@@ -23,11 +23,13 @@ async def handle_weekly_email(db: Client, email: EmailProvider) -> None:
     sent_count = 0
     for user in users:
         try:
-            await email.send(EmailMessage(
-                to=user["email"],
-                subject="This Week's CafeRoam Picks",
-                html=html_content,
-            ))
+            await email.send(
+                EmailMessage(
+                    to=user["email"],
+                    subject="This Week's CafeRoam Picks",
+                    html=html_content,
+                )
+            )
             sent_count += 1
         except Exception as e:
             logger.error("Failed to send weekly email", user_id=user["id"], error=str(e))

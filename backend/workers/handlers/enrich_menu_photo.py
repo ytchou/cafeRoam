@@ -22,8 +22,10 @@ async def handle_enrich_menu_photo(
 
     # Merge menu data into shop record
     if result.items:
-        db.table("shops").update({
-            "menu_data": result.items,
-        }).eq("id", shop_id).execute()
+        db.table("shops").update(
+            {
+                "menu_data": result.items,
+            }
+        ).eq("id", shop_id).execute()
 
     logger.info("Menu data extracted", shop_id=shop_id, item_count=len(result.items))

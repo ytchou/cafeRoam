@@ -23,15 +23,17 @@ class JobQueue:
         now = datetime.now(UTC)
         response = (
             self._db.table("job_queue")
-            .insert({
-                "job_type": job_type.value,
-                "payload": payload,
-                "status": JobStatus.PENDING.value,
-                "priority": priority,
-                "attempts": 0,
-                "max_attempts": 3,
-                "scheduled_at": (scheduled_at or now).isoformat(),
-            })
+            .insert(
+                {
+                    "job_type": job_type.value,
+                    "payload": payload,
+                    "status": JobStatus.PENDING.value,
+                    "priority": priority,
+                    "attempts": 0,
+                    "max_attempts": 3,
+                    "scheduled_at": (scheduled_at or now).isoformat(),
+                }
+            )
             .execute()
         )
         rows = cast("list[dict[str, Any]]", response.data)
@@ -65,10 +67,12 @@ class JobQueue:
 
     async def complete(self, job_id: str, result: dict[str, Any] | None = None) -> None:
         """Mark a job as completed."""
-        self._db.table("job_queue").update({
-            "status": JobStatus.COMPLETED.value,
-            "completed_at": datetime.now(UTC).isoformat(),
-        }).eq("id", job_id).execute()
+        self._db.table("job_queue").update(
+            {
+                "status": JobStatus.COMPLETED.value,
+                "completed_at": datetime.now(UTC).isoformat(),
+            }
+        ).eq("id", job_id).execute()
 
     async def fail(self, job_id: str, error: str) -> None:
         """Mark a job as failed. If under max_attempts, reset to pending with backoff."""
@@ -86,13 +90,17 @@ class JobQueue:
         if attempts < max_attempts:
             backoff_seconds = 60 * (2 ** (attempts - 1))  # 60s, 120s, 240s
             scheduled_at = (datetime.now(UTC) + timedelta(seconds=backoff_seconds)).isoformat()
-            self._db.table("job_queue").update({
-                "status": JobStatus.PENDING.value,
-                "last_error": error,
-                "scheduled_at": scheduled_at,
-            }).eq("id", job_id).execute()
+            self._db.table("job_queue").update(
+                {
+                    "status": JobStatus.PENDING.value,
+                    "last_error": error,
+                    "scheduled_at": scheduled_at,
+                }
+            ).eq("id", job_id).execute()
         else:
-            self._db.table("job_queue").update({
-                "status": JobStatus.FAILED.value,
-                "last_error": error,
-            }).eq("id", job_id).execute()
+            self._db.table("job_queue").update(
+                {
+                    "status": JobStatus.FAILED.value,
+                    "last_error": error,
+                }
+            ).eq("id", job_id).execute()

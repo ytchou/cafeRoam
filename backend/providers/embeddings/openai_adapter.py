@@ -16,13 +16,9 @@ class OpenAIEmbeddingsAdapter:
         return self._model
 
     async def embed(self, text: str) -> list[float]:
-        response = await self._client.embeddings.create(
-            model=self._model, input=text
-        )
+        response = await self._client.embeddings.create(model=self._model, input=text)
         return response.data[0].embedding
 
     async def embed_batch(self, texts: list[str]) -> list[list[float]]:
-        response = await self._client.embeddings.create(
-            model=self._model, input=texts
-        )
+        response = await self._client.embeddings.create(model=self._model, input=texts)
         return [item.embedding for item in response.data]

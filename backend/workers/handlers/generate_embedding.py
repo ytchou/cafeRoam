@@ -28,8 +28,10 @@ async def handle_generate_embedding(
     embedding = await embeddings.embed(text)
 
     # Store embedding
-    db.table("shops").update({
-        "embedding": embedding,
-    }).eq("id", shop_id).execute()
+    db.table("shops").update(
+        {
+            "embedding": embedding,
+        }
+    ).eq("id", shop_id).execute()
 
     logger.info("Embedding generated", shop_id=shop_id, dimensions=len(embedding))

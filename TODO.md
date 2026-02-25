@@ -113,15 +113,28 @@ Core infrastructure everything else depends on. No user-facing product yet.
 - [x] Lint + type-check + production build pass
 - [x] All routes accessible in browser
 
-### Database Schema (SQL Migrations)
+### Database Schema + Code Review Chunk 1 & 2
 
-> **Design Doc:** [docs/designs/2026-02-24-db-infrastructure-design.md](docs/designs/2026-02-24-db-infrastructure-design.md)
-> **Plan:** [docs/plans/2026-02-24-db-infrastructure-plan.md](docs/plans/2026-02-24-db-infrastructure-plan.md) (Tasks 1, 3, 4, 5 — SQL only)
+> **Design Doc:** [docs/designs/2026-02-25-db-schema-and-code-review-chunk1-2-design.md](docs/designs/2026-02-25-db-schema-and-code-review-chunk1-2-design.md)
+> **Plan:** [docs/plans/2026-02-25-db-schema-and-code-review-chunk1-2-plan.md](docs/plans/2026-02-25-db-schema-and-code-review-chunk1-2-plan.md)
+> **Original DB Design:** [docs/designs/2026-02-24-db-infrastructure-design.md](docs/designs/2026-02-24-db-infrastructure-design.md)
 
-- [ ] Supabase CLI init + config
-- [ ] Write schema migrations (8 files: extensions, shops, taxonomy, users, job queue, indexes, RLS)
-- [ ] Generate taxonomy seed + validate schema
-- [ ] Seed data + dev scripts + .env.example
+**Chunk 1 — Migration Files (Wave 1):**
+- [x] Copy 9 migration files from feat/db-infrastructure (fix job_queue columns, triggers, RPC)
+- [x] Add DEAD_LETTER to JobStatus enum + widen Job.payload
+
+**Chunk 2 — Per-Request JWT Auth (Wave 2-4):**
+- [x] Refactor supabase_client.py (per-request JWT + service role singleton)
+- [x] Add get_user_db FastAPI dependency
+- [x] Wire all auth routes to per-request JWT client
+
+**Chunk 3 — Service Simplification (Wave 5-6):**
+- [x] Simplify CheckInService (trigger handles stamp + job)
+- [x] Simplify ListsService (trigger cap + RLS ownership)
+- [x] Update list route handlers for simplified signatures
+
+**Chunk 4 — Verification (Wave 7):**
+- [x] All tests pass, lint, type-check, build
 
 ### Python Backend Migration
 
@@ -171,17 +184,9 @@ Core infrastructure everything else depends on. No user-facing product yet.
 > **Design Doc:** [docs/designs/2026-02-24-code-review-fixes-design.md](docs/designs/2026-02-24-code-review-fixes-design.md)
 > **Plan:** [docs/plans/2026-02-24-code-review-fixes-plan.md](docs/plans/2026-02-24-code-review-fixes-plan.md)
 
-**Chunk 1 — Auth/Authorization (Critical) — Deferred:**
+**Chunk 1 — Auth/Authorization (Critical):** → Moved to "Database Schema + Code Review Chunk 1 & 2" above
 
-- [ ] Supabase client refactor (per-request JWT + service role singleton)
-- [ ] Add get_user_db FastAPI dependency
-- [ ] Wire all API routes to per-request JWT client
-
-**Chunk 2 — Transaction Safety (Critical/Important) — Deferred:**
-
-- [ ] DB migrations (check-in trigger + list cap trigger)
-- [ ] Simplify CheckInService (remove stamp + job inserts)
-- [ ] Simplify ListsService (remove TOCTOU cap, drop ownership params)
+**Chunk 2 — Transaction Safety (Critical/Important):** → Moved to "Database Schema + Code Review Chunk 1 & 2" above
 
 **Chunk 3 — Data Integrity (Critical):**
 
@@ -203,39 +208,6 @@ Core infrastructure everything else depends on. No user-facing product yet.
 - [x] All backend tests pass (pytest)
 - [x] All frontend tests pass (vitest)
 - [x] ruff + mypy pass
-
-### Code Review Fixes (Python Backend)
-
-> **Design Doc:** [docs/designs/2026-02-24-code-review-fixes-design.md](docs/designs/2026-02-24-code-review-fixes-design.md)
-> **Plan:** [docs/plans/2026-02-24-code-review-fixes-plan.md](docs/plans/2026-02-24-code-review-fixes-plan.md)
-
-**Chunk 1 — Auth/Authorization (Critical):**
-- [ ] Supabase client refactor (per-request JWT + service role singleton)
-- [ ] Add get_user_db FastAPI dependency
-- [ ] Wire all API routes to per-request JWT client
-
-**Chunk 2 — Transaction Safety (Critical/Important):**
-- [ ] DB migrations (check-in trigger + list cap trigger)
-- [ ] Simplify CheckInService (remove stamp + job inserts)
-- [ ] Simplify ListsService (remove TOCTOU cap, drop ownership params)
-
-**Chunk 3 — Data Integrity (Critical):**
-- [ ] Job queue retry with exponential backoff
-- [ ] Fix enriched_at string literal to real timestamp
-
-**Chunk 4 — Infrastructure (Important):**
-- [ ] Resend email adapter: async thread wrapper + fix global state
-- [ ] Job.payload type widen to Any + search row.pop fix
-- [ ] Proxy content type forwarding
-- [ ] Missing list sub-resource proxy routes
-- [ ] Auth route (backend + frontend)
-- [ ] Dockerfile uv.lock fix + posthog dependency
-
-**Chunk 5 — Tests + Verification:**
-- [ ] Missing handler tests (enrich_menu_photo, weekly_email)
-- [ ] All backend tests pass (pytest)
-- [ ] All frontend tests pass (vitest)
-- [ ] ruff + mypy pass
 
 ### Auth & Privacy
 

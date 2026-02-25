@@ -39,10 +39,12 @@ async def handle_enrich_shop(
     )
 
     # Write enrichment result
-    db.table("shops").update({
-        "description": result.summary,
-        "enriched_at": datetime.now(UTC).isoformat(),
-    }).eq("id", shop_id).execute()
+    db.table("shops").update(
+        {
+            "description": result.summary,
+            "enriched_at": datetime.now(UTC).isoformat(),
+        }
+    ).eq("id", shop_id).execute()
 
     # Queue embedding generation
     await queue.enqueue(

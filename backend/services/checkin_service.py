@@ -1,9 +1,8 @@
-from datetime import UTC, datetime
 from typing import Any, cast
 
 from supabase import Client
 
-from models.types import CheckIn, JobType
+from models.types import CheckIn
 
 
 class CheckInService:
@@ -18,7 +17,7 @@ class CheckInService:
         menu_photo_url: str | None = None,
         note: str | None = None,
     ) -> CheckIn:
-        """Create a check-in, award a stamp, and optionally queue menu photo enrichment."""
+        """Create a check-in. DB trigger handles stamp creation and job queueing."""
         if len(photo_urls) < 1:
             raise ValueError("At least one photo is required for check-in")
 
@@ -31,29 +30,7 @@ class CheckInService:
         }
         response = self._db.table("check_ins").insert(checkin_data).execute()
         rows = cast("list[dict[str, Any]]", response.data)
-        checkin_row = rows[0]
-
-        stamp_data = {
-            "user_id": user_id,
-            "shop_id": shop_id,
-            "check_in_id": checkin_row["id"],
-            "design_url": f"/stamps/{shop_id}.svg",
-        }
-        self._db.table("stamps").insert(stamp_data).execute()
-
-        if menu_photo_url:
-            self._db.table("job_queue").insert({
-                "job_type": JobType.ENRICH_MENU_PHOTO.value,
-                "payload": {
-                    "shop_id": shop_id,
-                    "image_url": menu_photo_url,
-                },
-                "status": "pending",
-                "priority": 5,
-                "scheduled_at": datetime.now(UTC).isoformat(),
-            }).execute()
-
-        return CheckIn(**checkin_row)
+        return CheckIn(**rows[0])
 
     async def get_by_user(self, user_id: str) -> list[CheckIn]:
         response = (
