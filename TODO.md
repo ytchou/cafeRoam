@@ -262,7 +262,27 @@ Core infrastructure everything else depends on. No user-facing product yet.
 
 ### Provider Abstractions
 
-- [ ] Provider abstraction layer: LLMProvider, EmbeddingsProvider, EmailProvider, MapsProvider, AnalyticsProvider (Python Protocol classes — covered in Python Backend Migration above)
+> **Design Doc:** [docs/designs/2026-02-26-provider-adapter-implementations-design.md](docs/designs/2026-02-26-provider-adapter-implementations-design.md)
+> **Plan:** [docs/plans/2026-02-26-provider-adapter-implementations-plan.md](docs/plans/2026-02-26-provider-adapter-implementations-plan.md)
+
+**Chunk 1 — Models & Interface (Wave 1):**
+
+- [ ] Add ShopEnrichmentInput model to types.py
+- [ ] Update LLM protocol interface signature
+
+**Chunk 2 — Adapter Implementations (Wave 1-2):**
+
+- [ ] Implement Anthropic adapter enrich_shop with TDD
+- [ ] Add extract_menu_data tests for Anthropic adapter
+- [ ] Implement Mapbox geocoding adapter with TDD
+- [ ] Implement PostHog analytics adapter with TDD
+
+**Chunk 3 — Wiring & Verification (Wave 3-5):**
+
+- [ ] Update LLM factory for taxonomy parameter
+- [ ] Add missing Maps + Analytics factory tests
+- [ ] Update worker handlers for new enrich_shop signature
+- [ ] Full verification (pytest, ruff, mypy, pnpm test)
 
 ### Observability & Ops
 
