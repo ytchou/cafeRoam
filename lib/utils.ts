@@ -4,3 +4,11 @@ import { twMerge } from 'tailwind-merge';
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
+
+/** Sanitize a returnTo query param to prevent open-redirect attacks.
+ *  Accepts only same-origin relative paths (starts with /, not //).
+ */
+export function safeReturnTo(value: string | null | undefined): string {
+  if (!value || !value.startsWith('/') || value.startsWith('//')) return '/';
+  return value;
+}

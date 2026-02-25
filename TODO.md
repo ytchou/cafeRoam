@@ -120,20 +120,24 @@ Core infrastructure everything else depends on. No user-facing product yet.
 > **Original DB Design:** [docs/designs/2026-02-24-db-infrastructure-design.md](docs/designs/2026-02-24-db-infrastructure-design.md)
 
 **Chunk 1 — Migration Files (Wave 1):**
+
 - [x] Copy 9 migration files from feat/db-infrastructure (fix job_queue columns, triggers, RPC)
 - [x] Add DEAD_LETTER to JobStatus enum + widen Job.payload
 
 **Chunk 2 — Per-Request JWT Auth (Wave 2-4):**
+
 - [x] Refactor supabase_client.py (per-request JWT + service role singleton)
 - [x] Add get_user_db FastAPI dependency
 - [x] Wire all auth routes to per-request JWT client
 
 **Chunk 3 — Service Simplification (Wave 5-6):**
+
 - [x] Simplify CheckInService (trigger handles stamp + job)
 - [x] Simplify ListsService (trigger cap + RLS ownership)
 - [x] Update list route handlers for simplified signatures
 
 **Chunk 4 — Verification (Wave 7):**
+
 - [x] All tests pass, lint, type-check, build
 
 ### Python Backend Migration
@@ -211,8 +215,41 @@ Core infrastructure everything else depends on. No user-facing product yet.
 
 ### Auth & Privacy
 
-- [ ] Auth system: signup (with PDPA consent), login, session management, protected routes
-- [ ] PDPA: consent flow at signup, account deletion endpoint (cascades all user data)
+> **Design Doc:** [docs/designs/2026-02-25-auth-privacy-design.md](docs/designs/2026-02-25-auth-privacy-design.md)
+> **Plan:** [docs/plans/2026-02-25-auth-privacy-plan.md](docs/plans/2026-02-25-auth-privacy-plan.md)
+
+**Chunk 1 — DB Migrations (Wave 1-2):**
+
+- [x] Add `deletion_requested_at` column to profiles
+- [x] Custom JWT claim hook for PDPA consent + deletion status
+
+**Chunk 2 — Backend Auth Routes (Wave 3):**
+
+- [x] `POST /auth/consent` — record PDPA consent with TDD
+- [x] `DELETE /auth/account` — initiate 30-day soft delete with TDD
+- [x] `POST /auth/cancel-deletion` — cancel within grace period with TDD
+- [x] Account deletion scheduler (daily cleanup job) with TDD
+
+**Chunk 3 — Frontend Infra (Wave 3-4):**
+
+- [x] Supabase SSR client setup (browser, server, middleware helpers)
+- [x] Next.js middleware (route guards: public / onboarding / protected / recovery)
+
+**Chunk 4 — Frontend Auth Pages (Wave 5):**
+
+- [x] Login page (email/password + Google + LINE) with tests
+- [x] Signup page (email/password + PDPA checkbox) with tests
+- [x] Auth callback route (code exchange + consent check)
+- [x] PDPA consent page with tests
+- [x] Account recovery page with tests
+- [x] Settings page (logout + account deletion)
+- [x] Auth proxy routes (consent, delete, cancel-deletion)
+
+**Chunk 5 — Verification (Wave 6):**
+
+- [x] All backend tests pass (pytest)
+- [x] All frontend tests pass (vitest)
+- [x] Frontend lint, type-check, build pass
 
 ### Data Pipeline
 
@@ -323,3 +360,12 @@ Explicitly cut from V1. Revisit after Phase 3 validation data is in hand.
 - [ ] Recommendation engine trained on real usage data
 - [ ] Coverage expansion beyond Taipei
 - [ ] Native iOS/Android app (after Threads distribution is proven)
+
+### LINE Integration (V2)
+
+> Requires LINE Login (built in V1 auth) as prerequisite — LINE user ID is captured at auth time.
+
+- [ ] LINE Official Account setup (LINE Developer Console)
+- [ ] Push notifications via LINE Messaging API (replace or supplement weekly email)
+- [ ] Rich menu: quick-access to search, check-in, lists from within LINE app
+- [ ] Chatbot: natural language shop discovery via LINE chat (semantic search over Messaging API)

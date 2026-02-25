@@ -7,7 +7,10 @@ vi.mock('@/lib/api/proxy', () => ({
 }));
 
 import { proxyToBackend } from '@/lib/api/proxy';
-import { GET as authGET, POST as authPOST } from '../auth/route';
+import { POST as authPOST } from '../auth/route';
+import { POST as consentPOST } from '../auth/consent/route';
+import { POST as cancelDeletionPOST } from '../auth/cancel-deletion/route';
+import { DELETE as accountDELETE } from '../auth/account/route';
 import { GET as checkinsGET, POST as checkinsPOST } from '../checkins/route';
 import { DELETE as listShopDELETE } from '../lists/[listId]/shops/[shopId]/route';
 import { POST as listShopsPOST } from '../lists/[listId]/shops/route';
@@ -30,14 +33,39 @@ beforeEach(() => {
 });
 
 describe('auth route', () => {
-  it('GET returns 501 not implemented', async () => {
-    const res = await authGET();
-    expect(res.status).toBe(501);
+  it('POST proxies to /auth', async () => {
+    await authPOST(makeRequest());
+    expect(mockProxy).toHaveBeenCalledWith(expect.any(NextRequest), '/auth');
   });
+});
 
-  it('POST returns 501 not implemented', async () => {
-    const res = await authPOST();
-    expect(res.status).toBe(501);
+describe('auth/consent route', () => {
+  it('POST proxies to /auth/consent', async () => {
+    await consentPOST(makeRequest());
+    expect(mockProxy).toHaveBeenCalledWith(
+      expect.any(NextRequest),
+      '/auth/consent'
+    );
+  });
+});
+
+describe('auth/cancel-deletion route', () => {
+  it('POST proxies to /auth/cancel-deletion', async () => {
+    await cancelDeletionPOST(makeRequest());
+    expect(mockProxy).toHaveBeenCalledWith(
+      expect.any(NextRequest),
+      '/auth/cancel-deletion'
+    );
+  });
+});
+
+describe('auth/account route', () => {
+  it('DELETE proxies to /auth/account', async () => {
+    await accountDELETE(makeRequest());
+    expect(mockProxy).toHaveBeenCalledWith(
+      expect.any(NextRequest),
+      '/auth/account'
+    );
   });
 });
 

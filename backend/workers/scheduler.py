@@ -6,6 +6,7 @@ from models.types import JobType
 from providers.email import get_email_provider
 from providers.embeddings import get_embeddings_provider
 from providers.llm import get_llm_provider
+from workers.handlers.account_deletion import delete_expired_accounts
 from workers.handlers.enrich_menu_photo import handle_enrich_menu_photo
 from workers.handlers.enrich_shop import handle_enrich_shop
 from workers.handlers.generate_embedding import handle_generate_embedding
@@ -97,6 +98,13 @@ def create_scheduler() -> AsyncIOScheduler:
         day_of_week="mon",
         hour=9,
         id="weekly_email",
+    )
+    # Account deletion cleanup (daily at 4 AM)
+    scheduler.add_job(
+        delete_expired_accounts,
+        "cron",
+        hour=4,
+        id="delete_expired_accounts",
     )
 
     # Job queue polling (every 30 seconds)
