@@ -15,7 +15,7 @@ CREATE POLICY "profiles_own_update" ON profiles
     AND (
       -- Allow clearing deletion_requested_at (cancellation)
       deletion_requested_at IS NULL
-      -- Allow setting deletion_requested_at to approximately now (within 1 minute for clock skew)
-      OR deletion_requested_at >= now() - interval '1 minute'
+      -- Allow setting deletion_requested_at to approximately now (within 5 minutes for clock skew)
+      OR deletion_requested_at >= now() - interval '5 minutes'
     )
   );
