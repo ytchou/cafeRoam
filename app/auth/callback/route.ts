@@ -30,14 +30,15 @@ export async function GET(request: NextRequest) {
   const userMetaConsented = data.user?.user_metadata?.pdpa_consented === true;
 
   if (!appConsented && userMetaConsented) {
-    // New email signup: propagate consent from user_metadata → profiles table
-    const token = data.session?.access_token;
-    if (token) {
-      await fetch(`${origin}/api/auth/consent`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-      });
-    }
+    // New email signup: propagate consent from user_metadata → profiles table.
+    // Write directly via the server client (already has user session) to avoid a
+    // self-referencing HTTP round-trip which can fail behind load balancers.
+    // Idempotent: .is('pdpa_consent_at', null) is a no-op if consent is already recorded.
+    await supabase
+      .from('profiles')
+      .update({ pdpa_consent_at: new Date().toISOString() })
+      .eq('id', data.user.id)
+      .is('pdpa_consent_at', null);
     // Redirect to app — middleware will re-check JWT on next request after token refresh
     return NextResponse.redirect(`${origin}${returnTo}`);
   }

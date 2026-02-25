@@ -89,11 +89,14 @@ def _delete_storage_objects_by_url(db, urls: list[str]) -> None:  # type: ignore
         parsed = urlparse(url)
         parts = parsed.path.split("/storage/v1/object/public/", 1)
         if len(parts) < 2:
-            logger.warning("Unrecognized storage URL format — skipping", url=url)
+            # Log only scheme+host to avoid exposing user_id embedded in the URL path
+            safe_origin = f"{parsed.scheme}://{parsed.netloc}/..."
+            logger.warning("Unrecognized storage URL format — skipping", url=safe_origin)
             continue
         bucket_name, _, obj_path = parts[1].partition("/")
         if not bucket_name or not obj_path:
-            logger.warning("Could not extract bucket/path from storage URL — skipping", url=url)
+            safe_origin = f"{parsed.scheme}://{parsed.netloc}/..."
+            logger.warning("Could not extract bucket/path from storage URL — skipping", url=safe_origin)
             continue
         by_bucket.setdefault(bucket_name, []).append(obj_path)
 
