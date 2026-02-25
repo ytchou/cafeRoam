@@ -323,3 +323,12 @@ Explicitly cut from V1. Revisit after Phase 3 validation data is in hand.
 - [ ] Recommendation engine trained on real usage data
 - [ ] Coverage expansion beyond Taipei
 - [ ] Native iOS/Android app (after Threads distribution is proven)
+
+### LINE Integration (V2)
+
+> Requires LINE Login (built in V1 auth) as prerequisite — LINE user ID is captured at auth time.
+
+- [ ] LINE Official Account setup (LINE Developer Console)
+- [ ] Push notifications via LINE Messaging API (replace or supplement weekly email)
+- [ ] Rich menu: quick-access to search, check-in, lists from within LINE app
+- [ ] Chatbot: natural language shop discovery via LINE chat (semantic search over Messaging API)
