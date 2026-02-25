@@ -53,3 +53,49 @@ class TestListsAPI:
                 mock_cls.assert_called_once_with(db=mock_db)
         finally:
             app.dependency_overrides.clear()
+
+    def test_delete_list_calls_service_without_user_id(self):
+        """DELETE /lists/{id} must call service.delete(list_id=...) — no user_id param."""
+        mock_db = MagicMock()
+        app.dependency_overrides[get_current_user] = lambda: {"id": "user-1"}
+        app.dependency_overrides[get_user_db] = lambda: mock_db
+        try:
+            with patch("api.lists.ListsService") as mock_cls:
+                mock_svc = AsyncMock()
+                mock_cls.return_value = mock_svc
+                client.delete("/lists/list-1")
+                mock_svc.delete.assert_called_once_with(list_id="list-1")
+        finally:
+            app.dependency_overrides.clear()
+
+    def test_add_shop_calls_service_without_user_id(self):
+        """POST /lists/{id}/shops must call service.add_shop(list_id=..., shop_id=...) — no user_id."""
+        mock_db = MagicMock()
+        app.dependency_overrides[get_current_user] = lambda: {"id": "user-1"}
+        app.dependency_overrides[get_user_db] = lambda: mock_db
+        try:
+            with patch("api.lists.ListsService") as mock_cls:
+                mock_svc = AsyncMock()
+                mock_svc.add_shop.return_value = MagicMock(
+                    model_dump=lambda: {"list_id": "list-1", "shop_id": "shop-1",
+                                        "added_at": "2026-02-25T00:00:00"}
+                )
+                mock_cls.return_value = mock_svc
+                client.post("/lists/list-1/shops", json={"shop_id": "shop-1"})
+                mock_svc.add_shop.assert_called_once_with(list_id="list-1", shop_id="shop-1")
+        finally:
+            app.dependency_overrides.clear()
+
+    def test_remove_shop_calls_service_without_user_id(self):
+        """DELETE /lists/{id}/shops/{shop_id} must call service.remove_shop without user_id."""
+        mock_db = MagicMock()
+        app.dependency_overrides[get_current_user] = lambda: {"id": "user-1"}
+        app.dependency_overrides[get_user_db] = lambda: mock_db
+        try:
+            with patch("api.lists.ListsService") as mock_cls:
+                mock_svc = AsyncMock()
+                mock_cls.return_value = mock_svc
+                client.delete("/lists/list-1/shops/shop-1")
+                mock_svc.remove_shop.assert_called_once_with(list_id="list-1", shop_id="shop-1")
+        finally:
+            app.dependency_overrides.clear()
