@@ -226,7 +226,7 @@ Core infrastructure everything else depends on. No user-facing product yet.
 
 **Chunk 3 — Frontend Infra (Wave 3-4):**
 - [x] Supabase SSR client setup (browser, server, middleware helpers)
-- [ ] Next.js middleware (route guards: public / onboarding / protected / recovery)
+- [x] Next.js middleware (route guards: public / onboarding / protected / recovery)
 
 **Chunk 4 — Frontend Auth Pages (Wave 5):**
 - [ ] Login page (email/password + Google + LINE) with tests
