@@ -86,6 +86,31 @@ class TestDeleteExpiredAccounts:
         mock_db.auth.admin.delete_user.assert_not_called()
 
     @pytest.mark.asyncio
+    async def test_unparseable_menu_url_prevents_hard_delete(self):
+        """If a menu photo URL cannot be parsed, storage deletion aborts and user is NOT deleted."""
+        expired_profile = {
+            "id": "user-1",
+            "deletion_requested_at": "2026-01-01T00:00:00Z",
+        }
+        mock_db = MagicMock()
+        mock_db.table.return_value.select.return_value.lt.return_value.execute.return_value = (
+            MagicMock(data=[expired_profile])
+        )
+        mock_db.storage.from_.return_value.list.return_value = []
+        # Menu photo with an unrecognized URL scheme/format
+        mock_db.table.return_value.select.return_value.eq.return_value.not_.is_.return_value.execute.return_value = (
+            MagicMock(data=[{"menu_photo_url": "https://cdn.example.com/photos/photo.jpg"}])
+        )
+
+        with patch(
+            "workers.handlers.account_deletion.get_service_role_client",
+            return_value=mock_db,
+        ):
+            await delete_expired_accounts()
+
+        mock_db.auth.admin.delete_user.assert_not_called()
+
+    @pytest.mark.asyncio
     async def test_continues_on_individual_failure(self):
         """If one user's deletion fails, others should still be processed."""
         profiles = [
