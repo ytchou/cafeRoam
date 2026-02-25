@@ -10,7 +10,7 @@ client = TestClient(app)
 class TestShopsAPI:
     def test_list_shops_is_public(self):
         """GET /shops should not require auth."""
-        with patch("api.shops.get_service_role_client") as mock_sb:
+        with patch("api.shops.get_anon_client") as mock_sb:
             mock_client = MagicMock()
             mock_client.table = MagicMock(return_value=MagicMock(
                 select=MagicMock(return_value=MagicMock(
@@ -23,7 +23,7 @@ class TestShopsAPI:
 
     def test_get_shop_by_id_is_public(self):
         """GET /shops/{id} should not require auth."""
-        with patch("api.shops.get_service_role_client") as mock_sb:
+        with patch("api.shops.get_anon_client") as mock_sb:
             mock_client = MagicMock()
             mock_client.table = MagicMock(return_value=MagicMock(
                 select=MagicMock(return_value=MagicMock(

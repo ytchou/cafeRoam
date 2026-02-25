@@ -2,7 +2,7 @@ from typing import Any
 
 from fastapi import APIRouter
 
-from db.supabase_client import get_service_role_client
+from db.supabase_client import get_anon_client
 
 router = APIRouter(prefix="/shops", tags=["shops"])
 
@@ -10,7 +10,7 @@ router = APIRouter(prefix="/shops", tags=["shops"])
 @router.get("/")
 async def list_shops(city: str | None = None) -> list[Any]:
     """List shops. Public — no auth required."""
-    db = get_service_role_client()
+    db = get_anon_client()
     query = db.table("shops").select("*")
     if city:
         query = query.eq("city", city)
@@ -21,6 +21,6 @@ async def list_shops(city: str | None = None) -> list[Any]:
 @router.get("/{shop_id}")
 async def get_shop(shop_id: str) -> Any:
     """Get a single shop by ID. Public — no auth required."""
-    db = get_service_role_client()
+    db = get_anon_client()
     response = db.table("shops").select("*").eq("id", shop_id).single().execute()
     return response.data
