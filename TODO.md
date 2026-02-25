@@ -232,7 +232,7 @@ Core infrastructure everything else depends on. No user-facing product yet.
 - [x] Login page (email/password + Google + LINE) with tests
 - [x] Signup page (email/password + PDPA checkbox) with tests
 - [x] Auth callback route (code exchange + consent check)
-- [ ] PDPA consent page with tests
+- [x] PDPA consent page with tests
 - [ ] Account recovery page with tests
 - [ ] Settings page (logout + account deletion)
 - [ ] Auth proxy routes (consent, delete, cancel-deletion)
