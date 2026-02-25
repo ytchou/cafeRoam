@@ -39,21 +39,23 @@ export async function middleware(request: NextRequest) {
   const pdpaConsented = appMetadata.pdpa_consented === true;
   const deletionRequested = appMetadata.deletion_requested === true;
 
-  // Onboarding routes — just need session
-  if (ONBOARDING_ROUTES.some((r) => pathname.startsWith(r))) {
-    return supabaseResponse;
-  }
-
-  // Recovery routes — need session, allow even without consent
+  // Recovery routes — must be checked before the deletion guard so deletion-pending
+  // users can still reach /account/recover
   if (RECOVERY_ROUTES.some((r) => pathname.startsWith(r))) {
     return supabaseResponse;
   }
 
-  // Deletion pending — redirect to recovery
+  // Deletion pending — redirect to recovery (checked before onboarding so
+  // deletion-pending users can't reach consent page either)
   if (deletionRequested) {
     const url = request.nextUrl.clone();
     url.pathname = '/account/recover';
     return NextResponse.redirect(url);
+  }
+
+  // Onboarding routes — just need session (no consent required yet)
+  if (ONBOARDING_ROUTES.some((r) => pathname.startsWith(r))) {
+    return supabaseResponse;
   }
 
   // No PDPA consent — redirect to onboarding, preserving the intended destination

@@ -109,6 +109,15 @@ describe('middleware route guards', () => {
       const res = await middleware(makeRequest('/account/recover'));
       expect(res).toBe(passThroughResponse);
     });
+
+    it('/onboarding/consent redirects to /account/recover when deletion pending', async () => {
+      mockUpdateSession.mockResolvedValue({
+        user: makeUser({ deletion_requested: true }),
+        supabaseResponse: passThroughResponse,
+      });
+      const res = await middleware(makeRequest('/onboarding/consent'));
+      expect(res.headers.get('location')).toContain('/account/recover');
+    });
   });
 
   describe('fully authenticated and consented users', () => {
