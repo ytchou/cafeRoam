@@ -7,6 +7,7 @@ Date: 2026-02-25
 The `feat/db-infrastructure` branch has 9 SQL migration files that were written before the Python backend migration (PR #8). Several critical mismatches exist between the DB schema and the Python models. Additionally, Code Review Fixes Chunks 1 (per-request JWT / RLS enforcement) and 2 (service simplification via DB triggers) were deferred pending DB migration work.
 
 This design covers three tightly coupled workstreams:
+
 1. Fix existing DB migrations in-place to match Python models
 2. Implement Chunk 1: per-request JWT Supabase client
 3. Implement Chunk 2: service simplification with DB triggers + RLS
@@ -14,6 +15,7 @@ This design covers three tightly coupled workstreams:
 **Approach:** Single branch from `main`. Fix migrations in-place (they've never been applied to production), then implement Chunks 1 + 2. One PR.
 
 **Prior designs referenced:**
+
 - `docs/designs/2026-02-24-db-infrastructure-design.md`
 - `docs/designs/2026-02-24-code-review-fixes-design.md`
 - `docs/plans/2026-02-24-code-review-fixes-plan.md`
@@ -25,10 +27,12 @@ This design covers three tightly coupled workstreams:
 ### Migration 5 (`_create_job_queue.sql`) — 4 changes
 
 **1a. Column renames to match Python `Job` model:**
+
 - `error TEXT` -> `last_error TEXT`
 - `locked_at TIMESTAMPTZ` -> `claimed_at TIMESTAMPTZ`
 
 **1b. Status CHECK constraint update:**
+
 ```sql
 -- OLD
 CHECK (status IN ('pending', 'processing', 'completed', 'failed', 'dead_letter'))
@@ -133,20 +137,24 @@ The Python backend uses a singleton anon-key Supabase client. RLS policies based
 ### Changes
 
 **`backend/db/supabase.py` — Refactor client creation:**
+
 - `get_service_role_client() -> Client` — singleton, uses `SUPABASE_SERVICE_ROLE_KEY`. Workers and admin only.
 - `get_user_client(token: str) -> Client` — per-request, authenticated with user's JWT. Makes `auth.uid()` available in RLS.
 
 **`backend/api/deps.py` — New dependency:**
+
 - `get_user_db(request: Request) -> Client` — extracts Bearer token from `Authorization` header, calls `get_user_client(token)`. Raises 401 if missing/invalid.
 - `get_current_user()` remains for user info extraction.
 
 **All API routes wired to `Depends(get_user_db)`:**
+
 - `shops.py`, `search.py` — user client for reads (public SELECT works via RLS anyway)
 - `checkins.py` — user client for create/read (RLS enforces `auth.uid() = user_id`)
 - `lists.py` — user client for all CRUD (RLS enforces ownership)
 - `stamps.py` — user client for reads
 
 **Workers stay on service role client:**
+
 - `backend/workers/queue.py` — `get_service_role_client()` (bypasses RLS)
 - All handler files — same
 
@@ -157,11 +165,13 @@ The Python backend uses a singleton anon-key Supabase client. RLS policies based
 ### `CheckInService.create()` — Single insert
 
 Before:
+
 1. Insert check_in row
 2. Insert stamp row
 3. Enqueue enrich_menu_photo job
 
 After:
+
 1. Insert check_in row (trigger handles stamp + job)
 
 Photo validation (>= 1 photo URL) remains at application level.
@@ -169,11 +179,13 @@ Photo validation (>= 1 photo URL) remains at application level.
 ### `ListsService.create()` — Trigger-backed cap
 
 Before:
-1. COUNT(*) lists WHERE user_id = X
+
+1. COUNT(\*) lists WHERE user_id = X
 2. If count >= 3, raise error
 3. INSERT list
 
 After:
+
 1. INSERT list
 2. Catch `check_violation` -> raise HTTP 400 "Maximum of 3 lists allowed"
 

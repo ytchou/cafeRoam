@@ -10,7 +10,10 @@ const mockFrom = vi.hoisted(() => vi.fn());
 
 vi.mock('@/lib/supabase/server', () => ({
   createClient: vi.fn().mockResolvedValue({
-    auth: { exchangeCodeForSession: mockExchangeCodeForSession, refreshSession: mockRefreshSession },
+    auth: {
+      exchangeCodeForSession: mockExchangeCodeForSession,
+      refreshSession: mockRefreshSession,
+    },
     from: mockFrom,
   }),
 }));
@@ -43,7 +46,10 @@ describe('auth/callback GET', () => {
   });
 
   it('redirects to /login when code exchange fails', async () => {
-    mockExchangeCodeForSession.mockResolvedValue({ error: { message: 'bad code' }, data: {} });
+    mockExchangeCodeForSession.mockResolvedValue({
+      error: { message: 'bad code' },
+      data: {},
+    });
     const res = await GET(makeRequest('/auth/callback?code=bad'));
     expect(res.headers.get('location')).toContain('/login');
   });
@@ -66,14 +72,20 @@ describe('auth/callback GET', () => {
     mockExchangeCodeForSession.mockResolvedValue({
       error: null,
       data: {
-        user: { id: 'u1', app_metadata: {}, user_metadata: { pdpa_consented: true } },
+        user: {
+          id: 'u1',
+          app_metadata: {},
+          user_metadata: { pdpa_consented: true },
+        },
         session: { access_token: 'tok' },
       },
     });
     const { mockUpdate, mockEq, mockIs } = makeProfileUpdateChain();
     mockFrom.mockReturnValue({ update: mockUpdate });
 
-    const res = await GET(makeRequest('/auth/callback?code=abc&returnTo=/lists'));
+    const res = await GET(
+      makeRequest('/auth/callback?code=abc&returnTo=/lists')
+    );
 
     expect(mockFrom).toHaveBeenCalledWith('profiles');
     expect(mockUpdate).toHaveBeenCalledWith(
@@ -89,11 +101,17 @@ describe('auth/callback GET', () => {
     mockExchangeCodeForSession.mockResolvedValue({
       error: null,
       data: {
-        user: { id: 'u1', app_metadata: { pdpa_consented: true }, user_metadata: {} },
+        user: {
+          id: 'u1',
+          app_metadata: { pdpa_consented: true },
+          user_metadata: {},
+        },
         session: { access_token: 'tok' },
       },
     });
-    const res = await GET(makeRequest('/auth/callback?code=abc&returnTo=/search'));
+    const res = await GET(
+      makeRequest('/auth/callback?code=abc&returnTo=/search')
+    );
     expect(res.headers.get('location')).toContain('/search');
     expect(mockFrom).not.toHaveBeenCalled();
   });
@@ -102,11 +120,17 @@ describe('auth/callback GET', () => {
     mockExchangeCodeForSession.mockResolvedValue({
       error: null,
       data: {
-        user: { id: 'u1', app_metadata: { pdpa_consented: true }, user_metadata: {} },
+        user: {
+          id: 'u1',
+          app_metadata: { pdpa_consented: true },
+          user_metadata: {},
+        },
         session: { access_token: 'tok' },
       },
     });
-    const res = await GET(makeRequest('/auth/callback?code=abc&returnTo=//evil.com'));
+    const res = await GET(
+      makeRequest('/auth/callback?code=abc&returnTo=//evil.com')
+    );
     const location = res.headers.get('location') ?? '';
     expect(location).not.toContain('evil.com');
     expect(location).toMatch(/\/$/);
@@ -116,11 +140,17 @@ describe('auth/callback GET', () => {
     mockExchangeCodeForSession.mockResolvedValue({
       error: null,
       data: {
-        user: { id: 'u1', app_metadata: { pdpa_consented: true }, user_metadata: {} },
+        user: {
+          id: 'u1',
+          app_metadata: { pdpa_consented: true },
+          user_metadata: {},
+        },
         session: { access_token: 'tok' },
       },
     });
-    const res = await GET(makeRequest('/auth/callback?code=abc&returnTo=https://evil.com'));
+    const res = await GET(
+      makeRequest('/auth/callback?code=abc&returnTo=https://evil.com')
+    );
     const location = res.headers.get('location') ?? '';
     expect(location).not.toContain('evil.com');
   });

@@ -108,6 +108,7 @@ Implements end-to-end authentication (email/password, Google OAuth, LINE Login) 
 ```
 
 **Backend: `POST /auth/consent`**
+
 - Requires valid JWT
 - Sets `pdpa_consent_at = NOW()` on calling user's profile
 - Idempotent — no-op if already set
@@ -155,11 +156,11 @@ Storage cleanup must be explicit — there is no cascade from DB into Supabase S
 
 ### Backend routes
 
-| Method | Path | Description |
-|--------|------|-------------|
-| `POST` | `/auth/consent` | Record PDPA consent |
-| `DELETE` | `/auth/account` | Initiate soft delete |
-| `POST` | `/auth/cancel-deletion` | Cancel within grace period |
+| Method   | Path                    | Description                |
+| -------- | ----------------------- | -------------------------- |
+| `POST`   | `/auth/consent`         | Record PDPA consent        |
+| `DELETE` | `/auth/account`         | Initiate soft delete       |
+| `POST`   | `/auth/cancel-deletion` | Cancel within grace period |
 
 ---
 
@@ -196,7 +197,9 @@ See ADR: [2026-02-25-pdpa-jwt-claim.md](../decisions/2026-02-25-pdpa-jwt-claim.m
 Each Next.js API proxy route extracts the session token and forwards it:
 
 ```typescript
-const { data: { session } } = await supabase.auth.getSession()
+const {
+  data: { session },
+} = await supabase.auth.getSession();
 // Forward as: Authorization: Bearer <session.access_token>
 ```
 
@@ -246,29 +249,29 @@ See ADR: [2026-02-25-line-login-oidc.md](../decisions/2026-02-25-line-login-oidc
 
 ### Frontend
 
-| Component | Path |
-|-----------|------|
-| Login page | `app/(auth)/login/page.tsx` |
-| Signup page | `app/(auth)/signup/page.tsx` |
-| Auth callback page | `app/auth/callback/page.tsx` |
-| PDPA consent page | `app/onboarding/consent/page.tsx` |
-| Account recovery page | `app/account/recover/page.tsx` |
-| Settings page | `app/(protected)/settings/page.tsx` |
-| Middleware | `middleware.ts` |
-| Supabase server client | `lib/supabase/server.ts` |
-| Supabase middleware helper | `lib/supabase/middleware.ts` |
+| Component                  | Path                                |
+| -------------------------- | ----------------------------------- |
+| Login page                 | `app/(auth)/login/page.tsx`         |
+| Signup page                | `app/(auth)/signup/page.tsx`        |
+| Auth callback page         | `app/auth/callback/page.tsx`        |
+| PDPA consent page          | `app/onboarding/consent/page.tsx`   |
+| Account recovery page      | `app/account/recover/page.tsx`      |
+| Settings page              | `app/(protected)/settings/page.tsx` |
+| Middleware                 | `middleware.ts`                     |
+| Supabase server client     | `lib/supabase/server.ts`            |
+| Supabase middleware helper | `lib/supabase/middleware.ts`        |
 
 ### Backend
 
-| Component | Path |
-|-----------|------|
-| Auth routes | `backend/api/auth.py` |
+| Component                | Path                                           |
+| ------------------------ | ---------------------------------------------- |
+| Auth routes              | `backend/api/auth.py`                          |
 | Account deletion handler | `backend/workers/handlers/account_deletion.py` |
-| APScheduler registration | Update `backend/workers/scheduler.py` |
+| APScheduler registration | Update `backend/workers/scheduler.py`          |
 
 ### Database
 
-| Migration | Description |
-|-----------|-------------|
-| Add `deletion_requested_at` to profiles | Schema change |
+| Migration                               | Description                       |
+| --------------------------------------- | --------------------------------- |
+| Add `deletion_requested_at` to profiles | Schema change                     |
 | Supabase Auth hook for custom JWT claim | PostgreSQL function + hook config |

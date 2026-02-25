@@ -21,6 +21,7 @@
 ### Task 1: Refactor Supabase Client — Per-Request JWT + Service Role
 
 **Files:**
+
 - Modify: `backend/db/supabase_client.py`
 - Modify: `backend/tests/db/test_supabase_client.py`
 
@@ -154,6 +155,7 @@ git commit -m "fix(backend): refactor Supabase client to per-request JWT + servi
 ### Task 2: Add `get_user_db` Dependency to deps.py
 
 **Files:**
+
 - Modify: `backend/api/deps.py`
 - Modify: `backend/tests/api/test_auth.py`
 
@@ -273,6 +275,7 @@ git commit -m "fix(backend): add get_user_db dependency for per-request JWT clie
 ### Task 3: Update API Routes to Use get_user_db
 
 **Files:**
+
 - Modify: `backend/api/shops.py`
 - Modify: `backend/api/search.py`
 - Modify: `backend/api/checkins.py`
@@ -319,6 +322,7 @@ git commit -m "fix(backend): wire all API routes to per-request JWT Supabase cli
 ### Task 4: DB Migrations — Check-In Trigger + List Cap
 
 **Files:**
+
 - Create: `supabase/migrations/YYYYMMDDHHMMSS_checkin_trigger.sql`
 - Create: `supabase/migrations/YYYYMMDDHHMMSS_list_cap_trigger.sql`
 
@@ -394,6 +398,7 @@ git commit -m "feat(db): add check-in trigger (stamp + job) and list cap trigger
 ### Task 5: Simplify CheckInService — Remove Stamp + Job Queue Inserts
 
 **Files:**
+
 - Modify: `backend/services/checkin_service.py`
 - Modify: `backend/tests/services/test_checkin_service.py`
 
@@ -525,6 +530,7 @@ git commit -m "fix(backend): simplify CheckInService — stamp + job handled by 
 ### Task 6: Simplify ListsService — Remove TOCTOU Cap Check
 
 **Files:**
+
 - Modify: `backend/services/lists_service.py`
 - Modify: `backend/tests/services/test_lists_service.py`
 
@@ -670,6 +676,7 @@ git commit -m "fix(backend): remove TOCTOU list cap — enforce via DB trigger, 
 ### Task 7: Fix Job Queue Retry Logic
 
 **Files:**
+
 - Modify: `backend/workers/queue.py`
 - Modify: `backend/tests/workers/test_queue.py`
 
@@ -772,6 +779,7 @@ git commit -m "fix(backend): implement job queue retry with exponential backoff"
 ### Task 8: Fix enriched_at String Literal
 
 **Files:**
+
 - Modify: `backend/workers/handlers/enrich_shop.py`
 - Modify: `backend/tests/workers/test_handlers.py`
 
@@ -824,6 +832,7 @@ git commit -m "fix(backend): use real timestamp for enriched_at instead of strin
 ### Task 9: Fix Resend Email Adapter (Async + Global State)
 
 **Files:**
+
 - Modify: `backend/providers/email/resend_adapter.py`
 
 **Step 1: No new test needed** — existing tests use mocks. The behavioral change (non-blocking) is not observable in unit tests.
@@ -882,6 +891,7 @@ git commit -m "fix(backend): run Resend SDK in thread to avoid blocking event lo
 ### Task 10: Fix Job.payload Type + Search row.pop
 
 **Files:**
+
 - Modify: `backend/models/types.py`
 - Modify: `backend/services/search_service.py`
 
@@ -930,6 +940,7 @@ git commit -m "fix(backend): widen Job.payload to Any, use row.get instead of ro
 ### Task 11: Fix Proxy Content Type
 
 **Files:**
+
 - Modify: `lib/api/proxy.ts`
 
 **Step 1: No test needed** — proxy routes are thin pass-throughs. Integration testing validates them.
@@ -939,11 +950,11 @@ git commit -m "fix(backend): widen Job.payload to Any, use row.get instead of ro
 Replace `lib/api/proxy.ts`:
 
 ```typescript
-const BACKEND_URL = process.env.BACKEND_INTERNAL_URL || "http://localhost:8000";
+const BACKEND_URL = process.env.BACKEND_INTERNAL_URL || 'http://localhost:8000';
 
 export async function proxyToBackend(
   request: Request,
-  path: string,
+  path: string
 ): Promise<Response> {
   const url = new URL(request.url);
   const backendUrl = `${BACKEND_URL}${path}${url.search}`;
@@ -951,14 +962,14 @@ export async function proxyToBackend(
   const headers: HeadersInit = {};
 
   // Forward original content type
-  const contentType = request.headers.get("Content-Type");
+  const contentType = request.headers.get('Content-Type');
   if (contentType) {
-    headers["Content-Type"] = contentType;
+    headers['Content-Type'] = contentType;
   }
 
-  const authHeader = request.headers.get("Authorization");
+  const authHeader = request.headers.get('Authorization');
   if (authHeader) {
-    headers["Authorization"] = authHeader;
+    headers['Authorization'] = authHeader;
   }
 
   const init: RequestInit = {
@@ -966,7 +977,7 @@ export async function proxyToBackend(
     headers,
   };
 
-  if (request.method !== "GET" && request.method !== "HEAD") {
+  if (request.method !== 'GET' && request.method !== 'HEAD') {
     init.body = await request.text();
   }
 
@@ -974,9 +985,9 @@ export async function proxyToBackend(
 
   // Forward backend response headers
   const responseHeaders: HeadersInit = {};
-  const resContentType = res.headers.get("Content-Type");
+  const resContentType = res.headers.get('Content-Type');
   if (resContentType) {
-    responseHeaders["Content-Type"] = resContentType;
+    responseHeaders['Content-Type'] = resContentType;
   }
 
   return new Response(res.body, {
@@ -998,6 +1009,7 @@ git commit -m "fix(frontend): forward original content-type in proxy instead of 
 ### Task 12: Add Missing List Sub-Resource Proxy Routes
 
 **Files:**
+
 - Create: `app/api/lists/[id]/route.ts`
 - Create: `app/api/lists/[id]/shops/route.ts`
 - Create: `app/api/lists/[id]/shops/[shopId]/route.ts`
@@ -1009,11 +1021,11 @@ git commit -m "fix(frontend): forward original content-type in proxy instead of 
 `app/api/lists/[id]/route.ts`:
 
 ```typescript
-import { proxyToBackend } from "@/lib/api/proxy";
+import { proxyToBackend } from '@/lib/api/proxy';
 
 export async function DELETE(
   request: Request,
-  { params }: { params: Promise<{ id: string }> },
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
   return proxyToBackend(request, `/lists/${id}`);
@@ -1023,11 +1035,11 @@ export async function DELETE(
 `app/api/lists/[id]/shops/route.ts`:
 
 ```typescript
-import { proxyToBackend } from "@/lib/api/proxy";
+import { proxyToBackend } from '@/lib/api/proxy';
 
 export async function POST(
   request: Request,
-  { params }: { params: Promise<{ id: string }> },
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
   return proxyToBackend(request, `/lists/${id}/shops`);
@@ -1037,11 +1049,11 @@ export async function POST(
 `app/api/lists/[id]/shops/[shopId]/route.ts`:
 
 ```typescript
-import { proxyToBackend } from "@/lib/api/proxy";
+import { proxyToBackend } from '@/lib/api/proxy';
 
 export async function DELETE(
   request: Request,
-  { params }: { params: Promise<{ id: string; shopId: string }> },
+  { params }: { params: Promise<{ id: string; shopId: string }> }
 ) {
   const { id, shopId } = await params;
   return proxyToBackend(request, `/lists/${id}/shops/${shopId}`);
@@ -1060,6 +1072,7 @@ git commit -m "feat(frontend): add missing list sub-resource proxy routes"
 ### Task 13: Add Auth Route (Backend + Frontend)
 
 **Files:**
+
 - Create: `backend/api/auth.py`
 - Modify: `backend/main.py`
 
@@ -1134,6 +1147,7 @@ git commit -m "feat(backend): add auth callback route and register in main app"
 ### Task 14: Fix Dockerfile + Add posthog Dependency
 
 **Files:**
+
 - Modify: `backend/Dockerfile`
 - Modify: `backend/pyproject.toml`
 
@@ -1173,6 +1187,7 @@ git commit -m "fix(backend): copy uv.lock in Dockerfile, add posthog dependency"
 ### Task 15: Add Missing Handler Tests
 
 **Files:**
+
 - Modify: `backend/tests/workers/test_handlers.py`
 
 **Step 1: Write failing tests**
@@ -1320,6 +1335,7 @@ graph TD
 ```
 
 **Wave 1** (parallel — no dependencies):
+
 - Task 1: Supabase client refactor (per-request JWT)
 - Task 4: DB migrations (check-in trigger + list cap)
 - Task 7: Job queue retry logic
@@ -1332,13 +1348,16 @@ graph TD
 - Task 14: Dockerfile + posthog
 
 **Wave 2** (parallel — depends on Wave 1):
+
 - Task 2: get_user_db dependency ← Task 1
 - Task 5: CheckIn service simplification ← Task 4
 - Task 6: Lists service simplification ← Task 4
 - Task 15: Missing handler tests ← Task 8, Task 9
 
 **Wave 3** (sequential — depends on Wave 2):
+
 - Task 3: API routes wiring ← Task 2
 
 **Wave 4** (sequential — depends on all):
+
 - Task 16: Final verification ← All tasks

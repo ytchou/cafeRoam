@@ -19,6 +19,7 @@
 ## Task 1: Database Migration — `deletion_requested_at` Column
 
 **Files:**
+
 - Create: `supabase/migrations/20260225000001_add_deletion_requested_at.sql`
 
 **Step 1: Write the migration**
@@ -46,6 +47,7 @@ git commit -m "feat(db): add deletion_requested_at to profiles for 30-day soft d
 ## Task 2: Database Migration — Custom JWT Claim Hook
 
 **Files:**
+
 - Create: `supabase/migrations/20260225000002_pdpa_jwt_claim_hook.sql`
 
 **Step 1: Write the migration**
@@ -125,6 +127,7 @@ git commit -m "feat(db): add custom JWT claim hook for pdpa_consented + deletion
 ## Task 3: Backend Auth Routes
 
 **Files:**
+
 - Create: `backend/api/auth.py`
 - Modify: `backend/main.py` (register router)
 - Modify: `backend/models/types.py` (add `deletion_requested_at` to User model)
@@ -360,6 +363,7 @@ git commit -m "feat(backend): auth routes — PDPA consent, account deletion, ca
 ## Task 4: Account Deletion Scheduler Handler
 
 **Files:**
+
 - Create: `backend/workers/handlers/account_deletion.py`
 - Modify: `backend/workers/scheduler.py` (register cron job)
 - Test: `backend/tests/workers/test_account_deletion.py`
@@ -541,6 +545,7 @@ git commit -m "feat(backend): account deletion scheduler — 30-day grace period
 ## Task 5: Frontend Supabase Client Setup (`@supabase/ssr`)
 
 **Files:**
+
 - Create: `lib/supabase/server.ts`
 - Create: `lib/supabase/middleware.ts`
 - Create: `lib/supabase/client.ts` (browser client — this file doesn't exist yet despite the design doc saying "already exists")
@@ -647,6 +652,7 @@ git commit -m "feat(frontend): Supabase SSR client setup — browser, server, mi
 ## Task 6: Next.js Middleware (Route Guards)
 
 **Files:**
+
 - Create: `middleware.ts` (project root)
 
 No test needed — Next.js middleware is tested via E2E. Verified manually and by Task 8's frontend tests.
@@ -749,6 +755,7 @@ git commit -m "feat(frontend): Next.js middleware — route guards with PDPA con
 ## Task 7: Frontend Auth Pages (Login, Signup, Callback)
 
 **Files:**
+
 - Modify: `app/(auth)/login/page.tsx`
 - Modify: `app/(auth)/signup/page.tsx`
 - Create: `app/auth/callback/route.ts`
@@ -1174,6 +1181,7 @@ git commit -m "feat(frontend): login, signup, and auth callback pages with PDPA 
 ## Task 8: PDPA Consent Page
 
 **Files:**
+
 - Create: `app/onboarding/consent/page.tsx`
 - Test: `app/onboarding/__tests__/consent.test.tsx`
 
@@ -1364,6 +1372,7 @@ git commit -m "feat(frontend): PDPA consent page with disclosure + checkbox gate
 ## Task 9: Account Recovery + Settings Pages
 
 **Files:**
+
 - Create: `app/account/recover/page.tsx`
 - Create: `app/(protected)/settings/page.tsx`
 - Test: `app/account/__tests__/recover.test.tsx`
@@ -1606,6 +1615,7 @@ git commit -m "feat(frontend): account recovery page + settings page with accoun
 ## Task 10: Frontend Auth Proxy Routes
 
 **Files:**
+
 - Modify: `app/api/auth/route.ts` (replace 501 placeholder)
 - Create: `app/api/auth/consent/route.ts`
 - Create: `app/api/auth/cancel-deletion/route.ts`
@@ -1748,26 +1758,32 @@ graph TD
 ```
 
 **Wave 1** (sequential — foundation):
+
 - Task 1: `deletion_requested_at` column migration
 
 **Wave 2** (sequential — depends on Wave 1):
+
 - Task 2: Custom JWT claim hook migration (needs the column from Task 1)
 
 **Wave 3** (parallel — depends on Wave 2):
+
 - Task 3: Backend auth routes ← Task 2 (needs `deletion_requested_at`)
 - Task 4: Account deletion scheduler ← Task 2
 - Task 5: Frontend Supabase SSR client setup (no backend dependency)
 
 **Wave 4** (sequential — depends on Wave 3):
+
 - Task 6: Next.js middleware ← Task 5 (uses `updateSession` helper)
 
 **Wave 5** (parallel — depends on Wave 4):
+
 - Task 7: Login, Signup, Callback pages ← Task 6 (middleware must exist)
 - Task 8: PDPA consent page ← Task 6
 - Task 9: Account recovery + Settings pages ← Task 6
 - Task 10: Auth proxy routes ← Task 3 (backend routes must exist)
 
 **Wave 6** (sequential — depends on all):
+
 - Task 11: Full verification ← all tasks
 
 ---

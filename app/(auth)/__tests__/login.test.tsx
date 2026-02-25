@@ -47,12 +47,17 @@ describe('LoginPage', () => {
     render(<LoginPage />);
     await userEvent.type(screen.getByLabelText(/email/i), 'bad@email.com');
     await userEvent.type(screen.getByLabelText(/password/i), 'wrong');
-    await userEvent.click(screen.getByRole('button', { name: /登入|sign in/i }));
+    await userEvent.click(
+      screen.getByRole('button', { name: /登入|sign in/i })
+    );
     expect(await screen.findByText(/invalid/i)).toBeInTheDocument();
   });
 
   it('has a link to signup', () => {
     render(<LoginPage />);
-    expect(screen.getByRole('link', { name: /sign up|註冊/i })).toHaveAttribute('href', '/signup');
+    expect(screen.getByRole('link', { name: /sign up|註冊/i })).toHaveAttribute(
+      'href',
+      '/signup'
+    );
   });
 });

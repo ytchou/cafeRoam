@@ -19,6 +19,7 @@
 ### Task 1: Copy and fix DB migration files
 
 **Files:**
+
 - Create: `supabase/migrations/20260224000001_enable_extensions.sql`
 - Create: `supabase/migrations/20260224000002_create_shop_tables.sql`
 - Create: `supabase/migrations/20260224000003_create_taxonomy.sql`
@@ -49,6 +50,7 @@ No test needed — SQL migration files, tested by `supabase db reset`.
 **Step 2: Create fixed migration 5 (`_create_job_queue.sql`)**
 
 Write the fixed version with these changes from the original:
+
 - Rename `error TEXT` → `last_error TEXT`
 - Rename `locked_at TIMESTAMPTZ` → `claimed_at TIMESTAMPTZ`
 - Remove `locked_by TEXT` (not used by Python)
@@ -133,6 +135,7 @@ No test needed — SQL migration, tested by `supabase db reset`.
 **Step 3: Create fixed migration 9 (`_create_claim_job_rpc.sql`)**
 
 Rewrite to match Python backend expectations:
+
 - Parameter: `p_job_type TEXT DEFAULT NULL` (not `worker_id TEXT`)
 - Status: `claimed` (not `processing`)
 - Column: `claimed_at` (not `locked_at`)
@@ -179,6 +182,7 @@ Fix migration 9: rewrite claim_job RPC for Python backend compatibility."
 ### Task 2: Add DEAD_LETTER to JobStatus enum and widen Job.payload
 
 **Files:**
+
 - Modify: `backend/models/types.py:159-169`
 - Test: `backend/tests/models/test_types.py` (create)
 
@@ -221,15 +225,19 @@ class JobStatus(StrEnum):
 ```
 
 Also widen `Job.payload` type (line 169) from:
+
 ```python
 payload: dict[str, str | int | float | bool | None]
 ```
+
 to:
+
 ```python
 payload: dict[str, Any]
 ```
 
 And add `Any` to the imports on line 3:
+
 ```python
 from typing import Any, Literal
 ```
@@ -254,6 +262,7 @@ Widens Job.payload to support nested payloads (code review fix D6)."
 ### Task 3: Refactor Supabase client for per-request JWT
 
 **Files:**
+
 - Modify: `backend/db/supabase_client.py`
 - Modify: `backend/tests/db/test_supabase_client.py`
 
@@ -371,6 +380,7 @@ RLS policies. Service role client unchanged (workers only)."
 ### Task 4: Add get_user_db FastAPI dependency
 
 **Files:**
+
 - Modify: `backend/api/deps.py`
 - Modify: `backend/tests/api/test_auth.py`
 
@@ -495,6 +505,7 @@ async def get_optional_user(request: Request) -> dict[str, Any] | None:
 ```
 
 Key changes:
+
 - Imports `get_user_client` instead of `get_supabase_client`
 - New `get_user_db()` dependency returns an authenticated Supabase client
 - `get_current_user()` now uses `get_user_client()` instead of the anon singleton
@@ -521,6 +532,7 @@ instead of anon singleton."
 ### Task 5: Wire auth-required routes to per-request client
 
 **Files:**
+
 - Modify: `backend/api/checkins.py`
 - Modify: `backend/api/lists.py`
 - Modify: `backend/api/stamps.py`
@@ -1032,6 +1044,7 @@ Removes all references to old get_supabase_client singleton."
 ### Task 6: Simplify CheckInService (trigger-backed)
 
 **Files:**
+
 - Modify: `backend/services/checkin_service.py`
 - Modify: `backend/tests/services/test_checkin_service.py`
 
@@ -1215,6 +1228,7 @@ class CheckInService:
 ```
 
 Key changes:
+
 - Removed stamp insert (lines 36-42 of original) — DB trigger handles it
 - Removed job queue insert (lines 44-54 of original) — DB trigger handles it
 - Removed `datetime`, `JobType` imports — no longer needed
@@ -1240,6 +1254,7 @@ eliminating orphan record risk from non-atomic multi-table inserts."
 ### Task 7: Simplify ListsService (trigger + RLS backed)
 
 **Files:**
+
 - Modify: `backend/services/lists_service.py`
 - Modify: `backend/tests/services/test_lists_service.py`
 
@@ -1436,6 +1451,7 @@ class ListsService:
 ```
 
 Key changes:
+
 - `create()`: Removed manual count check (lines 27-38 of original). Just inserts, catches trigger `check_violation`.
 - `delete()`: Removed `user_id` parameter and `_verify_ownership()` call. RLS handles it.
 - `add_shop()`: Removed `user_id` parameter and `_verify_ownership()` call.
@@ -1465,6 +1481,7 @@ TOCTOU race. Ownership checks removed from add_shop/remove_shop/delete
 ### Task 8: Update route handlers for simplified ListsService
 
 **Files:**
+
 - Modify: `backend/api/lists.py` (update service call signatures)
 - Modify: `backend/tests/api/test_lists.py` (verify updated signatures)
 
@@ -1533,6 +1550,7 @@ Expected: FAIL — route handlers still pass `user_id` to `service.delete()`, `s
 Update three route handlers in `backend/api/lists.py`:
 
 **delete_list** — change service call:
+
 ```python
 # Before:
 await service.delete(list_id=list_id, user_id=user["id"])
@@ -1541,6 +1559,7 @@ await service.delete(list_id=list_id)
 ```
 
 **add_shop_to_list** — change service call:
+
 ```python
 # Before:
 result = await service.add_shop(
@@ -1553,6 +1572,7 @@ result = await service.add_shop(
 ```
 
 **remove_shop_from_list** — change service call:
+
 ```python
 # Before:
 await service.remove_shop(list_id=list_id, shop_id=shop_id, user_id=user["id"])
@@ -1673,24 +1693,31 @@ graph TD
 ```
 
 **Wave 1** (parallel — no dependencies):
+
 - Task 1: Copy and fix DB migration files
 - Task 2: Add DEAD_LETTER to JobStatus enum + widen Job.payload
 
 **Wave 2** (depends on Wave 1):
+
 - Task 3: Refactor Supabase client for per-request JWT ← Task 1 (DB schema must match), Task 2 (enum must match)
 
 **Wave 3** (depends on Wave 2):
+
 - Task 4: Add get_user_db FastAPI dependency ← Task 3
 
 **Wave 4** (depends on Wave 3):
+
 - Task 5: Wire auth-required routes to per-request client ← Task 4
 
 **Wave 5** (parallel — depends on Wave 4 + Wave 1):
+
 - Task 6: Simplify CheckInService ← Task 5 (routes use JWT client), Task 1 (trigger exists)
 - Task 7: Simplify ListsService ← Task 5, Task 1
 
 **Wave 6** (depends on Wave 5):
+
 - Task 8: Update list route handlers ← Task 7
 
 **Wave 7** (depends on all):
+
 - Task 9: Final verification ← Task 6, Task 8

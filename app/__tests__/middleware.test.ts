@@ -40,20 +40,29 @@ describe('middleware route guards', () => {
     it.each(['/', '/login', '/signup', '/auth/callback', '/privacy'])(
       '%s passes through without a session',
       async (pathname) => {
-        mockUpdateSession.mockResolvedValue({ user: null, supabaseResponse: passThroughResponse });
+        mockUpdateSession.mockResolvedValue({
+          user: null,
+          supabaseResponse: passThroughResponse,
+        });
         const res = await middleware(makeRequest(pathname));
         expect(res).toBe(passThroughResponse);
       }
     );
 
     it('/shops/cafe-abc (public prefix) passes through without session', async () => {
-      mockUpdateSession.mockResolvedValue({ user: null, supabaseResponse: passThroughResponse });
+      mockUpdateSession.mockResolvedValue({
+        user: null,
+        supabaseResponse: passThroughResponse,
+      });
       const res = await middleware(makeRequest('/shops/cafe-abc'));
       expect(res).toBe(passThroughResponse);
     });
 
     it('/api/auth/consent (public prefix) passes through without session', async () => {
-      mockUpdateSession.mockResolvedValue({ user: null, supabaseResponse: passThroughResponse });
+      mockUpdateSession.mockResolvedValue({
+        user: null,
+        supabaseResponse: passThroughResponse,
+      });
       const res = await middleware(makeRequest('/api/auth/consent'));
       expect(res).toBe(passThroughResponse);
     });
@@ -61,7 +70,10 @@ describe('middleware route guards', () => {
 
   describe('unauthenticated access to protected routes', () => {
     it('redirects to /login with returnTo when no session', async () => {
-      mockUpdateSession.mockResolvedValue({ user: null, supabaseResponse: passThroughResponse });
+      mockUpdateSession.mockResolvedValue({
+        user: null,
+        supabaseResponse: passThroughResponse,
+      });
       const res = await middleware(makeRequest('/settings'));
       const location = res.headers.get('location') ?? '';
       expect(location).toContain('/login');

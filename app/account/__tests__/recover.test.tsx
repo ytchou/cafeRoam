@@ -34,18 +34,24 @@ describe('RecoverPage', () => {
 
   it('renders recovery message', () => {
     render(<RecoverPage />);
-    expect(screen.getByText(/scheduled for deletion|即將刪除/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/scheduled for deletion|即將刪除/i)
+    ).toBeInTheDocument();
   });
 
   it('has a cancel deletion button', () => {
     render(<RecoverPage />);
-    expect(screen.getByRole('button', { name: /cancel|取消刪除/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /cancel|取消刪除/i })
+    ).toBeInTheDocument();
   });
 
   it('calls cancel-deletion API on click', async () => {
     mockFetch.mockResolvedValue({ ok: true, json: async () => ({ ok: true }) });
     render(<RecoverPage />);
-    await userEvent.click(screen.getByRole('button', { name: /cancel|取消刪除/i }));
+    await userEvent.click(
+      screen.getByRole('button', { name: /cancel|取消刪除/i })
+    );
     expect(mockFetch).toHaveBeenCalledWith(
       '/api/auth/cancel-deletion',
       expect.objectContaining({ method: 'POST' })
@@ -55,7 +61,9 @@ describe('RecoverPage', () => {
   it('redirects to /login when session is null without calling API', async () => {
     mockGetSession.mockResolvedValue({ data: { session: null } });
     render(<RecoverPage />);
-    await userEvent.click(screen.getByRole('button', { name: /cancel|取消刪除/i }));
+    await userEvent.click(
+      screen.getByRole('button', { name: /cancel|取消刪除/i })
+    );
     await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/login'));
     expect(mockFetch).not.toHaveBeenCalled();
   });

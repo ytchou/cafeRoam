@@ -70,17 +70,13 @@ function ConsentForm() {
 
   return (
     <main className="mx-auto flex min-h-screen max-w-lg flex-col items-center justify-center p-8">
-      <h1 className="text-2xl font-bold">
-        {'PDPA 個人資料說明'}
-      </h1>
+      <h1 className="text-2xl font-bold">{'PDPA 個人資料說明'}</h1>
       <p className="mt-2 text-center text-sm text-gray-500">
         {'CafeRoam 在提供服務過程中，會處理以下個人資料：'}
       </p>
 
       <section className="mt-6 w-full space-y-4 rounded-lg border p-6">
-        <h2 className="text-lg font-semibold">
-          {'我們收集的資料'}
-        </h2>
+        <h2 className="text-lg font-semibold">{'我們收集的資料'}</h2>
 
         <ul className="list-disc space-y-2 pl-5 text-sm">
           {DISCLOSURE_ITEMS.map((item) => (
@@ -100,7 +96,9 @@ function ConsentForm() {
 
         <h2 className="text-lg font-semibold">{'資料保存期限'}</h2>
         <p className="text-sm">
-          {'您的資料將在帳號存續期間保存。當您申請刪除帳號時，所有個人資料將在 30 天內完全刪除。'}
+          {
+            '您的資料將在帳號存續期間保存。當您申請刪除帳號時，所有個人資料將在 30 天內完全刪除。'
+          }
         </p>
 
         <h2 className="text-lg font-semibold">{'您的權利'}</h2>

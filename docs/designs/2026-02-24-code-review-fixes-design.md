@@ -63,6 +63,7 @@ Create a per-request Supabase client that carries the user's JWT token. PostgRES
 **Problem:** `JobQueue.fail()` unconditionally sets `status = FAILED`. The `max_attempts` field and docstring promise retry behavior that doesn't exist.
 
 **Fix:** In `fail()`:
+
 1. Fetch the job's current `attempts` and `max_attempts`
 2. If `attempts < max_attempts`: set `status = PENDING`, `scheduled_at = now + 2^attempts * 30 seconds` (exponential backoff)
 3. If `attempts >= max_attempts`: set `status = FAILED` (terminal)
@@ -158,6 +159,7 @@ Create `backend/api/auth.py` with auth callback handler. Register in `main.py` v
 ### D3: Proxy Content Type Fix
 
 Fix `lib/api/proxy.ts`:
+
 - **Request:** Forward original `Content-Type` from incoming request instead of hard-coding `application/json`
 - **Response:** Pass through the backend's response headers (especially `Content-Type`) instead of hard-coding
 
@@ -168,6 +170,7 @@ Change `COPY pyproject.toml ./` to `COPY pyproject.toml uv.lock ./` so `uv sync 
 ### D5: Resend Email Adapter Fixes
 
 Two issues in `backend/providers/email/resend_adapter.py`:
+
 - **Sync SDK in async method:** Wrap `resend_sdk.Emails.send()` in `await asyncio.to_thread(...)` to avoid blocking the event loop
 - **Global state mutation:** Move `resend_sdk.api_key = api_key` to the `send()` method scope, or pass API key configuration differently
 
@@ -195,12 +198,12 @@ Add tests for `handle_enrich_menu_photo` and `handle_weekly_email` in `backend/t
 
 ## Deferred Items (tracked in TODO.md)
 
-| Item | Reason |
-|------|--------|
+| Item                                     | Reason                                             |
+| ---------------------------------------- | -------------------------------------------------- |
 | `_compute_taxonomy_boost` implementation | Needs tag schema design + taxonomy data model work |
-| `enrich_shop` tag persistence | Needs `shop_tags` junction table + design |
-| `railway.json` creation | Deployment config, not blocking code review |
-| `CLAUDE.md` update | Documentation, low priority |
+| `enrich_shop` tag persistence            | Needs `shop_tags` junction table + design          |
+| `railway.json` creation                  | Deployment config, not blocking code review        |
+| `CLAUDE.md` update                       | Documentation, low priority                        |
 
 ---
 

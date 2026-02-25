@@ -46,9 +46,8 @@ describe('SignupPage', () => {
 
   it('has a link to privacy policy', () => {
     render(<SignupPage />);
-    expect(screen.getByRole('link', { name: /隱私權政策|privacy/i })).toHaveAttribute(
-      'href',
-      '/privacy'
-    );
+    expect(
+      screen.getByRole('link', { name: /隱私權政策|privacy/i })
+    ).toHaveAttribute('href', '/privacy');
   });
 });

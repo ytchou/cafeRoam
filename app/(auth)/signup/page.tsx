@@ -51,8 +51,8 @@ function SignupForm() {
         <div className="w-full max-w-sm space-y-4 text-center">
           <h1 className="text-2xl font-bold">Check your email</h1>
           <p className="text-sm text-gray-600">
-            We sent a confirmation link to <strong>{email}</strong>. Click the link to activate your
-            account.
+            We sent a confirmation link to <strong>{email}</strong>. Click the
+            link to activate your account.
           </p>
           <Link href="/login" className="text-sm underline">
             Back to login
