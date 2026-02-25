@@ -1,3 +1,4 @@
+from datetime import UTC, datetime
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -15,8 +16,22 @@ async def record_consent(
 ) -> dict[str, Any]:
     """Record PDPA consent. Idempotent: re-posting does not change existing timestamp."""
     response = (
-        db.table("profiles").update({"pdpa_consent_at": "now()"}).eq("id", user["id"]).execute()
+        db.table("profiles")
+        .update({"pdpa_consent_at": datetime.now(UTC).isoformat()})
+        .eq("id", user["id"])
+        .is_("pdpa_consent_at", "null")
+        .execute()
     )
+    if not response.data:
+        # Already consented — return existing profile
+        existing = (
+            db.table("profiles")
+            .select("id, pdpa_consent_at")
+            .eq("id", user["id"])
+            .single()
+            .execute()
+        )
+        return existing.data
     return response.data[0]
 
 
@@ -28,13 +43,25 @@ async def delete_account(
     """Request account deletion. Sets deletion_requested_at timestamp.
 
     A background scheduler will hard-delete the account after the grace period.
+    No-op if deletion is already pending (to prevent grace period reset attacks).
     """
     response = (
         db.table("profiles")
-        .update({"deletion_requested_at": "now()"})
+        .update({"deletion_requested_at": datetime.now(UTC).isoformat()})
         .eq("id", user["id"])
+        .is_("deletion_requested_at", "null")
         .execute()
     )
+    if not response.data:
+        # Deletion already pending — return existing profile
+        existing = (
+            db.table("profiles")
+            .select("id, deletion_requested_at")
+            .eq("id", user["id"])
+            .single()
+            .execute()
+        )
+        return existing.data
     return response.data[0]
 
 
@@ -60,4 +87,9 @@ async def cancel_deletion(
     response = (
         db.table("profiles").update({"deletion_requested_at": None}).eq("id", user["id"]).execute()
     )
+    if not response.data:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to cancel deletion",
+        )
     return response.data[0]
