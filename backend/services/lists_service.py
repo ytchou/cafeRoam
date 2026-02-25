@@ -57,11 +57,16 @@ class ListsService:
         return ListItem(**rows[0])
 
     async def remove_shop(self, list_id: str, shop_id: str) -> None:
-        """Remove a shop from a list. RLS enforces ownership via parent list."""
-        (
+        """Remove a shop from a list. RLS enforces ownership via parent list.
+
+        Raises ValueError if the item is not found or the caller doesn't own the list.
+        """
+        response = (
             self._db.table("list_items")
             .delete()
             .eq("list_id", list_id)
             .eq("shop_id", shop_id)
             .execute()
         )
+        if not response.data:
+            raise ValueError("List item not found or access denied")

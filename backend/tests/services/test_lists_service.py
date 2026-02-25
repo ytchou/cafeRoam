@@ -92,8 +92,24 @@ class TestListsService:
         result = await lists_service.add_shop(list_id="l1", shop_id="s1")
         assert result.shop_id == "s1"
 
-    async def test_remove_shop_no_user_id_param(self, lists_service, mock_supabase):
+    async def test_remove_shop_succeeds(self, lists_service, mock_supabase):
         """remove_shop() no longer takes user_id — RLS enforces ownership."""
+        mock_supabase.table = MagicMock(return_value=MagicMock(
+            delete=MagicMock(return_value=MagicMock(
+                eq=MagicMock(return_value=MagicMock(
+                    eq=MagicMock(return_value=MagicMock(
+                        execute=MagicMock(return_value=MagicMock(
+                            data=[{"list_id": "l1", "shop_id": "s1"}]
+                        ))
+                    ))
+                ))
+            ))
+        ))
+        # Note: no user_id parameter
+        await lists_service.remove_shop(list_id="l1", shop_id="s1")
+
+    async def test_remove_shop_raises_if_not_found_or_unauthorized(self, lists_service, mock_supabase):
+        """remove_shop() raises ValueError when RLS blocks the delete (0 rows affected)."""
         mock_supabase.table = MagicMock(return_value=MagicMock(
             delete=MagicMock(return_value=MagicMock(
                 eq=MagicMock(return_value=MagicMock(
@@ -103,8 +119,8 @@ class TestListsService:
                 ))
             ))
         ))
-        # Note: no user_id parameter
-        await lists_service.remove_shop(list_id="l1", shop_id="s1")
+        with pytest.raises(ValueError, match="not found or access denied"):
+            await lists_service.remove_shop(list_id="l1", shop_id="s1")
 
     async def test_get_by_user(self, lists_service, mock_supabase):
         mock_supabase.table = MagicMock(return_value=MagicMock(
