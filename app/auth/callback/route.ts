@@ -39,7 +39,10 @@ export async function GET(request: NextRequest) {
       .update({ pdpa_consent_at: new Date().toISOString() })
       .eq('id', data.user.id)
       .is('pdpa_consent_at', null);
-    // Redirect to app — middleware will re-check JWT on next request after token refresh
+    // Force a token refresh so the new JWT includes pdpa_consented: true from the
+    // JWT claim hook. Without this, the just-minted token (from exchangeCodeForSession)
+    // still has pdpa_consented: false and middleware would loop back to consent.
+    await supabase.auth.refreshSession();
     return NextResponse.redirect(`${origin}${returnTo}`);
   }
 

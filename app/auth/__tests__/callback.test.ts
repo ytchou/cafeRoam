@@ -3,11 +3,14 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // vi.mock is hoisted — create refs with vi.hoisted() so the factory can reference them
 const mockExchangeCodeForSession = vi.hoisted(() => vi.fn());
+const mockRefreshSession = vi.hoisted(() =>
+  vi.fn().mockResolvedValue({ data: { session: {} }, error: null })
+);
 const mockFrom = vi.hoisted(() => vi.fn());
 
 vi.mock('@/lib/supabase/server', () => ({
   createClient: vi.fn().mockResolvedValue({
-    auth: { exchangeCodeForSession: mockExchangeCodeForSession },
+    auth: { exchangeCodeForSession: mockExchangeCodeForSession, refreshSession: mockRefreshSession },
     from: mockFrom,
   }),
 }));
@@ -78,6 +81,7 @@ describe('auth/callback GET', () => {
     );
     expect(mockEq).toHaveBeenCalledWith('id', 'u1');
     expect(mockIs).toHaveBeenCalledWith('pdpa_consent_at', null);
+    expect(mockRefreshSession).toHaveBeenCalled();
     expect(res.headers.get('location')).toContain('/lists');
   });
 
