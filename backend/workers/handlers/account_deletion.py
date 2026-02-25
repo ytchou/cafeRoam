@@ -64,11 +64,13 @@ def _delete_user_storage(db, user_id: str) -> None:  # type: ignore[no-untyped-d
         logger.info("Deleted check-in photos", user_id=uid_prefix, count=len(file_paths))
 
     # 2. Delete menu photos (stored as full Supabase Storage URLs in check_ins.menu_photo_url)
+    # Use a high limit to match the check-in photos approach (PDPA requires complete deletion)
     checkins = (
         db.table("check_ins")
         .select("menu_photo_url")
         .eq("user_id", user_id)
         .not_.is_("menu_photo_url", "null")
+        .limit(10000)
         .execute()
     )
     if checkins.data:
