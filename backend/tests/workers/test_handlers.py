@@ -8,6 +8,40 @@ from workers.handlers.weekly_email import handle_weekly_email
 
 
 class TestEnrichShopHandler:
+    async def test_deletes_old_tags_before_inserting_new_ones(self):
+        """Re-enrichment replaces shop_tags via delete-then-insert, not upsert."""
+        db = MagicMock()
+        llm = AsyncMock()
+        queue = AsyncMock()
+
+        tag_mock = MagicMock(id="tag-cozy")
+        llm.enrich_shop = AsyncMock(
+            return_value=MagicMock(
+                tags=[tag_mock],
+                tag_confidences={"tag-cozy": 0.9},
+                summary="Cozy cafe",
+                mode_scores=None,
+            )
+        )
+        # Shop data (select().eq().single().execute())
+        db.table.return_value.select.return_value.eq.return_value.single.return_value.execute.return_value = MagicMock(
+            data={
+                "id": "shop-1", "name": "Test Cafe", "description": None,
+                "categories": [], "price_range": None, "socket": None,
+                "limited_time": None, "rating": None, "review_count": 0,
+            }
+        )
+        # Reviews data (select().eq().execute())
+        db.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(data=[])
+
+        await handle_enrich_shop(
+            payload={"shop_id": "shop-1"}, db=db, llm=llm, queue=queue
+        )
+
+        # Must delete old tags (not upsert) so stale tags are removed on re-enrichment
+        db.table.return_value.delete.return_value.eq.return_value.execute.assert_called_once()
+        db.table.return_value.upsert.assert_not_called()
+
     async def test_loads_shop_calls_llm_writes_result(self):
         db = MagicMock()
         llm = AsyncMock()

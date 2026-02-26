@@ -59,7 +59,8 @@ async def handle_enrich_shop(
         }
     ).eq("id", shop_id).execute()
 
-    # Write per-tag confidences to shop_tags (upsert to handle re-enrichment)
+    # Replace tags: delete old, then insert new (re-enrichment replaces, not appends)
+    db.table("shop_tags").delete().eq("shop_id", shop_id).execute()
     if result.tags:
         tag_rows = [
             {
@@ -69,7 +70,7 @@ async def handle_enrich_shop(
             }
             for tag in result.tags
         ]
-        db.table("shop_tags").upsert(tag_rows).execute()
+        db.table("shop_tags").insert(tag_rows).execute()
 
     # Queue embedding generation — forward submission context
     enqueue_payload: dict[str, Any] = {"shop_id": shop_id}
