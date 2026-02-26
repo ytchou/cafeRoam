@@ -2,7 +2,7 @@ import structlog
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from db.supabase_client import get_service_role_client
-from models.types import JobType
+from models.types import JobType, TaxonomyTag
 from providers.email import get_email_provider
 from providers.embeddings import get_embeddings_provider
 from providers.llm import get_llm_provider
@@ -30,27 +30,29 @@ async def process_job_queue() -> None:
 
     try:
         match job.job_type:
-            case JobType.ENRICH_SHOP:
-                llm = get_llm_provider()
-                await handle_enrich_shop(
-                    payload=job.payload,
-                    db=db,
-                    llm=llm,
-                    queue=queue,
-                )
+            case JobType.ENRICH_SHOP | JobType.ENRICH_MENU_PHOTO:
+                taxonomy_rows = db.table("taxonomy_tags").select("*").execute()
+                taxonomy = [TaxonomyTag(**row) for row in taxonomy_rows.data]
+                llm = get_llm_provider(taxonomy=taxonomy)
+                if job.job_type == JobType.ENRICH_SHOP:
+                    await handle_enrich_shop(
+                        payload=job.payload,
+                        db=db,
+                        llm=llm,
+                        queue=queue,
+                    )
+                else:
+                    await handle_enrich_menu_photo(
+                        payload=job.payload,
+                        db=db,
+                        llm=llm,
+                    )
             case JobType.GENERATE_EMBEDDING:
                 embeddings = get_embeddings_provider()
                 await handle_generate_embedding(
                     payload=job.payload,
                     db=db,
                     embeddings=embeddings,
-                )
-            case JobType.ENRICH_MENU_PHOTO:
-                llm = get_llm_provider()
-                await handle_enrich_menu_photo(
-                    payload=job.payload,
-                    db=db,
-                    llm=llm,
                 )
             case JobType.STALENESS_SWEEP:
                 await handle_staleness_sweep(db=db, queue=queue)
