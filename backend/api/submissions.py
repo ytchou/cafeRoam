@@ -79,38 +79,47 @@ async def submit_shop(
     sub_data = cast("list[dict[str, Any]]", sub_response.data)
     submission_id = sub_data[0]["id"]
 
-    # Create pending shop (via service role — needs write access)
+    # Create pending shop + enqueue job atomically (compensate on failure)
     svc_db = get_service_role_client()
-    shop_response = (
-        svc_db.table("shops")
-        .insert(
-            {
-                "name": "Pending",
-                "address": "Pending",
-                "latitude": 0,
-                "longitude": 0,
-                "review_count": 0,
-                "processing_status": "pending",
-                "source": "user_submission",
-            }
+    shop_id: str | None = None
+    try:
+        shop_response = (
+            svc_db.table("shops")
+            .insert(
+                {
+                    "name": "Pending",
+                    "address": "Pending",
+                    "latitude": 0,
+                    "longitude": 0,
+                    "review_count": 0,
+                    "processing_status": "pending",
+                    "source": "user_submission",
+                }
+            )
+            .execute()
         )
-        .execute()
-    )
-    shop_data = cast("list[dict[str, Any]]", shop_response.data)
-    shop_id = shop_data[0]["id"]
+        shop_data = cast("list[dict[str, Any]]", shop_response.data)
+        shop_id = shop_data[0]["id"]
 
-    # Queue scrape job
-    queue = JobQueue(db=svc_db)
-    await queue.enqueue(
-        job_type=JobType.SCRAPE_SHOP,
-        payload={
-            "shop_id": shop_id,
-            "google_maps_url": body.google_maps_url,
-            "submission_id": submission_id,
-            "submitted_by": user_id,
-        },
-        priority=2,
-    )
+        queue = JobQueue(db=svc_db)
+        await queue.enqueue(
+            job_type=JobType.SCRAPE_SHOP,
+            payload={
+                "shop_id": shop_id,
+                "google_maps_url": body.google_maps_url,
+                "submission_id": submission_id,
+                "submitted_by": user_id,
+            },
+            priority=2,
+        )
+    except Exception as e:
+        logger.error("Submission setup failed, cleaning up", error=str(e))
+        if shop_id:
+            svc_db.table("shops").delete().eq("id", shop_id).execute()
+        svc_db.table("shop_submissions").update(
+            {"status": "failed", "failure_reason": "Internal error during submission setup"}
+        ).eq("id", submission_id).execute()
+        raise HTTPException(status_code=500, detail="Submission processing failed") from e
 
     logger.info("Shop submission created", submission_id=submission_id, shop_id=shop_id)
 
