@@ -21,6 +21,7 @@ async def handle_scrape_shop(
     shop_id = payload["shop_id"]
     google_maps_url = payload["google_maps_url"]
     submission_id = payload.get("submission_id")
+    submitted_by = payload.get("submitted_by")
 
     logger.info("Scraping shop", shop_id=shop_id, url=google_maps_url)
 
@@ -101,10 +102,15 @@ async def handle_scrape_shop(
             }
         ).eq("id", submission_id).execute()
 
-    # Queue enrichment
+    # Queue enrichment — forward submission context
+    enrich_payload: dict[str, Any] = {"shop_id": shop_id}
+    if submission_id:
+        enrich_payload["submission_id"] = submission_id
+    if submitted_by:
+        enrich_payload["submitted_by"] = submitted_by
     await queue.enqueue(
         job_type=JobType.ENRICH_SHOP,
-        payload={"shop_id": shop_id, "submission_id": submission_id},
+        payload=enrich_payload,
         priority=5,
     )
 
