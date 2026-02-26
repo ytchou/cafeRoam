@@ -69,7 +69,8 @@ async def handle_scrape_shop(
         }
     ).eq("id", shop_id).execute()
 
-    # Replace reviews: delete stale rows then insert fresh batch
+    # Replace reviews: snapshot old rows, delete, insert fresh batch.
+    # If insert fails, restore the snapshot to avoid losing existing reviews.
     if data.reviews:
         review_rows = [
             {
@@ -82,8 +83,16 @@ async def handle_scrape_shop(
             if r.get("text")
         ]
         if review_rows:
+            snapshot = db.table("shop_reviews").select("*").eq("shop_id", shop_id).execute()
+            old_reviews = snapshot.data or []
             db.table("shop_reviews").delete().eq("shop_id", shop_id).execute()
-            db.table("shop_reviews").insert(review_rows).execute()
+            try:
+                db.table("shop_reviews").insert(review_rows).execute()
+            except Exception:
+                logger.warning("Review insert failed — restoring snapshot", shop_id=shop_id)
+                if old_reviews:
+                    db.table("shop_reviews").insert(old_reviews).execute()
+                return
 
     # Store photos — upsert on (shop_id, url) to avoid duplicates on re-scrape
     if data.photo_urls:
