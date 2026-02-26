@@ -125,7 +125,7 @@ class TestProviderFactories:
     def test_analytics_factory_returns_posthog(self):
         with (
             patch("providers.analytics.settings") as mock,
-            patch("providers.analytics.posthog_adapter.posthog"),
+            patch("providers.analytics.posthog_adapter.posthog_module"),
         ):
             mock.analytics_provider = "posthog"
             mock.posthog_api_key = "test-key"
