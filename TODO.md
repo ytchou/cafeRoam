@@ -268,7 +268,7 @@ Core infrastructure everything else depends on. No user-facing product yet.
 **Chunk 1 — Models & Interface (Wave 1):**
 
 - [x] Add ShopEnrichmentInput model to types.py
-- [ ] Update LLM protocol interface signature
+- [x] Update LLM protocol interface signature
 
 **Chunk 2 — Adapter Implementations (Wave 1-2):**
 
