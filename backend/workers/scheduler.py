@@ -10,7 +10,7 @@ from workers.handlers.account_deletion import delete_expired_accounts
 from workers.handlers.enrich_menu_photo import handle_enrich_menu_photo
 from workers.handlers.enrich_shop import handle_enrich_shop
 from workers.handlers.generate_embedding import handle_generate_embedding
-from workers.handlers.staleness_sweep import handle_staleness_sweep
+from workers.handlers.staleness_sweep import handle_staleness_sweep, handle_smart_staleness_sweep
 from workers.handlers.weekly_email import handle_weekly_email
 from workers.queue import JobQueue
 from providers.scraper import get_scraper_provider
@@ -58,7 +58,8 @@ async def process_job_queue() -> None:
                     embeddings=embeddings,
                 )
             case JobType.STALENESS_SWEEP:
-                await handle_staleness_sweep(db=db, queue=queue)
+                scraper = get_scraper_provider()
+                await handle_smart_staleness_sweep(db=db, scraper=scraper, queue=queue)
             case JobType.WEEKLY_EMAIL:
                 email = get_email_provider()
                 await handle_weekly_email(db=db, email=email)
