@@ -278,7 +278,7 @@ Core infrastructure everything else depends on. No user-facing product yet.
 
 - [x] Search service: IDF taxonomy boost + mode pre-filter
 - [ ] Smart staleness sweep (only re-enrich when new reviews detected)
-- [ ] Cold start importers (Google Takeout parser + Cafe Nomad fetcher)
+- [x] Cold start importers (Google Takeout parser + Cafe Nomad fetcher)
 - [ ] Propagate submission_id through ENRICH → EMBED → PUBLISH chain
 
 **Chunk 5 — Verification (Wave 6):**
