@@ -55,10 +55,12 @@ async def handle_enrich_shop(
             "mode_work": mode.work if mode else None,
             "mode_rest": mode.rest if mode else None,
             "mode_social": mode.social if mode else None,
+            "processing_status": "embedding",
         }
     ).eq("id", shop_id).execute()
 
-    # Write per-tag confidences to shop_tags (upsert to handle re-enrichment)
+    # Replace tags: delete old, then insert new (re-enrichment replaces, not appends)
+    db.table("shop_tags").delete().eq("shop_id", shop_id).execute()
     if result.tags:
         tag_rows = [
             {
@@ -68,12 +70,18 @@ async def handle_enrich_shop(
             }
             for tag in result.tags
         ]
-        db.table("shop_tags").upsert(tag_rows).execute()
+        db.table("shop_tags").insert(tag_rows).execute()
 
-    # Queue embedding generation
+    # Queue embedding generation — forward submission context
+    enqueue_payload: dict[str, Any] = {"shop_id": shop_id}
+    if payload.get("submission_id"):
+        enqueue_payload["submission_id"] = payload["submission_id"]
+    if payload.get("submitted_by"):
+        enqueue_payload["submitted_by"] = payload["submitted_by"]
+
     await queue.enqueue(
         job_type=JobType.GENERATE_EMBEDDING,
-        payload={"shop_id": shop_id},
+        payload=enqueue_payload,
         priority=5,
     )
 

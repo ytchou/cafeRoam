@@ -47,7 +47,10 @@ class TestDeleteExpiredAccounts:
                 },
             ]
         )
-        mock_db.table.return_value.select.return_value.eq.return_value.not_.is_.return_value.limit.return_value.execute.return_value = checkins_result
+        _not_chain = (
+            mock_db.table.return_value.select.return_value.eq.return_value.not_.is_.return_value
+        )
+        _not_chain.limit.return_value.execute.return_value = checkins_result
 
         mock_db.auth.admin.delete_user.return_value = None
 
@@ -98,7 +101,10 @@ class TestDeleteExpiredAccounts:
         )
         mock_db.storage.from_.return_value.list.return_value = []
         # Menu photo with an unrecognized URL scheme/format
-        mock_db.table.return_value.select.return_value.eq.return_value.not_.is_.return_value.limit.return_value.execute.return_value = MagicMock(
+        _not_chain = (
+            mock_db.table.return_value.select.return_value.eq.return_value.not_.is_.return_value
+        )
+        _not_chain.limit.return_value.execute.return_value = MagicMock(
             data=[{"menu_photo_url": "https://cdn.example.com/photos/photo.jpg"}]
         )
 
@@ -122,9 +128,10 @@ class TestDeleteExpiredAccounts:
             MagicMock(data=profiles)
         )
         mock_db.storage.from_.return_value.list.return_value = []
-        mock_db.table.return_value.select.return_value.eq.return_value.not_.is_.return_value.limit.return_value.execute.return_value = MagicMock(
-            data=[]
+        _not_chain = (
+            mock_db.table.return_value.select.return_value.eq.return_value.not_.is_.return_value
         )
+        _not_chain.limit.return_value.execute.return_value = MagicMock(data=[])
         mock_db.auth.admin.delete_user.side_effect = [Exception("fail"), None]
 
         with patch(

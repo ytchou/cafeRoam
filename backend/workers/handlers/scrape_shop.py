@@ -1,0 +1,132 @@
+from datetime import UTC, datetime
+from typing import Any
+
+import structlog
+from supabase import Client
+
+from models.types import JobType
+from providers.scraper.interface import ScraperProvider
+from workers.queue import JobQueue
+
+logger = structlog.get_logger()
+
+
+async def handle_scrape_shop(
+    payload: dict[str, Any],
+    db: Client,
+    scraper: ScraperProvider,
+    queue: JobQueue,
+) -> None:
+    """Scrape a shop from Google Maps via Apify and store the data."""
+    shop_id = payload["shop_id"]
+    google_maps_url = payload["google_maps_url"]
+    submission_id = payload.get("submission_id")
+    submitted_by = payload.get("submitted_by")
+
+    logger.info("Scraping shop", shop_id=shop_id, url=google_maps_url)
+
+    # Update processing status
+    db.table("shops").update(
+        {"processing_status": "scraping", "updated_at": datetime.now(UTC).isoformat()}
+    ).eq("id", shop_id).execute()
+
+    # Scrape via Apify
+    data = await scraper.scrape_by_url(google_maps_url)
+
+    if data is None:
+        logger.warning("Shop not found on Google Maps", shop_id=shop_id, url=google_maps_url)
+        db.table("shops").update(
+            {"processing_status": "failed", "updated_at": datetime.now(UTC).isoformat()}
+        ).eq("id", shop_id).execute()
+
+        if submission_id:
+            db.table("shop_submissions").update(
+                {
+                    "status": "failed",
+                    "failure_reason": "Place not found on Google Maps",
+                    "updated_at": datetime.now(UTC).isoformat(),
+                }
+            ).eq("id", submission_id).execute()
+
+        return
+
+    # Update shop with scraped data; advance status to enriching
+    db.table("shops").update(
+        {
+            "name": data.name,
+            "address": data.address,
+            "latitude": data.latitude,
+            "longitude": data.longitude,
+            "google_place_id": data.google_place_id,
+            "rating": data.rating,
+            "review_count": data.review_count,
+            "opening_hours": data.opening_hours,
+            "phone": data.phone,
+            "website": data.website,
+            "menu_url": data.menu_url,
+            "processing_status": "enriching",
+            "updated_at": datetime.now(UTC).isoformat(),
+        }
+    ).eq("id", shop_id).execute()
+
+    # Replace reviews: snapshot old rows, delete, insert fresh batch.
+    # If insert fails, restore the snapshot to avoid losing existing reviews.
+    if data.reviews:
+        review_rows = [
+            {
+                "shop_id": shop_id,
+                "text": r["text"],
+                "stars": r.get("stars"),
+                "published_at": r.get("published_at"),
+            }
+            for r in data.reviews
+            if r.get("text")
+        ]
+        if review_rows:
+            snapshot = db.table("shop_reviews").select("*").eq("shop_id", shop_id).execute()
+            old_reviews = snapshot.data or []
+            db.table("shop_reviews").delete().eq("shop_id", shop_id).execute()
+            try:
+                db.table("shop_reviews").insert(review_rows).execute()
+            except Exception:
+                logger.warning("Review insert failed — restoring snapshot", shop_id=shop_id)
+                if old_reviews:
+                    db.table("shop_reviews").insert(old_reviews).execute()
+                raise  # Let scheduler mark job failed for retry; don't leave shop at "enriching"
+
+    # Store photos — upsert on (shop_id, url) to avoid duplicates on re-scrape
+    if data.photo_urls:
+        photo_rows = [
+            {"shop_id": shop_id, "url": url, "sort_order": i}
+            for i, url in enumerate(data.photo_urls)
+        ]
+        db.table("shop_photos").upsert(photo_rows, on_conflict="shop_id,url").execute()
+
+    # Link submission to shop
+    if submission_id:
+        db.table("shop_submissions").update(
+            {
+                "shop_id": shop_id,
+                "status": "processing",
+                "updated_at": datetime.now(UTC).isoformat(),
+            }
+        ).eq("id", submission_id).execute()
+
+    # Queue enrichment — forward submission context
+    enrich_payload: dict[str, Any] = {"shop_id": shop_id}
+    if submission_id:
+        enrich_payload["submission_id"] = submission_id
+    if submitted_by:
+        enrich_payload["submitted_by"] = submitted_by
+    await queue.enqueue(
+        job_type=JobType.ENRICH_SHOP,
+        payload=enrich_payload,
+        priority=5,
+    )
+
+    logger.info(
+        "Shop scraped",
+        shop_id=shop_id,
+        reviews=len(data.reviews),
+        photos=len(data.photo_urls),
+    )

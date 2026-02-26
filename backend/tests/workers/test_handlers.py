@@ -3,11 +3,49 @@ from unittest.mock import AsyncMock, MagicMock
 from workers.handlers.enrich_menu_photo import handle_enrich_menu_photo
 from workers.handlers.enrich_shop import handle_enrich_shop
 from workers.handlers.generate_embedding import handle_generate_embedding
-from workers.handlers.staleness_sweep import handle_staleness_sweep
+from workers.handlers.staleness_sweep import handle_smart_staleness_sweep, handle_staleness_sweep
 from workers.handlers.weekly_email import handle_weekly_email
 
 
 class TestEnrichShopHandler:
+    async def test_deletes_old_tags_before_inserting_new_ones(self):
+        """Re-enrichment replaces shop_tags via delete-then-insert, not upsert."""
+        db = MagicMock()
+        llm = AsyncMock()
+        queue = AsyncMock()
+
+        tag_mock = MagicMock(id="tag-cozy")
+        llm.enrich_shop = AsyncMock(
+            return_value=MagicMock(
+                tags=[tag_mock],
+                tag_confidences={"tag-cozy": 0.9},
+                summary="Cozy cafe",
+                mode_scores=None,
+            )
+        )
+        # Shop data (select().eq().single().execute())
+        _shop_exec = (
+            db.table.return_value.select.return_value
+            .eq.return_value.single.return_value.execute
+        )
+        _shop_exec.return_value = MagicMock(
+            data={
+                "id": "shop-1", "name": "Test Cafe", "description": None,
+                "categories": [], "price_range": None, "socket": None,
+                "limited_time": None, "rating": None, "review_count": 0,
+            }
+        )
+        # Reviews data (select().eq().execute())
+        db.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(
+            data=[]
+        )
+
+        await handle_enrich_shop(payload={"shop_id": "shop-1"}, db=db, llm=llm, queue=queue)
+
+        # Must delete old tags (not upsert) so stale tags are removed on re-enrichment
+        db.table.return_value.delete.return_value.eq.return_value.execute.assert_called_once()
+        db.table.return_value.upsert.assert_not_called()
+
     async def test_loads_shop_calls_llm_writes_result(self):
         db = MagicMock()
         llm = AsyncMock()
@@ -121,12 +159,16 @@ class TestGenerateEmbeddingHandler:
             )
         )
 
+        queue = AsyncMock()
+
         await handle_generate_embedding(
             payload={"shop_id": "shop-1"},
             db=db,
             embeddings=embeddings,
+            queue=queue,
         )
         embeddings.embed.assert_called_once()
+        queue.enqueue.assert_called_once()  # Should queue publish step
 
 
 class TestStalenessSweepHandler:
@@ -150,6 +192,20 @@ class TestStalenessSweepHandler:
 
         await handle_staleness_sweep(db=db, queue=queue)
         assert queue.enqueue.call_count == 2
+
+    async def test_passes_batch_limit_to_rpc(self):
+        """Verify the production dispatch path (smart sweep) passes batch_limit."""
+        db = MagicMock()
+        queue = AsyncMock()
+        scraper = AsyncMock()
+        db.rpc = MagicMock(
+            return_value=MagicMock(execute=MagicMock(return_value=MagicMock(data=[])))
+        )
+
+        await handle_smart_staleness_sweep(db=db, scraper=scraper, queue=queue)
+        call_args = db.rpc.call_args
+        assert call_args[0][0] == "find_stale_shops"
+        assert call_args[0][1]["batch_limit"] == 100
 
 
 class TestEnrichMenuPhotoHandler:

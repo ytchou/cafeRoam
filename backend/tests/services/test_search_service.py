@@ -3,8 +3,19 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
+import services.search_service as _ss_module
 from models.types import SearchFilters, SearchQuery
 from services.search_service import SearchService
+
+
+@pytest.fixture(autouse=True)
+def reset_idf_cache():
+    """Reset module-level IDF cache between tests for isolation."""
+    _ss_module._IDF_CACHE = None
+    _ss_module._IDF_CACHE_AT = 0.0
+    yield
+    _ss_module._IDF_CACHE = None
+    _ss_module._IDF_CACHE_AT = 0.0
 
 
 def _make_shop(shop_id: str = "shop-1", name: str = "Test Cafe") -> dict:
@@ -128,4 +139,94 @@ class TestSearchService:
         query = SearchQuery(text="coffee")
         results = await search_service.search(query)
         assert results[0].taxonomy_boost == 0.0
-        assert results[0].total_score == results[0].similarity_score
+        assert results[0].taxonomy_boost == 0.0
+        assert results[0].total_score == pytest.approx(results[0].similarity_score * 0.7, rel=1e-4)
+
+
+_SEARCH_SHOP_ROW = {
+    "id": "shop-1",
+    "name": "Test Cafe",
+    "address": "Taipei",
+    "mrt": None,
+    "phone": None,
+    "website": None,
+    "opening_hours": None,
+    "rating": 4.5,
+    "review_count": 10,
+    "price_range": None,
+    "description": "A nice cafe",
+    "photo_urls": [],
+    "menu_url": None,
+    "cafenomad_id": None,
+    "google_place_id": None,
+    "latitude": 25.033,
+    "longitude": 121.565,
+    "similarity": 0.85,
+    "tag_ids": ["quiet", "wifi-reliable"],
+    "created_at": datetime.now().isoformat(),
+    "updated_at": datetime.now().isoformat(),
+}
+
+
+@pytest.fixture
+def mock_db_with_idf():
+    db = MagicMock()
+
+    # Route two different RPCs to different return values
+    def _rpc_side_effect(name: str, params: dict):
+        m = MagicMock()
+        if name == "search_shops":
+            m.execute.return_value = MagicMock(data=[_SEARCH_SHOP_ROW])
+        elif name == "shop_tag_counts":
+            m.execute.return_value = MagicMock(
+                data=[
+                    {"tag_id": "quiet", "shop_count": 5},
+                    {"tag_id": "wifi-reliable", "shop_count": 3},
+                ]
+            )
+        else:
+            m.execute.return_value = MagicMock(data=[])
+        return m
+
+    db.rpc.side_effect = _rpc_side_effect
+    # Shop count query: table("shops").select(...).eq(...).execute().count
+    db.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(
+        count=50
+    )
+    return db
+
+
+@pytest.mark.asyncio
+async def test_search_with_mode_filter(mock_supabase, mock_embeddings):
+    mock_supabase.rpc.return_value.execute.return_value = MagicMock(data=[])
+    service = SearchService(db=mock_supabase, embeddings=mock_embeddings)
+    query = SearchQuery(text="quiet wifi", limit=10)
+    await service.search(query, mode="work", mode_threshold=0.4)
+
+    # Should call RPC with mode filter params
+    mock_supabase.rpc.assert_called_once()
+    call_args = mock_supabase.rpc.call_args
+    assert call_args[0][0] == "search_shops"
+    params = call_args[0][1]
+    assert "filter_mode_field" in params
+    assert params["filter_mode_field"] == "mode_work"
+
+
+@pytest.mark.asyncio
+async def test_taxonomy_boost_increases_score(mock_db_with_idf, mock_embeddings):
+    service = SearchService(db=mock_db_with_idf, embeddings=mock_embeddings)
+    query = SearchQuery(
+        text="quiet place",
+        filters=SearchFilters(dimensions={"ambience": ["quiet"]}),
+        limit=10,
+    )
+    results = await service.search(query)
+
+    assert len(results) > 0
+    # Taxonomy boost should be > 0 when tags match
+    assert results[0].taxonomy_boost > 0.0
+    # total_score should be weighted combination
+    assert results[0].total_score == pytest.approx(
+        results[0].similarity_score * 0.7 + results[0].taxonomy_boost * 0.3,
+        rel=1e-4,
+    )

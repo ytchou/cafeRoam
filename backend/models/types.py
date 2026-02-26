@@ -168,6 +168,9 @@ class JobType(StrEnum):
     GENERATE_EMBEDDING = "generate_embedding"
     STALENESS_SWEEP = "staleness_sweep"
     WEEKLY_EMAIL = "weekly_email"
+    SCRAPE_SHOP = "scrape_shop"
+    PUBLISH_SHOP = "publish_shop"
+    ADMIN_DIGEST_EMAIL = "admin_digest_email"
 
 
 class JobStatus(StrEnum):
@@ -191,3 +194,37 @@ class Job(BaseModel):
     claimed_at: datetime | None = None
     completed_at: datetime | None = None
     created_at: datetime
+
+
+# --- Pipeline types ---
+
+
+class ProcessingStatus(StrEnum):
+    PENDING = "pending"
+    SCRAPING = "scraping"
+    ENRICHING = "enriching"
+    EMBEDDING = "embedding"
+    PUBLISHING = "publishing"
+    LIVE = "live"
+    FAILED = "failed"
+
+
+class ShopSubmission(BaseModel):
+    id: str
+    submitted_by: str
+    google_maps_url: str
+    shop_id: str | None = None
+    status: str = "pending"
+    failure_reason: str | None = None
+    reviewed_at: datetime | None = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
+
+
+class ActivityFeedEvent(BaseModel):
+    id: str
+    event_type: str
+    actor_id: str | None = None
+    shop_id: str | None = None
+    metadata: dict[str, Any] = {}
+    created_at: datetime | None = None

@@ -6,11 +6,14 @@ from models.types import JobType, TaxonomyTag
 from providers.email import get_email_provider
 from providers.embeddings import get_embeddings_provider
 from providers.llm import get_llm_provider
+from providers.scraper import get_scraper_provider
 from workers.handlers.account_deletion import delete_expired_accounts
 from workers.handlers.enrich_menu_photo import handle_enrich_menu_photo
 from workers.handlers.enrich_shop import handle_enrich_shop
 from workers.handlers.generate_embedding import handle_generate_embedding
-from workers.handlers.staleness_sweep import handle_staleness_sweep
+from workers.handlers.publish_shop import handle_publish_shop
+from workers.handlers.scrape_shop import handle_scrape_shop
+from workers.handlers.staleness_sweep import handle_smart_staleness_sweep
 from workers.handlers.weekly_email import handle_weekly_email
 from workers.queue import JobQueue
 
@@ -32,7 +35,7 @@ async def process_job_queue() -> None:
         match job.job_type:
             case JobType.ENRICH_SHOP | JobType.ENRICH_MENU_PHOTO:
                 taxonomy_rows = db.table("taxonomy_tags").select("*").execute()
-                taxonomy = [TaxonomyTag(**row) for row in taxonomy_rows.data]
+                taxonomy = [TaxonomyTag(**row) for row in taxonomy_rows.data]  # type: ignore[arg-type]
                 llm = get_llm_provider(taxonomy=taxonomy)
                 if job.job_type == JobType.ENRICH_SHOP:
                     await handle_enrich_shop(
@@ -53,12 +56,29 @@ async def process_job_queue() -> None:
                     payload=job.payload,
                     db=db,
                     embeddings=embeddings,
+                    queue=queue,
                 )
             case JobType.STALENESS_SWEEP:
-                await handle_staleness_sweep(db=db, queue=queue)
+                scraper = get_scraper_provider()
+                await handle_smart_staleness_sweep(db=db, scraper=scraper, queue=queue)
             case JobType.WEEKLY_EMAIL:
                 email = get_email_provider()
                 await handle_weekly_email(db=db, email=email)
+            case JobType.SCRAPE_SHOP:
+                scraper = get_scraper_provider()
+                await handle_scrape_shop(
+                    payload=job.payload,
+                    db=db,
+                    scraper=scraper,
+                    queue=queue,
+                )
+            case JobType.PUBLISH_SHOP:
+                await handle_publish_shop(
+                    payload=job.payload,
+                    db=db,
+                )
+            case JobType.ADMIN_DIGEST_EMAIL:
+                logger.info("Admin digest email not yet implemented, skipping")
             case _:
                 logger.warning("Unknown job type", job_type=job.job_type)
 

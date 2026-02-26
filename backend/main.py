@@ -4,12 +4,15 @@ from contextlib import asynccontextmanager
 import structlog
 from fastapi import FastAPI
 
+from api.admin import router as admin_router
 from api.auth import router as auth_router
 from api.checkins import router as checkins_router
+from api.feed import router as feed_router
 from api.lists import router as lists_router
 from api.search import router as search_router
 from api.shops import router as shops_router
 from api.stamps import router as stamps_router
+from api.submissions import router as submissions_router
 from core.config import settings
 from workers.scheduler import create_scheduler
 
@@ -50,3 +53,6 @@ app.include_router(search_router)
 app.include_router(checkins_router)
 app.include_router(lists_router)
 app.include_router(stamps_router)
+app.include_router(feed_router)
+app.include_router(submissions_router)
+app.include_router(admin_router)

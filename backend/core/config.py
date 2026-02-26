@@ -33,12 +33,19 @@ class Settings(BaseSettings):
     maps_provider: str = "mapbox"
     mapbox_access_token: str = ""
 
+    # Scraper
+    scraper_provider: str = "apify"
+    apify_api_token: str = ""
+
     # Sentry
     sentry_dsn: str = ""
 
     # App
     environment: str = "development"
     log_level: str = "INFO"
+
+    # Admin
+    admin_user_ids: list[str] = []
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 

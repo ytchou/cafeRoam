@@ -253,12 +253,44 @@ Core infrastructure everything else depends on. No user-facing product yet.
 
 ### Data Pipeline
 
-- [ ] Taxonomy system: canonical tag table, seeded with 60-100 initial tags across all dimensions
-- [ ] Data pipeline: Cafe Nomad importer + Apify scraper integration + Claude Sonnet enrichment + embedding generation (see [ADR](docs/decisions/2026-02-24-enrichment-model-sonnet-over-haiku.md))
-- [ ] 200+ Taipei shops enriched, tagged, and embedded in Supabase
-- [ ] Enrichment staleness tracking: store `enrichedAt` per shop, background job flags shops older than 90 days for re-enrichment
-- [ ] Incremental tag classification: re-classify only delta tags when taxonomy grows, not full re-enrichment (build before catalog exceeds 500 shops)
-- [ ] Embedding regeneration trigger: re-embed only when enrichment actually changes (diff tags/summary), not on every pipeline run
+> **Design Doc:** [docs/designs/2026-02-26-data-pipeline-design.md](docs/designs/2026-02-26-data-pipeline-design.md)
+> **Plan:** [docs/plans/2026-02-26-data-pipeline-plan.md](docs/plans/2026-02-26-data-pipeline-plan.md)
+
+**Chunk 1 — DB Migrations + Models (Wave 1-2):**
+
+- [x] DB migrations: shop_submissions, activity_feed, find_stale_shops RPC, pipeline columns
+- [x] Pydantic models: ShopSubmission, ActivityFeedEvent, ProcessingStatus, new JobTypes
+
+**Chunk 2 — Scraper Provider + Handlers (Wave 2-3):**
+
+- [x] Apify scraper provider (ScraperProvider protocol + ApifyScraperAdapter)
+- [x] SCRAPE_SHOP handler (Apify scrape → store → chain to ENRICH_SHOP)
+- [x] PUBLISH_SHOP handler (set live → activity feed → flag for admin)
+
+**Chunk 3 — Wiring + API Routes (Wave 4-5):**
+
+- [x] Wire new handlers into scheduler dispatch loop
+- [x] POST /submissions API route (user shop submission)
+- [x] GET /feed API route (public community activity feed)
+- [x] Admin dashboard API (overview, dead-letter, retry, reject)
+
+**Chunk 4 — Pipeline Features (Wave 4-5):**
+
+- [x] Search service: IDF taxonomy boost + mode pre-filter
+- [x] Smart staleness sweep (only re-enrich when new reviews detected)
+- [x] Cold start importers (Google Takeout parser + Cafe Nomad fetcher)
+- [x] Propagate submission_id through ENRICH → EMBED → PUBLISH chain
+
+**Chunk 5 — Verification (Wave 6):**
+
+- [x] All backend tests pass (pytest)
+- [x] ruff + mypy pass
+- [x] Frontend tests + build pass
+
+**Deferred (post-pipeline):**
+
+- [ ] Incremental tag classification: re-classify only delta tags when taxonomy grows
+- [ ] Embedding regeneration trigger: re-embed only when enrichment actually changes
 
 ### Provider Abstractions
 

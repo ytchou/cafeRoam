@@ -18,6 +18,7 @@ dependencies = [
     "sentry-sdk[fastapi]>=2.0",
     "structlog>=24.0",
     "posthog>=3.0",
+    "apify-client>=2.5.0",
 ]
 
 [project.optional-dependencies]
