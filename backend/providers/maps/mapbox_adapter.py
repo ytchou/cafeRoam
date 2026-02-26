@@ -38,7 +38,7 @@ class MapboxMapsAdapter:
                 longitude=coords[0],
                 formatted_address=feature["properties"]["full_address"],
             )
-        except (httpx.HTTPStatusError, httpx.TimeoutException) as e:
+        except (httpx.HTTPStatusError, httpx.TimeoutException, httpx.ConnectError, KeyError) as e:
             logger.warning("Mapbox geocode failed: %s", e)
             return None
 
@@ -60,7 +60,7 @@ class MapboxMapsAdapter:
             if not features:
                 return None
             return features[0]["properties"]["full_address"]
-        except (httpx.HTTPStatusError, httpx.TimeoutException) as e:
+        except (httpx.HTTPStatusError, httpx.TimeoutException, httpx.ConnectError, KeyError) as e:
             logger.warning("Mapbox reverse geocode failed: %s", e)
             return None
 

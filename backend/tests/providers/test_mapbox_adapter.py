@@ -70,6 +70,28 @@ class TestMapboxGeocode:
         result = await adapter.geocode("台北市")
         assert result is None
 
+    async def test_returns_none_on_connect_error(self, adapter):
+        adapter._client = AsyncMock(spec=httpx.AsyncClient)
+        adapter._client.get = AsyncMock(side_effect=httpx.ConnectError("DNS failure"))
+
+        result = await adapter.geocode("台北市")
+        assert result is None
+
+    async def test_returns_none_on_malformed_response(self, adapter):
+        mock_response = MagicMock(spec=httpx.Response)
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "type": "FeatureCollection",
+            "features": [{"type": "Feature"}],  # missing geometry
+        }
+        mock_response.raise_for_status = MagicMock()
+
+        adapter._client = AsyncMock(spec=httpx.AsyncClient)
+        adapter._client.get = AsyncMock(return_value=mock_response)
+
+        result = await adapter.geocode("台北市")
+        assert result is None
+
     async def test_passes_correct_params(self, adapter):
         mock_response = MagicMock(spec=httpx.Response)
         mock_response.status_code = 200

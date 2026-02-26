@@ -33,6 +33,7 @@ class TestProviderProtocols:
     def test_maps_provider_protocol_exists(self):
         assert hasattr(MapsProvider, "geocode")
         assert hasattr(MapsProvider, "reverse_geocode")
+        assert hasattr(MapsProvider, "close")
 
 
 class TestProviderFactories:
