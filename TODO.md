@@ -281,7 +281,7 @@ Core infrastructure everything else depends on. No user-facing product yet.
 
 - [x] Update LLM factory for taxonomy parameter
 - [x] Add missing Maps + Analytics factory tests
-- [ ] Update worker handlers for new enrich_shop signature
+- [x] Update worker handlers for new enrich_shop signature
 - [ ] Full verification (pytest, ruff, mypy, pnpm test)
 
 ### Observability & Ops

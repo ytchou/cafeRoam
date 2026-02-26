@@ -43,6 +43,12 @@ class TestEnrichShopHandler:
                                                     "id": "shop-1",
                                                     "name": "Test Cafe",
                                                     "description": None,
+                                                    "categories": ["咖啡廳"],
+                                                    "price_range": "$200-400",
+                                                    "socket": "yes",
+                                                    "limited_time": "no",
+                                                    "rating": 4.5,
+                                                    "review_count": 10,
                                                 }
                                             )
                                         )

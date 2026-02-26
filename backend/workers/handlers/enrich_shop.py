@@ -4,7 +4,7 @@ from typing import Any, cast
 import structlog
 from supabase import Client
 
-from models.types import JobType
+from models.types import JobType, ShopEnrichmentInput
 from providers.llm.interface import LLMProvider
 from workers.queue import JobQueue
 
@@ -30,13 +30,21 @@ async def handle_enrich_shop(
     review_rows = cast("list[dict[str, Any]]", reviews_response.data)
     reviews = [r["text"] for r in review_rows if r.get("text")]
 
-    # Call LLM for enrichment
-    result = await llm.enrich_shop(
+    # Build enrichment input
+    enrichment_input = ShopEnrichmentInput(
         name=shop["name"],
         reviews=reviews,
         description=shop.get("description"),
-        categories=[],
+        categories=shop.get("categories", []),
+        price_range=shop.get("price_range"),
+        socket=shop.get("socket"),
+        limited_time=shop.get("limited_time"),
+        rating=shop.get("rating"),
+        review_count=shop.get("review_count"),
     )
+
+    # Call LLM for enrichment
+    result = await llm.enrich_shop(enrichment_input)
 
     # Write enrichment result
     db.table("shops").update(
