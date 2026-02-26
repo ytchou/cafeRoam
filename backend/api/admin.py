@@ -2,7 +2,6 @@ from typing import Any, cast
 
 import structlog
 from fastapi import APIRouter, Depends, HTTPException
-from supabase import Client
 
 from api.deps import get_current_user
 from core.config import settings
@@ -32,20 +31,13 @@ async def pipeline_overview(
     job_counts: dict[str, int] = {}
     for status in JobStatus:
         response = (
-            db.table("job_queue")
-            .select("id", count="exact")
-            .eq("status", status.value)
-            .execute()
+            db.table("job_queue").select("id", count="exact").eq("status", status.value).execute()  # type: ignore[arg-type]
         )
         job_counts[status.value] = response.count or 0
 
     # Recent submissions
     subs_response = (
-        db.table("shop_submissions")
-        .select("*")
-        .order("created_at", desc=True)
-        .limit(20)
-        .execute()
+        db.table("shop_submissions").select("*").order("created_at", desc=True).limit(20).execute()
     )
 
     return {
@@ -78,9 +70,9 @@ async def retry_job(
 ) -> dict[str, str]:
     """Manually retry a failed/dead-letter job."""
     db = get_service_role_client()
-    db.table("job_queue").update(
-        {"status": "pending", "attempts": 0, "last_error": None}
-    ).eq("id", job_id).execute()
+    db.table("job_queue").update({"status": "pending", "attempts": 0, "last_error": None}).eq(
+        "id", job_id
+    ).execute()
     return {"message": f"Job {job_id} re-queued"}
 
 
@@ -93,11 +85,7 @@ async def reject_submission(
     db = get_service_role_client()
 
     sub_response = (
-        db.table("shop_submissions")
-        .select("shop_id")
-        .eq("id", submission_id)
-        .single()
-        .execute()
+        db.table("shop_submissions").select("shop_id").eq("id", submission_id).single().execute()
     )
     sub_data = cast("dict[str, Any]", sub_response.data)
     shop_id = sub_data.get("shop_id")

@@ -13,7 +13,8 @@ def client():
 
 def test_activity_feed_is_public(client):
     mock_db = MagicMock()
-    mock_db.table.return_value.select.return_value.order.return_value.limit.return_value.execute.return_value = MagicMock(
+    mock_chain = mock_db.table.return_value.select.return_value.order.return_value
+    mock_chain.limit.return_value.execute.return_value = MagicMock(
         data=[
             {
                 "id": "ev-1",
@@ -37,13 +38,14 @@ def test_activity_feed_is_public(client):
 
 def test_activity_feed_default_limit(client):
     mock_db = MagicMock()
-    mock_db.table.return_value.select.return_value.order.return_value.limit.return_value.execute.return_value = MagicMock(
-        data=[]
-    )
+    mock_chain = mock_db.table.return_value.select.return_value.order.return_value
+    mock_chain.limit.return_value.execute.return_value = MagicMock(data=[])
 
     with patch("api.feed.get_anon_client", return_value=mock_db):
         response = client.get("/feed")
 
     assert response.status_code == 200
     # Verify limit was called with default 20
-    mock_db.table.return_value.select.return_value.order.return_value.limit.assert_called_once_with(20)
+    mock_db.table.return_value.select.return_value.order.return_value.limit.assert_called_once_with(
+        20
+    )

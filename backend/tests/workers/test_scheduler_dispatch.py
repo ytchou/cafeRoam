@@ -1,3 +1,4 @@
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -14,8 +15,8 @@ async def test_process_job_queue_dispatches_scrape_shop():
         payload={"shop_id": "s-1", "google_maps_url": "https://maps.google.com/?cid=123"},
         status=JobStatus.CLAIMED,
         attempts=1,
-        scheduled_at="2026-01-01T00:00:00Z",
-        created_at="2026-01-01T00:00:00Z",
+        scheduled_at=datetime(2026, 1, 1, tzinfo=UTC),
+        created_at=datetime(2026, 1, 1, tzinfo=UTC),
     )
 
     with (
@@ -44,8 +45,8 @@ async def test_process_job_queue_dispatches_publish_shop():
         payload={"shop_id": "s-1"},
         status=JobStatus.CLAIMED,
         attempts=1,
-        scheduled_at="2026-01-01T00:00:00Z",
-        created_at="2026-01-01T00:00:00Z",
+        scheduled_at=datetime(2026, 1, 1, tzinfo=UTC),
+        created_at=datetime(2026, 1, 1, tzinfo=UTC),
     )
 
     with (

@@ -1,4 +1,4 @@
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -10,9 +10,8 @@ def mock_db():
     db = MagicMock()
     db.table.return_value.update.return_value.eq.return_value.execute.return_value = MagicMock()
     db.table.return_value.insert.return_value.execute.return_value = MagicMock()
-    db.table.return_value.select.return_value.eq.return_value.single.return_value.execute.return_value = MagicMock(
-        data={"name": "Test Cafe"}
-    )
+    mock_single = db.table.return_value.select.return_value.eq.return_value.single.return_value
+    mock_single.execute.return_value = MagicMock(data={"name": "Test Cafe"})
     return db
 
 

@@ -19,7 +19,8 @@ def mock_db():
             },
         ]
     )
-    db.table.return_value.select.return_value.eq.return_value.order.return_value.limit.return_value.execute.return_value = MagicMock(
+    mock_reviews = db.table.return_value.select.return_value.eq.return_value.order.return_value
+    mock_reviews.limit.return_value.execute.return_value = MagicMock(
         data=[{"published_at": "2025-12-01"}]
     )
     db.table.return_value.update.return_value.eq.return_value.execute.return_value = MagicMock()
@@ -54,7 +55,9 @@ def mock_queue():
 
 
 @pytest.mark.asyncio
-async def test_smart_sweep_queues_when_new_reviews(mock_db, mock_scraper_with_new_reviews, mock_queue):
+async def test_smart_sweep_queues_when_new_reviews(
+    mock_db, mock_scraper_with_new_reviews, mock_queue
+):
     await handle_smart_staleness_sweep(
         db=mock_db, scraper=mock_scraper_with_new_reviews, queue=mock_queue
     )
@@ -63,7 +66,9 @@ async def test_smart_sweep_queues_when_new_reviews(mock_db, mock_scraper_with_ne
 
 
 @pytest.mark.asyncio
-async def test_smart_sweep_skips_when_no_new_reviews(mock_db, mock_scraper_no_new_reviews, mock_queue):
+async def test_smart_sweep_skips_when_no_new_reviews(
+    mock_db, mock_scraper_no_new_reviews, mock_queue
+):
     await handle_smart_staleness_sweep(
         db=mock_db, scraper=mock_scraper_no_new_reviews, queue=mock_queue
     )

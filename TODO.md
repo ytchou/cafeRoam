@@ -283,9 +283,9 @@ Core infrastructure everything else depends on. No user-facing product yet.
 
 **Chunk 5 — Verification (Wave 6):**
 
-- [ ] All backend tests pass (pytest)
-- [ ] ruff + mypy pass
-- [ ] Frontend tests + build pass
+- [x] All backend tests pass (pytest)
+- [x] ruff + mypy pass
+- [x] Frontend tests + build pass
 
 **Deferred (post-pipeline):**
 

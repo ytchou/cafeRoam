@@ -65,7 +65,7 @@ async def handle_smart_staleness_sweep(
             .limit(1)
             .execute()
         )
-        latest_stored = stored_reviews.data[0]["published_at"] if stored_reviews.data else None
+        latest_stored = stored_reviews.data[0]["published_at"] if stored_reviews.data else None  # type: ignore[index,call-overload]
 
         # Quick-scrape reviews only from Google Maps
         try:
@@ -83,7 +83,7 @@ async def handle_smart_staleness_sweep(
                 (r.get("published_at", "") for r in fresh_reviews if r.get("published_at")),
                 default="",
             )
-            if newest_scraped and newest_scraped > latest_stored:
+            if newest_scraped and newest_scraped > latest_stored:  # type: ignore[operator]
                 has_new = True
         elif fresh_reviews and not latest_stored:
             has_new = True

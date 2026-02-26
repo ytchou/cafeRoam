@@ -21,7 +21,9 @@ class SearchService:
         mode: str | None = None,
         mode_threshold: float = 0.4,
     ) -> list[SearchResult]:
-        """Embed query, optionally pre-filter by mode, run pgvector similarity, apply taxonomy boost."""
+        """Embed query, optionally pre-filter by mode,
+        run pgvector similarity, apply taxonomy boost.
+        """
         query_embedding = await self._embeddings.embed(query.text)
 
         limit = query.limit or 20

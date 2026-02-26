@@ -4,7 +4,7 @@ from typing import Any
 import structlog
 from apify_client import ApifyClient
 
-from providers.scraper.interface import ScrapedShopData, ScraperProvider
+from providers.scraper.interface import ScrapedShopData
 
 logger = structlog.get_logger()
 
@@ -92,6 +92,8 @@ class ApifyScraperAdapter:
 
         def _sync_run() -> list[dict[str, Any]]:
             run = self._client.actor(_ACTOR_ID).call(run_input=run_input)
+            if run is None:
+                return []
             items = list(self._client.dataset(run["defaultDatasetId"]).iterate_items())
             return items
 
@@ -99,4 +101,3 @@ class ApifyScraperAdapter:
 
     async def close(self) -> None:
         pass
-

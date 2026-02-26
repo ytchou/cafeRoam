@@ -1,22 +1,21 @@
-import pytest
 from models.types import (
-    JobType,
-    ShopSubmission,
     ActivityFeedEvent,
+    JobType,
     ProcessingStatus,
+    ShopSubmission,
 )
 
 
 def test_new_job_types_exist():
-    assert JobType.SCRAPE_SHOP == "scrape_shop"
-    assert JobType.PUBLISH_SHOP == "publish_shop"
-    assert JobType.ADMIN_DIGEST_EMAIL == "admin_digest_email"
+    assert JobType.SCRAPE_SHOP.value == "scrape_shop"
+    assert JobType.PUBLISH_SHOP.value == "publish_shop"
+    assert JobType.ADMIN_DIGEST_EMAIL.value == "admin_digest_email"
 
 
 def test_processing_status_values():
-    assert ProcessingStatus.PENDING == "pending"
-    assert ProcessingStatus.LIVE == "live"
-    assert ProcessingStatus.FAILED == "failed"
+    assert ProcessingStatus.PENDING.value == "pending"
+    assert ProcessingStatus.LIVE.value == "live"
+    assert ProcessingStatus.FAILED.value == "failed"
 
 
 def test_shop_submission_model():

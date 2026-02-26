@@ -73,7 +73,9 @@ async def fetch_and_import_cafenomad(db: Any, queue: Any) -> int:
         )
         shop_id = insert_response.data[0]["id"]
 
-        google_maps_url = f"https://www.google.com/maps/search/{shop.get('name', '')}+{shop.get('address', '')}"
+        shop_name = shop.get("name", "")
+        shop_addr = shop.get("address", "")
+        google_maps_url = f"https://www.google.com/maps/search/{shop_name}+{shop_addr}"
         await queue.enqueue(
             job_type=JobType.SCRAPE_SHOP,
             payload={"shop_id": shop_id, "google_maps_url": google_maps_url},
@@ -81,5 +83,10 @@ async def fetch_and_import_cafenomad(db: Any, queue: Any) -> int:
         )
         queued += 1
 
-    logger.info("Cafe Nomad import complete", total=len(raw_shops), filtered=len(shops), queued=queued)
+    logger.info(
+        "Cafe Nomad import complete",
+        total=len(raw_shops),
+        filtered=len(shops),
+        queued=queued,
+    )
     return queued
