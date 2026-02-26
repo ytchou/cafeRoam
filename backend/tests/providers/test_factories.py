@@ -48,6 +48,34 @@ class TestProviderFactories:
             provider = get_llm_provider()
             assert provider is not None
 
+    def test_llm_factory_passes_taxonomy(self):
+        from models.types import TaxonomyTag
+
+        taxonomy = [
+            TaxonomyTag(id="quiet", dimension="ambience", label="Quiet", label_zh="安靜"),
+        ]
+        with patch("providers.llm.settings") as mock:
+            mock.llm_provider = "anthropic"
+            mock.anthropic_api_key = "test-key"
+            mock.anthropic_model = "claude-sonnet-4-6-20250514"
+            from providers.llm import get_llm_provider
+
+            provider = get_llm_provider(taxonomy=taxonomy)
+            assert provider is not None
+            assert hasattr(provider, "_taxonomy")
+            assert len(provider._taxonomy) == 1
+
+    def test_llm_factory_defaults_to_empty_taxonomy(self):
+        with patch("providers.llm.settings") as mock:
+            mock.llm_provider = "anthropic"
+            mock.anthropic_api_key = "test-key"
+            mock.anthropic_model = "claude-sonnet-4-6-20250514"
+            from providers.llm import get_llm_provider
+
+            provider = get_llm_provider()
+            assert provider is not None
+            assert provider._taxonomy == []
+
     def test_llm_factory_unknown_provider_raises(self):
         with patch("providers.llm.settings") as mock:
             mock.llm_provider = "unknown"
