@@ -48,42 +48,45 @@ async def fetch_and_import_cafenomad(db: Any, queue: Any) -> int:
 
     for shop in shops:
         cafenomad_id = shop.get("id", "")
+        try:
+            # Check if already imported
+            existing = db.table("shops").select("id").eq("cafenomad_id", cafenomad_id).execute()
+            if existing.data:
+                continue
 
-        # Check if already imported
-        existing = db.table("shops").select("id").eq("cafenomad_id", cafenomad_id).execute()
-        if existing.data:
-            continue
-
-        insert_response = (
-            db.table("shops")
-            .insert(
-                {
-                    "name": shop.get("name", "Unknown"),
-                    "address": shop.get("address", ""),
-                    "latitude": float(shop.get("latitude", 0)),
-                    "longitude": float(shop.get("longitude", 0)),
-                    "review_count": 0,
-                    "cafenomad_id": cafenomad_id,
-                    "processing_status": "pending",
-                    "source": "cafe_nomad",
-                    "website": shop.get("url"),
-                    "mrt": shop.get("mrt"),
-                }
+            insert_response = (
+                db.table("shops")
+                .insert(
+                    {
+                        "name": shop.get("name", "Unknown"),
+                        "address": shop.get("address", ""),
+                        "latitude": float(shop.get("latitude", 0)),
+                        "longitude": float(shop.get("longitude", 0)),
+                        "review_count": 0,
+                        "cafenomad_id": cafenomad_id,
+                        "processing_status": "pending",
+                        "source": "cafe_nomad",
+                        "website": shop.get("url"),
+                        "mrt": shop.get("mrt"),
+                    }
+                )
+                .execute()
             )
-            .execute()
-        )
-        shop_id = insert_response.data[0]["id"]
+            shop_id = insert_response.data[0]["id"]
 
-        shop_name = shop.get("name", "")
-        shop_addr = shop.get("address", "")
-        query = quote(f"{shop_name} {shop_addr}", safe="")
-        google_maps_url = f"https://www.google.com/maps/search/{query}"
-        await queue.enqueue(
-            job_type=JobType.SCRAPE_SHOP,
-            payload={"shop_id": shop_id, "google_maps_url": google_maps_url},
-            priority=0,
-        )
-        queued += 1
+            shop_name = shop.get("name", "")
+            shop_addr = shop.get("address", "")
+            query = quote(f"{shop_name} {shop_addr}", safe="")
+            google_maps_url = f"https://www.google.com/maps/search/{query}"
+            await queue.enqueue(
+                job_type=JobType.SCRAPE_SHOP,
+                payload={"shop_id": shop_id, "google_maps_url": google_maps_url},
+                priority=0,
+            )
+            queued += 1
+        except Exception:
+            logger.warning("Failed to import Cafe Nomad shop", cafenomad_id=cafenomad_id)
+            continue
 
     logger.info(
         "Cafe Nomad import complete",
