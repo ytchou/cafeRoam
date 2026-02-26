@@ -91,9 +91,7 @@ async def handle_scrape_shop(
             {"shop_id": shop_id, "url": url, "sort_order": i}
             for i, url in enumerate(data.photo_urls)
         ]
-        db.table("shop_photos").upsert(
-            photo_rows, on_conflict="shop_id,url"
-        ).execute()
+        db.table("shop_photos").upsert(photo_rows, on_conflict="shop_id,url").execute()
 
     # Link submission to shop
     if submission_id:

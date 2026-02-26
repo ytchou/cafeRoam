@@ -72,7 +72,9 @@ async def submit_shop(
         )
     except APIError as e:
         if "uq_shop_submissions_url" in str(e) or "23505" in str(e):
-            raise HTTPException(status_code=409, detail="This URL has already been submitted")
+            raise HTTPException(
+                status_code=409, detail="This URL has already been submitted"
+            ) from e
         raise
     sub_data = cast("list[dict[str, Any]]", sub_response.data)
     submission_id = sub_data[0]["id"]
