@@ -121,12 +121,16 @@ class TestGenerateEmbeddingHandler:
             )
         )
 
+        queue = AsyncMock()
+
         await handle_generate_embedding(
             payload={"shop_id": "shop-1"},
             db=db,
             embeddings=embeddings,
+            queue=queue,
         )
         embeddings.embed.assert_called_once()
+        queue.enqueue.assert_called_once()  # Should queue publish step
 
 
 class TestStalenessSweepHandler:

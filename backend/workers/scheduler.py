@@ -56,6 +56,7 @@ async def process_job_queue() -> None:
                     payload=job.payload,
                     db=db,
                     embeddings=embeddings,
+                    queue=queue,
                 )
             case JobType.STALENESS_SWEEP:
                 scraper = get_scraper_provider()
