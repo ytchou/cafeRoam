@@ -70,52 +70,59 @@ async def import_takeout_to_queue(
         if not place.get("google_maps_url"):
             continue
 
-        lat, lng = place["latitude"], place["longitude"]
-        coord_delta = 0.001  # ~111m
+        shop_id: str | None = None
+        try:
+            lat, lng = place["latitude"], place["longitude"]
+            coord_delta = 0.001  # ~111m
 
-        # Dedup: skip if a shop with the same name and approximate coordinates exists
-        existing = (
-            db.table("shops")
-            .select("id")
-            .ilike("name", place["name"])
-            .gte("latitude", lat - coord_delta)
-            .lte("latitude", lat + coord_delta)
-            .gte("longitude", lng - coord_delta)
-            .lte("longitude", lng + coord_delta)
-            .execute()
-        )
-        if existing.data:
-            logger.info("Skipping duplicate takeout place", name=place["name"])
-            continue
-
-        # Insert pending shop
-        response = (
-            db.table("shops")
-            .insert(
-                {
-                    "name": place["name"],
-                    "address": place.get("address", ""),
-                    "latitude": place["latitude"],
-                    "longitude": place["longitude"],
-                    "review_count": 0,
-                    "processing_status": "pending",
-                    "source": "google_takeout",
-                }
+            # Dedup: skip if a shop with the same name and approximate coordinates exists
+            existing = (
+                db.table("shops")
+                .select("id")
+                .ilike("name", place["name"])
+                .gte("latitude", lat - coord_delta)
+                .lte("latitude", lat + coord_delta)
+                .gte("longitude", lng - coord_delta)
+                .lte("longitude", lng + coord_delta)
+                .execute()
             )
-            .execute()
-        )
-        shop_id = response.data[0]["id"]
+            if existing.data:
+                logger.info("Skipping duplicate takeout place", name=place["name"])
+                continue
 
-        # Queue scrape job
-        await queue.enqueue(
-            job_type=JobType.SCRAPE_SHOP,
-            payload={
-                "shop_id": shop_id,
-                "google_maps_url": place["google_maps_url"],
-            },
-            priority=0,
-        )
-        queued += 1
+            # Insert pending shop
+            response = (
+                db.table("shops")
+                .insert(
+                    {
+                        "name": place["name"],
+                        "address": place.get("address", ""),
+                        "latitude": place["latitude"],
+                        "longitude": place["longitude"],
+                        "review_count": 0,
+                        "processing_status": "pending",
+                        "source": "google_takeout",
+                    }
+                )
+                .execute()
+            )
+            shop_id = response.data[0]["id"]
+
+            # Queue scrape job
+            await queue.enqueue(
+                job_type=JobType.SCRAPE_SHOP,
+                payload={
+                    "shop_id": shop_id,
+                    "google_maps_url": place["google_maps_url"],
+                },
+                priority=0,
+            )
+            queued += 1
+        except Exception:
+            logger.warning("Failed to import takeout place", name=place.get("name"))
+            if shop_id:
+                db.table("shops").delete().eq("id", shop_id).execute()
+            continue
 
     logger.info("Takeout import complete", queued=queued)
     return queued
