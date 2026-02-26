@@ -131,6 +131,7 @@ class ShopEnrichmentInput(BaseModel):
 
 class EnrichmentResult(BaseModel):
     tags: list[TaxonomyTag]
+    tag_confidences: dict[str, float] = {}
     summary: str
     confidence: float
     mode_scores: ShopModeScores | None = None

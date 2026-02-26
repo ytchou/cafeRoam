@@ -46,13 +46,29 @@ async def handle_enrich_shop(
     # Call LLM for enrichment
     result = await llm.enrich_shop(enrichment_input)
 
-    # Write enrichment result
+    # Write enrichment result — mode scores and summary to shops table
+    mode = result.mode_scores
     db.table("shops").update(
         {
             "description": result.summary,
             "enriched_at": datetime.now(UTC).isoformat(),
+            "mode_work": mode.work if mode else None,
+            "mode_rest": mode.rest if mode else None,
+            "mode_social": mode.social if mode else None,
         }
     ).eq("id", shop_id).execute()
+
+    # Write per-tag confidences to shop_tags (upsert to handle re-enrichment)
+    if result.tags:
+        tag_rows = [
+            {
+                "shop_id": shop_id,
+                "tag_id": tag.id,
+                "confidence": result.tag_confidences.get(tag.id, 0.0),
+            }
+            for tag in result.tags
+        ]
+        db.table("shop_tags").upsert(tag_rows).execute()
 
     # Queue embedding generation
     await queue.enqueue(

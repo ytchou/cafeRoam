@@ -1,6 +1,7 @@
 import logging
 
 from anthropic import AsyncAnthropic
+from anthropic.types import Message
 
 from models.types import (
     EnrichmentResult,
@@ -48,7 +49,7 @@ CLASSIFY_SHOP_TOOL = {
                 "description": "Primary usage mode for this shop",
             },
         },
-        "required": ["tags", "summary", "topReviews", "mode"],
+        "required": ["tags", "summary", "mode"],
     },
 }
 
@@ -190,7 +191,7 @@ class AnthropicLLMAdapter:
         return "\n".join(lines)
 
     @staticmethod
-    def _extract_tool_input(response, tool_name: str) -> dict:
+    def _extract_tool_input(response: Message, tool_name: str) -> dict:
         for block in response.content:
             if block.type == "tool_use" and block.name == tool_name:
                 return block.input
@@ -199,6 +200,7 @@ class AnthropicLLMAdapter:
     def _parse_enrichment(self, tool_input: dict) -> EnrichmentResult:
         raw_tags = tool_input.get("tags", [])
         valid_tags: list[TaxonomyTag] = []
+        tag_confidences: dict[str, float] = {}
         confidences: list[float] = []
 
         for raw in raw_tags:
@@ -209,6 +211,7 @@ class AnthropicLLMAdapter:
             confidence = max(0.0, min(1.0, float(raw.get("confidence", 0.0))))
             tag = self._taxonomy_by_id[tag_id]
             valid_tags.append(tag)
+            tag_confidences[tag_id] = confidence
             confidences.append(confidence)
 
         mode_str = tool_input.get("mode", "mixed")
@@ -218,6 +221,7 @@ class AnthropicLLMAdapter:
 
         return EnrichmentResult(
             tags=valid_tags,
+            tag_confidences=tag_confidences,
             summary=tool_input.get("summary", ""),
             confidence=overall_confidence,
             mode_scores=mode_scores,
