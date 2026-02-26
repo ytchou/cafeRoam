@@ -44,6 +44,9 @@ class Settings(BaseSettings):
     environment: str = "development"
     log_level: str = "INFO"
 
+    # Admin
+    admin_user_ids: list[str] = []
+
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 
 

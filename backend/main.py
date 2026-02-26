@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 import structlog
 from fastapi import FastAPI
 
+from api.admin import router as admin_router
 from api.auth import router as auth_router
 from api.checkins import router as checkins_router
 from api.feed import router as feed_router
@@ -54,3 +55,4 @@ app.include_router(lists_router)
 app.include_router(stamps_router)
 app.include_router(feed_router)
 app.include_router(submissions_router)
+app.include_router(admin_router)

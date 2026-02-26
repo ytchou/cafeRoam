@@ -272,7 +272,7 @@ Core infrastructure everything else depends on. No user-facing product yet.
 - [x] Wire new handlers into scheduler dispatch loop
 - [x] POST /submissions API route (user shop submission)
 - [x] GET /feed API route (public community activity feed)
-- [ ] Admin dashboard API (overview, dead-letter, retry, reject)
+- [x] Admin dashboard API (overview, dead-letter, retry, reject)
 
 **Chunk 4 — Pipeline Features (Wave 4-5):**
 
