@@ -14,13 +14,14 @@ router = APIRouter(tags=["search"])
 @router.get("/search")
 async def search(
     text: str = Query(..., min_length=1),
+    mode: str | None = Query(None, pattern="^(work|rest|social)$"),
     limit: int = Query(20, ge=1, le=50),
     user: dict[str, Any] = Depends(get_current_user),  # noqa: B008
     db: Client = Depends(get_user_db),  # noqa: B008
 ) -> list[dict[str, Any]]:
-    """Semantic search. Auth required."""
+    """Semantic search with optional mode filter. Auth required."""
     embeddings = get_embeddings_provider()
     service = SearchService(db=db, embeddings=embeddings)
     query = SearchQuery(text=text, limit=limit)
-    results = await service.search(query)
+    results = await service.search(query, mode=mode)
     return [r.model_dump() for r in results]

@@ -276,7 +276,7 @@ Core infrastructure everything else depends on. No user-facing product yet.
 
 **Chunk 4 — Pipeline Features (Wave 4-5):**
 
-- [ ] Search service: IDF taxonomy boost + mode pre-filter
+- [x] Search service: IDF taxonomy boost + mode pre-filter
 - [ ] Smart staleness sweep (only re-enrich when new reviews detected)
 - [ ] Cold start importers (Google Takeout parser + Cafe Nomad fetcher)
 - [ ] Propagate submission_id through ENRICH → EMBED → PUBLISH chain
