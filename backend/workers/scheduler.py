@@ -13,6 +13,9 @@ from workers.handlers.generate_embedding import handle_generate_embedding
 from workers.handlers.staleness_sweep import handle_staleness_sweep
 from workers.handlers.weekly_email import handle_weekly_email
 from workers.queue import JobQueue
+from providers.scraper import get_scraper_provider
+from workers.handlers.publish_shop import handle_publish_shop
+from workers.handlers.scrape_shop import handle_scrape_shop
 
 logger = structlog.get_logger()
 
@@ -59,6 +62,19 @@ async def process_job_queue() -> None:
             case JobType.WEEKLY_EMAIL:
                 email = get_email_provider()
                 await handle_weekly_email(db=db, email=email)
+            case JobType.SCRAPE_SHOP:
+                scraper = get_scraper_provider()
+                await handle_scrape_shop(
+                    payload=job.payload,
+                    db=db,
+                    scraper=scraper,
+                    queue=queue,
+                )
+            case JobType.PUBLISH_SHOP:
+                await handle_publish_shop(
+                    payload=job.payload,
+                    db=db,
+                )
             case _:
                 logger.warning("Unknown job type", job_type=job.job_type)
 
