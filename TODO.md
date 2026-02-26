@@ -263,7 +263,7 @@ Core infrastructure everything else depends on. No user-facing product yet.
 
 **Chunk 2 — Scraper Provider + Handlers (Wave 2-3):**
 
-- [ ] Apify scraper provider (ScraperProvider protocol + ApifyScraperAdapter)
+- [x] Apify scraper provider (ScraperProvider protocol + ApifyScraperAdapter)
 - [x] SCRAPE_SHOP handler (Apify scrape → store → chain to ENRICH_SHOP)
 - [x] PUBLISH_SHOP handler (set live → activity feed → flag for admin)
 
