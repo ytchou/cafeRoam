@@ -48,7 +48,8 @@ class ApifyScraperAdapter:
                 f"{h.get('day', '')}: {h.get('hours', '')}".strip(": ")
                 for h in place.get("openingHours") or []
                 if isinstance(h, dict)
-            ] or None,
+            ]
+            or None,
             phone=place.get("phone"),
             website=place.get("website"),
             menu_url=place.get("menu"),

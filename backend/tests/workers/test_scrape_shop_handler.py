@@ -62,14 +62,18 @@ async def test_scrape_shop_success(mock_db, mock_scraper, mock_queue, scraped_da
 
 
 @pytest.mark.asyncio
-async def test_scrape_shop_restores_reviews_on_insert_failure(mock_scraper, mock_queue, scraped_data):
+async def test_scrape_shop_restores_reviews_on_insert_failure(
+    mock_scraper, mock_queue, scraped_data
+):
     """If review insert fails, old reviews are restored."""
     db = MagicMock()
     db.table.return_value.update.return_value.eq.return_value.execute.return_value = MagicMock()
     db.table.return_value.upsert.return_value.execute.return_value = MagicMock()
 
     # Simulate: select returns existing reviews, delete succeeds, insert raises
-    old_reviews = [{"shop_id": "shop-1", "text": "Old review", "stars": 4, "published_at": "2025-01-01"}]
+    old_reviews = [
+        {"shop_id": "shop-1", "text": "Old review", "stars": 4, "published_at": "2025-01-01"}
+    ]
     db.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(
         data=old_reviews
     )
@@ -105,9 +109,7 @@ async def test_scrape_shop_not_found_marks_failed(mock_db, mock_scraper, mock_qu
     }
 
     # Permanent failure — should return cleanly (no exception) so the worker calls complete()
-    await handle_scrape_shop(
-        payload=payload, db=mock_db, scraper=mock_scraper, queue=mock_queue
-    )
+    await handle_scrape_shop(payload=payload, db=mock_db, scraper=mock_scraper, queue=mock_queue)
 
     # Should NOT queue ENRICH_SHOP
     mock_queue.enqueue.assert_not_called()

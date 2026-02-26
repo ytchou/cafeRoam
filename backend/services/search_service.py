@@ -59,7 +59,6 @@ class SearchService:
         if query.filters and query.filters.dimensions:
             await self._load_idf_cache()
 
-
         results: list[SearchResult] = []
         for row in rows:
             similarity = row.get("similarity", 0.0)

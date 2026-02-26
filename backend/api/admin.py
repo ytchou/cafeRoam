@@ -106,9 +106,7 @@ async def reject_submission(
     """Reject a submission and remove the associated shop."""
     db = get_service_role_client()
 
-    sub_response = (
-        db.table("shop_submissions").select("shop_id").eq("id", submission_id).execute()
-    )
+    sub_response = db.table("shop_submissions").select("shop_id").eq("id", submission_id).execute()
     if not sub_response.data:
         raise HTTPException(status_code=404, detail=f"Submission {submission_id} not found")
     sub_data = cast("dict[str, Any]", sub_response.data[0])
