@@ -53,7 +53,9 @@ class SearchService:
         response = self._db.rpc("search_shops", rpc_params).execute()
         rows = cast("list[dict[str, Any]]", response.data)
 
-        # Load IDF cache if needed (module-level, shared across requests)
+        # Load IDF cache if needed (module-level, shared across requests).
+        # Cold-start: the first request with dimension filters triggers the initial
+        # load; until then, _compute_taxonomy_boost falls back to count-based scoring.
         if query.filters and query.filters.dimensions:
             await self._load_idf_cache()
 
