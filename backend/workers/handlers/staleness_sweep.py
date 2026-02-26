@@ -17,7 +17,7 @@ async def handle_staleness_sweep(db: Client, queue: JobQueue) -> None:
     logger.info("Running staleness sweep")
 
     # Find stale shops via RPC (shops where enriched_at < now() - 90 days)
-    response = db.rpc("find_stale_shops", {"days_threshold": 90}).execute()
+    response = db.rpc("find_stale_shops", {"days_threshold": 90, "batch_limit": 100}).execute()
     stale_shops = cast("list[dict[str, Any]]", response.data)
 
     for shop in stale_shops:
@@ -38,7 +38,7 @@ async def handle_smart_staleness_sweep(
     """Smart staleness: only re-enrich when new Google reviews detected."""
     logger.info("Running smart staleness sweep")
 
-    response = db.rpc("find_stale_shops", {"days_threshold": 90}).execute()
+    response = db.rpc("find_stale_shops", {"days_threshold": 90, "batch_limit": 100}).execute()
     stale_shops = cast("list[dict[str, Any]]", response.data)
 
     queued = 0

@@ -155,6 +155,20 @@ class TestStalenessSweepHandler:
         await handle_staleness_sweep(db=db, queue=queue)
         assert queue.enqueue.call_count == 2
 
+    async def test_passes_batch_limit_to_rpc(self):
+        db = MagicMock()
+        queue = AsyncMock()
+        db.rpc = MagicMock(
+            return_value=MagicMock(
+                execute=MagicMock(return_value=MagicMock(data=[]))
+            )
+        )
+
+        await handle_staleness_sweep(db=db, queue=queue)
+        call_args = db.rpc.call_args
+        assert call_args[0][0] == "find_stale_shops"
+        assert call_args[0][1]["batch_limit"] == 100
+
 
 class TestEnrichMenuPhotoHandler:
     async def test_calls_llm_and_updates_shop_menu_data(self):
