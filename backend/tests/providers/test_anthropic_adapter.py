@@ -8,7 +8,9 @@ from providers.llm.anthropic_adapter import AnthropicLLMAdapter
 SAMPLE_TAXONOMY = [
     TaxonomyTag(id="quiet", dimension="ambience", label="Quiet", label_zh="安靜"),
     TaxonomyTag(id="deep_work", dimension="mode", label="Deep Work", label_zh="深度工作"),
-    TaxonomyTag(id="wifi_available", dimension="functionality", label="WiFi Available", label_zh="提供 WiFi"),
+    TaxonomyTag(
+        id="wifi_available", dimension="functionality", label="WiFi Available", label_zh="提供 WiFi"
+    ),
     TaxonomyTag(id="pour_over", dimension="coffee", label="Pour Over", label_zh="手沖咖啡"),
 ]
 
@@ -48,15 +50,17 @@ class TestAnthropicEnrichShop:
         )
 
     async def test_returns_enrichment_result_with_valid_tags(self, adapter):
-        mock_response = _make_tool_use_response({
-            "tags": [
-                {"id": "quiet", "confidence": 0.9},
-                {"id": "deep_work", "confidence": 0.85},
-            ],
-            "summary": "A quiet cafe perfect for focused work.",
-            "topReviews": ["很安靜適合工作"],
-            "mode": "work",
-        })
+        mock_response = _make_tool_use_response(
+            {
+                "tags": [
+                    {"id": "quiet", "confidence": 0.9},
+                    {"id": "deep_work", "confidence": 0.85},
+                ],
+                "summary": "A quiet cafe perfect for focused work.",
+                "topReviews": ["很安靜適合工作"],
+                "mode": "work",
+            }
+        )
         adapter._client = AsyncMock()
         adapter._client.messages.create = AsyncMock(return_value=mock_response)
 
@@ -71,15 +75,17 @@ class TestAnthropicEnrichShop:
         assert result.mode_scores == ShopModeScores(work=1.0, rest=0.0, social=0.0)
 
     async def test_filters_invalid_tags(self, adapter):
-        mock_response = _make_tool_use_response({
-            "tags": [
-                {"id": "quiet", "confidence": 0.9},
-                {"id": "nonexistent_tag", "confidence": 0.8},
-            ],
-            "summary": "A quiet place.",
-            "topReviews": [],
-            "mode": "rest",
-        })
+        mock_response = _make_tool_use_response(
+            {
+                "tags": [
+                    {"id": "quiet", "confidence": 0.9},
+                    {"id": "nonexistent_tag", "confidence": 0.8},
+                ],
+                "summary": "A quiet place.",
+                "topReviews": [],
+                "mode": "rest",
+            }
+        )
         adapter._client = AsyncMock()
         adapter._client.messages.create = AsyncMock(return_value=mock_response)
 
@@ -89,15 +95,17 @@ class TestAnthropicEnrichShop:
         assert result.tags[0].id == "quiet"
 
     async def test_clamps_confidence_values(self, adapter):
-        mock_response = _make_tool_use_response({
-            "tags": [
-                {"id": "quiet", "confidence": 1.5},
-                {"id": "deep_work", "confidence": -0.2},
-            ],
-            "summary": "Test.",
-            "topReviews": [],
-            "mode": "mixed",
-        })
+        mock_response = _make_tool_use_response(
+            {
+                "tags": [
+                    {"id": "quiet", "confidence": 1.5},
+                    {"id": "deep_work", "confidence": -0.2},
+                ],
+                "summary": "Test.",
+                "topReviews": [],
+                "mode": "mixed",
+            }
+        )
         adapter._client = AsyncMock()
         adapter._client.messages.create = AsyncMock(return_value=mock_response)
 
@@ -109,12 +117,14 @@ class TestAnthropicEnrichShop:
         assert 0.0 <= result.confidence <= 1.0
 
     async def test_defaults_invalid_mode_to_mixed(self, adapter):
-        mock_response = _make_tool_use_response({
-            "tags": [{"id": "quiet", "confidence": 0.9}],
-            "summary": "Test.",
-            "topReviews": [],
-            "mode": "invalid_mode",
-        })
+        mock_response = _make_tool_use_response(
+            {
+                "tags": [{"id": "quiet", "confidence": 0.9}],
+                "summary": "Test.",
+                "topReviews": [],
+                "mode": "invalid_mode",
+            }
+        )
         adapter._client = AsyncMock()
         adapter._client.messages.create = AsyncMock(return_value=mock_response)
 
@@ -130,12 +140,14 @@ class TestAnthropicEnrichShop:
             ("social", ShopModeScores(work=0.0, rest=0.0, social=1.0)),
             ("mixed", ShopModeScores(work=0.5, rest=0.5, social=0.5)),
         ]:
-            mock_response = _make_tool_use_response({
-                "tags": [{"id": "quiet", "confidence": 0.9}],
-                "summary": "Test.",
-                "topReviews": [],
-                "mode": mode,
-            })
+            mock_response = _make_tool_use_response(
+                {
+                    "tags": [{"id": "quiet", "confidence": 0.9}],
+                    "summary": "Test.",
+                    "topReviews": [],
+                    "mode": mode,
+                }
+            )
             adapter._client = AsyncMock()
             adapter._client.messages.create = AsyncMock(return_value=mock_response)
 
@@ -156,12 +168,14 @@ class TestAnthropicEnrichShop:
             await adapter.enrich_shop(SAMPLE_SHOP)
 
     async def test_prompt_includes_shop_data(self, adapter):
-        mock_response = _make_tool_use_response({
-            "tags": [],
-            "summary": "Test.",
-            "topReviews": [],
-            "mode": "mixed",
-        })
+        mock_response = _make_tool_use_response(
+            {
+                "tags": [],
+                "summary": "Test.",
+                "topReviews": [],
+                "mode": "mixed",
+            }
+        )
         adapter._client = AsyncMock()
         adapter._client.messages.create = AsyncMock(return_value=mock_response)
 
@@ -178,12 +192,14 @@ class TestAnthropicEnrichShop:
         assert "yes" in user_msg  # socket
 
     async def test_prompt_includes_taxonomy(self, adapter):
-        mock_response = _make_tool_use_response({
-            "tags": [],
-            "summary": "Test.",
-            "topReviews": [],
-            "mode": "mixed",
-        })
+        mock_response = _make_tool_use_response(
+            {
+                "tags": [],
+                "summary": "Test.",
+                "topReviews": [],
+                "mode": "mixed",
+            }
+        )
         adapter._client = AsyncMock()
         adapter._client.messages.create = AsyncMock(return_value=mock_response)
 
@@ -200,12 +216,14 @@ class TestAnthropicEnrichShop:
         assert "pour_over" in user_msg
 
     async def test_uses_forced_tool_choice(self, adapter):
-        mock_response = _make_tool_use_response({
-            "tags": [],
-            "summary": "Test.",
-            "topReviews": [],
-            "mode": "mixed",
-        })
+        mock_response = _make_tool_use_response(
+            {
+                "tags": [],
+                "summary": "Test.",
+                "topReviews": [],
+                "mode": "mixed",
+            }
+        )
         adapter._client = AsyncMock()
         adapter._client.messages.create = AsyncMock(return_value=mock_response)
 
@@ -216,12 +234,14 @@ class TestAnthropicEnrichShop:
         assert tool_choice == {"type": "tool", "name": "classify_shop"}
 
     async def test_empty_tags_returns_zero_confidence(self, adapter):
-        mock_response = _make_tool_use_response({
-            "tags": [],
-            "summary": "No tags found.",
-            "topReviews": [],
-            "mode": "mixed",
-        })
+        mock_response = _make_tool_use_response(
+            {
+                "tags": [],
+                "summary": "No tags found.",
+                "topReviews": [],
+                "mode": "mixed",
+            }
+        )
         adapter._client = AsyncMock()
         adapter._client.messages.create = AsyncMock(return_value=mock_response)
 
@@ -254,13 +274,15 @@ class TestAnthropicExtractMenuData:
         )
 
     async def test_returns_menu_items(self, adapter):
-        mock_response = _make_menu_tool_response({
-            "items": [
-                {"name": "Cappuccino", "price": 150, "category": "Coffee"},
-                {"name": "Matcha Latte", "price": 180},
-            ],
-            "raw_text": "Cappuccino 150\nMatcha Latte 180",
-        })
+        mock_response = _make_menu_tool_response(
+            {
+                "items": [
+                    {"name": "Cappuccino", "price": 150, "category": "Coffee"},
+                    {"name": "Matcha Latte", "price": 180},
+                ],
+                "raw_text": "Cappuccino 150\nMatcha Latte 180",
+            }
+        )
         adapter._client = AsyncMock()
         adapter._client.messages.create = AsyncMock(return_value=mock_response)
 
@@ -272,10 +294,12 @@ class TestAnthropicExtractMenuData:
         assert result.raw_text == "Cappuccino 150\nMatcha Latte 180"
 
     async def test_passes_image_url_in_content(self, adapter):
-        mock_response = _make_menu_tool_response({
-            "items": [],
-            "raw_text": None,
-        })
+        mock_response = _make_menu_tool_response(
+            {
+                "items": [],
+                "raw_text": None,
+            }
+        )
         adapter._client = AsyncMock()
         adapter._client.messages.create = AsyncMock(return_value=mock_response)
 
@@ -291,9 +315,11 @@ class TestAnthropicExtractMenuData:
         assert image_block["source"]["url"] == "https://storage.example.com/menu.jpg"
 
     async def test_empty_menu_returns_empty_items(self, adapter):
-        mock_response = _make_menu_tool_response({
-            "items": [],
-        })
+        mock_response = _make_menu_tool_response(
+            {
+                "items": [],
+            }
+        )
         adapter._client = AsyncMock()
         adapter._client.messages.create = AsyncMock(return_value=mock_response)
 

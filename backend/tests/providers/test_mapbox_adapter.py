@@ -54,9 +54,11 @@ class TestMapboxGeocode:
 
     async def test_returns_none_on_http_error(self, adapter):
         adapter._client = AsyncMock(spec=httpx.AsyncClient)
-        adapter._client.get = AsyncMock(side_effect=httpx.HTTPStatusError(
-            "Server error", request=MagicMock(), response=MagicMock(status_code=500)
-        ))
+        adapter._client.get = AsyncMock(
+            side_effect=httpx.HTTPStatusError(
+                "Server error", request=MagicMock(), response=MagicMock(status_code=500)
+            )
+        )
 
         result = await adapter.geocode("台北市")
         assert result is None

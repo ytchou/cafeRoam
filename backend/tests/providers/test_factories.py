@@ -63,7 +63,7 @@ class TestProviderFactories:
             provider = get_llm_provider(taxonomy=taxonomy)
             assert provider is not None
             assert hasattr(provider, "_taxonomy")
-            assert len(provider._taxonomy) == 1
+            assert len(provider._taxonomy) == 1  # type: ignore[attr-defined]
 
     def test_llm_factory_defaults_to_empty_taxonomy(self):
         with patch("providers.llm.settings") as mock:
@@ -74,7 +74,7 @@ class TestProviderFactories:
 
             provider = get_llm_provider()
             assert provider is not None
-            assert provider._taxonomy == []
+            assert provider._taxonomy == []  # type: ignore[attr-defined]
 
     def test_llm_factory_unknown_provider_raises(self):
         with patch("providers.llm.settings") as mock:
