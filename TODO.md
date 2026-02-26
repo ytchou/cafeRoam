@@ -274,7 +274,7 @@ Core infrastructure everything else depends on. No user-facing product yet.
 
 - [ ] Implement Anthropic adapter enrich_shop with TDD
 - [ ] Add extract_menu_data tests for Anthropic adapter
-- [ ] Implement Mapbox geocoding adapter with TDD
+- [x] Implement Mapbox geocoding adapter with TDD
 - [ ] Implement PostHog analytics adapter with TDD
 
 **Chunk 3 — Wiring & Verification (Wave 3-5):**
