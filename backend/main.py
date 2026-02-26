@@ -6,6 +6,7 @@ from fastapi import FastAPI
 
 from api.auth import router as auth_router
 from api.checkins import router as checkins_router
+from api.feed import router as feed_router
 from api.lists import router as lists_router
 from api.search import router as search_router
 from api.shops import router as shops_router
@@ -50,3 +51,4 @@ app.include_router(search_router)
 app.include_router(checkins_router)
 app.include_router(lists_router)
 app.include_router(stamps_router)
+app.include_router(feed_router)
