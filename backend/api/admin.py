@@ -6,7 +6,6 @@ from fastapi import APIRouter, Depends, HTTPException
 from api.deps import get_current_user
 from core.config import settings
 from db.supabase_client import get_service_role_client
-from models.types import JobStatus
 
 logger = structlog.get_logger()
 
@@ -27,13 +26,10 @@ async def pipeline_overview(
     """Job counts by status, recent submissions."""
     db = get_service_role_client()
 
-    # Count jobs by status
-    job_counts: dict[str, int] = {}
-    for status in JobStatus:
-        response = (
-            db.table("job_queue").select("id", count="exact").eq("status", status.value).execute()  # type: ignore[arg-type]
-        )
-        job_counts[status.value] = response.count or 0
+    # Count jobs by status — single GROUP BY query instead of N+1
+    counts_response = db.rpc("job_queue_counts_by_status", {}).execute()
+    counts_data = cast("list[dict[str, Any]]", counts_response.data or [])
+    job_counts: dict[str, int] = {row["status"]: int(row["count"]) for row in counts_data}
 
     # Recent submissions
     subs_response = (

@@ -77,15 +77,22 @@ async def handle_smart_staleness_sweep(
             skipped += 1
             continue
 
-        # Compare: are there newer reviews?
+        # Compare: are there newer reviews? Parse dates for safe comparison.
         has_new = False
         if fresh_reviews and latest_stored:
-            newest_scraped = max(
-                (r.get("published_at", "") for r in fresh_reviews if r.get("published_at")),
-                default="",
-            )
-            if newest_scraped and newest_scraped > latest_stored:  # type: ignore[operator]
-                has_new = True
+            scraped_dates = [
+                datetime.fromisoformat(r["published_at"])
+                for r in fresh_reviews
+                if r.get("published_at")
+            ]
+            if scraped_dates:
+                newest_scraped = max(scraped_dates)
+                try:
+                    stored_dt = datetime.fromisoformat(latest_stored)
+                    if newest_scraped > stored_dt:
+                        has_new = True
+                except (ValueError, TypeError):
+                    has_new = True  # Can't parse stored date — re-enrich to be safe
         elif fresh_reviews and not latest_stored:
             has_new = True
 
