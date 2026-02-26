@@ -55,6 +55,7 @@ async def handle_enrich_shop(
             "mode_work": mode.work if mode else None,
             "mode_rest": mode.rest if mode else None,
             "mode_social": mode.social if mode else None,
+            "processing_status": "embedding",
         }
     ).eq("id", shop_id).execute()
 

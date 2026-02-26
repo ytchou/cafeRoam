@@ -107,9 +107,11 @@ async def reject_submission(
     db = get_service_role_client()
 
     sub_response = (
-        db.table("shop_submissions").select("shop_id").eq("id", submission_id).single().execute()
+        db.table("shop_submissions").select("shop_id").eq("id", submission_id).execute()
     )
-    sub_data = cast("dict[str, Any]", sub_response.data)
+    if not sub_response.data:
+        raise HTTPException(status_code=404, detail=f"Submission {submission_id} not found")
+    sub_data = cast("dict[str, Any]", sub_response.data[0])
     shop_id = sub_data.get("shop_id")
 
     db.table("shop_submissions").update(

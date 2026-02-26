@@ -44,7 +44,11 @@ class ApifyScraperAdapter:
             google_place_id=place.get("placeId", ""),
             rating=place.get("totalScore"),
             review_count=place.get("reviewsCount", 0),
-            opening_hours=place.get("openingHours"),
+            opening_hours=[
+                f"{h.get('day', '')}: {h.get('hours', '')}".strip(": ")
+                for h in place.get("openingHours") or []
+                if isinstance(h, dict)
+            ] or None,
             phone=place.get("phone"),
             website=place.get("website"),
             menu_url=place.get("menu"),

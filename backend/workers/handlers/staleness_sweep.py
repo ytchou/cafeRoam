@@ -80,11 +80,13 @@ async def handle_smart_staleness_sweep(
         # Compare: are there newer reviews? Parse dates for safe comparison.
         has_new = False
         if fresh_reviews and latest_stored:
-            scraped_dates = [
-                datetime.fromisoformat(r["published_at"])
-                for r in fresh_reviews
-                if r.get("published_at")
-            ]
+            scraped_dates = []
+            for r in fresh_reviews:
+                if r.get("published_at"):
+                    try:
+                        scraped_dates.append(datetime.fromisoformat(r["published_at"]))
+                    except (ValueError, TypeError):
+                        pass  # skip malformed dates from Apify
             if scraped_dates:
                 newest_scraped = max(scraped_dates)
                 try:

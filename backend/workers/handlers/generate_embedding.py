@@ -30,10 +30,11 @@ async def handle_generate_embedding(
     # Generate embedding
     embedding = await embeddings.embed(text)
 
-    # Store embedding
+    # Store embedding and advance status
     db.table("shops").update(
         {
             "embedding": embedding,
+            "processing_status": "publishing",
         }
     ).eq("id", shop_id).execute()
 

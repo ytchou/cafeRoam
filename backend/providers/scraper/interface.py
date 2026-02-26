@@ -13,7 +13,7 @@ class ScrapedShopData(BaseModel):
     google_place_id: str
     rating: float | None = None
     review_count: int = 0
-    opening_hours: list[dict[str, str]] | None = None
+    opening_hours: list[str] | None = None
     phone: str | None = None
     website: str | None = None
     menu_url: str | None = None
