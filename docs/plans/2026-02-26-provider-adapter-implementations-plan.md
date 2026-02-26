@@ -19,6 +19,7 @@
 ### Task 1: Add ShopEnrichmentInput Model
 
 **Files:**
+
 - Modify: `backend/models/types.py` (after `SearchResult` class, ~line 113)
 - Test: `backend/tests/models/test_types.py` (create if needed)
 
@@ -99,6 +100,7 @@ git commit -m "feat: add ShopEnrichmentInput model for LLM enrichment"
 ### Task 2: Update LLM Protocol Interface
 
 **Files:**
+
 - Modify: `backend/providers/llm/interface.py`
 - Modify: `backend/tests/providers/test_factories.py` (update protocol check)
 
@@ -139,6 +141,7 @@ git commit -m "refactor: update LLMProvider.enrich_shop to accept ShopEnrichment
 ### Task 3: Implement Anthropic Adapter — enrich_shop (TDD)
 
 **Files:**
+
 - Create: `backend/tests/providers/test_anthropic_adapter.py`
 - Modify: `backend/providers/llm/anthropic_adapter.py`
 
@@ -619,6 +622,7 @@ git commit -m "feat: implement Anthropic adapter enrich_shop with tool use"
 ### Task 4: Implement Anthropic Adapter — extract_menu_data Tests
 
 **Files:**
+
 - Modify: `backend/tests/providers/test_anthropic_adapter.py` (add menu extraction tests)
 
 **Step 1: Write the failing tests**
@@ -726,6 +730,7 @@ git commit -m "test: add extract_menu_data tests for Anthropic adapter"
 ### Task 5: Implement Mapbox Maps Adapter (TDD)
 
 **Files:**
+
 - Create: `backend/tests/providers/test_mapbox_adapter.py`
 - Modify: `backend/providers/maps/mapbox_adapter.py`
 
@@ -960,6 +965,7 @@ git commit -m "feat: implement Mapbox geocoding adapter with httpx"
 ### Task 6: Implement PostHog Analytics Adapter (TDD)
 
 **Files:**
+
 - Create: `backend/tests/providers/test_posthog_adapter.py`
 - Modify: `backend/providers/analytics/posthog_adapter.py`
 
@@ -1143,6 +1149,7 @@ git commit -m "feat: implement PostHog analytics adapter"
 ### Task 7: Update LLM Factory for Taxonomy Parameter
 
 **Files:**
+
 - Modify: `backend/providers/llm/__init__.py`
 - Modify: `backend/tests/providers/test_factories.py` (update LLM factory test)
 
@@ -1227,6 +1234,7 @@ git commit -m "feat: update LLM factory to accept taxonomy parameter"
 ### Task 8: Add Missing Factory Tests (Maps + Analytics)
 
 **Files:**
+
 - Modify: `backend/tests/providers/test_factories.py`
 
 **Step 1: Write the tests**
@@ -1288,6 +1296,7 @@ git commit -m "test: add missing Maps and Analytics factory tests"
 ### Task 9: Update Worker Handlers for New enrich_shop Signature
 
 **Files:**
+
 - Modify: `backend/workers/handlers/enrich_shop.py`
 - Modify: `backend/tests/workers/test_handlers.py` (update mock)
 
@@ -1474,21 +1483,26 @@ graph TD
 ```
 
 **Wave 1** (parallel — no dependencies):
+
 - Task 1: ShopEnrichmentInput model
 - Task 2: LLM interface update
 - Task 5: Mapbox adapter (TDD)
 - Task 6: PostHog adapter (TDD)
 
 **Wave 2** (parallel — depends on Wave 1):
+
 - Task 3: Anthropic enrich_shop (TDD) ← Task 1, Task 2
 - Task 4: Menu extraction tests ← Task 2
 
 **Wave 3** (parallel — depends on Wave 2):
+
 - Task 7: LLM factory update ← Task 3
 - Task 8: Missing factory tests ← Task 5, Task 6
 
 **Wave 4** (sequential — depends on Wave 3):
+
 - Task 9: Worker handler update ← Task 7
 
 **Wave 5** (sequential — depends on all):
+
 - Task 10: Full verification ← all tasks

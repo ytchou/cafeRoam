@@ -10,24 +10,24 @@ Implement the 3 remaining stubbed provider adapters: LLM (Anthropic), Maps (Mapb
 
 ### Current State
 
-| Provider | Interface | Adapter | Factory | Status |
-|----------|-----------|---------|---------|--------|
-| Embeddings | Done | Done (OpenAI) | Done | Production |
-| Email | Done | Done (Resend) | Done | Production |
-| **LLM** | Done | **Stubbed** | Done | NotImplementedError |
-| **Maps** | Done | **Stubbed** | Done | NotImplementedError |
-| **Analytics** | Done | **Stubbed** | Done | pass (no-op) |
+| Provider      | Interface | Adapter       | Factory | Status              |
+| ------------- | --------- | ------------- | ------- | ------------------- |
+| Embeddings    | Done      | Done (OpenAI) | Done    | Production          |
+| Email         | Done      | Done (Resend) | Done    | Production          |
+| **LLM**       | Done      | **Stubbed**   | Done    | NotImplementedError |
+| **Maps**      | Done      | **Stubbed**   | Done    | NotImplementedError |
+| **Analytics** | Done      | **Stubbed**   | Done    | pass (no-op)        |
 
 ### Decision Summary
 
-| Decision | Choice | Rationale |
-|----------|--------|-----------|
-| LLM model | Sonnet (per ADR) | Quality gap vs Haiku is proven; config already defaults to claude-sonnet-4-6 |
-| enrich_shop input | ShopEnrichmentInput model | Cleaner than expanding params; easy to extend |
-| Taxonomy source | Injected via constructor | Keeps adapter pure; caller loads from DB/file |
-| Menu extraction | URL-based vision | Direct Supabase signed URL to Claude; no download step |
-| Maps HTTP client | httpx REST calls | No extra SDK dependency; testable |
-| PostHog init | Eager (constructor) | Fail fast; predictable |
+| Decision          | Choice                    | Rationale                                                                    |
+| ----------------- | ------------------------- | ---------------------------------------------------------------------------- |
+| LLM model         | Sonnet (per ADR)          | Quality gap vs Haiku is proven; config already defaults to claude-sonnet-4-6 |
+| enrich_shop input | ShopEnrichmentInput model | Cleaner than expanding params; easy to extend                                |
+| Taxonomy source   | Injected via constructor  | Keeps adapter pure; caller loads from DB/file                                |
+| Menu extraction   | URL-based vision          | Direct Supabase signed URL to Claude; no download step                       |
+| Maps HTTP client  | httpx REST calls          | No extra SDK dependency; testable                                            |
+| PostHog init      | Eager (constructor)       | Fail fast; predictable                                                       |
 
 ---
 
@@ -74,6 +74,7 @@ Taxonomy is injected at construction. The factory or caller loads it from DB or 
 ### 1.3 enrich_shop Implementation
 
 **Flow:**
+
 1. Build system prompt — expert classifier with rules (only taxonomy tags, confidence 0-1, 2-3 sentence summary, classify mode)
 2. Build user prompt — shop name, categories, price_range, socket, limited_time, rating, review_count, description, formatted reviews, full taxonomy listing
 3. Call Claude with forced tool use: `classify_shop` tool (same schema as TypeScript pipeline)
@@ -118,18 +119,19 @@ Taxonomy is injected at construction. The factory or caller loads it from DB or 
 
 **Mode-to-scores mapping:**
 
-| Mode string | ShopModeScores |
-|------------|----------------|
-| "work" | work=1.0, rest=0.0, social=0.0 |
-| "rest" | work=0.0, rest=1.0, social=0.0 |
-| "social" | work=0.0, rest=0.0, social=1.0 |
-| "mixed" | work=0.5, rest=0.5, social=0.5 |
+| Mode string | ShopModeScores                 |
+| ----------- | ------------------------------ |
+| "work"      | work=1.0, rest=0.0, social=0.0 |
+| "rest"      | work=0.0, rest=1.0, social=0.0 |
+| "social"    | work=0.0, rest=0.0, social=1.0 |
+| "mixed"     | work=0.5, rest=0.5, social=0.5 |
 
 Note: Pass 3c post-processing later refines these with tag-signal-based multi-mode inference.
 
 ### 1.4 extract_menu_data Implementation
 
 **Flow:**
+
 1. Build prompt: "Extract all menu items from this coffee shop menu photo. Return structured data."
 2. Call Claude vision API with image URL in the message content (URL source type)
 3. Forced tool use: `extract_menu` tool returning `{items: [{name, price, description?, category?}], raw_text}`
@@ -288,11 +290,13 @@ class PostHogAnalyticsAdapter:
 ## 4. Files Changed Summary
 
 ### New Files
+
 - `backend/tests/providers/test_anthropic_adapter.py`
 - `backend/tests/providers/test_mapbox_adapter.py`
 - `backend/tests/providers/test_posthog_adapter.py`
 
 ### Modified Files
+
 - `backend/models/types.py` — add `ShopEnrichmentInput`
 - `backend/providers/llm/interface.py` — update `enrich_shop` signature
 - `backend/providers/llm/anthropic_adapter.py` — full implementation
@@ -306,22 +310,22 @@ class PostHogAnalyticsAdapter:
 
 ## 5. Testing Strategy
 
-| Adapter | Test approach | Key test cases |
-|---------|--------------|----------------|
-| **Anthropic** | Mock `AsyncAnthropic` | Prompt includes all shop data; prompt includes taxonomy; valid tool use parsed correctly; invalid tags filtered; missing mode defaults to "mixed"; confidence clamped; API error propagates; vision URL passed correctly for menu extraction |
-| **Mapbox** | Mock `httpx.AsyncClient` | Successful geocode returns result; empty results return None; HTTP error returns None; timeout returns None; reverse geocode parses address |
-| **PostHog** | Mock `posthog` module | track() calls capture(); identify() calls identify(); page() maps to $pageview; errors don't propagate |
-| **Factories** | Mock settings | Maps factory returns MapboxMapsAdapter; Analytics factory returns PostHogAnalyticsAdapter; unknown provider raises ValueError |
+| Adapter       | Test approach            | Key test cases                                                                                                                                                                                                                               |
+| ------------- | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Anthropic** | Mock `AsyncAnthropic`    | Prompt includes all shop data; prompt includes taxonomy; valid tool use parsed correctly; invalid tags filtered; missing mode defaults to "mixed"; confidence clamped; API error propagates; vision URL passed correctly for menu extraction |
+| **Mapbox**    | Mock `httpx.AsyncClient` | Successful geocode returns result; empty results return None; HTTP error returns None; timeout returns None; reverse geocode parses address                                                                                                  |
+| **PostHog**   | Mock `posthog` module    | track() calls capture(); identify() calls identify(); page() maps to $pageview; errors don't propagate                                                                                                                                       |
+| **Factories** | Mock settings            | Maps factory returns MapboxMapsAdapter; Analytics factory returns PostHogAnalyticsAdapter; unknown provider raises ValueError                                                                                                                |
 
 ---
 
 ## 6. Dependencies
 
-| Package | Already in deps? | Needed for |
-|---------|-----------------|------------|
-| `anthropic` | Yes | LLM adapter |
-| `httpx` | Yes (FastAPI dep) | Maps adapter |
-| `posthog` | Yes (in pyproject.toml) | Analytics adapter |
+| Package     | Already in deps?        | Needed for        |
+| ----------- | ----------------------- | ----------------- |
+| `anthropic` | Yes                     | LLM adapter       |
+| `httpx`     | Yes (FastAPI dep)       | Maps adapter      |
+| `posthog`   | Yes (in pyproject.toml) | Analytics adapter |
 
 No new dependencies required.
 
