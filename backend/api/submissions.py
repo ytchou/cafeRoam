@@ -3,6 +3,7 @@ from typing import Any, cast
 
 import structlog
 from fastapi import APIRouter, Depends, HTTPException
+from postgrest.exceptions import APIError
 from pydantic import BaseModel, field_validator
 from supabase import Client
 
@@ -45,7 +46,7 @@ async def submit_shop(
     """Submit a Google Maps URL to add a new shop."""
     user_id = user["id"]
 
-    # Check for duplicate submission
+    # Check for duplicate submission (unique constraint enforces this at DB level too)
     existing = (
         db.table("shop_submissions")
         .select("id")
@@ -54,18 +55,25 @@ async def submit_shop(
     )
     if existing.data:
         raise HTTPException(status_code=409, detail="This URL has already been submitted")
+    # Note: unique constraint on google_maps_url handles the TOCTOU case
 
     # Create submission record (via user's RLS context)
-    sub_response = (
-        db.table("shop_submissions")
-        .insert(
-            {
-                "submitted_by": user_id,
-                "google_maps_url": body.google_maps_url,
-            }
+    # Unique constraint on google_maps_url catches any TOCTOU race
+    try:
+        sub_response = (
+            db.table("shop_submissions")
+            .insert(
+                {
+                    "submitted_by": user_id,
+                    "google_maps_url": body.google_maps_url,
+                }
+            )
+            .execute()
         )
-        .execute()
-    )
+    except APIError as e:
+        if "uq_shop_submissions_url" in str(e) or "23505" in str(e):
+            raise HTTPException(status_code=409, detail="This URL has already been submitted")
+        raise
     sub_data = cast("list[dict[str, Any]]", sub_response.data)
     submission_id = sub_data[0]["id"]
 

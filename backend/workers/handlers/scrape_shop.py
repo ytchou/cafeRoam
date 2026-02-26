@@ -50,7 +50,7 @@ async def handle_scrape_shop(
 
         raise ValueError(f"Place not found for URL: {google_maps_url}")
 
-    # Update shop with scraped data
+    # Update shop with scraped data; advance status to enriching
     db.table("shops").update(
         {
             "name": data.name,
@@ -64,12 +64,12 @@ async def handle_scrape_shop(
             "phone": data.phone,
             "website": data.website,
             "menu_url": data.menu_url,
-            "processing_status": "scraping",
+            "processing_status": "enriching",
             "updated_at": datetime.now(UTC).isoformat(),
         }
     ).eq("id", shop_id).execute()
 
-    # Store reviews
+    # Replace reviews: delete stale rows then insert fresh batch
     if data.reviews:
         review_rows = [
             {
@@ -82,15 +82,18 @@ async def handle_scrape_shop(
             if r.get("text")
         ]
         if review_rows:
-            db.table("shop_reviews").upsert(review_rows).execute()
+            db.table("shop_reviews").delete().eq("shop_id", shop_id).execute()
+            db.table("shop_reviews").insert(review_rows).execute()
 
-    # Store photos
+    # Store photos — upsert on (shop_id, url) to avoid duplicates on re-scrape
     if data.photo_urls:
         photo_rows = [
             {"shop_id": shop_id, "url": url, "sort_order": i}
             for i, url in enumerate(data.photo_urls)
         ]
-        db.table("shop_photos").upsert(photo_rows).execute()
+        db.table("shop_photos").upsert(
+            photo_rows, on_conflict="shop_id,url"
+        ).execute()
 
     # Link submission to shop
     if submission_id:
