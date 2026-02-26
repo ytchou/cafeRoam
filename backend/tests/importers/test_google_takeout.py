@@ -70,15 +70,18 @@ def test_parse_takeout_extracts_google_maps_url():
     assert results[0]["google_maps_url"] == "https://maps.google.com/?cid=789"
 
 
+def _setup_dedup_mock(db: MagicMock, data: list) -> None:
+    """Wire up the dedup query chain: ilike().gte().lte().gte().lte().execute()."""
+    chain = db.table.return_value.select.return_value.ilike.return_value
+    chain = chain.gte.return_value.lte.return_value.gte.return_value.lte.return_value
+    chain.execute.return_value = MagicMock(data=data)
+
+
 @pytest.fixture
 def mock_db_no_existing():
     """DB with no matching shops — dedup check returns empty."""
     db = MagicMock()
-    # Dedup query: table("shops").select("id").ilike(...).gte(...).lte(...).gte(...).lte(...).execute()
-    db.table.return_value.select.return_value.ilike.return_value.gte.return_value.lte.return_value.gte.return_value.lte.return_value.execute.return_value = MagicMock(
-        data=[]
-    )
-    # Insert returns a shop id
+    _setup_dedup_mock(db, data=[])
     db.table.return_value.insert.return_value.execute.return_value = MagicMock(
         data=[{"id": "new-shop-1"}]
     )
@@ -89,9 +92,7 @@ def mock_db_no_existing():
 def mock_db_existing():
     """DB with an existing matching shop — dedup check returns one row."""
     db = MagicMock()
-    db.table.return_value.select.return_value.ilike.return_value.gte.return_value.lte.return_value.gte.return_value.lte.return_value.execute.return_value = MagicMock(
-        data=[{"id": "existing-shop-1"}]
-    )
+    _setup_dedup_mock(db, data=[{"id": "existing-shop-1"}])
     return db
 
 
@@ -149,9 +150,7 @@ async def test_import_takeout_continues_on_single_place_failure():
     queue.enqueue = AsyncMock()
 
     # Both places pass dedup check
-    db.table.return_value.select.return_value.ilike.return_value.gte.return_value.lte.return_value.gte.return_value.lte.return_value.execute.return_value = MagicMock(
-        data=[]
-    )
+    _setup_dedup_mock(db, data=[])
 
     # First place insert raises, second succeeds
     first_insert = MagicMock()
@@ -173,9 +172,7 @@ async def test_import_takeout_cleans_up_shop_on_enqueue_failure():
     queue = MagicMock()
     queue.enqueue = AsyncMock(side_effect=Exception("Queue full"))
 
-    db.table.return_value.select.return_value.ilike.return_value.gte.return_value.lte.return_value.gte.return_value.lte.return_value.execute.return_value = MagicMock(
-        data=[]
-    )
+    _setup_dedup_mock(db, data=[])
     db.table.return_value.insert.return_value.execute.return_value = MagicMock(
         data=[{"id": "new-shop-1"}]
     )

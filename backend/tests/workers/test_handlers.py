@@ -24,7 +24,11 @@ class TestEnrichShopHandler:
             )
         )
         # Shop data (select().eq().single().execute())
-        db.table.return_value.select.return_value.eq.return_value.single.return_value.execute.return_value = MagicMock(
+        _shop_exec = (
+            db.table.return_value.select.return_value
+            .eq.return_value.single.return_value.execute
+        )
+        _shop_exec.return_value = MagicMock(
             data={
                 "id": "shop-1", "name": "Test Cafe", "description": None,
                 "categories": [], "price_range": None, "socket": None,
@@ -32,11 +36,11 @@ class TestEnrichShopHandler:
             }
         )
         # Reviews data (select().eq().execute())
-        db.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(data=[])
-
-        await handle_enrich_shop(
-            payload={"shop_id": "shop-1"}, db=db, llm=llm, queue=queue
+        db.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(
+            data=[]
         )
+
+        await handle_enrich_shop(payload={"shop_id": "shop-1"}, db=db, llm=llm, queue=queue)
 
         # Must delete old tags (not upsert) so stale tags are removed on re-enrichment
         db.table.return_value.delete.return_value.eq.return_value.execute.assert_called_once()
@@ -195,9 +199,7 @@ class TestStalenessSweepHandler:
         queue = AsyncMock()
         scraper = AsyncMock()
         db.rpc = MagicMock(
-            return_value=MagicMock(
-                execute=MagicMock(return_value=MagicMock(data=[]))
-            )
+            return_value=MagicMock(execute=MagicMock(return_value=MagicMock(data=[])))
         )
 
         await handle_smart_staleness_sweep(db=db, scraper=scraper, queue=queue)
