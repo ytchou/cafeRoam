@@ -114,6 +114,18 @@ class SearchResult(BaseModel):
     total_score: float
 
 
+class ShopEnrichmentInput(BaseModel):
+    name: str
+    reviews: list[str]
+    description: str | None = None
+    categories: list[str] = []
+    price_range: str | None = None
+    socket: str | None = None
+    limited_time: str | None = None
+    rating: float | None = None
+    review_count: int | None = None
+
+
 # --- Provider result types ---
 
 
