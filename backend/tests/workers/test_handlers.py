@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock, MagicMock
 from workers.handlers.enrich_menu_photo import handle_enrich_menu_photo
 from workers.handlers.enrich_shop import handle_enrich_shop
 from workers.handlers.generate_embedding import handle_generate_embedding
-from workers.handlers.staleness_sweep import handle_staleness_sweep
+from workers.handlers.staleness_sweep import handle_smart_staleness_sweep, handle_staleness_sweep
 from workers.handlers.weekly_email import handle_weekly_email
 
 
@@ -190,15 +190,17 @@ class TestStalenessSweepHandler:
         assert queue.enqueue.call_count == 2
 
     async def test_passes_batch_limit_to_rpc(self):
+        """Verify the production dispatch path (smart sweep) passes batch_limit."""
         db = MagicMock()
         queue = AsyncMock()
+        scraper = AsyncMock()
         db.rpc = MagicMock(
             return_value=MagicMock(
                 execute=MagicMock(return_value=MagicMock(data=[]))
             )
         )
 
-        await handle_staleness_sweep(db=db, queue=queue)
+        await handle_smart_staleness_sweep(db=db, scraper=scraper, queue=queue)
         call_args = db.rpc.call_args
         assert call_args[0][0] == "find_stale_shops"
         assert call_args[0][1]["batch_limit"] == 100
