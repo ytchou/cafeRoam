@@ -107,3 +107,35 @@ async def test_cafenomad_continues_on_single_shop_failure():
     # Only the second shop should be queued (first failed)
     assert count == 1
     queue.enqueue.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_cafenomad_cleans_up_shop_on_enqueue_failure():
+    """If enqueue fails after shop insert, the shop row is deleted."""
+    db = MagicMock()
+    queue = MagicMock()
+    queue.enqueue = AsyncMock(side_effect=Exception("Queue unavailable"))
+
+    db.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(
+        data=[]
+    )
+    db.table.return_value.insert.return_value.execute.return_value = MagicMock(
+        data=[{"id": "orphan-shop-1"}]
+    )
+    db.table.return_value.delete.return_value.eq.return_value.execute.return_value = MagicMock()
+
+    mock_response = MagicMock()
+    mock_response.json.return_value = [_CAFENOMAD_RAW[0]]  # single shop
+    mock_response.raise_for_status = MagicMock()
+
+    with patch("importers.cafe_nomad.httpx.AsyncClient") as mock_client_cls:
+        mock_client = AsyncMock()
+        mock_client.get = AsyncMock(return_value=mock_response)
+        mock_client_cls.return_value.__aenter__ = AsyncMock(return_value=mock_client)
+        mock_client_cls.return_value.__aexit__ = AsyncMock(return_value=False)
+
+        count = await fetch_and_import_cafenomad(db=db, queue=queue)
+
+    assert count == 0
+    # Verify the orphaned shop was cleaned up
+    db.table.return_value.delete.return_value.eq.return_value.execute.assert_called_once()

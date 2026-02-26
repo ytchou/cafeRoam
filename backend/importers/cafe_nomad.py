@@ -48,6 +48,7 @@ async def fetch_and_import_cafenomad(db: Any, queue: Any) -> int:
 
     for shop in shops:
         cafenomad_id = shop.get("id", "")
+        shop_id: str | None = None
         try:
             # Check if already imported
             existing = db.table("shops").select("id").eq("cafenomad_id", cafenomad_id).execute()
@@ -86,6 +87,8 @@ async def fetch_and_import_cafenomad(db: Any, queue: Any) -> int:
             queued += 1
         except Exception:
             logger.warning("Failed to import Cafe Nomad shop", cafenomad_id=cafenomad_id)
+            if shop_id:
+                db.table("shops").delete().eq("id", shop_id).execute()
             continue
 
     logger.info(
