@@ -258,7 +258,7 @@ Core infrastructure everything else depends on. No user-facing product yet.
 
 **Chunk 1 — DB Migrations + Models (Wave 1-2):**
 
-- [ ] DB migrations: shop_submissions, activity_feed, find_stale_shops RPC, pipeline columns
+- [x] DB migrations: shop_submissions, activity_feed, find_stale_shops RPC, pipeline columns
 - [ ] Pydantic models: ShopSubmission, ActivityFeedEvent, ProcessingStatus, new JobTypes
 
 **Chunk 2 — Scraper Provider + Handlers (Wave 2-3):**
