@@ -163,7 +163,11 @@ def mock_db_with_idf():
             }
         ]
     )
-    # IDF cache query (shop_tags table)
+    # Shop count query: table("shops").select(...).eq(...).execute().count
+    db.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(
+        count=50
+    )
+    # IDF cache query (shop_tags): table("shop_tags").select(...).execute()
     db.table.return_value.select.return_value.execute.return_value = MagicMock(
         data=[
             {"tag_id": "quiet", "shop_count": 5},
@@ -178,7 +182,7 @@ async def test_search_with_mode_filter(mock_supabase, mock_embeddings):
     mock_supabase.rpc.return_value.execute.return_value = MagicMock(data=[])
     service = SearchService(db=mock_supabase, embeddings=mock_embeddings)
     query = SearchQuery(text="quiet wifi", limit=10)
-    results = await service.search(query, mode="work", mode_threshold=0.4)
+    await service.search(query, mode="work", mode_threshold=0.4)
 
     # Should call RPC with mode filter params
     mock_supabase.rpc.assert_called_once()

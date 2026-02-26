@@ -80,6 +80,15 @@ class SearchService:
         if self._idf_cache is not None:
             return
 
+        # Get actual shop count for accurate IDF denominator
+        count_response = (
+            self._db.table("shops")
+            .select("id", count="exact")  # type: ignore[arg-type]
+            .eq("processing_status", "live")
+            .execute()
+        )
+        total_shops = max(count_response.count or 1, 1)
+
         response = self._db.table("shop_tags").select("tag_id, shop_count:count(*)").execute()
         rows = cast("list[dict[str, Any]]", response.data)
 
@@ -89,8 +98,8 @@ class SearchService:
             if not tag_id:
                 continue
             doc_freq = max(int(row.get("shop_count", 1)), 1)
-            # IDF: rarer tags score higher (using 100 as approximate total shops)
-            self._idf_cache[tag_id] = math.log(100.0 / doc_freq)
+            # IDF: rarer tags score higher
+            self._idf_cache[tag_id] = math.log(total_shops / doc_freq)
 
     def _compute_taxonomy_boost(self, row: dict[str, Any], query: SearchQuery) -> float:
         """Compute taxonomy boost based on IDF-weighted tag overlap."""

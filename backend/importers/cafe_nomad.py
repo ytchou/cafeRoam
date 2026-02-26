@@ -1,4 +1,5 @@
 from typing import Any
+from urllib.parse import quote
 
 import httpx
 import structlog
@@ -75,7 +76,8 @@ async def fetch_and_import_cafenomad(db: Any, queue: Any) -> int:
 
         shop_name = shop.get("name", "")
         shop_addr = shop.get("address", "")
-        google_maps_url = f"https://www.google.com/maps/search/{shop_name}+{shop_addr}"
+        query = quote(f"{shop_name} {shop_addr}", safe="")
+        google_maps_url = f"https://www.google.com/maps/search/{query}"
         await queue.enqueue(
             job_type=JobType.SCRAPE_SHOP,
             payload={"shop_id": shop_id, "google_maps_url": google_maps_url},

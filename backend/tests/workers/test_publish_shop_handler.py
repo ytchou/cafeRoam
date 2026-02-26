@@ -22,7 +22,16 @@ async def test_publish_shop_sets_status_live(mock_db):
 
     # Should update shop status to live
     mock_db.table.assert_any_call("shops")
-    # Should insert activity feed event
+    # No submitted_by — no feed event expected
+    feed_calls = [c for c in mock_db.table.call_args_list if c.args == ("activity_feed",)]
+    assert not feed_calls, "Should not insert feed event without submitted_by"
+
+
+@pytest.mark.asyncio
+async def test_publish_shop_inserts_feed_event_when_submitted_by(mock_db):
+    payload = {"shop_id": "shop-1", "submitted_by": "user-1"}
+    await handle_publish_shop(payload=payload, db=mock_db)
+
     mock_db.table.assert_any_call("activity_feed")
 
 

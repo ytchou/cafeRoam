@@ -46,6 +46,20 @@ async def pipeline_overview(
     }
 
 
+@router.get("/submissions")
+async def list_submissions(
+    status: str | None = None,
+    user: dict[str, Any] = Depends(_require_admin),  # noqa: B008
+) -> list[dict[str, Any]]:
+    """List shop submissions, optionally filtered by status."""
+    db = get_service_role_client()
+    query = db.table("shop_submissions").select("*").order("created_at", desc=True).limit(50)
+    if status:
+        query = query.eq("status", status)
+    response = query.execute()
+    return cast("list[dict[str, Any]]", response.data)
+
+
 @router.get("/dead-letter")
 async def dead_letter_jobs(
     user: dict[str, Any] = Depends(_require_admin),  # noqa: B008
@@ -70,6 +84,18 @@ async def retry_job(
 ) -> dict[str, str]:
     """Manually retry a failed/dead-letter job."""
     db = get_service_role_client()
+
+    job_response = db.table("job_queue").select("id, status").eq("id", job_id).execute()
+    if not job_response.data:
+        raise HTTPException(status_code=404, detail=f"Job {job_id} not found")
+
+    job_status = cast("list[dict[str, Any]]", job_response.data)[0]["status"]
+    if job_status not in ("failed", "dead_letter"):
+        raise HTTPException(
+            status_code=409,
+            detail=f"Job {job_id} is not retryable (status: {job_status})",
+        )
+
     db.table("job_queue").update({"status": "pending", "attempts": 0, "last_error": None}).eq(
         "id", job_id
     ).execute()
@@ -95,6 +121,11 @@ async def reject_submission(
     ).eq("id", submission_id).execute()
 
     if shop_id:
+        # Cancel in-flight jobs for this shop (JSONB payload filter)
+        db.rpc(
+            "cancel_shop_jobs",
+            {"p_shop_id": str(shop_id), "p_reason": "Submission rejected by admin"},
+        ).execute()
         db.table("shops").delete().eq("id", shop_id).execute()
 
     return {"message": f"Submission {submission_id} rejected"}

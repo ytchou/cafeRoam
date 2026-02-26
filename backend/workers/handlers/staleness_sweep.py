@@ -5,6 +5,7 @@ import structlog
 from supabase import Client
 
 from models.types import JobType
+from providers.scraper.interface import ScraperProvider
 from workers.queue import JobQueue
 
 logger = structlog.get_logger()
@@ -30,7 +31,7 @@ async def handle_staleness_sweep(db: Client, queue: JobQueue) -> None:
 
 async def handle_smart_staleness_sweep(
     db: Client,
-    scraper: Any,
+    scraper: ScraperProvider,
     queue: JobQueue,
 ) -> None:
     """Smart staleness: only re-enrich when new Google reviews detected."""

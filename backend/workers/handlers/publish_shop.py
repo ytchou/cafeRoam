@@ -21,28 +21,29 @@ async def handle_publish_shop(
     now = datetime.now(UTC).isoformat()
 
     # Set shop as live
-    db.table("shops").update(
-        {"processing_status": "live", "updated_at": now}
-    ).eq("id", shop_id).execute()
+    db.table("shops").update({"processing_status": "live", "updated_at": now}).eq(
+        "id", shop_id
+    ).execute()
 
     # Get shop name for activity feed
     shop_response = db.table("shops").select("name").eq("id", shop_id).single().execute()
     shop_name = cast("dict[str, Any]", shop_response.data).get("name", "Unknown")
 
-    # Insert activity feed event
-    db.table("activity_feed").insert(
-        {
-            "event_type": "shop_added",
-            "actor_id": submitted_by,
-            "shop_id": shop_id,
-            "metadata": {"shop_name": shop_name},
-        }
-    ).execute()
+    # Insert activity feed event only for user-submitted shops
+    if submitted_by:
+        db.table("activity_feed").insert(
+            {
+                "event_type": "shop_added",
+                "actor_id": submitted_by,
+                "shop_id": shop_id,
+                "metadata": {"shop_name": shop_name},
+            }
+        ).execute()
 
     # Update submission if exists
     if submission_id:
-        db.table("shop_submissions").update(
-            {"status": "live", "updated_at": now}
-        ).eq("id", submission_id).execute()
+        db.table("shop_submissions").update({"status": "live", "updated_at": now}).eq(
+            "id", submission_id
+        ).execute()
 
     logger.info("Shop published", shop_id=shop_id, shop_name=shop_name)
