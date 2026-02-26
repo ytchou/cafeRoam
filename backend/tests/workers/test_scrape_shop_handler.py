@@ -1,4 +1,4 @@
-from unittest.mock import AsyncMock, MagicMock, call, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -51,9 +51,7 @@ async def test_scrape_shop_success(mock_db, mock_scraper, mock_queue, scraped_da
     mock_scraper.scrape_by_url.return_value = scraped_data
     payload = {"shop_id": "shop-1", "google_maps_url": "https://maps.google.com/?cid=123"}
 
-    await handle_scrape_shop(
-        payload=payload, db=mock_db, scraper=mock_scraper, queue=mock_queue
-    )
+    await handle_scrape_shop(payload=payload, db=mock_db, scraper=mock_scraper, queue=mock_queue)
 
     # Should update shop with scraped data
     mock_db.table.assert_any_call("shops")
@@ -72,10 +70,10 @@ async def test_scrape_shop_not_found_marks_failed(mock_db, mock_scraper, mock_qu
         "submission_id": "sub-1",
     }
 
-    with pytest.raises(ValueError):
-        await handle_scrape_shop(
-            payload=payload, db=mock_db, scraper=mock_scraper, queue=mock_queue
-        )
+    # Permanent failure — should return cleanly (no exception) so the worker calls complete()
+    await handle_scrape_shop(
+        payload=payload, db=mock_db, scraper=mock_scraper, queue=mock_queue
+    )
 
     # Should NOT queue ENRICH_SHOP
     mock_queue.enqueue.assert_not_called()

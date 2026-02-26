@@ -77,6 +77,8 @@ async def process_job_queue() -> None:
                     payload=job.payload,
                     db=db,
                 )
+            case JobType.ADMIN_DIGEST_EMAIL:
+                logger.info("Admin digest email not yet implemented, skipping")
             case _:
                 logger.warning("Unknown job type", job_type=job.job_type)
 

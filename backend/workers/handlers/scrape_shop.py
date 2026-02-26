@@ -48,7 +48,7 @@ async def handle_scrape_shop(
                 }
             ).eq("id", submission_id).execute()
 
-        raise ValueError(f"Place not found for URL: {google_maps_url}")
+        return
 
     # Update shop with scraped data; advance status to enriching
     db.table("shops").update(

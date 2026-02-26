@@ -15,7 +15,7 @@ async def activity_feed(
     db = get_anon_client()
     response = (
         db.table("activity_feed")
-        .select("*")
+        .select("id, event_type, shop_id, metadata, created_at")
         .order("created_at", desc=True)
         .limit(limit)
         .execute()
