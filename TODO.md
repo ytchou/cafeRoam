@@ -265,7 +265,7 @@ Core infrastructure everything else depends on. No user-facing product yet.
 
 - [ ] Apify scraper provider (ScraperProvider protocol + ApifyScraperAdapter)
 - [x] SCRAPE_SHOP handler (Apify scrape → store → chain to ENRICH_SHOP)
-- [ ] PUBLISH_SHOP handler (set live → activity feed → flag for admin)
+- [x] PUBLISH_SHOP handler (set live → activity feed → flag for admin)
 
 **Chunk 3 — Wiring + API Routes (Wave 4-5):**
 
