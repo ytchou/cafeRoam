@@ -50,6 +50,8 @@ async def handle_smart_staleness_sweep(
         google_place_id = shop.get("google_place_id")
 
         if not google_place_id:
+            # No place ID to re-scrape from — fall back to re-enrichment with
+            # existing stored data (limited value, but avoids silently skipping)
             await queue.enqueue(
                 job_type=JobType.ENRICH_SHOP,
                 payload={"shop_id": shop_id},
@@ -98,9 +100,13 @@ async def handle_smart_staleness_sweep(
             has_new = True
 
         if has_new:
+            # Re-scrape to import the new review text, then the full pipeline
+            # (SCRAPE → ENRICH → EMBED → PUBLISH) brings the fresh data live.
+            # Using the canonical place-ID URL so Apify resolves the right shop.
+            maps_url = f"https://www.google.com/maps/place/?q=place_id:{google_place_id}"
             await queue.enqueue(
-                job_type=JobType.ENRICH_SHOP,
-                payload={"shop_id": shop_id},
+                job_type=JobType.SCRAPE_SHOP,
+                payload={"shop_id": shop_id, "google_maps_url": maps_url},
                 priority=1,
             )
             queued += 1

@@ -61,8 +61,11 @@ async def test_smart_sweep_queues_when_new_reviews(
     await handle_smart_staleness_sweep(
         db=mock_db, scraper=mock_scraper_with_new_reviews, queue=mock_queue
     )
-    # Should queue re-enrichment because new review found
+    # Should queue SCRAPE_SHOP (not ENRICH_SHOP) to import the new review text
     mock_queue.enqueue.assert_called_once()
+    call_kwargs = mock_queue.enqueue.call_args.kwargs
+    assert call_kwargs["job_type"].value == "scrape_shop"
+    assert "place_id:ChIJ_test" in call_kwargs["payload"]["google_maps_url"]
 
 
 @pytest.mark.asyncio
