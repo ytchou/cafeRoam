@@ -10,6 +10,7 @@ from models.types import (
     SearchFilters,
     SearchQuery,
     Shop,
+    ShopEnrichmentInput,
     ShopModeScores,
     TaxonomyTag,
 )
@@ -121,6 +122,36 @@ class TestSearchQuery:
         )
         assert q.filters is not None
         assert q.filters.radius_km == 2.0
+
+
+class TestShopEnrichmentInput:
+    def test_minimal_fields(self):
+        shop = ShopEnrichmentInput(name="Test Cafe", reviews=["Great coffee"])
+        assert shop.name == "Test Cafe"
+        assert shop.reviews == ["Great coffee"]
+        assert shop.categories == []
+        assert shop.description is None
+        assert shop.price_range is None
+        assert shop.socket is None
+        assert shop.limited_time is None
+        assert shop.rating is None
+        assert shop.review_count is None
+
+    def test_all_fields(self):
+        shop = ShopEnrichmentInput(
+            name="Test Cafe",
+            reviews=["Great coffee", "Nice vibe"],
+            description="A cozy spot",
+            categories=["咖啡廳", "書店"],
+            price_range="$200-400",
+            socket="yes",
+            limited_time="no",
+            rating=4.5,
+            review_count=42,
+        )
+        assert shop.rating == 4.5
+        assert shop.review_count == 42
+        assert shop.socket == "yes"
 
 
 class TestJobStatus:

@@ -4,7 +4,7 @@ from typing import Any, cast
 import structlog
 from supabase import Client
 
-from models.types import JobType
+from models.types import JobType, ShopEnrichmentInput
 from providers.llm.interface import LLMProvider
 from workers.queue import JobQueue
 
@@ -30,21 +30,45 @@ async def handle_enrich_shop(
     review_rows = cast("list[dict[str, Any]]", reviews_response.data)
     reviews = [r["text"] for r in review_rows if r.get("text")]
 
-    # Call LLM for enrichment
-    result = await llm.enrich_shop(
+    # Build enrichment input
+    enrichment_input = ShopEnrichmentInput(
         name=shop["name"],
         reviews=reviews,
         description=shop.get("description"),
-        categories=[],
+        categories=shop.get("categories", []),
+        price_range=shop.get("price_range"),
+        socket=shop.get("socket"),
+        limited_time=shop.get("limited_time"),
+        rating=shop.get("rating"),
+        review_count=shop.get("review_count"),
     )
 
-    # Write enrichment result
+    # Call LLM for enrichment
+    result = await llm.enrich_shop(enrichment_input)
+
+    # Write enrichment result — mode scores and summary to shops table
+    mode = result.mode_scores
     db.table("shops").update(
         {
             "description": result.summary,
             "enriched_at": datetime.now(UTC).isoformat(),
+            "mode_work": mode.work if mode else None,
+            "mode_rest": mode.rest if mode else None,
+            "mode_social": mode.social if mode else None,
         }
     ).eq("id", shop_id).execute()
+
+    # Write per-tag confidences to shop_tags (upsert to handle re-enrichment)
+    if result.tags:
+        tag_rows = [
+            {
+                "shop_id": shop_id,
+                "tag_id": tag.id,
+                "confidence": result.tag_confidences.get(tag.id, 0.0),
+            }
+            for tag in result.tags
+        ]
+        db.table("shop_tags").upsert(tag_rows).execute()
 
     # Queue embedding generation
     await queue.enqueue(

@@ -33,6 +33,7 @@ class TestProviderProtocols:
     def test_maps_provider_protocol_exists(self):
         assert hasattr(MapsProvider, "geocode")
         assert hasattr(MapsProvider, "reverse_geocode")
+        assert hasattr(MapsProvider, "close")
 
 
 class TestProviderFactories:
@@ -47,6 +48,34 @@ class TestProviderFactories:
 
             provider = get_llm_provider()
             assert provider is not None
+
+    def test_llm_factory_passes_taxonomy(self):
+        from models.types import TaxonomyTag
+
+        taxonomy = [
+            TaxonomyTag(id="quiet", dimension="ambience", label="Quiet", label_zh="安靜"),
+        ]
+        with patch("providers.llm.settings") as mock:
+            mock.llm_provider = "anthropic"
+            mock.anthropic_api_key = "test-key"
+            mock.anthropic_model = "claude-sonnet-4-6-20250514"
+            from providers.llm import get_llm_provider
+
+            provider = get_llm_provider(taxonomy=taxonomy)
+            assert provider is not None
+            assert hasattr(provider, "_taxonomy")
+            assert len(provider._taxonomy) == 1  # type: ignore[attr-defined]
+
+    def test_llm_factory_defaults_to_empty_taxonomy(self):
+        with patch("providers.llm.settings") as mock:
+            mock.llm_provider = "anthropic"
+            mock.anthropic_api_key = "test-key"
+            mock.anthropic_model = "claude-sonnet-4-6-20250514"
+            from providers.llm import get_llm_provider
+
+            provider = get_llm_provider()
+            assert provider is not None
+            assert provider._taxonomy == []  # type: ignore[attr-defined]
 
     def test_llm_factory_unknown_provider_raises(self):
         with patch("providers.llm.settings") as mock:
@@ -76,3 +105,41 @@ class TestProviderFactories:
 
             provider = get_email_provider()
             assert provider is not None
+
+    def test_maps_factory_returns_mapbox(self):
+        with patch("providers.maps.settings") as mock:
+            mock.maps_provider = "mapbox"
+            mock.mapbox_access_token = "pk.test-token"
+            from providers.maps import get_maps_provider
+
+            provider = get_maps_provider()
+            assert provider is not None
+
+    def test_maps_factory_unknown_provider_raises(self):
+        with patch("providers.maps.settings") as mock:
+            mock.maps_provider = "unknown"
+            from providers.maps import get_maps_provider
+
+            with pytest.raises(ValueError, match="Unknown maps provider"):
+                get_maps_provider()
+
+    def test_analytics_factory_returns_posthog(self):
+        with (
+            patch("providers.analytics.settings") as mock,
+            patch("providers.analytics.posthog_adapter.posthog_module"),
+        ):
+            mock.analytics_provider = "posthog"
+            mock.posthog_api_key = "test-key"
+            mock.posthog_host = "https://app.posthog.com"
+            from providers.analytics import get_analytics_provider
+
+            provider = get_analytics_provider()
+            assert provider is not None
+
+    def test_analytics_factory_unknown_provider_raises(self):
+        with patch("providers.analytics.settings") as mock:
+            mock.analytics_provider = "unknown"
+            from providers.analytics import get_analytics_provider
+
+            with pytest.raises(ValueError, match="Unknown analytics provider"):
+                get_analytics_provider()
