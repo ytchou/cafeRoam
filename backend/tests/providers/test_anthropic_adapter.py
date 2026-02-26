@@ -229,3 +229,86 @@ class TestAnthropicEnrichShop:
 
         assert result.tags == []
         assert result.confidence == 0.0
+
+
+def _make_menu_tool_response(tool_input: dict) -> MagicMock:
+    """Build a mock Anthropic response with an extract_menu tool_use block."""
+    tool_block = MagicMock()
+    tool_block.type = "tool_use"
+    tool_block.name = "extract_menu"
+    tool_block.input = tool_input
+
+    response = MagicMock()
+    response.content = [tool_block]
+    response.stop_reason = "tool_use"
+    return response
+
+
+class TestAnthropicExtractMenuData:
+    @pytest.fixture
+    def adapter(self):
+        return AnthropicLLMAdapter(
+            api_key="test-key",
+            model="claude-sonnet-4-6-20250514",
+            taxonomy=SAMPLE_TAXONOMY,
+        )
+
+    async def test_returns_menu_items(self, adapter):
+        mock_response = _make_menu_tool_response({
+            "items": [
+                {"name": "Cappuccino", "price": 150, "category": "Coffee"},
+                {"name": "Matcha Latte", "price": 180},
+            ],
+            "raw_text": "Cappuccino 150\nMatcha Latte 180",
+        })
+        adapter._client = AsyncMock()
+        adapter._client.messages.create = AsyncMock(return_value=mock_response)
+
+        result = await adapter.extract_menu_data("https://example.com/menu.jpg")
+
+        assert len(result.items) == 2
+        assert result.items[0]["name"] == "Cappuccino"
+        assert result.items[0]["price"] == 150
+        assert result.raw_text == "Cappuccino 150\nMatcha Latte 180"
+
+    async def test_passes_image_url_in_content(self, adapter):
+        mock_response = _make_menu_tool_response({
+            "items": [],
+            "raw_text": None,
+        })
+        adapter._client = AsyncMock()
+        adapter._client.messages.create = AsyncMock(return_value=mock_response)
+
+        await adapter.extract_menu_data("https://storage.example.com/menu.jpg")
+
+        call_args = adapter._client.messages.create.call_args
+        messages = call_args.kwargs.get("messages") or call_args[1].get("messages")
+        content_blocks = messages[0]["content"]
+
+        # First block should be the image
+        image_block = content_blocks[0]
+        assert image_block["type"] == "image"
+        assert image_block["source"]["url"] == "https://storage.example.com/menu.jpg"
+
+    async def test_empty_menu_returns_empty_items(self, adapter):
+        mock_response = _make_menu_tool_response({
+            "items": [],
+        })
+        adapter._client = AsyncMock()
+        adapter._client.messages.create = AsyncMock(return_value=mock_response)
+
+        result = await adapter.extract_menu_data("https://example.com/blank.jpg")
+
+        assert result.items == []
+        assert result.raw_text is None
+
+    async def test_uses_forced_tool_choice(self, adapter):
+        mock_response = _make_menu_tool_response({"items": []})
+        adapter._client = AsyncMock()
+        adapter._client.messages.create = AsyncMock(return_value=mock_response)
+
+        await adapter.extract_menu_data("https://example.com/menu.jpg")
+
+        call_args = adapter._client.messages.create.call_args
+        tool_choice = call_args.kwargs.get("tool_choice") or call_args[1].get("tool_choice")
+        assert tool_choice == {"type": "tool", "name": "extract_menu"}

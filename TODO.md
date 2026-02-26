@@ -273,7 +273,7 @@ Core infrastructure everything else depends on. No user-facing product yet.
 **Chunk 2 — Adapter Implementations (Wave 1-2):**
 
 - [x] Implement Anthropic adapter enrich_shop with TDD
-- [ ] Add extract_menu_data tests for Anthropic adapter
+- [x] Add extract_menu_data tests for Anthropic adapter
 - [x] Implement Mapbox geocoding adapter with TDD
 - [x] Implement PostHog analytics adapter with TDD
 
