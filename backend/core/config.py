@@ -33,6 +33,10 @@ class Settings(BaseSettings):
     maps_provider: str = "mapbox"
     mapbox_access_token: str = ""
 
+    # Scraper
+    scraper_provider: str = "apify"
+    apify_api_token: str = ""
+
     # Sentry
     sentry_dsn: str = ""
 
