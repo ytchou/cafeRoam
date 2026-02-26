@@ -12,8 +12,10 @@ CREATE TABLE activity_feed (
 CREATE INDEX idx_activity_feed_recent ON activity_feed (created_at DESC);
 CREATE INDEX idx_activity_feed_shop ON activity_feed (shop_id);
 
--- RLS: activity feed is public read, system-only write
+-- RLS: authenticated-only read prevents anon PostgREST access to actor_id.
+-- The /feed API endpoint uses the service-role client, which bypasses RLS,
+-- so the public feed still works while blocking direct anon table access.
 ALTER TABLE activity_feed ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY activity_feed_select ON activity_feed
-  FOR SELECT USING (true);
+  FOR SELECT TO authenticated USING (true);
