@@ -280,7 +280,7 @@ Core infrastructure everything else depends on. No user-facing product yet.
 **Chunk 3 — Wiring & Verification (Wave 3-5):**
 
 - [x] Update LLM factory for taxonomy parameter
-- [ ] Add missing Maps + Analytics factory tests
+- [x] Add missing Maps + Analytics factory tests
 - [ ] Update worker handlers for new enrich_shop signature
 - [ ] Full verification (pytest, ruff, mypy, pnpm test)
 

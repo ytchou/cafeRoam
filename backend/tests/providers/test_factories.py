@@ -104,3 +104,41 @@ class TestProviderFactories:
 
             provider = get_email_provider()
             assert provider is not None
+
+    def test_maps_factory_returns_mapbox(self):
+        with patch("providers.maps.settings") as mock:
+            mock.maps_provider = "mapbox"
+            mock.mapbox_access_token = "pk.test-token"
+            from providers.maps import get_maps_provider
+
+            provider = get_maps_provider()
+            assert provider is not None
+
+    def test_maps_factory_unknown_provider_raises(self):
+        with patch("providers.maps.settings") as mock:
+            mock.maps_provider = "unknown"
+            from providers.maps import get_maps_provider
+
+            with pytest.raises(ValueError, match="Unknown maps provider"):
+                get_maps_provider()
+
+    def test_analytics_factory_returns_posthog(self):
+        with (
+            patch("providers.analytics.settings") as mock,
+            patch("providers.analytics.posthog_adapter.posthog"),
+        ):
+            mock.analytics_provider = "posthog"
+            mock.posthog_api_key = "test-key"
+            mock.posthog_host = "https://app.posthog.com"
+            from providers.analytics import get_analytics_provider
+
+            provider = get_analytics_provider()
+            assert provider is not None
+
+    def test_analytics_factory_unknown_provider_raises(self):
+        with patch("providers.analytics.settings") as mock:
+            mock.analytics_provider = "unknown"
+            from providers.analytics import get_analytics_provider
+
+            with pytest.raises(ValueError, match="Unknown analytics provider"):
+                get_analytics_provider()
