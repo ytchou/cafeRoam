@@ -92,7 +92,7 @@ async def handle_scrape_shop(
                 logger.warning("Review insert failed — restoring snapshot", shop_id=shop_id)
                 if old_reviews:
                     db.table("shop_reviews").insert(old_reviews).execute()
-                return
+                raise  # Let scheduler mark job failed for retry; don't leave shop at "enriching"
 
     # Store photos — upsert on (shop_id, url) to avoid duplicates on re-scrape
     if data.photo_urls:

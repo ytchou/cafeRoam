@@ -82,14 +82,16 @@ async def test_scrape_shop_restores_reviews_on_insert_failure(mock_scraper, mock
     mock_scraper.scrape_by_url.return_value = scraped_data
     payload = {"shop_id": "shop-1", "google_maps_url": "https://maps.google.com/?cid=123"}
 
-    await handle_scrape_shop(payload=payload, db=db, scraper=mock_scraper, queue=mock_queue)
+    # Handler raises so the scheduler can mark the job failed for retry
+    with pytest.raises(Exception, match="DB error"):
+        await handle_scrape_shop(payload=payload, db=db, scraper=mock_scraper, queue=mock_queue)
 
     # Restore insert should have been called with the old reviews
     insert_calls = db.table.return_value.insert.call_args_list
     # First call: new reviews; second call: restore old reviews
     assert len(insert_calls) == 2
     assert insert_calls[1].args[0] == old_reviews
-    # Should NOT proceed to ENRICH_SHOP
+    # Should NOT have proceeded to ENRICH_SHOP
     mock_queue.enqueue.assert_not_called()
 
 
