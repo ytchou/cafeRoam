@@ -70,6 +70,24 @@ async def import_takeout_to_queue(
         if not place.get("google_maps_url"):
             continue
 
+        lat, lng = place["latitude"], place["longitude"]
+        coord_delta = 0.001  # ~111m
+
+        # Dedup: skip if a shop with the same name and approximate coordinates exists
+        existing = (
+            db.table("shops")
+            .select("id")
+            .ilike("name", place["name"])
+            .gte("latitude", lat - coord_delta)
+            .lte("latitude", lat + coord_delta)
+            .gte("longitude", lng - coord_delta)
+            .lte("longitude", lng + coord_delta)
+            .execute()
+        )
+        if existing.data:
+            logger.info("Skipping duplicate takeout place", name=place["name"])
+            continue
+
         # Insert pending shop
         response = (
             db.table("shops")
