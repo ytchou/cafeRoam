@@ -270,7 +270,7 @@ Core infrastructure everything else depends on. No user-facing product yet.
 **Chunk 3 — Wiring + API Routes (Wave 4-5):**
 
 - [x] Wire new handlers into scheduler dispatch loop
-- [ ] POST /submissions API route (user shop submission)
+- [x] POST /submissions API route (user shop submission)
 - [x] GET /feed API route (public community activity feed)
 - [ ] Admin dashboard API (overview, dead-letter, retry, reject)
 
