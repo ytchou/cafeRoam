@@ -1,4 +1,5 @@
 import math
+import time
 from typing import Any, cast
 
 from supabase import Client
@@ -8,12 +9,19 @@ from providers.embeddings.interface import EmbeddingsProvider
 
 _SHOP_FIELDS_HANDLED_SEPARATELY = {"photo_urls", "taxonomy_tags", "mode_scores"}
 
+# Module-level IDF cache — shared across all SearchService instances.
+# SearchService is instantiated per-request, so an instance-level cache never
+# survives between requests.  A 1-hour TTL is sufficient since tag distribution
+# only changes when new shops reach 'live' status.
+_IDF_CACHE: dict[str, float] | None = None
+_IDF_CACHE_AT: float = 0.0
+_IDF_TTL = 3600.0  # seconds
+
 
 class SearchService:
     def __init__(self, db: Client, embeddings: EmbeddingsProvider):
         self._db = db
         self._embeddings = embeddings
-        self._idf_cache: dict[str, float] | None = None
 
     async def search(
         self,
@@ -45,9 +53,10 @@ class SearchService:
         response = self._db.rpc("search_shops", rpc_params).execute()
         rows = cast("list[dict[str, Any]]", response.data)
 
-        # Load IDF cache if needed
+        # Load IDF cache if needed (module-level, shared across requests)
         if query.filters and query.filters.dimensions:
             await self._load_idf_cache()
+
 
         results: list[SearchResult] = []
         for row in rows:
@@ -76,8 +85,10 @@ class SearchService:
         return results
 
     async def _load_idf_cache(self) -> None:
-        """Load IDF scores from shop_tags aggregation."""
-        if self._idf_cache is not None:
+        """Load IDF scores from shop_tags via RPC, caching at module level."""
+        global _IDF_CACHE, _IDF_CACHE_AT
+        now = time.monotonic()
+        if _IDF_CACHE is not None and now - _IDF_CACHE_AT < _IDF_TTL:
             return
 
         # Get actual shop count for accurate IDF denominator
@@ -89,17 +100,21 @@ class SearchService:
         )
         total_shops = max(count_response.count or 1, 1)
 
-        response = self._db.table("shop_tags").select("tag_id, shop_count:count(*)").execute()
+        # Use RPC — PostgREST .select() cannot perform GROUP BY aggregations
+        response = self._db.rpc("shop_tag_counts", {}).execute()
         rows = cast("list[dict[str, Any]]", response.data)
 
-        self._idf_cache = {}
+        cache: dict[str, float] = {}
         for row in rows:
             tag_id = row.get("tag_id", "")
             if not tag_id:
                 continue
             doc_freq = max(int(row.get("shop_count", 1)), 1)
             # IDF: rarer tags score higher
-            self._idf_cache[tag_id] = math.log(total_shops / doc_freq)
+            cache[tag_id] = math.log(total_shops / doc_freq)
+
+        _IDF_CACHE = cache
+        _IDF_CACHE_AT = now
 
     def _compute_taxonomy_boost(self, row: dict[str, Any], query: SearchQuery) -> float:
         """Compute taxonomy boost based on IDF-weighted tag overlap."""
@@ -122,8 +137,8 @@ class SearchService:
         if not matching:
             return 0.0
 
-        if self._idf_cache:
-            idf_sum = sum(self._idf_cache.get(t, 1.0) for t in matching)
+        if _IDF_CACHE:
+            idf_sum = sum(_IDF_CACHE.get(t, 1.0) for t in matching)
             return idf_sum / max(len(shop_tags), 1)
 
         return len(matching) / max(len(shop_tags), 1)

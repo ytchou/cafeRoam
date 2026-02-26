@@ -1,3 +1,4 @@
+import contextlib
 from datetime import UTC, datetime
 from typing import Any, cast
 
@@ -83,10 +84,8 @@ async def handle_smart_staleness_sweep(
             scraped_dates = []
             for r in fresh_reviews:
                 if r.get("published_at"):
-                    try:
+                    with contextlib.suppress(ValueError, TypeError):
                         scraped_dates.append(datetime.fromisoformat(r["published_at"]))
-                    except (ValueError, TypeError):
-                        pass  # skip malformed dates from Apify
             if scraped_dates:
                 newest_scraped = max(scraped_dates)
                 try:

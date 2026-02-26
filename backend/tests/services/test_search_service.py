@@ -3,8 +3,19 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
+import services.search_service as _ss_module
 from models.types import SearchFilters, SearchQuery
 from services.search_service import SearchService
+
+
+@pytest.fixture(autouse=True)
+def reset_idf_cache():
+    """Reset module-level IDF cache between tests for isolation."""
+    _ss_module._IDF_CACHE = None
+    _ss_module._IDF_CACHE_AT = 0.0
+    yield
+    _ss_module._IDF_CACHE = None
+    _ss_module._IDF_CACHE_AT = 0.0
 
 
 def _make_shop(shop_id: str = "shop-1", name: str = "Test Cafe") -> dict:
@@ -132,47 +143,55 @@ class TestSearchService:
         assert results[0].total_score == pytest.approx(results[0].similarity_score * 0.7, rel=1e-4)
 
 
+_SEARCH_SHOP_ROW = {
+    "id": "shop-1",
+    "name": "Test Cafe",
+    "address": "Taipei",
+    "mrt": None,
+    "phone": None,
+    "website": None,
+    "opening_hours": None,
+    "rating": 4.5,
+    "review_count": 10,
+    "price_range": None,
+    "description": "A nice cafe",
+    "photo_urls": [],
+    "menu_url": None,
+    "cafenomad_id": None,
+    "google_place_id": None,
+    "latitude": 25.033,
+    "longitude": 121.565,
+    "similarity": 0.85,
+    "tag_ids": ["quiet", "wifi-reliable"],
+    "created_at": datetime.now().isoformat(),
+    "updated_at": datetime.now().isoformat(),
+}
+
+
 @pytest.fixture
 def mock_db_with_idf():
     db = MagicMock()
-    # RPC call for vector search
-    db.rpc.return_value.execute.return_value = MagicMock(
-        data=[
-            {
-                "id": "shop-1",
-                "name": "Test Cafe",
-                "address": "Taipei",
-                "mrt": None,
-                "phone": None,
-                "website": None,
-                "opening_hours": None,
-                "rating": 4.5,
-                "review_count": 10,
-                "price_range": None,
-                "description": "A nice cafe",
-                "photo_urls": [],
-                "menu_url": None,
-                "cafenomad_id": None,
-                "google_place_id": None,
-                "latitude": 25.033,
-                "longitude": 121.565,
-                "similarity": 0.85,
-                "tag_ids": ["quiet", "wifi-reliable"],
-                "created_at": datetime.now().isoformat(),
-                "updated_at": datetime.now().isoformat(),
-            }
-        ]
-    )
+
+    # Route two different RPCs to different return values
+    def _rpc_side_effect(name: str, params: dict):
+        m = MagicMock()
+        if name == "search_shops":
+            m.execute.return_value = MagicMock(data=[_SEARCH_SHOP_ROW])
+        elif name == "shop_tag_counts":
+            m.execute.return_value = MagicMock(
+                data=[
+                    {"tag_id": "quiet", "shop_count": 5},
+                    {"tag_id": "wifi-reliable", "shop_count": 3},
+                ]
+            )
+        else:
+            m.execute.return_value = MagicMock(data=[])
+        return m
+
+    db.rpc.side_effect = _rpc_side_effect
     # Shop count query: table("shops").select(...).eq(...).execute().count
     db.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(
         count=50
-    )
-    # IDF cache query (shop_tags): table("shop_tags").select(...).execute()
-    db.table.return_value.select.return_value.execute.return_value = MagicMock(
-        data=[
-            {"tag_id": "quiet", "shop_count": 5},
-            {"tag_id": "wifi-reliable", "shop_count": 3},
-        ]
     )
     return db
 
