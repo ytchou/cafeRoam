@@ -327,9 +327,9 @@ Core infrastructure everything else depends on. No user-facing product yet.
 - [x] Deep health check endpoint (/health/deep with DB validation)
 
 **Chunk 2 — Frontend Observability (Wave 1):**
-- [ ] Sentry frontend initialization (@sentry/nextjs, source maps)
+- [x] Sentry frontend initialization (@sentry/nextjs, source maps)
 - [ ] PostHog frontend provider (posthog-js, DNT respect)
-- [ ] Environment variable documentation
+- [x] Environment variable documentation
 
 **Chunk 3 — Worker Integration (Wave 2):**
 - [ ] Worker Sentry integration (capture job failures with context)
