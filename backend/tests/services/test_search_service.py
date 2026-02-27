@@ -1,4 +1,3 @@
-from datetime import datetime
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -6,6 +5,7 @@ import pytest
 import services.search_service as _ss_module
 from models.types import SearchFilters, SearchQuery
 from services.search_service import SearchService
+from tests.factories import make_shop_row
 
 
 @pytest.fixture(autouse=True)
@@ -18,44 +18,12 @@ def reset_idf_cache():
     _ss_module._IDF_CACHE_AT = 0.0
 
 
-def _make_shop(shop_id: str = "shop-1", name: str = "Test Cafe") -> dict:
-    """Helper to create a shop row dict as returned by Supabase."""
-    return {
-        "id": shop_id,
-        "name": name,
-        "address": "123 Test St",
-        "latitude": 25.033,
-        "longitude": 121.565,
-        "mrt": None,
-        "phone": None,
-        "website": None,
-        "opening_hours": None,
-        "rating": 4.5,
-        "review_count": 10,
-        "price_range": None,
-        "description": "A nice cafe",
-        "photo_urls": [],
-        "menu_url": None,
-        "cafenomad_id": None,
-        "google_place_id": None,
-        "created_at": datetime.now().isoformat(),
-        "updated_at": datetime.now().isoformat(),
-        "similarity": 0.85,
-    }
-
-
 @pytest.fixture
 def mock_embeddings():
     provider = AsyncMock()
     provider.embed = AsyncMock(return_value=[0.1] * 1536)
     provider.dimensions = 1536
     return provider
-
-
-@pytest.fixture
-def mock_supabase():
-    client = MagicMock()
-    return client
 
 
 @pytest.fixture
@@ -73,7 +41,7 @@ class TestSearchService:
         mock_embeddings.embed.assert_called_once_with("good wifi for working")
 
     async def test_search_returns_ranked_results(self, search_service, mock_supabase):
-        shop_data = _make_shop()
+        shop_data = make_shop_row()
         mock_supabase.rpc = MagicMock(
             return_value=MagicMock(execute=MagicMock(return_value=MagicMock(data=[shop_data])))
         )
@@ -106,9 +74,9 @@ class TestSearchService:
         assert params["filter_radius_km"] == 3.0
 
     async def test_search_sorts_by_total_score(self, search_service, mock_supabase):
-        shop_low = _make_shop(shop_id="shop-low", name="Low Score")
+        shop_low = make_shop_row(id="shop-low", name="Low Score")
         shop_low["similarity"] = 0.5
-        shop_high = _make_shop(shop_id="shop-high", name="High Score")
+        shop_high = make_shop_row(id="shop-high", name="High Score")
         shop_high["similarity"] = 0.95
         mock_supabase.rpc = MagicMock(
             return_value=MagicMock(
@@ -132,7 +100,7 @@ class TestSearchService:
         assert params["match_count"] == 20
 
     async def test_taxonomy_boost_zero_without_filters(self, search_service, mock_supabase):
-        shop_data = _make_shop()
+        shop_data = make_shop_row()
         mock_supabase.rpc = MagicMock(
             return_value=MagicMock(execute=MagicMock(return_value=MagicMock(data=[shop_data])))
         )
@@ -143,29 +111,7 @@ class TestSearchService:
         assert results[0].total_score == pytest.approx(results[0].similarity_score * 0.7, rel=1e-4)
 
 
-_SEARCH_SHOP_ROW = {
-    "id": "shop-1",
-    "name": "Test Cafe",
-    "address": "Taipei",
-    "mrt": None,
-    "phone": None,
-    "website": None,
-    "opening_hours": None,
-    "rating": 4.5,
-    "review_count": 10,
-    "price_range": None,
-    "description": "A nice cafe",
-    "photo_urls": [],
-    "menu_url": None,
-    "cafenomad_id": None,
-    "google_place_id": None,
-    "latitude": 25.033,
-    "longitude": 121.565,
-    "similarity": 0.85,
-    "tag_ids": ["quiet", "wifi-reliable"],
-    "created_at": datetime.now().isoformat(),
-    "updated_at": datetime.now().isoformat(),
-}
+_SEARCH_SHOP_ROW = make_shop_row(tag_ids=["quiet", "wifi-reliable"])
 
 
 @pytest.fixture
