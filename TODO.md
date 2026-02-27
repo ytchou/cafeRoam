@@ -351,7 +351,7 @@ Core infrastructure everything else depends on. No user-facing product yet.
 - [x] Backend test factories (make_user, make_shop_row, make_list, make_checkin, make_stamp)
 - [x] Frontend test factories (makeUser, makeSession, makeShop, makeList, makeCheckIn, makeStamp)
 - [x] Frontend mock helpers (createMockSupabaseAuth, createMockRouter)
-- [ ] Validate pattern: refactor settings/page.test.tsx to use shared utilities
+- [x] Validate pattern: refactor settings/page.test.tsx to use shared utilities
 - [ ] Validate pattern: refactor test_search_service.py to use shared factories
 
 **Phase 1 — Auth Test Hardening (Wave 3):**
