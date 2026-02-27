@@ -23,7 +23,7 @@
 | Storage          | Supabase Storage                  | Check-in photos, menu photos; RLS enforced           |
 | Error tracking   | Sentry                            | Frontend + backend, free tier at launch              |
 | Analytics        | PostHog                           | Via AnalyticsProvider protocol abstraction           |
-| Uptime           | UptimeRobot                       | 5-minute checks, email alerts                        |
+| Uptime           | Better Stack                      | 30-second checks, Slack/Discord + email alerts       |
 
 **Full rationale for each choice:** see `docs/decisions/`
 
@@ -123,9 +123,9 @@ Things that must exist for this product to ship. If any of these slip, the timel
 
 - **Error tracking:** Sentry — captures frontend + API route errors. Alert on new error types. Free tier sufficient at launch.
 - **Logging:** Railway built-in log viewer for app and worker logs. Structured JSON logs.
-- **Uptime monitoring:** UptimeRobot — 5-minute checks on production URL. Email alert on downtime.
+- **Uptime monitoring:** Better Stack — 30-second checks on production URLs. Slack/Discord + email alerts on downtime. Public status page.
 - **Analytics:** PostHog via IAnalyticsProvider. Tracks: search queries (anonymized), filter usage, check-in events, WAU, funnel from landing → auth → search. Never log user PII in analytics events.
-- **Alerting:** Sentry (new errors), UptimeRobot (downtime), Railway (worker crash logs).
+- **Alerting:** Sentry (new errors, email), Better Stack (downtime, Slack/Discord), Railway (worker crash logs).
 
 ---
 
