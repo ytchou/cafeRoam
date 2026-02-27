@@ -318,7 +318,32 @@ Core infrastructure everything else depends on. No user-facing product yet.
 
 ### Observability & Ops
 
-- [ ] Sentry + PostHog + UptimeRobot configured
+> **Design Doc:** [docs/designs/2026-02-27-observability-ops-design.md](docs/designs/2026-02-27-observability-ops-design.md)
+> **Plan:** [docs/plans/2026-02-27-observability-ops-plan.md](docs/plans/2026-02-27-observability-ops-plan.md)
+
+**Chunk 1 — Backend Observability (Wave 1):**
+
+- [x] Sentry backend initialization (DSN-gated, environment context)
+- [x] Request ID middleware (UUID per request, structured logging)
+- [x] Deep health check endpoint (/health/deep with DB validation)
+
+**Chunk 2 — Frontend Observability (Wave 1):**
+
+- [x] Sentry frontend initialization (@sentry/nextjs, source maps)
+- [x] PostHog frontend provider (posthog-js, DNT respect)
+- [x] Environment variable documentation
+
+**Chunk 3 — Worker Integration (Wave 2):**
+
+- [x] Worker Sentry integration (capture job failures with context)
+
+**Chunk 4 — Verification & Ops (Wave 3):**
+
+- [x] Full test suite verification (backend + frontend)
+- [x] Better Stack setup guide (manual external configuration)
+
+**Deferred:**
+
 - [ ] Admin/ops tooling: internal dashboard for data quality review and manual shop enrichment
 
 **Phase 1 is done when:** 200+ shops are live in the database with taxonomy tags and embeddings. Auth works end-to-end including PDPA consent and account deletion. Admin can add and edit shop data. `git clone` → running app in under 15 minutes.
@@ -374,6 +399,28 @@ The minimum that makes CafeRoam useful to a real user.
 - [ ] LINE group for beta feedback collection
 - [ ] Iterate on beta feedback: data gaps, search quality issues, UX friction
 
+### Activate Observability Stack
+
+Code is merged and env-gated — nothing fires until these are set in Railway:
+
+_Sentry:_
+
+- [ ] Create Sentry project → set `SENTRY_DSN` (backend Railway service) and `NEXT_PUBLIC_SENTRY_DSN` (frontend Railway service)
+- [ ] Create Sentry auth token → set `SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, `SENTRY_PROJECT` in Railway (source map uploads on deploy)
+- [ ] Trigger a test error post-deploy to confirm events arrive in Sentry
+
+_PostHog:_
+
+- [ ] Create PostHog project → set `NEXT_PUBLIC_POSTHOG_KEY` in Railway (frontend)
+- [ ] Confirm `NEXT_PUBLIC_POSTHOG_HOST` is set (defaults to `https://app.posthog.com` if omitted)
+- [ ] Verify pageview events in PostHog Live Events after first deploy
+
+_Better Stack:_
+
+- [ ] Create Better Stack account → follow `docs/ops/better-stack-setup.md` to add 3 monitors (API Health, Web Health, API Deep Health)
+- [ ] Configure Slack/Discord webhook alert policy (2 consecutive failures before alert)
+- [ ] Create `status.caferoam.com` status page → add CNAME in DNS
+
 ### Quality Gate
 
 - [ ] Weekly curated email: template + Railway cron job + Resend integration
@@ -385,7 +432,7 @@ The minimum that makes CafeRoam useful to a real user.
 
 - [ ] Public Threads launch post with beta user testimonials
 
-**Phase 3 is done when:** 20+ of 30 beta users say "better than Google Maps/Cafe Nomad." Public Threads post published. UptimeRobot shows 99%+ uptime during 2-week beta. 50+ WAU achieved.
+**Phase 3 is done when:** 20+ of 30 beta users say "better than Google Maps/Cafe Nomad." Public Threads post published. Better Stack shows 99%+ uptime during 2-week beta. 50+ WAU achieved.
 
 ---
 

@@ -56,6 +56,7 @@ The data pipeline is a Postgres-backed job queue with linear job chaining. Two i
 ```
 
 Scheduled jobs (separate from the submission pipeline):
+
 - **Smart staleness sweep** (daily 3 AM): Check for shops with new Google reviews since last enrichment. Queue re-enrichment only for changed shops.
 - **Weekly email** (Monday 9 AM): Curated content to opted-in users.
 - **Account deletion cleanup** (daily 4 AM): Cascade delete user data (PDPA).
@@ -235,6 +236,7 @@ Action:
 Google Takeout saved places export a GeoJSON file (`Saved Places.json`).
 
 The parser:
+
 1. Reads the GeoJSON file
 2. Filters to Taiwan coordinates (bounding box)
 3. Deduplicates against existing shops (by Google Place ID or coordinates + name similarity)
@@ -244,6 +246,7 @@ The parser:
 ### Cafe Nomad Importer
 
 Ported from prebuild `pass0-seed.json` logic to Python:
+
 1. Fetch Cafe Nomad API (`https://cafenomad.tw/api/v1.2/cafes/taipei`)
 2. Filter: remove closed, shell companies, out-of-bounds, duplicates
 3. Insert with `source='cafe_nomad'`, `processing_status='pending'`
@@ -304,25 +307,25 @@ Requires authentication. Returns shops ranked by combined similarity + taxonomy 
 
 ### Error Handling
 
-| Failure Type | Behavior | Max Retries | Backoff |
-|---|---|---|---|
-| Apify scrape timeout | Retry with same params | 3 | 60s, 300s, 900s |
-| Apify place not found | Permanently failed, notify submitter | 1 (no retry) | — |
-| Claude enrichment error | Retry | 3 | 60s, 300s, 900s |
-| OpenAI embedding error | Retry | 3 | 30s, 120s, 300s |
-| Apify rate limit | Retry with longer backoff | 5 | 300s, 600s, 1800s, 3600s, 7200s |
+| Failure Type            | Behavior                             | Max Retries  | Backoff                         |
+| ----------------------- | ------------------------------------ | ------------ | ------------------------------- |
+| Apify scrape timeout    | Retry with same params               | 3            | 60s, 300s, 900s                 |
+| Apify place not found   | Permanently failed, notify submitter | 1 (no retry) | —                               |
+| Claude enrichment error | Retry                                | 3            | 60s, 300s, 900s                 |
+| OpenAI embedding error  | Retry                                | 3            | 30s, 120s, 300s                 |
+| Apify rate limit        | Retry with longer backoff            | 5            | 300s, 600s, 1800s, 3600s, 7200s |
 
 After max retries exhausted: move to `dead_letter` status, flag in admin dashboard.
 
 ### Monitoring
 
-| What | How |
-|---|---|
-| Job queue depth | Postgres query: count of pending jobs by type. Exposed via `/admin/metrics`. |
-| Job failure rate | Count of failed + dead_letter jobs in last 24h. Alert if > 10%. |
-| Enrichment cost tracking | Log token usage per enrichment call. Monthly aggregate in admin dashboard. |
-| Pipeline latency | Time from submission to `live` status. Track p50/p95 in PostHog. |
-| Worker health | APScheduler heartbeat. Sentry captures unhandled exceptions. |
+| What                     | How                                                                          |
+| ------------------------ | ---------------------------------------------------------------------------- |
+| Job queue depth          | Postgres query: count of pending jobs by type. Exposed via `/admin/metrics`. |
+| Job failure rate         | Count of failed + dead_letter jobs in last 24h. Alert if > 10%.              |
+| Enrichment cost tracking | Log token usage per enrichment call. Monthly aggregate in admin dashboard.   |
+| Pipeline latency         | Time from submission to `live` status. Track p50/p95 in PostHog.             |
+| Worker health            | APScheduler heartbeat. Sentry captures unhandled exceptions.                 |
 
 ### Admin Dashboard API
 
@@ -338,12 +341,12 @@ Protected by admin role check.
 
 ### Notifications
 
-| Event | Recipient | Channel |
-|---|---|---|
-| Shop published (user submission) | Submitter | Activity feed (public) |
-| Submission permanently failed | Submitter | In-app notification (private) |
-| Daily digest (new shops, failures) | Admin | Email via Resend |
-| Dead-letter job | Admin | Admin dashboard + daily digest |
+| Event                              | Recipient | Channel                        |
+| ---------------------------------- | --------- | ------------------------------ |
+| Shop published (user submission)   | Submitter | Activity feed (public)         |
+| Submission permanently failed      | Submitter | In-app notification (private)  |
+| Daily digest (new shops, failures) | Admin     | Email via Resend               |
+| Dead-letter job                    | Admin     | Admin dashboard + daily digest |
 
 ## Deployment
 
@@ -356,6 +359,7 @@ Railway Project
 ```
 
 The worker service:
+
 - Runs `uvicorn` with a health check endpoint (`/health`)
 - APScheduler starts on boot, runs the poll loop + cron jobs
 - Shares the same Supabase database as the API
@@ -382,28 +386,29 @@ async def health():
 ### Scaling
 
 At V1 scale (200 shops, 5-20 submissions/month):
+
 - Single worker instance is sufficient
 - 30s poll interval = max 2 jobs/minute throughput
 - Horizontal scaling: deploy additional worker instances (FOR UPDATE SKIP LOCKED handles concurrency)
 
 ## Key Decisions
 
-| Decision | Rationale | ADR |
-|---|---|---|
-| Apify ongoing (not one-time) | User submissions need scraping. 5-review limit on Places API is a blocker. | Updated: `2026-02-23-apify-over-outscraper.md` |
-| Linear job chain orchestration | Simple, reuses existing job queue. Individual step retries. | `2026-02-26-linear-job-chain-orchestration.md` |
-| Smart re-enrichment | Only re-enrich when new reviews detected. Saves ~60% cost vs fixed 90-day cycle. | `2026-02-26-smart-re-enrichment.md` |
-| User submissions auto-publish with flagging | Low friction for community growth. Admin reviews async via dashboard. | `2026-02-26-auto-publish-with-flagging.md` |
-| Pre-filter then rank for mode search | Uses Postgres indexes efficiently. Simpler than embedding mode into vectors. | `2026-02-26-mode-pre-filter-search.md` |
+| Decision                                    | Rationale                                                                        | ADR                                            |
+| ------------------------------------------- | -------------------------------------------------------------------------------- | ---------------------------------------------- |
+| Apify ongoing (not one-time)                | User submissions need scraping. 5-review limit on Places API is a blocker.       | Updated: `2026-02-23-apify-over-outscraper.md` |
+| Linear job chain orchestration              | Simple, reuses existing job queue. Individual step retries.                      | `2026-02-26-linear-job-chain-orchestration.md` |
+| Smart re-enrichment                         | Only re-enrich when new reviews detected. Saves ~60% cost vs fixed 90-day cycle. | `2026-02-26-smart-re-enrichment.md`            |
+| User submissions auto-publish with flagging | Low friction for community growth. Admin reviews async via dashboard.            | `2026-02-26-auto-publish-with-flagging.md`     |
+| Pre-filter then rank for mode search        | Uses Postgres indexes efficiently. Simpler than embedding mode into vectors.     | `2026-02-26-mode-pre-filter-search.md`         |
 
 ## Cost Estimate
 
-| Component | Unit Cost | V1 Volume | Monthly Cost |
-|---|---|---|---|
-| Apify scraping (new shops) | ~$0.02-0.05/shop | 5-20/month | ~$0.10-1.00 |
-| Claude Sonnet enrichment | ~$0.62/shop | 5-20 new + 5-10 re-enrichment | ~$6-19 |
-| OpenAI embeddings | ~$0.0001/shop | 5-20/month | ~$0.01 |
-| Menu photo extraction | ~$0.15/photo | 5-20/month | ~$0.75-3.00 |
-| **Total** | — | — | **~$7-23/month** |
+| Component                  | Unit Cost        | V1 Volume                     | Monthly Cost     |
+| -------------------------- | ---------------- | ----------------------------- | ---------------- |
+| Apify scraping (new shops) | ~$0.02-0.05/shop | 5-20/month                    | ~$0.10-1.00      |
+| Claude Sonnet enrichment   | ~$0.62/shop      | 5-20 new + 5-10 re-enrichment | ~$6-19           |
+| OpenAI embeddings          | ~$0.0001/shop    | 5-20/month                    | ~$0.01           |
+| Menu photo extraction      | ~$0.15/photo     | 5-20/month                    | ~$0.75-3.00      |
+| **Total**                  | —                | —                             | **~$7-23/month** |
 
 Cold start (200+ shops): ~$130 one-time (mostly Claude Sonnet enrichment).

@@ -19,6 +19,7 @@
 ## Task 1: Database Migrations — New Tables and Columns
 
 **Files:**
+
 - Create: `supabase/migrations/20260226000001_add_shop_pipeline_columns.sql`
 - Create: `supabase/migrations/20260226000002_create_shop_submissions.sql`
 - Create: `supabase/migrations/20260226000003_create_activity_feed.sql`
@@ -162,6 +163,7 @@ git commit -m "feat(db): add pipeline tables — shop_submissions, activity_feed
 ## Task 2: Pydantic Models and Job Types
 
 **Files:**
+
 - Modify: `backend/models/types.py`
 
 **Step 1: Write the failing test**
@@ -275,6 +277,7 @@ git commit -m "feat: add pipeline models — ShopSubmission, ActivityFeedEvent, 
 ## Task 3: Apify Scraper Provider
 
 **Files:**
+
 - Create: `backend/providers/scraper/interface.py`
 - Create: `backend/providers/scraper/apify_adapter.py`
 - Create: `backend/providers/scraper/__init__.py`
@@ -557,6 +560,7 @@ git commit -m "feat: add Apify scraper provider — ScraperProvider protocol + A
 ## Task 4: SCRAPE_SHOP Handler
 
 **Files:**
+
 - Create: `backend/workers/handlers/scrape_shop.py`
 - Create: `backend/tests/workers/test_scrape_shop_handler.py`
 
@@ -779,6 +783,7 @@ git commit -m "feat: add SCRAPE_SHOP handler — Apify scrape + store + chain to
 ## Task 5: PUBLISH_SHOP Handler
 
 **Files:**
+
 - Create: `backend/workers/handlers/publish_shop.py`
 - Create: `backend/tests/workers/test_publish_shop_handler.py`
 
@@ -902,6 +907,7 @@ git commit -m "feat: add PUBLISH_SHOP handler — set live, activity feed, submi
 ## Task 6: Wire New Handlers into Scheduler
 
 **Files:**
+
 - Modify: `backend/workers/scheduler.py`
 - Modify: `backend/tests/workers/test_handlers.py` (add new handler dispatch tests)
 
@@ -985,6 +991,7 @@ Expected: FAIL (handler not wired in scheduler)
 Modify `backend/workers/scheduler.py`:
 
 1. Add imports at the top:
+
 ```python
 from providers.scraper import get_scraper_provider
 from workers.handlers.publish_shop import handle_publish_shop
@@ -992,6 +999,7 @@ from workers.handlers.scrape_shop import handle_scrape_shop
 ```
 
 2. Add cases to the `match` statement in `process_job_queue()`:
+
 ```python
             case JobType.SCRAPE_SHOP:
                 scraper = get_scraper_provider()
@@ -1032,6 +1040,7 @@ git commit -m "feat: wire SCRAPE_SHOP + PUBLISH_SHOP into scheduler dispatch loo
 ## Task 7: Shop Submission API Route
 
 **Files:**
+
 - Create: `backend/api/submissions.py`
 - Create: `backend/tests/api/test_submissions.py`
 - Modify: `backend/main.py` (register router)
@@ -1238,6 +1247,7 @@ async def submit_shop(
 **Step 4: Register router in main.py**
 
 Add to `backend/main.py`:
+
 ```python
 from api.submissions import router as submissions_router
 # ...
@@ -1261,6 +1271,7 @@ git commit -m "feat: add POST /submissions — user shop submission API route"
 ## Task 8: Cold Start Importers
 
 **Files:**
+
 - Create: `backend/importers/__init__.py`
 - Create: `backend/importers/google_takeout.py`
 - Create: `backend/importers/cafe_nomad.py`
@@ -1589,6 +1600,7 @@ git commit -m "feat: add cold start importers — Google Takeout parser + Cafe N
 ## Task 9: Smart Staleness Sweep Update
 
 **Files:**
+
 - Modify: `backend/workers/handlers/staleness_sweep.py`
 - Create: `backend/tests/workers/test_smart_staleness.py`
 
@@ -1804,6 +1816,7 @@ git commit -m "feat: smart staleness sweep — only re-enrich when new reviews d
 ## Task 10: Search Service — Taxonomy Boost + Mode Pre-filter
 
 **Files:**
+
 - Modify: `backend/services/search_service.py`
 - Modify: `backend/api/search.py`
 - Modify: `backend/tests/services/test_search_service.py`
@@ -2075,6 +2088,7 @@ git commit -m "feat: search service — IDF taxonomy boost + mode pre-filter"
 ## Task 11: Admin Dashboard API
 
 **Files:**
+
 - Create: `backend/api/admin.py`
 - Create: `backend/tests/api/test_admin.py`
 - Modify: `backend/main.py`
@@ -2279,6 +2293,7 @@ Add to `backend/core/config.py`:
 **Step 5: Register admin router in main.py**
 
 Add to `backend/main.py`:
+
 ```python
 from api.admin import router as admin_router
 # ...
@@ -2302,6 +2317,7 @@ git commit -m "feat: add admin pipeline dashboard API — overview, dead-letter,
 ## Task 12: Activity Feed API
 
 **Files:**
+
 - Create: `backend/api/feed.py`
 - Create: `backend/tests/api/test_feed.py`
 - Modify: `backend/main.py`
@@ -2384,6 +2400,7 @@ async def activity_feed(
 ```
 
 Register in `backend/main.py`:
+
 ```python
 from api.feed import router as feed_router
 app.include_router(feed_router)
@@ -2406,6 +2423,7 @@ git commit -m "feat: add GET /feed — public community activity feed"
 ## Task 13: Propagate submission_id Through Job Chain
 
 **Files:**
+
 - Modify: `backend/workers/handlers/enrich_shop.py`
 - Modify: `backend/workers/handlers/generate_embedding.py`
 
@@ -2583,22 +2601,27 @@ graph TD
 ```
 
 **Wave 1** (sequential — foundation):
+
 - Task 1: Database migrations (new tables + columns)
 
 **Wave 2** (parallel — no file overlaps):
+
 - Task 2: Pydantic models and job types ← Task 1
 - Task 3: Apify scraper provider ← Task 1
 
 **Wave 3** (parallel — no file overlaps):
+
 - Task 4: SCRAPE_SHOP handler ← Task 2, Task 3
 - Task 5: PUBLISH_SHOP handler ← Task 2
 
 **Wave 4** (parallel — scheduler + independent services):
+
 - Task 6: Wire handlers into scheduler ← Task 4, Task 5
 - Task 10: Search service — taxonomy boost + mode filter ← Task 2
 - Task 12: Activity feed API ← Task 1
 
 **Wave 5** (parallel — independent routes + features):
+
 - Task 7: Shop submission API route ← Task 6
 - Task 8: Cold start importers ← Task 2
 - Task 9: Smart staleness sweep ← Task 3
@@ -2606,4 +2629,5 @@ graph TD
 - Task 13: Propagate submission_id through chain ← Task 6
 
 **Wave 6** (sequential — final gate):
+
 - Task 14: Full verification ← all previous tasks

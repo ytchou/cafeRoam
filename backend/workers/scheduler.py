@@ -1,3 +1,4 @@
+import sentry_sdk
 import structlog
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
@@ -86,6 +87,7 @@ async def process_job_queue() -> None:
         logger.info("Job completed", job_id=job.id)
     except Exception as e:
         logger.error("Job failed", job_id=job.id, error=str(e))
+        sentry_sdk.capture_exception(e)
         await queue.fail(job.id, error=str(e))
 
 

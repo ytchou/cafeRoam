@@ -25,14 +25,19 @@ class TestEnrichShopHandler:
         )
         # Shop data (select().eq().single().execute())
         _shop_exec = (
-            db.table.return_value.select.return_value
-            .eq.return_value.single.return_value.execute
+            db.table.return_value.select.return_value.eq.return_value.single.return_value.execute
         )
         _shop_exec.return_value = MagicMock(
             data={
-                "id": "shop-1", "name": "Test Cafe", "description": None,
-                "categories": [], "price_range": None, "socket": None,
-                "limited_time": None, "rating": None, "review_count": 0,
+                "id": "shop-1",
+                "name": "Test Cafe",
+                "description": None,
+                "categories": [],
+                "price_range": None,
+                "socket": None,
+                "limited_time": None,
+                "rating": None,
+                "review_count": 0,
             }
         )
         # Reviews data (select().eq().execute())
