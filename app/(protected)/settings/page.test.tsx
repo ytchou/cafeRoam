@@ -17,13 +17,14 @@ vi.mock('next/navigation', () => ({
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
+const testSession = makeSession();
+
 import SettingsPage from './page';
 
 describe('SettingsPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    const session = makeSession();
-    mockAuth.getSession.mockResolvedValue({ data: { session } });
+    mockAuth.getSession.mockResolvedValue({ data: { session: testSession } });
     mockAuth.signOut.mockResolvedValue({});
   });
 
@@ -88,7 +89,7 @@ describe('SettingsPage', () => {
         expect.objectContaining({
           method: 'DELETE',
           headers: expect.objectContaining({
-            Authorization: expect.stringContaining('Bearer '),
+            Authorization: `Bearer ${testSession.access_token}`,
           }),
         })
       );
