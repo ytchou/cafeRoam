@@ -2,6 +2,8 @@
  * Shared test data factories. Realistic Taiwan-based defaults, all overridable.
  */
 
+const TS = '2026-01-15T10:00:00.000Z';
+
 export function makeUser(overrides: Record<string, unknown> = {}) {
   const defaults = {
     id: 'user-a1b2c3',
@@ -62,8 +64,8 @@ export function makeList(overrides: Record<string, unknown> = {}) {
     id: 'list-g7h8i9',
     user_id: 'user-a1b2c3',
     name: '適合工作的咖啡店',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+    created_at: TS,
+    updated_at: TS,
     ...overrides,
   };
 }
@@ -76,7 +78,7 @@ export function makeCheckIn(overrides: Record<string, unknown> = {}) {
     photo_urls: ['https://example.supabase.co/storage/v1/object/public/checkin-photos/user-a1b2c3/photo1.jpg'],
     menu_photo_url: null,
     note: null,
-    created_at: new Date().toISOString(),
+    created_at: TS,
     ...overrides,
   };
 }
@@ -88,7 +90,7 @@ export function makeStamp(overrides: Record<string, unknown> = {}) {
     shop_id: 'shop-d4e5f6',
     check_in_id: 'ci-j0k1l2',
     design_url: 'https://example.supabase.co/storage/v1/object/public/stamps/d4e5f6.png',
-    earned_at: new Date().toISOString(),
+    earned_at: TS,
     ...overrides,
   };
 }
