@@ -3,6 +3,7 @@ from tests.factories import (
     make_checkin,
     make_list,
     make_list_item,
+    make_shop,
     make_shop_row,
     make_stamp,
     make_user,
@@ -21,14 +22,19 @@ class TestFactories:
         assert data["email"] == "custom@example.com"
         assert data["display_name"] == "Custom Name"
 
-    def test_make_shop_row_returns_valid_shop(self):
-        data = make_shop_row()
-        # Shop model doesn't expect similarity/tag_ids, so pop them
-        similarity = data.pop("similarity")
-        data.pop("tag_ids")
+    def test_make_shop_returns_valid_shop(self):
+        data = make_shop()
         shop = Shop(**data)
         assert shop.name != "Test Cafe"  # Must be realistic, not placeholder
-        assert similarity == 0.85
+
+    def test_make_shop_row_extends_shop_with_rpc_fields(self):
+        data = make_shop_row()
+        assert data["similarity"] == 0.85
+        assert "tag_ids" in data
+        # Can construct Shop by removing RPC-specific fields
+        shop_data = {k: v for k, v in data.items() if k not in ("similarity", "tag_ids")}
+        shop = Shop(**shop_data)
+        assert shop.id == "shop-d4e5f6"
 
     def test_make_list_returns_valid_list(self):
         data = make_list()

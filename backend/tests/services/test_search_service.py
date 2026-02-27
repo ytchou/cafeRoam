@@ -111,7 +111,7 @@ class TestSearchService:
         assert results[0].total_score == pytest.approx(results[0].similarity_score * 0.7, rel=1e-4)
 
 
-_SEARCH_SHOP_ROW = make_shop_row(tag_ids=["quiet", "wifi-reliable"])
+_SEARCH_SHOP_ROW = make_shop_row()
 
 
 @pytest.fixture
