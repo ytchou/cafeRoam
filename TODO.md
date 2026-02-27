@@ -349,7 +349,7 @@ Core infrastructure everything else depends on. No user-facing product yet.
 
 **Phase 0 — Test Infrastructure (Wave 1-2):**
 - [x] Backend test factories (make_user, make_shop_row, make_list, make_checkin, make_stamp)
-- [ ] Frontend test factories (makeUser, makeSession, makeShop, makeList, makeCheckIn, makeStamp)
+- [x] Frontend test factories (makeUser, makeSession, makeShop, makeList, makeCheckIn, makeStamp)
 - [ ] Frontend mock helpers (createMockSupabaseAuth, createMockRouter)
 - [ ] Validate pattern: refactor settings/page.test.tsx to use shared utilities
 - [ ] Validate pattern: refactor test_search_service.py to use shared factories
