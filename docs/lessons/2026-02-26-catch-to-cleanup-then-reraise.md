@@ -1,4 +1,5 @@
 # Catch to clean up, then re-raise — never swallow exceptions after cleanup
+
 **Date:** 2026-02-26
 **Context:** Data pipeline — review snapshot/restore pattern in `scrape_shop` handler
 
@@ -6,7 +7,7 @@
 
 **Root cause:** "Catch, clean up, return" is a natural pattern but wrong when the caller uses exceptions to distinguish success from failure. The scheduler calls `queue.complete()` on normal return and `queue.fail()` on exception — returning early after a failure silently reports success.
 
-**Prevention:** When catching an exception to perform cleanup (snapshot restore, compensating transaction, etc.), always **re-raise** after cleanup unless the cleanup itself constitutes a full recovery. Rule: *catch to clean up, then raise* — never swallow exceptions that represent real failures.
+**Prevention:** When catching an exception to perform cleanup (snapshot restore, compensating transaction, etc.), always **re-raise** after cleanup unless the cleanup itself constitutes a full recovery. Rule: _catch to clean up, then raise_ — never swallow exceptions that represent real failures.
 
 ```python
 # WRONG — scheduler thinks the job succeeded

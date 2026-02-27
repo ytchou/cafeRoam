@@ -1,4 +1,5 @@
 # RPC RETURNS TABLE Column Mismatches Fail Silently
+
 **Date:** 2026-02-26
 **Context:** `find_stale_shops` RPC used by smart staleness sweep
 **What happened:** The SQL function `RETURNS TABLE (id, name, enriched_at, last_checked_at)` was missing `google_place_id`. The Python handler called `shop.get("google_place_id")` which always returned `None` — silently defeating the smart sweep optimization. No error was raised; the fallback branch (re-enrich everything) ran instead.
