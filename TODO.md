@@ -322,9 +322,9 @@ Core infrastructure everything else depends on. No user-facing product yet.
 > **Plan:** [docs/plans/2026-02-27-observability-ops-plan.md](docs/plans/2026-02-27-observability-ops-plan.md)
 
 **Chunk 1 — Backend Observability (Wave 1):**
-- [ ] Sentry backend initialization (DSN-gated, environment context)
-- [ ] Request ID middleware (UUID per request, structured logging)
-- [ ] Deep health check endpoint (/health/deep with DB validation)
+- [x] Sentry backend initialization (DSN-gated, environment context)
+- [x] Request ID middleware (UUID per request, structured logging)
+- [x] Deep health check endpoint (/health/deep with DB validation)
 
 **Chunk 2 — Frontend Observability (Wave 1):**
 - [ ] Sentry frontend initialization (@sentry/nextjs, source maps)
