@@ -71,4 +71,30 @@ describe('LoginPage', () => {
     );
     await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/'));
   });
+
+  it('Google button calls signInWithOAuth with google provider', async () => {
+    render(<LoginPage />);
+    await userEvent.click(screen.getByRole('button', { name: /google/i }));
+    expect(mockSignInWithOAuth).toHaveBeenCalledWith(
+      expect.objectContaining({
+        provider: 'google',
+        options: expect.objectContaining({
+          redirectTo: expect.stringContaining('/auth/callback'),
+        }),
+      })
+    );
+  });
+
+  it('LINE button calls signInWithOAuth with line_oidc provider', async () => {
+    render(<LoginPage />);
+    await userEvent.click(screen.getByRole('button', { name: /line/i }));
+    expect(mockSignInWithOAuth).toHaveBeenCalledWith(
+      expect.objectContaining({
+        provider: 'line_oidc',
+        options: expect.objectContaining({
+          redirectTo: expect.stringContaining('/auth/callback'),
+        }),
+      })
+    );
+  });
 });

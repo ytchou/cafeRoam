@@ -356,7 +356,7 @@ Core infrastructure everything else depends on. No user-facing product yet.
 
 **Phase 1 — Auth Test Hardening (Wave 3):**
 - [x] Login: successful login redirects to home
-- [ ] Login: OAuth buttons call signInWithOAuth with correct provider
+- [x] Login: OAuth buttons call signInWithOAuth with correct provider
 - [x] Signup: successful signup shows email confirmation
 - [ ] Signup: error display on failed signup
 
