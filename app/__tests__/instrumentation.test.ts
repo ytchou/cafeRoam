@@ -36,7 +36,11 @@ describe('instrumentation', () => {
     it('calls Sentry.captureRequestError with the provided args', async () => {
       const Sentry = await import('@sentry/nextjs');
       const { onRequestError } = await import('../../instrumentation');
-      const fakeArgs = [{ message: 'error' }, { request: {} }, { routeType: 'render' }];
+      const fakeArgs = [
+        { message: 'error' },
+        { request: {} },
+        { routeType: 'render' },
+      ];
 
       await onRequestError(...fakeArgs);
 
