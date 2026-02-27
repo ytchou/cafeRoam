@@ -328,7 +328,7 @@ Core infrastructure everything else depends on. No user-facing product yet.
 
 **Chunk 2 — Frontend Observability (Wave 1):**
 - [x] Sentry frontend initialization (@sentry/nextjs, source maps)
-- [ ] PostHog frontend provider (posthog-js, DNT respect)
+- [x] PostHog frontend provider (posthog-js, DNT respect)
 - [x] Environment variable documentation
 
 **Chunk 3 — Worker Integration (Wave 2):**
