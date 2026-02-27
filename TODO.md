@@ -332,7 +332,7 @@ Core infrastructure everything else depends on. No user-facing product yet.
 - [x] Environment variable documentation
 
 **Chunk 3 — Worker Integration (Wave 2):**
-- [ ] Worker Sentry integration (capture job failures with context)
+- [x] Worker Sentry integration (capture job failures with context)
 
 **Chunk 4 — Verification & Ops (Wave 3):**
 - [ ] Full test suite verification (backend + frontend)
