@@ -50,4 +50,4 @@ class TestDeepHealth:
         data = response.json()
         assert data["status"] == "unhealthy"
         assert data["checks"]["postgres"]["status"] == "unhealthy"
-        assert "error" in data["checks"]["postgres"]
+        assert data["checks"]["postgres"]["error"] == "connection_failed"

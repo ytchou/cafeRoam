@@ -1,19 +1,38 @@
-import { describe, it, expect, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-// Verify sentry config files exist and export correctly
-describe('Sentry configuration', () => {
-  it('client config calls Sentry.init', async () => {
-    const mockInit = vi.fn();
-    vi.doMock('@sentry/nextjs', () => ({
-      init: mockInit,
-      replayIntegration: vi.fn(() => ({ name: 'Replay' })),
-    }));
+vi.mock('@sentry/nextjs', () => ({
+  init: vi.fn(),
+}));
 
-    // Force re-import to trigger init
-    await vi.importActual('../../sentry.client.config');
+describe('Sentry client configuration', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.resetModules();
+  });
 
-    // The config file should call Sentry.init when imported
-    // We verify the file exists and is importable
-    expect(true).toBe(true); // Config file exists and doesn't throw
+  it('calls Sentry.init with correct config when DSN is set', async () => {
+    vi.stubEnv('NEXT_PUBLIC_SENTRY_DSN', 'https://test@sentry.io/123');
+    const Sentry = await import('@sentry/nextjs');
+    await import('../../sentry.client.config');
+
+    expect(Sentry.init).toHaveBeenCalledWith(
+      expect.objectContaining({
+        dsn: 'https://test@sentry.io/123',
+        tracesSampleRate: 0.1,
+        enabled: true,
+      }),
+    );
+  });
+
+  it('disables Sentry when DSN is not set', async () => {
+    vi.stubEnv('NEXT_PUBLIC_SENTRY_DSN', '');
+    const Sentry = await import('@sentry/nextjs');
+    await import('../../sentry.client.config');
+
+    expect(Sentry.init).toHaveBeenCalledWith(
+      expect.objectContaining({
+        enabled: false,
+      }),
+    );
   });
 });

@@ -1,3 +1,4 @@
+import asyncio
 import time
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
@@ -78,15 +79,22 @@ async def deep_health_check() -> JSONResponse:
     start = time.monotonic()
     try:
         db = get_service_role_client()
-        db.table("shops").select("id").limit(1).execute()
+        await asyncio.wait_for(
+            asyncio.to_thread(lambda: db.table("shops").select("id").limit(1).execute()),
+            timeout=5.0,
+        )
         latency_ms = round((time.monotonic() - start) * 1000, 1)
         checks["postgres"] = {"status": "healthy", "latency_ms": latency_ms}
-    except Exception as e:
+    except TimeoutError:
+        latency_ms = round((time.monotonic() - start) * 1000, 1)
+        checks["postgres"] = {"status": "unhealthy", "latency_ms": latency_ms, "error": "timeout"}
+        all_healthy = False
+    except Exception:
         latency_ms = round((time.monotonic() - start) * 1000, 1)
         checks["postgres"] = {
             "status": "unhealthy",
             "latency_ms": latency_ms,
-            "error": str(e),
+            "error": "connection_failed",
         }
         all_healthy = False
 

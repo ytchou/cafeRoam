@@ -22,6 +22,7 @@ class TestSentryInit:
             assert call_kwargs["dsn"] == "https://test@sentry.io/123"
             assert call_kwargs["environment"] == "production"
             assert call_kwargs["traces_sample_rate"] == 0.1
+            assert call_kwargs["send_default_pii"] is False
 
     def test_sentry_skipped_without_dsn(self):
         """Sentry should not initialize when DSN is empty."""

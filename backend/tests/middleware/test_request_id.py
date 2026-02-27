@@ -46,3 +46,9 @@ class TestRequestIDMiddleware:
         assert response.status_code == 200
         # Still gets a request ID header
         assert "X-Request-ID" in response.headers
+
+    def test_honors_incoming_request_id(self, client):
+        """If caller sends X-Request-ID, echo it back unchanged."""
+        custom_id = "550e8400-e29b-41d4-a716-446655440000"
+        response = client.get("/test", headers={"x-request-id": custom_id})
+        assert response.headers["X-Request-ID"] == custom_id

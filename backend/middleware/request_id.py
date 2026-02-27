@@ -1,7 +1,9 @@
 import time
 import uuid
 
+import sentry_sdk
 import structlog
+import structlog.contextvars
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
@@ -13,10 +15,16 @@ _SKIP_LOG_PATHS = {"/health", "/health/deep"}
 
 class RequestIDMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next) -> Response:
-        request_id = str(uuid.uuid4())
-        start = time.monotonic()
+        request_id = request.headers.get("x-request-id") or str(uuid.uuid4())
 
-        response = await call_next(request)
+        structlog.contextvars.bind_contextvars(request_id=request_id)
+        sentry_sdk.set_tag("request_id", request_id)
+
+        start = time.monotonic()
+        try:
+            response = await call_next(request)
+        finally:
+            structlog.contextvars.clear_contextvars()
 
         duration_ms = round((time.monotonic() - start) * 1000, 1)
         response.headers["X-Request-ID"] = request_id
@@ -24,7 +32,6 @@ class RequestIDMiddleware(BaseHTTPMiddleware):
         if request.url.path not in _SKIP_LOG_PATHS:
             logger.info(
                 "request",
-                request_id=request_id,
                 method=request.method,
                 path=request.url.path,
                 status=response.status_code,
