@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
@@ -59,5 +59,16 @@ describe('LoginPage', () => {
       'href',
       '/signup'
     );
+  });
+
+  it('successful login redirects to home', async () => {
+    mockSignInWithPassword.mockResolvedValue({ error: null });
+    render(<LoginPage />);
+    await userEvent.type(screen.getByLabelText(/email/i), 'lin.mei@gmail.com');
+    await userEvent.type(screen.getByLabelText(/password/i), 'SecurePass123!');
+    await userEvent.click(
+      screen.getByRole('button', { name: /登入|sign in/i })
+    );
+    await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/'));
   });
 });

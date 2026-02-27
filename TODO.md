@@ -355,7 +355,7 @@ Core infrastructure everything else depends on. No user-facing product yet.
 - [x] Validate pattern: refactor test_search_service.py to use shared factories
 
 **Phase 1 — Auth Test Hardening (Wave 3):**
-- [ ] Login: successful login redirects to home
+- [x] Login: successful login redirects to home
 - [ ] Login: OAuth buttons call signInWithOAuth with correct provider
 - [ ] Signup: successful signup shows email confirmation
 - [ ] Signup: error display on failed signup
