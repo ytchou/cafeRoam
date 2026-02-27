@@ -1,7 +1,4 @@
-from datetime import datetime
-
 from models.types import CheckIn, List, ListItem, Shop, Stamp, User
-
 from tests.factories import (
     make_checkin,
     make_list,
