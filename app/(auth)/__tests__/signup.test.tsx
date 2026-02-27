@@ -51,6 +51,21 @@ describe('SignupPage', () => {
     ).toHaveAttribute('href', '/privacy');
   });
 
+  it('shows error message when signup fails', async () => {
+    mockSignUp.mockResolvedValue({
+      error: { message: 'User already registered' },
+      data: {},
+    });
+    render(<SignupPage />);
+    await userEvent.type(screen.getByLabelText(/email/i), 'taken@example.com');
+    await userEvent.type(screen.getByLabelText(/password/i), 'SecurePass123!');
+    await userEvent.click(screen.getByRole('checkbox'));
+    await userEvent.click(screen.getByRole('button', { name: /註冊|sign up/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent(/already registered/i);
+    });
+  });
+
   it('successful signup shows email confirmation message', async () => {
     mockSignUp.mockResolvedValue({ error: null, data: {} });
     render(<SignupPage />);

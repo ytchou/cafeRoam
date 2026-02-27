@@ -358,7 +358,7 @@ Core infrastructure everything else depends on. No user-facing product yet.
 - [x] Login: successful login redirects to home
 - [x] Login: OAuth buttons call signInWithOAuth with correct provider
 - [x] Signup: successful signup shows email confirmation
-- [ ] Signup: error display on failed signup
+- [x] Signup: error display on failed signup
 
 **Blocked — D-grade page tests (need features built in Phase 2):**
 - [ ] Lists page tests (blocked until lists CRUD feature)
