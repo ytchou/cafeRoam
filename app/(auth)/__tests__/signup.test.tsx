@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
@@ -49,5 +49,18 @@ describe('SignupPage', () => {
     expect(
       screen.getByRole('link', { name: /隱私權政策|privacy/i })
     ).toHaveAttribute('href', '/privacy');
+  });
+
+  it('successful signup shows email confirmation message', async () => {
+    mockSignUp.mockResolvedValue({ error: null, data: {} });
+    render(<SignupPage />);
+    await userEvent.type(screen.getByLabelText(/email/i), 'wang.xiaoming@gmail.com');
+    await userEvent.type(screen.getByLabelText(/password/i), 'SecurePass123!');
+    await userEvent.click(screen.getByRole('checkbox'));
+    await userEvent.click(screen.getByRole('button', { name: /註冊|sign up/i }));
+    await waitFor(() => {
+      expect(screen.getByText(/check your email/i)).toBeInTheDocument();
+      expect(screen.getByText('wang.xiaoming@gmail.com')).toBeInTheDocument();
+    });
   });
 });
