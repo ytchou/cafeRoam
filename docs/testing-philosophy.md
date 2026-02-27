@@ -35,11 +35,11 @@ Integration tests sit at the sweet spot: they test how things work together (clo
 
 Only mock at system edges — the HTTP layer, the database boundary, the file system. Never mock internal modules or functions.
 
-| Wrong | Right |
-|---|---|
+| Wrong                            | Right                                            |
+| -------------------------------- | ------------------------------------------------ |
 | Mock `userRepository.findById()` | Use a real test DB (test container or in-memory) |
-| Mock internal service method | Mock the external API call at the boundary |
-| Mock your own module | Don't — test the real path |
+| Mock internal service method     | Mock the external API call at the boundary       |
+| Mock your own module             | Don't — test the real path                       |
 
 The specific mocking tool doesn't matter — `vi.mock()` at boundaries, MSW, VCR, or test doubles are all valid as long as the mock is at a system edge (auth SDK, HTTP call, DB layer). What matters is the **boundary** principle, not the tooling.
 
@@ -70,12 +70,12 @@ For test data: use **data factories** that generate realistic shapes. Avoid `{ n
 
 Not all journeys need the same depth:
 
-| Journey Type | Test Level | Mock Strategy |
-|---|---|---|
-| Critical path (auth, checkout, core feature) | Integration + E2E | MSW for external, real DB |
-| Secondary feature | Integration | MSW for external, real DB |
-| Pure business logic (calculation, validation) | Unit | No mocks needed |
-| UI layout / simple display | Snapshot or skip | N/A |
+| Journey Type                                  | Test Level        | Mock Strategy             |
+| --------------------------------------------- | ----------------- | ------------------------- |
+| Critical path (auth, checkout, core feature)  | Integration + E2E | MSW for external, real DB |
+| Secondary feature                             | Integration       | MSW for external, real DB |
+| Pure business logic (calculation, validation) | Unit              | No mocks needed           |
+| UI layout / simple display                    | Snapshot or skip  | N/A                       |
 
 ## Test Quality Checklist
 
@@ -91,12 +91,12 @@ If the answer to any of these is "no", the test is a candidate for rewrite.
 
 ## Coverage Gates
 
-| Area | Minimum | Target |
-|---|---|---|
-| Critical paths (auth, data transactions) | 80% | 90%+ |
-| Services / business logic | 70% | 80%+ |
-| UI components | 20% | test behavior, not coverage |
-| Overall codebase | 20% | — |
+| Area                                     | Minimum | Target                      |
+| ---------------------------------------- | ------- | --------------------------- |
+| Critical paths (auth, data transactions) | 80%     | 90%+                        |
+| Services / business logic                | 70%     | 80%+                        |
+| UI components                            | 20%     | test behavior, not coverage |
+| Overall codebase                         | 20%     | —                           |
 
 ## References
 

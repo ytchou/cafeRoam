@@ -15,6 +15,7 @@
 **Tech Stack:** Vitest + Testing Library (frontend), pytest + pytest-asyncio (backend)
 
 **Design Revision Note:** The original design assumed backend launch-blocker tests were missing. Investigation revealed they already exist:
+
 - 3-list cap: `test_lists_service.py` (7 tests) + `test_lists.py` (8 tests)
 - Check-in photo: `test_checkin_service.py` (5 tests) + `test_checkins.py` (4 tests)
 - PDPA cascade: `test_account_deletion.py` (5 tests)
@@ -26,6 +27,7 @@ Phase 1 scope is revised to: improve existing auth tests + refactor backend test
 ### Task 1: Backend Test Factories
 
 **Files:**
+
 - Create: `backend/tests/factories.py`
 - Test: `backend/tests/test_factories.py`
 
@@ -212,6 +214,7 @@ git commit -m "test: add backend test data factories with realistic Taiwan data"
 ### Task 2: Frontend Test Factories
 
 **Files:**
+
 - Create: `lib/test-utils/factories.ts`
 - Test: `lib/test-utils/__tests__/factories.test.ts`
 
@@ -235,7 +238,10 @@ describe('test factories', () => {
     expect(user.id).toMatch(/^user-/);
     expect(user.app_metadata.pdpa_consented).toBe(true);
 
-    const custom = makeUser({ id: 'user-custom', app_metadata: { pdpa_consented: false } });
+    const custom = makeUser({
+      id: 'user-custom',
+      app_metadata: { pdpa_consented: false },
+    });
     expect(custom.id).toBe('user-custom');
     expect(custom.app_metadata.pdpa_consented).toBe(false);
   });
@@ -313,7 +319,8 @@ export function makeUser(overrides: Record<string, unknown> = {}) {
 
 export function makeSession(overrides: Record<string, unknown> = {}) {
   return {
-    access_token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.test-token-payload.signature',
+    access_token:
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.test-token-payload.signature',
     refresh_token: 'test-refresh-token',
     expires_in: 3600,
     token_type: 'bearer',
@@ -335,7 +342,9 @@ export function makeShop(overrides: Record<string, unknown> = {}) {
     review_count: 287,
     price_range: '$$',
     description: '安靜適合工作的獨立咖啡店',
-    photo_urls: ['https://example.supabase.co/storage/v1/object/public/shop-photos/d4e5f6/exterior.jpg'],
+    photo_urls: [
+      'https://example.supabase.co/storage/v1/object/public/shop-photos/d4e5f6/exterior.jpg',
+    ],
     ...overrides,
   };
 }
@@ -356,7 +365,9 @@ export function makeCheckIn(overrides: Record<string, unknown> = {}) {
     id: 'ci-j0k1l2',
     user_id: 'user-a1b2c3',
     shop_id: 'shop-d4e5f6',
-    photo_urls: ['https://example.supabase.co/storage/v1/object/public/checkin-photos/user-a1b2c3/photo1.jpg'],
+    photo_urls: [
+      'https://example.supabase.co/storage/v1/object/public/checkin-photos/user-a1b2c3/photo1.jpg',
+    ],
     menu_photo_url: null,
     note: null,
     created_at: new Date().toISOString(),
@@ -370,7 +381,8 @@ export function makeStamp(overrides: Record<string, unknown> = {}) {
     user_id: 'user-a1b2c3',
     shop_id: 'shop-d4e5f6',
     check_in_id: 'ci-j0k1l2',
-    design_url: 'https://example.supabase.co/storage/v1/object/public/stamps/d4e5f6.png',
+    design_url:
+      'https://example.supabase.co/storage/v1/object/public/stamps/d4e5f6.png',
     earned_at: new Date().toISOString(),
     ...overrides,
   };
@@ -394,6 +406,7 @@ git commit -m "test: add frontend test data factories with realistic Taiwan data
 ### Task 3: Frontend Mock Helpers
 
 **Files:**
+
 - Create: `lib/test-utils/mocks.ts`
 - Test: `lib/test-utils/__tests__/mocks.test.ts`
 
@@ -469,7 +482,9 @@ export function createMockSupabaseAuth() {
     signOut: vi.fn(),
     getSession: vi.fn(),
     exchangeCodeForSession: vi.fn(),
-    refreshSession: vi.fn().mockResolvedValue({ data: { session: {} }, error: null }),
+    refreshSession: vi
+      .fn()
+      .mockResolvedValue({ data: { session: {} }, error: null }),
   };
 }
 
@@ -501,6 +516,7 @@ git commit -m "test: add frontend mock helpers (supabase auth, router)"
 ### Task 4: Validate Pattern — Refactor settings/page.test.tsx
 
 **Files:**
+
 - Modify: `app/(protected)/settings/page.test.tsx`
 
 No failing test needed — this is a refactor of an existing passing test. Validation = all 8 existing tests still pass.
@@ -649,6 +665,7 @@ git commit -m "refactor: settings test uses shared factories and mock helpers"
 ### Task 5: Validate Pattern — Refactor test_search_service.py
 
 **Files:**
+
 - Modify: `backend/tests/services/test_search_service.py`
 
 No failing test needed — refactor only. Validation = all 9 existing tests still pass.
@@ -703,6 +720,7 @@ git commit -m "refactor: search service tests use shared factories"
 ### Task 6: Login Test — Successful login redirects to home
 
 **Files:**
+
 - Modify: `app/(auth)/__tests__/login.test.tsx`
 
 Testing existing behavior — the code at `app/(auth)/login/page.tsx:30-36` already handles successful login. This test verifies it works.
@@ -745,6 +763,7 @@ git commit -m "test: login page — add successful login redirect test"
 ### Task 7: Login Test — OAuth button calls signInWithOAuth
 
 **Files:**
+
 - Modify: `app/(auth)/__tests__/login.test.tsx`
 
 Testing existing behavior — `app/(auth)/login/page.tsx:39-47` handles OAuth. The existing test only checks the button renders, not that it calls the auth method.
@@ -795,6 +814,7 @@ git commit -m "test: login page — verify OAuth buttons call signInWithOAuth"
 ### Task 8: Signup Test — Successful signup shows confirmation
 
 **Files:**
+
 - Modify: `app/(auth)/__tests__/signup.test.tsx`
 
 Testing existing behavior — `app/(auth)/signup/page.tsx:44-63` shows the "Check your email" confirmation screen after successful signup. Current tests don't cover this.
@@ -839,6 +859,7 @@ git commit -m "test: signup page — verify successful signup shows confirmation
 ### Task 9: Signup Test — Error display
 
 **Files:**
+
 - Modify: `app/(auth)/__tests__/signup.test.tsx`
 
 Testing existing behavior — `app/(auth)/signup/page.tsx:38-42` displays the error message from Supabase when signup fails.
@@ -930,21 +951,25 @@ graph TD
 ```
 
 **Wave 1** (parallel — no dependencies):
+
 - Task 1: Backend test factories
 - Task 2: Frontend test factories
 - Task 3: Frontend mock helpers
 
 **Wave 2** (parallel — depends on Wave 1):
+
 - Task 4: Refactor settings test ← Task 2, Task 3
 - Task 5: Refactor search service test ← Task 1
 
 **Wave 3** (sequential — depends on Wave 2):
+
 - Task 6: Login successful redirect test ← Task 4 (pattern validated)
 - Task 7: Login OAuth tests ← Task 6
 - Task 8: Signup confirmation test ← Task 7
 - Task 9: Signup error test ← Task 8
 
 **Wave 4** (sequential — depends on Wave 3):
+
 - Task 10: Full verification ← Task 5, Task 9
 
 ---
@@ -953,11 +978,11 @@ graph TD
 
 The following tests **cannot be improved** until their pages are built (Phase 2 of the product roadmap):
 
-| Test File | Page Status | Blocked Until |
-|---|---|---|
-| `app/(protected)/lists/page.test.tsx` | "Coming soon" stub | Lists CRUD feature built |
-| `app/(protected)/search/page.test.tsx` | "Coming soon" stub | Semantic search UI built |
-| `app/(protected)/profile/page.test.tsx` | "Coming soon" stub | Profile page built |
-| `app/page.test.tsx` | Minimal landing | Landing page enhanced |
+| Test File                               | Page Status        | Blocked Until            |
+| --------------------------------------- | ------------------ | ------------------------ |
+| `app/(protected)/lists/page.test.tsx`   | "Coming soon" stub | Lists CRUD feature built |
+| `app/(protected)/search/page.test.tsx`  | "Coming soon" stub | Semantic search UI built |
+| `app/(protected)/profile/page.test.tsx` | "Coming soon" stub | Profile page built       |
+| `app/page.test.tsx`                     | Minimal landing    | Landing page enhanced    |
 
 When those features are built, write proper journey tests using the factories from Task 2 and mock helpers from Task 3.

@@ -110,15 +110,16 @@ supabase db reset              # Reset local DB + reseed
 
 ### Test Priority (Testing Trophy shape)
 
-| Layer | Weight | When to use |
-|---|---|---|
-| Integration | Most | User flows involving multiple parts (auth → redirect, form → API → DB) |
-| Unit | Some | Pure logic only (validators, transforms, calculations) |
-| E2E | Few | 3–5 critical paths only (signup, search, check-in) |
+| Layer       | Weight | When to use                                                            |
+| ----------- | ------ | ---------------------------------------------------------------------- |
+| Integration | Most   | User flows involving multiple parts (auth → redirect, form → API → DB) |
+| Unit        | Some   | Pure logic only (validators, transforms, calculations)                 |
+| E2E         | Few    | 3–5 critical paths only (signup, search, check-in)                     |
 
 ### Critical Paths Requiring Tests
 
 **Backend (pytest):**
+
 - `backend/services/search_service.py` — semantic search + taxonomy boost logic
 - `backend/services/checkin_service.py` — photo upload, stamp generation
 - `backend/services/lists_service.py` — list CRUD, **3-list cap enforcement**
@@ -126,6 +127,7 @@ supabase db reset              # Reset local DB + reseed
 - `backend/api/` — all API route handlers (auth validation, input validation)
 
 **Frontend (Vitest + Testing Library):**
+
 - Auth flows — login, signup, OAuth callback, consent
 - List management — create, delete, cap enforcement
 - Check-in — photo upload validation, form submission
@@ -135,6 +137,7 @@ supabase db reset              # Reset local DB + reseed
 ### Test Quality Checklist
 
 Before finishing any test, verify:
+
 - [ ] Test description describes a user action or outcome
 - [ ] Mocks are only at HTTP/auth/DB boundaries
 - [ ] Test would survive an internal refactor that preserves behavior

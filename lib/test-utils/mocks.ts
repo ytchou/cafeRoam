@@ -27,7 +27,9 @@ export function createMockSupabaseAuth() {
     signOut: vi.fn(),
     getSession: vi.fn(),
     exchangeCodeForSession: vi.fn(),
-    refreshSession: vi.fn().mockResolvedValue({ data: { session: {} }, error: null }),
+    refreshSession: vi
+      .fn()
+      .mockResolvedValue({ data: { session: {} }, error: null }),
   };
 }
 

@@ -11,6 +11,7 @@ The inline session used a known sentinel (`{ access_token: 'test-token' }`). Aft
 
 **Prevention:**
 When refactoring tests to use shared factories:
+
 1. Lift the factory call to module level if the assertion needs to reference the exact values it produces
 2. Never loosen an assertion "to make it work" — if the assertion must change, verify the new assertion is equally specific
 3. Pattern: `const testSession = makeSession()` at module level → use `testSession.access_token` in both the mock setup AND the assertion

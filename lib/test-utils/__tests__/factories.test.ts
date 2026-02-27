@@ -14,7 +14,10 @@ describe('test factories', () => {
     expect(user.id).toMatch(/^user-/);
     expect(user.app_metadata.pdpa_consented).toBe(true);
 
-    const custom = makeUser({ id: 'user-custom', app_metadata: { pdpa_consented: false } });
+    const custom = makeUser({
+      id: 'user-custom',
+      app_metadata: { pdpa_consented: false },
+    });
     expect(custom.id).toBe('user-custom');
     expect(custom.app_metadata.pdpa_consented).toBe(false);
   });

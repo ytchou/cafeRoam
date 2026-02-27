@@ -10,11 +10,11 @@ A test audit revealed that ~30% of CafeRoam's test suite is high-quality (A-grad
 
 ### Audit Results
 
-| Grade | Count | Files |
-|---|---|---|
-| A (keep) | 5 | callback.test.ts, middleware.test.ts, settings/page.test.tsx, recover.test.tsx, consent.test.tsx |
-| B (improve) | 3 | login.test.tsx, signup.test.tsx, proxy-routes.test.ts |
-| D (rewrite) | 4 | page.test.tsx, lists/page.test.tsx, search/page.test.tsx, profile/page.test.tsx |
+| Grade       | Count | Files                                                                                            |
+| ----------- | ----- | ------------------------------------------------------------------------------------------------ |
+| A (keep)    | 5     | callback.test.ts, middleware.test.ts, settings/page.test.tsx, recover.test.tsx, consent.test.tsx |
+| B (improve) | 3     | login.test.tsx, signup.test.tsx, proxy-routes.test.ts                                            |
+| D (rewrite) | 4     | page.test.tsx, lists/page.test.tsx, search/page.test.tsx, profile/page.test.tsx                  |
 
 ### Critical Journey Gaps
 
@@ -38,20 +38,20 @@ A test audit revealed that ~30% of CafeRoam's test suite is high-quality (A-grad
 
 ### Frontend (`lib/test-utils/`)
 
-| File | Purpose |
-|---|---|
+| File           | Purpose                                                                                                                                |
+| -------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
 | `factories.ts` | Data factories: `makeUser()`, `makeShop()`, `makeList()`, `makeCheckIn()`, `makeStamp()` — realistic Taiwan data, overridable defaults |
-| `mocks.ts` | Boundary mock helpers: `mockSupabaseAuth()`, `mockRouter()`, `mockFetch()` — extracted from existing A-grade tests |
-| `render.ts` | Custom render wrapper that pre-wires common providers |
+| `mocks.ts`     | Boundary mock helpers: `mockSupabaseAuth()`, `mockRouter()`, `mockFetch()` — extracted from existing A-grade tests                     |
+| `render.ts`    | Custom render wrapper that pre-wires common providers                                                                                  |
 
 ### Backend (`backend/tests/factories.py`)
 
-| Function | Purpose |
-|---|---|
-| `make_user()` | Realistic user with configurable metadata, consent state |
-| `make_shop()` | Shop with realistic Thai name, coordinates, tags |
-| `make_list()` | List with owner reference and optional shop items |
-| `make_checkin()` | Check-in with photo URL, optional note, timestamp |
+| Function         | Purpose                                                  |
+| ---------------- | -------------------------------------------------------- |
+| `make_user()`    | Realistic user with configurable metadata, consent state |
+| `make_shop()`    | Shop with realistic Thai name, coordinates, tags         |
+| `make_list()`    | List with owner reference and optional shop items        |
+| `make_checkin()` | Check-in with photo URL, optional note, timestamp        |
 
 Factories use overridable defaults — every field has a realistic default but can be overridden per-test.
 
@@ -67,49 +67,49 @@ Factories use overridable defaults — every field has a realistic default but c
 
 ### Phase 1 — Launch Blockers (critical business rules)
 
-| Journey | Layer | What to Test |
-|---|---|---|
-| **3-list cap** | Backend | POST /lists when user has 3 → 400. POST when user has 2 → 201. |
-| **3-list cap** | Frontend | Given user has 3 lists, create button shows error. Given 0-2, create succeeds. |
-| **Check-in photo** | Backend | POST /checkins without photo → 400. With valid photo → 201 + stamp. |
-| **Check-in photo** | Frontend | Form submit disabled without photo. Upload + submit → success + stamp. |
-| **PDPA cascade** | Backend | DELETE /auth/account → photos removed, lists deleted, check-ins deleted, stamps deleted, profile deleted. |
-| **PDPA cascade** | Frontend | Already A-grade — verify endpoint call with auth header. |
+| Journey            | Layer    | What to Test                                                                                              |
+| ------------------ | -------- | --------------------------------------------------------------------------------------------------------- |
+| **3-list cap**     | Backend  | POST /lists when user has 3 → 400. POST when user has 2 → 201.                                            |
+| **3-list cap**     | Frontend | Given user has 3 lists, create button shows error. Given 0-2, create succeeds.                            |
+| **Check-in photo** | Backend  | POST /checkins without photo → 400. With valid photo → 201 + stamp.                                       |
+| **Check-in photo** | Frontend | Form submit disabled without photo. Upload + submit → success + stamp.                                    |
+| **PDPA cascade**   | Backend  | DELETE /auth/account → photos removed, lists deleted, check-ins deleted, stamps deleted, profile deleted. |
+| **PDPA cascade**   | Frontend | Already A-grade — verify endpoint call with auth header.                                                  |
 
 ### Phase 2 — Core Features (D-grade rewrites)
 
-| Journey | Layer | What to Test |
-|---|---|---|
-| **Search** | Backend | Query → embedding → pgvector results. Empty query → error. Taxonomy boost ranking. |
-| **Search** | Frontend | User types query → shop cards with name/tags. No results → empty state. |
-| **List CRUD** | Frontend | Create → appears. Add shop → visible. Remove shop → gone. Delete list → gone. |
-| **Profile/stamps** | Frontend | 3 check-ins + 2 stamps → history + collection renders. New user → empty state. |
+| Journey            | Layer    | What to Test                                                                       |
+| ------------------ | -------- | ---------------------------------------------------------------------------------- |
+| **Search**         | Backend  | Query → embedding → pgvector results. Empty query → error. Taxonomy boost ranking. |
+| **Search**         | Frontend | User types query → shop cards with name/tags. No results → empty state.            |
+| **List CRUD**      | Frontend | Create → appears. Add shop → visible. Remove shop → gone. Delete list → gone.      |
+| **Profile/stamps** | Frontend | 3 check-ins + 2 stamps → history + collection renders. New user → empty state.     |
 
 ### Phase 3 — Auth Hardening (B-grade → A-grade)
 
-| Journey | Layer | What to Test |
-|---|---|---|
-| **Login errors** | Frontend | Wrong password → error. Network failure → error. Empty fields → validation. Realistic emails. |
-| **Signup errors** | Frontend | Email taken → error. Password short → validation. PDPA unchecked → blocked. |
-| **OAuth flow** | Frontend | Google → `signInWithOAuth` with correct provider. LINE → same. Callback error → display. |
-| **Proxy routes** | Frontend | Request body forwarding, auth header, error responses. |
+| Journey           | Layer    | What to Test                                                                                  |
+| ----------------- | -------- | --------------------------------------------------------------------------------------------- |
+| **Login errors**  | Frontend | Wrong password → error. Network failure → error. Empty fields → validation. Realistic emails. |
+| **Signup errors** | Frontend | Email taken → error. Password short → validation. PDPA unchecked → blocked.                   |
+| **OAuth flow**    | Frontend | Google → `signInWithOAuth` with correct provider. LINE → same. Callback error → display.      |
+| **Proxy routes**  | Frontend | Request body forwarding, auth header, error responses.                                        |
 
 ### Phase 4 — Coverage Extensions (nice-to-haves)
 
-| Journey | Layer | What to Test |
-|---|---|---|
-| **Homepage** | Frontend | Featured shops or search CTA. Auth state affects visible actions. |
-| **Shop detail** | Frontend | Shop info, map, tags. Check-in button visible when authed. |
-| **Email digest** | Backend | Weekly cron content. Unsubscribe flag respected. |
+| Journey          | Layer    | What to Test                                                      |
+| ---------------- | -------- | ----------------------------------------------------------------- |
+| **Homepage**     | Frontend | Featured shops or search CTA. Auth state affects visible actions. |
+| **Shop detail**  | Frontend | Shop info, map, tags. Check-in button visible when authed.        |
+| **Email digest** | Backend  | Weekly cron content. Unsubscribe flag respected.                  |
 
 ## Success Criteria
 
-| Metric | Before | After Phase 2 | After Phase 4 |
-|---|---|---|---|
-| D-grade test files | 4 | 0 | 0 |
-| Critical journey coverage | 2/8 | 6/8 | 8/8 |
-| Frontend test quality (A/B grade) | 7/12 | 11/12 | 12/12 |
-| Backend launch-blocker coverage | 0% | 100% | 100% |
+| Metric                            | Before | After Phase 2 | After Phase 4 |
+| --------------------------------- | ------ | ------------- | ------------- |
+| D-grade test files                | 4      | 0             | 0             |
+| Critical journey coverage         | 2/8    | 6/8           | 8/8           |
+| Frontend test quality (A/B grade) | 7/12   | 11/12         | 12/12         |
+| Backend launch-blocker coverage   | 0%     | 100%          | 100%          |
 
 ## Testing Philosophy Reference
 

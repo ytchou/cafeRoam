@@ -60,19 +60,28 @@ describe('SignupPage', () => {
     await userEvent.type(screen.getByLabelText(/email/i), 'taken@example.com');
     await userEvent.type(screen.getByLabelText(/password/i), 'SecurePass123!');
     await userEvent.click(screen.getByRole('checkbox'));
-    await userEvent.click(screen.getByRole('button', { name: /註冊|sign up/i }));
+    await userEvent.click(
+      screen.getByRole('button', { name: /註冊|sign up/i })
+    );
     await waitFor(() => {
-      expect(screen.getByRole('alert')).toHaveTextContent(/already registered/i);
+      expect(screen.getByRole('alert')).toHaveTextContent(
+        /already registered/i
+      );
     });
   });
 
   it('successful signup shows email confirmation message', async () => {
     mockSignUp.mockResolvedValue({ error: null, data: {} });
     render(<SignupPage />);
-    await userEvent.type(screen.getByLabelText(/email/i), 'wang.xiaoming@gmail.com');
+    await userEvent.type(
+      screen.getByLabelText(/email/i),
+      'wang.xiaoming@gmail.com'
+    );
     await userEvent.type(screen.getByLabelText(/password/i), 'SecurePass123!');
     await userEvent.click(screen.getByRole('checkbox'));
-    await userEvent.click(screen.getByRole('button', { name: /註冊|sign up/i }));
+    await userEvent.click(
+      screen.getByRole('button', { name: /註冊|sign up/i })
+    );
     await waitFor(() => {
       expect(screen.getByText(/check your email/i)).toBeInTheDocument();
       expect(screen.getByText('wang.xiaoming@gmail.com')).toBeInTheDocument();

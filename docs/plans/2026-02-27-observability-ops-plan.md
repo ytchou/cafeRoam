@@ -21,6 +21,7 @@
 Wire up `sentry-sdk` (already in `pyproject.toml`) to capture FastAPI errors with environment context.
 
 **Files:**
+
 - Modify: `backend/main.py`
 - Modify: `backend/core/config.py`
 - Test: `backend/tests/test_sentry_init.py`
@@ -124,6 +125,7 @@ git commit -m "feat(obs): initialize Sentry backend with environment context"
 Add middleware that generates a UUID `request_id` for every API request, logs request/response details, and returns the ID in response headers.
 
 **Files:**
+
 - Create: `backend/middleware/__init__.py`
 - Create: `backend/middleware/request_id.py`
 - Test: `backend/tests/middleware/__init__.py`
@@ -261,6 +263,7 @@ git commit -m "feat(obs): add request ID middleware with structured request logg
 Add a `/health/deep` endpoint that validates Postgres connectivity and reports per-dependency health with latency.
 
 **Files:**
+
 - Modify: `backend/main.py`
 - Test: `backend/tests/test_health.py`
 
@@ -379,6 +382,7 @@ git commit -m "feat(obs): add deep health check endpoint with dependency validat
 Install `@sentry/nextjs` and wire it into the Next.js 16 app. Source maps uploaded at build time.
 
 **Files:**
+
 - Create: `sentry.client.config.ts`
 - Create: `sentry.server.config.ts`
 - Create: `sentry.edge.config.ts`
@@ -542,6 +546,7 @@ git commit -m "feat(obs): initialize Sentry frontend with source map upload supp
 Install `posthog-js` and create a PostHog provider wrapper for the React app.
 
 **Files:**
+
 - Create: `lib/posthog/provider.tsx`
 - Modify: `app/layout.tsx` (wrap with PostHogProvider)
 - Modify: `.env.example` (already has PostHog vars — verify)
@@ -680,6 +685,7 @@ git commit -m "feat(obs): add PostHog frontend provider with DNT respect"
 Ensure Sentry captures worker job failures with job context (job_id, job_type, shop_id).
 
 **Files:**
+
 - Modify: `backend/workers/scheduler.py`
 - Test: `backend/tests/workers/test_sentry_capture.py`
 
@@ -769,6 +775,7 @@ git commit -m "feat(obs): capture worker job failures in Sentry with context"
 Update `.env.example` with all observability-related env vars for both services.
 
 **Files:**
+
 - Modify: `.env.example`
 - Modify: `backend/core/config.py` (add `app_version` field)
 
@@ -805,6 +812,7 @@ git commit -m "docs(obs): update env vars documentation for observability stack"
 Run all tests across both services. Document Better Stack setup as a manual ops task.
 
 **Files:**
+
 - Create: `docs/ops/better-stack-setup.md`
 
 **Step 1: Run all backend tests**
@@ -908,6 +916,7 @@ graph TD
 ```
 
 **Wave 1** (parallel — no dependencies):
+
 - Task 1: Sentry Backend Initialization
 - Task 2: Request ID Middleware
 - Task 3: Deep Health Check Endpoint
@@ -916,7 +925,9 @@ graph TD
 - Task 7: Environment Variable Documentation
 
 **Wave 2** (depends on Task 1):
+
 - Task 6: Worker Sentry Integration ← Task 1 (Sentry must be initialized first)
 
 **Wave 3** (depends on all):
+
 - Task 8: Full Verification & Better Stack Setup Guide ← All previous tasks

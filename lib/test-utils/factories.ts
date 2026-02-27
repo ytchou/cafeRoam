@@ -32,7 +32,8 @@ export function makeUser(overrides: Record<string, unknown> = {}) {
 
 export function makeSession(overrides: Record<string, unknown> = {}) {
   return {
-    access_token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.test-token-payload.signature',
+    access_token:
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.test-token-payload.signature',
     refresh_token: 'test-refresh-token',
     expires_in: 3600,
     token_type: 'bearer',
@@ -54,7 +55,9 @@ export function makeShop(overrides: Record<string, unknown> = {}) {
     review_count: 287,
     price_range: '$$',
     description: '安靜適合工作的獨立咖啡店',
-    photo_urls: ['https://example.supabase.co/storage/v1/object/public/shop-photos/d4e5f6/exterior.jpg'],
+    photo_urls: [
+      'https://example.supabase.co/storage/v1/object/public/shop-photos/d4e5f6/exterior.jpg',
+    ],
     ...overrides,
   };
 }
@@ -75,7 +78,9 @@ export function makeCheckIn(overrides: Record<string, unknown> = {}) {
     id: 'ci-j0k1l2',
     user_id: 'user-a1b2c3',
     shop_id: 'shop-d4e5f6',
-    photo_urls: ['https://example.supabase.co/storage/v1/object/public/checkin-photos/user-a1b2c3/photo1.jpg'],
+    photo_urls: [
+      'https://example.supabase.co/storage/v1/object/public/checkin-photos/user-a1b2c3/photo1.jpg',
+    ],
     menu_photo_url: null,
     note: null,
     created_at: TS,
@@ -89,7 +94,8 @@ export function makeStamp(overrides: Record<string, unknown> = {}) {
     user_id: 'user-a1b2c3',
     shop_id: 'shop-d4e5f6',
     check_in_id: 'ci-j0k1l2',
-    design_url: 'https://example.supabase.co/storage/v1/object/public/stamps/d4e5f6.png',
+    design_url:
+      'https://example.supabase.co/storage/v1/object/public/stamps/d4e5f6.png',
     earned_at: TS,
     ...overrides,
   };

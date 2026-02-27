@@ -322,23 +322,28 @@ Core infrastructure everything else depends on. No user-facing product yet.
 > **Plan:** [docs/plans/2026-02-27-observability-ops-plan.md](docs/plans/2026-02-27-observability-ops-plan.md)
 
 **Chunk 1 — Backend Observability (Wave 1):**
+
 - [ ] Sentry backend initialization (DSN-gated, environment context)
 - [ ] Request ID middleware (UUID per request, structured logging)
 - [ ] Deep health check endpoint (/health/deep with DB validation)
 
 **Chunk 2 — Frontend Observability (Wave 1):**
+
 - [ ] Sentry frontend initialization (@sentry/nextjs, source maps)
 - [ ] PostHog frontend provider (posthog-js, DNT respect)
 - [ ] Environment variable documentation
 
 **Chunk 3 — Worker Integration (Wave 2):**
+
 - [ ] Worker Sentry integration (capture job failures with context)
 
 **Chunk 4 — Verification & Ops (Wave 3):**
+
 - [ ] Full test suite verification (backend + frontend)
 - [ ] Better Stack setup guide (manual external configuration)
 
 **Deferred:**
+
 - [ ] Admin/ops tooling: internal dashboard for data quality review and manual shop enrichment
 
 ### Test Improvement (Phase 0 + 1)
@@ -348,6 +353,7 @@ Core infrastructure everything else depends on. No user-facing product yet.
 > **Plan:** [docs/plans/2026-02-27-test-improvement-phase-0-1-plan.md](docs/plans/2026-02-27-test-improvement-phase-0-1-plan.md)
 
 **Phase 0 — Test Infrastructure (Wave 1-2):**
+
 - [x] Backend test factories (make_user, make_shop_row, make_list, make_checkin, make_stamp)
 - [x] Frontend test factories (makeUser, makeSession, makeShop, makeList, makeCheckIn, makeStamp)
 - [x] Frontend mock helpers (createMockSupabaseAuth, createMockRouter)
@@ -355,12 +361,14 @@ Core infrastructure everything else depends on. No user-facing product yet.
 - [x] Validate pattern: refactor test_search_service.py to use shared factories
 
 **Phase 1 — Auth Test Hardening (Wave 3):**
+
 - [x] Login: successful login redirects to home
 - [x] Login: OAuth buttons call signInWithOAuth with correct provider
 - [x] Signup: successful signup shows email confirmation
 - [x] Signup: error display on failed signup
 
 **Blocked — D-grade page tests (need features built in Phase 2):**
+
 - [ ] Lists page tests (blocked until lists CRUD feature)
 - [ ] Search page tests (blocked until semantic search UI)
 - [ ] Profile page tests (blocked until profile page)

@@ -7,16 +7,16 @@
 
 ## Pass 1 — Full Discovery
 
-*Agents: Bug Hunter (Opus), Standards (Sonnet), Architecture (Opus), Plan Alignment (Sonnet)*
+_Agents: Bug Hunter (Opus), Standards (Sonnet), Architecture (Opus), Plan Alignment (Sonnet)_
 
 ### Issues Found (4 valid, 5 false positives)
 
-| Severity | File:Line | Description | Flagged By |
-|----------|-----------|-------------|------------|
-| Important | `app/(protected)/settings/page.test.tsx:91` | Authorization header assertion loosened from exact token to `stringContaining('Bearer ')` — misses regression where wrong token is sent | Bug Hunter |
-| Important | `backend/tests/factories.py` | `make_shop_row` includes RPC-only fields (`similarity`, `tag_ids`) that force callers to `pop()` before `Shop()` construction — easy to misuse | Architecture |
-| Minor | `backend/tests/services/test_search_service.py:114` | Redundant `tag_ids=["quiet", "wifi-reliable"]` override — factory default already matches | Bug Hunter |
-| Minor | `backend/tests/factories.py`, `lib/test-utils/factories.ts` | Non-deterministic `datetime.now()`/`new Date()` timestamps — trap for future test authors | Bug Hunter, Architecture |
+| Severity  | File:Line                                                   | Description                                                                                                                                    | Flagged By               |
+| --------- | ----------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ |
+| Important | `app/(protected)/settings/page.test.tsx:91`                 | Authorization header assertion loosened from exact token to `stringContaining('Bearer ')` — misses regression where wrong token is sent        | Bug Hunter               |
+| Important | `backend/tests/factories.py`                                | `make_shop_row` includes RPC-only fields (`similarity`, `tag_ids`) that force callers to `pop()` before `Shop()` construction — easy to misuse | Architecture             |
+| Minor     | `backend/tests/services/test_search_service.py:114`         | Redundant `tag_ids=["quiet", "wifi-reliable"]` override — factory default already matches                                                      | Bug Hunter               |
+| Minor     | `backend/tests/factories.py`, `lib/test-utils/factories.ts` | Non-deterministic `datetime.now()`/`new Date()` timestamps — trap for future test authors                                                      | Bug Hunter, Architecture |
 
 ### Validation Results
 
@@ -33,6 +33,7 @@ Plan Alignment: **No misalignments found — all planned tasks complete**
 **Pre-fix SHA:** 34f882f663f22b3c9a20c788fcc08859bb985ebc
 
 **Issues fixed:**
+
 - [Important] `settings/page.test.tsx:91` — Lifted `testSession` to module level; tightened Authorization header assertion to exact token via template literal (`Bearer ${testSession.access_token}`)
 - [Important] `backend/tests/factories.py` — Split `make_shop_row` into `make_shop()` (clean model) + `make_shop_row()` (extends with RPC fields); fixed non-deterministic `datetime.now()` with `_TS` sentinel; updated `test_factories.py` tests accordingly
 - [Minor] `backend/tests/services/test_search_service.py:114` — Removed redundant `tag_ids` override (factory default already matched)
@@ -42,10 +43,11 @@ Plan Alignment: **No misalignments found — all planned tasks complete**
 
 ## Pass 2 — Re-Verify (Smart Routing)
 
-*Agents re-run: Bug Hunter, Architecture*
-*Agents skipped (no findings in Pass 1): Plan Alignment*
+_Agents re-run: Bug Hunter, Architecture_
+_Agents skipped (no findings in Pass 1): Plan Alignment_
 
 ### Previously Flagged Issues — Resolution Status
+
 - [Important] settings/page.test.tsx:91 — ✓ Resolved
 - [Important] backend/tests/factories.py (timestamps + split) — ✓ Resolved
 - [Minor] test_search_service.py:114 redundant override — ✓ Resolved
