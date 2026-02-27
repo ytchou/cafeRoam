@@ -99,14 +99,46 @@ supabase db reset              # Reset local DB + reseed
 
 ## Testing
 
-Critical paths requiring tests:
+**Full philosophy:** [`docs/testing-philosophy.md`](docs/testing-philosophy.md) — read this before writing any test.
 
+### Core Principles (non-negotiable)
+
+1. **Mock at boundaries only** — mock at system edges (auth SDK, HTTP, DB). Never mock your own modules or internal functions. Tooling doesn't matter (`vi.mock()`, MSW, etc.) — the boundary principle does.
+2. **Frame tests from user journeys** — test descriptions must describe a user action or outcome, not a function name. "Given a user with 3 lists, when they try to create a 4th, then they see an error" not "returns 400 when limit exceeded".
+3. **Realistic test data** — never `{ name: "test", email: "test@test.com" }`. Use data factories or realistic values.
+4. **Test the behavior, not the implementation** — a test that breaks on internal refactors without breaking user behavior is wrong.
+
+### Test Priority (Testing Trophy shape)
+
+| Layer | Weight | When to use |
+|---|---|---|
+| Integration | Most | User flows involving multiple parts (auth → redirect, form → API → DB) |
+| Unit | Some | Pure logic only (validators, transforms, calculations) |
+| E2E | Few | 3–5 critical paths only (signup, search, check-in) |
+
+### Critical Paths Requiring Tests
+
+**Backend (pytest):**
 - `backend/services/search_service.py` — semantic search + taxonomy boost logic
 - `backend/services/checkin_service.py` — photo upload, stamp generation
-- `backend/services/lists_service.py` — list CRUD, 3-list cap enforcement
+- `backend/services/lists_service.py` — list CRUD, **3-list cap enforcement**
 - `backend/providers/` — all provider adapters
 - `backend/api/` — all API route handlers (auth validation, input validation)
-- `app/` — frontend component tests (Vitest + Testing Library)
+
+**Frontend (Vitest + Testing Library):**
+- Auth flows — login, signup, OAuth callback, consent
+- List management — create, delete, cap enforcement
+- Check-in — photo upload validation, form submission
+- Search — query → results rendering
+- Profile — stamp collection, check-in history
+
+### Test Quality Checklist
+
+Before finishing any test, verify:
+- [ ] Test description describes a user action or outcome
+- [ ] Mocks are only at HTTP/auth/DB boundaries
+- [ ] Test would survive an internal refactor that preserves behavior
+- [ ] Test data is realistic, not placeholder strings
 
 ---
 
