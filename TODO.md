@@ -342,6 +342,26 @@ Core infrastructure everything else depends on. No user-facing product yet.
 - [x] Full test suite verification (backend + frontend)
 - [x] Better Stack setup guide (manual external configuration)
 
+**Pre-activation (env vars not yet set in Railway — nothing fires until these are done):**
+
+_Sentry:_
+
+- [ ] Create Sentry project → set `SENTRY_DSN` (backend Railway service) and `NEXT_PUBLIC_SENTRY_DSN` (frontend Railway service)
+- [ ] Create Sentry auth token → set `SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, `SENTRY_PROJECT` in Railway (source map uploads on deploy)
+- [ ] Trigger a test error post-deploy to confirm events arrive in Sentry
+
+_PostHog:_
+
+- [ ] Create PostHog project → set `NEXT_PUBLIC_POSTHOG_KEY` in Railway (frontend)
+- [ ] Confirm `NEXT_PUBLIC_POSTHOG_HOST` is set (defaults to `https://app.posthog.com` if omitted)
+- [ ] Verify pageview events in PostHog Live Events after first deploy
+
+_Better Stack:_
+
+- [ ] Create Better Stack account → follow `docs/ops/better-stack-setup.md` to add 3 monitors (API Health, Web Health, API Deep Health)
+- [ ] Configure Slack/Discord webhook alert policy (2 consecutive failures before alert)
+- [ ] Create `status.caferoam.com` status page → add CNAME in DNS
+
 **Deferred:**
 
 - [ ] Admin/ops tooling: internal dashboard for data quality review and manual shop enrichment
