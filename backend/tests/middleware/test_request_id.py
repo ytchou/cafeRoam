@@ -1,8 +1,8 @@
 import uuid
 
 import pytest
-from starlette.testclient import TestClient
 from fastapi import FastAPI
+from starlette.testclient import TestClient
 
 from middleware.request_id import RequestIDMiddleware
 

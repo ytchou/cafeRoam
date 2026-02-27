@@ -335,8 +335,8 @@ Core infrastructure everything else depends on. No user-facing product yet.
 - [x] Worker Sentry integration (capture job failures with context)
 
 **Chunk 4 — Verification & Ops (Wave 3):**
-- [ ] Full test suite verification (backend + frontend)
-- [ ] Better Stack setup guide (manual external configuration)
+- [x] Full test suite verification (backend + frontend)
+- [x] Better Stack setup guide (manual external configuration)
 
 **Deferred:**
 - [ ] Admin/ops tooling: internal dashboard for data quality review and manual shop enrichment

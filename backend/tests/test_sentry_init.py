@@ -1,6 +1,4 @@
-from unittest.mock import patch, MagicMock
-
-import pytest
+from unittest.mock import patch
 
 
 class TestSentryInit:
@@ -16,6 +14,7 @@ class TestSentryInit:
             mock_settings.environment = "production"
 
             from main import _init_sentry
+
             _init_sentry()
 
             mock_sentry.init.assert_called_once()
@@ -33,6 +32,7 @@ class TestSentryInit:
             mock_settings.sentry_dsn = ""
 
             from main import _init_sentry
+
             _init_sentry()
 
             mock_sentry.init.assert_not_called()
