@@ -36,6 +36,7 @@ Use Apify (`compass/crawler-google-places`) instead of Outscraper.
 ## Update (2026-02-26)
 
 Originally framed as a "one-time scrape," Apify is now an ongoing dependency:
+
 - **User submissions**: Users submit Google Maps URLs → Apify scrapes reviews + photos for enrichment
 - **Smart re-enrichment**: Daily staleness sweep uses Apify to check for new reviews before re-enriching
 - Google Places API (New) was evaluated as an alternative but rejected due to a hard 5-review limit per place, which is insufficient for AI enrichment (needs 10-20 reviews)

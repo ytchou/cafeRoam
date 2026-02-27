@@ -322,23 +322,28 @@ Core infrastructure everything else depends on. No user-facing product yet.
 > **Plan:** [docs/plans/2026-02-27-observability-ops-plan.md](docs/plans/2026-02-27-observability-ops-plan.md)
 
 **Chunk 1 — Backend Observability (Wave 1):**
+
 - [x] Sentry backend initialization (DSN-gated, environment context)
 - [x] Request ID middleware (UUID per request, structured logging)
 - [x] Deep health check endpoint (/health/deep with DB validation)
 
 **Chunk 2 — Frontend Observability (Wave 1):**
+
 - [x] Sentry frontend initialization (@sentry/nextjs, source maps)
 - [x] PostHog frontend provider (posthog-js, DNT respect)
 - [x] Environment variable documentation
 
 **Chunk 3 — Worker Integration (Wave 2):**
+
 - [x] Worker Sentry integration (capture job failures with context)
 
 **Chunk 4 — Verification & Ops (Wave 3):**
+
 - [x] Full test suite verification (backend + frontend)
 - [x] Better Stack setup guide (manual external configuration)
 
 **Deferred:**
+
 - [ ] Admin/ops tooling: internal dashboard for data quality review and manual shop enrichment
 
 **Phase 1 is done when:** 200+ shops are live in the database with taxonomy tags and embeddings. Auth works end-to-end including PDPA consent and account deletion. Admin can add and edit shop data. `git clone` → running app in under 15 minutes.

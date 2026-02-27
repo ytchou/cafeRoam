@@ -11,6 +11,7 @@ It's easy to conflate "the header is set" with "logging is correlated". They are
 
 **Prevention:**
 Request ID middleware must do all three:
+
 1. `structlog.contextvars.bind_contextvars(request_id=request_id)` — before `call_next`
 2. `sentry_sdk.set_tag("request_id", request_id)` — before `call_next`
 3. `structlog.contextvars.clear_contextvars()` — in a `finally` block after `call_next`

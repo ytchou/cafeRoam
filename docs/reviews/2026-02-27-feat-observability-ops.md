@@ -9,19 +9,19 @@
 
 ## Pass 1 — Full Discovery
 
-*Agents: Bug Hunter (Opus), Standards (Sonnet), Architecture (Opus), Plan Alignment (Sonnet)*
+_Agents: Bug Hunter (Opus), Standards (Sonnet), Architecture (Opus), Plan Alignment (Sonnet)_
 
 ### Issues Found (7 total — after dedup)
 
-| Severity | File:Line | Description | Flagged By |
-|----------|-----------|-------------|------------|
-| Important | `backend/main.py:89` | Health check leaks raw exception strings (info disclosure) | Bug Hunter, Standards, Architecture |
-| Important | `backend/main.py:71-95` | Deep health check has no timeout — can hang and exhaust workers | Architecture |
-| Important | `backend/middleware/request_id.py:16-22` | Request ID not bound to structlog context/Sentry scope — useless for correlation | Bug Hunter, Architecture |
-| Important | `backend/middleware/request_id.py:16` | Incoming X-Request-ID header ignored — breaks end-to-end tracing | Bug Hunter |
-| Important | `app/__tests__/sentry-init.test.ts:17` | Vacuous test (`expect(true).toBe(true)`) — provides no coverage guarantee | Standards, Architecture |
-| Minor | `backend/tests/test_sentry_init.py` | `send_default_pii=False` not asserted — privacy-sensitive regression surface | Plan Alignment |
-| Minor | `next.config.ts:14-16` | `silent: !process.env.CI` noisy locally; `disableLogger: true` missing from plan | Bug Hunter, Plan Alignment |
+| Severity  | File:Line                                | Description                                                                      | Flagged By                          |
+| --------- | ---------------------------------------- | -------------------------------------------------------------------------------- | ----------------------------------- |
+| Important | `backend/main.py:89`                     | Health check leaks raw exception strings (info disclosure)                       | Bug Hunter, Standards, Architecture |
+| Important | `backend/main.py:71-95`                  | Deep health check has no timeout — can hang and exhaust workers                  | Architecture                        |
+| Important | `backend/middleware/request_id.py:16-22` | Request ID not bound to structlog context/Sentry scope — useless for correlation | Bug Hunter, Architecture            |
+| Important | `backend/middleware/request_id.py:16`    | Incoming X-Request-ID header ignored — breaks end-to-end tracing                 | Bug Hunter                          |
+| Important | `app/__tests__/sentry-init.test.ts:17`   | Vacuous test (`expect(true).toBe(true)`) — provides no coverage guarantee        | Standards, Architecture             |
+| Minor     | `backend/tests/test_sentry_init.py`      | `send_default_pii=False` not asserted — privacy-sensitive regression surface     | Plan Alignment                      |
+| Minor     | `next.config.ts:14-16`                   | `silent: !process.env.CI` noisy locally; `disableLogger: true` missing from plan | Bug Hunter, Plan Alignment          |
 
 ### False Positives Skipped
 
@@ -42,6 +42,7 @@
 **Post-fix SHA:** fd8798c (fix(review): sanitize health errors, bind request ID context, fix vacuous test)
 
 **Issues fixed:**
+
 - [Important] `backend/main.py:71-95` — Added `asyncio.wait_for(..., timeout=5.0)` + `asyncio.to_thread()` to health check; replaced `str(e)` with static `"connection_failed"` / `"timeout"` strings
 - [Important] `backend/middleware/request_id.py` — Complete rewrite: `bind_contextvars(request_id=...)` before `call_next`, `clear_contextvars()` in `finally`, `sentry_sdk.set_tag("request_id", ...)`, honor incoming `x-request-id` header
 - [Important] `app/__tests__/sentry-init.test.ts` — Rewrote vacuous test using `vi.mock()` hoisting + `vi.resetModules()` + `vi.stubEnv()` + dynamic imports for two real assertions (enabled: true/false)
@@ -58,8 +59,8 @@
 
 ## Pass 2 — Re-Verify (Smart Routing)
 
-*Agents re-run: Bug Hunter (Opus), Standards (Sonnet), Architecture (Opus)*
-*Skipped: Plan Alignment (no findings in Pass 1 that weren't already false positives)*
+_Agents re-run: Bug Hunter (Opus), Standards (Sonnet), Architecture (Opus)_
+_Skipped: Plan Alignment (no findings in Pass 1 that weren't already false positives)_
 
 ### Previously Flagged Issues — Resolution Status
 

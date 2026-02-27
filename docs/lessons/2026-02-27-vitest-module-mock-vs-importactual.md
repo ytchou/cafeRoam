@@ -11,6 +11,7 @@ The test used `vi.doMock('@sentry/nextjs', ...)` then immediately called `vi.imp
 
 **Prevention:**
 For testing module-level side effects (code that runs at import time, like `Sentry.init`):
+
 1. Use `vi.mock('@sentry/nextjs', () => ({ init: vi.fn() }))` at the TOP of the file — Vitest hoists this before imports
 2. In `beforeEach`: call `vi.clearAllMocks()` AND `vi.resetModules()` to reset state between tests
 3. In each test: use `vi.stubEnv('VAR', 'value')` then dynamic `await import('...module...')` to re-execute module-level code with the new env

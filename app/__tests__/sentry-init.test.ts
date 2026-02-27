@@ -20,7 +20,7 @@ describe('Sentry client configuration', () => {
         dsn: 'https://test@sentry.io/123',
         tracesSampleRate: 0.1,
         enabled: true,
-      }),
+      })
     );
   });
 
@@ -32,7 +32,7 @@ describe('Sentry client configuration', () => {
     expect(Sentry.init).toHaveBeenCalledWith(
       expect.objectContaining({
         enabled: false,
-      }),
+      })
     );
   });
 });

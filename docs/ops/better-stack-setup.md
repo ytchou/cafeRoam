@@ -14,11 +14,11 @@ Manual setup guide for configuring Better Stack uptime monitoring for CafeRoam.
 
 ## Monitors to Create
 
-| Monitor | URL | Interval | Purpose |
-|---------|-----|----------|---------|
-| API Health | `https://api.caferoam.com/health` | 60s | Shallow check — app is running |
-| Web Health | `https://caferoam.com` | 60s | Frontend is reachable |
-| API Deep Health | `https://api.caferoam.com/health/deep` | 300s | DB connectivity + latency |
+| Monitor         | URL                                    | Interval | Purpose                        |
+| --------------- | -------------------------------------- | -------- | ------------------------------ |
+| API Health      | `https://api.caferoam.com/health`      | 60s      | Shallow check — app is running |
+| Web Health      | `https://caferoam.com`                 | 60s      | Frontend is reachable          |
+| API Deep Health | `https://api.caferoam.com/health/deep` | 300s     | DB connectivity + latency      |
 
 ### Monitor Configuration
 
@@ -30,6 +30,7 @@ For each monitor:
 4. **Confirmation period:** 2 consecutive failures before alerting (avoids flapping)
 
 For the Deep Health monitor specifically:
+
 - The endpoint returns `503` when the database is unreachable
 - Set "Expected status code" to `200` so any non-200 triggers an alert
 
@@ -70,7 +71,7 @@ For the Deep Health monitor specifically:
 ### GET /health (shallow)
 
 ```json
-{"status": "ok"}
+{ "status": "ok" }
 ```
 
 Always returns 200 if the app process is running. No external dependencies checked.
