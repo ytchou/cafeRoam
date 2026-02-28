@@ -1,7 +1,10 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { createMockSupabaseAuth, createMockRouter } from '@/lib/test-utils/mocks';
+import {
+  createMockSupabaseAuth,
+  createMockRouter,
+} from '@/lib/test-utils/mocks';
 
 const mockAuth = createMockSupabaseAuth();
 vi.mock('@/lib/supabase/client', () => ({
