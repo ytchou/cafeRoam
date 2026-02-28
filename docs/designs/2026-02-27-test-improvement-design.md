@@ -41,15 +41,14 @@ A test audit revealed that ~30% of CafeRoam's test suite is high-quality (A-grad
 | File           | Purpose                                                                                                                                |
 | -------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
 | `factories.ts` | Data factories: `makeUser()`, `makeShop()`, `makeList()`, `makeCheckIn()`, `makeStamp()` — realistic Taiwan data, overridable defaults |
-| `mocks.ts`     | Boundary mock helpers: `mockSupabaseAuth()`, `mockRouter()`, `mockFetch()` — extracted from existing A-grade tests                     |
-| `render.ts`    | Custom render wrapper that pre-wires common providers                                                                                  |
+| `mocks.ts`     | Boundary mock helpers: `createMockSupabaseAuth()`, `createMockRouter()` — extracted from existing A-grade tests                        |
 
 ### Backend (`backend/tests/factories.py`)
 
 | Function         | Purpose                                                  |
 | ---------------- | -------------------------------------------------------- |
 | `make_user()`    | Realistic user with configurable metadata, consent state |
-| `make_shop()`    | Shop with realistic Thai name, coordinates, tags         |
+| `make_shop()`    | Shop with realistic Taiwanese name, coordinates, tags    |
 | `make_list()`    | List with owner reference and optional shop items        |
 | `make_checkin()` | Check-in with photo URL, optional note, timestamp        |
 
@@ -61,7 +60,7 @@ Factories use overridable defaults — every field has a realistic default but c
 
 - Create `lib/test-utils/factories.ts`
 - Create `lib/test-utils/mocks.ts` (extract from existing A-grade tests)
-- Create `lib/test-utils/render.ts`
+- ~~Create `lib/test-utils/render.ts`~~ — descoped at planning time; add when first test needs provider pre-wiring
 - Create `backend/tests/factories.py`
 - Refactor 1 existing A-grade test to use new utilities (validate pattern)
 

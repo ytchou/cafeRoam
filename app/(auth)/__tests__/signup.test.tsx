@@ -1,19 +1,16 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { createMockSupabaseAuth, createMockRouter } from '@/lib/test-utils/mocks';
 
-const mockSignUp = vi.fn();
+const mockAuth = createMockSupabaseAuth();
 vi.mock('@/lib/supabase/client', () => ({
-  createClient: () => ({
-    auth: {
-      signUp: mockSignUp,
-    },
-  }),
+  createClient: () => ({ auth: mockAuth }),
 }));
 
-const mockPush = vi.fn();
+const mockRouter = createMockRouter();
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({ push: mockPush }),
+  useRouter: () => mockRouter,
   useSearchParams: () => new URLSearchParams(),
 }));
 
@@ -52,12 +49,12 @@ describe('SignupPage', () => {
   });
 
   it('shows error message when signup fails', async () => {
-    mockSignUp.mockResolvedValue({
+    mockAuth.signUp.mockResolvedValue({
       error: { message: 'User already registered' },
       data: {},
     });
     render(<SignupPage />);
-    await userEvent.type(screen.getByLabelText(/email/i), 'taken@example.com');
+    await userEvent.type(screen.getByLabelText(/email/i), 'chen.wei@gmail.com');
     await userEvent.type(screen.getByLabelText(/password/i), 'SecurePass123!');
     await userEvent.click(screen.getByRole('checkbox'));
     await userEvent.click(
@@ -71,7 +68,7 @@ describe('SignupPage', () => {
   });
 
   it('successful signup shows email confirmation message', async () => {
-    mockSignUp.mockResolvedValue({ error: null, data: {} });
+    mockAuth.signUp.mockResolvedValue({ error: null, data: {} });
     render(<SignupPage />);
     await userEvent.type(
       screen.getByLabelText(/email/i),
