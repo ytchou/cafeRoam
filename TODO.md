@@ -346,6 +346,33 @@ Core infrastructure everything else depends on. No user-facing product yet.
 
 - [ ] Admin/ops tooling: internal dashboard for data quality review and manual shop enrichment
 
+### Test Improvement (Phase 0 + 1)
+
+> **Design Doc:** [docs/designs/2026-02-27-test-improvement-design.md](docs/designs/2026-02-27-test-improvement-design.md)
+> **Philosophy:** [docs/testing-philosophy.md](docs/testing-philosophy.md)
+> **Plan:** [docs/plans/2026-02-27-test-improvement-phase-0-1-plan.md](docs/plans/2026-02-27-test-improvement-phase-0-1-plan.md)
+
+**Phase 0 — Test Infrastructure (Wave 1-2):**
+
+- [x] Backend test factories (make_user, make_shop_row, make_list, make_checkin, make_stamp)
+- [x] Frontend test factories (makeUser, makeSession, makeShop, makeList, makeCheckIn, makeStamp)
+- [x] Frontend mock helpers (createMockSupabaseAuth, createMockRouter)
+- [x] Validate pattern: refactor settings/page.test.tsx to use shared utilities
+- [x] Validate pattern: refactor test_search_service.py to use shared factories
+
+**Phase 1 — Auth Test Hardening (Wave 3):**
+
+- [x] Login: successful login redirects to home
+- [x] Login: OAuth buttons call signInWithOAuth with correct provider
+- [x] Signup: successful signup shows email confirmation
+- [x] Signup: error display on failed signup
+
+**Blocked — D-grade page tests (need features built in Phase 2):**
+
+- [ ] Lists page tests (blocked until lists CRUD feature)
+- [ ] Search page tests (blocked until semantic search UI)
+- [ ] Profile page tests (blocked until profile page)
+
 **Phase 1 is done when:** 200+ shops are live in the database with taxonomy tags and embeddings. Auth works end-to-end including PDPA consent and account deletion. Admin can add and edit shop data. `git clone` → running app in under 15 minutes.
 
 ---

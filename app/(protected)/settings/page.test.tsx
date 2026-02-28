@@ -1,38 +1,34 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import {
+  createMockSupabaseAuth,
+  createMockRouter,
+} from '@/lib/test-utils/mocks';
+import { makeSession } from '@/lib/test-utils/factories';
 
-// Mock Supabase client
-const mockSignOut = vi.fn();
-const mockGetSession = vi.fn();
+const mockAuth = createMockSupabaseAuth();
 vi.mock('@/lib/supabase/client', () => ({
-  createClient: () => ({
-    auth: {
-      signOut: mockSignOut,
-      getSession: mockGetSession,
-    },
-  }),
+  createClient: () => ({ auth: mockAuth }),
 }));
 
-// Mock next/navigation
-const mockPush = vi.fn();
+const mockRouter = createMockRouter();
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({ push: mockPush }),
+  useRouter: () => mockRouter,
 }));
 
-// Mock fetch for DELETE /api/auth/account
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
+
+const testSession = makeSession();
 
 import SettingsPage from './page';
 
 describe('SettingsPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockGetSession.mockResolvedValue({
-      data: { session: { access_token: 'test-token' } },
-    });
-    mockSignOut.mockResolvedValue({});
+    mockAuth.getSession.mockResolvedValue({ data: { session: testSession } });
+    mockAuth.signOut.mockResolvedValue({});
   });
 
   it('renders logout button and danger zone', () => {
@@ -47,8 +43,8 @@ describe('SettingsPage', () => {
   it('logout calls signOut and redirects to /', async () => {
     render(<SettingsPage />);
     await userEvent.click(screen.getByRole('button', { name: /logout/i }));
-    expect(mockSignOut).toHaveBeenCalledOnce();
-    await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/'));
+    expect(mockAuth.signOut).toHaveBeenCalledOnce();
+    await waitFor(() => expect(mockRouter.push).toHaveBeenCalledWith('/'));
   });
 
   it('shows confirmation dialog when delete account is clicked', async () => {
@@ -96,12 +92,12 @@ describe('SettingsPage', () => {
         expect.objectContaining({
           method: 'DELETE',
           headers: expect.objectContaining({
-            Authorization: 'Bearer test-token',
+            Authorization: `Bearer ${testSession.access_token}`,
           }),
         })
       );
-      expect(mockSignOut).toHaveBeenCalledOnce();
-      expect(mockPush).toHaveBeenCalledWith('/');
+      expect(mockAuth.signOut).toHaveBeenCalledOnce();
+      expect(mockRouter.push).toHaveBeenCalledWith('/');
     });
   });
 
@@ -123,7 +119,7 @@ describe('SettingsPage', () => {
     await waitFor(() => {
       expect(screen.getByRole('alert')).toHaveTextContent('Server error');
     });
-    expect(mockSignOut).not.toHaveBeenCalled();
+    expect(mockAuth.signOut).not.toHaveBeenCalled();
   });
 
   it('cancel button closes dialog without deleting', async () => {
@@ -141,7 +137,7 @@ describe('SettingsPage', () => {
   });
 
   it('redirects to /login when session is null without calling API', async () => {
-    mockGetSession.mockResolvedValue({ data: { session: null } });
+    mockAuth.getSession.mockResolvedValue({ data: { session: null } });
     render(<SettingsPage />);
     await userEvent.click(
       screen.getByRole('button', { name: /delete account/i })
@@ -150,7 +146,7 @@ describe('SettingsPage', () => {
     await userEvent.click(
       screen.getByRole('button', { name: /confirm delete/i })
     );
-    await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/login'));
+    await waitFor(() => expect(mockRouter.push).toHaveBeenCalledWith('/login'));
     expect(mockFetch).not.toHaveBeenCalled();
   });
 });
