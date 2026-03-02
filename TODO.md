@@ -349,7 +349,7 @@ Core infrastructure everything else depends on. No user-facing product yet.
 
 **Chunk 1 — DB + Audit (Wave 1-2):**
 
-- [ ] DB migration: `manually_edited_at` column + `admin_audit_logs` table + low-confidence RPC
+- [x] DB migration: `manually_edited_at` column + `admin_audit_logs` table + low-confidence RPC
 - [ ] Audit log utility (`log_admin_action`) with TDD
 
 **Chunk 2 — Backend API (Wave 3):**
