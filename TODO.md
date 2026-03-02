@@ -375,7 +375,7 @@ Core infrastructure everything else depends on. No user-facing product yet.
 
 **Chunk 5 — Verification (Wave 7):**
 
-- [ ] Full verification (pytest, vitest, ruff, mypy, pnpm build)
+- [x] Full verification (pytest, vitest, ruff, mypy, pnpm build)
 
 ### Test Improvement (Phase 0 + 1)
 
