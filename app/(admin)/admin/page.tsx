@@ -1,23 +1,41 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 
+interface Submission {
+  id: string;
+  google_maps_url: string;
+  status: string;
+  created_at: string;
+}
+
 interface PipelineOverview {
   job_counts: Record<string, number>;
-  recent_submissions: Array<{
-    id: string;
-    google_maps_url: string;
-    status: string;
-    created_at: string;
-  }>;
+  recent_submissions: Submission[];
 }
 
 export default function AdminDashboard() {
   const [data, setData] = useState<PipelineOverview | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const tokenRef = useRef<string | null>(null);
+
+  const fetchOverview = useCallback(async (token: string) => {
+    const res = await fetch('/api/admin/pipeline/overview', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      setError(body.detail || 'Failed to load overview');
+      setLoading(false);
+      return;
+    }
+    setData(await res.json());
+    setLoading(false);
+  }, []);
 
   useEffect(() => {
     async function load() {
@@ -26,21 +44,30 @@ export default function AdminDashboard() {
         data: { session },
       } = await supabase.auth.getSession();
       if (!session) return;
+      tokenRef.current = session.access_token;
+      fetchOverview(session.access_token);
+    }
+    load();
+  }, [fetchOverview]);
 
-      const res = await fetch('/api/admin/pipeline/overview', {
-        headers: { Authorization: `Bearer ${session.access_token}` },
+  async function handleSubmissionAction(submissionId: string, action: 'approve' | 'reject') {
+    if (!tokenRef.current) return;
+    setActionError(null);
+    try {
+      const res = await fetch(`/api/admin/pipeline/${action}/${submissionId}`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${tokenRef.current}` },
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        setError(body.detail || 'Failed to load overview');
-        setLoading(false);
+        setActionError(body.detail || `Failed to ${action} submission`);
         return;
       }
-      setData(await res.json());
-      setLoading(false);
+      fetchOverview(tokenRef.current);
+    } catch {
+      setActionError('Network error');
     }
-    load();
-  }, []);
+  }
 
   if (loading) return <p>Loading...</p>;
   if (error)
@@ -79,6 +106,11 @@ export default function AdminDashboard() {
 
       <section>
         <h2 className="mb-4 text-lg font-semibold">Recent Submissions</h2>
+        {actionError && (
+          <p role="alert" className="mb-3 rounded border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">
+            {actionError}
+          </p>
+        )}
         {data.recent_submissions.length === 0 ? (
           <p className="text-gray-500">No submissions yet.</p>
         ) : (
@@ -88,6 +120,7 @@ export default function AdminDashboard() {
                 <th className="pb-2">URL</th>
                 <th className="pb-2">Status</th>
                 <th className="pb-2">Date</th>
+                <th className="pb-2">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -109,6 +142,26 @@ export default function AdminDashboard() {
                   </td>
                   <td className="py-2 text-gray-500">
                     {new Date(sub.created_at).toLocaleDateString()}
+                  </td>
+                  <td className="py-2">
+                    {(sub.status === 'pending' || sub.status === 'processing') && (
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleSubmissionAction(sub.id, 'approve')}
+                          className="rounded bg-green-50 px-2 py-1 text-xs text-green-700 hover:bg-green-100"
+                        >
+                          Approve
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleSubmissionAction(sub.id, 'reject')}
+                          className="rounded bg-red-50 px-2 py-1 text-xs text-red-600 hover:bg-red-100"
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    )}
                   </td>
                 </tr>
               ))}

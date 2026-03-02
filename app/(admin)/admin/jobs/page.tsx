@@ -10,7 +10,7 @@ interface Job {
   priority: number;
   attempts: number;
   created_at: string;
-  error: string | null;
+  last_error: string | null;
   payload: Record<string, unknown>;
 }
 
@@ -48,6 +48,7 @@ const PAGE_SIZE = 20;
 export default function AdminJobsPage() {
   const [data, setData] = useState<JobsResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
@@ -96,6 +97,7 @@ export default function AdminJobsPage() {
 
   async function handleCancel(jobId: string) {
     if (!tokenRef.current) return;
+    setActionError(null);
     try {
       const res = await fetch(`/api/admin/pipeline/jobs/${jobId}/cancel`, {
         method: 'POST',
@@ -103,17 +105,18 @@ export default function AdminJobsPage() {
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        setError(body.detail || 'Failed to cancel job');
+        setActionError(body.detail || 'Failed to cancel job');
         return;
       }
       fetchJobs(tokenRef.current, page, statusFilter, typeFilter);
     } catch {
-      setError('Network error');
+      setActionError('Network error');
     }
   }
 
   async function handleRetry(jobId: string) {
     if (!tokenRef.current) return;
+    setActionError(null);
     try {
       const res = await fetch(`/api/admin/pipeline/retry/${jobId}`, {
         method: 'POST',
@@ -121,12 +124,12 @@ export default function AdminJobsPage() {
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        setError(body.detail || 'Failed to retry job');
+        setActionError(body.detail || 'Failed to retry job');
         return;
       }
       fetchJobs(tokenRef.current, page, statusFilter, typeFilter);
     } catch {
-      setError('Network error');
+      setActionError('Network error');
     }
   }
 
@@ -183,6 +186,12 @@ export default function AdminJobsPage() {
         </label>
       </div>
 
+      {actionError && (
+        <p role="alert" className="rounded border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">
+          {actionError}
+        </p>
+      )}
+
       <table className="w-full text-left text-sm">
         <thead>
           <tr className="border-b text-gray-500">
@@ -218,9 +227,9 @@ export default function AdminJobsPage() {
                   {new Date(job.created_at).toLocaleDateString()}
                 </td>
                 <td className="max-w-xs truncate py-2 text-gray-500">
-                  {job.error
-                    ? job.error.slice(0, 60) +
-                      (job.error.length > 60 ? '...' : '')
+                  {job.last_error
+                    ? job.last_error.slice(0, 60) +
+                      (job.last_error.length > 60 ? '...' : '')
                     : '-'}
                 </td>
                 <td className="py-2">
@@ -260,13 +269,13 @@ export default function AdminJobsPage() {
                           {JSON.stringify(job.payload, null, 2)}
                         </pre>
                       </div>
-                      {job.error && (
+                      {job.last_error && (
                         <div>
                           <p className="text-xs font-semibold text-gray-500">
                             Full Error
                           </p>
                           <pre className="mt-1 overflow-auto rounded bg-white p-2 text-xs text-red-600">
-                            {job.error}
+                            {job.last_error}
                           </pre>
                         </div>
                       )}

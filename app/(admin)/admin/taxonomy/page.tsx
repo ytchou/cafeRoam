@@ -6,6 +6,8 @@ import { createClient } from '@/lib/supabase/client';
 interface TagFrequency {
   tag_id: string;
   shop_count: number;
+  avg_confidence: number;
+  dimension: string;
 }
 
 interface LowConfidenceShop {
@@ -118,14 +120,18 @@ export default function TaxonomyPage() {
           <thead>
             <tr className="border-b text-gray-500">
               <th className="pb-2">Tag ID</th>
+              <th className="pb-2">Dimension</th>
               <th className="pb-2">Shop Count</th>
+              <th className="pb-2">Avg Confidence</th>
             </tr>
           </thead>
           <tbody>
             {data.tag_frequency.map((tag) => (
               <tr key={tag.tag_id} className="border-b">
                 <td className="py-2">{tag.tag_id}</td>
+                <td className="py-2 text-gray-500">{tag.dimension}</td>
                 <td className="py-2">{tag.shop_count}</td>
+                <td className="py-2">{tag.avg_confidence?.toFixed(2) ?? '—'}</td>
               </tr>
             ))}
           </tbody>

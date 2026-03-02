@@ -152,7 +152,11 @@ export default function AdminShopDetail() {
         return;
       }
       const data = await res.json();
-      setSearchResult(`Rank: ${data.rank ?? 'N/A'}, Score: ${data.score ?? 'N/A'}`);
+      if (data.found) {
+        setSearchResult(`Rank: ${data.rank} of ${data.total_results}`);
+      } else {
+        setSearchResult(`Not ranked (checked top ${data.total_results} results)`);
+      }
     } catch {
       setSearchResult('Network error');
     }

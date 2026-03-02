@@ -97,6 +97,43 @@ async def retry_job(
     return {"message": f"Job {job_id} re-queued"}
 
 
+@router.post("/approve/{submission_id}")
+async def approve_submission(
+    submission_id: str,
+    user: dict[str, Any] = Depends(require_admin),  # noqa: B008
+) -> dict[str, str]:
+    """Approve a submission — marks it live and records the review timestamp."""
+    import datetime
+
+    db = get_service_role_client()
+
+    sub_response = db.table("shop_submissions").select("id, status").eq("id", submission_id).execute()
+    if not sub_response.data:
+        raise HTTPException(status_code=404, detail=f"Submission {submission_id} not found")
+
+    sub_status = cast("list[dict[str, Any]]", sub_response.data)[0]["status"]
+    if sub_status not in ("pending", "processing"):
+        raise HTTPException(
+            status_code=409,
+            detail=f"Submission {submission_id} cannot be approved (status: {sub_status})",
+        )
+
+    db.table("shop_submissions").update(
+        {
+            "status": "live",
+            "reviewed_at": datetime.datetime.now(datetime.UTC).isoformat(),
+        }
+    ).eq("id", submission_id).execute()
+
+    log_admin_action(
+        admin_user_id=user["id"],
+        action=f"POST /admin/pipeline/approve/{submission_id}",
+        target_type="submission",
+        target_id=submission_id,
+    )
+    return {"message": f"Submission {submission_id} approved"}
+
+
 @router.post("/reject/{submission_id}")
 async def reject_submission(
     submission_id: str,

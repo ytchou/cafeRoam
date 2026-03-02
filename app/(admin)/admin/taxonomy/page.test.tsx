@@ -50,13 +50,13 @@ function makeTaxonomyStats(overrides: Record<string, unknown> = {}) {
     ],
     missing_embeddings: [
       {
-        shop_id: 'shop-me1',
-        shop_name: '好丘信義店',
+        id: 'shop-me1',
+        name: '好丘信義店',
         processing_status: 'enriched',
       },
       {
-        shop_id: 'shop-me2',
-        shop_name: '咖啡黑潮',
+        id: 'shop-me2',
+        name: '咖啡黑潮',
         processing_status: 'scraped',
       },
     ],

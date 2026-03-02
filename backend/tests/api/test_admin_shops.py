@@ -5,6 +5,7 @@ from fastapi.testclient import TestClient
 
 from api.admin_shops import router
 from api.deps import get_current_user
+from providers.embeddings import get_embeddings_provider
 from tests.factories import make_shop_row
 
 # Create a test app with just this router
@@ -211,7 +212,10 @@ class TestAdminShopEnqueue:
 class TestAdminShopSearchRank:
     def test_admin_can_check_shop_search_rank_for_a_query(self):
         """Admin can check where a shop ranks for a given search query."""
+        mock_provider = MagicMock()
+        mock_provider.embed = AsyncMock(return_value=[0.1] * 1536)
         test_app.dependency_overrides[get_current_user] = _admin_user
+        test_app.dependency_overrides[get_embeddings_provider] = lambda: mock_provider
         try:
             mock_db = MagicMock()
             search_results = [
@@ -223,12 +227,8 @@ class TestAdminShopSearchRank:
             with (
                 patch("api.admin_shops.get_service_role_client", return_value=mock_db),
                 patch("api.deps.settings") as mock_settings,
-                patch("api.admin_shops.get_embeddings_provider") as mock_emb,
             ):
                 mock_settings.admin_user_ids = [_ADMIN_ID]
-                mock_provider = MagicMock()
-                mock_provider.embed = AsyncMock(return_value=[0.1] * 1536)
-                mock_emb.return_value = mock_provider
                 response = client.get("/admin/shops/shop-1/search-rank?query=quiet+coffee")
             assert response.status_code == 200
             data = response.json()

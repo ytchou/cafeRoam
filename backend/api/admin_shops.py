@@ -9,7 +9,7 @@ from api.deps import require_admin
 from db.supabase_client import get_service_role_client
 from middleware.admin_audit import log_admin_action
 from models.types import JobStatus, JobType, ProcessingStatus
-from providers.embeddings import get_embeddings_provider
+from providers.embeddings import EmbeddingsProvider, get_embeddings_provider
 from workers.queue import JobQueue
 
 logger = structlog.get_logger()
@@ -111,9 +111,10 @@ async def get_shop_detail(
     """Full shop detail including tags, photos, and mode scores."""
     db = get_service_role_client()
 
-    shop_resp = db.table("shops").select("*").eq("id", shop_id).single().execute()
-    if not shop_resp.data:
-        raise HTTPException(status_code=404, detail=f"Shop {shop_id} not found")
+    try:
+        shop_resp = db.table("shops").select("*").eq("id", shop_id).single().execute()
+    except Exception:
+        raise HTTPException(status_code=404, detail=f"Shop {shop_id} not found") from None
 
     tags_resp = db.table("shop_tags").select("tag_id, confidence").eq("shop_id", shop_id).execute()
     photos_resp = (
@@ -138,7 +139,7 @@ async def update_shop(
     user: dict[str, Any] = Depends(require_admin),  # noqa: B008
 ) -> dict[str, Any]:
     """Update shop identity fields. Sets manually_edited_at timestamp."""
-    updates = body.model_dump(exclude_none=True)
+    updates = body.model_dump(exclude_unset=True)
     if not updates:
         raise HTTPException(status_code=400, detail="No fields to update")
 
@@ -190,10 +191,21 @@ async def enqueue_job(
             detail=f"A pending {body.job_type} job already exists for shop {shop_id}",
         )
 
+    # scrape_shop handler requires google_maps_url in payload — fetch it from the shop row
+    payload: dict[str, Any] = {"shop_id": shop_id}
+    if job_type == JobType.SCRAPE_SHOP:
+        shop_row = db.table("shops").select("google_maps_url").eq("id", shop_id).single().execute()
+        if not shop_row.data or not shop_row.data.get("google_maps_url"):
+            raise HTTPException(
+                status_code=422,
+                detail=f"Shop {shop_id} has no google_maps_url — cannot enqueue scrape job",
+            )
+        payload["google_maps_url"] = shop_row.data["google_maps_url"]
+
     queue = JobQueue(db=db)
     job_id = await queue.enqueue(
         job_type=job_type,
-        payload={"shop_id": shop_id},
+        payload=payload,
         priority=5,
     )
     log_admin_action(
@@ -211,14 +223,14 @@ async def search_rank(
     shop_id: str,
     query: str = Query(..., min_length=1),
     user: dict[str, Any] = Depends(require_admin),  # noqa: B008
+    embeddings: EmbeddingsProvider = Depends(get_embeddings_provider),  # noqa: B008
 ) -> dict[str, Any]:
     """Run a search query and return where this shop ranks in results."""
-    embeddings = get_embeddings_provider()
     query_embedding = await embeddings.embed(query)
 
     db = get_service_role_client()
     response = db.rpc(
-        "search_shops",
+        "admin_search_shops",
         {"query_embedding": query_embedding, "match_count": 50},
     ).execute()
 

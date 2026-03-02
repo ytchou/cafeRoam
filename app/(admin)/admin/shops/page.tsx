@@ -16,8 +16,6 @@ interface Shop {
 interface ShopsResponse {
   shops: Shop[];
   total: number;
-  offset: number;
-  limit: number;
 }
 
 const STATUS_OPTIONS = ['all', 'pending', 'enriched', 'live', 'failed'] as const;
@@ -51,6 +49,12 @@ export default function AdminShopsList() {
         const {
           data: { session },
         } = await supabase.auth.getSession();
+
+        if (!session) {
+          setError('Session expired — please refresh the page');
+          setLoading(false);
+          return;
+        }
 
         const params = new URLSearchParams();
         if (searchTerm) params.set('search', searchTerm);
@@ -123,11 +127,20 @@ export default function AdminShopsList() {
     setCreateError(null);
 
     const formData = new FormData(e.currentTarget);
+    const latitude = parseFloat(formData.get('latitude') as string);
+    const longitude = parseFloat(formData.get('longitude') as string);
+
+    if (isNaN(latitude) || isNaN(longitude)) {
+      setCreateError('Latitude and longitude must be valid numbers');
+      setCreateLoading(false);
+      return;
+    }
+
     const payload = {
       name: formData.get('name') as string,
       address: formData.get('address') as string,
-      latitude: parseFloat(formData.get('latitude') as string),
-      longitude: parseFloat(formData.get('longitude') as string),
+      latitude,
+      longitude,
     };
 
     try {
