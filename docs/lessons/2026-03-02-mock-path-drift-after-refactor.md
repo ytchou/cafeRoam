@@ -40,9 +40,11 @@ app.dependency_overrides[require_admin] = lambda: {"id": "admin-id"}
 **Context:** Adding `.limit(200)` to bulk_approve query
 
 ### What happened
+
 Tests mocked `.eq().execute()`. When production code gained `.limit(200)` between `.eq()` and `.execute()`, tests still passed because MagicMock auto-creates chain links and iterating an unconfigured MagicMock yields `[]` — the right answer, for the wrong reason.
 
 ### Prevention
+
 After any DB query refactor (adding `.limit()`, `.order()`, `.range()`), search for test mocks on that query's chain. Verify mock chains match the full production chain. `execute.return_value` anchored too early is the smell.
 
 ## Related

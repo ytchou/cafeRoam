@@ -33,6 +33,7 @@ Known errors, their symptoms, causes, and fixes. Add an entry every time you hit
 **Fix:** Match each `fetch()` call against the FastAPI route: verify URL, method, query params, response shape. Create missing proxy routes immediately.
 
 **Prevention:**
+
 - When writing any `fetch()` call, immediately open the corresponding FastAPI route handler and cross-check: URL, HTTP method, query param names, JSON response shape
 - Front-end test mocks must match the actual backend response shape — not an assumed shape
 - Missing proxy route = 404 at runtime. Create `app/api/admin/X/route.ts` alongside the backend endpoint
@@ -48,6 +49,7 @@ Known errors, their symptoms, causes, and fixes. Add an entry every time you hit
 **Fix:** Update all patch paths from `api.X.settings` → `api.deps.settings`.
 
 **Prevention:**
+
 - After any `deps.py` extraction, grep for `patch("api.<old_module>.settings")` across all test files and update the path
 - Prefer `app.dependency_overrides[require_admin] = lambda: {"id": "admin-id"}` over patching settings — it's immune to module path changes
 

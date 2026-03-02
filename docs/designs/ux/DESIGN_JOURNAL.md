@@ -9,9 +9,11 @@
 ### Round 1 — 2026-03-02 (initial batch)
 
 **Prompt used:**
+
 > CafeRoam (啡遊) — mobile landing and search screen. Warm, curated aesthetic like a knowledgeable local friend. Bilingual Traditional Chinese/English. Hero: natural language search bar with placeholder "找間有巴斯克蛋糕的咖啡廳…". Mode chips: 工作 Work / 放鬆 Rest / 社交 Social / 精品 Specialty. 3 featured shop cards below. Bottom nav. Warm off-whites, terracotta, espresso brown.
 
 **Variants:**
+
 - v1a: `screenshots/search-v1a-proposed.png` — Map-dominant. Full-screen map, frosted glass search overlay at top, swipeable cafe carousel at bottom
 - v1b: `screenshots/search-v1b-proposed.png` — Search-hero. Large centered search bar, 2×2 mode chip grid, vertical cafe list below
 - v1c: `screenshots/search-v1c-proposed.png` — Mode-discovery. Large photography mode tiles in grid, search bar secondary, masonry curated section
@@ -25,9 +27,11 @@
 ### Round 2 — 2026-03-02 (web-app corrected batch)
 
 **Prompt used:**
+
 > Same layout approaches but explicitly web app (Next.js/Tailwind/shadcn/ui), not native iOS. Mobile browser context.
 
 **Variants:**
+
 - v2a: `screenshots/search-v2a-proposed.png` — Map-first web. Full-bleed map, glassmorphism search overlay, single cafe card at bottom → **APPROVED as Map screen**
 - v2b: `screenshots/search-v2b-proposed.png` — Search-hero web. Terracotta header with search, dense list below → **chosen direction for Home screen, needs iteration**
 - v2c: `screenshots/search-v2c-proposed.png` — Mode-discovery web. Photo tiles, masonry grid → rejected
@@ -55,6 +59,7 @@ Changes from v2a: larger glassmorphism search bar with sparkle icon, glassmorphi
 ### Round 1 — 2026-03-02 (initial batch)
 
 **Variants:**
+
 - v1a: `screenshots/shop-detail-v1a-proposed.png` — Editorial hero. Large hero photo, trust section with recent check-in photos, menu highlights with icons, fixed bottom CTA bar
 - v1b: `screenshots/shop-detail-v1b-proposed.png` — Card-based. Photo menu thumbnails, quick info box, stacked CTAs
 - v1c: `screenshots/shop-detail-v1c-proposed.png` — Tab-based. Photo carousel, quick-stat row, 3 tabs (資訊/菜單/打卡), floating check-in FAB

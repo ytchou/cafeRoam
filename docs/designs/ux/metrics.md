@@ -14,6 +14,7 @@
 - PostHog events: `search_submitted` → `shop_detail_viewed` (within same session, time-to-tap < 60s)
 
 **Secondary KPIs:**
+
 - % of sessions with a food/item-specific query (e.g. "巴斯克蛋糕", "手沖") — measures natural language adoption over generic keyword use
   - Event: `search_submitted` with `query_type: "item_specific"` (classified server-side)
 - 7-day return rate after first search session — measures habit formation
@@ -29,6 +30,7 @@
 - PostHog event: `shop_url_copied` OR `native_share_triggered` on Shop Detail page
 
 **Secondary KPIs:**
+
 - % of sessions that visit 2+ shop detail pages (comparison behavior)
   - Event: `shop_detail_viewed` count per session ≥ 2
 - Time-to-share from session start — measures how quickly the app resolves the "where should we go" question
@@ -44,6 +46,7 @@
 - PostHog event: `checkin_completed` where `is_first_checkin_at_shop: true`
 
 **Secondary KPIs:**
+
 - User opens their stamp collection / profile at least once per week (habit signal)
   - Event: `profile_stamps_viewed` with `days_since_last_visit <= 7`
 - User performs a specialty-specific search (e.g. "Yirgacheffe", "single origin", "精品咖啡") — measures data depth adoption
@@ -53,15 +56,15 @@
 
 ## Cross-Persona Events to Instrument
 
-| Event | Required properties | Screens |
-|---|---|---|
-| `search_submitted` | `query_text`, `query_type` (classified), `mode_chip_active`, `result_count` | Home, Map |
-| `shop_detail_viewed` | `shop_id`, `referrer` (search / map_pin / direct), `session_search_query` | Shop Detail |
-| `shop_url_copied` | `shop_id`, `copy_method` (native_share / clipboard) | Shop Detail |
-| `checkin_completed` | `shop_id`, `is_first_checkin_at_shop`, `has_text_note`, `has_menu_photo` | Check-in page |
-| `profile_stamps_viewed` | `stamp_count` | Profile |
-| `filter_applied` | `filter_type`, `filter_value` | Home, Map |
-| `session_start` | `days_since_first_session`, `previous_sessions` | All |
+| Event                   | Required properties                                                         | Screens       |
+| ----------------------- | --------------------------------------------------------------------------- | ------------- |
+| `search_submitted`      | `query_text`, `query_type` (classified), `mode_chip_active`, `result_count` | Home, Map     |
+| `shop_detail_viewed`    | `shop_id`, `referrer` (search / map_pin / direct), `session_search_query`   | Shop Detail   |
+| `shop_url_copied`       | `shop_id`, `copy_method` (native_share / clipboard)                         | Shop Detail   |
+| `checkin_completed`     | `shop_id`, `is_first_checkin_at_shop`, `has_text_note`, `has_menu_photo`    | Check-in page |
+| `profile_stamps_viewed` | `stamp_count`                                                               | Profile       |
+| `filter_applied`        | `filter_type`, `filter_value`                                               | Home, Map     |
+| `session_start`         | `days_since_first_session`, `previous_sessions`                             | All           |
 
 ---
 
