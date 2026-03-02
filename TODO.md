@@ -461,8 +461,8 @@ This is the final gate for Phase 1. Two paths: fast path seeds 29 pre-built shop
 - [ ] Write `backend/scripts/run_takeout_import.py`:
   - Accept GeoJSON file path as CLI arg (`sys.argv[1]`)
   - Load and parse the file
-  - Call `import_takeout_to_queue(geojson, db, queue)` from `importers/google_takeout.py`
-  - Print count of shops queued
+  - Call `import_takeout_to_queue(geojson, db, bounds=REGIONS["greater_taipei"].bounds)` from `importers/google_takeout.py`
+  - Print count of shops queued (alternatively, trigger via `POST /admin/shops/import/google-takeout` in the admin UI)
 - [ ] Start backend: `cd backend && uvicorn main:app --reload --port 8000`
 - [ ] Run import: `cd backend && uv run python scripts/run_takeout_import.py /path/to/Saved\ Places.json`
 - [ ] Confirm SCRAPE_SHOP jobs queued — check `/admin/jobs` or `GET /admin/pipeline/jobs?status=pending`
