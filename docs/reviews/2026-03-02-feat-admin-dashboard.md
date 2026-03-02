@@ -52,8 +52,49 @@
 
 ---
 
-## Fix Pass 1
+## Fix Pass 1 (Critical)
 
 **Pre-fix SHA:** 9f96d72d66db410daa2bd83928dcf13d6e18030c
+**Commit:** `bb750f5`
 
-*(Populated after fixes)*
+| # | Status | Fix |
+|---|--------|-----|
+| C1 | Fixed | `shops/[id]/page.tsx`: destructure `{shop, tags, photos}` from API response; merge with `setShop({...shopData, tags, photos})` |
+| C2 | Fixed | Created `app/api/admin/pipeline/overview/route.ts` and `app/api/admin/pipeline/retry/[id]/route.ts`; fixed enqueue URL in shop detail page |
+| C3 | Fixed | `handleSaveEdit` method changed from PATCH → PUT |
+| C4 | Fixed | `admin_taxonomy.py`: query `shop_tags` table directly for `unique_tagged_shops` count instead of wrong RPC |
+| C5 | Fixed | `shops/[id]/page.tsx`: `?q=` → `?query=` in search-rank fetch |
+| I2 | Fixed | `taxonomy/page.tsx`: `MissingEmbeddingShop` interface `shop_id/shop_name` → `id/name` |
+| I8 | Fixed | `shops/[id]/page.test.tsx`: test mock returns nested `{shop, tags, photos}` shape |
+| I9 | Fixed | Added `handleToggleLive()` and Set Live/Unpublish button to shop detail page |
+| M1 | Fixed | `handleSaveEdit` now has `editError` state and try/catch with error display |
+| M5 | Fixed | `parseFloat` guarded with `isNaN` check before sending lat/lng to API |
+
+## Fix Pass 2 (Important + Minor)
+
+**Pre-fix SHA:** `bb750f5`
+**Commit:** `0d5e3e2`
+
+| # | Status | Fix |
+|---|--------|-----|
+| I1 | Fixed | `jobs/page.tsx`: pagination `page`/`page_size` → `offset`/`limit`; `JobsResponse` interface updated |
+| I3 | Fixed | Migration: added `ALTER TABLE admin_audit_logs ENABLE ROW LEVEL SECURITY` |
+| I4 | Fixed | `admin.py cancel_job`: conditional `.in_("status", ["pending", "claimed"])` update eliminates check-then-act race |
+| I5 | Fixed | `_require_admin` extracted to `api/deps.py` as `require_admin`; all 3 routers use shared dependency |
+| I6 | Fixed | `admin.py`: `retry_job` and `reject_submission` now call `log_admin_action` |
+| I7 | Fixed | `UpdateShopRequest.processing_status: str` → `ProcessingStatus \| None` |
+| I10 | Fixed | `middleware.ts`: added comment explaining how to set `app_metadata.is_admin` manually in Supabase |
+| I11 | Fixed | `admin_shops.py create_shop`: `google_maps_url` included in DB insert |
+| I12 | Fixed | Tests: removed `log_admin_action` + `JobQueue` internal patches; use `middleware.admin_audit.get_service_role_client` at DB boundary; `JobQueue.enqueue` tested via DB insert mock |
+| M2 | Fixed | `jobs/page.tsx`: `handleCancel` and `handleRetry` now have `res.ok` check and try/catch |
+| M3 | Fixed | `shops/page.tsx`: source filter dropdown added using `SOURCE_OPTIONS` |
+| M4 | Fixed | `shops/page.tsx`: column shows `enriched_at` (with `'—'` fallback) instead of `updated_at` |
+| M6 | Fixed | All test functions renamed to user-outcome framing across `test_admin.py`, `test_admin_shops.py`, `test_admin_taxonomy.py` |
+| M7 | Fixed | Placeholder names ("Coffee A", "Coffee B", "Test") replaced with realistic Taiwanese café names |
+
+## Verification
+
+- **275** frontend tests pass (42 test files)
+- **216** backend tests pass (all including new admin tests)
+- Pre-existing TS error in `login/page.tsx` (`line_oidc` Provider type) — not in our diff, not introduced by this PR
+- All 24 issues resolved; 2 Gemini false positives discarded
