@@ -366,12 +366,12 @@ Core infrastructure everything else depends on. No user-facing product yet.
 
 **Chunk 4 — Frontend Pages (Wave 6):**
 
-- [ ] Admin layout (sidebar nav + breadcrumbs)
-- [ ] Dashboard page (pipeline overview, job counts, recent submissions)
-- [ ] Shops list page (search, filter, create)
-- [ ] Shop detail page (enrichment viewer, tags, photos, pipeline replay actions)
-- [ ] Jobs page (queue browser, retry, cancel)
-- [ ] Taxonomy page (coverage stats, tag frequency, low-confidence shops)
+- [x] Admin layout (sidebar nav + breadcrumbs)
+- [x] Dashboard page (pipeline overview, job counts, recent submissions)
+- [x] Shops list page (search, filter, create)
+- [x] Shop detail page (enrichment viewer, tags, photos, pipeline replay actions)
+- [x] Jobs page (queue browser, retry, cancel)
+- [x] Taxonomy page (coverage stats, tag frequency, low-confidence shops)
 
 **Chunk 5 — Verification (Wave 7):**
 
