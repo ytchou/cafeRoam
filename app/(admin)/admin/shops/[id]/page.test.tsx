@@ -1,5 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import userEvent from '@testing-library/user-event';
+import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import {
   createMockSupabaseAuth,
   createMockRouter,
@@ -75,6 +76,10 @@ describe('AdminShopDetail', () => {
     });
   });
 
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it('renders shop detail with name and status when the API returns shop data', async () => {
     const shopData = makeShopDetail();
 
@@ -139,5 +144,74 @@ describe('AdminShopDetail', () => {
     });
 
     expect(screen.getByText('Shop not found')).toBeInTheDocument();
+  });
+
+  it('enqueues a re-enrichment job when the admin clicks Re-enrich', async () => {
+    mockFetch
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(makeShopDetail()),
+      })
+      .mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({}),
+      });
+
+    const user = userEvent.setup();
+    render(<AdminShopDetail />);
+
+    await waitFor(() => {
+      expect(screen.getByText('山小孩咖啡')).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole('button', { name: /re-enrich/i }));
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      '/api/admin/shops/shop-1/enqueue',
+      expect.objectContaining({
+        method: 'POST',
+        headers: expect.objectContaining({
+          Authorization: `Bearer ${testSession.access_token}`,
+        }),
+        body: JSON.stringify({ job_type: 'enrich_shop' }),
+      })
+    );
+  });
+
+  it('asks for confirmation and unpublishes a live shop when the admin clicks Unpublish', async () => {
+    const shopData = makeShopDetail({ processing_status: 'live' });
+    const updatedShop = { ...shopData.shop, processing_status: 'pending' };
+
+    mockFetch
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(shopData),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(updatedShop),
+      });
+
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+
+    const user = userEvent.setup();
+    render(<AdminShopDetail />);
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole('button', { name: /unpublish/i })
+      ).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole('button', { name: /unpublish/i }));
+
+    expect(window.confirm).toHaveBeenCalled();
+    expect(mockFetch).toHaveBeenCalledWith(
+      '/api/admin/shops/shop-1',
+      expect.objectContaining({
+        method: 'PUT',
+        body: JSON.stringify({ processing_status: 'pending' }),
+      })
+    );
   });
 });

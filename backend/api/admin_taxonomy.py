@@ -26,13 +26,9 @@ async def taxonomy_stats(
     tagged_resp = db.rpc("shop_tag_counts", {}).execute()
     tag_frequency = cast("list[dict[str, Any]]", tagged_resp.data or [])
 
-    # Count distinct shops with at least one tag.
-    # PostgREST defaults to 1000-row limit — use explicit limit to avoid silent truncation.
-    # TODO: replace with a COUNT(DISTINCT shop_id) RPC when the catalog exceeds ~10k shops.
-    tagged_shops_resp = db.table("shop_tags").select("shop_id").limit(100_000).execute()
-    unique_tagged_shops = len(
-        {row["shop_id"] for row in (tagged_shops_resp.data or []) if row.get("shop_id")}
-    )
+    # Count distinct shops with at least one tag — use RPC to avoid PostgREST row-limit truncation.
+    tagged_count_resp = db.rpc("tagged_shop_count", {}).execute()
+    unique_tagged_shops = int(tagged_count_resp.data or 0)
 
     # Shops with embeddings
     embedded_resp = (

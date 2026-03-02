@@ -102,6 +102,7 @@ export default function AdminJobsPage() {
 
   async function handleCancel(jobId: string) {
     if (!tokenRef.current) return;
+    if (!window.confirm('Cancel this job? This cannot be undone.')) return;
     setActionError(null);
     try {
       const res = await fetch(`/api/admin/pipeline/jobs/${jobId}/cancel`, {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 
@@ -51,6 +51,7 @@ export default function AdminShopDetail() {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResult, setSearchResult] = useState<string | null>(null);
   const [actionStatus, setActionStatus] = useState<string | null>(null);
+  const tokenRef = useRef<string | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -59,6 +60,7 @@ export default function AdminShopDetail() {
         data: { session },
       } = await supabase.auth.getSession();
       if (!session) return;
+      tokenRef.current = session.access_token;
 
       const res = await fetch(`/api/admin/shops/${id}`, {
         headers: { Authorization: `Bearer ${session.access_token}` },
@@ -83,16 +85,8 @@ export default function AdminShopDetail() {
     load();
   }, [id]);
 
-  async function getToken() {
-    const supabase = createClient();
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    return session?.access_token;
-  }
-
   async function handleEnqueue(jobType: string) {
-    const token = await getToken();
+    const token = tokenRef.current;
     if (!token) return;
     setActionStatus(`Enqueuing ${jobType}...`);
     try {
@@ -116,9 +110,16 @@ export default function AdminShopDetail() {
   }
 
   async function handleToggleLive() {
-    const token = await getToken();
+    const token = tokenRef.current;
     if (!token || !shop) return;
     const newStatus = shop.processing_status === 'live' ? 'pending' : 'live';
+    if (
+      shop.processing_status === 'live' &&
+      !window.confirm(
+        'Unpublish this shop? It will be removed from search results.'
+      )
+    )
+      return;
     setActionStatus(`Setting status to ${newStatus}...`);
     try {
       const res = await fetch(`/api/admin/shops/${id}`, {
@@ -144,7 +145,7 @@ export default function AdminShopDetail() {
 
   async function handleSearchRank() {
     if (!searchQuery.trim()) return;
-    const token = await getToken();
+    const token = tokenRef.current;
     if (!token) return;
     setSearchResult('Searching...');
     try {
@@ -170,7 +171,7 @@ export default function AdminShopDetail() {
   }
 
   async function handleSaveEdit() {
-    const token = await getToken();
+    const token = tokenRef.current;
     if (!token) return;
     setEditError(null);
 

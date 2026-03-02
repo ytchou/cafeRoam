@@ -1,5 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import userEvent from '@testing-library/user-event';
+import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import {
   createMockSupabaseAuth,
   createMockRouter,
@@ -31,6 +32,10 @@ describe('AdminDashboard', () => {
       data: { session: testSession },
       error: null,
     });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   it('renders pipeline overview with job counts when API returns data', async () => {
@@ -115,5 +120,96 @@ describe('AdminDashboard', () => {
     expect(
       screen.getByText('Forbidden: admin role required')
     ).toBeInTheDocument();
+  });
+
+  it('approves a pending submission when the admin clicks Approve', async () => {
+    const overviewData = {
+      job_counts: {
+        pending: 0,
+        claimed: 0,
+        completed: 0,
+        failed: 0,
+        dead_letter: 0,
+      },
+      recent_submissions: [
+        {
+          id: 'sub-pending-001',
+          google_maps_url: 'https://maps.google.com/?cid=1111111111',
+          status: 'pending',
+          created_at: '2026-03-02T09:00:00.000Z',
+        },
+      ],
+    };
+
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve(overviewData),
+    });
+
+    const user = userEvent.setup();
+    render(<AdminDashboard />);
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole('button', { name: /approve/i })
+      ).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole('button', { name: /approve/i }));
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      '/api/admin/pipeline/approve/sub-pending-001',
+      expect.objectContaining({
+        method: 'POST',
+        headers: { Authorization: `Bearer ${testSession.access_token}` },
+      })
+    );
+  });
+
+  it('asks for confirmation and rejects a pending submission when the admin clicks Reject', async () => {
+    const overviewData = {
+      job_counts: {
+        pending: 0,
+        claimed: 0,
+        completed: 0,
+        failed: 0,
+        dead_letter: 0,
+      },
+      recent_submissions: [
+        {
+          id: 'sub-pending-002',
+          google_maps_url: 'https://maps.google.com/?cid=2222222222',
+          status: 'pending',
+          created_at: '2026-03-02T10:00:00.000Z',
+        },
+      ],
+    };
+
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve(overviewData),
+    });
+
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+
+    const user = userEvent.setup();
+    render(<AdminDashboard />);
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole('button', { name: /reject/i })
+      ).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole('button', { name: /reject/i }));
+
+    expect(window.confirm).toHaveBeenCalled();
+    expect(mockFetch).toHaveBeenCalledWith(
+      '/api/admin/pipeline/reject/sub-pending-002',
+      expect.objectContaining({
+        method: 'POST',
+        headers: { Authorization: `Bearer ${testSession.access_token}` },
+      })
+    );
   });
 });

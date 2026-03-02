@@ -90,7 +90,7 @@ export default function AdminShopsList() {
         });
 
         if (!res.ok) {
-          const body = await res.json();
+          const body = await res.json().catch(() => ({}));
           setError(body.detail || 'Failed to load shops');
           return;
         }
@@ -176,7 +176,7 @@ export default function AdminShopsList() {
       });
 
       if (!res.ok) {
-        const body = await res.json();
+        const body = await res.json().catch(() => ({}));
         setCreateError(body.detail || 'Failed to create shop');
         return;
       }

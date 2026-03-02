@@ -86,9 +86,19 @@ async def retry_job(
             detail=f"Job {job_id} is not retryable (status: {job_status})",
         )
 
-    db.table("job_queue").update({"status": "pending", "attempts": 0, "last_error": None}).eq(
-        "id", job_id
-    ).execute()
+    # Conditional update — only succeeds if job is still in a retryable state (TOCTOU guard)
+    update_response = (
+        db.table("job_queue")
+        .update({"status": "pending", "attempts": 0, "last_error": None, "claimed_at": None})
+        .eq("id", job_id)
+        .in_("status", ["failed", "dead_letter"])
+        .execute()
+    )
+    if not update_response.data:
+        raise HTTPException(
+            status_code=409,
+            detail=f"Job {job_id} status changed concurrently — refresh and retry",
+        )
     log_admin_action(
         admin_user_id=user["id"],
         action=f"POST /admin/pipeline/retry/{job_id}",
@@ -119,12 +129,19 @@ async def approve_submission(
             detail=f"Submission {submission_id} cannot be approved (status: {sub_status})",
         )
 
-    db.table("shop_submissions").update(
-        {
-            "status": "live",
-            "reviewed_at": datetime.now(UTC).isoformat(),
-        }
-    ).eq("id", submission_id).execute()
+    # Conditional update — only succeeds if submission is still in an approvable state (TOCTOU guard)
+    update_response = (
+        db.table("shop_submissions")
+        .update({"status": "live", "reviewed_at": datetime.now(UTC).isoformat()})
+        .eq("id", submission_id)
+        .in_("status", ["pending", "processing"])
+        .execute()
+    )
+    if not update_response.data:
+        raise HTTPException(
+            status_code=409,
+            detail=f"Submission {submission_id} status changed concurrently — refresh and retry",
+        )
 
     log_admin_action(
         admin_user_id=user["id"],
@@ -143,11 +160,20 @@ async def reject_submission(
     """Reject a submission and remove the associated shop."""
     db = get_service_role_client()
 
-    sub_response = db.table("shop_submissions").select("shop_id").eq("id", submission_id).execute()
+    sub_response = (
+        db.table("shop_submissions").select("shop_id, status").eq("id", submission_id).execute()
+    )
     if not sub_response.data:
         raise HTTPException(status_code=404, detail=f"Submission {submission_id} not found")
     sub_data = cast("dict[str, Any]", sub_response.data[0])
+    sub_status = sub_data.get("status")
     shop_id = sub_data.get("shop_id")
+
+    if sub_status == "live":
+        raise HTTPException(
+            status_code=409,
+            detail=f"Submission {submission_id} is already live — cannot reject a published shop",
+        )
 
     db.table("shop_submissions").update(
         {"status": "failed", "failure_reason": "Rejected by admin"}

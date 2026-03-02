@@ -153,7 +153,7 @@ class TestAdminShopUpdate:
                 )
             assert response.status_code == 200
             update_call = mock_db.table.return_value.update
-            update_data = update_call.call_args[0][0]
+            update_data = update_call.call_args.args[0]
             assert "manually_edited_at" in update_data
         finally:
             test_app.dependency_overrides.clear()

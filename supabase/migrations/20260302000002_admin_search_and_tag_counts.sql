@@ -1,5 +1,7 @@
 -- Update shop_tag_counts to include avg_confidence and dimension (taxonomy category).
 -- The design doc specifies these columns in the tag frequency table.
+-- DROP required: PostgreSQL forbids changing return type via CREATE OR REPLACE.
+DROP FUNCTION IF EXISTS shop_tag_counts();
 CREATE OR REPLACE FUNCTION shop_tag_counts()
 RETURNS TABLE (tag_id text, shop_count bigint, avg_confidence numeric, dimension text)
 LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public

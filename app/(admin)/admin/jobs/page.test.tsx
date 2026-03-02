@@ -1,6 +1,6 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import {
   createMockSupabaseAuth,
   createMockRouter,
@@ -45,6 +45,10 @@ describe('AdminJobsPage', () => {
       data: { session: testSession },
       error: null,
     });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   it('renders jobs table with data from the pipeline jobs API', async () => {
@@ -113,7 +117,7 @@ describe('AdminJobsPage', () => {
     );
   });
 
-  it('triggers cancel API call when cancel button is clicked on a pending job', async () => {
+  it('asks for confirmation and cancels a pending job when the admin clicks Cancel', async () => {
     const jobsResponse = makeJobsResponse([
       {
         id: 'job-cancel-001',
@@ -122,8 +126,51 @@ describe('AdminJobsPage', () => {
         priority: 1,
         attempts: 0,
         created_at: '2026-03-02T10:15:00.000Z',
-        error: null,
+        last_error: null,
         payload: { google_maps_url: 'https://maps.google.com/?cid=999' },
+      },
+    ]);
+
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve(jobsResponse),
+    });
+
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+
+    const user = userEvent.setup();
+    render(<AdminJobsPage />);
+
+    await waitFor(() => {
+      const tbody = screen.getAllByRole('rowgroup')[1];
+      expect(within(tbody).getByText('scrape_shop')).toBeInTheDocument();
+    });
+
+    const cancelButton = screen.getByRole('button', { name: /cancel/i });
+    await user.click(cancelButton);
+
+    expect(window.confirm).toHaveBeenCalled();
+    expect(mockFetch).toHaveBeenCalledWith(
+      '/api/admin/pipeline/jobs/job-cancel-001/cancel',
+      expect.objectContaining({
+        method: 'POST',
+        headers: { Authorization: `Bearer ${testSession.access_token}` },
+      })
+    );
+  });
+
+  it('retries a failed job when the admin clicks Retry', async () => {
+    const jobsResponse = makeJobsResponse([
+      {
+        id: 'job-retry-001',
+        job_type: 'generate_embedding',
+        status: 'failed',
+        priority: 5,
+        attempts: 3,
+        created_at: '2026-02-28T14:00:00.000Z',
+        last_error:
+          'OpenAI API rate limit exceeded. Please retry after 60 seconds.',
+        payload: { shop_id: 'shop-d4e5f6', model: 'text-embedding-3-small' },
       },
     ]);
 
@@ -137,14 +184,14 @@ describe('AdminJobsPage', () => {
 
     await waitFor(() => {
       const tbody = screen.getAllByRole('rowgroup')[1];
-      expect(within(tbody).getByText('scrape_shop')).toBeInTheDocument();
+      expect(within(tbody).getByText('generate_embedding')).toBeInTheDocument();
     });
 
-    const cancelButton = screen.getByRole('button', { name: /cancel/i });
-    await user.click(cancelButton);
+    const retryButton = screen.getByRole('button', { name: /retry/i });
+    await user.click(retryButton);
 
     expect(mockFetch).toHaveBeenCalledWith(
-      '/api/admin/pipeline/jobs/job-cancel-001/cancel',
+      '/api/admin/pipeline/retry/job-retry-001',
       expect.objectContaining({
         method: 'POST',
         headers: { Authorization: `Bearer ${testSession.access_token}` },

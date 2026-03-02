@@ -55,6 +55,13 @@ export default function AdminDashboard() {
     action: 'approve' | 'reject'
   ) {
     if (!tokenRef.current) return;
+    if (
+      action === 'reject' &&
+      !window.confirm(
+        'Reject this submission and permanently remove the associated shop?'
+      )
+    )
+      return;
     setActionError(null);
     try {
       const res = await fetch(`/api/admin/pipeline/${action}/${submissionId}`, {
