@@ -36,8 +36,14 @@ class TestAdminShopsList:
         test_app.dependency_overrides[get_current_user] = _admin_user
         try:
             mock_db = MagicMock()
-            shops = [make_shop_row(id="shop-1", name="Coffee A"), make_shop_row(id="shop-2", name="Coffee B")]
-            mock_db.table.return_value.select.return_value.order.return_value.range.return_value.execute.return_value = MagicMock(data=shops, count=2)
+            shops = [
+                make_shop_row(id="shop-1", name="Coffee A"),
+                make_shop_row(id="shop-2", name="Coffee B"),
+            ]
+            select_rv = mock_db.table.return_value.select.return_value
+            select_rv.order.return_value.range.return_value.execute.return_value = MagicMock(
+                data=shops, count=2
+            )
             with (
                 patch("api.admin_shops.get_service_role_client", return_value=mock_db),
                 patch("api.admin_shops.settings") as mock_settings,
@@ -55,7 +61,11 @@ class TestAdminShopsList:
         test_app.dependency_overrides[get_current_user] = _admin_user
         try:
             mock_db = MagicMock()
-            mock_db.table.return_value.select.return_value.eq.return_value.order.return_value.range.return_value.execute.return_value = MagicMock(data=[], count=0)
+            select_rv = mock_db.table.return_value.select.return_value
+            eq_rv = select_rv.eq.return_value
+            eq_rv.order.return_value.range.return_value.execute.return_value = MagicMock(
+                data=[], count=0
+            )
             with (
                 patch("api.admin_shops.get_service_role_client", return_value=mock_db),
                 patch("api.admin_shops.settings") as mock_settings,
@@ -84,7 +94,12 @@ class TestAdminShopCreate:
                 mock_settings.admin_user_ids = [_ADMIN_ID]
                 response = client.post(
                     "/admin/shops",
-                    json={"name": "\u624b\u6c96\u54a8\u5561\u5e97", "address": "\u53f0\u5317\u5e02\u4e2d\u5c71\u5340", "latitude": 25.05, "longitude": 121.52},
+                    json={
+                        "name": "\u624b\u6c96\u54a8\u5561\u5e97",
+                        "address": "\u53f0\u5317\u5e02\u4e2d\u5c71\u5340",
+                        "latitude": 25.05,
+                        "longitude": 121.52,
+                    },
                 )
             assert response.status_code == 201
             mock_audit.assert_called_once()
@@ -98,11 +113,12 @@ class TestAdminShopDetail:
         test_app.dependency_overrides[get_current_user] = _admin_user
         try:
             mock_db = MagicMock()
-            mock_db.table.return_value.select.return_value.eq.return_value.single.return_value.execute.return_value = MagicMock(
+            select_rv = mock_db.table.return_value.select.return_value
+            select_rv.eq.return_value.single.return_value.execute.return_value = MagicMock(
                 data={"id": "shop-1", "name": "Test", "processing_status": "live"}
             )
-            mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(data=[])
-            mock_db.table.return_value.select.return_value.eq.return_value.order.return_value.execute.return_value = MagicMock(data=[])
+            select_rv.eq.return_value.execute.return_value = MagicMock(data=[])
+            select_rv.eq.return_value.order.return_value.execute.return_value = MagicMock(data=[])
             with (
                 patch("api.admin_shops.get_service_role_client", return_value=mock_db),
                 patch("api.admin_shops.settings") as mock_settings,
@@ -118,12 +134,12 @@ class TestAdminShopDetail:
 
 class TestAdminShopUpdate:
     def test_updates_shop_and_sets_manually_edited_at(self):
-        """When admin updates a shop, manually_edited_at is set to protect from pipeline overwrite."""
+        """When admin updates a shop, manually_edited_at is set."""
         test_app.dependency_overrides[get_current_user] = _admin_user
         try:
             mock_db = MagicMock()
-            mock_db.table.return_value.update.return_value.eq.return_value.execute.return_value = MagicMock(
-                data=[{"id": "shop-1", "name": "Updated"}]
+            mock_db.table.return_value.update.return_value.eq.return_value.execute.return_value = (
+                MagicMock(data=[{"id": "shop-1", "name": "Updated"}])
             )
             with (
                 patch("api.admin_shops.get_service_role_client", return_value=mock_db),
@@ -149,7 +165,9 @@ class TestAdminShopEnqueue:
         test_app.dependency_overrides[get_current_user] = _admin_user
         try:
             mock_db = MagicMock()
-            mock_db.table.return_value.select.return_value.eq.return_value.eq.return_value.eq.return_value.execute.return_value = MagicMock(data=[])
+            select_rv = mock_db.table.return_value.select.return_value
+            eq3_rv = select_rv.eq.return_value.eq.return_value.eq.return_value
+            eq3_rv.execute.return_value = MagicMock(data=[])
             with (
                 patch("api.admin_shops.get_service_role_client", return_value=mock_db),
                 patch("api.admin_shops.settings") as mock_settings,
@@ -174,9 +192,9 @@ class TestAdminShopEnqueue:
         test_app.dependency_overrides[get_current_user] = _admin_user
         try:
             mock_db = MagicMock()
-            mock_db.table.return_value.select.return_value.eq.return_value.eq.return_value.eq.return_value.execute.return_value = MagicMock(
-                data=[{"id": "existing-job"}]
-            )
+            select_rv = mock_db.table.return_value.select.return_value
+            eq3_rv = select_rv.eq.return_value.eq.return_value.eq.return_value
+            eq3_rv.execute.return_value = MagicMock(data=[{"id": "existing-job"}])
             with (
                 patch("api.admin_shops.get_service_role_client", return_value=mock_db),
                 patch("api.admin_shops.settings") as mock_settings,

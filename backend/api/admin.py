@@ -169,10 +169,12 @@ async def cancel_job(
             detail=f"Job {job_id} cannot be cancelled (status: {job_status})",
         )
 
-    db.table("job_queue").update({
-        "status": "dead_letter",
-        "last_error": "Cancelled by admin",
-    }).eq("id", job_id).execute()
+    db.table("job_queue").update(
+        {
+            "status": "dead_letter",
+            "last_error": "Cancelled by admin",
+        }
+    ).eq("id", job_id).execute()
 
     log_admin_action(
         admin_user_id=user["id"],

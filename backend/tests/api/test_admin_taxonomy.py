@@ -36,7 +36,9 @@ class TestAdminTaxonomyStats:
             mock_db = MagicMock()
 
             # Total shops
-            mock_db.table.return_value.select.return_value.execute.return_value = MagicMock(count=100)
+            mock_db.table.return_value.select.return_value.execute.return_value = MagicMock(
+                count=100
+            )
 
             # shop_tag_counts RPC
             mock_db.rpc.return_value.execute.return_value = MagicMock(
@@ -47,14 +49,12 @@ class TestAdminTaxonomyStats:
             )
 
             # Shops with embeddings
-            mock_db.table.return_value.select.return_value.not_.is_.return_value.execute.return_value = MagicMock(
-                count=90
-            )
+            select_rv = mock_db.table.return_value.select.return_value
+            select_rv.not_.is_.return_value.execute.return_value = MagicMock(count=90)
 
             # Missing embeddings
-            mock_db.table.return_value.select.return_value.is_.return_value.neq.return_value.limit.return_value.execute.return_value = MagicMock(
-                data=[]
-            )
+            is_rv = select_rv.is_.return_value
+            is_rv.neq.return_value.limit.return_value.execute.return_value = MagicMock(data=[])
 
             with (
                 patch("api.admin_taxonomy.get_service_role_client", return_value=mock_db),

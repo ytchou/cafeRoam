@@ -157,7 +157,8 @@ class TestAdminJobsList:
         app.dependency_overrides[get_current_user] = _admin_user
         try:
             mock_db = MagicMock()
-            mock_db.table.return_value.select.return_value.order.return_value.range.return_value.execute.return_value = MagicMock(
+            select_rv = mock_db.table.return_value.select.return_value
+            select_rv.order.return_value.range.return_value.execute.return_value = MagicMock(
                 data=[{"id": "job-1", "job_type": "enrich_shop", "status": "pending"}],
                 count=1,
             )
@@ -178,8 +179,11 @@ class TestAdminJobsList:
         app.dependency_overrides[get_current_user] = _admin_user
         try:
             mock_db = MagicMock()
-            mock_db.table.return_value.select.return_value.eq.return_value.eq.return_value.order.return_value.range.return_value.execute.return_value = MagicMock(
-                data=[], count=0,
+            select_rv = mock_db.table.return_value.select.return_value
+            eq2_rv = select_rv.eq.return_value.eq.return_value
+            eq2_rv.order.return_value.range.return_value.execute.return_value = MagicMock(
+                data=[],
+                count=0,
             )
             with (
                 patch("api.admin.get_service_role_client", return_value=mock_db),
@@ -198,8 +202,8 @@ class TestAdminJobCancel:
         app.dependency_overrides[get_current_user] = _admin_user
         try:
             mock_db = MagicMock()
-            mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(
-                data=[{"id": "job-1", "status": "pending"}]
+            mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value = (
+                MagicMock(data=[{"id": "job-1", "status": "pending"}])
             )
             with (
                 patch("api.admin.get_service_role_client", return_value=mock_db),
@@ -218,8 +222,8 @@ class TestAdminJobCancel:
         app.dependency_overrides[get_current_user] = _admin_user
         try:
             mock_db = MagicMock()
-            mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(
-                data=[{"id": "job-1", "status": "completed"}]
+            mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value = (
+                MagicMock(data=[{"id": "job-1", "status": "completed"}])
             )
             with (
                 patch("api.admin.get_service_role_client", return_value=mock_db),

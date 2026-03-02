@@ -86,15 +86,17 @@ async def create_shop(
     db = get_service_role_client()
     response = (
         db.table("shops")
-        .insert({
-            "name": body.name,
-            "address": body.address,
-            "latitude": body.latitude,
-            "longitude": body.longitude,
-            "source": "manual",
-            "processing_status": "pending",
-            "review_count": 0,
-        })
+        .insert(
+            {
+                "name": body.name,
+                "address": body.address,
+                "latitude": body.latitude,
+                "longitude": body.longitude,
+                "source": "manual",
+                "processing_status": "pending",
+                "review_count": 0,
+            }
+        )
         .execute()
     )
     shop = cast("list[dict[str, Any]]", response.data)[0]

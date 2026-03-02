@@ -5,7 +5,7 @@ from middleware.admin_audit import log_admin_action
 
 class TestAdminAuditLog:
     def test_logs_action_to_database(self):
-        """Given an admin action, when log_admin_action is called, it inserts a row into admin_audit_logs."""
+        """log_admin_action inserts a row into admin_audit_logs."""
         mock_db = MagicMock()
         with patch("middleware.admin_audit.get_service_role_client", return_value=mock_db):
             log_admin_action(
