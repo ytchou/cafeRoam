@@ -1,3 +1,4 @@
+from datetime import UTC, datetime
 from typing import Any, cast
 
 import structlog
@@ -103,8 +104,6 @@ async def approve_submission(
     user: dict[str, Any] = Depends(require_admin),  # noqa: B008
 ) -> dict[str, str]:
     """Approve a submission — marks it live and records the review timestamp."""
-    import datetime
-
     db = get_service_role_client()
 
     sub_response = db.table("shop_submissions").select("id, status").eq("id", submission_id).execute()
@@ -121,7 +120,7 @@ async def approve_submission(
     db.table("shop_submissions").update(
         {
             "status": "live",
-            "reviewed_at": datetime.datetime.now(datetime.UTC).isoformat(),
+            "reviewed_at": datetime.now(UTC).isoformat(),
         }
     ).eq("id", submission_id).execute()
 

@@ -30,3 +30,6 @@ AS $$
     ORDER BY s.embedding <=> query_embedding
     LIMIT match_count;
 $$;
+
+-- SECURITY DEFINER — revoke public execute so only service role can call directly.
+REVOKE EXECUTE ON FUNCTION admin_search_shops(vector, int) FROM PUBLIC;

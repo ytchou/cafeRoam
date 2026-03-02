@@ -32,9 +32,9 @@ function makeTaxonomyStats(overrides: Record<string, unknown> = {}) {
     shops_missing_tags: 12,
     shops_missing_embeddings: 14,
     tag_frequency: [
-      { tag_id: 'wifi', shop_count: 35 },
-      { tag_id: 'power_outlets', shop_count: 28 },
-      { tag_id: 'quiet', shop_count: 22 },
+      { tag_id: 'wifi', shop_count: 35, avg_confidence: 0.78, dimension: 'functionality' },
+      { tag_id: 'power_outlets', shop_count: 28, avg_confidence: 0.71, dimension: 'functionality' },
+      { tag_id: 'quiet', shop_count: 22, avg_confidence: 0.65, dimension: 'ambience' },
     ],
     low_confidence_shops: [
       {
@@ -134,7 +134,14 @@ describe('TaxonomyPage', () => {
 
     // Verify table headers
     expect(screen.getByText('Tag ID')).toBeInTheDocument();
+    expect(screen.getByText('Dimension')).toBeInTheDocument();
     expect(screen.getByText('Shop Count')).toBeInTheDocument();
+    expect(screen.getByText('Avg Confidence')).toBeInTheDocument();
+
+    // Verify dimension and avg_confidence values are rendered
+    expect(screen.getAllByText('functionality').length).toBeGreaterThan(0);
+    expect(screen.getByText('ambience')).toBeInTheDocument();
+    expect(screen.getByText('0.78')).toBeInTheDocument();
   });
 
   it('shows error state when the taxonomy stats API returns an error', async () => {
