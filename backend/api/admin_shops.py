@@ -2,10 +2,12 @@ from datetime import UTC, datetime
 from typing import Any, cast
 
 import structlog
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, Form, HTTPException, Query, UploadFile
 from pydantic import BaseModel
 
 from api.deps import require_admin
+from core.db import first
+from core.regions import DEFAULT_REGION, REGIONS
 from db.supabase_client import get_service_role_client
 from middleware.admin_audit import log_admin_action
 from models.types import JobStatus, JobType, ProcessingStatus
@@ -39,6 +41,18 @@ class UpdateShopRequest(BaseModel):
 
 class EnqueueRequest(BaseModel):
     job_type: JobType
+
+
+class CafeNomadImportRequest(BaseModel):
+    region: str = DEFAULT_REGION
+
+
+class BulkApproveRequest(BaseModel):
+    shop_ids: list[str] | None = None
+
+
+class CheckUrlsRequest(BaseModel):
+    pass
 
 
 @router.get("/")
@@ -100,7 +114,7 @@ async def create_shop(
         )
         .execute()
     )
-    shop = cast("list[dict[str, Any]]", response.data)[0]
+    shop = first(cast("list[dict[str, Any]]", response.data), "create shop")
     log_admin_action(
         admin_user_id=user["id"],
         action="POST /admin/shops",
@@ -108,6 +122,187 @@ async def create_shop(
         target_id=str(shop["id"]),
     )
     return shop
+
+
+@router.post("/import/cafe-nomad", status_code=202)
+async def import_cafe_nomad(
+    body: CafeNomadImportRequest,
+    user: dict[str, Any] = Depends(require_admin),  # noqa: B008
+) -> dict[str, Any]:
+    """Trigger a Cafe Nomad import for the given region."""
+    from importers.cafe_nomad import fetch_and_import_cafenomad
+
+    if body.region not in REGIONS:
+        raise HTTPException(status_code=400, detail=f"Unknown region: {body.region}")
+
+    region = REGIONS[body.region]
+    db = get_service_role_client()
+
+    try:
+        result = await fetch_and_import_cafenomad(db=db, region=region)
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"Cafe Nomad API error: {exc}") from exc
+
+    log_admin_action(
+        admin_user_id=user["id"],
+        action="POST /admin/shops/import/cafe-nomad",
+        target_type="import",
+        payload={"region": body.region, "imported": result.get("imported", 0)},
+    )
+    return result
+
+
+@router.post("/import/google-takeout", status_code=202)
+async def import_google_takeout(
+    file: UploadFile,
+    region: str = Form(DEFAULT_REGION),
+    user: dict[str, Any] = Depends(require_admin),  # noqa: B008
+) -> dict[str, Any]:
+    """Upload a Google Takeout GeoJSON and import shops for the given region."""
+    import json
+
+    from importers.google_takeout import import_takeout_to_queue
+
+    if region not in REGIONS:
+        raise HTTPException(status_code=400, detail=f"Unknown region: {region}")
+
+    region_obj = REGIONS[region]
+
+    # 10MB file size limit
+    content = await file.read(10 * 1024 * 1024 + 1)
+    if len(content) > 10 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="File exceeds 10MB limit")
+
+    try:
+        geojson = json.loads(content)
+    except json.JSONDecodeError as exc:
+        raise HTTPException(status_code=422, detail=f"Invalid JSON: {exc}") from exc
+
+    if not isinstance(geojson, dict) or geojson.get("type") != "FeatureCollection":
+        raise HTTPException(status_code=422, detail="File must be a GeoJSON FeatureCollection")
+
+    db = get_service_role_client()
+
+    result = await import_takeout_to_queue(
+        geojson=geojson,
+        db=db,
+        bounds=region_obj.bounds,
+        region_name=region,
+    )
+
+    log_admin_action(
+        admin_user_id=user["id"],
+        action="POST /admin/shops/import/google-takeout",
+        target_type="import",
+        payload={"region": region, "imported": result.get("imported", 0)},
+    )
+    return result
+
+
+@router.post("/bulk-approve")
+async def bulk_approve(
+    body: BulkApproveRequest,
+    user: dict[str, Any] = Depends(require_admin),  # noqa: B008
+) -> dict[str, Any]:
+    """Approve pending_review shops, transitioning them to pending and queuing scrape jobs.
+
+    Accepts explicit shop_ids (max 50) or approves all pending_review shops.
+    """
+    db = get_service_role_client()
+
+    if body.shop_ids is not None:
+        if len(body.shop_ids) > 50:
+            raise HTTPException(status_code=400, detail="Maximum 50 shops per bulk-approve request")
+        shops_to_approve = body.shop_ids
+    else:
+        # Approve all pending_review — capped at 200 to prevent request timeouts
+        resp = (
+            db.table("shops")
+            .select("id")
+            .eq("processing_status", ProcessingStatus.PENDING_REVIEW.value)
+            .limit(200)
+            .execute()
+        )
+        shops_to_approve = [
+            row["id"] for row in cast("list[dict[str, Any]]", resp.data or [])
+        ]
+
+    if not shops_to_approve:
+        return {"approved": 0, "queued": 0}
+
+    queue = JobQueue(db=db)
+    approved = 0
+    queued = 0
+    total = len(shops_to_approve)
+
+    for i, shop_id in enumerate(shops_to_approve):
+        try:
+            # UPDATE ... RETURNING: only update shops in pending_review to prevent
+            # reverting live/failed shops. .single() raises if no rows match.
+            shop_resp = (
+                db.table("shops")
+                .update({"processing_status": ProcessingStatus.PENDING.value})
+                .eq("id", shop_id)
+                .eq("processing_status", ProcessingStatus.PENDING_REVIEW.value)
+                .select("google_maps_url")  # type: ignore[attr-defined]
+                .single()
+                .execute()
+            )
+            approved += 1
+
+            shop_data = cast("dict[str, Any]", shop_resp.data) if shop_resp.data else None
+            google_maps_url = shop_data.get("google_maps_url") if shop_data else None
+
+            if google_maps_url:
+                await queue.enqueue(
+                    job_type=JobType.SCRAPE_SHOP,
+                    payload={"shop_id": shop_id, "google_maps_url": google_maps_url},
+                    # Queue uses DESC priority: earlier shops get higher numbers → processed first
+                    priority=total - i,
+                )
+                queued += 1
+        except Exception:
+            logger.warning("Failed to approve shop", shop_id=shop_id)
+            continue
+
+    log_admin_action(
+        admin_user_id=user["id"],
+        action="POST /admin/shops/bulk-approve",
+        target_type="import",
+        payload={"approved": approved, "queued": queued},
+    )
+    return {"approved": approved, "queued": queued}
+
+
+@router.post("/import/check-urls", status_code=202)
+async def trigger_url_check(
+    background_tasks: BackgroundTasks,
+    body: CheckUrlsRequest,
+    user: dict[str, Any] = Depends(require_admin),  # noqa: B008
+) -> dict[str, Any]:
+    """Kick off background HTTP HEAD validation for shops in pending_url_check status."""
+    from workers.handlers.check_urls import check_urls_for_region
+
+    db = get_service_role_client()
+
+    # Count shops awaiting check
+    count_resp = (
+        db.table("shops")
+        .select("id", count="exact")  # type: ignore[arg-type]
+        .eq("processing_status", "pending_url_check")
+        .execute()
+    )
+    checking = count_resp.count or 0
+
+    background_tasks.add_task(check_urls_for_region, db=db)
+
+    log_admin_action(
+        admin_user_id=user["id"],
+        action="POST /admin/shops/import/check-urls",
+        target_type="import",
+        payload={"checking": checking},
+    )
+    return {"checking": checking}
 
 
 @router.get("/{shop_id}")
@@ -164,7 +359,7 @@ async def update_shop(
         target_type="shop",
         target_id=shop_id,
     )
-    return cast("list[dict[str, Any]]", response.data)[0]
+    return first(cast("list[dict[str, Any]]", response.data), "update shop")
 
 
 @router.post("/{shop_id}/enqueue")
@@ -199,12 +394,13 @@ async def enqueue_job(
     payload: dict[str, Any] = {"shop_id": shop_id}
     if body.job_type == JobType.SCRAPE_SHOP:
         shop_row = db.table("shops").select("google_maps_url").eq("id", shop_id).single().execute()
-        if not shop_row.data or not shop_row.data.get("google_maps_url"):
+        shop_row_data = cast("dict[str, Any]", shop_row.data) if shop_row.data else None
+        if not shop_row_data or not shop_row_data.get("google_maps_url"):
             raise HTTPException(
                 status_code=422,
                 detail=f"Shop {shop_id} has no google_maps_url — cannot enqueue scrape job",
             )
-        payload["google_maps_url"] = shop_row.data["google_maps_url"]
+        payload["google_maps_url"] = shop_row_data["google_maps_url"]
 
     queue = JobQueue(db=db)
     job_id = await queue.enqueue(
