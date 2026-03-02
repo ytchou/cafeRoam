@@ -149,3 +149,84 @@ def test_reject_submission_not_found():
         assert response.status_code == 404
     finally:
         app.dependency_overrides.clear()
+
+
+class TestAdminJobsList:
+    def test_lists_all_jobs(self):
+        """Admin can list all jobs with pagination."""
+        app.dependency_overrides[get_current_user] = _admin_user
+        try:
+            mock_db = MagicMock()
+            mock_db.table.return_value.select.return_value.order.return_value.range.return_value.execute.return_value = MagicMock(
+                data=[{"id": "job-1", "job_type": "enrich_shop", "status": "pending"}],
+                count=1,
+            )
+            with (
+                patch("api.admin.get_service_role_client", return_value=mock_db),
+                patch("api.admin.settings") as mock_settings,
+            ):
+                mock_settings.admin_user_ids = [_ADMIN_ID]
+                response = client.get("/admin/pipeline/jobs")
+            assert response.status_code == 200
+            data = response.json()
+            assert "jobs" in data
+        finally:
+            app.dependency_overrides.clear()
+
+    def test_filters_by_status_and_type(self):
+        """Admin can filter jobs by status and job_type."""
+        app.dependency_overrides[get_current_user] = _admin_user
+        try:
+            mock_db = MagicMock()
+            mock_db.table.return_value.select.return_value.eq.return_value.eq.return_value.order.return_value.range.return_value.execute.return_value = MagicMock(
+                data=[], count=0,
+            )
+            with (
+                patch("api.admin.get_service_role_client", return_value=mock_db),
+                patch("api.admin.settings") as mock_settings,
+            ):
+                mock_settings.admin_user_ids = [_ADMIN_ID]
+                response = client.get("/admin/pipeline/jobs?status=failed&job_type=enrich_shop")
+            assert response.status_code == 200
+        finally:
+            app.dependency_overrides.clear()
+
+
+class TestAdminJobCancel:
+    def test_cancels_pending_job(self):
+        """Admin can cancel a pending job."""
+        app.dependency_overrides[get_current_user] = _admin_user
+        try:
+            mock_db = MagicMock()
+            mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(
+                data=[{"id": "job-1", "status": "pending"}]
+            )
+            with (
+                patch("api.admin.get_service_role_client", return_value=mock_db),
+                patch("api.admin.settings") as mock_settings,
+                patch("api.admin.log_admin_action"),
+            ):
+                mock_settings.admin_user_ids = [_ADMIN_ID]
+                response = client.post("/admin/pipeline/jobs/job-1/cancel")
+            assert response.status_code == 200
+            assert "cancelled" in response.json()["message"].lower()
+        finally:
+            app.dependency_overrides.clear()
+
+    def test_cannot_cancel_completed_job(self):
+        """Completed jobs cannot be cancelled — returns 409."""
+        app.dependency_overrides[get_current_user] = _admin_user
+        try:
+            mock_db = MagicMock()
+            mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(
+                data=[{"id": "job-1", "status": "completed"}]
+            )
+            with (
+                patch("api.admin.get_service_role_client", return_value=mock_db),
+                patch("api.admin.settings") as mock_settings,
+            ):
+                mock_settings.admin_user_ids = [_ADMIN_ID]
+                response = client.post("/admin/pipeline/jobs/job-1/cancel")
+            assert response.status_code == 409
+        finally:
+            app.dependency_overrides.clear()

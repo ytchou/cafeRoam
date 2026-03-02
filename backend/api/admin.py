@@ -1,11 +1,12 @@
 from typing import Any, cast
 
 import structlog
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 from api.deps import get_current_user
 from core.config import settings
 from db.supabase_client import get_service_role_client
+from middleware.admin_audit import log_admin_action
 
 logger = structlog.get_logger()
 
@@ -125,3 +126,58 @@ async def reject_submission(
         db.table("shops").delete().eq("id", shop_id).execute()
 
     return {"message": f"Submission {submission_id} rejected"}
+
+
+@router.get("/jobs")
+async def list_jobs(
+    status: str | None = None,
+    job_type: str | None = None,
+    offset: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=200),
+    user: dict[str, Any] = Depends(_require_admin),  # noqa: B008
+) -> dict[str, Any]:
+    """List all jobs with optional filters."""
+    db = get_service_role_client()
+    query = db.table("job_queue").select("*", count="exact")
+    if status:
+        query = query.eq("status", status)
+    if job_type:
+        query = query.eq("job_type", job_type)
+    query = query.order("created_at", desc=True).range(offset, offset + limit - 1)
+    response = query.execute()
+    return {
+        "jobs": cast("list[dict[str, Any]]", response.data),
+        "total": response.count or 0,
+    }
+
+
+@router.post("/jobs/{job_id}/cancel")
+async def cancel_job(
+    job_id: str,
+    user: dict[str, Any] = Depends(_require_admin),  # noqa: B008
+) -> dict[str, str]:
+    """Cancel a pending or claimed job."""
+    db = get_service_role_client()
+    job_response = db.table("job_queue").select("id, status").eq("id", job_id).execute()
+    if not job_response.data:
+        raise HTTPException(status_code=404, detail=f"Job {job_id} not found")
+
+    job_status = cast("list[dict[str, Any]]", job_response.data)[0]["status"]
+    if job_status not in ("pending", "claimed"):
+        raise HTTPException(
+            status_code=409,
+            detail=f"Job {job_id} cannot be cancelled (status: {job_status})",
+        )
+
+    db.table("job_queue").update({
+        "status": "dead_letter",
+        "last_error": "Cancelled by admin",
+    }).eq("id", job_id).execute()
+
+    log_admin_action(
+        admin_user_id=user["id"],
+        action=f"POST /admin/pipeline/jobs/{job_id}/cancel",
+        target_type="job",
+        target_id=job_id,
+    )
+    return {"message": f"Job {job_id} cancelled"}

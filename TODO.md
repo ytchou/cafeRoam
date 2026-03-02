@@ -355,7 +355,7 @@ Core infrastructure everything else depends on. No user-facing product yet.
 **Chunk 2 — Backend API (Wave 3):**
 
 - [x] Admin shops router: list, create, detail, update, enqueue, search-rank with TDD
-- [ ] Admin jobs router: list all + cancel endpoint with TDD
+- [x] Admin jobs router: list all + cancel endpoint with TDD
 - [ ] Admin taxonomy router: coverage stats endpoint with TDD
 - [ ] Backend verification (pytest, ruff, mypy)
 
