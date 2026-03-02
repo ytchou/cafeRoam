@@ -2,23 +2,31 @@ from typing import Any
 
 import structlog
 
+from core.db import first
+from core.regions import DEFAULT_REGION, REGIONS, GeoBounds
+from importers.prefilter import (
+    PreFilterSummary,
+    is_fuzzy_duplicate,
+    is_known_failed_location,
+    validate_google_maps_url,
+    validate_shop_name,
+)
+
 logger = structlog.get_logger()
 
-# Taiwan bounding box (approximate)
-TAIWAN_BOUNDS = {
-    "min_lat": 21.5,
-    "max_lat": 26.5,
-    "min_lng": 119.0,
-    "max_lng": 122.5,
-}
 
-
-def parse_takeout_places(geojson: dict[str, Any]) -> list[dict[str, Any]]:
+def parse_takeout_places(
+    geojson: dict[str, Any],
+    bounds: GeoBounds | None = None,
+) -> list[dict[str, Any]]:
     """Parse a Google Takeout Saved Places GeoJSON file.
 
     Returns a list of dicts with: name, google_maps_url, latitude, longitude, address.
-    Filters to Taiwan coordinates only.
+    Filters to the given bounds (defaults to Greater Taipei).
     """
+    if bounds is None:
+        bounds = REGIONS[DEFAULT_REGION].bounds
+
     places: list[dict[str, Any]] = []
 
     for feature in geojson.get("features", []):
@@ -28,11 +36,7 @@ def parse_takeout_places(geojson: dict[str, Any]) -> list[dict[str, Any]]:
 
         lng, lat = coords[0], coords[1]
 
-        # Filter to Taiwan bounding box
-        if not (
-            TAIWAN_BOUNDS["min_lat"] <= lat <= TAIWAN_BOUNDS["max_lat"]
-            and TAIWAN_BOUNDS["min_lng"] <= lng <= TAIWAN_BOUNDS["max_lng"]
-        ):
+        if not bounds.contains(lat, lng):
             continue
 
         props = feature.get("properties", {})
@@ -48,81 +52,127 @@ def parse_takeout_places(geojson: dict[str, Any]) -> list[dict[str, Any]]:
             }
         )
 
-    logger.info("Parsed takeout places", total=len(geojson.get("features", [])), taiwan=len(places))
+    total = len(geojson.get("features", []))
+    logger.info("Parsed takeout places", total=total, matched=len(places))
     return places
 
 
 async def import_takeout_to_queue(
     geojson: dict[str, Any],
     db: Any,
-    queue: Any,
-) -> int:
-    """Import Google Takeout places into the shops table and queue scrape jobs.
+    bounds: GeoBounds | None = None,
+    region_name: str = "custom",
+) -> dict[str, Any]:
+    """Import Google Takeout places into the shops table with pre-filter.
 
-    Returns the number of shops queued.
+    Runs pre-filter steps 1-4 synchronously; marks survivors as pending_url_check.
+    Returns an import summary dict.
     """
-    from models.types import JobType
 
-    places = parse_takeout_places(geojson)
-    queued = 0
+    if bounds is None:
+        bounds = REGIONS[DEFAULT_REGION].bounds
+
+    places = parse_takeout_places(geojson, bounds)
+
+    # Pre-fetch existing shops and failed shops for bulk dedup checks (avoids N+1 queries)
+    existing_resp = (
+        db.table("shops")
+        .select("id, name, latitude, longitude")
+        .gte("latitude", bounds.min_lat)
+        .lte("latitude", bounds.max_lat)
+        .gte("longitude", bounds.min_lng)
+        .lte("longitude", bounds.max_lng)
+        .execute()
+    )
+    existing_shops: list[dict[str, Any]] = existing_resp.data or []
+
+    failed_resp = (
+        db.table("shops")
+        .select("id, latitude, longitude")
+        .eq("processing_status", "failed")
+        .gte("latitude", bounds.min_lat)
+        .lte("latitude", bounds.max_lat)
+        .gte("longitude", bounds.min_lng)
+        .lte("longitude", bounds.max_lng)
+        .execute()
+    )
+    failed_shops: list[dict[str, Any]] = failed_resp.data or []
+
+    summary = PreFilterSummary()
+    imported = 0
 
     for place in places:
-        if not place.get("google_maps_url"):
+        name = place.get("name", "Unknown")
+        lat, lng = place["latitude"], place["longitude"]
+        google_maps_url = place.get("google_maps_url", "")
+
+        # Pre-filter step 1: URL format validation
+        url_result = validate_google_maps_url(google_maps_url)
+        if not url_result.passed:
+            summary.invalid_url += 1
             continue
 
-        shop_id: str | None = None
+        # Pre-filter step 2: Name validation
+        name_result = validate_shop_name(name)
+        if not name_result.passed:
+            summary.invalid_name += 1
+            continue
+
+        # Pre-filter step 3: Known-failed check (in-memory, pre-fetched above)
+        if is_known_failed_location(lat, lng, failed_shops):
+            summary.known_failed += 1
+            continue
+
+        # Pre-filter step 4: Fuzzy dedup (flag, do not auto-reject)
+        if is_fuzzy_duplicate(name, lat, lng, existing_shops):
+            summary.flagged_duplicates += 1
+
+        # Exact dedup: skip if same name + approx coords already exists (in-memory)
+        coord_delta = 0.001  # ~111m
+        is_exact_dup = any(
+            abs(float(s.get("latitude", 0)) - lat) <= coord_delta
+            and abs(float(s.get("longitude", 0)) - lng) <= coord_delta
+            and s.get("name", "").lower() == name.lower()
+            for s in existing_shops
+        )
+        if is_exact_dup:
+            logger.info("Skipping duplicate takeout place", name=name)
+            continue
+
         try:
-            lat, lng = place["latitude"], place["longitude"]
-            coord_delta = 0.001  # ~111m
-
-            # Dedup: skip if a shop with the same name and approximate coordinates exists
-            existing = (
-                db.table("shops")
-                .select("id")
-                .ilike("name", place["name"])
-                .gte("latitude", lat - coord_delta)
-                .lte("latitude", lat + coord_delta)
-                .gte("longitude", lng - coord_delta)
-                .lte("longitude", lng + coord_delta)
-                .execute()
-            )
-            if existing.data:
-                logger.info("Skipping duplicate takeout place", name=place["name"])
-                continue
-
-            # Insert pending shop
             response = (
                 db.table("shops")
                 .insert(
                     {
-                        "name": place["name"],
+                        "name": name,
                         "address": place.get("address", ""),
-                        "latitude": place["latitude"],
-                        "longitude": place["longitude"],
+                        "latitude": lat,
+                        "longitude": lng,
                         "review_count": 0,
-                        "processing_status": "pending",
+                        "processing_status": "pending_url_check",
                         "source": "google_takeout",
+                        "google_maps_url": google_maps_url,
                     }
                 )
                 .execute()
             )
-            shop_id = response.data[0]["id"]
-
-            # Queue scrape job
-            await queue.enqueue(
-                job_type=JobType.SCRAPE_SHOP,
-                payload={
-                    "shop_id": shop_id,
-                    "google_maps_url": place["google_maps_url"],
-                },
-                priority=0,
-            )
-            queued += 1
+            first(response.data, "import takeout shop")
+            imported += 1
         except Exception:
-            logger.warning("Failed to import takeout place", name=place.get("name"))
-            if shop_id:
-                db.table("shops").delete().eq("id", shop_id).execute()
+            logger.warning("Failed to import takeout place", name=name)
             continue
 
-    logger.info("Takeout import complete", queued=queued)
-    return queued
+    logger.info("Takeout import complete", imported=imported)
+
+    return {
+        "imported": imported,
+        "filtered": {
+            "invalid_url": summary.invalid_url,
+            "invalid_name": summary.invalid_name,
+            "known_failed": summary.known_failed,
+            "closed": 0,
+        },
+        "pending_url_check": imported,
+        "flagged_duplicates": summary.flagged_duplicates,
+        "region": region_name,
+    }

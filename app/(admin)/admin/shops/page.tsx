@@ -21,12 +21,35 @@ interface ShopsResponse {
   total: number;
 }
 
+interface ImportSummary {
+  imported: number;
+  filtered: {
+    invalid_url: number;
+    invalid_name: number;
+    known_failed: number;
+    closed: number;
+  };
+  pending_url_check: number;
+  flagged_duplicates: number;
+  region: string;
+}
+
+const REGIONS = [
+  { value: 'greater_taipei', label: 'Greater Taipei (大台北)' },
+] as const;
+
 const STATUS_OPTIONS = [
   'all',
   'pending',
-  'enriched',
+  'pending_url_check',
+  'pending_review',
+  'scraping',
+  'enriching',
+  'embedding',
+  'publishing',
   'live',
   'failed',
+  'filtered_dead_url',
 ] as const;
 const SOURCE_OPTIONS = [
   'all',
@@ -36,6 +59,14 @@ const SOURCE_OPTIONS = [
   'user_submission',
 ] as const;
 const PAGE_SIZE = 20;
+
+async function getAuthToken(): Promise<string | null> {
+  const supabase = createClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  return session?.access_token ?? null;
+}
 
 export default function AdminShopsList() {
   const router = useRouter();
@@ -51,6 +82,21 @@ export default function AdminShopsList() {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [createLoading, setCreateLoading] = useState(false);
 
+  // Import section state
+  const [selectedRegion, setSelectedRegion] = useState<string>(
+    REGIONS[0].value
+  );
+  const [importingCafeNomad, setImportingCafeNomad] = useState(false);
+  const [importingTakeout, setImportingTakeout] = useState(false);
+  const [checkingUrls, setCheckingUrls] = useState(false);
+  const takeoutFileRef = useRef<HTMLInputElement>(null);
+
+  // Bulk approve state
+  const [selectedShopIds, setSelectedShopIds] = useState<Set<string>>(
+    new Set()
+  );
+  const [approvingBulk, setApprovingBulk] = useState(false);
+
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const fetchShops = useCallback(
@@ -64,12 +110,8 @@ export default function AdminShopsList() {
       setError(null);
 
       try {
-        const supabase = createClient();
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-
-        if (!session) {
+        const token = await getAuthToken();
+        if (!token) {
           setError('Session expired — please refresh the page');
           setLoading(false);
           return;
@@ -86,9 +128,7 @@ export default function AdminShopsList() {
         const url = `/api/admin/shops${queryString ? `?${queryString}` : ''}`;
 
         const res = await fetch(url, {
-          headers: {
-            Authorization: `Bearer ${session?.access_token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         });
 
         if (!res.ok) {
@@ -112,6 +152,11 @@ export default function AdminShopsList() {
   useEffect(() => {
     fetchShops(appliedSearch, statusFilter, sourceFilter, offset);
   }, [fetchShops, appliedSearch, statusFilter, sourceFilter, offset]);
+
+  // Reset selection when filter changes
+  useEffect(() => {
+    setSelectedShopIds(new Set());
+  }, [statusFilter, sourceFilter, appliedSearch, offset]);
 
   function handleSearchChange(value: string) {
     setSearch(value);
@@ -140,6 +185,162 @@ export default function AdminShopsList() {
     setOffset(0);
   }
 
+  function toggleShopSelection(shopId: string) {
+    setSelectedShopIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(shopId)) {
+        next.delete(shopId);
+      } else {
+        next.add(shopId);
+      }
+      return next;
+    });
+  }
+
+  function handleSelectAll() {
+    if (selectedShopIds.size === shops.length) {
+      setSelectedShopIds(new Set());
+    } else {
+      setSelectedShopIds(new Set(shops.map((s) => s.id)));
+    }
+  }
+
+  async function handleImportCafeNomad() {
+    setImportingCafeNomad(true);
+    try {
+      const token = await getAuthToken();
+      if (!token) {
+        toast.error('Session expired — please refresh the page');
+        return;
+      }
+      const res = await fetch('/api/admin/shops/import/cafe-nomad', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ region: selectedRegion }),
+      });
+      const data: ImportSummary = await res.json();
+      if (!res.ok) {
+        toast.error((data as { detail?: string }).detail || 'Import failed');
+        return;
+      }
+      toast.success(
+        `Imported ${data.imported} shops (${data.flagged_duplicates} flagged as duplicates)`
+      );
+      fetchShops(appliedSearch, statusFilter, sourceFilter, offset);
+    } catch {
+      toast.error('Network error');
+    } finally {
+      setImportingCafeNomad(false);
+    }
+  }
+
+  async function handleImportTakeout() {
+    const file = takeoutFileRef.current?.files?.[0];
+    if (!file) {
+      toast.error('Please select a GeoJSON file first');
+      return;
+    }
+
+    setImportingTakeout(true);
+    try {
+      const token = await getAuthToken();
+      if (!token) {
+        toast.error('Session expired — please refresh the page');
+        return;
+      }
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('region', selectedRegion);
+
+      const res = await fetch('/api/admin/shops/import/google-takeout', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+      const data: ImportSummary = await res.json();
+      if (!res.ok) {
+        toast.error((data as { detail?: string }).detail || 'Upload failed');
+        return;
+      }
+      toast.success(
+        `Imported ${data.imported} shops from Google Takeout (${data.flagged_duplicates} flagged as duplicates)`
+      );
+      if (takeoutFileRef.current) takeoutFileRef.current.value = '';
+      fetchShops(appliedSearch, statusFilter, sourceFilter, offset);
+    } catch {
+      toast.error('Network error');
+    } finally {
+      setImportingTakeout(false);
+    }
+  }
+
+  async function handleCheckUrls() {
+    setCheckingUrls(true);
+    try {
+      const token = await getAuthToken();
+      if (!token) {
+        toast.error('Session expired — please refresh the page');
+        return;
+      }
+      const res = await fetch('/api/admin/shops/import/check-urls', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({}),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.detail || 'URL check failed');
+        return;
+      }
+      toast.success(`URL check started for ${data.checking} shops`);
+    } catch {
+      toast.error('Network error');
+    } finally {
+      setCheckingUrls(false);
+    }
+  }
+
+  async function handleBulkApprove(approveAll: boolean) {
+    setApprovingBulk(true);
+    try {
+      const token = await getAuthToken();
+      if (!token) {
+        toast.error('Session expired — please refresh the page');
+        return;
+      }
+      const body = approveAll ? {} : { shop_ids: Array.from(selectedShopIds) };
+
+      const res = await fetch('/api/admin/shops/bulk-approve', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.detail || 'Bulk approve failed');
+        return;
+      }
+      toast.success(
+        `Approved ${data.approved} shops, queued ${data.queued} scrape jobs`
+      );
+      setSelectedShopIds(new Set());
+      fetchShops(appliedSearch, statusFilter, sourceFilter, offset);
+    } catch {
+      toast.error('Network error');
+    } finally {
+      setApprovingBulk(false);
+    }
+  }
+
   async function handleCreateShop(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setCreateLoading(true);
@@ -162,16 +363,17 @@ export default function AdminShopsList() {
     };
 
     try {
-      const supabase = createClient();
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
+      const token = await getAuthToken();
+      if (!token) {
+        toast.error('Session expired — please refresh the page');
+        setCreateLoading(false);
+        return;
+      }
       const res = await fetch('/api/admin/shops', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${session?.access_token}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(payload),
       });
@@ -194,6 +396,7 @@ export default function AdminShopsList() {
 
   const hasPrev = offset > 0;
   const hasNext = offset + PAGE_SIZE < total;
+  const isReviewFilter = statusFilter === 'pending_review';
 
   return (
     <div className="space-y-6">
@@ -206,6 +409,66 @@ export default function AdminShopsList() {
         >
           Create Shop
         </button>
+      </div>
+
+      {/* Import Section */}
+      <div className="space-y-3 rounded-lg border p-4">
+        <h2 className="text-sm font-semibold text-gray-700">Import Shops</h2>
+        <div className="flex flex-wrap items-center gap-3">
+          <div>
+            <label htmlFor="region-select" className="sr-only">
+              Region
+            </label>
+            <select
+              id="region-select"
+              value={selectedRegion}
+              onChange={(e) => setSelectedRegion(e.target.value)}
+              className="rounded border px-3 py-1.5 text-sm"
+            >
+              {REGIONS.map((r) => (
+                <option key={r.value} value={r.value}>
+                  {r.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleImportCafeNomad}
+            disabled={importingCafeNomad}
+            className="rounded bg-amber-600 px-3 py-1.5 text-sm text-white hover:bg-amber-700 disabled:opacity-50"
+          >
+            {importingCafeNomad ? 'Importing...' : 'Import from Cafe Nomad'}
+          </button>
+
+          <div className="flex items-center gap-2">
+            <input
+              ref={takeoutFileRef}
+              type="file"
+              accept=".json,.geojson"
+              className="text-sm"
+              id="takeout-file"
+            />
+            <button
+              type="button"
+              onClick={handleImportTakeout}
+              disabled={importingTakeout}
+              className="rounded bg-green-700 px-3 py-1.5 text-sm text-white hover:bg-green-800 disabled:opacity-50"
+            >
+              {importingTakeout ? 'Uploading...' : 'Import Google Takeout'}
+            </button>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleCheckUrls}
+            disabled={checkingUrls}
+            className="rounded border border-gray-300 px-3 py-1.5 text-sm hover:bg-gray-50 disabled:opacity-50"
+          >
+            {checkingUrls ? 'Checking...' : 'Check URLs'}
+          </button>
+        </div>
       </div>
 
       {showCreateForm && (
@@ -314,6 +577,31 @@ export default function AdminShopsList() {
         </select>
       </div>
 
+      {/* Bulk approve bar — shown only when filtering by pending_review */}
+      {isReviewFilter && (
+        <div className="flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2">
+          <span className="text-sm text-amber-800">
+            {selectedShopIds.size} selected
+          </span>
+          <button
+            type="button"
+            onClick={() => handleBulkApprove(false)}
+            disabled={approvingBulk || selectedShopIds.size === 0}
+            className="rounded bg-amber-600 px-3 py-1 text-sm text-white hover:bg-amber-700 disabled:opacity-50"
+          >
+            Approve Selected
+          </button>
+          <button
+            type="button"
+            onClick={() => handleBulkApprove(true)}
+            disabled={approvingBulk}
+            className="rounded border border-amber-400 px-3 py-1 text-sm text-amber-700 hover:bg-amber-100 disabled:opacity-50"
+          >
+            Approve All
+          </button>
+        </div>
+      )}
+
       {error && (
         <div
           role="alert"
@@ -328,6 +616,19 @@ export default function AdminShopsList() {
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="border-b text-gray-500">
+                {isReviewFilter && (
+                  <th className="pr-2 pb-2">
+                    <input
+                      type="checkbox"
+                      aria-label="Select all"
+                      checked={
+                        shops.length > 0 &&
+                        selectedShopIds.size === shops.length
+                      }
+                      onChange={handleSelectAll}
+                    />
+                  </th>
+                )}
                 <th className="pb-2">Name</th>
                 <th className="pb-2">Address</th>
                 <th className="pb-2">Status</th>
@@ -344,6 +645,19 @@ export default function AdminShopsList() {
                   onClick={() => router.push(`/admin/shops/${shop.id}`)}
                   className="cursor-pointer border-b hover:bg-gray-50"
                 >
+                  {isReviewFilter && (
+                    <td
+                      className="py-2 pr-2"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <input
+                        type="checkbox"
+                        aria-label={`Select ${shop.name}`}
+                        checked={selectedShopIds.has(shop.id)}
+                        onChange={() => toggleShopSelection(shop.id)}
+                      />
+                    </td>
+                  )}
                   <td className="py-2">{shop.name}</td>
                   <td className="py-2 text-gray-600">{shop.address}</td>
                   <td className="py-2">{shop.processing_status}</td>
@@ -369,7 +683,10 @@ export default function AdminShopsList() {
               ))}
               {!loading && shops.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="py-8 text-center text-gray-400">
+                  <td
+                    colSpan={isReviewFilter ? 8 : 7}
+                    className="py-8 text-center text-gray-400"
+                  >
                     No shops found
                   </td>
                 </tr>
