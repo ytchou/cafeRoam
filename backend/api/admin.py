@@ -1,27 +1,21 @@
+from datetime import UTC, datetime
 from typing import Any, cast
 
 import structlog
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 
-from api.deps import get_current_user
-from core.config import settings
+from api.deps import require_admin
 from db.supabase_client import get_service_role_client
+from middleware.admin_audit import log_admin_action
 
 logger = structlog.get_logger()
 
 router = APIRouter(prefix="/admin/pipeline", tags=["admin"])
 
 
-def _require_admin(user: dict[str, Any] = Depends(get_current_user)) -> dict[str, Any]:  # noqa: B008
-    user_id = user["id"]
-    if user_id not in settings.admin_user_ids:
-        raise HTTPException(status_code=403, detail="Admin access required")
-    return user
-
-
 @router.get("/overview")
 async def pipeline_overview(
-    user: dict[str, Any] = Depends(_require_admin),  # noqa: B008
+    user: dict[str, Any] = Depends(require_admin),  # noqa: B008
 ) -> dict[str, Any]:
     """Job counts by status, recent submissions."""
     db = get_service_role_client()
@@ -45,7 +39,7 @@ async def pipeline_overview(
 @router.get("/submissions")
 async def list_submissions(
     status: str | None = None,
-    user: dict[str, Any] = Depends(_require_admin),  # noqa: B008
+    user: dict[str, Any] = Depends(require_admin),  # noqa: B008
 ) -> list[dict[str, Any]]:
     """List shop submissions, optionally filtered by status."""
     db = get_service_role_client()
@@ -58,7 +52,7 @@ async def list_submissions(
 
 @router.get("/dead-letter")
 async def dead_letter_jobs(
-    user: dict[str, Any] = Depends(_require_admin),  # noqa: B008
+    user: dict[str, Any] = Depends(require_admin),  # noqa: B008
 ) -> list[dict[str, Any]]:
     """Failed jobs for investigation."""
     db = get_service_role_client()
@@ -76,7 +70,7 @@ async def dead_letter_jobs(
 @router.post("/retry/{job_id}")
 async def retry_job(
     job_id: str,
-    user: dict[str, Any] = Depends(_require_admin),  # noqa: B008
+    user: dict[str, Any] = Depends(require_admin),  # noqa: B008
 ) -> dict[str, str]:
     """Manually retry a failed/dead-letter job."""
     db = get_service_role_client()
@@ -92,25 +86,94 @@ async def retry_job(
             detail=f"Job {job_id} is not retryable (status: {job_status})",
         )
 
-    db.table("job_queue").update({"status": "pending", "attempts": 0, "last_error": None}).eq(
-        "id", job_id
-    ).execute()
+    # Conditional update — only succeeds if job is still in a retryable state (TOCTOU guard)
+    update_response = (
+        db.table("job_queue")
+        .update({"status": "pending", "attempts": 0, "last_error": None, "claimed_at": None})
+        .eq("id", job_id)
+        .in_("status", ["failed", "dead_letter"])
+        .execute()
+    )
+    if not update_response.data:
+        raise HTTPException(
+            status_code=409,
+            detail=f"Job {job_id} status changed concurrently — refresh and retry",
+        )
+    log_admin_action(
+        admin_user_id=user["id"],
+        action=f"POST /admin/pipeline/retry/{job_id}",
+        target_type="job",
+        target_id=job_id,
+    )
     return {"message": f"Job {job_id} re-queued"}
+
+
+@router.post("/approve/{submission_id}")
+async def approve_submission(
+    submission_id: str,
+    user: dict[str, Any] = Depends(require_admin),  # noqa: B008
+) -> dict[str, str]:
+    """Approve a submission — marks it live and records the review timestamp."""
+    db = get_service_role_client()
+
+    sub_response = (
+        db.table("shop_submissions").select("id, status").eq("id", submission_id).execute()
+    )
+    if not sub_response.data:
+        raise HTTPException(status_code=404, detail=f"Submission {submission_id} not found")
+
+    sub_status = cast("list[dict[str, Any]]", sub_response.data)[0]["status"]
+    if sub_status not in ("pending", "processing"):
+        raise HTTPException(
+            status_code=409,
+            detail=f"Submission {submission_id} cannot be approved (status: {sub_status})",
+        )
+
+    # Conditional update — only succeeds if submission is still in an approvable state (TOCTOU guard)
+    update_response = (
+        db.table("shop_submissions")
+        .update({"status": "live", "reviewed_at": datetime.now(UTC).isoformat()})
+        .eq("id", submission_id)
+        .in_("status", ["pending", "processing"])
+        .execute()
+    )
+    if not update_response.data:
+        raise HTTPException(
+            status_code=409,
+            detail=f"Submission {submission_id} status changed concurrently — refresh and retry",
+        )
+
+    log_admin_action(
+        admin_user_id=user["id"],
+        action=f"POST /admin/pipeline/approve/{submission_id}",
+        target_type="submission",
+        target_id=submission_id,
+    )
+    return {"message": f"Submission {submission_id} approved"}
 
 
 @router.post("/reject/{submission_id}")
 async def reject_submission(
     submission_id: str,
-    user: dict[str, Any] = Depends(_require_admin),  # noqa: B008
+    user: dict[str, Any] = Depends(require_admin),  # noqa: B008
 ) -> dict[str, str]:
     """Reject a submission and remove the associated shop."""
     db = get_service_role_client()
 
-    sub_response = db.table("shop_submissions").select("shop_id").eq("id", submission_id).execute()
+    sub_response = (
+        db.table("shop_submissions").select("shop_id, status").eq("id", submission_id).execute()
+    )
     if not sub_response.data:
         raise HTTPException(status_code=404, detail=f"Submission {submission_id} not found")
     sub_data = cast("dict[str, Any]", sub_response.data[0])
+    sub_status = sub_data.get("status")
     shop_id = sub_data.get("shop_id")
+
+    if sub_status == "live":
+        raise HTTPException(
+            status_code=409,
+            detail=f"Submission {submission_id} is already live — cannot reject a published shop",
+        )
 
     db.table("shop_submissions").update(
         {"status": "failed", "failure_reason": "Rejected by admin"}
@@ -124,4 +187,76 @@ async def reject_submission(
         ).execute()
         db.table("shops").delete().eq("id", shop_id).execute()
 
+    log_admin_action(
+        admin_user_id=user["id"],
+        action=f"POST /admin/pipeline/reject/{submission_id}",
+        target_type="submission",
+        target_id=submission_id,
+        payload={"shop_id": str(shop_id) if shop_id else None},
+    )
     return {"message": f"Submission {submission_id} rejected"}
+
+
+@router.get("/jobs")
+async def list_jobs(
+    status: str | None = None,
+    job_type: str | None = None,
+    offset: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=200),
+    user: dict[str, Any] = Depends(require_admin),  # noqa: B008
+) -> dict[str, Any]:
+    """List all jobs with optional filters."""
+    db = get_service_role_client()
+    query = db.table("job_queue").select("*", count="exact")
+    if status:
+        query = query.eq("status", status)
+    if job_type:
+        query = query.eq("job_type", job_type)
+    query = query.order("created_at", desc=True).range(offset, offset + limit - 1)
+    response = query.execute()
+    return {
+        "jobs": cast("list[dict[str, Any]]", response.data),
+        "total": response.count or 0,
+    }
+
+
+@router.post("/jobs/{job_id}/cancel")
+async def cancel_job(
+    job_id: str,
+    user: dict[str, Any] = Depends(require_admin),  # noqa: B008
+) -> dict[str, str]:
+    """Cancel a pending or claimed job."""
+    db = get_service_role_client()
+
+    job_response = db.table("job_queue").select("id, status").eq("id", job_id).execute()
+    if not job_response.data:
+        raise HTTPException(status_code=404, detail=f"Job {job_id} not found")
+
+    job_status = cast("list[dict[str, Any]]", job_response.data)[0]["status"]
+    if job_status not in ("pending", "claimed"):
+        raise HTTPException(
+            status_code=409,
+            detail=f"Job {job_id} cannot be cancelled (status: {job_status})",
+        )
+
+    # Conditional update: only succeeds if job is still in a cancellable state
+    update_response = (
+        db.table("job_queue")
+        .update({"status": "dead_letter", "last_error": "Cancelled by admin"})
+        .eq("id", job_id)
+        .in_("status", ["pending", "claimed"])
+        .execute()
+    )
+    if not update_response.data:
+        raise HTTPException(
+            status_code=409,
+            detail=f"Job {job_id} could not be cancelled — it may have already completed",
+        )
+
+    log_admin_action(
+        admin_user_id=user["id"],
+        action=f"POST /admin/pipeline/jobs/{job_id}/cancel",
+        target_type="job",
+        target_id=job_id,
+    )
+    return {"message": f"Job {job_id} cancelled"}
