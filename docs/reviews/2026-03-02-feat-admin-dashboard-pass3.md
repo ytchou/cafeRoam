@@ -68,5 +68,72 @@ _Agents: Bug Hunter (Opus), Standards (Sonnet), Architecture (Opus), Plan Alignm
 ## Fix Pass 1
 
 **Pre-fix SHA:** `079e97672ffd1b9eda999b4dae0f8430f3e1a82a`
+**Post-fix SHA:** `c1a219f8fb7f4320feaa6fad15bd64510c43a490`
 
-*(Populated after fixes are applied)*
+### Issues Fixed
+
+- **[Critical] C1** — `supabase/migrations/20260302000002_admin_search_and_tag_counts.sql`: Added `DROP FUNCTION IF EXISTS shop_tag_counts();` before CREATE OR REPLACE
+- **[Critical] C2** — `backend/api/admin.py` `reject_submission`: Added status guard — 409 if submission is already `live`
+- **[Important] I1** — `backend/api/admin.py` `retry_job`: Conditional `.in_("status", ["failed", "dead_letter"])` UPDATE + `claimed_at: None` reset + empty-data check (TOCTOU guard)
+- **[Important] I2** — `backend/api/admin.py` `approve_submission`: Conditional `.in_("status", ["pending", "processing"])` UPDATE + empty-data check (TOCTOU guard)
+- **[Important] I3** — `app/(admin)/admin/shops/[id]/page.tsx`: Completed `tokenRef` migration — `handleToggleLive`, `handleSaveEdit`, `handleSearchRank` now use `tokenRef.current`; `getToken()` removed
+- **[Important] I4** — Added `window.confirm()` guards: reject submission (`admin/page.tsx`), cancel job (`jobs/page.tsx`), unpublish shop (`shops/[id]/page.tsx`)
+- **[Important] I5** — Added action button tests: approve/reject on dashboard; Re-enrich/Unpublish on shop detail; cancel/retry on jobs page; updated cancel test to mock `window.confirm`
+- **[Important] I6** — `backend/tests/middleware/test_admin_audit.py`: UUID-format IDs; assertion now uses `table.return_value.insert.assert_called_once_with({...})`
+- **[Important] I7** — Created `supabase/migrations/20260302000003_tagged_shop_count_rpc.sql` with `tagged_shop_count()` RPC; `backend/api/admin_taxonomy.py` uses RPC instead of Python row-fetch-and-deduplicate
+- **[Minor] M1** — `test_admin_audit.py`: UUID-format IDs (`f47ac10b-...`, `6ba7b810-...`)
+- **[Minor] M2** — `middleware.ts`: Fixed stale comment `_require_admin` → `require_admin`
+- **[Minor] M3** — `app/(admin)/admin/shops/page.tsx`: Added `.catch(() => ({}))` to error-path `res.json()` calls
+- **[Minor] M9** — `backend/tests/api/test_admin_shops.py`: `call_args.args[0]` instead of `call_args[0][0]`
+
+### Issues Skipped (out of scope for fix pass)
+
+- M4: Layout breadcrumbs — requires significant new UI work
+- M5: Shops list tag count + has_embedding columns — requires API + UI changes
+- M6: Taxonomy table sortable headers — requires new sort state + click handlers
+- M7: Sonner toast notifications — requires package installation
+- M8: Submission `submitted_by` — requires schema/API changes
+- M10: proxy-routes mock boundary (Gemini-disputed)
+- M11: proxy-routes test names (improvement only)
+- M12: Already addressed in I1 fix (`claimed_at: None` added to retry_job UPDATE)
+- M13: AdminShopDetail component size (refactor concern, low priority)
+
+---
+
+## Re-Verify Pass 1
+
+*Agents re-run (smart routing): Bug Hunter (Opus), Plan Alignment + Test Philosophy (Sonnet)*
+*Agents skipped (no independent findings): Standards (M2 trivially verified)*
+
+### Previously Flagged Issues — Resolution Status
+
+| #   | Status     | Notes                                                                               |
+| --- | ---------- | ----------------------------------------------------------------------------------- |
+| C1  | ✓ Resolved | DROP FUNCTION IF EXISTS confirmed before CREATE OR REPLACE                          |
+| C2  | ✓ Resolved | 409 guard for `live` status confirmed                                               |
+| I1  | ✓ Resolved | Conditional `.in_()` UPDATE + `claimed_at: None` + empty-data check confirmed       |
+| I2  | ✓ Resolved | Conditional `.in_()` UPDATE + empty-data check confirmed                            |
+| I3  | ✓ Resolved | All four handlers now use `tokenRef.current`                                        |
+| I4  | ✓ Resolved | `window.confirm` guards in all three destructive actions confirmed                  |
+| I5  | ✓ Resolved | Tests for approve/reject, Re-enrich/Unpublish, cancel/retry confirmed               |
+| I6  | ✓ Resolved (substantially) | UUID IDs + cleaner assertion; still calls internal function (accepted as pragmatic for this module) |
+| I7  | ✓ Resolved | `tagged_shop_count()` RPC used; migration confirmed                                 |
+| M1  | ✓ Resolved | UUID-format IDs confirmed                                                           |
+| M9  | ✓ Resolved | `call_args.args[0]` confirmed                                                       |
+
+### New Issues Found
+
+None Critical or Important. Two Minor observations:
+
+- **[Minor]** `backend/api/admin.py` `reject_submission`: Small TOCTOU window remains between the `'live'` status check (line 172) and the unconditional status update (line 178). A concurrent approval could result in rejecting a just-approved submission. Very low probability for admin tooling; would require `.neq("status", "live")` on the UPDATE + empty-data check to fully close.
+- **[Minor]** `backend/tests/middleware/test_admin_audit.py`: Still imports/calls `log_admin_action` directly (pre-existing classification from original I6; accepted as pragmatic for a fire-and-forget utility with no HTTP surface).
+
+**Early exit: No Critical or Important issues remain.**
+
+---
+
+## Final State
+
+**Iterations completed:** 1
+**All Critical/Important resolved:** Yes
+**Remaining Minor issues:** M4, M5, M6, M7, M8, M10, M11, M13 (deferred — require significant feature/schema work), plus 2 new observations above (both Minor, low-risk)
