@@ -53,7 +53,7 @@ describe('useUserLists', () => {
     });
   });
 
-  it('isSaved returns true for a shop in any list', async () => {
+  it('a shop saved to any list shows as saved on the bookmark button', async () => {
     const { result } = renderHook(() => useUserLists());
     await waitFor(() => expect(result.current.lists).toHaveLength(2));
     expect(result.current.isSaved('s1')).toBe(true);
@@ -61,7 +61,7 @@ describe('useUserLists', () => {
     expect(result.current.isSaved('not-saved')).toBe(false);
   });
 
-  it('isInList returns correct per-list membership', async () => {
+  it('a shop in list A does not show as saved in list B', async () => {
     const { result } = renderHook(() => useUserLists());
     await waitFor(() => expect(result.current.lists).toHaveLength(2));
     expect(result.current.isInList('l1', 's1')).toBe(true);
@@ -69,7 +69,7 @@ describe('useUserLists', () => {
     expect(result.current.isInList('l2', 's3')).toBe(true);
   });
 
-  it('createList calls POST /api/lists and revalidates', async () => {
+  it('when a user creates a new list it is sent to the API', async () => {
     const { result } = renderHook(() => useUserLists());
     await waitFor(() => expect(result.current.lists).toHaveLength(2));
 
@@ -88,7 +88,7 @@ describe('useUserLists', () => {
     expect(postCall).toBeDefined();
   });
 
-  it('saveShop calls POST /api/lists/{listId}/shops', async () => {
+  it('when a user saves a shop to a list the API is called with the shop id', async () => {
     const { result } = renderHook(() => useUserLists());
     await waitFor(() => expect(result.current.lists).toHaveLength(2));
 
@@ -107,7 +107,7 @@ describe('useUserLists', () => {
     expect(postCall).toBeDefined();
   });
 
-  it('removeShop calls DELETE /api/lists/{listId}/shops/{shopId}', async () => {
+  it('when a user removes a shop from a list the DELETE API is called', async () => {
     const { result } = renderHook(() => useUserLists());
     await waitFor(() => expect(result.current.lists).toHaveLength(2));
 
