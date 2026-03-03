@@ -89,6 +89,28 @@ class TestListsAPI:
         finally:
             app.dependency_overrides.clear()
 
+    def test_get_pins_requires_auth(self):
+        response = client.get("/lists/pins")
+        assert response.status_code == 401
+
+    def test_get_list_shops_requires_auth(self):
+        response = client.get("/lists/list-1/shops")
+        assert response.status_code == 401
+
+    def test_rename_list_requires_auth(self):
+        response = client.patch("/lists/list-1", json={"name": "New"})
+        assert response.status_code == 401
+
+    def test_rename_list_rejects_empty_name(self):
+        mock_db = MagicMock()
+        app.dependency_overrides[get_current_user] = lambda: {"id": "user-1"}
+        app.dependency_overrides[get_user_db] = lambda: mock_db
+        try:
+            response = client.patch("/lists/list-1", json={"name": "   "})
+            assert response.status_code == 400
+        finally:
+            app.dependency_overrides.clear()
+
     def test_remove_shop_calls_service_without_user_id(self):
         """DELETE /lists/{id}/shops/{shop_id} must call service.remove_shop without user_id."""
         mock_db = MagicMock()

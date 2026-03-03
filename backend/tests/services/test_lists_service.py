@@ -199,6 +199,146 @@ class TestListsService:
         results = await lists_service.get_by_user("user-1")
         assert isinstance(results, list)
 
+    async def test_rename_list_succeeds(self, lists_service, mock_supabase):
+        """rename() updates the list name via Supabase update."""
+        from datetime import datetime
+        mock_update = MagicMock(
+            return_value=MagicMock(
+                eq=MagicMock(
+                    return_value=MagicMock(
+                        execute=MagicMock(
+                            return_value=MagicMock(
+                                data=[
+                                    {
+                                        "id": "l1",
+                                        "user_id": "user-1",
+                                        "name": "New Name",
+                                        "created_at": datetime.now().isoformat(),
+                                        "updated_at": datetime.now().isoformat(),
+                                    }
+                                ]
+                            )
+                        )
+                    )
+                )
+            )
+        )
+        mock_supabase.table = MagicMock(return_value=MagicMock(update=mock_update))
+        result = await lists_service.rename(list_id="l1", name="New Name")
+        assert result.name == "New Name"
+
+    async def test_rename_list_raises_if_not_found_or_unauthorized(
+        self, lists_service, mock_supabase
+    ):
+        """rename() raises ValueError when RLS blocks the update (0 rows affected)."""
+        mock_update = MagicMock(
+            return_value=MagicMock(
+                eq=MagicMock(
+                    return_value=MagicMock(
+                        execute=MagicMock(return_value=MagicMock(data=[]))
+                    )
+                )
+            )
+        )
+        mock_supabase.table = MagicMock(return_value=MagicMock(update=mock_update))
+        with pytest.raises(ValueError, match="not found or access denied"):
+            await lists_service.rename(list_id="l1", name="New Name")
+
+    async def test_get_list_shops_returns_full_shop_data(self, lists_service, mock_supabase):
+        """get_list_shops() returns full Shop objects for shops in a list."""
+        from datetime import datetime
+        mock_supabase.table = MagicMock(
+            return_value=MagicMock(
+                select=MagicMock(
+                    return_value=MagicMock(
+                        eq=MagicMock(
+                            return_value=MagicMock(
+                                execute=MagicMock(
+                                    return_value=MagicMock(
+                                        data=[
+                                            {
+                                                "shop_id": "s1",
+                                                "added_at": datetime.now().isoformat(),
+                                                "shops": {
+                                                    "id": "s1",
+                                                    "name": "山小孩咖啡",
+                                                    "address": "台北市大安區溫州街74巷5弄2號",
+                                                    "latitude": 25.0216,
+                                                    "longitude": 121.5312,
+                                                    "mrt": "台電大樓",
+                                                    "phone": None,
+                                                    "website": None,
+                                                    "opening_hours": None,
+                                                    "rating": 4.6,
+                                                    "review_count": 287,
+                                                    "price_range": "$$",
+                                                    "description": "安靜適合工作",
+                                                    "photo_urls": [],
+                                                    "menu_url": None,
+                                                    "taxonomy_tags": [],
+                                                    "mode_scores": None,
+                                                    "cafenomad_id": None,
+                                                    "google_place_id": None,
+                                                    "created_at": datetime.now().isoformat(),
+                                                    "updated_at": datetime.now().isoformat(),
+                                                },
+                                            }
+                                        ]
+                                    )
+                                )
+                            )
+                        )
+                    )
+                )
+            )
+        )
+        results = await lists_service.get_list_shops(list_id="l1")
+        assert len(results) == 1
+        assert results[0].name == "山小孩咖啡"
+        assert results[0].latitude == 25.0216
+
+    async def test_get_list_shops_empty_when_unauthorized(self, lists_service, mock_supabase):
+        """get_list_shops() returns empty list when RLS blocks access."""
+        mock_supabase.table = MagicMock(
+            return_value=MagicMock(
+                select=MagicMock(
+                    return_value=MagicMock(
+                        eq=MagicMock(
+                            return_value=MagicMock(
+                                execute=MagicMock(
+                                    return_value=MagicMock(data=[])
+                                )
+                            )
+                        )
+                    )
+                )
+            )
+        )
+        results = await lists_service.get_list_shops(list_id="l1")
+        assert results == []
+
+    async def test_get_pins_returns_coordinates(self, lists_service, mock_supabase):
+        """get_pins() returns list_id, shop_id, lat, lng for all saved shops."""
+        mock_supabase.table = MagicMock(
+            return_value=MagicMock(
+                select=MagicMock(
+                    return_value=MagicMock(
+                        execute=MagicMock(
+                            return_value=MagicMock(
+                                data=[
+                                    {"list_id": "l1", "shop_id": "s1", "shops": {"latitude": 25.04, "longitude": 121.52}},
+                                    {"list_id": "l1", "shop_id": "s2", "shops": {"latitude": 25.05, "longitude": 121.53}},
+                                ]
+                            )
+                        )
+                    )
+                )
+            )
+        )
+        results = await lists_service.get_pins("user-1")
+        assert len(results) == 2
+        assert results[0].lat == 25.04
+
     async def test_get_by_user_includes_items(self, lists_service, mock_supabase):
         """get_by_user() must return lists with their items (shop_ids)."""
         from datetime import datetime

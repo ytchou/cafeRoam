@@ -5,6 +5,7 @@ from pydantic import BaseModel
 from supabase import Client
 
 from api.deps import get_current_user, get_user_db
+from models.types import ListPin
 from services.lists_service import ListsService
 
 router = APIRouter(prefix="/lists", tags=["lists"])
@@ -16,6 +17,10 @@ class CreateListRequest(BaseModel):
 
 class AddShopRequest(BaseModel):
     shop_id: str
+
+
+class RenameListRequest(BaseModel):
+    name: str
 
 
 @router.get("/")
@@ -44,6 +49,17 @@ async def create_list(
         raise HTTPException(status_code=400, detail=str(e)) from None
 
 
+@router.get("/pins")
+async def get_list_pins(
+    user: dict[str, Any] = Depends(get_current_user),  # noqa: B008
+    db: Client = Depends(get_user_db),  # noqa: B008
+) -> list[dict[str, Any]]:
+    """Get map pins (coordinates) for all shops in the user's lists."""
+    service = ListsService(db=db)
+    results = await service.get_pins(user["id"])
+    return [r.model_dump() for r in results]
+
+
 @router.delete("/{list_id}")
 async def delete_list(
     list_id: str,
@@ -57,6 +73,36 @@ async def delete_list(
         return {"ok": True}
     except ValueError as e:
         raise HTTPException(status_code=403, detail=str(e)) from None
+
+
+@router.patch("/{list_id}")
+async def rename_list(
+    list_id: str,
+    body: RenameListRequest,
+    user: dict[str, Any] = Depends(get_current_user),  # noqa: B008
+    db: Client = Depends(get_user_db),  # noqa: B008
+) -> dict[str, Any]:
+    """Rename a list. Auth required."""
+    if not body.name.strip():
+        raise HTTPException(status_code=400, detail="List name cannot be empty")
+    service = ListsService(db=db)
+    try:
+        result = await service.rename(list_id=list_id, name=body.name.strip())
+        return result.model_dump()
+    except ValueError as e:
+        raise HTTPException(status_code=403, detail=str(e)) from None
+
+
+@router.get("/{list_id}/shops")
+async def get_list_shops(
+    list_id: str,
+    user: dict[str, Any] = Depends(get_current_user),  # noqa: B008
+    db: Client = Depends(get_user_db),  # noqa: B008
+) -> list[dict[str, Any]]:
+    """Get full shop data for shops in a list. Auth required."""
+    service = ListsService(db=db)
+    results = await service.get_list_shops(list_id=list_id)
+    return [r.model_dump() for r in results]
 
 
 @router.post("/{list_id}/shops")

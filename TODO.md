@@ -493,9 +493,9 @@ This is the final gate for Phase 1. Two paths: fast path seeds 29 pre-built shop
 - [x] Backend: enhance `get_by_user` to include list items
 
 **Wave 2 — Backend endpoints + Frontend primitives:**
-- [ ] Backend: `GET /lists/pins` endpoint
-- [ ] Backend: `GET /lists/{list_id}/shops` endpoint
-- [ ] Backend: `PATCH /lists/{list_id}` rename endpoint
+- [x] Backend: `GET /lists/pins` endpoint
+- [x] Backend: `GET /lists/{list_id}/shops` endpoint
+- [x] Backend: `PATCH /lists/{list_id}` rename endpoint
 - [ ] Frontend types + factories update
 - [ ] Drawer UI component (vaul wrapper)
 

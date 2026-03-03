@@ -77,6 +77,13 @@ class ListWithItems(BaseModel):
     items: list[ListItem] = []
 
 
+class ListPin(BaseModel):
+    list_id: str
+    shop_id: str
+    lat: float
+    lng: float
+
+
 class CheckIn(BaseModel):
     id: str
     user_id: str

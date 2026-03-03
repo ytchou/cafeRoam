@@ -4,7 +4,7 @@ from postgrest.exceptions import APIError
 from supabase import Client
 
 from core.db import first
-from models.types import List, ListItem, ListWithItems
+from models.types import List, ListItem, ListPin, ListWithItems, Shop
 
 
 class ListsService:
@@ -38,6 +38,21 @@ class ListsService:
         rows = cast("list[dict[str, Any]]", response.data)
         return List(**first(rows, "create list"))
 
+    async def rename(self, list_id: str, name: str) -> List:
+        """Rename a list. RLS ensures only the owner can update.
+        Raises ValueError if the list is not found or the caller doesn't own it.
+        """
+        response = (
+            self._db.table("lists")
+            .update({"name": name})
+            .eq("id", list_id)
+            .execute()
+        )
+        if not response.data:
+            raise ValueError("List not found or access denied")
+        rows = cast("list[dict[str, Any]]", response.data)
+        return List(**rows[0])
+
     async def delete(self, list_id: str) -> None:
         """Delete a list. RLS ensures only the owner can delete.
 
@@ -55,6 +70,49 @@ class ListsService:
         )
         rows = cast("list[dict[str, Any]]", response.data)
         return ListItem(**first(rows, "add shop to list"))
+
+    async def get_list_shops(self, list_id: str) -> list[Shop]:
+        """Get full shop data for all shops in a list.
+        RLS on list_items ensures only the owner's lists are visible.
+        """
+        response = (
+            self._db.table("list_items")
+            .select("shop_id, added_at, shops(*)")
+            .eq("list_id", list_id)
+            .execute()
+        )
+        rows = cast("list[dict[str, Any]]", response.data)
+        shops = []
+        for row in rows:
+            shop_data = row.get("shops")
+            if shop_data:
+                shops.append(Shop(**shop_data))
+        return shops
+
+    async def get_pins(self, user_id: str) -> list[ListPin]:
+        """Return coordinates for all shops across the user's lists.
+        Uses a join query: list_items -> shops for lat/lng.
+        RLS on list_items filters to the authenticated user's lists.
+        """
+        response = (
+            self._db.table("list_items")
+            .select("list_id, shop_id, shops(latitude, longitude)")
+            .execute()
+        )
+        rows = cast("list[dict[str, Any]]", response.data)
+        pins = []
+        for row in rows:
+            shop_data = row.get("shops", {})
+            if shop_data and shop_data.get("latitude") and shop_data.get("longitude"):
+                pins.append(
+                    ListPin(
+                        list_id=row["list_id"],
+                        shop_id=row["shop_id"],
+                        lat=shop_data["latitude"],
+                        lng=shop_data["longitude"],
+                    )
+                )
+        return pins
 
     async def remove_shop(self, list_id: str, shop_id: str) -> None:
         """Remove a shop from a list. RLS enforces ownership via parent list.
