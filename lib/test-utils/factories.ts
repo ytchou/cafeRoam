@@ -67,8 +67,17 @@ export function makeList(overrides: Record<string, unknown> = {}) {
     id: 'list-g7h8i9',
     user_id: 'user-a1b2c3',
     name: '適合工作的咖啡店',
+    items: [],
     created_at: TS,
     updated_at: TS,
+    ...overrides,
+  };
+}
+
+export function makeListItem(overrides: Record<string, unknown> = {}) {
+  return {
+    shop_id: 'shop-d4e5f6',
+    added_at: TS,
     ...overrides,
   };
 }

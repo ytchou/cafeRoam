@@ -27,7 +27,7 @@ describe('Domain types', () => {
     expectTypeOf<List>().toHaveProperty('id');
     expectTypeOf<List>().toHaveProperty('userId');
     expectTypeOf<List>().toHaveProperty('name');
-    expectTypeOf<List>().toHaveProperty('shopIds');
+    expectTypeOf<List>().toHaveProperty('items');
   });
 
   it('CheckIn requires at least one photo', () => {
