@@ -1,19 +1,37 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { SWRConfig } from 'swr';
 
-// vi.hoisted ensures these are available when vi.mock factory runs (mock is hoisted above declarations)
-const { mockUseUserLists } = vi.hoisted(() => ({ mockUseUserLists: vi.fn() }));
+const LIST_ID_1 = 'e3b0c442-98a1-441d-b22f-5a00bd8c3e1b';
+const LIST_ID_2 = 'f4c1d553-a9b2-552e-c330-6b11ce9d4f2c';
+const LIST_ID_3 = 'a7e8b9c0-d1f2-4a3b-8c5d-e6f7a8b9c0d1';
+const USER_ID   = 'c7d2a819-5e3f-4c8b-b6a0-1234567890ab';
+const SHOP_ID_1 = 'a1b2c3d4-5678-90ab-cdef-1234567890ab';
+const SHOP_ID_2 = 'b2c3d4e5-6789-01bc-def0-2345678901bc';
+const SHOP_ID_3 = 'c3d4e5f6-789a-12cd-ef01-3456789012cd';
 
-const mockSaveShop = vi.fn();
-const mockRemoveShop = vi.fn();
-const mockCreateList = vi.fn();
+const TWO_LISTS = [
+  { id: LIST_ID_1, user_id: USER_ID, name: 'Work spots', items: [{ shop_id: SHOP_ID_1, added_at: '2026-01-15T10:00:00Z' }, { shop_id: SHOP_ID_2, added_at: '2026-01-15T11:00:00Z' }], created_at: '2026-01-15T10:00:00Z', updated_at: '2026-01-15T10:00:00Z' },
+  { id: LIST_ID_2, user_id: USER_ID, name: 'Date night', items: [{ shop_id: SHOP_ID_3, added_at: '2026-01-16T10:00:00Z' }], created_at: '2026-01-16T10:00:00Z', updated_at: '2026-01-16T10:00:00Z' },
+];
 
-vi.mock('@/lib/hooks/use-user-lists', () => ({
-  useUserLists: mockUseUserLists,
+const THREE_LISTS = [
+  ...TWO_LISTS,
+  { id: LIST_ID_3, user_id: USER_ID, name: 'Weekend', items: [], created_at: '2026-01-17T10:00:00Z', updated_at: '2026-01-17T10:00:00Z' },
+];
+
+vi.mock('@/lib/supabase/client', () => ({
+  createClient: () => ({
+    auth: {
+      getSession: vi.fn().mockResolvedValue({
+        data: { session: { access_token: 'test-token' } },
+      }),
+    },
+  }),
 }));
 
-// Mock vaul/drawer — render children directly
+// Mock vaul/drawer — render children directly in jsdom
 vi.mock('@/components/ui/drawer', () => ({
   Drawer: ({ children, open }: { children: React.ReactNode; open: boolean }) =>
     open ? <div>{children}</div> : null,
@@ -24,72 +42,87 @@ vi.mock('@/components/ui/drawer', () => ({
   DrawerClose: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
+const mockFetch = vi.fn();
+global.fetch = mockFetch;
+
 import { SaveToListSheet } from './save-to-list-sheet';
 
-const BASE_HOOK_VALUES = {
-  isSaved: vi.fn(),
-  isInList: (listId: string, shopId: string) => {
-    if (listId === 'l1' && (shopId === 's1' || shopId === 's2')) return true;
-    if (listId === 'l2' && shopId === 's3') return true;
-    return false;
-  },
-  saveShop: mockSaveShop,
-  removeShop: mockRemoveShop,
-  createList: mockCreateList,
-  deleteList: vi.fn(),
-  renameList: vi.fn(),
-  isLoading: false,
-  error: null,
-};
-
-const TWO_LISTS = [
-  { id: 'l1', name: 'Work spots', items: [{ shop_id: 's1' }, { shop_id: 's2' }] },
-  { id: 'l2', name: 'Date night', items: [{ shop_id: 's3' }] },
-];
-
-const THREE_LISTS = [
-  ...TWO_LISTS,
-  { id: 'l3', name: 'Weekend', items: [] },
-];
-
-beforeEach(() => {
-  mockSaveShop.mockReset();
-  mockRemoveShop.mockReset();
-  mockCreateList.mockReset();
-  mockUseUserLists.mockReturnValue({ ...BASE_HOOK_VALUES, lists: TWO_LISTS });
-});
-
 describe('SaveToListSheet', () => {
-  it('lists containing the shop show as checked', () => {
-    render(<SaveToListSheet shopId="s1" open={true} onOpenChange={vi.fn()} />);
-    const workCheckbox = screen.getByRole('checkbox', { name: /work spots/i });
-    const dateCheckbox = screen.getByRole('checkbox', { name: /date night/i });
+  beforeEach(() => {
+    mockFetch.mockReset();
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: async () => TWO_LISTS,
+    });
+  });
+
+  it('lists containing the shop show as checked', async () => {
+    render(
+      <SWRConfig value={{ provider: () => new Map() }}>
+        <SaveToListSheet shopId={SHOP_ID_1} open={true} onOpenChange={vi.fn()} />
+      </SWRConfig>
+    );
+    const workCheckbox = await screen.findByRole('checkbox', { name: /work spots/i });
+    const dateCheckbox = await screen.findByRole('checkbox', { name: /date night/i });
     expect(workCheckbox).toBeChecked();
     expect(dateCheckbox).not.toBeChecked();
   });
 
   it('when a user checks an unchecked list the shop is saved to it', async () => {
-    render(<SaveToListSheet shopId="s1" open={true} onOpenChange={vi.fn()} />);
-    const dateCheckbox = screen.getByRole('checkbox', { name: /date night/i });
+    render(
+      <SWRConfig value={{ provider: () => new Map() }}>
+        <SaveToListSheet shopId={SHOP_ID_1} open={true} onOpenChange={vi.fn()} />
+      </SWRConfig>
+    );
+    const dateCheckbox = await screen.findByRole('checkbox', { name: /date night/i });
     await userEvent.click(dateCheckbox);
-    expect(mockSaveShop).toHaveBeenCalledWith('l2', 's1');
+    await waitFor(() => {
+      const saveCall = mockFetch.mock.calls.find(
+        (c) => c[1]?.method === 'POST' && c[0] === `/api/lists/${LIST_ID_2}/shops`
+      );
+      expect(saveCall).toBeDefined();
+    });
   });
 
   it('when a user unchecks a checked list the shop is removed from it', async () => {
-    render(<SaveToListSheet shopId="s1" open={true} onOpenChange={vi.fn()} />);
-    const workCheckbox = screen.getByRole('checkbox', { name: /work spots/i });
+    render(
+      <SWRConfig value={{ provider: () => new Map() }}>
+        <SaveToListSheet shopId={SHOP_ID_1} open={true} onOpenChange={vi.fn()} />
+      </SWRConfig>
+    );
+    const workCheckbox = await screen.findByRole('checkbox', { name: /work spots/i });
     await userEvent.click(workCheckbox);
-    expect(mockRemoveShop).toHaveBeenCalledWith('l1', 's1');
+    await waitFor(() => {
+      const removeCall = mockFetch.mock.calls.find(
+        (c) => c[1]?.method === 'DELETE' && c[0] === `/api/lists/${LIST_ID_1}/shops/${SHOP_ID_1}`
+      );
+      expect(removeCall).toBeDefined();
+    });
   });
 
-  it('create new list input is shown when the user has fewer than 3 lists', () => {
-    render(<SaveToListSheet shopId="s1" open={true} onOpenChange={vi.fn()} />);
-    expect(screen.getByPlaceholderText(/create new list/i)).toBeInTheDocument();
+  it('create new list input is shown when the user has fewer than 3 lists', async () => {
+    render(
+      <SWRConfig value={{ provider: () => new Map() }}>
+        <SaveToListSheet shopId={SHOP_ID_1} open={true} onOpenChange={vi.fn()} />
+      </SWRConfig>
+    );
+    expect(await screen.findByPlaceholderText(/create new list/i)).toBeInTheDocument();
   });
 
-  it('create new list input is hidden when the user has reached the 3-list cap', () => {
-    mockUseUserLists.mockReturnValue({ ...BASE_HOOK_VALUES, lists: THREE_LISTS });
-    render(<SaveToListSheet shopId="s1" open={true} onOpenChange={vi.fn()} />);
-    expect(screen.queryByPlaceholderText(/create new list/i)).not.toBeInTheDocument();
+  it('create new list input is hidden when the user has reached the 3-list cap', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => THREE_LISTS,
+    });
+    render(
+      <SWRConfig value={{ provider: () => new Map() }}>
+        <SaveToListSheet shopId={SHOP_ID_1} open={true} onOpenChange={vi.fn()} />
+      </SWRConfig>
+    );
+    // Wait for lists to load, then verify cap hides the create input
+    await screen.findByRole('checkbox', { name: /work spots/i });
+    await waitFor(() => {
+      expect(screen.queryByPlaceholderText(/create new list/i)).not.toBeInTheDocument();
+    });
   });
 });

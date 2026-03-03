@@ -1,24 +1,26 @@
-import { render, screen } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
+import { render, screen, waitFor } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { SWRConfig } from 'swr';
 
-const mockLists = [
-  { id: 'l1', name: 'Work spots', items: [{ shop_id: 's1' }, { shop_id: 's2' }], created_at: '2026-01-15', updated_at: '2026-01-15' },
-  { id: 'l2', name: 'Date night', items: [{ shop_id: 's3' }], created_at: '2026-01-16', updated_at: '2026-01-16' },
-  { id: 'l3', name: 'Weekend', items: [], created_at: '2026-01-17', updated_at: '2026-01-17' },
+const LIST_ID_1 = 'e3b0c442-98a1-441d-b22f-5a00bd8c3e1b';
+const LIST_ID_2 = 'f4c1d553-a9b2-552e-c330-6b11ce9d4f2c';
+const LIST_ID_3 = 'a7e8b9c0-d1f2-4a3b-8c5d-e6f7a8b9c0d1';
+const USER_ID   = 'c7d2a819-5e3f-4c8b-b6a0-1234567890ab';
+const SHOP_ID_1 = 'a1b2c3d4-5678-90ab-cdef-1234567890ab';
+
+const THREE_LISTS = [
+  { id: LIST_ID_1, user_id: USER_ID, name: 'Work spots', items: [{ shop_id: SHOP_ID_1, added_at: '2026-01-15T10:00:00Z' }], created_at: '2026-01-15T10:00:00Z', updated_at: '2026-01-15T10:00:00Z' },
+  { id: LIST_ID_2, user_id: USER_ID, name: 'Date night', items: [], created_at: '2026-01-16T10:00:00Z', updated_at: '2026-01-16T10:00:00Z' },
+  { id: LIST_ID_3, user_id: USER_ID, name: 'Weekend', items: [], created_at: '2026-01-17T10:00:00Z', updated_at: '2026-01-17T10:00:00Z' },
 ];
 
-vi.mock('@/lib/hooks/use-user-lists', () => ({
-  useUserLists: () => ({
-    lists: mockLists,
-    isLoading: false,
-    error: null,
-    isSaved: vi.fn(),
-    isInList: vi.fn(),
-    saveShop: vi.fn(),
-    removeShop: vi.fn(),
-    createList: vi.fn(),
-    deleteList: vi.fn(),
-    renameList: vi.fn(),
+vi.mock('@/lib/supabase/client', () => ({
+  createClient: () => ({
+    auth: {
+      getSession: vi.fn().mockResolvedValue({
+        data: { session: { access_token: 'test-token' } },
+      }),
+    },
   }),
 }));
 
@@ -32,23 +34,63 @@ vi.mock('next/link', () => ({
   ),
 }));
 
+const mockFetch = vi.fn();
+global.fetch = mockFetch;
+
 import ListsPage from './page';
 
 describe('/lists page', () => {
-  it("a user's lists are shown on the page", () => {
-    render(<ListsPage />);
-    expect(screen.getByText('Work spots')).toBeInTheDocument();
-    expect(screen.getByText('Date night')).toBeInTheDocument();
-    expect(screen.getByText('Weekend')).toBeInTheDocument();
+  beforeEach(() => {
+    mockFetch.mockReset();
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: async () => THREE_LISTS,
+    });
   });
 
-  it('the 3/3 cap indicator is visible when the user is at the limit', () => {
-    render(<ListsPage />);
-    expect(screen.getByText(/3.*\/.*3|3\s*\/\s*3/)).toBeInTheDocument();
+  it("a user's lists are shown on the page", async () => {
+    render(
+      <SWRConfig value={{ provider: () => new Map() }}>
+        <ListsPage />
+      </SWRConfig>
+    );
+    expect(await screen.findByText('Work spots')).toBeInTheDocument();
+    expect(await screen.findByText('Date night')).toBeInTheDocument();
+    expect(await screen.findByText('Weekend')).toBeInTheDocument();
   });
 
-  it('create list input is not shown when the user is at the 3-list cap', () => {
-    render(<ListsPage />);
+  it('the 3/3 cap indicator is visible when the user is at the limit', async () => {
+    render(
+      <SWRConfig value={{ provider: () => new Map() }}>
+        <ListsPage />
+      </SWRConfig>
+    );
+    expect(await screen.findByText(/3.*\/.*3|3\s*\/\s*3/)).toBeInTheDocument();
+  });
+
+  it('create list input is not shown when the user is at the 3-list cap', async () => {
+    render(
+      <SWRConfig value={{ provider: () => new Map() }}>
+        <ListsPage />
+      </SWRConfig>
+    );
+    // Wait for lists to load, then verify no create input
+    await screen.findByText('Work spots');
     expect(screen.queryByPlaceholderText(/create new list/i)).not.toBeInTheDocument();
+  });
+
+  it('map pins are not fetched when the lists page first loads', async () => {
+    render(
+      <SWRConfig value={{ provider: () => new Map() }}>
+        <ListsPage />
+      </SWRConfig>
+    );
+    await screen.findByText('Work spots');
+    await waitFor(() => {
+      const pinsFetch = mockFetch.mock.calls.find(
+        (c) => typeof c[0] === 'string' && (c[0] as string).includes('/pins')
+      );
+      expect(pinsFetch).toBeUndefined();
+    });
   });
 });
