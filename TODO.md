@@ -504,10 +504,10 @@ This is the final gate for Phase 1. Two paths: fast path seeds 29 pre-built shop
 - [x] `useUserLists` SWR hook with derived state + optimistic mutations
 
 **Wave 4 — UI components:**
-- [ ] `BookmarkButton` component
-- [ ] `SaveToListSheet` bottom sheet
-- [ ] `RenameListDialog` component
-- [ ] `ListCard` component
+- [x] `BookmarkButton` component
+- [x] `SaveToListSheet` bottom sheet
+- [x] `RenameListDialog` component
+- [x] `ListCard` component
 
 **Wave 5 — Pages:**
 - [ ] `/lists` page (list cards, create, rename, delete)
