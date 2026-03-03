@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Pencil, Trash2, X } from 'lucide-react';
 import { toast } from 'sonner';
+import useSWR from 'swr';
 import { useUserLists } from '@/lib/hooks/use-user-lists';
 import { fetchWithAuth } from '@/lib/api/fetch';
 import { RenameListDialog } from '@/components/lists/rename-list-dialog';
@@ -27,30 +28,18 @@ export default function ListDetailPage() {
   const { lists, removeShop, deleteList, renameList } = useUserLists();
   const list = lists.find((l) => l.id === listId);
 
-  const [shops, setShops] = useState<ShopData[]>([]);
-  const [loading, setLoading] = useState(true);
+  const {
+    data: shops = [],
+    isLoading: loading,
+    mutate: mutateShops,
+  } = useSWR<ShopData[]>(`/api/lists/${listId}/shops`, fetchWithAuth);
   const [hoveredShopId, setHoveredShopId] = useState<string | null>(null);
   const [renaming, setRenaming] = useState(false);
-
-  const fetchShops = useCallback(async () => {
-    try {
-      const data = await fetchWithAuth(`/api/lists/${listId}/shops`);
-      setShops(data);
-    } catch (err) {
-      console.error('Failed to load list shops:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, [listId]);
-
-  useEffect(() => {
-    fetchShops();
-  }, [fetchShops]);
 
   async function handleRemoveShop(shopId: string) {
     try {
       await removeShop(listId, shopId);
-      setShops((prev) => prev.filter((s) => s.id !== shopId));
+      mutateShops(shops.filter((s) => s.id !== shopId), false);
       toast.success('Shop removed');
     } catch {
       toast.error('Failed to remove shop');
