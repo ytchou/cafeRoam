@@ -37,9 +37,17 @@ import { POST as cancelDeletionPOST } from '../auth/cancel-deletion/route';
 import { DELETE as accountDELETE } from '../auth/account/route';
 import { GET as checkinsGET, POST as checkinsPOST } from '../checkins/route';
 import { DELETE as listShopDELETE } from '../lists/[listId]/shops/[shopId]/route';
-import { POST as listShopsPOST } from '../lists/[listId]/shops/route';
-import { DELETE as listDELETE } from '../lists/[listId]/route';
+import {
+  GET as listShopsGET,
+  POST as listShopsPOST,
+} from '../lists/[listId]/shops/route';
+import {
+  DELETE as listDELETE,
+  GET as listGET,
+  PATCH as listPATCH,
+} from '../lists/[listId]/route';
 import { GET as listsGET, POST as listsPOST } from '../lists/route';
+import { GET as pinGET } from '../lists/pins/route';
 import { GET as searchGET } from '../search/route';
 import { GET as shopGET } from '../shops/[id]/route';
 import { GET as shopsGET } from '../shops/route';
@@ -155,6 +163,26 @@ describe('lists route', () => {
 });
 
 describe('lists/[listId] route', () => {
+  it('GET proxies to /lists/:listId', async () => {
+    await listGET(makeRequest(), {
+      params: Promise.resolve({ listId: 'list-1' }),
+    });
+    expect(mockProxy).toHaveBeenCalledWith(
+      expect.any(NextRequest),
+      '/lists/list-1'
+    );
+  });
+
+  it('PATCH proxies to /lists/:listId', async () => {
+    await listPATCH(makeRequest(), {
+      params: Promise.resolve({ listId: 'list-1' }),
+    });
+    expect(mockProxy).toHaveBeenCalledWith(
+      expect.any(NextRequest),
+      '/lists/list-1'
+    );
+  });
+
   it('DELETE proxies to /lists/:listId', async () => {
     await listDELETE(makeRequest(), {
       params: Promise.resolve({ listId: 'list-1' }),
@@ -167,6 +195,16 @@ describe('lists/[listId] route', () => {
 });
 
 describe('lists/[listId]/shops route', () => {
+  it('GET proxies to /lists/:listId/shops', async () => {
+    await listShopsGET(makeRequest(), {
+      params: Promise.resolve({ listId: 'list-1' }),
+    });
+    expect(mockProxy).toHaveBeenCalledWith(
+      expect.any(NextRequest),
+      '/lists/list-1/shops'
+    );
+  });
+
   it('POST proxies to /lists/:listId/shops', async () => {
     await listShopsPOST(makeRequest(), {
       params: Promise.resolve({ listId: 'list-1' }),
@@ -174,6 +212,16 @@ describe('lists/[listId]/shops route', () => {
     expect(mockProxy).toHaveBeenCalledWith(
       expect.any(NextRequest),
       '/lists/list-1/shops'
+    );
+  });
+});
+
+describe('lists/pins route', () => {
+  it('GET proxies to /lists/pins', async () => {
+    await pinGET(makeRequest());
+    expect(mockProxy).toHaveBeenCalledWith(
+      expect.any(NextRequest),
+      '/lists/pins'
     );
   });
 });

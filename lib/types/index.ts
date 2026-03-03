@@ -39,13 +39,25 @@ export interface User {
   createdAt: string;
 }
 
+export interface ListItem {
+  shop_id: string;
+  added_at: string;
+}
+
 export interface List {
   id: string;
-  userId: string;
+  user_id: string;
   name: string;
-  shopIds: string[];
-  createdAt: string;
-  updatedAt: string;
+  items: ListItem[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ListPin {
+  list_id: string;
+  shop_id: string;
+  lat: number;
+  lng: number;
 }
 
 export interface CheckIn {
