@@ -37,8 +37,15 @@ import { POST as cancelDeletionPOST } from '../auth/cancel-deletion/route';
 import { DELETE as accountDELETE } from '../auth/account/route';
 import { GET as checkinsGET, POST as checkinsPOST } from '../checkins/route';
 import { DELETE as listShopDELETE } from '../lists/[listId]/shops/[shopId]/route';
-import { GET as listShopsGET, POST as listShopsPOST } from '../lists/[listId]/shops/route';
-import { DELETE as listDELETE, GET as listGET, PATCH as listPATCH } from '../lists/[listId]/route';
+import {
+  GET as listShopsGET,
+  POST as listShopsPOST,
+} from '../lists/[listId]/shops/route';
+import {
+  DELETE as listDELETE,
+  GET as listGET,
+  PATCH as listPATCH,
+} from '../lists/[listId]/route';
 import { GET as listsGET, POST as listsPOST } from '../lists/route';
 import { GET as pinGET } from '../lists/pins/route';
 import { GET as searchGET } from '../search/route';
