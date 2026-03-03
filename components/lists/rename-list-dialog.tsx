@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { useUserLists } from '@/lib/hooks/use-user-lists';
 
@@ -20,6 +20,10 @@ export function RenameListDialog({
   const { renameList } = useUserLists();
   const [name, setName] = useState(currentName);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (open) setName(currentName);
+  }, [open, currentName]);
 
   if (!open) return null;
 

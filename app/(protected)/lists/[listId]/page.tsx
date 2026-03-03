@@ -1,11 +1,10 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Pencil, Trash2, X } from 'lucide-react';
 import { toast } from 'sonner';
-import { createClient } from '@/lib/supabase/client';
-import { useUserLists } from '@/lib/hooks/use-user-lists';
+import { useUserLists, fetchWithAuth } from '@/lib/hooks/use-user-lists';
 import { RenameListDialog } from '@/components/lists/rename-list-dialog';
 
 interface ShopData {
@@ -30,21 +29,13 @@ export default function ListDetailPage() {
   const [loading, setLoading] = useState(true);
   const [hoveredShopId, setHoveredShopId] = useState<string | null>(null);
   const [renaming, setRenaming] = useState(false);
-  const shopRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
   const fetchShops = useCallback(async () => {
     try {
-      const supabase = createClient();
-      const { data } = await supabase.auth.getSession();
-      const token = data.session?.access_token;
-      if (!token) return;
-
-      const res = await fetch(`/api/lists/${listId}/shops`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) {
-        setShops(await res.json());
-      }
+      const data = await fetchWithAuth(`/api/lists/${listId}/shops`);
+      setShops(data);
+    } catch {
+      // unauthenticated users cannot reach this protected route
     } finally {
       setLoading(false);
     }
@@ -129,9 +120,6 @@ export default function ListDetailPage() {
             {shops.map((shop) => (
               <div
                 key={shop.id}
-                ref={(el) => {
-                  if (el) shopRefs.current.set(shop.id, el);
-                }}
                 onMouseEnter={() => setHoveredShopId(shop.id)}
                 onMouseLeave={() => setHoveredShopId(null)}
                 className={`flex items-center justify-between rounded-xl border p-4 transition ${

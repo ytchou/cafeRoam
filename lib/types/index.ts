@@ -40,22 +40,22 @@ export interface User {
 }
 
 export interface ListItem {
-  shopId: string;
-  addedAt: string;
+  shop_id: string;
+  added_at: string;
 }
 
 export interface List {
   id: string;
-  userId: string;
+  user_id: string;
   name: string;
   items: ListItem[];
-  createdAt: string;
-  updatedAt: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface ListPin {
-  listId: string;
-  shopId: string;
+  list_id: string;
+  shop_id: string;
   lat: number;
   lng: number;
 }

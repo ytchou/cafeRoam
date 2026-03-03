@@ -3,22 +3,9 @@
 import { useMemo, useCallback } from 'react';
 import useSWR from 'swr';
 import { createClient } from '@/lib/supabase/client';
+import type { List } from '@/lib/types';
 
-interface ListItemData {
-  shop_id: string;
-  added_at: string;
-}
-
-interface ListData {
-  id: string;
-  user_id: string;
-  name: string;
-  items: ListItemData[];
-  created_at: string;
-  updated_at: string;
-}
-
-async function fetchWithAuth(url: string, init?: RequestInit) {
+export async function fetchWithAuth(url: string, init?: RequestInit) {
   const supabase = createClient();
   const { data } = await supabase.auth.getSession();
   const token = data.session?.access_token;
@@ -42,28 +29,20 @@ async function fetchWithAuth(url: string, init?: RequestInit) {
 const fetcher = (url: string) => fetchWithAuth(url);
 
 export function useUserLists() {
-  const { data: lists, error, isLoading, mutate } = useSWR<ListData[]>(
+  const { data: lists, error, isLoading, mutate } = useSWR<List[]>(
     '/api/lists',
     fetcher
   );
 
-  const savedShopIds = useMemo(() => {
-    const set = new Set<string>();
-    for (const list of lists ?? []) {
-      for (const item of list.items) {
-        set.add(item.shop_id);
-      }
-    }
-    return set;
-  }, [lists]);
-
-  const listMembership = useMemo(() => {
-    const map = new Map<string, Set<string>>();
+  const { savedShopIds, listMembership } = useMemo(() => {
+    const saved = new Set<string>();
+    const membership = new Map<string, Set<string>>();
     for (const list of lists ?? []) {
       const shopIds = new Set(list.items.map((i) => i.shop_id));
-      map.set(list.id, shopIds);
+      for (const id of shopIds) saved.add(id);
+      membership.set(list.id, shopIds);
     }
-    return map;
+    return { savedShopIds: saved, listMembership: membership };
   }, [lists]);
 
   const isSaved = useCallback(

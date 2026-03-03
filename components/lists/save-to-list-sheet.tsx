@@ -44,11 +44,7 @@ export function SaveToListSheet({ shopId, open, onOpenChange }: SaveToListSheetP
       setNewListName('');
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to create list';
-      if (message.includes('3') || message.includes('Maximum')) {
-        toast.error("You've reached the 3-list limit");
-      } else {
-        toast.error(message);
-      }
+      toast.error(message.includes('Maximum') ? "You've reached the 3-list limit" : message);
     } finally {
       setCreating(false);
     }

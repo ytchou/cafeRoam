@@ -25,7 +25,7 @@ describe('Domain types', () => {
 
   it('List enforces max 3 via type (cap is API-enforced, type is documentation)', () => {
     expectTypeOf<List>().toHaveProperty('id');
-    expectTypeOf<List>().toHaveProperty('userId');
+    expectTypeOf<List>().toHaveProperty('user_id');
     expectTypeOf<List>().toHaveProperty('name');
     expectTypeOf<List>().toHaveProperty('items');
   });
