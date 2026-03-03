@@ -68,18 +68,18 @@ global.fetch = vi.fn().mockResolvedValue({
 import ListDetailPage from './page';
 
 describe('/lists/[listId] page', () => {
-  it('renders the list name in the header', async () => {
+  it('the list name is shown in the page header', async () => {
     render(<ListDetailPage />);
     expect(await screen.findByText('Work spots')).toBeInTheDocument();
   });
 
-  it('renders shop cards from the list', async () => {
+  it("the user's saved shops appear as cards on the list detail page", async () => {
     render(<ListDetailPage />);
     expect(await screen.findByText('山小孩咖啡')).toBeInTheDocument();
     expect(await screen.findByText('Simple Kaffa')).toBeInTheDocument();
   });
 
-  it('shows empty state when list has no shops', async () => {
+  it('an empty state is shown when the list has no saved shops', async () => {
     (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       ok: true,
       json: async () => [],

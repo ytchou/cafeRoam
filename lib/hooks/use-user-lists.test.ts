@@ -125,4 +125,23 @@ describe('useUserLists', () => {
     );
     expect(deleteCall).toBeDefined();
   });
+
+  it('when saving a shop fails the optimistic update is rolled back', async () => {
+    const { result } = renderHook(() => useUserLists());
+    await waitFor(() => expect(result.current.lists).toHaveLength(2));
+
+    const originalItemCount = result.current.lists.find((l) => l.id === 'l1')?.items.length ?? 0;
+
+    // API call fails
+    mockFetch.mockResolvedValueOnce({ ok: false, json: async () => ({ detail: 'Server error' }) });
+
+    await act(async () => {
+      await expect(result.current.saveShop('l1', 'new-shop-id')).rejects.toThrow();
+    });
+
+    await waitFor(() => {
+      const itemCount = result.current.lists.find((l) => l.id === 'l1')?.items.length ?? 0;
+      expect(itemCount).toBe(originalItemCount);
+    });
+  });
 });

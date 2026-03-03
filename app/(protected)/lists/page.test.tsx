@@ -35,19 +35,19 @@ vi.mock('next/link', () => ({
 import ListsPage from './page';
 
 describe('/lists page', () => {
-  it('renders list cards', () => {
+  it("a user's lists are shown on the page", () => {
     render(<ListsPage />);
     expect(screen.getByText('Work spots')).toBeInTheDocument();
     expect(screen.getByText('Date night')).toBeInTheDocument();
     expect(screen.getByText('Weekend')).toBeInTheDocument();
   });
 
-  it('shows 3/3 cap indicator when at limit', () => {
+  it('the 3/3 cap indicator is visible when the user is at the limit', () => {
     render(<ListsPage />);
     expect(screen.getByText(/3.*\/.*3|3\s*\/\s*3/)).toBeInTheDocument();
   });
 
-  it('hides create input when at 3 lists', () => {
+  it('create list input is not shown when the user is at the 3-list cap', () => {
     render(<ListsPage />);
     expect(screen.queryByPlaceholderText(/create new list/i)).not.toBeInTheDocument();
   });
