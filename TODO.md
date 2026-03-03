@@ -497,7 +497,7 @@ This is the final gate for Phase 1. Two paths: fast path seeds 29 pre-built shop
 - [x] Backend: `GET /lists/{list_id}/shops` endpoint
 - [x] Backend: `PATCH /lists/{list_id}` rename endpoint
 - [x] Frontend types + factories update
-- [ ] Drawer UI component (vaul wrapper)
+- [x] Drawer UI component (vaul wrapper)
 
 **Wave 3 — Frontend core:**
 - [ ] Frontend API proxy routes (pins, shops, rename)
