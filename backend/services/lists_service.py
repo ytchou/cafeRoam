@@ -4,23 +4,28 @@ from postgrest.exceptions import APIError
 from supabase import Client
 
 from core.db import first
-from models.types import List, ListItem
+from models.types import List, ListItem, ListWithItems
 
 
 class ListsService:
     def __init__(self, db: Client):
         self._db = db
 
-    async def get_by_user(self, user_id: str) -> list[List]:
+    async def get_by_user(self, user_id: str) -> list[ListWithItems]:
         response = (
             self._db.table("lists")
-            .select("*")
+            .select("*, list_items(shop_id, added_at)")
             .eq("user_id", user_id)
             .order("created_at", desc=True)
             .execute()
         )
         rows = cast("list[dict[str, Any]]", response.data)
-        return [List(**row) for row in rows]
+        results = []
+        for row in rows:
+            items_data = row.pop("list_items", [])
+            items = [ListItem(**item) for item in items_data]
+            results.append(ListWithItems(**row, items=items))
+        return results
 
     async def create(self, user_id: str, name: str) -> List:
         """Create a new list. DB trigger enforces max 3 lists per user."""

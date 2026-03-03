@@ -490,7 +490,7 @@ This is the final gate for Phase 1. Two paths: fast path seeds 29 pre-built shop
 
 **Wave 1 — Foundation:**
 - [x] Install frontend deps (swr, vaul, react-map-gl, mapbox-gl)
-- [ ] Backend: enhance `get_by_user` to include list items
+- [x] Backend: enhance `get_by_user` to include list items
 
 **Wave 2 — Backend endpoints + Frontend primitives:**
 - [ ] Backend: `GET /lists/pins` endpoint

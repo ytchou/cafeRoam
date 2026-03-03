@@ -198,3 +198,50 @@ class TestListsService:
         )
         results = await lists_service.get_by_user("user-1")
         assert isinstance(results, list)
+
+    async def test_get_by_user_includes_items(self, lists_service, mock_supabase):
+        """get_by_user() must return lists with their items (shop_ids)."""
+        from datetime import datetime
+        mock_supabase.table = MagicMock(
+            return_value=MagicMock(
+                select=MagicMock(
+                    return_value=MagicMock(
+                        eq=MagicMock(
+                            return_value=MagicMock(
+                                order=MagicMock(
+                                    return_value=MagicMock(
+                                        execute=MagicMock(
+                                            return_value=MagicMock(
+                                                data=[
+                                                    {
+                                                        "id": "l1",
+                                                        "user_id": "user-1",
+                                                        "name": "Work spots",
+                                                        "created_at": datetime.now().isoformat(),
+                                                        "updated_at": datetime.now().isoformat(),
+                                                        "list_items": [
+                                                            {
+                                                                "shop_id": "s1",
+                                                                "added_at": datetime.now().isoformat(),
+                                                            },
+                                                            {
+                                                                "shop_id": "s2",
+                                                                "added_at": datetime.now().isoformat(),
+                                                            },
+                                                        ],
+                                                    }
+                                                ]
+                                            )
+                                        )
+                                    )
+                                )
+                            )
+                        )
+                    )
+                )
+            )
+        )
+        results = await lists_service.get_by_user("user-1")
+        assert len(results) == 1
+        assert len(results[0].items) == 2
+        assert results[0].items[0].shop_id == "s1"

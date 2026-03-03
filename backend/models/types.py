@@ -63,9 +63,18 @@ class List(BaseModel):
 
 
 class ListItem(BaseModel):
-    list_id: str
+    list_id: str | None = None
     shop_id: str
     added_at: datetime
+
+
+class ListWithItems(BaseModel):
+    id: str
+    user_id: str
+    name: str
+    created_at: datetime
+    updated_at: datetime
+    items: list[ListItem] = []
 
 
 class CheckIn(BaseModel):
