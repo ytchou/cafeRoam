@@ -6,7 +6,7 @@ async function uploadToStorage(bucket: string, file: File): Promise<string> {
   const userId = sessionData.session?.user?.id;
   if (!userId) throw new Error('Not authenticated');
 
-  const ext = 'webp';
+  const ext = file.name.split('.').pop() ?? 'jpg';
   const path = `${userId}/${crypto.randomUUID()}.${ext}`;
 
   const { error } = await supabase.storage.from(bucket).upload(path, file, {
