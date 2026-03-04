@@ -69,7 +69,6 @@ export function BatchDetail({
     };
   }, [search]);
 
-
   useEffect(() => {
     const controller = new AbortController();
     setLoading(true);
@@ -116,7 +115,10 @@ export function BatchDetail({
           {Object.entries(data.status_summary).map(([st, count]) => (
             <button
               key={st}
-              onClick={() => { setStatusFilter(statusFilter === st ? '' : st); setPage(1); }}
+              onClick={() => {
+                setStatusFilter(statusFilter === st ? '' : st);
+                setPage(1);
+              }}
               className={`rounded px-2 py-0.5 text-xs ring-1 ring-transparent transition ${
                 STATUS_COLORS[st] || 'bg-gray-100 text-gray-700'
               } ${statusFilter === st ? 'ring-current' : 'opacity-80 hover:opacity-100'}`}
@@ -138,7 +140,10 @@ export function BatchDetail({
         />
         <select
           value={statusFilter}
-          onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
+          onChange={(e) => {
+            setStatusFilter(e.target.value);
+            setPage(1);
+          }}
           className="rounded border px-2 py-1 text-sm"
         >
           <option value="">All statuses</option>
@@ -153,7 +158,9 @@ export function BatchDetail({
       {loading ? (
         <p className="text-sm text-gray-500">Loading…</p>
       ) : !data || data.shops.length === 0 ? (
-        <p className="text-sm text-gray-500">No shops match the current filter.</p>
+        <p className="text-sm text-gray-500">
+          No shops match the current filter.
+        </p>
       ) : (
         <table className="w-full text-left text-sm">
           <thead>

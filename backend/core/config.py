@@ -8,11 +8,12 @@ class Settings(BaseSettings):
     supabase_url: str = "http://127.0.0.1:54321"
     supabase_anon_key: str = ""
     supabase_service_role_key: str = ""
+    supabase_jwt_secret: str = "super-secret-jwt-token-with-at-least-32-characters-long"
 
     # LLM
     llm_provider: str = "anthropic"
     anthropic_api_key: str = ""
-    anthropic_model: str = "claude-sonnet-4-6-20250514"
+    anthropic_model: str = "claude-sonnet-4-6"
 
     # Embeddings
     embeddings_provider: str = "openai"
@@ -47,7 +48,7 @@ class Settings(BaseSettings):
     # Admin
     admin_user_ids: list[str] = []
 
-    model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
+    model_config = {"env_file": ".env", "env_file_encoding": "utf-8", "extra": "ignore"}
 
 
 settings = Settings()

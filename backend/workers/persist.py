@@ -20,7 +20,10 @@ async def persist_scraped_data(
     submitted_by: str | None = None,
     batch_id: str | None = None,
 ) -> None:
-    """Persist scraped shop data and enqueue enrichment. Shared by single and batch scrape handlers."""
+    """Persist scraped shop data and enqueue enrichment.
+
+    Shared by single and batch scrape handlers.
+    """
     # Update shop with scraped data; advance status to enriching
     db.table("shops").update(
         {

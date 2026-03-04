@@ -56,16 +56,10 @@ class ApifyScraperAdapter:
         url_to_shop_id = {s.google_maps_url: s.shop_id for s in shops}
         # Path-based fallback: handles https://maps.google.com → https://www.google.com/maps/...
         path_to_shop_id = {
-            _url_path(s.google_maps_url): s.shop_id
-            for s in shops
-            if _url_path(s.google_maps_url)
+            _url_path(s.google_maps_url): s.shop_id for s in shops if _url_path(s.google_maps_url)
         }
         # CID-based fallback: CID URLs (?cid=12345) have no path, but Apify may echo the CID
-        cid_to_shop_id = {
-            cid: s.shop_id
-            for s in shops
-            if (cid := _url_cid(s.google_maps_url))
-        }
+        cid_to_shop_id = {cid: s.shop_id for s in shops if (cid := _url_cid(s.google_maps_url))}
         if cid_to_shop_id:
             logger.info(
                 "Batch contains CID-format URLs — using CID matching fallback",
@@ -95,10 +89,7 @@ class ApifyScraperAdapter:
             if shop_id:
                 matched[shop_id] = self._parse_place(place)
 
-        return [
-            BatchScrapeResult(shop_id=s.shop_id, data=matched.get(s.shop_id))
-            for s in shops
-        ]
+        return [BatchScrapeResult(shop_id=s.shop_id, data=matched.get(s.shop_id)) for s in shops]
 
     async def scrape_reviews_only(self, google_place_id: str) -> list[dict[str, str | int | None]]:
         results = await self._run_actor(

@@ -24,7 +24,7 @@ CREATE OR REPLACE FUNCTION admin_search_shops(
     match_count int DEFAULT 50
 )
 RETURNS TABLE (id uuid, similarity float)
-LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public, extensions
 AS $$
     SELECT s.id, 1 - (s.embedding <=> query_embedding) AS similarity
     FROM shops s

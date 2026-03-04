@@ -30,5 +30,24 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  return { supabase, user, supabaseResponse };
+  // getUser() validates the JWT server-side but returns stored app_metadata,
+  // which does NOT include custom JWT hook claims (e.g. pdpa_consented).
+  // getSession() decodes the JWT locally, exposing hook-injected claims.
+  // Merge both so middleware can read custom claims while keeping server validation.
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  const userWithClaims =
+    user && session?.user?.app_metadata
+      ? {
+          ...user,
+          app_metadata: {
+            ...user.app_metadata,
+            ...session.user.app_metadata,
+          },
+        }
+      : user;
+
+  return { supabase, user: userWithClaims, supabaseResponse };
 }

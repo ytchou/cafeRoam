@@ -6,6 +6,7 @@
 ## What Happened
 
 Three files essential to the new `SCRAPE_BATCH` feature existed only in the working tree:
+
 - `backend/models/types.py` — `JobType.SCRAPE_BATCH` enum value
 - `backend/providers/scraper/interface.py` — `BatchScrapeInput`, `BatchScrapeResult`, `scrape_batch` protocol
 - `backend/workers/scheduler.py` — `handle_scrape_batch` dispatch case

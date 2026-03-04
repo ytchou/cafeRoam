@@ -185,7 +185,8 @@ async def import_google_takeout(
 
     Accepts:
     - GeoJSON FeatureCollection (.json/.geojson) — includes coordinates, filtered to region bounds.
-    - CSV with columns Title, Note, URL, Tags, Comment (.csv) — no coordinates; scraper fills them in.
+    - CSV with columns Title, Note, URL, Tags, Comment (.csv) — no coordinates;
+      scraper fills them in.
     """
     import json
 
@@ -235,7 +236,11 @@ async def import_google_takeout(
         admin_user_id=user["id"],
         action="POST /admin/shops/import/google-takeout",
         target_type="import",
-        payload={"region": region, "imported": result.get("imported", 0), "format": "csv" if is_csv else "geojson"},
+        payload={
+            "region": region,
+            "imported": result.get("imported", 0),
+            "format": "csv" if is_csv else "geojson",
+        },
     )
     return result
 

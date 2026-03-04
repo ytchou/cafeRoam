@@ -1,6 +1,6 @@
 """Tests for the scrape_batch worker handler."""
 
-from unittest.mock import AsyncMock, MagicMock, call
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -133,9 +133,9 @@ async def test_shop_not_found_on_google_maps_marks_failed_without_aborting_batch
     assert failed_status_updates, "Expected at least one failed status update"
     # Verify shop A specifically was targeted (.eq("id", _SHOP_ID_A) was called)
     eq_calls = mock_db.table.return_value.update.return_value.eq.call_args_list
-    assert any(
-        c.args == ("id", _SHOP_ID_A) for c in eq_calls
-    ), f"Expected shop A ({_SHOP_ID_A}) to be targeted in failed update"
+    assert any(c.args == ("id", _SHOP_ID_A) for c in eq_calls), (
+        f"Expected shop A ({_SHOP_ID_A}) to be targeted in failed update"
+    )
 
 
 @pytest.mark.asyncio
@@ -153,8 +153,8 @@ async def test_persist_failure_marks_shop_failed_and_continues_remaining(
     insert_mock = MagicMock()
     insert_mock.execute.side_effect = [Exception("DB constraint error"), MagicMock(), MagicMock()]
     mock_db.table.return_value.insert.return_value = insert_mock
-    mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value = (
-        MagicMock(data=[])
+    mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(
+        data=[]
     )
 
     payload = {
@@ -187,9 +187,7 @@ async def test_empty_batch_payload_is_a_no_op(mock_db, mock_queue):
 
 
 @pytest.mark.asyncio
-async def test_submission_context_forwarded_to_enrichment_job(
-    mock_db, mock_queue, scraped_data_a
-):
+async def test_submission_context_forwarded_to_enrichment_job(mock_db, mock_queue, scraped_data_a):
     """Submission ID and submitted_by are forwarded to the ENRICH_SHOP payload."""
     mock_scraper = AsyncMock()
     mock_scraper.scrape_batch.return_value = [

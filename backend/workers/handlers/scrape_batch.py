@@ -22,7 +22,10 @@ async def handle_scrape_batch(
     Payload shape:
         {
             "batch_id": str,
-            "shops": [{"shop_id": str, "google_maps_url": str, "submission_id"?: str, "submitted_by"?: str}]
+            "shops": [
+                {"shop_id": str, "google_maps_url": str,
+                 "submission_id"?: str, "submitted_by"?: str}
+            ]
         }
     """
     batch_id = payload["batch_id"]

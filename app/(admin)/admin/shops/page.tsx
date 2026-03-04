@@ -51,6 +51,34 @@ const STATUS_OPTIONS = [
   'failed',
   'filtered_dead_url',
 ] as const;
+
+const STATUS_LABELS: Record<string, string> = {
+  all: 'All statuses',
+  pending: 'Queued',
+  pending_url_check: 'URL Check',
+  pending_review: 'Awaiting Approval',
+  scraping: 'Scraping',
+  enriching: 'Enriching',
+  embedding: 'Embedding',
+  publishing: 'Publishing',
+  live: 'Live',
+  failed: 'Failed',
+  filtered_dead_url: 'Dead URL',
+};
+
+const STATUS_COLORS: Record<string, string> = {
+  pending_url_check: 'bg-yellow-100 text-yellow-800 border-yellow-300',
+  pending_review: 'bg-blue-100 text-blue-800 border-blue-300',
+  pending: 'bg-gray-100 text-gray-700 border-gray-300',
+  scraping: 'bg-orange-100 text-orange-800 border-orange-300',
+  enriching: 'bg-purple-100 text-purple-800 border-purple-300',
+  embedding: 'bg-indigo-100 text-indigo-800 border-indigo-300',
+  publishing: 'bg-teal-100 text-teal-800 border-teal-300',
+  live: 'bg-green-100 text-green-800 border-green-300',
+  filtered_dead_url: 'bg-red-100 text-red-700 border-red-300',
+  failed: 'bg-red-100 text-red-800 border-red-300',
+};
+
 const SOURCE_OPTIONS = [
   'all',
   'cafe_nomad',
@@ -58,6 +86,15 @@ const SOURCE_OPTIONS = [
   'google_takeout',
   'user_submission',
 ] as const;
+
+const SOURCE_LABELS: Record<string, string> = {
+  all: 'All sources',
+  cafe_nomad: 'Cafe Nomad',
+  manual: 'Manual',
+  google_takeout: 'Google Takeout',
+  user_submission: 'User Submission',
+};
+
 const PAGE_SIZE = 20;
 
 async function getAuthToken(): Promise<string | null> {
@@ -96,6 +133,11 @@ export default function AdminShopsList() {
     new Set()
   );
   const [approvingBulk, setApprovingBulk] = useState(false);
+
+  // Pipeline status
+  const [pipelineStatus, setPipelineStatus] = useState<Record<string, number>>(
+    {}
+  );
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -157,6 +199,27 @@ export default function AdminShopsList() {
   useEffect(() => {
     setSelectedShopIds(new Set());
   }, [statusFilter, sourceFilter, appliedSearch, offset]);
+
+  // Pipeline status polling — fetch once on mount, then every 5s.
+  // Empty deps: interval is created once and never recreated.
+  useEffect(() => {
+    async function fetchPipelineStatus() {
+      const token = await getAuthToken();
+      if (!token) return;
+      try {
+        const res = await fetch('/api/admin/shops/pipeline-status', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) setPipelineStatus(await res.json());
+      } catch {
+        // non-critical — ignore silently
+      }
+    }
+
+    fetchPipelineStatus();
+    const id = setInterval(fetchPipelineStatus, 5000);
+    return () => clearInterval(id);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   function handleSearchChange(value: string) {
     setSearch(value);
@@ -240,7 +303,7 @@ export default function AdminShopsList() {
   async function handleImportTakeout() {
     const file = takeoutFileRef.current?.files?.[0];
     if (!file) {
-      toast.error('Please select a GeoJSON file first');
+      toast.error('Please select a GeoJSON or CSV file first');
       return;
     }
 
@@ -411,6 +474,62 @@ export default function AdminShopsList() {
         </button>
       </div>
 
+      {/* Pipeline Status */}
+      {Object.keys(pipelineStatus).length > 0 && (
+        <div className="space-y-2 rounded-lg border p-4">
+          <h2 className="text-sm font-semibold text-gray-700">
+            Pipeline Status
+          </h2>
+          <div className="flex flex-wrap gap-2">
+            {Object.keys(STATUS_COLORS)
+              .filter((key) => (pipelineStatus[key] ?? 0) > 0)
+              .map((key) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setStatusFilter(key)}
+                  className={`rounded-full border px-3 py-1 text-xs font-medium ${STATUS_COLORS[key]} transition-opacity hover:opacity-80`}
+                >
+                  {STATUS_LABELS[key]}: {pipelineStatus[key]}
+                </button>
+              ))}
+          </div>
+          {[
+            'pending_url_check',
+            'scraping',
+            'enriching',
+            'embedding',
+            'publishing',
+          ].some((s) => (pipelineStatus[s] ?? 0) > 0) && (
+            <p className="text-xs text-gray-400">Auto-refreshing every 5s</p>
+          )}
+        </div>
+      )}
+
+      {/* Review CTA — shown when there are shops awaiting approval but user isn't already in review mode */}
+      {(pipelineStatus['pending_review'] ?? 0) > 0 &&
+        statusFilter !== 'pending_review' && (
+          <div className="flex items-center justify-between rounded-lg border border-blue-200 bg-blue-50 px-4 py-3">
+            <div>
+              <span className="text-sm font-medium text-blue-800">
+                {pipelineStatus['pending_review']} shop
+                {pipelineStatus['pending_review'] !== 1 ? 's' : ''} awaiting
+                approval
+              </span>
+              <p className="mt-0.5 text-xs text-blue-600">
+                Review and bulk-approve to queue them for scraping.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setStatusFilter('pending_review')}
+              className="rounded bg-blue-600 px-3 py-1.5 text-sm text-white hover:bg-blue-700"
+            >
+              Review &amp; Approve
+            </button>
+          </div>
+        )}
+
       {/* Import Section */}
       <div className="space-y-3 rounded-lg border p-4">
         <h2 className="text-sm font-semibold text-gray-700">Import Shops</h2>
@@ -446,7 +565,7 @@ export default function AdminShopsList() {
             <input
               ref={takeoutFileRef}
               type="file"
-              accept=".json,.geojson"
+              accept=".json,.geojson,.csv"
               className="text-sm"
               id="takeout-file"
             />
@@ -560,7 +679,7 @@ export default function AdminShopsList() {
         >
           {STATUS_OPTIONS.map((s) => (
             <option key={s} value={s}>
-              {s}
+              {STATUS_LABELS[s] ?? s}
             </option>
           ))}
         </select>
@@ -571,7 +690,7 @@ export default function AdminShopsList() {
         >
           {SOURCE_OPTIONS.map((s) => (
             <option key={s} value={s}>
-              {s}
+              {SOURCE_LABELS[s] ?? s}
             </option>
           ))}
         </select>
@@ -660,8 +779,13 @@ export default function AdminShopsList() {
                   )}
                   <td className="py-2">{shop.name}</td>
                   <td className="py-2 text-gray-600">{shop.address}</td>
-                  <td className="py-2">{shop.processing_status}</td>
-                  <td className="py-2 text-gray-500">{shop.source}</td>
+                  <td className="py-2">
+                    {STATUS_LABELS[shop.processing_status] ??
+                      shop.processing_status}
+                  </td>
+                  <td className="py-2 text-gray-500">
+                    {SOURCE_LABELS[shop.source] ?? shop.source}
+                  </td>
                   <td className="py-2 text-gray-500">{shop.tag_count}</td>
                   <td className="py-2 text-gray-500">
                     {shop.has_embedding ? (

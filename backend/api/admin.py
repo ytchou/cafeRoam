@@ -6,9 +6,9 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from api.deps import require_admin
 from core.db import first
-from models.types import JobType
 from db.supabase_client import get_service_role_client
 from middleware.admin_audit import log_admin_action
+from models.types import JobType
 
 logger = structlog.get_logger()
 
@@ -133,7 +133,7 @@ async def approve_submission(
             detail=f"Submission {submission_id} cannot be approved (status: {sub_status})",
         )
 
-    # Conditional update — only succeeds if submission is still in an approvable state (TOCTOU guard)
+    # Conditional update — only succeeds if submission is still approvable (TOCTOU guard)
     update_response = (
         db.table("shop_submissions")
         .update({"status": "live", "reviewed_at": datetime.now(UTC).isoformat()})
@@ -266,10 +266,7 @@ async def list_batches(
     shop_status_map: dict[str, str] = {}
     if all_shop_ids:
         shops_resp = (
-            db.table("shops")
-            .select("id, processing_status")
-            .in_("id", all_shop_ids)
-            .execute()
+            db.table("shops").select("id, processing_status").in_("id", all_shop_ids).execute()
         )
         for s in cast("list[dict[str, Any]]", shops_resp.data or []):
             shop_status_map[str(s["id"])] = s["processing_status"]
@@ -348,10 +345,7 @@ async def get_batch_detail(
 
     # Single unfiltered fetch — status_summary needs all shops; search/status filtered in Python
     all_shops_resp = (
-        db.table("shops")
-        .select("id, name, processing_status")
-        .in_("id", shop_ids)
-        .execute()
+        db.table("shops").select("id, name, processing_status").in_("id", shop_ids).execute()
     )
     all_shop_rows: dict[str, dict[str, Any]] = {
         str(s["id"]): s for s in cast("list[dict[str, Any]]", all_shops_resp.data or [])

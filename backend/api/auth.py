@@ -4,7 +4,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, status
 from supabase import Client
 
-from api.deps import get_current_user, get_user_db
+from api.deps import get_admin_db, get_current_user, get_user_db
 from core.db import first
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -14,6 +14,7 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 async def record_consent(
     user: dict[str, Any] = Depends(get_current_user),  # noqa: B008
     db: Client = Depends(get_user_db),  # noqa: B008
+    admin_db: Client = Depends(get_admin_db),  # noqa: B008
 ) -> dict[str, Any]:
     """Record PDPA consent. Idempotent: re-posting does not change existing timestamp."""
     response = (
@@ -23,8 +24,11 @@ async def record_consent(
         .is_("pdpa_consent_at", "null")
         .execute()
     )
+    # Always sync app_metadata so getUser() reflects consent state immediately,
+    # regardless of whether this was a new consent or a repeat call.
+    admin_db.auth.admin.update_user_by_id(user["id"], {"app_metadata": {"pdpa_consented": True}})
+
     if not response.data:
-        # Already consented — return existing profile
         existing = (
             db.table("profiles")
             .select("id, pdpa_consent_at")
@@ -40,6 +44,7 @@ async def record_consent(
 async def delete_account(
     user: dict[str, Any] = Depends(get_current_user),  # noqa: B008
     db: Client = Depends(get_user_db),  # noqa: B008
+    admin_db: Client = Depends(get_admin_db),  # noqa: B008
 ) -> dict[str, Any]:
     """Request account deletion. Sets deletion_requested_at timestamp.
 
@@ -54,7 +59,6 @@ async def delete_account(
         .execute()
     )
     if not response.data:
-        # Deletion already pending — return existing profile
         existing = (
             db.table("profiles")
             .select("id, deletion_requested_at")
@@ -63,6 +67,9 @@ async def delete_account(
             .execute()
         )
         return existing.data
+    admin_db.auth.admin.update_user_by_id(
+        user["id"], {"app_metadata": {"deletion_requested": True}}
+    )
     return first(response.data, "delete account")
 
 
@@ -70,6 +77,7 @@ async def delete_account(
 async def cancel_deletion(
     user: dict[str, Any] = Depends(get_current_user),  # noqa: B008
     db: Client = Depends(get_user_db),  # noqa: B008
+    admin_db: Client = Depends(get_admin_db),  # noqa: B008
 ) -> dict[str, Any]:
     """Cancel a pending account deletion. Returns 404 if no deletion is pending."""
     profile = (
@@ -93,4 +101,7 @@ async def cancel_deletion(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to cancel deletion",
         )
+    admin_db.auth.admin.update_user_by_id(
+        user["id"], {"app_metadata": {"deletion_requested": False}}
+    )
     return first(response.data, "cancel deletion")

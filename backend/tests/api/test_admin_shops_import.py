@@ -307,8 +307,14 @@ class TestBulkApprove:
         # Batch SELECT with URLs: .select().in_().eq().execute()
         mock_db.table.return_value.select.return_value.in_.return_value.eq.return_value.execute.return_value = MagicMock(  # noqa: E501
             data=[
-                {"id": shop_id_1, "google_maps_url": "https://maps.google.com/?cid=11111111111111111"},
-                {"id": shop_id_2, "google_maps_url": "https://maps.google.com/?cid=22222222222222222"},
+                {
+                    "id": shop_id_1,
+                    "google_maps_url": "https://maps.google.com/?cid=11111111111111111",
+                },
+                {
+                    "id": shop_id_2,
+                    "google_maps_url": "https://maps.google.com/?cid=22222222222222222",
+                },
             ]
         )
         # Batch UPDATE returns updated rows
