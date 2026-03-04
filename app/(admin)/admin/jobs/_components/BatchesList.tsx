@@ -137,10 +137,7 @@ export function BatchesList() {
                 {expandedBatchId === batch.batch_id && token && (
                   <tr className="border-b bg-gray-50">
                     <td colSpan={3} className="px-4 py-3">
-                      <BatchDetail
-                        batchId={batch.batch_id}
-                        token={token}
-                      />
+                      <BatchDetail batchId={batch.batch_id} token={token} />
                     </td>
                   </tr>
                 )}

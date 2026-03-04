@@ -81,10 +81,13 @@ export function BatchDetail({
       if (debouncedSearch) params.set('search', debouncedSearch);
       if (statusFilter) params.set('status', statusFilter);
       try {
-        const res = await fetch(`/api/admin/pipeline/batches/${batchId}?${params}`, {
-          headers: { Authorization: `Bearer ${token}` },
-          signal: controller.signal,
-        });
+        const res = await fetch(
+          `/api/admin/pipeline/batches/${batchId}?${params}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+            signal: controller.signal,
+          }
+        );
         if (!res.ok) {
           const body = await res.json().catch(() => ({}));
           setError(body.detail || 'Failed to load batch detail');
