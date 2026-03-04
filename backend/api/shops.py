@@ -1,6 +1,6 @@
 from typing import Any
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 
 from api.deps import get_admin_db, get_optional_user
 from core.db import first
@@ -32,7 +32,7 @@ async def get_shop(shop_id: str) -> Any:
 @router.get("/{shop_id}/checkins")
 async def get_shop_checkins(
     shop_id: str,
-    limit: int = 9,
+    limit: int = Query(default=9, ge=1, le=50),
     user: dict[str, Any] | None = Depends(get_optional_user),  # noqa: B008
 ) -> list[dict[str, Any]] | dict[str, Any]:
     """Get check-ins for a shop. Auth-gated response shape.
@@ -58,7 +58,7 @@ async def get_shop_checkins(
                 display_name=(
                     row.get("profiles", {}).get("display_name") if row.get("profiles") else None
                 ),
-                photo_url=row["photo_urls"][0],
+                photo_url=row["photo_urls"][0] if row.get("photo_urls") else None,
                 note=row.get("note"),
                 created_at=row["created_at"],
             ).model_dump()
@@ -69,10 +69,11 @@ async def get_shop_checkins(
             db.table("check_ins")
             .select("photo_urls", count="exact")
             .eq("shop_id", shop_id)
+            .limit(1)
             .execute()
         )
         first_row = first(response.data, "shop checkins preview") if response.data else None
-        preview_url = first_row["photo_urls"][0] if first_row else None
+        preview_url = first_row["photo_urls"][0] if first_row and first_row.get("photo_urls") else None
         return ShopCheckInPreview(
             count=response.count or 0,
             preview_photo_url=preview_url,
