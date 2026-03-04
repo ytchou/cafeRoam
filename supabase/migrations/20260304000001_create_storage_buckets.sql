@@ -1,7 +1,7 @@
 -- Create storage buckets for check-in and menu photos
 INSERT INTO storage.buckets (id, name, public)
 VALUES
-  ('checkin-photos', 'checkin-photos', false),
+  ('checkin-photos', 'checkin-photos', true),  -- public: photos served via CDN in img tags
   ('menu-photos', 'menu-photos', false);
 
 -- checkin-photos: authenticated users upload to their own path
@@ -12,10 +12,7 @@ WITH CHECK (
   AND (storage.foldername(name))[1] = auth.uid()::text
 );
 
--- checkin-photos: authenticated users can read all photos (for shop detail grid)
-CREATE POLICY "Authenticated read checkin photos"
-ON storage.objects FOR SELECT TO authenticated
-USING (bucket_id = 'checkin-photos');
+-- checkin-photos: public bucket — all reads served via CDN; no SELECT policy needed
 
 -- checkin-photos: users can delete their own photos (PDPA cascade)
 CREATE POLICY "Users delete own checkin photos"
