@@ -153,4 +153,32 @@ count = int(result.data or 0)
 
 ---
 
+## Prettier Silently Misformats Next.js `[param]` Paths
+
+**Symptom:** `pnpm format:check` passes locally but CI reports a formatting error on a file inside a `[param]` directory (e.g., `app/(protected)/checkin/[shopId]/page.tsx`). Running `prettier --write .` appears to fix the file but doesn't — it re-runs and produces slightly different output.
+
+**Root cause:** Shell glob expansion treats `[shopId]` as a character class (`[s,h,o,p,I,d]`). When prettier (or the shell) expands `.`, it may match different filenames than intended, resulting in inconsistent formatting for files in bracket-named directories.
+
+**Fix:**
+```bash
+# Always use the explicit path, quoted, for files in [param] directories:
+pnpm exec prettier --write "app/(protected)/checkin/[shopId]/page.tsx"
+```
+
+**Prevention:** After running `prettier --write .`, always verify bracket-path files with an explicit `prettier --check "path/to/[param]/file"` before committing.
+
+---
+
+## Supabase Storage: Private Bucket + `getPublicUrl()` = Silent 403
+
+**Symptom:** Images stored in Supabase Storage render as broken in `<img>` tags — no error thrown, URL is syntactically valid, but browser requests return 403.
+
+**Root cause:** `getPublicUrl()` constructs a URL regardless of bucket visibility. On a `public=false` bucket, the URL is structurally correct but access-denied at the CDN. Browser `<img>` requests don't carry Supabase JWT auth headers, so even authenticated users can't view photos.
+
+**Fix:** Make the bucket `public=true` (upload RLS policies still protect write access), or use `createSignedUrl()` per render (not storable permanently).
+
+**Prevention:** In any plan or migration that creates a Supabase Storage bucket: explicitly choose `public: true` if photos will be rendered in `<img>` tags. Add a plan comment: "`<img>` tags cannot carry auth headers → public bucket required."
+
+---
+
 _Add entries here as you discover them._
