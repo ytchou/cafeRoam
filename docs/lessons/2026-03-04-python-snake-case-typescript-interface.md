@@ -10,6 +10,7 @@ The Python `ShopReview` Pydantic model uses snake_case field names. `fetchWithAu
 Developer assumed TypeScript interfaces should use camelCase (JavaScript convention) without checking whether `fetchWithAuth` performed any key transformation.
 
 **Prevention:**
+
 - Check `lib/api/fetch.ts` — it does NOT camelCase-convert responses.
 - TypeScript interfaces for API responses must mirror the Python Pydantic model field names (snake_case).
 - The camelCase convention applies only to locally-computed state and component props, not to API response shapes.

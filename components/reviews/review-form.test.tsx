@@ -5,7 +5,12 @@ import { ReviewForm } from './review-form';
 import type { TaxonomyTag } from '@/lib/types';
 
 const mockTags: TaxonomyTag[] = [
-  { id: 'good_wifi', dimension: 'functionality', label: 'Good WiFi', labelZh: '穩定WiFi' },
+  {
+    id: 'good_wifi',
+    dimension: 'functionality',
+    label: 'Good WiFi',
+    labelZh: '穩定WiFi',
+  },
   { id: 'quiet', dimension: 'ambience', label: 'Quiet', labelZh: '安靜' },
 ];
 

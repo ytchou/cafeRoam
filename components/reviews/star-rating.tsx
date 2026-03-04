@@ -45,7 +45,7 @@ export function StarRating({ value, onChange, size = 'md' }: StarRatingProps) {
           </button>
         ) : (
           <Star key={star} filled={star <= value} size={sizeClass} />
-        ),
+        )
       )}
     </div>
   );

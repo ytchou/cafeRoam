@@ -42,15 +42,7 @@ class TestShopReviewsAPI:
             ]
 
             # Paginated query: table().select().eq().not_().order().limit().offset().execute()
-            paginated_chain = (
-                mock_db.table.return_value
-                .select.return_value
-                .eq.return_value
-                .not_.return_value
-                .order.return_value
-                .limit.return_value
-                .offset.return_value
-            )
+            paginated_chain = mock_db.table.return_value.select.return_value.eq.return_value.not_.return_value.order.return_value.limit.return_value.offset.return_value
             paginated_chain.execute.return_value = MagicMock(data=review_rows, count=2)
 
             # RPC for average rating
@@ -75,15 +67,7 @@ class TestShopReviewsAPI:
         app.dependency_overrides[get_current_user] = lambda: {"id": "user-chen-wei"}
         app.dependency_overrides[get_admin_db] = lambda: mock_db
         try:
-            paginated_chain = (
-                mock_db.table.return_value
-                .select.return_value
-                .eq.return_value
-                .not_.return_value
-                .order.return_value
-                .limit.return_value
-                .offset.return_value
-            )
+            paginated_chain = mock_db.table.return_value.select.return_value.eq.return_value.not_.return_value.order.return_value.limit.return_value.offset.return_value
             paginated_chain.execute.return_value = MagicMock(data=[], count=0)
             mock_db.rpc.return_value.execute.return_value = MagicMock(data=0.0)
 

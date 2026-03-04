@@ -76,20 +76,22 @@ class TestCheckinsAPI:
         app.dependency_overrides[get_user_db] = lambda: mock_db
         try:
             mock_db.table.return_value.insert.return_value.execute.return_value = MagicMock(
-                data=[{
-                    "id": "ci-review-1",
-                    "user_id": "user-abc123",
-                    "shop_id": "shop-taipei-01",
-                    "photo_urls": ["https://storage.supabase.co/checkins/latte-art.jpg"],
-                    "menu_photo_url": None,
-                    "note": "Great pour-over selection",
-                    "stars": 4,
-                    "review_text": "Excellent single-origin options with a cozy atmosphere",
-                    "confirmed_tags": ["wifi", "quiet", "good-coffee"],
-                    "reviewed_at": "2026-03-04T14:00:00Z",
-                    "created_at": "2026-03-04T14:00:00Z",
-                    "stamps": [],
-                }]
+                data=[
+                    {
+                        "id": "ci-review-1",
+                        "user_id": "user-abc123",
+                        "shop_id": "shop-taipei-01",
+                        "photo_urls": ["https://storage.supabase.co/checkins/latte-art.jpg"],
+                        "menu_photo_url": None,
+                        "note": "Great pour-over selection",
+                        "stars": 4,
+                        "review_text": "Excellent single-origin options with a cozy atmosphere",
+                        "confirmed_tags": ["wifi", "quiet", "good-coffee"],
+                        "reviewed_at": "2026-03-04T14:00:00Z",
+                        "created_at": "2026-03-04T14:00:00Z",
+                        "stamps": [],
+                    }
+                ]
             )
             response = client.post(
                 "/checkins/",
@@ -125,20 +127,22 @@ class TestCheckinsAPI:
         app.dependency_overrides[get_user_db] = lambda: mock_db
         try:
             mock_db.table.return_value.update.return_value.eq.return_value.eq.return_value.execute.return_value = MagicMock(
-                data=[{
-                    "id": "ci-456",
-                    "user_id": "user-abc123",
-                    "shop_id": "shop-yongkang-01",
-                    "photo_urls": ["https://storage.supabase.co/checkins/espresso.jpg"],
-                    "menu_photo_url": None,
-                    "note": None,
-                    "stars": 5,
-                    "review_text": "Best espresso in Taipei",
-                    "confirmed_tags": ["good-coffee", "cozy"],
-                    "reviewed_at": "2026-03-04T15:30:00Z",
-                    "created_at": "2026-03-04T12:00:00Z",
-                    "stamps": [],
-                }]
+                data=[
+                    {
+                        "id": "ci-456",
+                        "user_id": "user-abc123",
+                        "shop_id": "shop-yongkang-01",
+                        "photo_urls": ["https://storage.supabase.co/checkins/espresso.jpg"],
+                        "menu_photo_url": None,
+                        "note": None,
+                        "stars": 5,
+                        "review_text": "Best espresso in Taipei",
+                        "confirmed_tags": ["good-coffee", "cozy"],
+                        "reviewed_at": "2026-03-04T15:30:00Z",
+                        "created_at": "2026-03-04T12:00:00Z",
+                        "stamps": [],
+                    }
+                ]
             )
             response = client.patch(
                 "/checkins/ci-456/review",

@@ -140,9 +140,7 @@ class TestCheckInService:
         results = await checkin_service.get_by_shop("shop-1")
         assert isinstance(results, list)
 
-    async def test_create_with_review_includes_review_fields(
-        self, checkin_service, mock_supabase
-    ):
+    async def test_create_with_review_includes_review_fields(self, checkin_service, mock_supabase):
         """When a user checks in with a star rating, review fields are persisted."""
         frozen_now = datetime(2026, 3, 4, 12, 0, 0, tzinfo=timezone.utc)
         mock_supabase.table = MagicMock(
@@ -193,9 +191,7 @@ class TestCheckInService:
         assert insert_call["confirmed_tags"] == ["quiet", "wifi"]
         assert insert_call["reviewed_at"] == frozen_now.isoformat()
 
-    async def test_update_review_sets_review_fields(
-        self, checkin_service, mock_supabase
-    ):
+    async def test_update_review_sets_review_fields(self, checkin_service, mock_supabase):
         """When a user adds a review to an existing check-in, review fields are updated."""
         frozen_now = datetime(2026, 3, 4, 14, 30, 0, tzinfo=timezone.utc)
         mock_supabase.table.return_value.update.return_value.eq.return_value.eq.return_value.execute.return_value = MagicMock(
@@ -232,9 +228,7 @@ class TestCheckInService:
         assert update_call["stars"] == 5
         assert update_call["reviewed_at"] == frozen_now.isoformat()
 
-    async def test_update_review_not_found_raises(
-        self, checkin_service, mock_supabase
-    ):
+    async def test_update_review_not_found_raises(self, checkin_service, mock_supabase):
         """When update_review targets a check-in the user doesn't own, a ValueError is raised."""
         mock_supabase.table.return_value.update.return_value.eq.return_value.eq.return_value.execute.return_value = MagicMock(
             data=[]
@@ -247,9 +241,7 @@ class TestCheckInService:
                 stars=3,
             )
 
-    async def test_create_with_review_text_but_no_stars_raises(
-        self, checkin_service
-    ):
+    async def test_create_with_review_text_but_no_stars_raises(self, checkin_service):
         """When a user provides review text without a star rating, validation fails."""
         with pytest.raises(ValueError, match="review_text requires a star rating"):
             await checkin_service.create(

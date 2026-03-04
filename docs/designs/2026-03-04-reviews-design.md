@@ -7,6 +7,7 @@ Date: 2026-03-04
 Reviews are optional metadata on check-ins. Each check-in can have a 1-5 star rating, optional free text, and optional taxonomy tag confirmations. This extends the existing check-in system — no new tables, just new columns on `check_ins`.
 
 **Key decisions:**
+
 - One review per check-in (not one per shop). Multiple visits = multiple reviews.
 - Stars required for a review; text optional. Tag confirmation optional.
 - User reviews displayed separately from Google scraper reviews.
@@ -16,12 +17,12 @@ Reviews are optional metadata on check-ins. Each check-in can have a 1-5 star ra
 
 ### New columns on `check_ins` table
 
-| Column | Type | Nullable | Description |
-|--------|------|----------|-------------|
-| `stars` | `SMALLINT CHECK (stars BETWEEN 1 AND 5)` | Yes | 1-5 star rating |
-| `review_text` | `TEXT` | Yes | Free-form review text |
-| `confirmed_tags` | `TEXT[]` | Yes | Array of taxonomy tag IDs the user confirmed |
-| `reviewed_at` | `TIMESTAMPTZ` | Yes | When the review was added/updated |
+| Column           | Type                                     | Nullable | Description                                  |
+| ---------------- | ---------------------------------------- | -------- | -------------------------------------------- |
+| `stars`          | `SMALLINT CHECK (stars BETWEEN 1 AND 5)` | Yes      | 1-5 star rating                              |
+| `review_text`    | `TEXT`                                   | Yes      | Free-form review text                        |
+| `confirmed_tags` | `TEXT[]`                                 | Yes      | Array of taxonomy tag IDs the user confirmed |
+| `reviewed_at`    | `TIMESTAMPTZ`                            | Yes      | When the review was added/updated            |
 
 **Constraint:** `CHECK (stars IS NOT NULL OR review_text IS NULL)` — review text requires stars.
 
@@ -32,6 +33,7 @@ No new table. No new RLS policies — check-ins already have correct RLS.
 `confirmed_tags` stores an array of taxonomy tag IDs (e.g. `{'good_wifi', 'quiet'}`) that the user confirmed during their review. Only positive confirmations — no deny/negative signal. References `taxonomy_tags.id` by convention (not FK, since it's an array column).
 
 Future use (not in scope):
+
 - Display "confirmed by N visitors" next to taxonomy tags
 - Weight confirmed tags higher in search ranking
 - Flag unconfirmed tags for review
@@ -61,6 +63,7 @@ If `stars` is provided, `reviewed_at` is set to `now()`.
 Add or update a review on an existing check-in. Only the owning user can update.
 
 **Request:**
+
 ```python
 class UpdateReviewRequest(BaseModel):
     stars: int  # 1-5, required
@@ -81,6 +84,7 @@ Returns check-ins that have reviews (`stars IS NOT NULL`) for a shop.
 **Query params:** `limit` (default 10), `offset` (default 0)
 
 **Response:**
+
 ```json
 {
   "reviews": [CheckIn],
@@ -100,6 +104,7 @@ Response now includes review fields (null for check-ins without reviews). No beh
 ### `StarRating`
 
 Reusable 1-5 star component with two modes:
+
 - **Interactive:** tappable stars for input (used in ReviewForm)
 - **Display:** read-only filled stars (used in ReviewCard, ReviewsSection)
 
@@ -110,6 +115,7 @@ Displays the shop's existing taxonomy tags as tappable chips. Tapped = confirmed
 ### `ReviewForm`
 
 Combines StarRating (interactive) + TagConfirmation + optional textarea. Used in:
+
 - Check-in page (inline, below existing fields)
 - "Add Review" bottom sheet (standalone, from shop detail)
 
@@ -120,6 +126,7 @@ Displays a single review: stars, text, confirmed tags, user display name, date.
 ### `ReviewsSection`
 
 Shop detail section:
+
 - Average user rating + review count header
 - Paginated `ReviewCard` list
 - Auth-gated: logged-out users do not see this section
@@ -140,6 +147,7 @@ If the user skips rating, check-in is created without review (existing behavior)
 ## "Add Review Later" Flow
 
 From the shop detail page, if a user has check-ins at this shop but hasn't reviewed their latest one:
+
 - Show "Rate your visit" CTA button
 - Opens a bottom sheet with `ReviewForm`
 - Calls `PATCH /checkins/{checkin_id}/review`
@@ -164,13 +172,13 @@ Reviews section appears below the check-in photos section:
 
 ## Auth & Visibility Rules
 
-| Action | Auth required? |
-|--------|---------------|
-| Submit review (during check-in) | Yes (inherits from check-in) |
-| Add review later | Yes + must own the check-in |
-| View reviews on shop detail | Yes |
-| View review count + average rating | Yes |
-| Edit own review | Yes + must own the check-in |
+| Action                             | Auth required?               |
+| ---------------------------------- | ---------------------------- |
+| Submit review (during check-in)    | Yes (inherits from check-in) |
+| Add review later                   | Yes + must own the check-in  |
+| View reviews on shop detail        | Yes                          |
+| View review count + average rating | Yes                          |
+| Edit own review                    | Yes + must own the check-in  |
 
 Unauthenticated visitors see check-in count + representative photo only (existing behavior). They do **not** see the reviews section.
 

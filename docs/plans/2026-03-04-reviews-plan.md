@@ -15,6 +15,7 @@
 **Tech Stack:** Supabase (migration), FastAPI (backend), Next.js + React (frontend), Vitest + pytest (tests)
 
 **Acceptance Criteria:**
+
 - [ ] A user can submit a check-in with a 1-5 star rating, optional text, and optional tag confirmations
 - [ ] A user can add/edit a review on an existing check-in they own
 - [ ] Logged-in users see a reviews section on shop detail with average rating and individual reviews
@@ -26,6 +27,7 @@
 ### Task 1: DB Migration — Add review columns to check_ins
 
 **Files:**
+
 - Create: `supabase/migrations/20260304000001_add_review_columns.sql`
 
 **Step 1: Write the migration**
@@ -74,6 +76,7 @@ git commit -m "feat(db): add review columns to check_ins table"
 ### Task 2: Backend — Update CheckIn model with review fields
 
 **Files:**
+
 - Modify: `backend/models/types.py:87-101` (CheckIn model)
 - Modify: `backend/models/types.py:113-119` (ShopCheckInSummary model)
 
@@ -162,6 +165,7 @@ git commit -m "feat(models): add review fields to CheckIn and ShopCheckInSummary
 ### Task 3: Backend — Update CheckInService with review support
 
 **Files:**
+
 - Modify: `backend/services/checkin_service.py`
 - Modify: `backend/tests/services/test_checkin_service.py`
 
@@ -440,6 +444,7 @@ git commit -m "feat(service): add review support to CheckInService"
 ### Task 4: Backend — Update checkins API route + add review endpoints
 
 **Files:**
+
 - Modify: `backend/api/checkins.py`
 - Modify: `backend/tests/api/test_checkins.py`
 
@@ -650,6 +655,7 @@ git commit -m "feat(api): add review fields to check-in creation + PATCH review 
 ### Task 5: Backend — Add GET /shops/{shop_id}/reviews endpoint
 
 **Files:**
+
 - Modify: `backend/api/shops.py`
 - Create: `backend/tests/api/test_shop_reviews.py`
 
@@ -858,6 +864,7 @@ git commit -m "fix: lint and type-check fixes for reviews backend"
 ### Task 7: Frontend — Update types with review fields
 
 **Files:**
+
 - Modify: `lib/types/index.ts:63-71` (CheckIn interface)
 
 **Step 1: No test needed** — type-only change, validated by TypeScript compiler.
@@ -915,6 +922,7 @@ git commit -m "feat(types): add review fields to CheckIn and ShopReview types"
 ### Task 8: Frontend — StarRating component
 
 **Files:**
+
 - Create: `components/reviews/star-rating.tsx`
 - Create: `components/reviews/star-rating.test.tsx`
 
@@ -1047,6 +1055,7 @@ git commit -m "feat(ui): add StarRating component with interactive and display m
 ### Task 9: Frontend — TagConfirmation component
 
 **Files:**
+
 - Create: `components/reviews/tag-confirmation.tsx`
 - Create: `components/reviews/tag-confirmation.test.tsx`
 
@@ -1062,9 +1071,19 @@ import { TagConfirmation } from './tag-confirmation';
 import type { TaxonomyTag } from '@/lib/types';
 
 const mockTags: TaxonomyTag[] = [
-  { id: 'good_wifi', dimension: 'functionality', label: 'Good WiFi', labelZh: '穩定WiFi' },
+  {
+    id: 'good_wifi',
+    dimension: 'functionality',
+    label: 'Good WiFi',
+    labelZh: '穩定WiFi',
+  },
   { id: 'quiet', dimension: 'ambience', label: 'Quiet', labelZh: '安靜' },
-  { id: 'laptop_friendly', dimension: 'functionality', label: 'Laptop Friendly', labelZh: '適合帶筆電' },
+  {
+    id: 'laptop_friendly',
+    dimension: 'functionality',
+    label: 'Laptop Friendly',
+    labelZh: '適合帶筆電',
+  },
 ];
 
 describe('TagConfirmation', () => {
@@ -1194,6 +1213,7 @@ git commit -m "feat(ui): add TagConfirmation component for taxonomy tag voting"
 ### Task 10: Frontend — ReviewForm component
 
 **Files:**
+
 - Create: `components/reviews/review-form.tsx`
 - Create: `components/reviews/review-form.test.tsx`
 
@@ -1209,7 +1229,12 @@ import { ReviewForm } from './review-form';
 import type { TaxonomyTag } from '@/lib/types';
 
 const mockTags: TaxonomyTag[] = [
-  { id: 'good_wifi', dimension: 'functionality', label: 'Good WiFi', labelZh: '穩定WiFi' },
+  {
+    id: 'good_wifi',
+    dimension: 'functionality',
+    label: 'Good WiFi',
+    labelZh: '穩定WiFi',
+  },
   { id: 'quiet', dimension: 'ambience', label: 'Quiet', labelZh: '安靜' },
 ];
 
@@ -1382,6 +1407,7 @@ git commit -m "feat(ui): add ReviewForm component with star rating, tags, and te
 ### Task 11: Frontend — Integrate ReviewForm into check-in page
 
 **Files:**
+
 - Modify: `app/(protected)/checkin/[shopId]/page.tsx`
 - Modify: `app/(protected)/checkin/[shopId]/page.test.tsx`
 
@@ -1397,7 +1423,9 @@ it('includes review data in check-in submission when stars are selected', async 
     json: async () => ({
       id: 'ci-1',
       shop_id: 'shop-d4e5f6',
-      photo_urls: ['https://example.supabase.co/storage/v1/object/public/checkin-photos/user-abc/photo.webp'],
+      photo_urls: [
+        'https://example.supabase.co/storage/v1/object/public/checkin-photos/user-abc/photo.webp',
+      ],
       stars: 4,
       review_text: null,
       created_at: '2026-03-04T10:00:00Z',
@@ -1437,7 +1465,9 @@ it('submits without review data when stars are not selected', async () => {
     json: async () => ({
       id: 'ci-1',
       shop_id: 'shop-d4e5f6',
-      photo_urls: ['https://example.supabase.co/storage/v1/object/public/checkin-photos/user-abc/photo.webp'],
+      photo_urls: [
+        'https://example.supabase.co/storage/v1/object/public/checkin-photos/user-abc/photo.webp',
+      ],
       created_at: '2026-03-04T10:00:00Z',
     }),
   });
@@ -1486,7 +1516,7 @@ const [reviewText, setReviewText] = useState('');
 const [confirmedTags, setConfirmedTags] = useState<string[]>([]);
 
 // In handleSubmit body JSON (update around line 52-60):
-body: JSON.stringify({
+body: (JSON.stringify({
   shop_id: shopId,
   photo_urls: photoUrls,
   menu_photo_url: menuPhotoUrl ?? null,
@@ -1497,32 +1527,34 @@ body: JSON.stringify({
     confirmed_tags: confirmedTags,
   }),
 }),
-
-// New JSX section (add between menu photo div and submit Button):
-<div className="border-t pt-4">
-  <StarRating value={stars} onChange={setStars} size="lg" />
-  {stars > 0 && (
-    <div className="mt-4 space-y-4">
-      {shop?.taxonomyTags?.length > 0 && (
-        <TagConfirmation
-          tags={shop.taxonomyTags}
-          confirmedIds={confirmedTags}
-          onChange={setConfirmedTags}
-        />
+  (
+    // New JSX section (add between menu photo div and submit Button):
+    <div className="border-t pt-4">
+      <StarRating value={stars} onChange={setStars} size="lg" />
+      {stars > 0 && (
+        <div className="mt-4 space-y-4">
+          {shop?.taxonomyTags?.length > 0 && (
+            <TagConfirmation
+              tags={shop.taxonomyTags}
+              confirmedIds={confirmedTags}
+              onChange={setConfirmedTags}
+            />
+          )}
+          <textarea
+            value={reviewText}
+            onChange={(e) => setReviewText(e.target.value)}
+            placeholder="How was your visit? 這次體驗如何？"
+            rows={3}
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm placeholder:text-gray-400 focus:border-blue-500 focus:outline-none"
+          />
+        </div>
       )}
-      <textarea
-        value={reviewText}
-        onChange={(e) => setReviewText(e.target.value)}
-        placeholder="How was your visit? 這次體驗如何？"
-        rows={3}
-        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm placeholder:text-gray-400 focus:border-blue-500 focus:outline-none"
-      />
     </div>
-  )}
-</div>
+  ));
 ```
 
 Add imports at the top:
+
 ```tsx
 import { StarRating } from '@/components/reviews/star-rating';
 import { TagConfirmation } from '@/components/reviews/tag-confirmation';
@@ -1545,6 +1577,7 @@ git commit -m "feat(checkin): add optional review fields to check-in form"
 ### Task 12: Frontend — ReviewCard and ReviewsSection components
 
 **Files:**
+
 - Create: `components/reviews/review-card.tsx`
 - Create: `components/reviews/reviews-section.tsx`
 - Create: `components/reviews/reviews-section.test.tsx`
@@ -1741,6 +1774,7 @@ git commit -m "feat(ui): add ReviewCard and ReviewsSection for shop detail"
 ### Task 13: Frontend — Add proxy routes
 
 **Files:**
+
 - Create: `app/api/shops/[id]/reviews/route.ts`
 - Create: `app/api/checkins/[id]/review/route.ts`
 
@@ -1792,6 +1826,7 @@ git commit -m "feat(proxy): add review proxy routes"
 ### Task 14: Frontend — Update shop checkins response to include review fields
 
 **Files:**
+
 - Modify: `components/checkins/checkin-photo-grid.tsx:7-14` (CheckInSummary interface)
 
 **Step 1: No test needed** — interface-only change; existing component renders the same.
@@ -1917,18 +1952,22 @@ graph TD
 ```
 
 **Wave 1** (no dependencies):
+
 - Task 1: DB migration
 
 **Wave 2** (parallel — depends on Wave 1):
+
 - Task 2: Backend models ← Task 1
 - Task 7: Frontend types (no backend dependency)
 
 **Wave 3** (parallel — depends on Wave 2):
+
 - Task 3: CheckInService ← Task 2
 - Task 8: StarRating ← Task 7
 - Task 9: TagConfirmation ← Task 7
 
 **Wave 4** (parallel — depends on Wave 3):
+
 - Task 4: Checkins API ← Task 3
 - Task 5: Reviews API ← Task 3
 - Task 10: ReviewForm ← Task 8, Task 9
@@ -1936,11 +1975,13 @@ graph TD
 - Task 14: Photo grid types ← Task 7
 
 **Wave 5** (parallel — depends on Wave 4):
+
 - Task 6: Backend verification ← Task 4, Task 5
 - Task 11: Check-in page integration ← Task 10
 - Task 12: ReviewsSection ← Task 8
 
 **Wave 6** (depends on all):
+
 - Task 15: Full verification ← all tasks
 
 ---

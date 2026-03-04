@@ -105,7 +105,18 @@ export default function CheckInPage() {
     } finally {
       setSubmitState('idle');
     }
-  }, [canSubmit, photos, menuPhoto, note, stars, reviewText, confirmedTags, shopId, shop, router]);
+  }, [
+    canSubmit,
+    photos,
+    menuPhoto,
+    note,
+    stars,
+    reviewText,
+    confirmedTags,
+    shopId,
+    shop,
+    router,
+  ]);
 
   return (
     <main className="mx-auto max-w-lg px-4 py-6">
