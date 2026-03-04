@@ -3,6 +3,7 @@ from typing import Any
 from fastapi import APIRouter, Depends
 
 from api.deps import get_admin_db, get_optional_user
+from core.db import first
 from db.supabase_client import get_anon_client
 from models.types import ShopCheckInPreview, ShopCheckInSummary
 
@@ -70,7 +71,7 @@ async def get_shop_checkins(
             .eq("shop_id", shop_id)
             .execute()
         )
-        preview_url = response.data[0]["photo_urls"][0] if response.data else None
+        preview_url = first(response.data, "shop checkins preview")["photo_urls"][0] if response.data else None
         return ShopCheckInPreview(
             count=response.count or 0,
             preview_photo_url=preview_url,
