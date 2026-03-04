@@ -116,7 +116,7 @@ export function BatchDetail({
           {Object.entries(data.status_summary).map(([st, count]) => (
             <button
               key={st}
-              onClick={() => setStatusFilter(statusFilter === st ? '' : st)}
+              onClick={() => { setStatusFilter(statusFilter === st ? '' : st); setPage(1); }}
               className={`rounded px-2 py-0.5 text-xs ring-1 ring-transparent transition ${
                 STATUS_COLORS[st] || 'bg-gray-100 text-gray-700'
               } ${statusFilter === st ? 'ring-current' : 'opacity-80 hover:opacity-100'}`}
