@@ -107,6 +107,15 @@ async def handle_scrape_batch(
             db.table("shops").update(
                 {"processing_status": "failed", "updated_at": datetime.now(UTC).isoformat()}
             ).eq("id", shop_id).execute()
+            submission_id = shop_meta.get("submission_id")
+            if submission_id:
+                db.table("shop_submissions").update(
+                    {
+                        "status": "failed",
+                        "failure_reason": f"Persist error: {exc}",
+                        "updated_at": datetime.now(UTC).isoformat(),
+                    }
+                ).eq("id", submission_id).execute()
             failed += 1
 
     logger.info(

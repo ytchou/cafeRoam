@@ -127,10 +127,15 @@ async def test_shop_not_found_on_google_maps_marks_failed_without_aborting_batch
 
     # Shop A should be marked "failed"
     update_calls = mock_db.table.return_value.update.call_args_list
-    failed_updates = [
+    failed_status_updates = [
         c for c in update_calls if c.args and c.args[0].get("processing_status") == "failed"
     ]
-    assert any(True for _ in failed_updates), "Expected at least one failed status update"
+    assert failed_status_updates, "Expected at least one failed status update"
+    # Verify shop A specifically was targeted (.eq("id", _SHOP_ID_A) was called)
+    eq_calls = mock_db.table.return_value.update.return_value.eq.call_args_list
+    assert any(
+        c.args == ("id", _SHOP_ID_A) for c in eq_calls
+    ), f"Expected shop A ({_SHOP_ID_A}) to be targeted in failed update"
 
 
 @pytest.mark.asyncio

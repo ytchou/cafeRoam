@@ -5,7 +5,7 @@ import structlog
 from fastapi import APIRouter, Depends, HTTPException, Query
 
 from api.deps import require_admin
-from core.db import escape_ilike, first
+from core.db import first
 from models.types import JobType
 from db.supabase_client import get_service_role_client
 from middleware.admin_audit import log_admin_action
@@ -214,17 +214,17 @@ async def list_batches(
     """
     db = get_service_role_client()
 
-    _BATCH_JOB_CAP = 5000
+    batch_job_cap = 5000
     # Fetch both job types — capped to prevent full table scan at scale
     response = (
         db.table("job_queue")
         .select("job_type, payload, created_at")
         .in_("job_type", [JobType.SCRAPE_SHOP.value, JobType.SCRAPE_BATCH.value])
         .order("created_at", desc=True)
-        .limit(_BATCH_JOB_CAP)
+        .limit(batch_job_cap)
         .execute()
     )
-    if len(response.data or []) == _BATCH_JOB_CAP:
+    if len(response.data or []) == batch_job_cap:
         logger.warning("list_batches: hit job cap — oldest batches may be missing")
 
     # Group by batch_id — skip jobs without one
@@ -253,7 +253,9 @@ async def list_batches(
         else:
             if created_at < batch_map[bid]["created_at"]:
                 batch_map[bid]["created_at"] = created_at
-        batch_map[bid]["shop_ids"].extend(shop_ids)
+        # Dedup: retried batches produce a new job with the same shop_ids; extend without dupes
+        existing = set(batch_map[bid]["shop_ids"])
+        batch_map[bid]["shop_ids"].extend(s for s in shop_ids if s not in existing)
 
     sorted_batches = sorted(batch_map.items(), key=lambda x: x[1]["created_at"], reverse=True)
     total = len(sorted_batches)

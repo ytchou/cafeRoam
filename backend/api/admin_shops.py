@@ -295,10 +295,13 @@ async def bulk_approve(
         )
         approved = len(update_resp.data or [])
 
+    # Build batch_shops from UPDATE result to stay consistent with approved count —
+    # concurrent updates between SELECT and UPDATE could otherwise inflate queued vs approved.
+    updated_ids = {row["id"] for row in (update_resp.data or [])} if eligible_ids else set()
     batch_shops = [
         {"shop_id": row["id"], "google_maps_url": row["google_maps_url"]}
         for row in eligible
-        if row.get("google_maps_url")
+        if row["id"] in updated_ids and row.get("google_maps_url")
     ]
 
     queued = 0
