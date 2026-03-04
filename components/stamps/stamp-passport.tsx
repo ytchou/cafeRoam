@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 
 const SLOTS_PER_PAGE = 20;
 const COLS = 4;
@@ -18,6 +18,7 @@ interface StampPassportProps {
 
 export function StampPassport({ stamps }: StampPassportProps) {
   const [currentPage, setCurrentPage] = useState(0);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   const pages = useMemo(() => {
     const totalPages = Math.max(1, Math.ceil(stamps.length / SLOTS_PER_PAGE));
@@ -44,6 +45,7 @@ export function StampPassport({ stamps }: StampPassportProps) {
       </div>
 
       <div
+        ref={scrollRef}
         className="flex snap-x snap-mandatory gap-4 overflow-x-auto"
         style={{ scrollbarWidth: 'none' }}
       >
@@ -90,7 +92,13 @@ export function StampPassport({ stamps }: StampPassportProps) {
             <button
               key={i}
               data-testid="page-dot"
-              onClick={() => setCurrentPage(i)}
+              onClick={() => {
+                setCurrentPage(i);
+                scrollRef.current?.scrollTo({
+                  left: i * scrollRef.current.offsetWidth,
+                  behavior: 'smooth',
+                });
+              }}
               className={`h-2 w-2 rounded-full ${
                 i === currentPage ? 'bg-gray-800' : 'bg-gray-300'
               }`}
