@@ -582,7 +582,7 @@ This is the final gate for Phase 1. Two paths: fast path seeds 29 pre-built shop
 **Chunk 4 — Frontend Integration (Wave 4-5):**
 
 - [x] Check-in page: add optional review fields with TDD
-- [ ] ReviewCard + ReviewsSection for shop detail with TDD
+- [x] ReviewCard + ReviewsSection for shop detail with TDD
 - [x] Proxy routes (shop reviews, checkin review update)
 - [x] Update CheckInSummary types
 
