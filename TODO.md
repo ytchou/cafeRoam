@@ -588,7 +588,7 @@ This is the final gate for Phase 1. Two paths: fast path seeds 29 pre-built shop
 
 **Chunk 5 — Verification (Wave 6):**
 
-- [ ] Full verification (pytest, vitest, ruff, mypy, pnpm build)
+- [x] Full verification (pytest, vitest, ruff, mypy, pnpm build)
 
 ### User Profile
 

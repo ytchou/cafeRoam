@@ -41,7 +41,7 @@ class CheckInService:
             checkin_data["stars"] = stars
             checkin_data["review_text"] = review_text
             checkin_data["confirmed_tags"] = confirmed_tags
-            checkin_data["reviewed_at"] = datetime.now(timezone.utc).isoformat()
+            checkin_data["reviewed_at"] = datetime.now(timezone.utc).isoformat()  # noqa: UP017
 
         response = self._db.table("check_ins").insert(checkin_data).execute()
         rows = cast("list[dict[str, Any]]", response.data)
@@ -62,7 +62,7 @@ class CheckInService:
             "stars": stars,
             "review_text": review_text,
             "confirmed_tags": confirmed_tags,
-            "reviewed_at": datetime.now(timezone.utc).isoformat(),
+            "reviewed_at": datetime.now(timezone.utc).isoformat(),  # noqa: UP017
         }
         response = (
             self._db.table("check_ins")
