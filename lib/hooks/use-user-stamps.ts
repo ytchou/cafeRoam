@@ -10,6 +10,7 @@ export interface StampData {
   check_in_id: string;
   design_url: string;
   earned_at: string;
+  shop_name: string; // from JOIN
 }
 
 const fetcher = (url: string) => fetchWithAuth(url);
