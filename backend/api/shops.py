@@ -2,10 +2,10 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, Query
 
-from api.deps import get_admin_db, get_optional_user
+from api.deps import get_admin_db, get_current_user, get_optional_user
 from core.db import first
 from db.supabase_client import get_anon_client
-from models.types import ShopCheckInPreview, ShopCheckInSummary
+from models.types import ShopCheckInPreview, ShopCheckInSummary, ShopReview, ShopReviewsResponse
 
 router = APIRouter(prefix="/shops", tags=["shops"])
 
@@ -80,3 +80,57 @@ async def get_shop_checkins(
             count=response.count or 0,
             preview_photo_url=preview_url,
         ).model_dump()
+
+
+@router.get("/{shop_id}/reviews")
+async def get_shop_reviews(
+    shop_id: str,
+    limit: int = Query(default=10, ge=1, le=50),
+    offset: int = Query(default=0, ge=0),
+    user: dict[str, Any] = Depends(get_current_user),  # noqa: B008
+) -> dict[str, Any]:
+    """Get reviews for a shop. Auth-gated.
+
+    Returns paginated reviews (check-ins with stars), total count, and average rating.
+    """
+    db = get_admin_db()
+
+    response = (
+        db.table("check_ins")
+        .select(
+            "id, user_id, stars, review_text, confirmed_tags, reviewed_at, profiles(display_name)",
+            count="exact",
+        )
+        .eq("shop_id", shop_id)
+        .not_("stars", "is", "null")
+        .order("reviewed_at", desc=True)
+        .limit(limit)
+        .offset(offset)
+        .execute()
+    )
+
+    reviews = [
+        ShopReview(
+            id=row["id"],
+            user_id=row["user_id"],
+            display_name=(
+                row.get("profiles", {}).get("display_name") if row.get("profiles") else None
+            ),
+            stars=row["stars"],
+            review_text=row.get("review_text"),
+            confirmed_tags=row.get("confirmed_tags"),
+            reviewed_at=row["reviewed_at"],
+        ).model_dump()
+        for row in response.data
+    ]
+
+    total_count = response.count or 0
+    average_rating = (
+        sum(r["stars"] for r in reviews) / len(reviews) if reviews else 0.0
+    )
+
+    return ShopReviewsResponse(
+        reviews=reviews,
+        total_count=total_count,
+        average_rating=round(average_rating, 2),
+    ).model_dump()
