@@ -1,6 +1,8 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { SWRConfig } from 'swr';
+import React from 'react';
 import {
   createMockSupabaseAuth,
   createMockRouter,
@@ -133,7 +135,10 @@ describe('SettingsPage', () => {
     expect(
       screen.queryByPlaceholderText(/type delete/i)
     ).not.toBeInTheDocument();
-    expect(mockFetch).not.toHaveBeenCalled();
+    expect(mockFetch).not.toHaveBeenCalledWith(
+      '/api/auth/account',
+      expect.anything()
+    );
   });
 
   it('redirects to /login when session is null without calling API', async () => {
@@ -148,5 +153,68 @@ describe('SettingsPage', () => {
     );
     await waitFor(() => expect(mockRouter.push).toHaveBeenCalledWith('/login'));
     expect(mockFetch).not.toHaveBeenCalled();
+  });
+});
+
+function wrapper({ children }: { children: React.ReactNode }) {
+  return React.createElement(
+    SWRConfig,
+    { value: { provider: () => new Map() } },
+    children
+  );
+}
+
+describe('Profile editing', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockAuth.getSession.mockResolvedValue({ data: { session: testSession } });
+    mockAuth.signOut.mockResolvedValue({});
+    // Mock GET /api/profile for the initial load
+    mockFetch.mockImplementation((url: string, init?: RequestInit) => {
+      if (typeof url === 'string' && url.includes('/api/profile') && (!init || init.method !== 'PATCH')) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            display_name: 'Mei-Ling',
+            avatar_url: null,
+            stamp_count: 0,
+            checkin_count: 0,
+          }),
+        });
+      }
+      if (typeof url === 'string' && url.includes('/api/profile') && init?.method === 'PATCH') {
+        return Promise.resolve({ ok: true, json: async () => ({ message: 'Profile updated' }) });
+      }
+      return Promise.resolve({ ok: true, json: async () => ({}) });
+    });
+  });
+
+  it('renders display name input with current value', async () => {
+    render(<SettingsPage />, { wrapper });
+    await waitFor(() => {
+      const input = screen.getByLabelText(/display name/i);
+      expect(input).toHaveValue('Mei-Ling');
+    });
+  });
+
+  it('saves updated display name on submit', async () => {
+    const user = userEvent.setup();
+    render(<SettingsPage />, { wrapper });
+
+    await waitFor(() => {
+      expect(screen.getByLabelText(/display name/i)).toBeInTheDocument();
+    });
+
+    const input = screen.getByLabelText(/display name/i);
+    await user.clear(input);
+    await user.type(input, 'New Name');
+    await user.click(screen.getByRole('button', { name: /save changes/i }));
+
+    await waitFor(() => {
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/profile'),
+        expect.objectContaining({ method: 'PATCH' })
+      );
+    });
   });
 });

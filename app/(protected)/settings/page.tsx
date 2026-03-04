@@ -1,15 +1,31 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { useUserProfile } from '@/lib/hooks/use-user-profile';
+import { fetchWithAuth } from '@/lib/api/fetch';
 
 export default function SettingsPage() {
   const router = useRouter();
+  const { profile, mutate: mutateProfile } = useUserProfile();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [confirmText, setConfirmText] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const [displayName, setDisplayName] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [profileError, setProfileError] = useState<string | null>(null);
+  const [profileSuccess, setProfileSuccess] = useState(false);
+
+  useEffect(() => {
+    if (profile) {
+      setDisplayName(profile.display_name ?? '');
+      setAvatarUrl(profile.avatar_url ?? null);
+    }
+  }, [profile]);
 
   async function handleLogout() {
     const supabase = createClient();
@@ -56,10 +72,127 @@ export default function SettingsPage() {
     }
   }
 
+  async function handleSaveProfile() {
+    setSaving(true);
+    setProfileError(null);
+    setProfileSuccess(false);
+    try {
+      await fetchWithAuth('/api/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          display_name: displayName || null,
+          avatar_url: avatarUrl || null,
+        }),
+      });
+      setProfileSuccess(true);
+      mutateProfile();
+    } catch {
+      setProfileError('Failed to save profile');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleAvatarUpload(file: File) {
+    if (file.size > 1024 * 1024) {
+      setProfileError('Image must be under 1MB');
+      return;
+    }
+    const supabase = createClient();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (!session) return;
+
+    const ext = file.name.split('.').pop();
+    const path = `${session.user.id}/${Date.now()}.${ext}`;
+    const { error: uploadError } = await supabase.storage
+      .from('avatars')
+      .upload(path, file, { upsert: true });
+    if (uploadError) {
+      setProfileError('Failed to upload avatar');
+      return;
+    }
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from('avatars').getPublicUrl(path);
+    setAvatarUrl(publicUrl);
+  }
+
   return (
     <main className="flex min-h-screen flex-col items-center p-8">
       <div className="w-full max-w-md space-y-8">
         <h1 className="text-2xl font-bold">Settings (設定)</h1>
+
+        <section className="space-y-4 rounded-lg border p-6">
+          <h2 className="text-lg font-semibold">Profile</h2>
+          <div>
+            <label
+              htmlFor="display-name"
+              className="block text-sm font-medium mb-1"
+            >
+              Display name
+            </label>
+            <input
+              id="display-name"
+              type="text"
+              maxLength={30}
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              className="w-full rounded-md border px-3 py-2 text-sm"
+              placeholder="Enter your display name"
+            />
+            <p className="mt-1 text-xs text-muted-foreground">
+              {displayName.length}/30
+            </p>
+          </div>
+          <div>
+            <p className="block text-sm font-medium mb-2">Avatar</p>
+            <div className="flex items-center gap-4">
+              <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center overflow-hidden">
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt="Avatar"
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <span className="text-lg font-medium text-muted-foreground">
+                    {displayName.charAt(0).toUpperCase() || 'U'}
+                  </span>
+                )}
+              </div>
+              <label className="cursor-pointer">
+                <span className="rounded-md border px-3 py-2 text-sm hover:bg-accent">
+                  Upload photo
+                </span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="sr-only"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleAvatarUpload(file);
+                  }}
+                />
+              </label>
+            </div>
+          </div>
+          <button
+            onClick={handleSaveProfile}
+            disabled={saving}
+            className="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+          >
+            {saving ? 'Saving...' : 'Save changes'}
+          </button>
+          {profileError && (
+            <p className="text-sm text-red-600">{profileError}</p>
+          )}
+          {profileSuccess && (
+            <p className="text-sm text-green-600">Profile updated!</p>
+          )}
+        </section>
 
         <section className="space-y-4">
           <button
