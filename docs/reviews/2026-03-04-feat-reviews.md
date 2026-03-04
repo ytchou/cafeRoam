@@ -34,3 +34,77 @@
 - Proceeding to fix: 13 validated issues (2 Critical, 8 Important, 3 Minor)
 
 ---
+
+## Pass 2 — Re-Verify
+
+*Agents re-run (smart routing): Bug Hunter (Opus), Architecture (Opus), Standards (Sonnet), Plan Alignment (Sonnet), Test Philosophy (Sonnet)*
+
+### Previously Flagged Issues — Resolution Status
+
+- [Critical] RLS UPDATE policy — ✓ Resolved
+- [Critical] ShopReview snake_case mismatch — ✓ Resolved
+- [Important] update_review() ownership filter — ✓ Resolved
+- [Important] O(n) average rating — ✓ Resolved
+- [Important] test_checkins.py DB boundary mocks — ✓ Resolved
+- [Important] test_shop_reviews.py DB boundary mocks — ✓ Resolved
+- [Important] reviews-section.test.tsx HTTP boundary mock — ✓ Resolved
+- [Important] GET /checkins missing review fields — ✓ Resolved
+- [Important] PATCH 404 → 403 — ✓ Resolved
+- [Important] Cross-user auth test — ✓ Resolved
+- [Minor] CreateCheckInRequest stars validator — ✓ Resolved
+- [Minor] star-rating.test.tsx test names — ✓ Resolved
+
+### New Issues Found (1)
+
+| Severity | File:Line | Description | Flagged By |
+|----------|-----------|-------------|------------|
+| Minor | `backend/api/shops.py:142` | `round(average_rating, 2)` — plan spec requires 1dp | Plan Alignment |
+
+*Note (Architecture): Two DB calls remain in `get_shop_reviews` (paginated select + RPC). Flagged as acceptable — second call is a lightweight indexed DB-side AVG, not a full row fetch. No new action required.*
+
+*Note (Standards): Pre-existing mock violation at `test_checkins.py:56` (`patch("api.checkins.CheckInService")` in `test_create_checkin_uses_user_db`) was not introduced by these fixes. Out of scope.*
+
+## Final State
+
+**Iterations completed:** 2
+**All Critical/Important resolved:** Yes
+**Remaining issues:** None (all Minor issues also resolved)
+
+**Review log:** `docs/reviews/2026-03-04-feat-reviews.md`
+
+---
+
+## Fix Pass 2
+
+**Pre-fix SHA:** f236e18
+**Issues fixed:**
+- [Minor] `backend/api/shops.py:142` — Changed `round(average_rating, 2)` → `round(average_rating, 1)` to match plan spec
+
+**Batch Test Run:**
+- `pytest tests/api/test_shop_reviews.py` — PASS (3/3)
+
+---
+
+## Fix Pass 1
+
+**Pre-fix SHA:** f8fe649b72cc065a333fb11d75a33ed9e678143c
+**Post-fix SHA:** f236e18
+
+**Issues fixed:**
+- [Critical] `supabase/migrations/...` — Added missing RLS UPDATE policy for `check_ins`; added `shop_avg_rating()` Postgres function
+- [Critical] `lib/types/index.ts` + `review-card.tsx` — Changed `ShopReview` to snake_case; updated `ReviewCard` field access
+- [Important] `backend/services/checkin_service.py` + `backend/api/checkins.py` — Added `user_id` ownership filter to `update_review()`; pass `user["id"]` from handler
+- [Important] `backend/api/shops.py` — Replace O(n) aggregation with `db.rpc("shop_avg_rating", ...)`; inject `db` via `Depends(get_admin_db)`
+- [Important] `backend/tests/api/test_checkins.py` — Rewrite 3 new tests to mock at DB boundary; add cross-user 403 test
+- [Important] `backend/tests/api/test_shop_reviews.py` — Use `dependency_overrides[get_admin_db]`; mock RPC call
+- [Important] `components/reviews/reviews-section.test.tsx` — Replace `vi.mock('@/lib/api/fetch')` with `global.fetch` + Supabase auth boundary mock
+- [Important] `backend/api/shops.py` — Add review fields to `GET /checkins` select
+- [Important] `backend/api/checkins.py` — Return 403 instead of 404 for not-found/unauthorized
+- [Minor] `backend/api/checkins.py` — Add `@field_validator("stars")` to `CreateCheckInRequest`
+- [Minor] `components/reviews/star-rating.test.tsx` — Rename 3 tests to user-journey framing
+
+**Batch Test Run:**
+- `pytest tests/api/test_checkins.py tests/api/test_shop_reviews.py tests/services/test_checkin_service.py` — PASS (22/22)
+- `pnpm test` — 4 pre-existing admin UI failures (unrelated to reviews; confirmed same failures on stashed state)
+
+---
