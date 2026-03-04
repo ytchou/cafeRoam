@@ -150,8 +150,8 @@ class TestCheckinsAPI:
         finally:
             app.dependency_overrides.clear()
 
-    def test_update_review_not_found_returns_403(self):
-        """When a user tries to update a review on a non-owned check-in, they get 403."""
+    def test_update_review_not_found_returns_404(self):
+        """When a user tries to update a review on a non-existent check-in, they get 404."""
         mock_db = MagicMock()
         app.dependency_overrides[get_current_user] = lambda: {"id": "user-abc123"}
         app.dependency_overrides[get_user_db] = lambda: mock_db
@@ -164,6 +164,6 @@ class TestCheckinsAPI:
                     "/checkins/ci-not-mine/review",
                     json={"stars": 3},
                 )
-                assert response.status_code == 403
+                assert response.status_code == 404
         finally:
             app.dependency_overrides.clear()

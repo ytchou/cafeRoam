@@ -47,11 +47,15 @@ class TestShopReviewsAPI:
             chain = mock_db.table.return_value
             chain = chain.select.return_value
             chain = chain.eq.return_value
-            chain = chain.not_.return_value
-            chain = chain.order.return_value
-            chain = chain.limit.return_value
-            chain = chain.offset.return_value
-            chain.execute.return_value = MagicMock(data=review_rows, count=2)
+            not_chain = chain.not_.return_value
+            # Paginated query: table().select().eq().not_().order().limit().offset().execute()
+            not_chain.order.return_value.limit.return_value.offset.return_value.execute.return_value = MagicMock(
+                data=review_rows, count=2
+            )
+            # Aggregation query: table().select().eq().not_().execute()
+            not_chain.execute.return_value = MagicMock(
+                data=[{"stars": 4}, {"stars": 5}]
+            )
 
             response = client.get("/shops/shop-abc123/reviews")
 

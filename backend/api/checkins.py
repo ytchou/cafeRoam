@@ -1,7 +1,7 @@
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from supabase import Client
 
 from api.deps import get_current_user, get_user_db
@@ -24,6 +24,13 @@ class UpdateReviewRequest(BaseModel):
     stars: int
     review_text: str | None = None
     confirmed_tags: list[str] | None = None
+
+    @field_validator("stars")
+    @classmethod
+    def stars_must_be_valid(cls, v: int) -> int:
+        if not (1 <= v <= 5):
+            raise ValueError("Stars must be between 1 and 5")
+        return v
 
 
 @router.post("/")
@@ -68,7 +75,7 @@ async def update_review(
         )
         return result.model_dump()
     except ValueError as e:
-        raise HTTPException(status_code=403, detail=str(e)) from None
+        raise HTTPException(status_code=404, detail=str(e)) from None
 
 
 @router.get("/")

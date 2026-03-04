@@ -11,6 +11,11 @@ class CheckInService:
     def __init__(self, db: Client):
         self._db = db
 
+    @staticmethod
+    def _validate_stars(stars: int) -> None:
+        if not (1 <= stars <= 5):
+            raise ValueError("Stars must be between 1 and 5")
+
     async def create(
         self,
         user_id: str,
@@ -27,8 +32,8 @@ class CheckInService:
             raise ValueError("At least one photo is required for check-in")
         if review_text is not None and stars is None:
             raise ValueError("review_text requires a star rating")
-        if stars is not None and not (1 <= stars <= 5):
-            raise ValueError("Stars must be between 1 and 5")
+        if stars is not None:
+            self._validate_stars(stars)
 
         checkin_data: dict[str, Any] = {
             "user_id": user_id,
@@ -55,8 +60,7 @@ class CheckInService:
         confirmed_tags: list[str] | None = None,
     ) -> CheckIn:
         """Add or update a review on an existing check-in."""
-        if not (1 <= stars <= 5):
-            raise ValueError("Stars must be between 1 and 5")
+        self._validate_stars(stars)
 
         update_data: dict[str, Any] = {
             "stars": stars,

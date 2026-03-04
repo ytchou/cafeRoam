@@ -18,7 +18,6 @@ interface ReviewFormProps {
   initialStars?: number;
   initialText?: string;
   initialTags?: string[];
-  submitLabel?: string;
 }
 
 export function ReviewForm({
@@ -27,7 +26,6 @@ export function ReviewForm({
   initialStars = 0,
   initialText = '',
   initialTags = [],
-  submitLabel = 'Save Review',
 }: ReviewFormProps) {
   const [stars, setStars] = useState(initialStars);
   const [reviewText, setReviewText] = useState(initialText);
@@ -79,7 +77,7 @@ export function ReviewForm({
             variant="secondary"
             className="w-full"
           >
-            {submitLabel}
+            Save Review
           </Button>
         </>
       )}

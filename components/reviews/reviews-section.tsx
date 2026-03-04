@@ -1,11 +1,12 @@
 'use client';
 
-import { useCallback } from 'react';
 import useSWR from 'swr';
 import { fetchWithAuth } from '@/lib/api/fetch';
 import { StarRating } from '@/components/reviews/star-rating';
 import { ReviewCard } from '@/components/reviews/review-card';
 import type { ShopReviewsResponse } from '@/lib/types';
+
+const fetcher = (url: string) => fetchWithAuth(url);
 
 interface ReviewsSectionProps {
   shopId: string;
@@ -17,7 +18,6 @@ export function ReviewsSection({
   isAuthenticated,
 }: ReviewsSectionProps) {
   const apiUrl = `/api/shops/${shopId}/reviews`;
-  const fetcher = useCallback(() => fetchWithAuth(apiUrl), [apiUrl]);
   const { data } = useSWR<ShopReviewsResponse>(
     isAuthenticated ? apiUrl : null,
     fetcher

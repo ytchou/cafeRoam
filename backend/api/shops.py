@@ -125,9 +125,17 @@ async def get_shop_reviews(
     ]
 
     total_count = response.count or 0
-    average_rating = (
-        sum(r["stars"] for r in reviews) / len(reviews) if reviews else 0.0
+
+    # Compute average over ALL reviews for this shop, not just the current page
+    agg_response = (
+        db.table("check_ins")
+        .select("stars")
+        .eq("shop_id", shop_id)
+        .not_("stars", "is", "null")
+        .execute()
     )
+    all_stars = [r["stars"] for r in agg_response.data]
+    average_rating = sum(all_stars) / len(all_stars) if all_stars else 0.0
 
     return ShopReviewsResponse(
         reviews=reviews,

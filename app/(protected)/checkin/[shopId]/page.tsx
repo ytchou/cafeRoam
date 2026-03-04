@@ -39,6 +39,24 @@ export default function CheckInPage() {
   const [submitState, setSubmitState] = useState<SubmitState>('idle');
   const [menuOpen, setMenuOpen] = useState(false);
 
+  const shopTags = useMemo(
+    () =>
+      shop?.taxonomy_tags?.map(
+        (t: {
+          id: string;
+          label_zh: string;
+          dimension: string;
+          label: string;
+        }) => ({
+          id: t.id,
+          dimension: t.dimension,
+          label: t.label,
+          labelZh: t.label_zh,
+        })
+      ) ?? [],
+    [shop?.taxonomy_tags]
+  );
+
   const canSubmit = photos.length > 0 && submitState === 'idle';
 
   const handleSubmit = useCallback(async () => {
@@ -166,16 +184,9 @@ export default function CheckInPage() {
           <StarRating value={stars} onChange={setStars} size="lg" />
           {stars > 0 && (
             <div className="mt-4 space-y-4">
-              {shop?.taxonomy_tags && shop.taxonomy_tags.length > 0 && (
+              {shopTags.length > 0 && (
                 <TagConfirmation
-                  tags={shop.taxonomy_tags.map(
-                    (t: { id: string; label_zh: string; dimension: string; label: string }) => ({
-                      id: t.id,
-                      dimension: t.dimension,
-                      label: t.label,
-                      labelZh: t.label_zh,
-                    })
-                  )}
+                  tags={shopTags}
                   confirmedIds={confirmedTags}
                   onChange={setConfirmedTags}
                 />
