@@ -538,9 +538,9 @@ This is the final gate for Phase 1. Two paths: fast path seeds 29 pre-built shop
 - [x] `useUserStamps` SWR hook
 
 **Chunk 3 — Pages (Wave 2):**
-- [ ] Check-in page (`/checkin/[shopId]`): upload → submit → stamp toast
-- [ ] Profile page: stamp passport collection (replace placeholder)
-- [ ] Next.js proxy route for shop check-ins
+- [x] Check-in page (`/checkin/[shopId]`): upload → submit → stamp toast
+- [x] Profile page: stamp passport collection (replace placeholder)
+- [x] Next.js proxy route for shop check-ins
 
 **Chunk 4 — Shop Detail Integration (Wave 3):**
 - [ ] CheckInPhotoGrid component (auth-gated: photo grid vs. preview + login CTA)
