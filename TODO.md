@@ -621,7 +621,7 @@ This is the final gate for Phase 1. Two paths: fast path seeds 29 pre-built shop
 
 - [x] Rebuild profile page (header + passport hero + tabbed check-ins/lists)
 - [x] Add profile editing to settings (display name + avatar upload)
-- [ ] Full integration verification (all tests, type-check, lint)
+- [x] Full integration verification (all tests, type-check, lint)
 
 **Deferred:**
 
