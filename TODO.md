@@ -533,9 +533,9 @@ This is the final gate for Phase 1. Two paths: fast path seeds 29 pre-built shop
 - [x] Photo upload utility (`lib/supabase/storage.ts`)
 
 **Chunk 2 — Components (Wave 1-2):**
-- [ ] PhotoUploader component (camera-first mobile, file picker desktop, max 3)
-- [ ] StampPassport component (4×5 grid, swipeable pages)
-- [ ] `useUserStamps` SWR hook
+- [x] PhotoUploader component (camera-first mobile, file picker desktop, max 3)
+- [x] StampPassport component (4×5 grid, swipeable pages)
+- [x] `useUserStamps` SWR hook
 
 **Chunk 3 — Pages (Wave 2):**
 - [ ] Check-in page (`/checkin/[shopId]`): upload → submit → stamp toast
