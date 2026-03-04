@@ -48,7 +48,9 @@ export function PhotoUploader({
         valid.push(file);
       }
 
-      const combined = [...files, ...valid].slice(0, maxPhotos);
+      const existingNames = new Set(files.map((f) => `${f.name}:${f.size}`));
+      const deduped = valid.filter((f) => !existingNames.has(`${f.name}:${f.size}`));
+      const combined = [...files, ...deduped].slice(0, maxPhotos);
       onChange(combined);
     },
     [files, onChange, maxPhotos, maxSizeMB]
