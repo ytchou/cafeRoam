@@ -543,7 +543,7 @@ This is the final gate for Phase 1. Two paths: fast path seeds 29 pre-built shop
 - [x] Next.js proxy route for shop check-ins
 
 **Chunk 4 — Shop Detail Integration (Wave 3):**
-- [ ] CheckInPhotoGrid component (auth-gated: photo grid vs. preview + login CTA)
+- [x] CheckInPhotoGrid component (auth-gated: photo grid vs. preview + login CTA)
 
 **Deferred:**
 - [ ] Menu photo enrichment worker (job queueing already works via DB trigger)
