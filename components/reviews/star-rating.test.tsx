@@ -4,13 +4,13 @@ import { describe, it, expect, vi } from 'vitest';
 import { StarRating } from './star-rating';
 
 describe('StarRating', () => {
-  it('renders 5 stars in display mode', () => {
+  it('shows 5 stars when displaying a rating', () => {
     render(<StarRating value={3} />);
     const stars = screen.getAllByRole('img', { hidden: true });
     expect(stars).toHaveLength(5);
   });
 
-  it('highlights the correct number of stars in display mode', () => {
+  it('shows the correct number of filled stars for the given rating', () => {
     const { container } = render(<StarRating value={4} />);
     const filled = container.querySelectorAll('[data-filled="true"]');
     expect(filled).toHaveLength(4);
@@ -25,7 +25,7 @@ describe('StarRating', () => {
     expect(onChange).toHaveBeenCalledWith(3);
   });
 
-  it('does not render buttons in display mode', () => {
+  it('stars are not interactive when no onChange handler is provided', () => {
     render(<StarRating value={3} />);
     const buttons = screen.queryAllByRole('button');
     expect(buttons).toHaveLength(0);

@@ -6,7 +6,7 @@ interface ReviewCardProps {
 }
 
 export function ReviewCard({ review }: ReviewCardProps) {
-  const date = new Date(review.reviewedAt).toLocaleDateString('zh-TW', {
+  const date = new Date(review.reviewed_at).toLocaleDateString('zh-TW', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
@@ -19,14 +19,14 @@ export function ReviewCard({ review }: ReviewCardProps) {
         <span className="text-sm text-gray-500">{date}</span>
       </div>
       <p className="text-sm font-medium text-gray-700">
-        {review.displayName ?? 'Anonymous'}
+        {review.display_name ?? 'Anonymous'}
       </p>
-      {review.reviewText && (
-        <p className="mt-1 text-sm text-gray-600">{review.reviewText}</p>
+      {review.review_text && (
+        <p className="mt-1 text-sm text-gray-600">{review.review_text}</p>
       )}
-      {review.confirmedTags && review.confirmedTags.length > 0 && (
+      {review.confirmed_tags && review.confirmed_tags.length > 0 && (
         <div className="mt-1.5 flex flex-wrap gap-1">
-          {review.confirmedTags.map((tag) => (
+          {review.confirmed_tags.map((tag) => (
             <span
               key={tag}
               className="rounded-full bg-amber-50 px-2 py-0.5 text-xs text-amber-700"

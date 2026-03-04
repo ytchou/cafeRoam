@@ -3,10 +3,20 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { SWRConfig } from 'swr';
 import type { ReactNode } from 'react';
 
-const mockFetchWithAuth = vi.fn();
-vi.mock('@/lib/api/fetch', () => ({
-  fetchWithAuth: (...args: unknown[]) => mockFetchWithAuth(...args),
+// Mock at the auth SDK boundary (Supabase session)
+vi.mock('@/lib/supabase/client', () => ({
+  createClient: () => ({
+    auth: {
+      getSession: vi.fn().mockResolvedValue({
+        data: { session: { access_token: 'test-token' } },
+      }),
+    },
+  }),
 }));
+
+// Mock at the HTTP boundary
+const mockFetch = vi.fn();
+global.fetch = mockFetch;
 
 import { ReviewsSection } from './reviews-section';
 
@@ -18,24 +28,27 @@ function Wrapper({ children }: { children: ReactNode }) {
 
 describe('ReviewsSection', () => {
   beforeEach(() => {
-    mockFetchWithAuth.mockReset();
+    mockFetch.mockReset();
   });
 
-  it('renders average rating and review count', async () => {
-    mockFetchWithAuth.mockResolvedValue({
-      reviews: [
-        {
-          id: 'ci-1',
-          userId: 'u-1',
-          displayName: 'Alice',
-          stars: 4,
-          reviewText: 'Great latte!',
-          confirmedTags: ['quiet'],
-          reviewedAt: '2026-03-04T10:00:00Z',
-        },
-      ],
-      total_count: 1,
-      average_rating: 4.5,
+  it('renders average rating and review count when authenticated', async () => {
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        reviews: [
+          {
+            id: 'ci-1',
+            user_id: 'user-chen-wei',
+            display_name: 'Alice',
+            stars: 4,
+            review_text: 'Great latte!',
+            confirmed_tags: ['quiet'],
+            reviewed_at: '2026-03-04T10:00:00Z',
+          },
+        ],
+        total_count: 1,
+        average_rating: 4.5,
+      }),
     });
 
     render(
@@ -59,10 +72,13 @@ describe('ReviewsSection', () => {
   });
 
   it('does not render when there are no reviews', async () => {
-    mockFetchWithAuth.mockResolvedValue({
-      reviews: [],
-      total_count: 0,
-      average_rating: 0,
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        reviews: [],
+        total_count: 0,
+        average_rating: 0,
+      }),
     });
 
     render(
@@ -71,7 +87,7 @@ describe('ReviewsSection', () => {
       </Wrapper>
     );
     await waitFor(() => {
-      expect(mockFetchWithAuth).toHaveBeenCalled();
+      expect(mockFetch).toHaveBeenCalled();
     });
     expect(screen.queryByText(/User Reviews/)).not.toBeInTheDocument();
   });

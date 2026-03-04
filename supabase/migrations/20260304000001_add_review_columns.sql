@@ -20,3 +20,15 @@ COMMENT ON COLUMN check_ins.stars IS '1-5 star rating (required for review)';
 COMMENT ON COLUMN check_ins.review_text IS 'Optional free-form review text';
 COMMENT ON COLUMN check_ins.confirmed_tags IS 'Taxonomy tag IDs the user confirmed during review';
 COMMENT ON COLUMN check_ins.reviewed_at IS 'When the review was added or last updated';
+
+-- RLS: allow users to update their own check-ins (needed for PATCH /checkins/{id}/review)
+CREATE POLICY "check_ins_own_update" ON check_ins
+  FOR UPDATE USING (auth.uid() = user_id);
+
+-- Helper function: compute average star rating for a shop without a full table scan
+CREATE OR REPLACE FUNCTION shop_avg_rating(p_shop_id UUID)
+RETURNS NUMERIC AS $$
+  SELECT COALESCE(AVG(stars), 0)
+  FROM check_ins
+  WHERE shop_id = p_shop_id AND stars IS NOT NULL;
+$$ LANGUAGE SQL STABLE;

@@ -19,6 +19,13 @@ class CreateCheckInRequest(BaseModel):
     review_text: str | None = None
     confirmed_tags: list[str] | None = None
 
+    @field_validator("stars")
+    @classmethod
+    def stars_must_be_valid(cls, v: int | None) -> int | None:
+        if v is not None and not (1 <= v <= 5):
+            raise ValueError("Stars must be between 1 and 5")
+        return v
+
 
 class UpdateReviewRequest(BaseModel):
     stars: int
@@ -69,13 +76,14 @@ async def update_review(
     try:
         result = await service.update_review(
             checkin_id=checkin_id,
+            user_id=user["id"],
             stars=body.stars,
             review_text=body.review_text,
             confirmed_tags=body.confirmed_tags,
         )
         return result.model_dump()
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e)) from None
+        raise HTTPException(status_code=403, detail=str(e)) from None
 
 
 @router.get("/")

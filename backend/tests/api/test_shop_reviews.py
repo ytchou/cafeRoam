@@ -1,8 +1,8 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 from fastapi.testclient import TestClient
 
-from api.deps import get_current_user
+from api.deps import get_admin_db, get_current_user
 from main import app
 
 client = TestClient(app)
@@ -16,11 +16,10 @@ class TestShopReviewsAPI:
 
     def test_authenticated_user_sees_aggregated_review_data(self):
         """Logged-in user gets reviews list, total count, and average rating for a shop."""
+        mock_db = MagicMock()
         app.dependency_overrides[get_current_user] = lambda: {"id": "user-chen-wei"}
-        with patch("api.shops.get_admin_db") as mock_admin:
-            mock_db = MagicMock()
-            mock_admin.return_value = mock_db
-
+        app.dependency_overrides[get_admin_db] = lambda: mock_db
+        try:
             review_rows = [
                 {
                     "id": "ci-review-1",
@@ -42,22 +41,24 @@ class TestShopReviewsAPI:
                 },
             ]
 
-            # Mock the chained Supabase query:
-            # table().select().eq().not_().order().limit().offset().execute()
-            chain = mock_db.table.return_value
-            chain = chain.select.return_value
-            chain = chain.eq.return_value
-            not_chain = chain.not_.return_value
             # Paginated query: table().select().eq().not_().order().limit().offset().execute()
-            not_chain.order.return_value.limit.return_value.offset.return_value.execute.return_value = MagicMock(
-                data=review_rows, count=2
+            paginated_chain = (
+                mock_db.table.return_value
+                .select.return_value
+                .eq.return_value
+                .not_.return_value
+                .order.return_value
+                .limit.return_value
+                .offset.return_value
             )
-            # Aggregation query: table().select().eq().not_().execute()
-            not_chain.execute.return_value = MagicMock(
-                data=[{"stars": 4}, {"stars": 5}]
-            )
+            paginated_chain.execute.return_value = MagicMock(data=review_rows, count=2)
+
+            # RPC for average rating
+            mock_db.rpc.return_value.execute.return_value = MagicMock(data=4.5)
 
             response = client.get("/shops/shop-abc123/reviews")
+        finally:
+            app.dependency_overrides.clear()
 
         assert response.status_code == 200
         data = response.json()
@@ -70,21 +71,25 @@ class TestShopReviewsAPI:
 
     def test_shop_with_no_reviews_returns_empty_and_zero_average(self):
         """When a shop has no reviews, the response has an empty list and 0.0 average."""
+        mock_db = MagicMock()
         app.dependency_overrides[get_current_user] = lambda: {"id": "user-chen-wei"}
-        with patch("api.shops.get_admin_db") as mock_admin:
-            mock_db = MagicMock()
-            mock_admin.return_value = mock_db
-
-            chain = mock_db.table.return_value
-            chain = chain.select.return_value
-            chain = chain.eq.return_value
-            chain = chain.not_.return_value
-            chain = chain.order.return_value
-            chain = chain.limit.return_value
-            chain = chain.offset.return_value
-            chain.execute.return_value = MagicMock(data=[], count=0)
+        app.dependency_overrides[get_admin_db] = lambda: mock_db
+        try:
+            paginated_chain = (
+                mock_db.table.return_value
+                .select.return_value
+                .eq.return_value
+                .not_.return_value
+                .order.return_value
+                .limit.return_value
+                .offset.return_value
+            )
+            paginated_chain.execute.return_value = MagicMock(data=[], count=0)
+            mock_db.rpc.return_value.execute.return_value = MagicMock(data=0.0)
 
             response = client.get("/shops/shop-empty/reviews")
+        finally:
+            app.dependency_overrides.clear()
 
         assert response.status_code == 200
         data = response.json()

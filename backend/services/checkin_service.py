@@ -55,11 +55,12 @@ class CheckInService:
     async def update_review(
         self,
         checkin_id: str,
+        user_id: str,
         stars: int,
         review_text: str | None = None,
         confirmed_tags: list[str] | None = None,
     ) -> CheckIn:
-        """Add or update a review on an existing check-in."""
+        """Add or update a review on an existing check-in. Only the owner can update."""
         self._validate_stars(stars)
 
         update_data: dict[str, Any] = {
@@ -72,6 +73,7 @@ class CheckInService:
             self._db.table("check_ins")
             .update(update_data)
             .eq("id", checkin_id)
+            .eq("user_id", user_id)
             .execute()
         )
         rows = cast("list[dict[str, Any]]", response.data)

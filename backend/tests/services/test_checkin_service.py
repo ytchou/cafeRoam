@@ -198,9 +198,7 @@ class TestCheckInService:
     ):
         """When a user adds a review to an existing check-in, review fields are updated."""
         frozen_now = datetime(2026, 3, 4, 14, 30, 0, tzinfo=timezone.utc)
-        mock_update = MagicMock()
-        mock_eq = MagicMock()
-        mock_eq.execute.return_value = MagicMock(
+        mock_supabase.table.return_value.update.return_value.eq.return_value.eq.return_value.execute.return_value = MagicMock(
             data=[
                 {
                     "id": "ci-existing",
@@ -217,14 +215,13 @@ class TestCheckInService:
                 }
             ]
         )
-        mock_update.eq.return_value = mock_eq
-        mock_supabase.table.return_value.update.return_value = mock_update
 
         with patch("services.checkin_service.datetime") as mock_dt:
             mock_dt.now.return_value = frozen_now
             mock_dt.side_effect = lambda *a, **kw: datetime(*a, **kw)
             result = await checkin_service.update_review(
                 checkin_id="ci-existing",
+                user_id="user-42",
                 stars=5,
                 review_text="Changed my mind, it is amazing",
                 confirmed_tags=["quiet"],
@@ -238,16 +235,15 @@ class TestCheckInService:
     async def test_update_review_not_found_raises(
         self, checkin_service, mock_supabase
     ):
-        """When update_review targets a non-existent check-in, a ValueError is raised."""
-        mock_update = MagicMock()
-        mock_eq = MagicMock()
-        mock_eq.execute.return_value = MagicMock(data=[])
-        mock_update.eq.return_value = mock_eq
-        mock_supabase.table.return_value.update.return_value = mock_update
+        """When update_review targets a check-in the user doesn't own, a ValueError is raised."""
+        mock_supabase.table.return_value.update.return_value.eq.return_value.eq.return_value.execute.return_value = MagicMock(
+            data=[]
+        )
 
         with pytest.raises(ValueError, match="Check-in not found"):
             await checkin_service.update_review(
                 checkin_id="ci-nonexistent",
+                user_id="user-42",
                 stars=3,
             )
 

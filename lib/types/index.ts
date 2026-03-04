@@ -76,12 +76,12 @@ export interface CheckIn {
 
 export interface ShopReview {
   id: string;
-  userId: string;
-  displayName: string | null;
+  user_id: string;
+  display_name: string | null;
   stars: number;
-  reviewText: string | null;
-  confirmedTags: string[] | null;
-  reviewedAt: string;
+  review_text: string | null;
+  confirmed_tags: string[] | null;
+  reviewed_at: string;
 }
 
 export interface ShopReviewsResponse {
