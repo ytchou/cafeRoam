@@ -71,7 +71,8 @@ async def get_shop_checkins(
             .eq("shop_id", shop_id)
             .execute()
         )
-        preview_url = first(response.data, "shop checkins preview")["photo_urls"][0] if response.data else None
+        first_row = first(response.data, "shop checkins preview") if response.data else None
+        preview_url = first_row["photo_urls"][0] if first_row else None
         return ShopCheckInPreview(
             count=response.count or 0,
             preview_photo_url=preview_url,

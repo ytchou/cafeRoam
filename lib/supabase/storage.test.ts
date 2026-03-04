@@ -23,6 +23,7 @@ beforeEach(() => {
         data: { session: { user: { id: 'user-abc' } } },
       }),
     },
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } as any);
   mockUpload.mockReset();
   mockGetPublicUrl.mockReset();
