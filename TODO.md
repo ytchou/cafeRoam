@@ -528,9 +528,9 @@ This is the final gate for Phase 1. Two paths: fast path seeds 29 pre-built shop
 > **Plan:** [docs/plans/2026-03-04-checkin-stamps-plan.md](docs/plans/2026-03-04-checkin-stamps-plan.md)
 
 **Chunk 1 — Infrastructure (Wave 1):**
-- [ ] Supabase Storage migration: `checkin-photos` + `menu-photos` buckets with RLS
-- [ ] Backend `GET /shops/{shop_id}/checkins` endpoint (auth-gated response shape)
-- [ ] Photo upload utility (`lib/supabase/storage.ts`)
+- [x] Supabase Storage migration: `checkin-photos` + `menu-photos` buckets with RLS
+- [x] Backend `GET /shops/{shop_id}/checkins` endpoint (auth-gated response shape)
+- [x] Photo upload utility (`lib/supabase/storage.ts`)
 
 **Chunk 2 — Components (Wave 1-2):**
 - [ ] PhotoUploader component (camera-first mobile, file picker desktop, max 3)
