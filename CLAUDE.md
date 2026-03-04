@@ -95,6 +95,15 @@ supabase db reset              # Reset local DB + reseed
 - RLS policies required on all user-facing tables
 - Never store user PII outside Supabase (no logs, no analytics events with email or raw user IDs)
 
+### Performance Standards
+
+- **O(1) first**: Use set/dict/Map/Set for membership checks; prefer generators over materializing full collections
+- **No work in loops**: Hoist regex compile, JSON/date parsing, and DB/API calls out of any loop; batch calls at end, not per-item
+- **Python**: `re.compile()` at module level; `executemany`/bulk upserts over row-by-row; no `SELECT *`; evaluate querysets once
+- **Database**: No N+1 queries (use JOINs or `IN()`); index FKs and frequently-filtered columns; CTEs over correlated subqueries
+- **Frontend**: No inline object/array in render without `useMemo`; `Map` over `Array.find()` in list renders; deduplicate at SWR/fetch layer
+- **Workers**: Deduplicate inputs before queuing; batch DB writes at batch end; cap concurrency explicitly — never unbounded fan-out
+
 ---
 
 ## Testing

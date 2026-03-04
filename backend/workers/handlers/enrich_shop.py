@@ -72,12 +72,14 @@ async def handle_enrich_shop(
         ]
         db.table("shop_tags").insert(tag_rows).execute()
 
-    # Queue embedding generation — forward submission context
+    # Queue embedding generation — forward submission context + batch tracking
     enqueue_payload: dict[str, Any] = {"shop_id": shop_id}
     if payload.get("submission_id"):
         enqueue_payload["submission_id"] = payload["submission_id"]
     if payload.get("submitted_by"):
         enqueue_payload["submitted_by"] = payload["submitted_by"]
+    if payload.get("batch_id"):
+        enqueue_payload["batch_id"] = payload["batch_id"]
 
     await queue.enqueue(
         job_type=JobType.GENERATE_EMBEDDING,

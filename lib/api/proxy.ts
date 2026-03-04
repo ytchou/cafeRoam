@@ -28,7 +28,15 @@ export async function proxyToBackend(
     init.body = await request.text();
   }
 
-  const res = await fetch(backendUrl, init);
+  let res: Response;
+  try {
+    res = await fetch(backendUrl, init);
+  } catch {
+    return new Response(JSON.stringify({ detail: 'Backend unavailable' }), {
+      status: 503,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
   return new Response(res.body, {
     status: res.status,
     headers: res.headers,

@@ -22,10 +22,24 @@ class ScrapedShopData(BaseModel):
     photo_urls: list[str] = []
 
 
+class BatchScrapeInput(BaseModel):
+    shop_id: str
+    google_maps_url: str
+
+
+class BatchScrapeResult(BaseModel):
+    shop_id: str
+    data: ScrapedShopData | None
+
+
 @runtime_checkable
 class ScraperProvider(Protocol):
     async def scrape_by_url(self, google_maps_url: str) -> ScrapedShopData | None:
         """Scrape a shop by Google Maps URL. Returns None if not found."""
+        ...
+
+    async def scrape_batch(self, shops: list[BatchScrapeInput]) -> list[BatchScrapeResult]:
+        """Scrape multiple shops in a single Apify actor run."""
         ...
 
     async def scrape_reviews_only(self, google_place_id: str) -> list[dict[str, str | int | None]]:

@@ -45,7 +45,7 @@ class TestAnthropicEnrichShop:
     def adapter(self):
         return AnthropicLLMAdapter(
             api_key="test-key",
-            model="claude-sonnet-4-6-20250514",
+            model="claude-sonnet-4-6",
             taxonomy=SAMPLE_TAXONOMY,
         )
 
@@ -269,7 +269,7 @@ class TestAnthropicExtractMenuData:
     def adapter(self):
         return AnthropicLLMAdapter(
             api_key="test-key",
-            model="claude-sonnet-4-6-20250514",
+            model="claude-sonnet-4-6",
             taxonomy=SAMPLE_TAXONOMY,
         )
 

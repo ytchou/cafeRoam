@@ -2,7 +2,6 @@ import uuid
 from datetime import datetime
 from unittest.mock import MagicMock
 
-import pytest
 from fastapi.testclient import TestClient
 from postgrest.exceptions import APIError
 

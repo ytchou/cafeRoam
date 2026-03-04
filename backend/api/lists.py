@@ -5,7 +5,6 @@ from pydantic import BaseModel
 from supabase import Client
 
 from api.deps import get_current_user, get_user_db
-from models.types import ListPin
 from services.lists_service import ListsService
 
 router = APIRouter(prefix="/lists", tags=["lists"])

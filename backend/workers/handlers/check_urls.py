@@ -19,9 +19,10 @@ import structlog
 
 logger = structlog.get_logger()
 
-_BATCH_SIZE = 5
-_BATCH_DELAY_SECONDS = 1.0
-_REQUEST_TIMEOUT = 10.0
+_BATCH_SIZE = 20  # 20 concurrent HEAD requests per round
+_BATCH_DELAY_SECONDS = 0.5
+_REQUEST_TIMEOUT = 5.0
+_LOG_EVERY_N_BATCHES = 5  # progress log every 100 shops
 
 
 async def _check_single_url(
@@ -42,6 +43,7 @@ async def check_urls_for_region(
 ) -> dict[str, int]:
     """Run background URL validation for all pending_url_check shops.
 
+    Updates the DB after every batch so pipeline-status reflects live progress.
     Returns:
         {"checked": N, "passed": N, "failed": N}
     """
@@ -54,17 +56,20 @@ async def check_urls_for_region(
     shops: list[dict[str, Any]] = response.data or []
 
     if not shops:
-        logger.info("No pending_url_check shops found")
+        logger.info("url_check: no pending shops")
         return {"checked": 0, "passed": 0, "failed": 0}
 
-    logger.info("Starting URL check batch", count=len(shops))
+    total = len(shops)
+    logger.info("url_check: starting", total=total, batch_size=_BATCH_SIZE)
 
-    passed_ids: list[str] = []
-    failed_ids: list[str] = []
+    total_passed = 0
+    total_failed = 0
+    batch_num = 0
 
     async with httpx.AsyncClient() as client:
-        for batch_start in range(0, len(shops), _BATCH_SIZE):
+        for batch_start in range(0, total, _BATCH_SIZE):
             batch = shops[batch_start : batch_start + _BATCH_SIZE]
+            batch_num += 1
 
             tasks = [
                 _check_single_url(client, shop["id"], shop.get("google_maps_url", ""))
@@ -72,25 +77,47 @@ async def check_urls_for_region(
             ]
             results = await asyncio.gather(*tasks)
 
-            for shop_id, is_alive in results:
-                if is_alive:
-                    passed_ids.append(shop_id)
-                else:
-                    failed_ids.append(shop_id)
+            passed_ids = [sid for sid, ok in results if ok]
+            failed_ids = [sid for sid, ok in results if not ok]
 
-            if batch_start + _BATCH_SIZE < len(shops):
+            # Write each batch immediately — progress is visible in pipeline-status
+            try:
+                if passed_ids:
+                    db.table("shops").update({"processing_status": "pending_review"}).in_(
+                        "id", passed_ids
+                    ).execute()
+                if failed_ids:
+                    db.table("shops").update({"processing_status": "filtered_dead_url"}).in_(
+                        "id", failed_ids
+                    ).execute()
+                total_passed += len(passed_ids)
+                total_failed += len(failed_ids)
+            except Exception:
+                logger.exception(
+                    "url_check: DB write failed for batch",
+                    batch_num=batch_num,
+                    passed=len(passed_ids),
+                    failed=len(failed_ids),
+                )
+
+            checked_so_far = batch_start + len(batch)
+            if batch_num % _LOG_EVERY_N_BATCHES == 0 or checked_so_far >= total:
+                logger.info(
+                    "url_check: progress",
+                    checked=checked_so_far,
+                    total=total,
+                    passed=total_passed,
+                    failed=total_failed,
+                    pct=round(checked_so_far / total * 100),
+                )
+
+            if batch_start + _BATCH_SIZE < total:
                 await asyncio.sleep(_BATCH_DELAY_SECONDS)
 
-    if passed_ids:
-        db.table("shops").update({"processing_status": "pending_review"}).in_(
-            "id", passed_ids
-        ).execute()
-    if failed_ids:
-        db.table("shops").update({"processing_status": "filtered_dead_url"}).in_(
-            "id", failed_ids
-        ).execute()
-
-    passed = len(passed_ids)
-    failed = len(failed_ids)
-    logger.info("URL check complete", checked=len(shops), passed=passed, failed=failed)
-    return {"checked": len(shops), "passed": passed, "failed": failed}
+    logger.info(
+        "url_check: complete",
+        total=total,
+        passed=total_passed,
+        failed=total_failed,
+    )
+    return {"checked": total, "passed": total_passed, "failed": total_failed}

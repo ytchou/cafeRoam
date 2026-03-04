@@ -42,7 +42,7 @@ RETURNS TABLE (
     tag_ids         text[],
     similarity      float
 )
-LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public, extensions
 AS $$
     SELECT
         s.id,

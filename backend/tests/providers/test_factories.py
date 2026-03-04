@@ -43,7 +43,7 @@ class TestProviderFactories:
         with patch("providers.llm.settings") as mock:
             mock.llm_provider = "anthropic"
             mock.anthropic_api_key = "test-key"
-            mock.anthropic_model = "claude-sonnet-4-6-20250514"
+            mock.anthropic_model = "claude-sonnet-4-6"
             from providers.llm import get_llm_provider
 
             provider = get_llm_provider()
@@ -58,7 +58,7 @@ class TestProviderFactories:
         with patch("providers.llm.settings") as mock:
             mock.llm_provider = "anthropic"
             mock.anthropic_api_key = "test-key"
-            mock.anthropic_model = "claude-sonnet-4-6-20250514"
+            mock.anthropic_model = "claude-sonnet-4-6"
             from providers.llm import get_llm_provider
 
             provider = get_llm_provider(taxonomy=taxonomy)
@@ -70,7 +70,7 @@ class TestProviderFactories:
         with patch("providers.llm.settings") as mock:
             mock.llm_provider = "anthropic"
             mock.anthropic_api_key = "test-key"
-            mock.anthropic_model = "claude-sonnet-4-6-20250514"
+            mock.anthropic_model = "claude-sonnet-4-6"
             from providers.llm import get_llm_provider
 
             provider = get_llm_provider()

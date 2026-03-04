@@ -1,9 +1,9 @@
-from typing import TypeVar
+def escape_ilike(search: str) -> str:
+    """Escape special characters for a PostgreSQL ILIKE pattern."""
+    return search.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
 
-T = TypeVar("T")
 
-
-def first(rows: list[T], context: str = "query") -> T:
+def first[T](rows: list[T], context: str = "query") -> T:
     """Return the first element of a non-empty list.
 
     Raises RuntimeError with a descriptive message if the list is empty,
