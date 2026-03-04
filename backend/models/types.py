@@ -185,6 +185,7 @@ class JobType(StrEnum):
     STALENESS_SWEEP = "staleness_sweep"
     WEEKLY_EMAIL = "weekly_email"
     SCRAPE_SHOP = "scrape_shop"
+    SCRAPE_BATCH = "scrape_batch"
     PUBLISH_SHOP = "publish_shop"
     ADMIN_DIGEST_EMAIL = "admin_digest_email"
 

@@ -13,6 +13,7 @@ from workers.handlers.enrich_menu_photo import handle_enrich_menu_photo
 from workers.handlers.enrich_shop import handle_enrich_shop
 from workers.handlers.generate_embedding import handle_generate_embedding
 from workers.handlers.publish_shop import handle_publish_shop
+from workers.handlers.scrape_batch import handle_scrape_batch
 from workers.handlers.scrape_shop import handle_scrape_shop
 from workers.handlers.staleness_sweep import handle_smart_staleness_sweep
 from workers.handlers.weekly_email import handle_weekly_email
@@ -68,6 +69,14 @@ async def process_job_queue() -> None:
             case JobType.SCRAPE_SHOP:
                 scraper = get_scraper_provider()
                 await handle_scrape_shop(
+                    payload=job.payload,
+                    db=db,
+                    scraper=scraper,
+                    queue=queue,
+                )
+            case JobType.SCRAPE_BATCH:
+                scraper = get_scraper_provider()
+                await handle_scrape_batch(
                     payload=job.payload,
                     db=db,
                     scraper=scraper,
