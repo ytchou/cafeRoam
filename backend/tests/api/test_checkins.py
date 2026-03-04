@@ -192,3 +192,37 @@ class TestCheckinsAPI:
             assert response.status_code == 403
         finally:
             app.dependency_overrides.clear()
+
+
+class TestGetMyCheckins:
+    def test_checkins_include_shop_data(self):
+        """When a user fetches their check-ins, each record includes shop_name and shop_mrt."""
+        mock_db = MagicMock()
+        app.dependency_overrides[get_current_user] = lambda: {"id": "user-123"}
+        app.dependency_overrides[get_user_db] = lambda: mock_db
+        try:
+            mock_db.table.return_value.select.return_value.eq.return_value.order.return_value.execute.return_value = MagicMock(
+                data=[
+                    {
+                        "id": "ci-1",
+                        "user_id": "user-123",
+                        "shop_id": "shop-a",
+                        "photo_urls": ["https://example.com/photo1.jpg"],
+                        "menu_photo_url": None,
+                        "note": None,
+                        "stars": 4,
+                        "review_text": None,
+                        "confirmed_tags": [],
+                        "reviewed_at": None,
+                        "created_at": "2026-03-01T00:00:00Z",
+                        "shops": {"name": "Fika Coffee", "mrt": "Daan"},
+                    }
+                ]
+            )
+            resp = client.get("/checkins")
+            assert resp.status_code == 200
+            data = resp.json()
+            assert data[0]["shop_name"] == "Fika Coffee"
+            assert data[0]["shop_mrt"] == "Daan"
+        finally:
+            app.dependency_overrides.clear()

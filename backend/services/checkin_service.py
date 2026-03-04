@@ -4,7 +4,7 @@ from typing import Any, cast
 from supabase import Client
 
 from core.db import first
-from models.types import CheckIn
+from models.types import CheckIn, CheckInWithShop
 
 
 class CheckInService:
@@ -81,16 +81,22 @@ class CheckInService:
             raise ValueError("Check-in not found")
         return CheckIn(**rows[0])
 
-    async def get_by_user(self, user_id: str) -> list[CheckIn]:
+    async def get_by_user(self, user_id: str) -> list[CheckInWithShop]:
         response = (
             self._db.table("check_ins")
-            .select("*")
+            .select("*, shops(name, mrt)")
             .eq("user_id", user_id)
             .order("created_at", desc=True)
             .execute()
         )
         rows = cast("list[dict[str, Any]]", response.data)
-        return [CheckIn(**row) for row in rows]
+        results = []
+        for row in rows:
+            shop_data = row.pop("shops", {}) or {}
+            row["shop_name"] = shop_data.get("name")
+            row["shop_mrt"] = shop_data.get("mrt")
+            results.append(CheckInWithShop(**row))
+        return results
 
     async def get_by_shop(self, shop_id: str) -> list[CheckIn]:
         response = (
