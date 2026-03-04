@@ -4,6 +4,7 @@ import { describe, it, expect, vi, beforeEach, beforeAll } from 'vitest';
 
 // Stub browser APIs missing in jsdom
 global.URL.createObjectURL = vi.fn(() => 'blob:mock-url');
+global.URL.revokeObjectURL = vi.fn();
 
 beforeAll(() => {
   Object.defineProperty(window, 'matchMedia', {

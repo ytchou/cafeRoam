@@ -5,6 +5,7 @@ import { describe, it, expect, vi, beforeAll } from 'vitest';
 import { PhotoUploader } from './photo-uploader';
 
 global.URL.createObjectURL = vi.fn(() => 'blob:mock-url');
+global.URL.revokeObjectURL = vi.fn();
 
 // jsdom does not implement window.matchMedia — stub it as non-mobile (desktop)
 beforeAll(() => {

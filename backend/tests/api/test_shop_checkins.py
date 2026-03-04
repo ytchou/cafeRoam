@@ -46,7 +46,7 @@ class TestShopCheckinsAPI:
             with patch("api.shops.get_admin_db") as mock_admin:
                 mock_db = MagicMock()
                 mock_admin.return_value = mock_db
-                mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(
+                mock_db.table.return_value.select.return_value.eq.return_value.limit.return_value.execute.return_value = MagicMock(
                     count=5,
                     data=[{"photo_urls": ["https://example.com/latest.jpg"]}],
                 )
@@ -65,7 +65,7 @@ class TestShopCheckinsAPI:
             with patch("api.shops.get_admin_db") as mock_admin:
                 mock_db = MagicMock()
                 mock_admin.return_value = mock_db
-                mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(
+                mock_db.table.return_value.select.return_value.eq.return_value.limit.return_value.execute.return_value = MagicMock(
                     count=0, data=[]
                 )
                 response = client.get("/shops/shop-1/checkins")

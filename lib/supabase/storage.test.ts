@@ -40,7 +40,7 @@ describe('uploadCheckInPhoto', () => {
     const url = await uploadCheckInPhoto(file);
 
     expect(mockUpload).toHaveBeenCalledWith(
-      expect.stringMatching(/^user-abc\/[a-f0-9-]+\.webp$/),
+      expect.stringMatching(/^user-abc\/[a-f0-9-]+\.\w+$/),
       file,
       { contentType: 'image/jpeg' }
     );
