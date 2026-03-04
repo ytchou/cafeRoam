@@ -44,4 +44,47 @@
 
 ## Fix Pass 1
 
-*(Populated in Phase 6)*
+**Pre-fix SHA:** 34aa80f4386efd2ec49db51747d301def624d5b7
+**Post-fix SHA:** 948aa1c6f70a64ef13489a4741131b2b099abb0c
+
+**Issues fixed:**
+- [Critical] `supabase/migrations/...sql:4` — Made `checkin-photos` bucket `public=true`; removed redundant SELECT policy
+- [Important] `components/checkins/photo-uploader.tsx:75` — Memoized blob URLs via `useMemo` + `useEffect` cleanup with `revokeObjectURL`
+- [Important] `lib/supabase/storage.ts:9` — Derive file extension from `file.name` instead of hardcoding `'webp'`
+- [Important] `backend/api/shops.py:61,75` — Guard `photo_urls[0]` with `if row.get("photo_urls")` check
+- [Important] `backend/api/shops.py:68-72` — Added `.limit(1)` to anon preview query
+- [Important] `backend/api/shops.py:35` — Added `Query(ge=1, le=50)` upper bound on limit param
+- [Important] `components/checkins/checkin-photo-grid.tsx:41` — Prefixed SWR key with `auth:`/`anon:` to bust stale cache on login
+- [Minor] `components/stamps/stamp-passport.tsx:87-101` — Wired dot clicks to `scrollRef.scrollTo()` via `useRef`
+- [Minor] `components/stamps/stamp-passport.tsx` — Imported `StampData` from `use-user-stamps.ts` (removed duplicate)
+- [Minor] `components/checkins/photo-uploader.tsx` — Added `name:size` fingerprint dedup in `handleFiles`
+- [Minor] `app/(protected)/checkin/[shopId]/page.tsx` — Added stamp SVG `icon` to success toast
+
+**Test fixes:**
+- `photo-uploader.test.tsx`, `page.test.tsx` — Added `URL.revokeObjectURL = vi.fn()` stub
+- `storage.test.ts` — Updated path regex from `\.webp` to `\.\w+`
+- `test_shop_checkins.py` — Updated anon mock chain to include `.limit()`
+
+**Batch Test Run:**
+- `pnpm test` — PASS (4 pre-existing admin failures unrelated to this branch)
+- `uv run pytest` — PASS for all shop checkins tests; pre-existing failures in other test suites unrelated
+
+---
+
+## Pass 2 — Re-Verify
+
+*Agents re-run (smart routing): Bug Hunter (Opus), Architecture (Sonnet)*
+*Agents skipped (Minor-only findings in Pass 1): Standards, Plan Alignment, Test Philosophy*
+
+### Previously Flagged Issues — Resolution Status
+All 10 issues verified as resolved. No Critical or Important regressions introduced.
+
+---
+
+## Final State
+
+**Iterations completed:** 1
+**All Critical/Important resolved:** Yes
+**Remaining issues:** None blocking (all fixed)
+
+**Review log:** docs/reviews/2026-03-04-feat-checkin-stamps.md
