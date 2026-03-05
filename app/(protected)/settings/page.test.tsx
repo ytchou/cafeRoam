@@ -237,14 +237,19 @@ describe('Profile editing', () => {
 
   it('rejects non-image files with an error message', async () => {
     render(<SettingsPage />, { wrapper });
-    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+    const fileInput = document.querySelector(
+      'input[type="file"]'
+    ) as HTMLInputElement;
 
     // userEvent respects accept="image/*" and drops non-image files before firing onChange.
     // Use fireEvent to simulate a file arriving via drag-and-drop (bypasses accept filter).
     const pdfFile = new File(['content'], 'document.pdf', {
       type: 'application/pdf',
     });
-    Object.defineProperty(fileInput, 'files', { value: [pdfFile], configurable: true });
+    Object.defineProperty(fileInput, 'files', {
+      value: [pdfFile],
+      configurable: true,
+    });
     fireEvent.change(fileInput);
 
     await waitFor(() => {
@@ -255,7 +260,9 @@ describe('Profile editing', () => {
 
   it('rejects images over 1MB with an error message', async () => {
     render(<SettingsPage />, { wrapper });
-    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+    const fileInput = document.querySelector(
+      'input[type="file"]'
+    ) as HTMLInputElement;
 
     const largeFile = new File(
       [new ArrayBuffer(1024 * 1024 + 1)],
@@ -279,7 +286,9 @@ describe('Profile editing', () => {
       },
     });
     render(<SettingsPage />, { wrapper });
-    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+    const fileInput = document.querySelector(
+      'input[type="file"]'
+    ) as HTMLInputElement;
 
     const avatarFile = new File(['img'], 'selfie.jpg', { type: 'image/jpeg' });
     await userEvent.upload(fileInput, avatarFile);

@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import {
   Drawer,
@@ -29,10 +30,11 @@ export function StampDetailSheet({ stamp, onClose }: StampDetailSheetProps) {
     <Drawer open onOpenChange={(isOpen) => !isOpen && onClose()}>
       <DrawerContent>
         <DrawerHeader className="flex flex-col items-center gap-3 pb-6">
-          <img
+          <Image
             src={stamp.design_url}
             alt={`${shopName} stamp`}
-            className="h-24 w-24"
+            width={96}
+            height={96}
           />
           <DrawerTitle>{shopName}</DrawerTitle>
           <p className="text-muted-foreground text-sm">Earned {earnedDate}</p>

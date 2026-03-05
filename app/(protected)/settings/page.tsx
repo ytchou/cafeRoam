@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { createClient } from '@/lib/supabase/client';
 import { useUserProfile } from '@/lib/hooks/use-user-profile';
 import { fetchWithAuth } from '@/lib/api/fetch';
@@ -163,12 +164,13 @@ export default function SettingsPage() {
           <div>
             <p className="mb-2 block text-sm font-medium">Avatar</p>
             <div className="flex items-center gap-4">
-              <div className="bg-muted flex h-16 w-16 items-center justify-center overflow-hidden rounded-full">
+              <div className="bg-muted relative flex h-16 w-16 items-center justify-center overflow-hidden rounded-full">
                 {avatarUrl ? (
-                  <img
+                  <Image
                     src={avatarUrl}
                     alt="Avatar"
-                    className="h-full w-full object-cover"
+                    fill
+                    className="object-cover"
                   />
                 ) : (
                   <span className="text-muted-foreground text-lg font-medium">

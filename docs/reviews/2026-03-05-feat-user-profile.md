@@ -126,28 +126,28 @@ No regressions from the fixes. One edge case noted but classified as pre-existin
 
 ### Issues Found (9 total)
 
-| # | Severity | File:Line | Description | Flagged By |
-|---|----------|-----------|-------------|------------|
-| 1 | Important | `backend/api/stamps.py:18-23` | Supabase SDK `.execute()` called in `async def` without `asyncio.to_thread` — blocks event loop (new: modified in PR) | Bug Hunter, Standards, Architecture |
-| 2 | Important | `backend/services/lists_service.py:16-22` | `get_summaries` — same event loop blocking pattern (new method introduced in PR) | Bug Hunter, Standards, Architecture |
-| 3 | Important | `backend/services/checkin_service.py:85-91` | `get_by_user` — same event loop blocking pattern (modified in PR to add JOIN) | Bug Hunter, Architecture |
-| 4 | Important | `backend/models/types.py:82` | `avatar_url` validator accepts any `https://` URL; design doc requires Supabase Storage URL prefix restriction | Bug Hunter, Standards, Architecture, Plan Alignment |
-| 5 | Important | `backend/tests/api/test_checkins.py:32-45,55-68` | `CheckInService` (internal module) mocked instead of relying on boundary-mocked DB; also tests wiring, not behavior | Test Philosophy |
-| 6 | Minor | `app/(protected)/settings/page.tsx:114` | Avatar path uses extension (`avatar.${ext}`); switching formats creates orphaned storage files | Bug Hunter, Architecture |
-| 7 | Minor | `components/profile/checkin-history-tab.tsx` | Date uses `formatDate` (absolute zh-TW); design spec calls for `formatDistanceToNow` (relative) | Plan Alignment |
-| 8 | Minor | `app/(protected)/settings/page.test.tsx` | Avatar upload flow (file select, MIME/size validation, upload success/failure) not tested | Plan Alignment |
-| 9 | Minor | `backend/tests/services/test_checkin_service.py:21-27,101-141` | Placeholder IDs (`"user-1"`, `"shop-1"`) + function-centric test names (`test_get_by_user`) | Test Philosophy |
-| 10 | Minor | `app/(protected)/settings/page.tsx:103-120` | No loading state during avatar upload; user can click Save before upload completes | Gemini |
-| 11 | Minor | `backend/tests/test_profile_api.py:17` | Auth fixture uses `"Bearer test-token"` placeholder | Test Philosophy |
+| #   | Severity  | File:Line                                                      | Description                                                                                                           | Flagged By                                          |
+| --- | --------- | -------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| 1   | Important | `backend/api/stamps.py:18-23`                                  | Supabase SDK `.execute()` called in `async def` without `asyncio.to_thread` — blocks event loop (new: modified in PR) | Bug Hunter, Standards, Architecture                 |
+| 2   | Important | `backend/services/lists_service.py:16-22`                      | `get_summaries` — same event loop blocking pattern (new method introduced in PR)                                      | Bug Hunter, Standards, Architecture                 |
+| 3   | Important | `backend/services/checkin_service.py:85-91`                    | `get_by_user` — same event loop blocking pattern (modified in PR to add JOIN)                                         | Bug Hunter, Architecture                            |
+| 4   | Important | `backend/models/types.py:82`                                   | `avatar_url` validator accepts any `https://` URL; design doc requires Supabase Storage URL prefix restriction        | Bug Hunter, Standards, Architecture, Plan Alignment |
+| 5   | Important | `backend/tests/api/test_checkins.py:32-45,55-68`               | `CheckInService` (internal module) mocked instead of relying on boundary-mocked DB; also tests wiring, not behavior   | Test Philosophy                                     |
+| 6   | Minor     | `app/(protected)/settings/page.tsx:114`                        | Avatar path uses extension (`avatar.${ext}`); switching formats creates orphaned storage files                        | Bug Hunter, Architecture                            |
+| 7   | Minor     | `components/profile/checkin-history-tab.tsx`                   | Date uses `formatDate` (absolute zh-TW); design spec calls for `formatDistanceToNow` (relative)                       | Plan Alignment                                      |
+| 8   | Minor     | `app/(protected)/settings/page.test.tsx`                       | Avatar upload flow (file select, MIME/size validation, upload success/failure) not tested                             | Plan Alignment                                      |
+| 9   | Minor     | `backend/tests/services/test_checkin_service.py:21-27,101-141` | Placeholder IDs (`"user-1"`, `"shop-1"`) + function-centric test names (`test_get_by_user`)                           | Test Philosophy                                     |
+| 10  | Minor     | `app/(protected)/settings/page.tsx:103-120`                    | No loading state during avatar upload; user can click Save before upload completes                                    | Gemini                                              |
+| 11  | Minor     | `backend/tests/test_profile_api.py:17`                         | Auth fixture uses `"Bearer test-token"` placeholder                                                                   | Test Philosophy                                     |
 
 ### False Positives / Skipped
 
-| Issue | Reason |
-|-------|--------|
-| `update_profile` silently succeeds for 0 rows | FALSE POSITIVE: `handle_new_user` trigger guarantees profile row exists for all auth users (Gemini dispute confirmed by migration check) |
-| `CheckInWithShop(**row)` raises on null `photo_urls` | FALSE POSITIVE: business rule + DB constraint prevent null `photo_urls` |
-| `preview_photos` skips shops with no photos | Intentional: only show photos that exist; not a data integrity issue |
-| `<img>` instead of `next/image` in ProfileHeader | Intentional: lint rule explicitly silenced; known performance tradeoff |
+| Issue                                                | Reason                                                                                                                                   |
+| ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `update_profile` silently succeeds for 0 rows        | FALSE POSITIVE: `handle_new_user` trigger guarantees profile row exists for all auth users (Gemini dispute confirmed by migration check) |
+| `CheckInWithShop(**row)` raises on null `photo_urls` | FALSE POSITIVE: business rule + DB constraint prevent null `photo_urls`                                                                  |
+| `preview_photos` skips shops with no photos          | Intentional: only show photos that exist; not a data integrity issue                                                                     |
+| `<img>` instead of `next/image` in ProfileHeader     | Intentional: lint rule explicitly silenced; known performance tradeoff                                                                   |
 
 ### Gemini Disputes Applied
 
@@ -169,28 +169,28 @@ No regressions from the fixes. One edge case noted but classified as pre-existin
 
 ### Issues Found (11 valid after false positive filtering)
 
-| # | Severity | File:Line | Description | Flagged By |
-|---|----------|-----------|-------------|------------|
-| 1 | Important | `backend/api/stamps.py` | Supabase SDK called synchronously in async handler (event loop blocking) | Bug Hunter, Standards, Architecture |
-| 2 | Important | `backend/services/lists_service.py` | `get_summaries` — same blocking pattern | Bug Hunter, Standards, Architecture |
-| 3 | Important | `backend/services/checkin_service.py` | `get_by_user` — same blocking pattern | Bug Hunter, Standards, Architecture |
-| 4 | Important | `backend/models/types.py:79-84` | `avatar_url` validator accepts any HTTPS URL — not restricted to Storage bucket | Bug Hunter, Standards, Architecture, Plan Alignment |
-| 5 | Important | `backend/tests/api/test_checkins.py` | Internal `CheckInService` mocked — violates boundary-only mock rule | Test Philosophy |
-| 6 | Minor | `app/(protected)/settings/page.tsx:114-116` | Avatar upload path includes extension — orphaned files on format change | Bug Hunter, Architecture |
-| 7 | Minor | `app/(protected)/settings/page.tsx` | No `uploading` state — Save button clickable during upload | Gemini |
-| 8 | Minor | `components/profile/checkin-history-tab.tsx` | Uses `formatDate` (absolute) instead of `formatRelativeTime` per design doc | Plan Alignment |
-| 9 | Minor | `app/(protected)/settings/page.test.tsx` | Missing avatar upload test coverage (3 scenarios) | Plan Alignment |
-| 10 | Minor | `backend/tests/services/test_checkin_service.py` | Test names framed around function signatures, not user journeys | Test Philosophy |
-| 11 | Minor | `backend/tests/test_profile_api.py:17` | Placeholder auth token `"Bearer test-token"` | Test Philosophy |
+| #   | Severity  | File:Line                                        | Description                                                                     | Flagged By                                          |
+| --- | --------- | ------------------------------------------------ | ------------------------------------------------------------------------------- | --------------------------------------------------- |
+| 1   | Important | `backend/api/stamps.py`                          | Supabase SDK called synchronously in async handler (event loop blocking)        | Bug Hunter, Standards, Architecture                 |
+| 2   | Important | `backend/services/lists_service.py`              | `get_summaries` — same blocking pattern                                         | Bug Hunter, Standards, Architecture                 |
+| 3   | Important | `backend/services/checkin_service.py`            | `get_by_user` — same blocking pattern                                           | Bug Hunter, Standards, Architecture                 |
+| 4   | Important | `backend/models/types.py:79-84`                  | `avatar_url` validator accepts any HTTPS URL — not restricted to Storage bucket | Bug Hunter, Standards, Architecture, Plan Alignment |
+| 5   | Important | `backend/tests/api/test_checkins.py`             | Internal `CheckInService` mocked — violates boundary-only mock rule             | Test Philosophy                                     |
+| 6   | Minor     | `app/(protected)/settings/page.tsx:114-116`      | Avatar upload path includes extension — orphaned files on format change         | Bug Hunter, Architecture                            |
+| 7   | Minor     | `app/(protected)/settings/page.tsx`              | No `uploading` state — Save button clickable during upload                      | Gemini                                              |
+| 8   | Minor     | `components/profile/checkin-history-tab.tsx`     | Uses `formatDate` (absolute) instead of `formatRelativeTime` per design doc     | Plan Alignment                                      |
+| 9   | Minor     | `app/(protected)/settings/page.test.tsx`         | Missing avatar upload test coverage (3 scenarios)                               | Plan Alignment                                      |
+| 10  | Minor     | `backend/tests/services/test_checkin_service.py` | Test names framed around function signatures, not user journeys                 | Test Philosophy                                     |
+| 11  | Minor     | `backend/tests/test_profile_api.py:17`           | Placeholder auth token `"Bearer test-token"`                                    | Test Philosophy                                     |
 
 ### False Positives Skipped
 
-| Issue | Reason |
-|-------|--------|
-| `update_profile` 0-rows silent success | `handle_new_user` DB trigger guarantees profile row — Gemini dispute confirmed |
+| Issue                                      | Reason                                                                              |
+| ------------------------------------------ | ----------------------------------------------------------------------------------- |
+| `update_profile` 0-rows silent success     | `handle_new_user` DB trigger guarantees profile row — Gemini dispute confirmed      |
 | `CheckInWithShop(**row)` null `photo_urls` | Business rule prevents null; Gemini raised, but data constraint makes it impossible |
-| `<img>` vs `next/image` in profile header | Intentional; lint rule silenced; documented tradeoff |
-| `preview_photos` skips empty shops | Intentional — only show photos that exist |
+| `<img>` vs `next/image` in profile header  | Intentional; lint rule silenced; documented tradeoff                                |
+| `preview_photos` skips empty shops         | Intentional — only show photos that exist                                           |
 
 ## Fix Pass 1
 
@@ -199,14 +199,14 @@ No regressions from the fixes. One edge case noted but classified as pre-existin
 
 ### Issues Fixed
 
-| # | Commit | Description |
-|---|--------|-------------|
-| 1,2,3 | 8a12e63 | Wrapped supabase calls in `asyncio.to_thread` in stamps.py, lists_service.py (get_summaries), checkin_service.py (get_by_user) |
-| 4 | 9f0fc08 | Restricted avatar_url to `/storage/v1/object/public/avatars/` path |
-| 5 | b198cd2 | Removed internal CheckInService mock; test at DB boundary only |
-| 6,7,8 | f98b92b | Extension-less avatar path; uploading state; formatRelativeTime in checkin tab |
-| 9,10,11 | 164b0e7 | Avatar upload tests; checkin test user-journey names; realistic test data |
-| - | d7dc049 | Fix avatar file input selector (document.querySelector + fireEvent for accept bypass) |
+| #       | Commit  | Description                                                                                                                    |
+| ------- | ------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| 1,2,3   | 8a12e63 | Wrapped supabase calls in `asyncio.to_thread` in stamps.py, lists_service.py (get_summaries), checkin_service.py (get_by_user) |
+| 4       | 9f0fc08 | Restricted avatar_url to `/storage/v1/object/public/avatars/` path                                                             |
+| 5       | b198cd2 | Removed internal CheckInService mock; test at DB boundary only                                                                 |
+| 6,7,8   | f98b92b | Extension-less avatar path; uploading state; formatRelativeTime in checkin tab                                                 |
+| 9,10,11 | 164b0e7 | Avatar upload tests; checkin test user-journey names; realistic test data                                                      |
+| -       | d7dc049 | Fix avatar file input selector (document.querySelector + fireEvent for accept bypass)                                          |
 
 ### Batch Test Run
 
@@ -215,7 +215,7 @@ No regressions from the fixes. One edge case noted but classified as pre-existin
 
 ## Pass 2 — Re-Verify (Smart Routing)
 
-*Agents re-run: Bug Hunter, Standards, Architecture, Plan Alignment, Test Philosophy*
+_Agents re-run: Bug Hunter, Standards, Architecture, Plan Alignment, Test Philosophy_
 
 ### Previously Flagged Issues — Resolution Status
 
@@ -223,10 +223,10 @@ All 11 issues confirmed resolved.
 
 ### New Issues Found in Fix Diff
 
-| # | Severity | File:Line | Description |
-|---|----------|-----------|-------------|
-| 1 | Important | `backend/services/lists_service.py:47-53` | `get_by_user` — missed in first pass, same blocking pattern |
-| 2 | Important | `backend/services/checkin_service.py:52,73-79,103-109` | `create`, `update_review`, `get_by_shop` — same blocking pattern |
+| #   | Severity  | File:Line                                              | Description                                                      |
+| --- | --------- | ------------------------------------------------------ | ---------------------------------------------------------------- |
+| 1   | Important | `backend/services/lists_service.py:47-53`              | `get_by_user` — missed in first pass, same blocking pattern      |
+| 2   | Important | `backend/services/checkin_service.py:52,73-79,103-109` | `create`, `update_review`, `get_by_shop` — same blocking pattern |
 
 ### Fix Pass 2
 

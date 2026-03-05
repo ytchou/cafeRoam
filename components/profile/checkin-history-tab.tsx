@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import type { CheckInData } from '@/lib/hooks/use-user-checkins';
 import { formatRelativeTime } from '@/lib/utils';
@@ -42,10 +43,12 @@ function CheckinCard({ checkin }: { checkin: CheckInData }) {
   return (
     <div className="flex gap-3 rounded-lg border p-3">
       {checkin.photo_urls[0] && (
-        <img
+        <Image
           src={checkin.photo_urls[0]}
           alt=""
-          className="h-[60px] w-[60px] rounded-md object-cover"
+          width={60}
+          height={60}
+          className="rounded-md object-cover"
         />
       )}
       <div className="min-w-0 flex-1">

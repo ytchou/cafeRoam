@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useRef, useState } from 'react';
+import Image from 'next/image';
 import type { StampData } from '@/lib/hooks/use-user-stamps';
 
 const SLOTS_PER_PAGE = 20;
@@ -62,11 +63,14 @@ export function StampPassport({ stamps, onStampClick }: StampPassportProps) {
                   className="flex aspect-square cursor-pointer items-center justify-center rounded-lg bg-amber-50 p-1"
                   onClick={() => onStampClick?.(stamp)}
                 >
-                  <img
-                    src={stamp.design_url}
-                    alt="Stamp"
-                    className="h-full w-full object-contain"
-                  />
+                  <div className="relative h-full w-full">
+                    <Image
+                      src={stamp.design_url}
+                      alt="Stamp"
+                      fill
+                      className="object-contain"
+                    />
+                  </div>
                 </div>
               ) : (
                 <div

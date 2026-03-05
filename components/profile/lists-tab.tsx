@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import type { ListSummaryData } from '@/lib/hooks/use-list-summaries';
 
@@ -53,11 +54,13 @@ function ListCard({ list }: { list: ListSummaryData }) {
       <div className="flex items-center">
         <div className="flex -space-x-2">
           {list.preview_photos.map((url, i) => (
-            <img
+            <Image
               key={i}
               src={url}
               alt={`${list.name} shop preview ${i + 1}`}
-              className="border-background h-10 w-10 rounded-full border-2 object-cover"
+              width={40}
+              height={40}
+              className="border-background rounded-full border-2 object-cover"
             />
           ))}
         </div>
