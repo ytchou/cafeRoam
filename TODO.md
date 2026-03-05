@@ -652,7 +652,7 @@ This is the final gate for Phase 1. Two paths: fast path seeds 29 pre-built shop
 
 **Chunk 5 — Verification:**
 
-- [ ] Full verification (pytest, vitest, ruff, mypy, pnpm build)
+- [x] Full verification (pytest, vitest, ruff, mypy, pnpm build)
 
 **Phase 2A is done when:** A user can sign up, check in with a photo at a seed shop, earn a stamp, create a list, leave a review, and view their profile — all without a full shop corpus. PostHog confirms `checkin_completed`, `profile_stamps_viewed`, and `session_start` fire correctly.
 

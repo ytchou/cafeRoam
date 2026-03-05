@@ -207,17 +207,27 @@ describe('CheckInPage', () => {
   });
 
   it('fires checkin_completed PostHog event after successful submit', async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({
-        id: 'ci-4',
-        shop_id: 'shop-d4e5f6',
-        photo_urls: [
-          'https://example.supabase.co/storage/v1/object/public/checkin-photos/user-abc/photo.webp',
-        ],
-        is_first_checkin_at_shop: true,
-        created_at: '2026-03-04T10:00:00Z',
-      }),
+    // Reset to clear beforeEach queue, then use url-based routing for this test
+    mockFetch.mockReset();
+    mockFetch.mockImplementation((url: string) => {
+      if (url === '/api/checkins') {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            id: 'ci-4',
+            shop_id: 'shop-d4e5f6',
+            photo_urls: [
+              'https://example.supabase.co/storage/v1/object/public/checkin-photos/user-abc/photo.webp',
+            ],
+            is_first_checkin_at_shop: true,
+            created_at: '2026-03-04T10:00:00Z',
+          }),
+        });
+      }
+      return Promise.resolve({
+        ok: true,
+        json: async () => ({ id: 'shop-d4e5f6', name: '山小孩咖啡' }),
+      });
     });
 
     render(<CheckInPage />);

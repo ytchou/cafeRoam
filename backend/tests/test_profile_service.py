@@ -98,7 +98,7 @@ class TestSessionHeartbeat:
     @pytest.mark.asyncio
     async def test_returning_user_gets_correct_session_count(self, mock_db: MagicMock):
         """Returning user after >30 min gets incremented count."""
-        from datetime import UTC, datetime, timedelta
+        from datetime import UTC, datetime
         first = datetime(2026, 3, 1, tzinfo=UTC)
         last = datetime(2026, 3, 3, tzinfo=UTC)  # >30 min ago
         profile_table = MagicMock()
