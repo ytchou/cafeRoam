@@ -76,6 +76,13 @@ class ProfileUpdateRequest(BaseModel):
                 raise ValueError("Display name must be 30 characters or less")
         return v
 
+    @field_validator("avatar_url")
+    @classmethod
+    def validate_avatar_url(cls, v: str | None) -> str | None:
+        if v is not None and not v.startswith("https://"):
+            raise ValueError("Avatar URL must use HTTPS")
+        return v
+
 
 class StampWithShop(BaseModel):
     id: str
@@ -84,14 +91,14 @@ class StampWithShop(BaseModel):
     check_in_id: str
     design_url: str
     earned_at: datetime
-    shop_name: str
+    shop_name: str | None = None
 
 
 class CheckInWithShop(BaseModel):
     id: str
     user_id: str
     shop_id: str
-    shop_name: str
+    shop_name: str | None = None
     shop_mrt: str | None = None
     photo_urls: list[str]
     menu_photo_url: str | None = None

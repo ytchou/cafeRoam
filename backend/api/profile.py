@@ -28,12 +28,10 @@ async def update_profile(
     db: Client = Depends(get_user_db),
 ) -> dict[str, str]:
     service = ProfileService(db=db)
-    try:
-        await service.update_profile(
-            user["id"],
-            display_name=body.display_name,
-            avatar_url=body.avatar_url,
-        )
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e)) from None
+    await service.update_profile(
+        user["id"],
+        fields=body.model_fields_set,
+        display_name=body.display_name,
+        avatar_url=body.avatar_url,
+    )
     return {"message": "Profile updated"}

@@ -42,7 +42,7 @@ describe('SettingsPage', () => {
     ).toBeInTheDocument();
   });
 
-  it('logout calls signOut and redirects to /', async () => {
+  it('user can log out and is redirected to the home page', async () => {
     render(<SettingsPage />);
     await userEvent.click(screen.getByRole('button', { name: /logout/i }));
     expect(mockAuth.signOut).toHaveBeenCalledOnce();
@@ -76,7 +76,7 @@ describe('SettingsPage', () => {
     expect(confirmBtn).not.toBeDisabled();
   });
 
-  it('successful account deletion calls API, signs out, and redirects', async () => {
+  it('user can request account deletion and is signed out', async () => {
     mockFetch.mockResolvedValue({ ok: true });
     render(<SettingsPage />);
 

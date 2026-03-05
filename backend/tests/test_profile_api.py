@@ -1,4 +1,4 @@
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 from fastapi.testclient import TestClient
@@ -42,7 +42,7 @@ class TestGetProfile:
 
     def test_returns_401_without_auth(self, client: TestClient):
         resp = client.get("/profile")
-        assert resp.status_code in (401, 422)
+        assert resp.status_code == 401
 
 
 class TestPatchProfile:

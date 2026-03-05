@@ -13,30 +13,31 @@ def mock_db():
     return db
 
 
+def _make_table_map(profile_data: list, stamp_count: int = 0, checkin_count: int = 0):
+    """Build per-table mocks for asyncio.gather dispatch-by-name pattern."""
+    profile_table = MagicMock()
+    stamp_table = MagicMock()
+    checkin_table = MagicMock()
+
+    profile_table.select.return_value.eq.return_value.limit.return_value.execute.return_value.data = profile_data
+    stamp_table.select.return_value.eq.return_value.execute.return_value.count = stamp_count
+    checkin_table.select.return_value.eq.return_value.execute.return_value.count = checkin_count
+
+    return {"profiles": profile_table, "stamps": stamp_table, "check_ins": checkin_table}
+
+
 class TestGetProfile:
     @pytest.mark.asyncio
-    async def test_returns_profile_with_counts(self, mock_db: MagicMock):
-        user_id = "user-123"
-
-        # Dispatch by table name — order is non-deterministic with asyncio.gather
-        profile_table = MagicMock()
-        stamp_table = MagicMock()
-        checkin_table = MagicMock()
-        table_map = {"profiles": profile_table, "stamps": stamp_table, "check_ins": checkin_table}
+    async def test_profile_page_shows_stamps_and_checkin_counts(self, mock_db: MagicMock):
+        table_map = _make_table_map(
+            profile_data=[{"display_name": "Mei-Ling", "avatar_url": "https://example.com/avatar.jpg"}],
+            stamp_count=12,
+            checkin_count=8,
+        )
         mock_db.table.side_effect = lambda name: table_map[name]
 
-        # Mock profiles query
-        profile_table.select.return_value.eq.return_value.single.return_value.execute.return_value.data = {
-            "display_name": "Mei-Ling",
-            "avatar_url": "https://example.com/avatar.jpg",
-        }
-        # Mock stamp count
-        stamp_table.select.return_value.eq.return_value.execute.return_value.count = 12
-        # Mock checkin count
-        checkin_table.select.return_value.eq.return_value.execute.return_value.count = 8
-
         service = ProfileService(db=mock_db)
-        result = await service.get_profile(user_id)
+        result = await service.get_profile("user-123")
 
         assert isinstance(result, ProfileResponse)
         assert result.display_name == "Mei-Ling"
@@ -44,16 +45,16 @@ class TestGetProfile:
         assert result.checkin_count == 8
 
     @pytest.mark.asyncio
-    async def test_returns_zero_counts_for_new_user(self, mock_db: MagicMock):
-        user_id = "user-new"
-        mock_db.table.return_value.select.return_value.eq.return_value.single.return_value.execute.return_value.data = {
-            "display_name": None,
-            "avatar_url": None,
-        }
-        mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value.count = 0
+    async def test_new_user_sees_zero_counts_before_first_checkin(self, mock_db: MagicMock):
+        table_map = _make_table_map(
+            profile_data=[{"display_name": None, "avatar_url": None}],
+            stamp_count=0,
+            checkin_count=0,
+        )
+        mock_db.table.side_effect = lambda name: table_map[name]
 
         service = ProfileService(db=mock_db)
-        result = await service.get_profile(user_id)
+        result = await service.get_profile("user-new")
 
         assert result.display_name is None
         assert result.stamp_count == 0
@@ -62,19 +63,15 @@ class TestGetProfile:
 
 class TestUpdateProfile:
     @pytest.mark.asyncio
-    async def test_updates_display_name(self, mock_db: MagicMock):
-        user_id = "user-123"
-        mock_db.table.return_value.update.return_value.eq.return_value.execute.return_value.data = [
-            {"display_name": "New Name", "avatar_url": None}
-        ]
-
+    async def test_user_can_update_their_display_name(self, mock_db: MagicMock):
         service = ProfileService(db=mock_db)
-        await service.update_profile(user_id, display_name="New Name")
+        await service.update_profile("user-123", fields={"display_name"}, display_name="New Name")
 
-        mock_db.table.return_value.update.assert_called()
+        mock_db.table.return_value.update.assert_called_once_with({"display_name": "New Name"})
 
     @pytest.mark.asyncio
-    async def test_update_with_empty_data_raises(self, mock_db: MagicMock):
+    async def test_patch_with_no_fields_is_a_no_op(self, mock_db: MagicMock):
         service = ProfileService(db=mock_db)
-        with pytest.raises(ValueError, match="No fields to update"):
-            await service.update_profile("user-123")
+        await service.update_profile("user-123", fields=set())
+
+        mock_db.table.return_value.update.assert_not_called()

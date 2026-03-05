@@ -17,7 +17,7 @@ class ProfileService:
                 lambda: self._db.table("profiles")
                 .select("display_name, avatar_url")
                 .eq("id", user_id)
-                .single()
+                .limit(1)
                 .execute()
             ),
             asyncio.to_thread(
@@ -33,7 +33,8 @@ class ProfileService:
                 .execute()
             ),
         )
-        profile = cast("dict[str, Any]", profile_resp.data)
+        rows = cast("list[dict[str, Any]]", profile_resp.data)
+        profile = rows[0] if rows else {}
         return ProfileResponse(
             display_name=profile.get("display_name"),
             avatar_url=profile.get("avatar_url"),
@@ -44,16 +45,20 @@ class ProfileService:
     async def update_profile(
         self,
         user_id: str,
+        fields: set[str],
         display_name: str | None = None,
         avatar_url: str | None = None,
     ) -> None:
+        """Update profile fields. `fields` is the set of keys explicitly provided in the request."""
         update_data: dict[str, Any] = {}
-        if display_name is not None:
+        if "display_name" in fields:
             update_data["display_name"] = display_name
-        if avatar_url is not None:
+        if "avatar_url" in fields:
             update_data["avatar_url"] = avatar_url
 
         if not update_data:
-            raise ValueError("No fields to update")
+            return  # nothing to update — no-op
 
-        self._db.table("profiles").update(update_data).eq("id", user_id).execute()
+        await asyncio.to_thread(
+            lambda: self._db.table("profiles").update(update_data).eq("id", user_id).execute()
+        )

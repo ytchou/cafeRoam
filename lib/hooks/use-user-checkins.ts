@@ -7,7 +7,7 @@ export interface CheckInData {
   id: string;
   user_id: string;
   shop_id: string;
-  shop_name: string;
+  shop_name: string | null; // null if shop was deleted
   shop_mrt: string | null;
   photo_urls: string[];
   stars: number | null;

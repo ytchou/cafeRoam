@@ -50,7 +50,7 @@ function CheckinCard({ checkin }: { checkin: CheckInData }) {
           href={`/shop/${checkin.shop_id}`}
           className="font-medium hover:underline"
         >
-          {checkin.shop_name}
+          {checkin.shop_name ?? 'Unknown Shop'}
         </Link>
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           {checkin.stars != null && <StarDisplay count={checkin.stars} />}

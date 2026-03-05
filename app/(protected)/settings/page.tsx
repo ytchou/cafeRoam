@@ -97,6 +97,10 @@ export default function SettingsPage() {
   }
 
   async function handleAvatarUpload(file: File) {
+    if (!file.type.startsWith('image/')) {
+      setProfileError('File must be an image');
+      return;
+    }
     if (file.size > 1024 * 1024) {
       setProfileError('Image must be under 1MB');
       return;
@@ -107,8 +111,9 @@ export default function SettingsPage() {
     } = await supabase.auth.getSession();
     if (!session) return;
 
+    // Use a fixed path so upsert overwrites the previous avatar (no orphaned files)
     const ext = file.name.split('.').pop() ?? 'jpg';
-    const path = `${session.user.id}/${Date.now()}.${ext}`;
+    const path = `${session.user.id}/avatar.${ext}`;
     const { error: uploadError } = await supabase.storage
       .from('avatars')
       .upload(path, file, { upsert: true });

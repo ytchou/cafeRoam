@@ -9,13 +9,13 @@ from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 
 from api.admin import router as admin_router
-from api.profile import router as profile_router
 from api.admin_shops import router as admin_shops_router
 from api.admin_taxonomy import router as admin_taxonomy_router
 from api.auth import router as auth_router
 from api.checkins import router as checkins_router
 from api.feed import router as feed_router
 from api.lists import router as lists_router
+from api.profile import router as profile_router
 from api.search import router as search_router
 from api.shops import router as shops_router
 from api.stamps import router as stamps_router

@@ -25,7 +25,7 @@ describe('StampDetailSheet', () => {
     expect(link).toHaveAttribute('href', '/shop/shop-a');
   });
 
-  it('is not rendered when parent unmounts it', () => {
+  it('stamp details disappear when the sheet is dismissed', () => {
     const { unmount } = render(<StampDetailSheet stamp={stamp} onClose={vi.fn()} />);
     unmount();
     expect(screen.queryByText('Fika Coffee')).not.toBeInTheDocument();

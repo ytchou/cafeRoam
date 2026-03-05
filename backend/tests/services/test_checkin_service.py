@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -142,7 +142,7 @@ class TestCheckInService:
 
     async def test_create_with_review_includes_review_fields(self, checkin_service, mock_supabase):
         """When a user checks in with a star rating, review fields are persisted."""
-        frozen_now = datetime(2026, 3, 4, 12, 0, 0, tzinfo=timezone.utc)
+        frozen_now = datetime(2026, 3, 4, 12, 0, 0, tzinfo=UTC)
         mock_supabase.table = MagicMock(
             return_value=MagicMock(
                 insert=MagicMock(
@@ -193,7 +193,7 @@ class TestCheckInService:
 
     async def test_update_review_sets_review_fields(self, checkin_service, mock_supabase):
         """When a user adds a review to an existing check-in, review fields are updated."""
-        frozen_now = datetime(2026, 3, 4, 14, 30, 0, tzinfo=timezone.utc)
+        frozen_now = datetime(2026, 3, 4, 14, 30, 0, tzinfo=UTC)
         mock_supabase.table.return_value.update.return_value.eq.return_value.eq.return_value.execute.return_value = MagicMock(
             data=[
                 {
