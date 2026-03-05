@@ -1,6 +1,14 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, it, expect, vi, beforeEach, beforeAll } from 'vitest';
+import {
+  describe,
+  it,
+  expect,
+  vi,
+  beforeEach,
+  afterEach,
+  beforeAll,
+} from 'vitest';
 
 // Stub browser APIs missing in jsdom
 global.URL.createObjectURL = vi.fn(() => 'blob:mock-url');
@@ -57,6 +65,11 @@ vi.mock('@/lib/supabase/client', () => ({
   }),
 }));
 
+const { mockCapture } = vi.hoisted(() => ({ mockCapture: vi.fn() }));
+vi.mock('posthog-js', () => ({
+  default: { capture: mockCapture },
+}));
+
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
@@ -64,13 +77,19 @@ import CheckInPage from './page';
 
 describe('CheckInPage', () => {
   beforeEach(() => {
+    vi.stubEnv('NEXT_PUBLIC_POSTHOG_KEY', 'phc_test');
     mockFetch.mockReset();
     mockBack.mockReset();
+    mockCapture.mockReset();
     // Mock shop fetch
     mockFetch.mockResolvedValueOnce({
       ok: true,
       json: async () => ({ id: 'shop-d4e5f6', name: '山小孩咖啡' }),
     });
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
   });
 
   it('shows the shop name and a disabled submit button initially', async () => {
@@ -197,6 +216,50 @@ describe('CheckInPage', () => {
       expect(postCall).toBeDefined();
       const body = JSON.parse(postCall![1].body);
       expect(body.stars).toBeUndefined();
+    });
+  });
+
+  it('fires checkin_completed PostHog event after successful submit', async () => {
+    // Reset to clear beforeEach queue, then use url-based routing for this test
+    mockFetch.mockReset();
+    mockFetch.mockImplementation((url: string) => {
+      if (url === '/api/checkins') {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            id: 'ci-4',
+            shop_id: 'shop-d4e5f6',
+            photo_urls: [
+              'https://example.supabase.co/storage/v1/object/public/checkin-photos/user-abc/photo.webp',
+            ],
+            is_first_checkin_at_shop: true,
+            created_at: '2026-03-04T10:00:00Z',
+          }),
+        });
+      }
+      return Promise.resolve({
+        ok: true,
+        json: async () => ({ id: 'shop-d4e5f6', name: '山小孩咖啡' }),
+      });
+    });
+
+    render(<CheckInPage />);
+    await screen.findByText(/山小孩咖啡/);
+
+    const input = screen.getByTestId('photo-input');
+    const file = new File(['photo'], 'latte.jpg', { type: 'image/jpeg' });
+    await userEvent.upload(input, file);
+
+    const submitBtn = screen.getByRole('button', { name: /check in/i });
+    await userEvent.click(submitBtn);
+
+    await waitFor(() => {
+      expect(mockCapture).toHaveBeenCalledWith('checkin_completed', {
+        shop_id: 'shop-d4e5f6',
+        is_first_checkin_at_shop: true,
+        has_text_note: false,
+        has_menu_photo: false,
+      });
     });
   });
 });

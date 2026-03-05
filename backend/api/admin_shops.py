@@ -98,7 +98,7 @@ async def list_shops(
 
     shops = []
     for row in cast("list[dict[str, Any]]", response.data):
-        row["has_embedding"] = row.pop("embedding") is not None
+        row["has_embedding"] = row.pop("embedding", None) is not None
         row["tag_count"] = row.pop("shop_tags", [{}])[0].get("count", 0)
         shops.append(row)
 

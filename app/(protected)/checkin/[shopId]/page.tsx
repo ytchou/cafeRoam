@@ -11,12 +11,14 @@ import { StarRating } from '@/components/reviews/star-rating';
 import { TagConfirmation } from '@/components/reviews/tag-confirmation';
 import { fetchWithAuth } from '@/lib/api/fetch';
 import { uploadCheckInPhoto, uploadMenuPhoto } from '@/lib/supabase/storage';
+import { useAnalytics } from '@/lib/posthog/use-analytics';
 
 type SubmitState = 'idle' | 'uploading' | 'submitting';
 
 export default function CheckInPage() {
   const { shopId } = useParams<{ shopId: string }>();
   const router = useRouter();
+  const { capture } = useAnalytics();
 
   const { data: shop } = useSWR(shopId ? `/api/shops/${shopId}` : null, (url) =>
     fetch(url).then((r) => r.json())
@@ -73,7 +75,7 @@ export default function CheckInPage() {
 
       setSubmitState('submitting');
 
-      await fetchWithAuth('/api/checkins', {
+      const checkinResult = await fetchWithAuth('/api/checkins', {
         method: 'POST',
         body: JSON.stringify({
           shop_id: shopId,
@@ -86,6 +88,13 @@ export default function CheckInPage() {
             confirmed_tags: confirmedTags,
           }),
         }),
+      });
+
+      capture('checkin_completed', {
+        shop_id: shopId,
+        is_first_checkin_at_shop: checkinResult.is_first_checkin_at_shop,
+        has_text_note: note.trim().length > 0,
+        has_menu_photo: menuPhoto !== null,
       });
 
       toast('打卡成功！Stamp earned.', {
@@ -122,6 +131,7 @@ export default function CheckInPage() {
     shopId,
     shop,
     router,
+    capture,
   ]);
 
   return (

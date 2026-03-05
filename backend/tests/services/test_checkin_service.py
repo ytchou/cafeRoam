@@ -29,74 +29,77 @@ class TestCheckInService:
     async def test_create_only_inserts_checkin_row(self, checkin_service, mock_supabase):
         """After trigger migration: create() should ONLY insert into check_ins.
         Stamp creation and job queueing are handled by the DB trigger."""
-        mock_supabase.table = MagicMock(
-            return_value=MagicMock(
-                insert=MagicMock(
-                    return_value=MagicMock(
-                        execute=MagicMock(
-                            return_value=MagicMock(
-                                data=[
-                                    {
-                                        "id": "ci-1",
-                                        "user_id": "user-1",
-                                        "shop_id": "shop-1",
-                                        "photo_urls": ["https://example.com/photo.jpg"],
-                                        "menu_photo_url": None,
-                                        "note": None,
-                                        "created_at": datetime.now().isoformat(),
-                                    }
-                                ]
-                            )
-                        )
-                    )
-                )
-            )
+        count_table = MagicMock()
+        count_table.select.return_value.eq.return_value.eq.return_value.execute.return_value = (
+            MagicMock(count=0)
         )
+
+        insert_table = MagicMock()
+        insert_table.insert.return_value.execute.return_value = MagicMock(
+            data=[
+                {
+                    "id": "ci-1",
+                    "user_id": "user-1",
+                    "shop_id": "shop-1",
+                    "photo_urls": ["https://example.com/photo.jpg"],
+                    "menu_photo_url": None,
+                    "note": None,
+                    "created_at": datetime.now().isoformat(),
+                }
+            ]
+        )
+
+        mock_supabase.table.side_effect = [count_table, insert_table]
+
         result = await checkin_service.create(
             user_id="user-1",
             shop_id="shop-1",
             photo_urls=["https://example.com/photo.jpg"],
         )
         assert result.id == "ci-1"
+        assert result.is_first_checkin_at_shop is True
         # Service should only call table("check_ins") — NOT stamps or job_queue
+        # (Two calls expected: one count query + one insert)
         table_calls = [c[0][0] for c in mock_supabase.table.call_args_list]
-        assert table_calls == ["check_ins"]
+        assert set(table_calls) == {"check_ins"}
 
     async def test_create_with_menu_photo_still_only_inserts_checkin(
         self, checkin_service, mock_supabase
     ):
         """Even with menu_photo_url, service only inserts check_in. Trigger handles job."""
-        mock_supabase.table = MagicMock(
-            return_value=MagicMock(
-                insert=MagicMock(
-                    return_value=MagicMock(
-                        execute=MagicMock(
-                            return_value=MagicMock(
-                                data=[
-                                    {
-                                        "id": "ci-1",
-                                        "user_id": "user-1",
-                                        "shop_id": "shop-1",
-                                        "photo_urls": ["https://example.com/photo.jpg"],
-                                        "menu_photo_url": "https://example.com/menu.jpg",
-                                        "note": None,
-                                        "created_at": datetime.now().isoformat(),
-                                    }
-                                ]
-                            )
-                        )
-                    )
-                )
-            )
+        count_table = MagicMock()
+        count_table.select.return_value.eq.return_value.eq.return_value.execute.return_value = (
+            MagicMock(count=0)
         )
-        await checkin_service.create(
+
+        insert_table = MagicMock()
+        insert_table.insert.return_value.execute.return_value = MagicMock(
+            data=[
+                {
+                    "id": "ci-1",
+                    "user_id": "user-1",
+                    "shop_id": "shop-1",
+                    "photo_urls": ["https://example.com/photo.jpg"],
+                    "menu_photo_url": "https://example.com/menu.jpg",
+                    "note": None,
+                    "created_at": datetime.now().isoformat(),
+                }
+            ]
+        )
+
+        mock_supabase.table.side_effect = [count_table, insert_table]
+
+        result = await checkin_service.create(
             user_id="user-1",
             shop_id="shop-1",
             photo_urls=["https://example.com/photo.jpg"],
             menu_photo_url="https://example.com/menu.jpg",
         )
+        assert result.is_first_checkin_at_shop is True
+        # Service should only call table("check_ins") — NOT stamps or job_queue
+        # (Two calls expected: one count query + one insert)
         table_calls = [c[0][0] for c in mock_supabase.table.call_args_list]
-        assert table_calls == ["check_ins"]
+        assert set(table_calls) == {"check_ins"}
 
     async def test_user_checkin_history_includes_shop_name_and_mrt(
         self, checkin_service, mock_supabase
@@ -154,33 +157,33 @@ class TestCheckInService:
     async def test_create_with_review_includes_review_fields(self, checkin_service, mock_supabase):
         """When a user checks in with a star rating, review fields are persisted."""
         frozen_now = datetime(2026, 3, 4, 12, 0, 0, tzinfo=UTC)
-        mock_supabase.table = MagicMock(
-            return_value=MagicMock(
-                insert=MagicMock(
-                    return_value=MagicMock(
-                        execute=MagicMock(
-                            return_value=MagicMock(
-                                data=[
-                                    {
-                                        "id": "ci-review-1",
-                                        "user_id": "user-42",
-                                        "shop_id": "shop-fuji",
-                                        "photo_urls": ["https://cdn.caferoam.tw/photo1.jpg"],
-                                        "menu_photo_url": None,
-                                        "note": "Great latte art",
-                                        "stars": 4,
-                                        "review_text": "Cozy spot with excellent pour-over",
-                                        "confirmed_tags": ["quiet", "wifi"],
-                                        "reviewed_at": frozen_now.isoformat(),
-                                        "created_at": frozen_now.isoformat(),
-                                    }
-                                ]
-                            )
-                        )
-                    )
-                )
-            )
+
+        count_table = MagicMock()
+        count_table.select.return_value.eq.return_value.eq.return_value.execute.return_value = (
+            MagicMock(count=0)
         )
+
+        insert_table = MagicMock()
+        insert_table.insert.return_value.execute.return_value = MagicMock(
+            data=[
+                {
+                    "id": "ci-review-1",
+                    "user_id": "user-42",
+                    "shop_id": "shop-fuji",
+                    "photo_urls": ["https://cdn.caferoam.tw/photo1.jpg"],
+                    "menu_photo_url": None,
+                    "note": "Great latte art",
+                    "stars": 4,
+                    "review_text": "Cozy spot with excellent pour-over",
+                    "confirmed_tags": ["quiet", "wifi"],
+                    "reviewed_at": frozen_now.isoformat(),
+                    "created_at": frozen_now.isoformat(),
+                }
+            ]
+        )
+
+        mock_supabase.table.side_effect = [count_table, insert_table]
+
         with patch("services.checkin_service.datetime") as mock_dt:
             mock_dt.now.return_value = frozen_now
             mock_dt.side_effect = lambda *a, **kw: datetime(*a, **kw)
@@ -196,7 +199,7 @@ class TestCheckInService:
         assert result.stars == 4
         assert result.review_text == "Cozy spot with excellent pour-over"
         assert result.confirmed_tags == ["quiet", "wifi"]
-        insert_call = mock_supabase.table.return_value.insert.call_args[0][0]
+        insert_call = insert_table.insert.call_args[0][0]
         assert insert_call["stars"] == 4
         assert insert_call["review_text"] == "Cozy spot with excellent pour-over"
         assert insert_call["confirmed_tags"] == ["quiet", "wifi"]

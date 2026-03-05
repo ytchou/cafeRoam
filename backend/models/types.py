@@ -80,7 +80,9 @@ class ProfileUpdateRequest(BaseModel):
     @classmethod
     def validate_avatar_url(cls, v: str | None) -> str | None:
         if v is not None and "/storage/v1/object/public/avatars/" not in v:
-            raise ValueError("Avatar URL must point to the project's Supabase Storage avatars bucket")
+            raise ValueError(
+                "Avatar URL must point to the project's Supabase Storage avatars bucket"
+            )
         return v
 
 
@@ -166,6 +168,12 @@ class CheckIn(BaseModel):
         if len(v) < 1:
             raise ValueError("At least one photo is required for check-in")
         return v
+
+
+class CreateCheckInResponse(CheckIn):
+    """Check-in creation response with analytics metadata."""
+
+    is_first_checkin_at_shop: bool
 
 
 class Stamp(BaseModel):

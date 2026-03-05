@@ -16,11 +16,13 @@ async def get_my_stamps(
 ) -> list[dict[str, Any]]:
     """Get current user's stamps with shop names. Auth required."""
     response = await asyncio.to_thread(
-        lambda: db.table("stamps")
-        .select("*, shops(name)")
-        .eq("user_id", user["id"])
-        .order("earned_at", desc=True)
-        .execute()
+        lambda: (
+            db.table("stamps")
+            .select("*, shops(name)")
+            .eq("user_id", user["id"])
+            .order("earned_at", desc=True)
+            .execute()
+        )
     )
     results = []
     for row in response.data:

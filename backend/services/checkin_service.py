@@ -5,7 +5,7 @@ from typing import Any, cast
 from supabase import Client
 
 from core.db import first
-from models.types import CheckIn, CheckInWithShop
+from models.types import CheckIn, CheckInWithShop, CreateCheckInResponse
 
 
 class CheckInService:
@@ -27,7 +27,7 @@ class CheckInService:
         stars: int | None = None,
         review_text: str | None = None,
         confirmed_tags: list[str] | None = None,
-    ) -> CheckIn:
+    ) -> CreateCheckInResponse:
         """Create a check-in. DB trigger handles stamp creation and job queueing."""
         if len(photo_urls) < 1:
             raise ValueError("At least one photo is required for check-in")
@@ -35,6 +35,20 @@ class CheckInService:
             raise ValueError("review_text requires a star rating")
         if stars is not None:
             self._validate_stars(stars)
+
+        # Check if this is the user's first check-in at this shop.
+        # Note: TOCTOU race exists (concurrent requests could both see count=0).
+        # Acceptable because this field is analytics-only metadata, not business logic.
+        count_resp = await asyncio.to_thread(
+            lambda: (
+                self._db.table("check_ins")
+                .select("id", count="exact")
+                .eq("user_id", user_id)
+                .eq("shop_id", shop_id)
+                .execute()
+            )
+        )
+        is_first = (count_resp.count or 0) == 0
 
         checkin_data: dict[str, Any] = {
             "user_id": user_id,
@@ -53,7 +67,8 @@ class CheckInService:
             lambda: self._db.table("check_ins").insert(checkin_data).execute()
         )
         rows = cast("list[dict[str, Any]]", response.data)
-        return CheckIn(**first(rows, "create check-in"))
+        row = first(rows, "create check-in")
+        return CreateCheckInResponse(**row, is_first_checkin_at_shop=is_first)
 
     async def update_review(
         self,
@@ -73,11 +88,13 @@ class CheckInService:
             "reviewed_at": datetime.now(timezone.utc).isoformat(),  # noqa: UP017
         }
         response = await asyncio.to_thread(
-            lambda: self._db.table("check_ins")
-            .update(update_data)
-            .eq("id", checkin_id)
-            .eq("user_id", user_id)
-            .execute()
+            lambda: (
+                self._db.table("check_ins")
+                .update(update_data)
+                .eq("id", checkin_id)
+                .eq("user_id", user_id)
+                .execute()
+            )
         )
         rows = cast("list[dict[str, Any]]", response.data)
         if not rows:
@@ -86,11 +103,13 @@ class CheckInService:
 
     async def get_by_user(self, user_id: str) -> list[CheckInWithShop]:
         response = await asyncio.to_thread(
-            lambda: self._db.table("check_ins")
-            .select("*, shops(name, mrt)")
-            .eq("user_id", user_id)
-            .order("created_at", desc=True)
-            .execute()
+            lambda: (
+                self._db.table("check_ins")
+                .select("*, shops(name, mrt)")
+                .eq("user_id", user_id)
+                .order("created_at", desc=True)
+                .execute()
+            )
         )
         rows = cast("list[dict[str, Any]]", response.data)
         results = []
@@ -103,11 +122,13 @@ class CheckInService:
 
     async def get_by_shop(self, shop_id: str) -> list[CheckIn]:
         response = await asyncio.to_thread(
-            lambda: self._db.table("check_ins")
-            .select("*")
-            .eq("shop_id", shop_id)
-            .order("created_at", desc=True)
-            .execute()
+            lambda: (
+                self._db.table("check_ins")
+                .select("*")
+                .eq("shop_id", shop_id)
+                .order("created_at", desc=True)
+                .execute()
+            )
         )
         rows = cast("list[dict[str, Any]]", response.data)
         return [CheckIn(**row) for row in rows]

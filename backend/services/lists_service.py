@@ -15,11 +15,13 @@ class ListsService:
     async def get_summaries(self, user_id: str) -> list[ListSummary]:
         """Get lightweight list summaries for profile display."""
         response = await asyncio.to_thread(
-            lambda: self._db.table("lists")
-            .select("id, name, list_items(shop_id, shops(shop_photos(url)))")
-            .eq("user_id", user_id)
-            .order("created_at", desc=True)
-            .execute()
+            lambda: (
+                self._db.table("lists")
+                .select("id, name, list_items(shop_id, shops(shop_photos(url)))")
+                .eq("user_id", user_id)
+                .order("created_at", desc=True)
+                .execute()
+            )
         )
         rows = cast("list[dict[str, Any]]", response.data)
         summaries = []
@@ -45,11 +47,13 @@ class ListsService:
 
     async def get_by_user(self, user_id: str) -> list[ListWithItems]:
         response = await asyncio.to_thread(
-            lambda: self._db.table("lists")
-            .select("*, list_items(shop_id, added_at)")
-            .eq("user_id", user_id)
-            .order("created_at", desc=True)
-            .execute()
+            lambda: (
+                self._db.table("lists")
+                .select("*, list_items(shop_id, added_at)")
+                .eq("user_id", user_id)
+                .order("created_at", desc=True)
+                .execute()
+            )
         )
         rows = cast("list[dict[str, Any]]", response.data)
         results = []

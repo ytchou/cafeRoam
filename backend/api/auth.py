@@ -6,6 +6,7 @@ from supabase import Client
 
 from api.deps import get_admin_db, get_current_user, get_user_db
 from core.db import first
+from services.profile_service import ProfileService
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -105,3 +106,13 @@ async def cancel_deletion(
         user["id"], {"app_metadata": {"deletion_requested": False}}
     )
     return first(response.data, "cancel deletion")
+
+
+@router.post("/session-heartbeat")
+async def session_heartbeat(
+    user: dict[str, Any] = Depends(get_current_user),  # noqa: B008
+    db: Client = Depends(get_user_db),  # noqa: B008
+) -> dict[str, int]:
+    """Track session start for analytics. Deduplicates within 30 min."""
+    service = ProfileService(db=db)
+    return await service.session_heartbeat(user["id"])
