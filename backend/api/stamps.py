@@ -1,3 +1,4 @@
+import asyncio
 from typing import Any
 
 from fastapi import APIRouter, Depends
@@ -14,8 +15,8 @@ async def get_my_stamps(
     db: Client = Depends(get_user_db),  # noqa: B008
 ) -> list[dict[str, Any]]:
     """Get current user's stamps with shop names. Auth required."""
-    response = (
-        db.table("stamps")
+    response = await asyncio.to_thread(
+        lambda: db.table("stamps")
         .select("*, shops(name)")
         .eq("user_id", user["id"])
         .order("earned_at", desc=True)

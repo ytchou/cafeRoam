@@ -1,3 +1,4 @@
+import asyncio
 from typing import Any, cast
 
 from postgrest.exceptions import APIError
@@ -13,8 +14,8 @@ class ListsService:
 
     async def get_summaries(self, user_id: str) -> list[ListSummary]:
         """Get lightweight list summaries for profile display."""
-        response = (
-            self._db.table("lists")
+        response = await asyncio.to_thread(
+            lambda: self._db.table("lists")
             .select("id, name, list_items(shop_id, shops(shop_photos(url)))")
             .eq("user_id", user_id)
             .order("created_at", desc=True)

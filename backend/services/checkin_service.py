@@ -1,3 +1,4 @@
+import asyncio
 from datetime import datetime, timezone
 from typing import Any, cast
 
@@ -82,8 +83,8 @@ class CheckInService:
         return CheckIn(**rows[0])
 
     async def get_by_user(self, user_id: str) -> list[CheckInWithShop]:
-        response = (
-            self._db.table("check_ins")
+        response = await asyncio.to_thread(
+            lambda: self._db.table("check_ins")
             .select("*, shops(name, mrt)")
             .eq("user_id", user_id)
             .order("created_at", desc=True)
