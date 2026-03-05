@@ -1,6 +1,6 @@
+from collections.abc import Callable
 from datetime import UTC, datetime
 from unittest.mock import MagicMock, patch
-from typing import Callable
 
 import pytest
 
