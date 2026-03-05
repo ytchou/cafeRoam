@@ -93,7 +93,7 @@ class TestSessionHeartbeat:
         result = await service.session_heartbeat("user-new")
 
         assert result["days_since_first_session"] == 0
-        assert result["previous_sessions"] == 1  # incremented from 0
+        assert result["previous_sessions"] == 0  # 0 sessions before this one
 
     @pytest.mark.asyncio
     async def test_returning_user_gets_correct_session_count(self, mock_db: MagicMock):
@@ -112,7 +112,7 @@ class TestSessionHeartbeat:
         service = ProfileService(db=mock_db)
         result = await service.session_heartbeat("user-returning")
 
-        assert result["previous_sessions"] == 6  # incremented from 5
+        assert result["previous_sessions"] == 5  # 5 sessions before this one
         assert result["days_since_first_session"] >= 0
 
     @pytest.mark.asyncio

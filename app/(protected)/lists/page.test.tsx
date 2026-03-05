@@ -179,7 +179,7 @@ describe('/lists page', () => {
     });
   });
 
-  it('user sees an error when trying to create a list at the 3-list cap', async () => {
+  it('user sees an error toast when the backend rejects list creation', async () => {
     const user = userEvent.setup();
     const twoLists = THREE_LISTS.slice(0, 2);
     mockFetch.mockReset();

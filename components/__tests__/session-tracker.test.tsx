@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, waitFor } from '@testing-library/react';
 
 vi.mock('@/lib/supabase/client', () => ({
@@ -11,9 +11,9 @@ vi.mock('@/lib/supabase/client', () => ({
   }),
 }));
 
-const mockCapture = vi.fn();
-vi.mock('@/lib/posthog/use-analytics', () => ({
-  useAnalytics: () => ({ capture: mockCapture }),
+const { mockCapture } = vi.hoisted(() => ({ mockCapture: vi.fn() }));
+vi.mock('posthog-js', () => ({
+  default: { capture: mockCapture },
 }));
 
 const mockFetch = vi.fn();
@@ -23,8 +23,13 @@ import { SessionTracker } from '../session-tracker';
 
 describe('SessionTracker', () => {
   beforeEach(() => {
+    vi.stubEnv('NEXT_PUBLIC_POSTHOG_KEY', 'phc_test');
     mockFetch.mockReset();
     mockCapture.mockReset();
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
   });
 
   it('calls heartbeat endpoint and fires session_start event on mount', async () => {

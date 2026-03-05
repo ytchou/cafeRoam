@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { SWRConfig } from 'swr';
 import React from 'react';
 import { makeStamp } from '@/lib/test-utils/factories';
@@ -15,9 +15,9 @@ vi.mock('@/lib/supabase/client', () => ({
   }),
 }));
 
-const mockCapture = vi.fn();
-vi.mock('@/lib/posthog/use-analytics', () => ({
-  useAnalytics: () => ({ capture: mockCapture }),
+const { mockCapture } = vi.hoisted(() => ({ mockCapture: vi.fn() }));
+vi.mock('posthog-js', () => ({
+  default: { capture: mockCapture },
 }));
 
 const mockFetch = vi.fn();
@@ -35,8 +35,13 @@ function wrapper({ children }: { children: React.ReactNode }) {
 
 describe('ProfilePage', () => {
   beforeEach(() => {
+    vi.stubEnv('NEXT_PUBLIC_POSTHOG_KEY', 'phc_test');
     mockFetch.mockReset();
     mockCapture.mockReset();
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
   });
 
   function mockAllEndpoints(

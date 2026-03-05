@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, it, expect, vi, beforeEach, beforeAll } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach, beforeAll } from 'vitest';
 
 // Stub browser APIs missing in jsdom
 global.URL.createObjectURL = vi.fn(() => 'blob:mock-url');
@@ -57,9 +57,9 @@ vi.mock('@/lib/supabase/client', () => ({
   }),
 }));
 
-const mockCapture = vi.fn();
-vi.mock('@/lib/posthog/use-analytics', () => ({
-  useAnalytics: () => ({ capture: mockCapture }),
+const { mockCapture } = vi.hoisted(() => ({ mockCapture: vi.fn() }));
+vi.mock('posthog-js', () => ({
+  default: { capture: mockCapture },
 }));
 
 const mockFetch = vi.fn();
@@ -69,6 +69,7 @@ import CheckInPage from './page';
 
 describe('CheckInPage', () => {
   beforeEach(() => {
+    vi.stubEnv('NEXT_PUBLIC_POSTHOG_KEY', 'phc_test');
     mockFetch.mockReset();
     mockBack.mockReset();
     mockCapture.mockReset();
@@ -77,6 +78,10 @@ describe('CheckInPage', () => {
       ok: true,
       json: async () => ({ id: 'shop-d4e5f6', name: '山小孩咖啡' }),
     });
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
   });
 
   it('shows the shop name and a disabled submit button initially', async () => {

@@ -80,6 +80,7 @@ class ProfileService:
         )
         profile = cast("dict[str, Any]", profile_resp.data)
         session_count: int = profile.get("session_count") or 0
+        previous_count = session_count  # capture before potential increment
         first_session_at = profile.get("first_session_at")
         last_session_at = profile.get("last_session_at")
 
@@ -115,5 +116,5 @@ class ProfileService:
 
         return {
             "days_since_first_session": days,
-            "previous_sessions": session_count,
+            "previous_sessions": previous_count,
         }
