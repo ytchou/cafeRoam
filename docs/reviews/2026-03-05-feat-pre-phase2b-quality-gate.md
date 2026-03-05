@@ -37,7 +37,7 @@ _Agents: Bug Hunter (Opus), Standards (Sonnet), Architecture (Opus), Plan Alignm
 - Skipped (minor): #7, #8, #9, #11 — Low impact, would require invasive refactoring for cosmetic improvement
 - Proceeding to fix: 4 issues (#1, #2, #6, #10)
 
-## Fix Pass 1
+## Fix Pass 1 (Prior Session)
 
 **Pre-fix SHA:** 5ec786e00e10c28deef151389655ecd2222ff50b
 
@@ -49,22 +49,48 @@ _Agents: Bug Hunter (Opus), Standards (Sonnet), Architecture (Opus), Plan Alignm
 - [Minor] Hook test files (3) — Replaced placeholder `'test-token'` with `makeSession()` factory
 - Added regression test: `test_update_review_with_unknown_tags_returns_400`
 
-**Issues skipped (false positives / low impact):**
+## Pass 3 — Re-Discovery (Session 2)
 
-- #3: Table-call assertions test trigger migration intent
-- #4: Time is a system boundary, not an internal module
-- #5: MagicMock auto-vivification is standard for unrelated code paths
-- #7, #8, #9, #11: Minor issues not worth invasive refactoring
+_Agents: Bug Hunter (prior findings), Standards (prior findings), Architecture (prior findings), Plan Alignment (Sonnet), Test Philosophy (Sonnet)_
+
+### New/Refined Issues Found
+
+| # | Severity | File:Line | Description | Flagged By |
+|---|----------|-----------|-------------|------------|
+| 12 | Important | `backend/api/checkins.py:85-89` | String matching on ValueError message for control flow — fragile, should use typed exceptions | Bug Hunter, Standards, Architecture |
+| 13 | Important | `backend/api/checkins.py:88` | 403 for not-found/not-owned check-in is wrong HTTP semantics — should be 404 | Bug Hunter, Standards |
+| 14 | Minor | `backend/services/checkin_service.py:45` | `len(photo_urls) < 1` should be `not photo_urls` (Python convention) | Standards |
+
+### Validation Results (Pass 3)
+
+- Skipped (false positive): "errored counter not logged" — Already logged at `check_urls.py:121-127`
+- Skipped (out of scope): Deep Supabase chain mocking — DB client IS the boundary; repository layer refactor out of scope
+- Skipped (out of scope): Implementation coupling in test assertions — assertions verify trigger migration intent
+- Skipped (out of scope): Mypy ignore_errors breadth — pre-existing debt, narrowing is a separate task
+- Skipped (out of scope): Backend mutation continue-on-error — mutmut bug workaround, documented
+- Skipped (out of scope): Scope creep findings — CI/mutation infra supports PR's quality gate purpose
+- Proceeding to fix: 3 issues (#12, #13, #14)
+
+## Fix Pass 2
+
+**Pre-fix SHA:** 7a0a2af57f29ce70795233aeac7f7644a48af11f
+
+**Issues fixed:**
+
+- [Important] #12+#13 — Created `core.exceptions.NotFoundError`; service raises `NotFoundError` instead of `ValueError`; API catches `NotFoundError → 404`, `ValueError → 400`. Eliminates string matching.
+- [Minor] #14 — Changed `len(photo_urls) < 1` to `not photo_urls`
+- Updated service test to expect `NotFoundError`
+- Updated API tests to expect 404 instead of 403
 
 **Batch Test Run:**
 
-- `pnpm test` — 461 passed
+- `pnpm test` — 461 passed (73 files)
 - `pytest` — 342 passed
 
 ## Final State
 
-**Iterations completed:** 1
+**Iterations completed:** 2 (across 2 sessions)
 **All Critical/Important resolved:** Yes
-**Remaining issues:** 4 Minor items noted but not blocking (#7, #8, #9, #11)
+**Remaining issues:** Minor items from Pass 2 (#7, #8, #9, #11) — cosmetic, not blocking
 
 **Review log:** docs/reviews/2026-03-05-feat-pre-phase2b-quality-gate.md
