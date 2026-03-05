@@ -45,4 +45,68 @@
 
 ### Validation Results
 
-*(Populated after Phase 5 validation)*
+- Skipped (pre-existing): `components/stamps/stamp-passport.tsx` page dot desync — not introduced by this PR
+- Skipped (debatable/OOS): See "Debatable / Will Not Fix" table above
+- Proceeding to fix: 8 Important + 6 Minor issues
+
+---
+
+## Fix Pass 1
+
+**Pre-fix SHA:** b532214d2fba628e72bf57b1e65ba7c52e678aa4
+**Issues fixed:**
+- [Important #1 & #7] `update_profile` event loop block + sentinel conflation — `asyncio.to_thread` + `fields: set[str]` from `model_fields_set`
+- [Important #3] `get_profile` `APIError` on missing profile row — `.limit(1)` + graceful empty list handling
+- [Important #2] `shop_name` non-nullable causing 500 on orphaned shop JOIN — `str | None = None` in `StampWithShop`, `CheckInWithShop`, frontend types
+- [Important #4] `avatar_url` no HTTPS validation — added `@field_validator` in `ProfileUpdateRequest`
+- [Important #5] Auth test accepts 422 — changed to `== 401`
+- [Important #6 & #8] Avatar MIME type check missing + `Date.now()` path breaks upsert — added `file.type.startsWith('image/')` check, changed path to `${user_id}/avatar.${ext}`
+- [Minor #10] Test names implementation-framed in `test_profile_service.py` — renamed to user-journey framing
+- [Minor #11] `assert_called()` no payload check — changed to `assert_called_once_with({"display_name": "New Name"})`
+- [Minor #12] Settings test names leak internal method names — renamed
+- [Minor #13] Stamp-detail-sheet test name describes lifecycle — renamed
+- Additional: `test_profile_api.py` mock chain for profile query still used `.single()` chain after service changed to `.limit(1)` — fixed to use per-table dispatch + list return
+
+**Issues skipped (false positives / pre-existing):**
+- Minor #9: page dots desync — pre-existing, not in this PR's scope
+- Minor #14: `get_summaries` over-fetch — bounded by 3-list cap, acceptable
+- Minor #15: backend API test naming — updated as part of fix
+
+**Batch Test Run:**
+- `pnpm test` — PASS (3 pre-existing admin failures unrelated to this branch)
+- `pytest` — PASS (3 pre-existing failures unrelated to this branch; all 8 profile tests pass)
+
+---
+
+## Pass 2 — Re-Verify (Smart Routing)
+
+*Agents re-run: Bug Hunter (Opus), Standards (Sonnet)*
+*Agents skipped (Minor-only findings): Test Philosophy*
+
+### Previously Flagged Issues — Resolution Status
+
+- [Important #1] `update_profile` event loop block — ✓ Resolved (`asyncio.to_thread`)
+- [Important #2] `shop_name` non-nullable causing 500 — ✓ Resolved (`str | None = None`)
+- [Important #3] `get_profile` APIError on missing row — ✓ Resolved (`.limit(1)` + empty list)
+- [Important #4] `avatar_url` no HTTPS validation — ✓ Resolved (`@field_validator`)
+- [Important #5] Auth test accepts 422 — ✓ Resolved (`== 401`)
+- [Important #6] Avatar MIME type check missing — ✓ Resolved (`file.type.startsWith('image/')`)
+- [Important #7] Sentinel conflation — ✓ Resolved (`model_fields_set`)
+- [Important #8] Avatar path breaks upsert — ✓ Resolved (fixed path)
+- [Minor #10] Test names implementation-framed in service tests — ✓ Resolved
+- [Minor #11] `assert_called()` no payload check — ✓ Resolved
+- [Minor #12] Settings test naming — ✓ Resolved
+- [Minor #13] Stamp-detail-sheet test naming — ✓ Resolved
+
+### New Issues Found: 0
+
+No regressions from the fixes. One edge case noted but classified as pre-existing: switching avatar extension (e.g. `.png` → `.jpg`) creates a separate storage file. This is a minor limitation, not introduced by the fix.
+
+---
+
+## Final State
+
+**Iterations completed:** 1
+**All Critical/Important resolved:** Yes
+**Remaining issues:**
+- None
