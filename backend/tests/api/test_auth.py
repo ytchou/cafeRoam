@@ -28,12 +28,8 @@ class TestAuth:
         assert response.status_code == 401
 
     def test_protected_route_rejects_invalid_token(self):
-        with patch("api.deps.get_user_client") as mock_sb:
-            mock_client = MagicMock()
-            mock_client.auth.get_user = MagicMock(side_effect=Exception("Invalid token"))
-            mock_sb.return_value = mock_client
-            response = client.get("/protected", headers={"Authorization": "Bearer invalid"})
-            assert response.status_code == 401
+        response = client.get("/protected", headers={"Authorization": "Bearer invalid"})
+        assert response.status_code == 401
 
     def test_protected_route_accepts_valid_token(self):
         app.dependency_overrides[get_current_user] = lambda: {"id": "user-1"}
