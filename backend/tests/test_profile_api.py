@@ -20,13 +20,22 @@ def auth_headers():
 class TestGetProfile:
     def test_returns_profile_data(self, client: TestClient, auth_headers: dict):
         db = MagicMock()
-        # Profile query: .table().select().eq().single().execute()
-        db.table.return_value.select.return_value.eq.return_value.single.return_value.execute.return_value.data = {
-            "display_name": "Mei-Ling",
-            "avatar_url": None,
-        }
-        # Count queries: .table().select().eq().execute() — stamp_count and checkin_count
-        db.table.return_value.select.return_value.eq.return_value.execute.return_value.count = 5
+        # Dispatch by table name — asyncio.gather makes call order non-deterministic
+        profile_table = MagicMock()
+        stamp_table = MagicMock()
+        checkin_table = MagicMock()
+        db.table.side_effect = lambda name: {
+            "profiles": profile_table,
+            "stamps": stamp_table,
+            "check_ins": checkin_table,
+        }[name]
+        # Profile query: .table().select().eq().limit(1).execute() returns a list
+        profile_table.select.return_value.eq.return_value.limit.return_value.execute.return_value.data = [
+            {"display_name": "Mei-Ling", "avatar_url": None}
+        ]
+        # Count queries
+        stamp_table.select.return_value.eq.return_value.execute.return_value.count = 5
+        checkin_table.select.return_value.eq.return_value.execute.return_value.count = 5
 
         app.dependency_overrides[get_current_user] = lambda: {"id": "user-123"}
         app.dependency_overrides[get_user_db] = lambda: db
