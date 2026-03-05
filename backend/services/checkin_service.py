@@ -17,6 +17,24 @@ class CheckInService:
         if not (1 <= stars <= 5):
             raise ValueError("Stars must be between 1 and 5")
 
+    async def _validate_confirmed_tags(self, tags: list[str]) -> None:
+        """Validate that all confirmed_tags exist in taxonomy_tags table."""
+        if not tags:
+            return
+        response = await asyncio.to_thread(
+            lambda: (
+                self._db.table("taxonomy_tags")
+                .select("id")
+                .in_("id", tags)
+                .execute()
+            )
+        )
+        rows: list[dict[str, Any]] = cast("list[dict[str, Any]]", response.data or [])
+        found_ids = {row["id"] for row in rows}
+        unknown = set(tags) - found_ids
+        if unknown:
+            raise ValueError(f"Unknown tag IDs: {sorted(unknown)}")
+
     async def create(
         self,
         user_id: str,
@@ -35,6 +53,8 @@ class CheckInService:
             raise ValueError("review_text requires a star rating")
         if stars is not None:
             self._validate_stars(stars)
+        if confirmed_tags:
+            await self._validate_confirmed_tags(confirmed_tags)
 
         # Check if this is the user's first check-in at this shop.
         # Note: TOCTOU race exists (concurrent requests could both see count=0).
@@ -80,6 +100,8 @@ class CheckInService:
     ) -> CheckIn:
         """Add or update a review on an existing check-in. Only the owner can update."""
         self._validate_stars(stars)
+        if confirmed_tags:
+            await self._validate_confirmed_tags(confirmed_tags)
 
         update_data: dict[str, Any] = {
             "stars": stars,

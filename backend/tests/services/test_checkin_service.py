@@ -158,6 +158,11 @@ class TestCheckInService:
         """When a user checks in with a star rating, review fields are persisted."""
         frozen_now = datetime(2026, 3, 4, 12, 0, 0, tzinfo=UTC)
 
+        taxonomy_table = MagicMock()
+        taxonomy_table.select.return_value.in_.return_value.execute.return_value = MagicMock(
+            data=[{"id": "quiet"}, {"id": "wifi"}]
+        )
+
         count_table = MagicMock()
         count_table.select.return_value.eq.return_value.eq.return_value.execute.return_value = (
             MagicMock(count=0)
@@ -182,7 +187,18 @@ class TestCheckInService:
             ]
         )
 
-        mock_supabase.table.side_effect = [count_table, insert_table]
+        call_count = 0
+
+        def table_router(name):
+            nonlocal call_count
+            if name == "taxonomy_tags":
+                return taxonomy_table
+            call_count += 1
+            if call_count == 1:
+                return count_table
+            return insert_table
+
+        mock_supabase.table.side_effect = table_router
 
         with patch("services.checkin_service.datetime") as mock_dt:
             mock_dt.now.return_value = frozen_now
@@ -234,7 +250,6 @@ class TestCheckInService:
                 user_id="user-42",
                 stars=5,
                 review_text="Changed my mind, it is amazing",
-                confirmed_tags=["quiet"],
             )
         assert result.stars == 5
         assert result.review_text == "Changed my mind, it is amazing"
@@ -281,3 +296,123 @@ class TestCheckInService:
                 photo_urls=["https://cdn.caferoam.tw/photo1.jpg"],
                 stars=6,
             )
+
+
+class TestConfirmedTagsValidation:
+    """Confirmed tags must exist in taxonomy_tags table."""
+
+    @pytest.mark.asyncio
+    async def test_create_rejects_unknown_tags(self, mock_supabase, checkin_service):
+        """When a user submits tag IDs not in taxonomy, return ValueError."""
+        taxonomy_table = MagicMock()
+        taxonomy_table.select.return_value.in_.return_value.execute.return_value = (
+            MagicMock(data=[{"id": "quiet"}, {"id": "wifi"}])
+        )
+
+        count_table = MagicMock()
+        count_table.select.return_value.eq.return_value.eq.return_value.execute.return_value = (
+            MagicMock(count=0)
+        )
+
+        mock_supabase.table.side_effect = lambda name: {
+            "taxonomy_tags": taxonomy_table,
+            "check_ins": count_table,
+        }[name]
+
+        with pytest.raises(ValueError, match="Unknown tag IDs"):
+            await checkin_service.create(
+                user_id="user-1",
+                shop_id="shop-1",
+                photo_urls=["https://example.com/photo.jpg"],
+                stars=4,
+                confirmed_tags=["quiet", "wifi", "fake_tag"],
+            )
+
+    @pytest.mark.asyncio
+    async def test_create_accepts_valid_tags(self, mock_supabase, checkin_service):
+        """When all tag IDs exist in taxonomy, check-in succeeds."""
+        taxonomy_table = MagicMock()
+        taxonomy_table.select.return_value.in_.return_value.execute.return_value = (
+            MagicMock(data=[{"id": "quiet"}, {"id": "wifi"}])
+        )
+
+        count_table = MagicMock()
+        count_table.select.return_value.eq.return_value.eq.return_value.execute.return_value = (
+            MagicMock(count=0)
+        )
+
+        insert_table = MagicMock()
+        insert_table.insert.return_value.execute.return_value = MagicMock(
+            data=[{
+                "id": "ci-new",
+                "user_id": "user-1",
+                "shop_id": "shop-1",
+                "photo_urls": ["https://example.com/photo.jpg"],
+                "menu_photo_url": None,
+                "note": None,
+                "stars": 4,
+                "review_text": None,
+                "confirmed_tags": ["quiet", "wifi"],
+                "reviewed_at": "2026-03-05T00:00:00Z",
+                "created_at": "2026-03-05T00:00:00Z",
+            }]
+        )
+
+        call_count = 0
+
+        def table_router(name):
+            nonlocal call_count
+            if name == "taxonomy_tags":
+                return taxonomy_table
+            call_count += 1
+            if call_count == 1:
+                return count_table
+            return insert_table
+
+        mock_supabase.table.side_effect = table_router
+
+        result = await checkin_service.create(
+            user_id="user-1",
+            shop_id="shop-1",
+            photo_urls=["https://example.com/photo.jpg"],
+            stars=4,
+            confirmed_tags=["quiet", "wifi"],
+        )
+        assert result.id == "ci-new"
+
+    @pytest.mark.asyncio
+    async def test_create_skips_validation_when_no_tags(self, mock_supabase, checkin_service):
+        """When confirmed_tags is None, skip taxonomy validation entirely."""
+        count_table = MagicMock()
+        count_table.select.return_value.eq.return_value.eq.return_value.execute.return_value = (
+            MagicMock(count=0)
+        )
+
+        insert_table = MagicMock()
+        insert_table.insert.return_value.execute.return_value = MagicMock(
+            data=[{
+                "id": "ci-no-tags",
+                "user_id": "user-1",
+                "shop_id": "shop-1",
+                "photo_urls": ["https://example.com/photo.jpg"],
+                "menu_photo_url": None,
+                "note": None,
+                "stars": None,
+                "review_text": None,
+                "confirmed_tags": None,
+                "reviewed_at": None,
+                "created_at": "2026-03-05T00:00:00Z",
+            }]
+        )
+
+        mock_supabase.table.side_effect = [count_table, insert_table]
+
+        result = await checkin_service.create(
+            user_id="user-1",
+            shop_id="shop-1",
+            photo_urls=["https://example.com/photo.jpg"],
+            confirmed_tags=None,
+        )
+        assert result.id == "ci-no-tags"
+        table_calls = [c[0][0] for c in mock_supabase.table.call_args_list]
+        assert "taxonomy_tags" not in table_calls
