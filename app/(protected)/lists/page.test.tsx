@@ -226,7 +226,9 @@ describe('/lists page', () => {
 
     expect(await screen.findByText('Work spots')).toBeInTheDocument();
 
-    const deleteButtons = screen.getAllByRole('button', { name: /delete list/i });
+    const deleteButtons = screen.getAllByRole('button', {
+      name: /delete list/i,
+    });
 
     mockFetch.mockResolvedValueOnce({ ok: true, json: async () => ({}) });
     mockFetch.mockResolvedValueOnce({

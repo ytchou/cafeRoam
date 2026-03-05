@@ -80,7 +80,9 @@ class ProfileUpdateRequest(BaseModel):
     @classmethod
     def validate_avatar_url(cls, v: str | None) -> str | None:
         if v is not None and "/storage/v1/object/public/avatars/" not in v:
-            raise ValueError("Avatar URL must point to the project's Supabase Storage avatars bucket")
+            raise ValueError(
+                "Avatar URL must point to the project's Supabase Storage avatars bucket"
+            )
         return v
 
 

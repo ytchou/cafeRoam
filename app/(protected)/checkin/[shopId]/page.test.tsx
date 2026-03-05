@@ -1,6 +1,14 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, it, expect, vi, beforeEach, afterEach, beforeAll } from 'vitest';
+import {
+  describe,
+  it,
+  expect,
+  vi,
+  beforeEach,
+  afterEach,
+  beforeAll,
+} from 'vitest';
 
 // Stub browser APIs missing in jsdom
 global.URL.createObjectURL = vi.fn(() => 'blob:mock-url');

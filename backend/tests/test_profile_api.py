@@ -15,7 +15,9 @@ def client():
 @pytest.fixture
 def auth_headers():
     # A realistic-format JWT (not a real token — safe for tests)
-    return {"Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyLW1laS1saW5nLTAwMSJ9.test"}
+    return {
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyLW1laS1saW5nLTAwMSJ9.test"
+    }
 
 
 class TestGetProfile:

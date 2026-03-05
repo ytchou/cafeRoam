@@ -19,7 +19,10 @@ export function SessionTracker() {
 
       fetchWithAuth('/api/auth/session-heartbeat', { method: 'POST' })
         .then(
-          (result: { days_since_first_session: number; previous_sessions: number }) => {
+          (result: {
+            days_since_first_session: number;
+            previous_sessions: number;
+          }) => {
             capture('session_start', {
               days_since_first_session: result.days_since_first_session,
               previous_sessions: result.previous_sessions,

@@ -711,6 +711,7 @@ This is the final gate for Phase 1. Two paths: fast path seeds 29 pre-built shop
 30-50 person beta → public Threads launch.
 
 ### Analytics Review
+
 - [ ] Review to make sure we have cover all analytics events needed
 
 ### Beta Program

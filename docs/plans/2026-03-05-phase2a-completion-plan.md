@@ -15,6 +15,7 @@
 **Tech Stack:** PostHog (posthog-js), Vitest + Testing Library (frontend tests), pytest (backend tests), Supabase migrations (session columns)
 
 **Acceptance Criteria:**
+
 - [ ] After a successful check-in, `checkin_completed` PostHog event fires with `shop_id`, `is_first_checkin_at_shop`, `has_text_note`, `has_menu_photo`
 - [ ] When a user views their profile with stamps, `profile_stamps_viewed` fires with `stamp_count`
 - [ ] On app mount, `session_start` fires with `days_since_first_session` and `previous_sessions`
@@ -26,6 +27,7 @@
 ## Task 1: StampData Type Fix
 
 **Files:**
+
 - Modify: `lib/types/index.ts:93-100`
 
 **Step 1: Add `shopName` to Stamp interface**
@@ -62,6 +64,7 @@ git commit -m "fix: add shopName to Stamp type to match StampData and factory"
 ## Task 2: `useAnalytics` Hook
 
 **Files:**
+
 - Create: `lib/posthog/use-analytics.ts`
 - Create: `lib/posthog/__tests__/use-analytics.test.ts`
 
@@ -164,12 +167,14 @@ git commit -m "feat: useAnalytics hook for PostHog event capture"
 ## Task 3: Backend — `is_first_checkin_at_shop` in Check-in Response
 
 **Files:**
+
 - Modify: `backend/models/types.py:150-168` (add `CreateCheckInResponse` model)
 - Modify: `backend/services/checkin_service.py:20-56` (add count query)
 - Modify: `backend/api/checkins.py:43-64` (return enriched response)
 - Create: `backend/tests/test_checkin_api.py`
 
 **API Contract:**
+
 ```yaml
 endpoint: POST /checkins
 request: (unchanged)
@@ -185,7 +190,7 @@ response:
   confirmed_tags: string[] | null
   reviewed_at: string | null
   created_at: string
-  is_first_checkin_at_shop: bool  # NEW
+  is_first_checkin_at_shop: bool # NEW
 ```
 
 **Step 1: Write the failing test**
@@ -413,6 +418,7 @@ git commit -m "feat: return is_first_checkin_at_shop in check-in response"
 ## Task 4: `checkin_completed` PostHog Event
 
 **Files:**
+
 - Modify: `app/(protected)/checkin/[shopId]/page.tsx:63-125`
 - Modify: `app/(protected)/checkin/[shopId]/page.test.tsx`
 
@@ -476,11 +482,13 @@ Expected: FAIL — `mockCapture` not called
 In `app/(protected)/checkin/[shopId]/page.tsx`:
 
 Add import at top (after line 12):
+
 ```typescript
 import { useAnalytics } from '@/lib/posthog/use-analytics';
 ```
 
 Inside the component, add after `const router = useRouter();` (line 19):
+
 ```typescript
 const { capture } = useAnalytics();
 ```
@@ -488,27 +496,27 @@ const { capture } = useAnalytics();
 In `handleSubmit`, after the `fetchWithAuth` call succeeds (after line 89, before the `toast()`), add:
 
 ```typescript
-      const result = await fetchWithAuth('/api/checkins', {
-        method: 'POST',
-        body: JSON.stringify({
-          shop_id: shopId,
-          photo_urls: photoUrls,
-          menu_photo_url: menuPhotoUrl ?? null,
-          note: note.trim() || null,
-          ...(stars > 0 && {
-            stars,
-            review_text: reviewText.trim() || null,
-            confirmed_tags: confirmedTags,
-          }),
-        }),
-      });
+const result = await fetchWithAuth('/api/checkins', {
+  method: 'POST',
+  body: JSON.stringify({
+    shop_id: shopId,
+    photo_urls: photoUrls,
+    menu_photo_url: menuPhotoUrl ?? null,
+    note: note.trim() || null,
+    ...(stars > 0 && {
+      stars,
+      review_text: reviewText.trim() || null,
+      confirmed_tags: confirmedTags,
+    }),
+  }),
+});
 
-      capture('checkin_completed', {
-        shop_id: shopId,
-        is_first_checkin_at_shop: result.is_first_checkin_at_shop,
-        has_text_note: note.trim().length > 0,
-        has_menu_photo: menuPhoto !== null,
-      });
+capture('checkin_completed', {
+  shop_id: shopId,
+  is_first_checkin_at_shop: result.is_first_checkin_at_shop,
+  has_text_note: note.trim().length > 0,
+  has_menu_photo: menuPhoto !== null,
+});
 ```
 
 Note: This requires changing the `fetchWithAuth` call to capture its return value. Currently on line 76 it does `await fetchWithAuth(...)` without storing the result. Change to `const result = await fetchWithAuth(...)`.
@@ -532,6 +540,7 @@ git commit -m "feat: fire checkin_completed PostHog event after successful check
 ## Task 5: `profile_stamps_viewed` PostHog Event
 
 **Files:**
+
 - Modify: `app/(protected)/profile/page.tsx`
 - Modify: `app/(protected)/profile/page.test.tsx`
 
@@ -573,6 +582,7 @@ Expected: FAIL — `mockCapture` not called
 In `app/(protected)/profile/page.tsx`:
 
 Add import (after line 7):
+
 ```typescript
 import { useEffect } from 'react';
 import { useAnalytics } from '@/lib/posthog/use-analytics';
@@ -609,6 +619,7 @@ git commit -m "feat: fire profile_stamps_viewed PostHog event on profile load"
 ## Task 6: DB Migration — Session Tracking Columns
 
 **Files:**
+
 - Create: `supabase/migrations/20260305000001_session_tracking.sql`
 
 No test needed — this is a SQL migration. Verified by the backend tests that follow.
@@ -635,11 +646,13 @@ git commit -m "migration: add session_count, first_session_at, last_session_at t
 ## Task 7: Backend — Session Heartbeat Endpoint
 
 **Files:**
+
 - Modify: `backend/services/profile_service.py`
 - Modify: `backend/api/auth.py`
 - Modify: `backend/tests/test_profile_service.py`
 
 **API Contract:**
+
 ```yaml
 endpoint: POST /auth/session-heartbeat
 request: (empty body)
@@ -821,6 +834,7 @@ git commit -m "feat: session heartbeat endpoint for session_start analytics"
 ## Task 8: Frontend — Session Tracker Component + Proxy
 
 **Files:**
+
 - Create: `app/api/auth/session-heartbeat/route.ts`
 - Create: `components/session-tracker.tsx`
 - Modify: `app/layout.tsx:1-36`
@@ -932,12 +946,17 @@ export function SessionTracker() {
     hasFired.current = true;
 
     fetchWithAuth('/api/auth/session-heartbeat', { method: 'POST' })
-      .then((data: { days_since_first_session: number; previous_sessions: number }) => {
-        capture('session_start', {
-          days_since_first_session: data.days_since_first_session,
-          previous_sessions: data.previous_sessions,
-        });
-      })
+      .then(
+        (data: {
+          days_since_first_session: number;
+          previous_sessions: number;
+        }) => {
+          capture('session_start', {
+            days_since_first_session: data.days_since_first_session,
+            previous_sessions: data.previous_sessions,
+          });
+        }
+      )
       .catch(() => {
         // Silently ignore — user may not be authenticated
       });
@@ -950,11 +969,13 @@ export function SessionTracker() {
 **Step 5: Mount in root layout**
 
 In `app/layout.tsx`, add import (after line 3):
+
 ```typescript
 import { SessionTracker } from '@/components/session-tracker';
 ```
 
 Inside the `<PostHogProvider>` wrapper (line 32), add `<SessionTracker />`:
+
 ```typescript
 <PostHogProvider>
   <SessionTracker />
@@ -979,6 +1000,7 @@ git commit -m "feat: SessionTracker component fires session_start PostHog event"
 ## Task 9: Lists Page User Journey Tests
 
 **Files:**
+
 - Modify: `app/(protected)/lists/page.test.tsx`
 
 **Step 1: Write the tests**
@@ -1120,6 +1142,7 @@ Run: `pnpm test app/(protected)/lists/page.test.tsx`
 Expected: PASS
 
 Note: These tests may need adjustment based on the exact DOM structure. The key patterns are:
+
 - Create: type in input → click Add → verify new list appears
 - Cap: POST fails with "Maximum" → verify toast.error
 - Delete: click delete → confirm → verify list disappears
@@ -1136,6 +1159,7 @@ git commit -m "test: lists page user journey tests — create, cap enforcement, 
 ## Task 10: Profile Page User Journey Tests
 
 **Files:**
+
 - Modify: `app/(protected)/profile/page.test.tsx`
 
 **Step 1: Write the tests**
@@ -1333,6 +1357,7 @@ graph TD
 ```
 
 **Wave 1** (parallel — no dependencies):
+
 - Task 1: Stamp type fix
 - Task 2: useAnalytics hook
 - Task 3: Backend is_first_checkin_at_shop
@@ -1340,15 +1365,18 @@ graph TD
 - Task 9: Lists page user journey tests
 
 **Wave 2** (depends on Wave 1):
+
 - Task 7: Backend session heartbeat ← Task 6
 
 **Wave 3** (depends on Wave 1 + 2):
+
 - Task 4: checkin_completed event ← Task 2, Task 3
 - Task 5: profile_stamps_viewed event ← Task 2
 - Task 8: SessionTracker component ← Task 2, Task 7
 - Task 10: Profile page user journey tests (can run in Wave 1 but grouped here since profile_stamps_viewed mock pattern needed)
 
 **Wave 4** (depends on all):
+
 - Task 11: Full verification
 
 ---

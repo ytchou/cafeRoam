@@ -30,7 +30,9 @@ class TestGetProfile:
     @pytest.mark.asyncio
     async def test_profile_page_shows_stamps_and_checkin_counts(self, mock_db: MagicMock):
         table_map = _make_table_map(
-            profile_data=[{"display_name": "Mei-Ling", "avatar_url": "https://example.com/avatar.jpg"}],
+            profile_data=[
+                {"display_name": "Mei-Ling", "avatar_url": "https://example.com/avatar.jpg"}
+            ],
             stamp_count=12,
             checkin_count=8,
         )
@@ -99,6 +101,7 @@ class TestSessionHeartbeat:
     async def test_returning_user_gets_correct_session_count(self, mock_db: MagicMock):
         """Returning user after >30 min gets incremented count."""
         from datetime import UTC, datetime
+
         first = datetime(2026, 3, 1, tzinfo=UTC)
         last = datetime(2026, 3, 3, tzinfo=UTC)  # >30 min ago
         profile_table = MagicMock()
@@ -119,6 +122,7 @@ class TestSessionHeartbeat:
     async def test_heartbeat_within_30min_does_not_increment(self, mock_db: MagicMock):
         """Heartbeat within 30 min of last session does not increment counter."""
         from datetime import UTC, datetime, timedelta
+
         now = datetime.now(UTC)
         recent = now - timedelta(minutes=10)
         profile_table = MagicMock()

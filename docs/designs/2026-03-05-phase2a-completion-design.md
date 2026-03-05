@@ -53,6 +53,7 @@ is_first = count.count == 0
 Add `is_first_checkin_at_shop: bool` to the check-in API response. Frontend proxy passes it through.
 
 **Files:**
+
 - `backend/services/checkin_service.py` — add count check
 - `backend/api/checkins.py` — include field in response
 - `backend/models/types.py` — add response model field
@@ -76,21 +77,25 @@ useEffect(() => {
 ### 5. `session_start` Event
 
 **DB migration:** Add to `profiles` table:
+
 - `session_count` integer DEFAULT 0
 - `first_session_at` timestamptz NULL
 - `last_session_at` timestamptz NULL
 
 **Backend:** New `POST /auth/session-heartbeat` endpoint:
+
 - If `last_session_at` is NULL or >30 min ago: increment `session_count`, set `first_session_at` on first call, update `last_session_at`
 - Returns `{ days_since_first_session: int, previous_sessions: int }`
 - If within 30 min: returns current values without incrementing (dedup)
 
 **Frontend:** Create `SessionTracker` component, mounted once in root layout:
+
 - On mount, calls `POST /api/auth/session-heartbeat`
 - On response, fires `session_start` event with returned values
 - Only fires once per mount (no re-fires on re-render)
 
 **Files:**
+
 - `supabase/migrations/XXXX_session_tracking.sql`
 - `backend/api/auth.py` — new endpoint
 - `backend/services/profile_service.py` — heartbeat logic
@@ -102,12 +107,12 @@ useEffect(() => {
 
 Add to `app/(protected)/lists/page.test.tsx`:
 
-| Test | Description |
-|------|-------------|
-| Create list flow | User types name, clicks create, new list appears in rendered list |
-| 3-list cap enforcement | At 3 lists, create attempt shows error toast/message |
-| Delete list flow | User clicks delete on a list, confirms, list disappears |
-| Add shop to list | Via SaveToListSheet component, shop count increments |
+| Test                   | Description                                                       |
+| ---------------------- | ----------------------------------------------------------------- |
+| Create list flow       | User types name, clicks create, new list appears in rendered list |
+| 3-list cap enforcement | At 3 lists, create attempt shows error toast/message              |
+| Delete list flow       | User clicks delete on a list, confirms, list disappears           |
+| Add shop to list       | Via SaveToListSheet component, shop count increments              |
 
 Pattern: Mock `fetch` to simulate API responses. Use `userEvent` for interactions. Verify DOM updates via `waitFor` + `screen.getByText`.
 
@@ -117,12 +122,12 @@ Pattern: Mock `fetch` to simulate API responses. Use `userEvent` for interaction
 
 Add to `app/(protected)/profile/page.test.tsx`:
 
-| Test | Description |
-|------|-------------|
-| Stamp tap opens detail sheet | Click stamp, StampDetailSheet appears with shop name + earned date |
-| Check-in history shows shop info | Shop name, date, photo indicators visible in history tab |
-| Empty stamps state | No stamps returns empty passport message |
-| Empty check-ins state | No check-ins shows empty history message |
+| Test                             | Description                                                        |
+| -------------------------------- | ------------------------------------------------------------------ |
+| Stamp tap opens detail sheet     | Click stamp, StampDetailSheet appears with shop name + earned date |
+| Check-in history shows shop info | Shop name, date, photo indicators visible in history tab           |
+| Empty stamps state               | No stamps returns empty passport message                           |
+| Empty check-ins state            | No check-ins shows empty history message                           |
 
 **Files:** `app/(protected)/profile/page.test.tsx`
 

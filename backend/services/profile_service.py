@@ -15,23 +15,29 @@ class ProfileService:
     async def get_profile(self, user_id: str) -> ProfileResponse:
         profile_resp, stamp_resp, checkin_resp = await asyncio.gather(
             asyncio.to_thread(
-                lambda: self._db.table("profiles")
-                .select("display_name, avatar_url")
-                .eq("id", user_id)
-                .limit(1)
-                .execute()
+                lambda: (
+                    self._db.table("profiles")
+                    .select("display_name, avatar_url")
+                    .eq("id", user_id)
+                    .limit(1)
+                    .execute()
+                )
             ),
             asyncio.to_thread(
-                lambda: self._db.table("stamps")
-                .select("id", count="exact")
-                .eq("user_id", user_id)
-                .execute()
+                lambda: (
+                    self._db.table("stamps")
+                    .select("id", count="exact")
+                    .eq("user_id", user_id)
+                    .execute()
+                )
             ),
             asyncio.to_thread(
-                lambda: self._db.table("check_ins")
-                .select("id", count="exact")
-                .eq("user_id", user_id)
-                .execute()
+                lambda: (
+                    self._db.table("check_ins")
+                    .select("id", count="exact")
+                    .eq("user_id", user_id)
+                    .execute()
+                )
             ),
         )
         rows = cast("list[dict[str, Any]]", profile_resp.data)
@@ -72,11 +78,13 @@ class ProfileService:
         replace this if precision becomes important.
         """
         profile_resp = await asyncio.to_thread(
-            lambda: self._db.table("profiles")
-            .select("session_count, first_session_at, last_session_at")
-            .eq("id", user_id)
-            .single()
-            .execute()
+            lambda: (
+                self._db.table("profiles")
+                .select("session_count, first_session_at, last_session_at")
+                .eq("id", user_id)
+                .single()
+                .execute()
+            )
         )
         profile = cast("dict[str, Any]", profile_resp.data)
         session_count: int = profile.get("session_count") or 0
@@ -101,10 +109,7 @@ class ProfileService:
                 update_data["first_session_at"] = now.isoformat()
 
             await asyncio.to_thread(
-                lambda: self._db.table("profiles")
-                .update(update_data)
-                .eq("id", user_id)
-                .execute()
+                lambda: self._db.table("profiles").update(update_data).eq("id", user_id).execute()
             )
             session_count += 1
             if first_session_at is None:

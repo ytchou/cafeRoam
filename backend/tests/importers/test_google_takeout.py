@@ -141,7 +141,9 @@ def mock_db_existing() -> MagicMock:
 @pytest.mark.asyncio
 async def test_admin_uploading_valid_takeout_file_imports_shops(mock_db_no_existing):
     places = parse_takeout_places(_GEOJSON_TAIPEI, bounds=_GREATER_TAIPEI_BOUNDS)
-    result = await import_takeout_to_queue(places, mock_db_no_existing, bounds=_GREATER_TAIPEI_BOUNDS)
+    result = await import_takeout_to_queue(
+        places, mock_db_no_existing, bounds=_GREATER_TAIPEI_BOUNDS
+    )
     assert result["imported"] == 1
     assert "filtered" in result
     assert "pending_url_check" in result

@@ -30,7 +30,9 @@ class TestCheckInService:
         """After trigger migration: create() should ONLY insert into check_ins.
         Stamp creation and job queueing are handled by the DB trigger."""
         count_table = MagicMock()
-        count_table.select.return_value.eq.return_value.eq.return_value.execute.return_value = MagicMock(count=0)
+        count_table.select.return_value.eq.return_value.eq.return_value.execute.return_value = (
+            MagicMock(count=0)
+        )
 
         insert_table = MagicMock()
         insert_table.insert.return_value.execute.return_value = MagicMock(
@@ -66,7 +68,9 @@ class TestCheckInService:
     ):
         """Even with menu_photo_url, service only inserts check_in. Trigger handles job."""
         count_table = MagicMock()
-        count_table.select.return_value.eq.return_value.eq.return_value.execute.return_value = MagicMock(count=0)
+        count_table.select.return_value.eq.return_value.eq.return_value.execute.return_value = (
+            MagicMock(count=0)
+        )
 
         insert_table = MagicMock()
         insert_table.insert.return_value.execute.return_value = MagicMock(
@@ -155,7 +159,9 @@ class TestCheckInService:
         frozen_now = datetime(2026, 3, 4, 12, 0, 0, tzinfo=UTC)
 
         count_table = MagicMock()
-        count_table.select.return_value.eq.return_value.eq.return_value.execute.return_value = MagicMock(count=0)
+        count_table.select.return_value.eq.return_value.eq.return_value.execute.return_value = (
+            MagicMock(count=0)
+        )
 
         insert_table = MagicMock()
         insert_table.insert.return_value.execute.return_value = MagicMock(
