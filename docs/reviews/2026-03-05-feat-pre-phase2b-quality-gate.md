@@ -36,3 +36,35 @@
 - Skipped (incorrect): #5 — Test doesn't claim to test is_first_checkin; MagicMock auto-vivification is standard for unrelated paths
 - Skipped (minor): #7, #8, #9, #11 — Low impact, would require invasive refactoring for cosmetic improvement
 - Proceeding to fix: 4 issues (#1, #2, #6, #10)
+
+## Fix Pass 1
+
+**Pre-fix SHA:** 5ec786e00e10c28deef151389655ecd2222ff50b
+
+**Issues fixed:**
+
+- [Important] `backend/api/checkins.py:85-86` — Split ValueError handling: "Check-in not found" → 403, all other validation errors → 400
+- [Important] `backend/workers/handlers/check_urls.py:119-126` — Added `errored=total_errored` to completion log
+- [Important] `TODO.md:657-659` — Checked off all 3 verification items
+- [Minor] Hook test files (3) — Replaced placeholder `'test-token'` with `makeSession()` factory
+- Added regression test: `test_update_review_with_unknown_tags_returns_400`
+
+**Issues skipped (false positives / low impact):**
+
+- #3: Table-call assertions test trigger migration intent
+- #4: Time is a system boundary, not an internal module
+- #5: MagicMock auto-vivification is standard for unrelated code paths
+- #7, #8, #9, #11: Minor issues not worth invasive refactoring
+
+**Batch Test Run:**
+
+- `pnpm test` — 461 passed
+- `pytest` — 342 passed
+
+## Final State
+
+**Iterations completed:** 1
+**All Critical/Important resolved:** Yes
+**Remaining issues:** 4 Minor items noted but not blocking (#7, #8, #9, #11)
+
+**Review log:** docs/reviews/2026-03-05-feat-pre-phase2b-quality-gate.md
