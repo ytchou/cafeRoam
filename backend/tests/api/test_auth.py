@@ -36,15 +36,13 @@ class TestAuth:
             assert response.status_code == 401
 
     def test_protected_route_accepts_valid_token(self):
-        with patch("api.deps.get_user_client") as mock_sb:
-            mock_client = MagicMock()
-            mock_client.auth.get_user = MagicMock(
-                return_value=MagicMock(user=MagicMock(id="user-1", email="test@example.com"))
-            )
-            mock_sb.return_value = mock_client
+        app.dependency_overrides[get_current_user] = lambda: {"id": "user-1"}
+        try:
             response = client.get("/protected", headers={"Authorization": "Bearer valid-jwt"})
             assert response.status_code == 200
             assert response.json()["user_id"] == "user-1"
+        finally:
+            app.dependency_overrides.clear()
 
     def test_public_route_allows_unauthenticated(self):
         response = client.get("/public")

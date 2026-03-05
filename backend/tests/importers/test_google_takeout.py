@@ -140,9 +140,8 @@ def mock_db_existing() -> MagicMock:
 
 @pytest.mark.asyncio
 async def test_admin_uploading_valid_takeout_file_imports_shops(mock_db_no_existing):
-    result = await import_takeout_to_queue(
-        _GEOJSON_TAIPEI, mock_db_no_existing, bounds=_GREATER_TAIPEI_BOUNDS
-    )
+    places = parse_takeout_places(_GEOJSON_TAIPEI, bounds=_GREATER_TAIPEI_BOUNDS)
+    result = await import_takeout_to_queue(places, mock_db_no_existing, bounds=_GREATER_TAIPEI_BOUNDS)
     assert result["imported"] == 1
     assert "filtered" in result
     assert "pending_url_check" in result
@@ -151,9 +150,8 @@ async def test_admin_uploading_valid_takeout_file_imports_shops(mock_db_no_exist
 @pytest.mark.asyncio
 async def test_imported_takeout_shops_are_staged_for_url_validation(mock_db_no_existing):
     """Shops are inserted with pending_url_check status and google_maps_url stored."""
-    await import_takeout_to_queue(
-        _GEOJSON_TAIPEI, mock_db_no_existing, bounds=_GREATER_TAIPEI_BOUNDS
-    )
+    places = parse_takeout_places(_GEOJSON_TAIPEI, bounds=_GREATER_TAIPEI_BOUNDS)
+    await import_takeout_to_queue(places, mock_db_no_existing, bounds=_GREATER_TAIPEI_BOUNDS)
     insert_call = mock_db_no_existing.table.return_value.insert.call_args
     inserted_data = insert_call.args[0]
     assert inserted_data["processing_status"] == "pending_url_check"
@@ -162,9 +160,8 @@ async def test_imported_takeout_shops_are_staged_for_url_validation(mock_db_no_e
 
 @pytest.mark.asyncio
 async def test_duplicate_takeout_place_is_not_imported_twice(mock_db_existing):
-    result = await import_takeout_to_queue(
-        _GEOJSON_TAIPEI, mock_db_existing, bounds=_GREATER_TAIPEI_BOUNDS
-    )
+    places = parse_takeout_places(_GEOJSON_TAIPEI, bounds=_GREATER_TAIPEI_BOUNDS)
+    result = await import_takeout_to_queue(places, mock_db_existing, bounds=_GREATER_TAIPEI_BOUNDS)
     assert result["imported"] == 0
 
 
@@ -186,7 +183,8 @@ async def test_takeout_places_with_non_google_maps_url_are_filtered_before_impor
         ],
     }
     db = _build_mock_db_no_existing()
-    result = await import_takeout_to_queue(geojson, db, bounds=_GREATER_TAIPEI_BOUNDS)
+    places = parse_takeout_places(geojson, bounds=_GREATER_TAIPEI_BOUNDS)
+    result = await import_takeout_to_queue(places, db, bounds=_GREATER_TAIPEI_BOUNDS)
     assert result["imported"] == 0
     assert result["filtered"]["invalid_url"] == 1
 
@@ -235,7 +233,8 @@ async def test_takeout_import_continues_when_one_shop_fails_to_insert():
     second_insert.execute.return_value = MagicMock(data=[{"id": "shop-2"}])
     db.table.return_value.insert.side_effect = [first_insert, second_insert]
 
-    result = await import_takeout_to_queue(_GEOJSON_TWO_PLACES, db, bounds=_GREATER_TAIPEI_BOUNDS)
+    places = parse_takeout_places(_GEOJSON_TWO_PLACES, bounds=_GREATER_TAIPEI_BOUNDS)
+    result = await import_takeout_to_queue(places, db, bounds=_GREATER_TAIPEI_BOUNDS)
 
     assert result["imported"] == 1
 
@@ -246,6 +245,7 @@ async def test_takeout_import_reports_zero_when_all_inserts_fail():
     db = _build_mock_db_no_existing()
     db.table.return_value.insert.return_value.execute.side_effect = Exception("DB unavailable")
 
-    result = await import_takeout_to_queue(_GEOJSON_TAIPEI, db, bounds=_GREATER_TAIPEI_BOUNDS)
+    places = parse_takeout_places(_GEOJSON_TAIPEI, bounds=_GREATER_TAIPEI_BOUNDS)
+    result = await import_takeout_to_queue(places, db, bounds=_GREATER_TAIPEI_BOUNDS)
 
     assert result["imported"] == 0

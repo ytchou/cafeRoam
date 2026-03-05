@@ -40,13 +40,23 @@ class TestAdminTaxonomyStats:
                 count=100
             )
 
-            # shop_tag_counts RPC
-            mock_db.rpc.return_value.execute.return_value = MagicMock(
-                data=[
-                    {"tag_id": "wifi-reliable", "shop_count": 80},
-                    {"tag_id": "quiet", "shop_count": 60},
-                ]
-            )
+            # RPC calls: shop_tag_counts (list), tagged_shop_count (int), shops_with_low_confidence_tags (list)
+            def _rpc_side_effect(name, params):
+                m = MagicMock()
+                if name == "shop_tag_counts":
+                    m.execute.return_value = MagicMock(
+                        data=[
+                            {"tag_id": "wifi-reliable", "shop_count": 80},
+                            {"tag_id": "quiet", "shop_count": 60},
+                        ]
+                    )
+                elif name == "tagged_shop_count":
+                    m.execute.return_value = MagicMock(data=50)
+                else:
+                    m.execute.return_value = MagicMock(data=[])
+                return m
+
+            mock_db.rpc.side_effect = _rpc_side_effect
 
             # Shops with embeddings
             select_rv = mock_db.table.return_value.select.return_value
