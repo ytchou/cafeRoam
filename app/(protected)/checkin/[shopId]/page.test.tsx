@@ -57,6 +57,11 @@ vi.mock('@/lib/supabase/client', () => ({
   }),
 }));
 
+const mockCapture = vi.fn();
+vi.mock('@/lib/posthog/use-analytics', () => ({
+  useAnalytics: () => ({ capture: mockCapture }),
+}));
+
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
@@ -66,6 +71,7 @@ describe('CheckInPage', () => {
   beforeEach(() => {
     mockFetch.mockReset();
     mockBack.mockReset();
+    mockCapture.mockReset();
     // Mock shop fetch
     mockFetch.mockResolvedValueOnce({
       ok: true,
@@ -197,6 +203,40 @@ describe('CheckInPage', () => {
       expect(postCall).toBeDefined();
       const body = JSON.parse(postCall![1].body);
       expect(body.stars).toBeUndefined();
+    });
+  });
+
+  it('fires checkin_completed PostHog event after successful submit', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        id: 'ci-4',
+        shop_id: 'shop-d4e5f6',
+        photo_urls: [
+          'https://example.supabase.co/storage/v1/object/public/checkin-photos/user-abc/photo.webp',
+        ],
+        is_first_checkin_at_shop: true,
+        created_at: '2026-03-04T10:00:00Z',
+      }),
+    });
+
+    render(<CheckInPage />);
+    await screen.findByText(/山小孩咖啡/);
+
+    const input = screen.getByTestId('photo-input');
+    const file = new File(['photo'], 'latte.jpg', { type: 'image/jpeg' });
+    await userEvent.upload(input, file);
+
+    const submitBtn = screen.getByRole('button', { name: /check in/i });
+    await userEvent.click(submitBtn);
+
+    await waitFor(() => {
+      expect(mockCapture).toHaveBeenCalledWith('checkin_completed', {
+        shop_id: 'shop-d4e5f6',
+        is_first_checkin_at_shop: true,
+        has_text_note: false,
+        has_menu_photo: false,
+      });
     });
   });
 });
