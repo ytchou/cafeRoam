@@ -55,11 +55,11 @@ _Agents: Bug Hunter (prior findings), Standards (prior findings), Architecture (
 
 ### New/Refined Issues Found
 
-| # | Severity | File:Line | Description | Flagged By |
-|---|----------|-----------|-------------|------------|
-| 12 | Important | `backend/api/checkins.py:85-89` | String matching on ValueError message for control flow — fragile, should use typed exceptions | Bug Hunter, Standards, Architecture |
-| 13 | Important | `backend/api/checkins.py:88` | 403 for not-found/not-owned check-in is wrong HTTP semantics — should be 404 | Bug Hunter, Standards |
-| 14 | Minor | `backend/services/checkin_service.py:45` | `len(photo_urls) < 1` should be `not photo_urls` (Python convention) | Standards |
+| #   | Severity  | File:Line                                | Description                                                                                   | Flagged By                          |
+| --- | --------- | ---------------------------------------- | --------------------------------------------------------------------------------------------- | ----------------------------------- |
+| 12  | Important | `backend/api/checkins.py:85-89`          | String matching on ValueError message for control flow — fragile, should use typed exceptions | Bug Hunter, Standards, Architecture |
+| 13  | Important | `backend/api/checkins.py:88`             | 403 for not-found/not-owned check-in is wrong HTTP semantics — should be 404                  | Bug Hunter, Standards               |
+| 14  | Minor     | `backend/services/checkin_service.py:45` | `len(photo_urls) < 1` should be `not photo_urls` (Python convention)                          | Standards                           |
 
 ### Validation Results (Pass 3)
 
