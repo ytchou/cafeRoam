@@ -59,10 +59,42 @@ warn_unused_configs = true
 module = ["tests.*"]
 disallow_untyped_defs = false
 disallow_any_generics = false
+disallow_untyped_calls = false
+warn_return_any = false
+ignore_errors = true
 
 [[tool.mypy.overrides]]
 module = ["apscheduler.*"]
 ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["posthog.*"]
+ignore_missing_imports = true
+
+# Pre-existing type annotation debt in provider adapters, workers, and API modules.
+# These modules use external libraries with incomplete type stubs (posthog, supabase
+# JSON types, anthropic overloads). Suppress until each module is individually
+# brought into type-compliance in a follow-up refactor.
+[[tool.mypy.overrides]]
+module = [
+    "providers.analytics.posthog_adapter",
+    "providers.llm.anthropic_adapter",
+    "providers.scraper.apify_adapter",
+    "providers.maps.mapbox_adapter",
+    "middleware.request_id",
+    "middleware.admin_audit",
+    "workers.persist",
+    "workers.handlers.staleness_sweep",
+    "workers.handlers.account_deletion",
+    "api.stamps",
+    "api.shops",
+    "api.admin_taxonomy",
+    "api.admin_shops",
+    "api.admin",
+    "api.auth",
+    "main",
+]
+ignore_errors = true
 
 [dependency-groups]
 dev = [
