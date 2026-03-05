@@ -75,3 +75,64 @@ class TestUpdateProfile:
         await service.update_profile("user-123", fields=set())
 
         mock_db.table.return_value.update.assert_not_called()
+
+
+class TestSessionHeartbeat:
+    @pytest.mark.asyncio
+    async def test_first_session_returns_zero_counters(self, mock_db: MagicMock):
+        """First-time user gets days=0 and previous_sessions=0."""
+        profile_table = MagicMock()
+        profile_table.select.return_value.eq.return_value.single.return_value.execute.return_value.data = {
+            "session_count": 0,
+            "first_session_at": None,
+            "last_session_at": None,
+        }
+        mock_db.table.return_value = profile_table
+
+        service = ProfileService(db=mock_db)
+        result = await service.session_heartbeat("user-new")
+
+        assert result["days_since_first_session"] == 0
+        assert result["previous_sessions"] == 1  # incremented from 0
+
+    @pytest.mark.asyncio
+    async def test_returning_user_gets_correct_session_count(self, mock_db: MagicMock):
+        """Returning user after >30 min gets incremented count."""
+        from datetime import UTC, datetime, timedelta
+        first = datetime(2026, 3, 1, tzinfo=UTC)
+        last = datetime(2026, 3, 3, tzinfo=UTC)  # >30 min ago
+        profile_table = MagicMock()
+        profile_table.select.return_value.eq.return_value.single.return_value.execute.return_value.data = {
+            "session_count": 5,
+            "first_session_at": first.isoformat(),
+            "last_session_at": last.isoformat(),
+        }
+        mock_db.table.return_value = profile_table
+
+        service = ProfileService(db=mock_db)
+        result = await service.session_heartbeat("user-returning")
+
+        assert result["previous_sessions"] == 6  # incremented from 5
+        assert result["days_since_first_session"] >= 0
+
+    @pytest.mark.asyncio
+    async def test_heartbeat_within_30min_does_not_increment(self, mock_db: MagicMock):
+        """Heartbeat within 30 min of last session does not increment counter."""
+        from datetime import UTC, datetime, timedelta
+        now = datetime.now(UTC)
+        recent = now - timedelta(minutes=10)
+        profile_table = MagicMock()
+        profile_table.select.return_value.eq.return_value.single.return_value.execute.return_value.data = {
+            "session_count": 3,
+            "first_session_at": (now - timedelta(days=5)).isoformat(),
+            "last_session_at": recent.isoformat(),
+        }
+        mock_db.table.return_value = profile_table
+
+        service = ProfileService(db=mock_db)
+        result = await service.session_heartbeat("user-active")
+
+        # Counter NOT incremented (dedup within 30 min)
+        assert result["previous_sessions"] == 3
+        # Should NOT have called update
+        profile_table.update.assert_not_called()

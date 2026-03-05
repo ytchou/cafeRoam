@@ -62,3 +62,63 @@ class ProfileService:
         await asyncio.to_thread(
             lambda: self._db.table("profiles").update(update_data).eq("id", user_id).execute()
         )
+
+    async def session_heartbeat(self, user_id: str) -> dict[str, int]:
+        """Track session start for analytics. Deduplicates within 30 min."""
+        from datetime import UTC, datetime, timedelta
+
+        profile_resp = await asyncio.to_thread(
+            lambda: self._db.table("profiles")
+            .select("session_count, first_session_at, last_session_at")
+            .eq("id", user_id)
+            .single()
+            .execute()
+        )
+        profile = cast("dict[str, Any]", profile_resp.data)
+        session_count: int = profile.get("session_count") or 0
+        first_session_at = profile.get("first_session_at")
+        last_session_at = profile.get("last_session_at")
+
+        now = datetime.now(UTC)
+
+        should_increment = True
+        if last_session_at:
+            last_dt = (
+                datetime.fromisoformat(last_session_at)
+                if isinstance(last_session_at, str)
+                else last_session_at
+            )
+            if (now - last_dt) < timedelta(minutes=30):
+                should_increment = False
+
+        if should_increment:
+            update_data: dict[str, Any] = {
+                "session_count": session_count + 1,
+                "last_session_at": now.isoformat(),
+            }
+            if first_session_at is None:
+                update_data["first_session_at"] = now.isoformat()
+
+            await asyncio.to_thread(
+                lambda: self._db.table("profiles")
+                .update(update_data)
+                .eq("id", user_id)
+                .execute()
+            )
+            session_count += 1
+            if first_session_at is None:
+                first_session_at = now.isoformat()
+
+        days = 0
+        if first_session_at:
+            first_dt = (
+                datetime.fromisoformat(first_session_at)
+                if isinstance(first_session_at, str)
+                else first_session_at
+            )
+            days = (now - first_dt).days
+
+        return {
+            "days_since_first_session": days,
+            "previous_sessions": session_count,
+        }
