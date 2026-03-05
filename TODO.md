@@ -608,7 +608,7 @@ This is the final gate for Phase 1. Two paths: fast path seeds 29 pre-built shop
 
 - [x] Profile API router (GET/PATCH /profile) with TDD
 - [x] Frontend proxy routes + SWR hooks (useUserProfile, useUserCheckins, useListSummaries)
-- [ ] Update StampData type + factory with shop_name
+- [x] Update StampData type + factory with shop_name (moved to Phase 2A Completion)
 
 **Chunk 3 — UI Components (Wave 5):**
 
@@ -623,22 +623,36 @@ This is the final gate for Phase 1. Two paths: fast path seeds 29 pre-built shop
 - [x] Add profile editing to settings (display name + avatar upload)
 - [x] Full integration verification (all tests, type-check, lint)
 
-**Deferred:**
+### Phase 2A Completion
 
-- [ ] `profile_stamps_viewed` PostHog event: stamp_count
+> **Design Doc:** [docs/designs/2026-03-05-phase2a-completion-design.md](docs/designs/2026-03-05-phase2a-completion-design.md)
+> **Plan:** [docs/plans/2026-03-05-phase2a-completion-plan.md](docs/plans/2026-03-05-phase2a-completion-plan.md)
 
-### UGC Analytics Instrumentation
+**Chunk 1 — Type Fix + Analytics Hook (Wave 1):**
+
+- [ ] Fix Stamp type: add shopName field
+- [ ] Create useAnalytics hook with TDD
+
+**Chunk 2 — Backend Changes (Wave 1-2):**
+
+- [ ] Backend: is_first_checkin_at_shop in check-in response with TDD
+- [ ] DB migration: session tracking columns
+- [ ] Backend: session heartbeat endpoint with TDD
+
+**Chunk 3 — Frontend Analytics Events (Wave 3):**
 
 - [ ] `checkin_completed` PostHog event: shop_id, is_first_checkin_at_shop, has_text_note, has_menu_photo
 - [ ] `profile_stamps_viewed` PostHog event: stamp_count
-- [ ] `session_start` event: days_since_first_session, previous_sessions
+- [ ] SessionTracker component + `session_start` event: days_since_first_session, previous_sessions
 
-### Unblock Phase 2B Test Coverage
+**Chunk 4 — User Journey Tests (Wave 1, 3):**
 
-These page-level tests were blocked pending Phase 2 features — complete once features above are built:
+- [ ] Lists page tests (create, cap enforcement, delete)
+- [ ] Profile page tests (stamp detail, empty states, check-in history)
 
-- [ ] Lists page tests (create, cap enforcement, add/remove shop)
-- [ ] Profile page tests (stamp collection, check-in history)
+**Chunk 5 — Verification:**
+
+- [ ] Full verification (pytest, vitest, ruff, mypy, pnpm build)
 
 **Phase 2A is done when:** A user can sign up, check in with a photo at a seed shop, earn a stamp, create a list, leave a review, and view their profile — all without a full shop corpus. PostHog confirms `checkin_completed`, `profile_stamps_viewed`, and `session_start` fire correctly.
 
@@ -695,6 +709,9 @@ These page-level tests were blocked pending Phase 2 features — complete once f
 ## Phase 3: Beta & Launch — Target: Week 3-4
 
 30-50 person beta → public Threads launch.
+
+### Analytics Review
+- [ ] Review to make sure we have cover all analytics events needed
 
 ### Beta Program
 
