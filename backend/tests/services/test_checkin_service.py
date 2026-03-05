@@ -51,7 +51,9 @@ class TestCheckInService:
                 photo_urls=[],
             )
 
-    async def test_stamps_and_job_queue_handled_by_trigger_not_service(self, checkin_service, mock_supabase):
+    async def test_stamps_and_job_queue_handled_by_trigger_not_service(
+        self, checkin_service, mock_supabase
+    ):
         """After trigger migration: when a user checks in, stamp creation and job queueing
         are handled by the DB trigger — the service only inserts into check_ins."""
         count_table = MagicMock()
