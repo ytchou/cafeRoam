@@ -171,7 +171,11 @@ describe('Profile editing', () => {
     mockAuth.signOut.mockResolvedValue({});
     // Mock GET /api/profile for the initial load
     mockFetch.mockImplementation((url: string, init?: RequestInit) => {
-      if (typeof url === 'string' && url.includes('/api/profile') && (!init || init.method !== 'PATCH')) {
+      if (
+        typeof url === 'string' &&
+        url.includes('/api/profile') &&
+        (!init || init.method !== 'PATCH')
+      ) {
         return Promise.resolve({
           ok: true,
           json: async () => ({
@@ -182,8 +186,15 @@ describe('Profile editing', () => {
           }),
         });
       }
-      if (typeof url === 'string' && url.includes('/api/profile') && init?.method === 'PATCH') {
-        return Promise.resolve({ ok: true, json: async () => ({ message: 'Profile updated' }) });
+      if (
+        typeof url === 'string' &&
+        url.includes('/api/profile') &&
+        init?.method === 'PATCH'
+      ) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ message: 'Profile updated' }),
+        });
       }
       return Promise.resolve({ ok: true, json: async () => ({}) });
     });

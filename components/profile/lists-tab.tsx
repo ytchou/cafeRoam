@@ -17,9 +17,12 @@ export function ListsTab({ lists, isLoading }: ListsTabProps) {
 
   if (lists.length === 0) {
     return (
-      <div className="py-12 text-center text-muted-foreground">
+      <div className="text-muted-foreground py-12 text-center">
         <p>No lists yet — save shops to organise your favourites</p>
-        <Link href="/lists" className="mt-2 inline-block text-sm text-primary hover:underline">
+        <Link
+          href="/lists"
+          className="text-primary mt-2 inline-block text-sm hover:underline"
+        >
           Create a list →
         </Link>
       </div>
@@ -41,11 +44,11 @@ function ListCard({ list }: { list: ListSummaryData }) {
   return (
     <Link
       href={`/lists/${list.id}`}
-      className="flex items-center justify-between rounded-lg border p-3 hover:bg-accent/50 transition-colors"
+      className="hover:bg-accent/50 flex items-center justify-between rounded-lg border p-3 transition-colors"
     >
       <div>
         <p className="font-medium">{list.name}</p>
-        <p className="text-sm text-muted-foreground">{list.shop_count} shops</p>
+        <p className="text-muted-foreground text-sm">{list.shop_count} shops</p>
       </div>
       <div className="flex items-center">
         <div className="flex -space-x-2">
@@ -54,12 +57,14 @@ function ListCard({ list }: { list: ListSummaryData }) {
               key={i}
               src={url}
               alt={`${list.name} shop preview ${i + 1}`}
-              className="h-10 w-10 rounded-full border-2 border-background object-cover"
+              className="border-background h-10 w-10 rounded-full border-2 object-cover"
             />
           ))}
         </div>
         {extraCount > 0 && (
-          <span className="ml-1 text-xs text-muted-foreground">+{extraCount}</span>
+          <span className="text-muted-foreground ml-1 text-xs">
+            +{extraCount}
+          </span>
         )}
       </div>
     </Link>

@@ -35,7 +35,7 @@ export function StampDetailSheet({ stamp, onClose }: StampDetailSheetProps) {
             className="h-24 w-24"
           />
           <DrawerTitle>{shopName}</DrawerTitle>
-          <p className="text-sm text-muted-foreground">Earned {earnedDate}</p>
+          <p className="text-muted-foreground text-sm">Earned {earnedDate}</p>
           <Link href={`/shop/${stamp.shop_id}`}>
             <Button variant="outline" size="sm">
               Visit Again →

@@ -28,18 +28,17 @@ export function ProfileHeader({
             className="aspect-square size-full object-cover"
           />
         ) : (
-          <AvatarFallback className="text-lg font-medium">{initial}</AvatarFallback>
+          <AvatarFallback className="text-lg font-medium">
+            {initial}
+          </AvatarFallback>
         )}
       </Avatar>
       <div className="flex-1">
         <h1 className="text-xl font-bold">{name}</h1>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-muted-foreground text-sm">
           {stampCount} stamps &middot; {checkinCount} check-ins
         </p>
-        <Link
-          href="/settings"
-          className="text-sm text-primary hover:underline"
-        >
+        <Link href="/settings" className="text-primary text-sm hover:underline">
           Edit Profile &rarr;
         </Link>
       </div>

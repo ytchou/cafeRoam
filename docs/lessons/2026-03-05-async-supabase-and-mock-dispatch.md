@@ -1,4 +1,5 @@
 # Async Supabase SDK patterns and mock dispatch with asyncio.gather
+
 **Date:** 2026-03-05
 **Context:** User profile feature — profile_service.py review and fix
 
@@ -19,11 +20,13 @@ Three related issues found together during code review of the async profile serv
 ## Prevention
 
 1. **Always use `asyncio.to_thread`** when calling supabase-py SDK methods inside `async def`:
+
    ```python
    result = await asyncio.to_thread(lambda: db.table("x").select("*").execute())
    ```
 
 2. **Never use `.single()` for optional rows** (profile, preferences, etc.):
+
    ```python
    # BAD — raises APIError if row missing
    resp = db.table("profiles").select("*").eq("id", uid).single().execute()
@@ -34,6 +37,7 @@ Three related issues found together during code review of the async profile serv
    ```
 
 3. **Mock by table name, not by call order**, when using `asyncio.gather`:
+
    ```python
    # BAD — order-dependent, breaks with gather
    mock_db.table.side_effect = [profile_table, stamp_table, checkin_table]

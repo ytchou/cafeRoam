@@ -33,12 +33,14 @@ describe('ProfilePage', () => {
     mockFetch.mockReset();
   });
 
-  function mockAllEndpoints(overrides: {
-    profile?: Record<string, unknown>;
-    stamps?: unknown[];
-    checkins?: unknown[];
-    listSummaries?: unknown[];
-  } = {}) {
+  function mockAllEndpoints(
+    overrides: {
+      profile?: Record<string, unknown>;
+      stamps?: unknown[];
+      checkins?: unknown[];
+      listSummaries?: unknown[];
+    } = {}
+  ) {
     mockFetch.mockImplementation((url: string) => {
       if (url.includes('/api/profile')) {
         return Promise.resolve({
@@ -85,7 +87,12 @@ describe('ProfilePage', () => {
           ok: true,
           json: async () =>
             overrides.listSummaries ?? [
-              { id: 'list-1', name: 'Favourites', shop_count: 3, preview_photos: [] },
+              {
+                id: 'list-1',
+                name: 'Favourites',
+                shop_count: 3,
+                preview_photos: [],
+              },
             ],
         });
       }
@@ -119,7 +126,9 @@ describe('ProfilePage', () => {
     render(<ProfilePage />, { wrapper });
 
     await waitFor(() => {
-      expect(screen.getByRole('tab', { name: /check-ins/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole('tab', { name: /check-ins/i })
+      ).toBeInTheDocument();
     });
 
     await user.click(screen.getByRole('tab', { name: /check-ins/i }));

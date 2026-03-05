@@ -7,7 +7,10 @@ interface CheckinHistoryTabProps {
   isLoading: boolean;
 }
 
-export function CheckinHistoryTab({ checkins, isLoading }: CheckinHistoryTabProps) {
+export function CheckinHistoryTab({
+  checkins,
+  isLoading,
+}: CheckinHistoryTabProps) {
   if (isLoading) {
     return (
       <div className="flex justify-center py-12" data-testid="loading-spinner">
@@ -18,7 +21,7 @@ export function CheckinHistoryTab({ checkins, isLoading }: CheckinHistoryTabProp
 
   if (checkins.length === 0) {
     return (
-      <div className="py-12 text-center text-muted-foreground">
+      <div className="text-muted-foreground py-12 text-center">
         <p>No check-ins yet — find a shop to visit</p>
       </div>
     );
@@ -45,19 +48,19 @@ function CheckinCard({ checkin }: { checkin: CheckInData }) {
           className="h-[60px] w-[60px] rounded-md object-cover"
         />
       )}
-      <div className="flex-1 min-w-0">
+      <div className="min-w-0 flex-1">
         <Link
           href={`/shop/${checkin.shop_id}`}
           className="font-medium hover:underline"
         >
           {checkin.shop_name ?? 'Unknown Shop'}
         </Link>
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <div className="text-muted-foreground flex items-center gap-2 text-sm">
           {checkin.stars != null && <StarDisplay count={checkin.stars} />}
           <span>{date}</span>
         </div>
         {checkin.shop_mrt && (
-          <p className="text-xs text-muted-foreground">{checkin.shop_mrt}</p>
+          <p className="text-muted-foreground text-xs">{checkin.shop_mrt}</p>
         )}
       </div>
     </div>

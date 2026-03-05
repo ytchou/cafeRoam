@@ -137,7 +137,7 @@ export default function SettingsPage() {
           <div>
             <label
               htmlFor="display-name"
-              className="block text-sm font-medium mb-1"
+              className="mb-1 block text-sm font-medium"
             >
               Display name
             </label>
@@ -150,14 +150,14 @@ export default function SettingsPage() {
               className="w-full rounded-md border px-3 py-2 text-sm"
               placeholder="Enter your display name"
             />
-            <p className="mt-1 text-xs text-muted-foreground">
+            <p className="text-muted-foreground mt-1 text-xs">
               {displayName.length}/30
             </p>
           </div>
           <div>
-            <p className="block text-sm font-medium mb-2">Avatar</p>
+            <p className="mb-2 block text-sm font-medium">Avatar</p>
             <div className="flex items-center gap-4">
-              <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center overflow-hidden">
+              <div className="bg-muted flex h-16 w-16 items-center justify-center overflow-hidden rounded-full">
                 {avatarUrl ? (
                   <img
                     src={avatarUrl}
@@ -165,13 +165,13 @@ export default function SettingsPage() {
                     className="h-full w-full object-cover"
                   />
                 ) : (
-                  <span className="text-lg font-medium text-muted-foreground">
+                  <span className="text-muted-foreground text-lg font-medium">
                     {displayName.charAt(0).toUpperCase() || 'U'}
                   </span>
                 )}
               </div>
               <label className="cursor-pointer">
-                <span className="rounded-md border px-3 py-2 text-sm hover:bg-accent">
+                <span className="hover:bg-accent rounded-md border px-3 py-2 text-sm">
                   Upload photo
                 </span>
                 <input
@@ -189,7 +189,7 @@ export default function SettingsPage() {
           <button
             onClick={handleSaveProfile}
             disabled={saving}
-            className="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+            className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-md px-4 py-2 text-sm disabled:opacity-50"
           >
             {saving ? 'Saving...' : 'Save changes'}
           </button>

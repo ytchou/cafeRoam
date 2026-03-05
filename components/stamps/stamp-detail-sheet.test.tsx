@@ -26,7 +26,9 @@ describe('StampDetailSheet', () => {
   });
 
   it('stamp details disappear when the sheet is dismissed', () => {
-    const { unmount } = render(<StampDetailSheet stamp={stamp} onClose={vi.fn()} />);
+    const { unmount } = render(
+      <StampDetailSheet stamp={stamp} onClose={vi.fn()} />
+    );
     unmount();
     expect(screen.queryByText('Fika Coffee')).not.toBeInTheDocument();
   });

@@ -59,7 +59,7 @@ export function StampPassport({ stamps, onStampClick }: StampPassportProps) {
                 <div
                   key={stamp.id}
                   data-testid="stamp-slot-filled"
-                  className="flex aspect-square items-center justify-center rounded-lg bg-amber-50 p-1 cursor-pointer"
+                  className="flex aspect-square cursor-pointer items-center justify-center rounded-lg bg-amber-50 p-1"
                   onClick={() => onStampClick?.(stamp)}
                 >
                   <img

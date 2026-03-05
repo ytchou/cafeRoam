@@ -184,6 +184,7 @@ count = int(result.data or 0)
 **Root cause:** supabase-py is a synchronous library. Calling it directly in `async def` blocks uvicorn's event loop for the duration of the DB call.
 
 **Fix:**
+
 ```python
 # Wrap every supabase-py call in asyncio.to_thread
 result = await asyncio.to_thread(lambda: db.table("profiles").select("*").eq("id", uid).execute())
@@ -200,6 +201,7 @@ result = await asyncio.to_thread(lambda: db.table("profiles").select("*").eq("id
 **Root cause:** PostgREST `.single()` raises `APIError` when the query matches 0 or 2+ rows. New users have no `profiles` row yet.
 
 **Fix:**
+
 ```python
 # Use .limit(1) for optional rows; handle empty list
 rows = db.table("profiles").select("*").eq("id", uid).limit(1).execute().data
@@ -217,6 +219,7 @@ profile = rows[0] if rows else {}
 **Root cause:** `asyncio.gather` dispatches coroutines concurrently. `side_effect = [table_a, table_b, table_c]` assumes a deterministic call order that no longer holds.
 
 **Fix:**
+
 ```python
 # Dispatch by argument instead of by call order
 table_map = {"profiles": profile_table, "stamps": stamp_table, "check_ins": checkin_table}

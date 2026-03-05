@@ -23,7 +23,12 @@ describe('ProfileHeader', () => {
   });
 
   it('shows avatar image when URL provided', () => {
-    render(<ProfileHeader {...defaultProps} avatarUrl="https://example.com/avatar.jpg" />);
+    render(
+      <ProfileHeader
+        {...defaultProps}
+        avatarUrl="https://example.com/avatar.jpg"
+      />
+    );
     const img = screen.getByRole('img');
     expect(img).toHaveAttribute('src', expect.stringContaining('avatar.jpg'));
   });
