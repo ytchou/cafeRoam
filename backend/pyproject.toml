@@ -64,3 +64,11 @@ ignore_missing_imports = true
 dev = [
     "mypy>=1.19.1",
 ]
+
+[tool.coverage.run]
+branch = true
+source = ["api", "services", "providers", "core", "models", "middleware"]
+omit = ["tests/*", ".venv/*", "conftest.py"]
+
+[tool.coverage.report]
+show_missing = true
