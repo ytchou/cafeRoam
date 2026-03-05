@@ -60,6 +60,7 @@ The stamp passport is always visible (hero section). Check-ins and Lists are in 
 **File:** `components/profile/checkin-history-tab.tsx`
 
 Each card:
+
 ```
 ┌──────────────────────────────────┐
 │ [photo]  Fika Coffee             │
@@ -80,6 +81,7 @@ Each card:
 **File:** `components/profile/lists-tab.tsx`
 
 Each card:
+
 ```
 ┌────────────────────────────────┐
 │ My Favourites           8 shops │
@@ -97,12 +99,12 @@ Each card:
 
 ## Data Hooks
 
-| Hook | Endpoint | Status |
-|---|---|---|
-| `useUserProfile()` | `GET /profile` | New |
-| `useUserStamps()` | `GET /stamps` | Exists — extend response shape |
+| Hook                | Endpoint        | Status                                            |
+| ------------------- | --------------- | ------------------------------------------------- |
+| `useUserProfile()`  | `GET /profile`  | New                                               |
+| `useUserStamps()`   | `GET /stamps`   | Exists — extend response shape                    |
 | `useUserCheckins()` | `GET /checkins` | New hook, endpoint exists — extend response shape |
-| `useUserLists()` | `GET /lists` | Exists — extend response shape |
+| `useUserLists()`    | `GET /lists`    | Exists — extend response shape                    |
 
 All hooks use `fetchWithAuth` + SWR.
 
@@ -115,6 +117,7 @@ All hooks use `fetchWithAuth` + SWR.
 Returns profile data + aggregate stats for the header.
 
 **Response:**
+
 ```json
 {
   "display_name": "Mei-Ling",
@@ -131,14 +134,16 @@ Implementation: JOIN profiles + COUNT(stamps) + COUNT(check_ins) for the authent
 Updates `display_name` and/or `avatar_url`.
 
 **Request body:**
+
 ```json
 {
-  "display_name": "Mei-Ling",  // optional, max 30 chars
-  "avatar_url": "https://..."  // optional, must be a Supabase Storage URL
+  "display_name": "Mei-Ling", // optional, max 30 chars
+  "avatar_url": "https://..." // optional, must be a Supabase Storage URL
 }
 ```
 
 Validation:
+
 - `display_name`: strip whitespace, max 30 chars, min 1 char if provided
 - `avatar_url`: must start with the project's Supabase Storage URL (prevent arbitrary URLs)
 
@@ -147,13 +152,21 @@ Validation:
 Add `shop_name` field to each stamp (JOIN with `shops` table).
 
 **Current response item:**
+
 ```json
 { "id": "...", "shop_id": "...", "design_url": "...", "earned_at": "..." }
 ```
 
 **New response item:**
+
 ```json
-{ "id": "...", "shop_id": "...", "shop_name": "Fika Coffee", "design_url": "...", "earned_at": "..." }
+{
+  "id": "...",
+  "shop_id": "...",
+  "shop_name": "Fika Coffee",
+  "design_url": "...",
+  "earned_at": "..."
+}
 ```
 
 ### Extended: `GET /checkins`
@@ -161,6 +174,7 @@ Add `shop_name` field to each stamp (JOIN with `shops` table).
 Add `shop_name`, `shop_neighborhood`, `shop_cover_photo` (JOIN with `shops`).
 
 **New response item:**
+
 ```json
 {
   "id": "...",
@@ -180,6 +194,7 @@ Add `shop_name`, `shop_neighborhood`, `shop_cover_photo` (JOIN with `shops`).
 Add `shop_count` and `preview_photos` (first 3 shop cover photos) per list.
 
 **New response item:**
+
 ```json
 {
   "id": "...",
@@ -190,6 +205,7 @@ Add `shop_count` and `preview_photos` (first 3 shop cover photos) per list.
 ```
 
 ### New files:
+
 - `backend/api/profile.py` — router for GET/PATCH /profile
 - `backend/services/profile_service.py` — service logic
 
@@ -211,7 +227,7 @@ Avatar
 [Save changes]
 ```
 
-- Avatar upload: file picker (image/* only, max 1MB). On select: upload to Supabase Storage `avatars/{user_id}` via client-side `supabase.storage.from('avatars').upload(...)`, then set URL. On save: `PATCH /api/profile` with new `avatar_url`.
+- Avatar upload: file picker (image/\* only, max 1MB). On select: upload to Supabase Storage `avatars/{user_id}` via client-side `supabase.storage.from('avatars').upload(...)`, then set URL. On save: `PATCH /api/profile` with new `avatar_url`.
 - Display name: controlled text input. Save triggers `PATCH /api/profile`.
 - New proxy route: `app/api/profile/route.ts` → GET + PATCH → Python backend
 
@@ -236,6 +252,7 @@ Avatar
 ## Testing Strategy
 
 **Frontend (Vitest + Testing Library):**
+
 - `profile/page.test.tsx` — extend: header renders with display name + stats, tabs switch, each tab's empty state
 - `settings/page.test.tsx` — extend: display name input, avatar upload, save success, save error
 - `components/stamps/stamp-detail-sheet.test.tsx` — new: renders shop name, date, link
@@ -243,6 +260,7 @@ Avatar
 - `components/profile/lists-tab.test.tsx` — new: renders cards, empty state
 
 **Backend (pytest):**
+
 - `backend/tests/test_profile_api.py` — new: GET /profile (auth required, returns correct counts), PATCH /profile (validation, 401, success)
 - `backend/tests/test_stamps_api.py` — extend: GET /stamps now includes shop_name
 - `backend/tests/test_checkins_api.py` — extend: GET /checkins includes shop data

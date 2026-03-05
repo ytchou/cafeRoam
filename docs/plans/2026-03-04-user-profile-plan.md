@@ -15,6 +15,7 @@
 **Tech Stack:** FastAPI, Supabase (PostgREST nested selects, Storage), Next.js App Router, SWR, shadcn/ui (Tabs, Avatar), Tailwind CSS
 
 **Acceptance Criteria:**
+
 - [ ] A user can see their display name, avatar, stamp count, and check-in count on the profile header
 - [ ] A user can tap a stamp in their passport and see the shop name, earned date, and a link to the shop
 - [ ] A user can view their check-in history with photo thumbnails, shop names, star ratings, and dates
@@ -26,6 +27,7 @@
 ## Codebase Reference
 
 **Key patterns (read these before implementing):**
+
 - Backend service pattern: `backend/services/checkin_service.py` — `__init__(self, db: Client)`, async methods, raises `ValueError`
 - Backend router pattern: `backend/api/checkins.py` — local request `BaseModel`, `Depends(get_current_user)`, `Depends(get_user_db)`, `service = Service(db=db)`
 - Frontend hook pattern: `lib/hooks/use-user-stamps.ts` — SWR + `fetchWithAuth`, exports interface, returns `data ?? []`
@@ -34,6 +36,7 @@
 - Test mocks: `lib/test-utils/mocks.ts` — `createMockSupabaseAuth()`, `createMockRouter()`
 
 **DB column names:**
+
 - `shops.name` (not `shop_name`), `shops.mrt` (nearest MRT station, acts as neighborhood)
 - Cover photos: `shop_photos` table, ordered by `sort_order` — no column on `shops` itself
 - `profiles.display_name`, `profiles.avatar_url` (both nullable)
@@ -45,6 +48,7 @@
 ### Task 1: Install shadcn UI components and create avatars storage bucket
 
 **Files:**
+
 - Create: `components/ui/tabs.tsx` (via shadcn CLI)
 - Create: `components/ui/avatar.tsx` (via shadcn CLI)
 - Create: `supabase/migrations/20260304000003_create_avatars_bucket.sql`
@@ -58,6 +62,7 @@ npx shadcn@latest add tabs avatar
 ```
 
 Verify both files exist:
+
 ```bash
 ls components/ui/tabs.tsx components/ui/avatar.tsx
 ```
@@ -107,6 +112,7 @@ git commit -m "chore: install shadcn tabs/avatar + create avatars storage bucket
 ### Task 2: Backend models for profile
 
 **Files:**
+
 - Modify: `backend/models/types.py`
 
 No test needed — pure type definitions.
@@ -184,6 +190,7 @@ git commit -m "feat(models): add profile, stamp-with-shop, checkin-with-shop, li
 ### Task 3: ProfileService with TDD
 
 **Files:**
+
 - Create: `backend/services/profile_service.py`
 - Create: `backend/tests/test_profile_service.py`
 
@@ -362,11 +369,13 @@ git commit -m "feat(profile): add ProfileService with TDD — get_profile + upda
 ### Task 4: Profile API router with TDD
 
 **Files:**
+
 - Create: `backend/api/profile.py`
 - Modify: `backend/main.py` (register router)
 - Create: `backend/tests/test_profile_api.py`
 
 **API Contract:**
+
 ```yaml
 GET /profile:
   auth: required
@@ -381,10 +390,10 @@ GET /profile:
 PATCH /profile:
   auth: required
   request:
-    display_name: string | null  # max 30 chars
+    display_name: string | null # max 30 chars
     avatar_url: string | null
   response:
-    message: "Profile updated"
+    message: 'Profile updated'
   errors:
     400: validation failure
     401: unauthenticated
@@ -530,6 +539,7 @@ async def update_profile(
 **Step 4: Register router in `backend/main.py`**
 
 Add import and registration alongside existing routers:
+
 ```python
 from api.profile import router as profile_router
 # ...
@@ -556,6 +566,7 @@ git commit -m "feat(api): add GET/PATCH /profile endpoint with TDD"
 ### Task 5: Extend GET /stamps to include shop_name
 
 **Files:**
+
 - Modify: `backend/api/stamps.py`
 
 **Step 1: Write the failing test**
@@ -674,6 +685,7 @@ git commit -m "feat(stamps): include shop_name in GET /stamps via JOIN"
 ### Task 6: Extend GET /checkins to include shop data
 
 **Files:**
+
 - Modify: `backend/services/checkin_service.py`
 - Modify: `backend/api/checkins.py`
 
@@ -771,6 +783,7 @@ git commit -m "feat(checkins): include shop_name and shop_mrt in GET /checkins v
 ### Task 7: Extend GET /lists to include shop_count and preview_photos
 
 **Files:**
+
 - Modify: `backend/services/lists_service.py`
 - Modify: `backend/api/lists.py`
 
@@ -902,6 +915,7 @@ git commit -m "feat(lists): add GET /lists/summaries for profile preview photos"
 ### Task 8: Frontend proxy routes and hooks
 
 **Files:**
+
 - Create: `app/api/profile/route.ts`
 - Create: `lib/hooks/use-user-profile.ts`
 - Create: `lib/hooks/use-user-checkins.ts`
@@ -1051,6 +1065,7 @@ git commit -m "feat: add profile/checkins/list-summaries proxy routes and SWR ho
 ### Task 9: ProfileHeader component with TDD
 
 **Files:**
+
 - Create: `components/profile/profile-header.tsx`
 - Create: `components/profile/profile-header.test.tsx`
 
@@ -1083,7 +1098,12 @@ describe('ProfileHeader', () => {
   });
 
   it('shows avatar image when URL provided', () => {
-    render(<ProfileHeader {...defaultProps} avatarUrl="https://example.com/avatar.jpg" />);
+    render(
+      <ProfileHeader
+        {...defaultProps}
+        avatarUrl="https://example.com/avatar.jpg"
+      />
+    );
     const img = screen.getByRole('img');
     expect(img).toHaveAttribute('src', expect.stringContaining('avatar.jpg'));
   });
@@ -1136,17 +1156,16 @@ export function ProfileHeader({
     <div className="flex items-center gap-4 pb-6">
       <Avatar className="h-16 w-16">
         {avatarUrl && <AvatarImage src={avatarUrl} alt={name} />}
-        <AvatarFallback className="text-lg font-medium">{initial}</AvatarFallback>
+        <AvatarFallback className="text-lg font-medium">
+          {initial}
+        </AvatarFallback>
       </Avatar>
       <div className="flex-1">
         <h1 className="text-xl font-bold">{name}</h1>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-muted-foreground text-sm">
           {stampCount} stamps &middot; {checkinCount} check-ins
         </p>
-        <Link
-          href="/settings"
-          className="text-sm text-primary hover:underline"
-        >
+        <Link href="/settings" className="text-primary text-sm hover:underline">
           Edit Profile →
         </Link>
       </div>
@@ -1175,6 +1194,7 @@ git commit -m "feat(profile): add ProfileHeader component with TDD"
 ### Task 10: StampDetailSheet component with TDD
 
 **Files:**
+
 - Create: `components/stamps/stamp-detail-sheet.tsx`
 - Create: `components/stamps/stamp-detail-sheet.test.tsx`
 - Modify: `components/stamps/stamp-passport.tsx` (add tap handler)
@@ -1253,7 +1273,11 @@ interface StampDetailSheetProps {
   onClose: () => void;
 }
 
-export function StampDetailSheet({ stamp, open, onClose }: StampDetailSheetProps) {
+export function StampDetailSheet({
+  stamp,
+  open,
+  onClose,
+}: StampDetailSheetProps) {
   const earnedDate = new Date(stamp.earned_at).toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'long',
@@ -1270,7 +1294,7 @@ export function StampDetailSheet({ stamp, open, onClose }: StampDetailSheetProps
             className="h-24 w-24"
           />
           <DrawerTitle>{stamp.shop_name}</DrawerTitle>
-          <p className="text-sm text-muted-foreground">Earned {earnedDate}</p>
+          <p className="text-muted-foreground text-sm">Earned {earnedDate}</p>
           <Link href={`/shop/${stamp.shop_id}`}>
             <Button variant="outline" size="sm">
               Visit Again →
@@ -1294,6 +1318,7 @@ Expected: PASS
 **Step 5: Update StampPassport to support tap-to-open**
 
 In `components/stamps/stamp-passport.tsx`, add:
+
 - Accept an `onStampClick?: (stamp: StampData) => void` prop
 - On each filled slot, attach `onClick={() => onStampClick?.(stamp)}`
 - Add `cursor-pointer` to filled slots
@@ -1312,6 +1337,7 @@ git commit -m "feat(stamps): add StampDetailSheet + tap-to-open on passport stam
 ### Task 11: CheckinHistoryTab component with TDD
 
 **Files:**
+
 - Create: `components/profile/checkin-history-tab.tsx`
 - Create: `components/profile/checkin-history-tab.test.tsx`
 
@@ -1407,7 +1433,10 @@ interface CheckinHistoryTabProps {
   isLoading: boolean;
 }
 
-export function CheckinHistoryTab({ checkins, isLoading }: CheckinHistoryTabProps) {
+export function CheckinHistoryTab({
+  checkins,
+  isLoading,
+}: CheckinHistoryTabProps) {
   if (isLoading) {
     return (
       <div className="flex justify-center py-12" data-testid="loading-spinner">
@@ -1418,7 +1447,7 @@ export function CheckinHistoryTab({ checkins, isLoading }: CheckinHistoryTabProp
 
   if (checkins.length === 0) {
     return (
-      <div className="py-12 text-center text-muted-foreground">
+      <div className="text-muted-foreground py-12 text-center">
         <p>No check-ins yet — find a shop to visit</p>
       </div>
     );
@@ -1445,19 +1474,19 @@ function CheckinCard({ checkin }: { checkin: CheckInData }) {
         alt=""
         className="h-[60px] w-[60px] rounded-md object-cover"
       />
-      <div className="flex-1 min-w-0">
+      <div className="min-w-0 flex-1">
         <Link
           href={`/shop/${checkin.shop_id}`}
           className="font-medium hover:underline"
         >
           {checkin.shop_name}
         </Link>
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <div className="text-muted-foreground flex items-center gap-2 text-sm">
           {checkin.stars && <StarDisplay count={checkin.stars} />}
           <span>{timeAgo}</span>
         </div>
         {checkin.shop_mrt && (
-          <p className="text-xs text-muted-foreground">{checkin.shop_mrt}</p>
+          <p className="text-muted-foreground text-xs">{checkin.shop_mrt}</p>
         )}
       </div>
     </div>
@@ -1501,6 +1530,7 @@ git commit -m "feat(profile): add CheckinHistoryTab component with TDD"
 ### Task 12: ListsTab component with TDD
 
 **Files:**
+
 - Create: `components/profile/lists-tab.tsx`
 - Create: `components/profile/lists-tab.test.tsx`
 
@@ -1601,9 +1631,12 @@ export function ListsTab({ lists, isLoading }: ListsTabProps) {
 
   if (lists.length === 0) {
     return (
-      <div className="py-12 text-center text-muted-foreground">
+      <div className="text-muted-foreground py-12 text-center">
         <p>No lists yet — save shops to organise your favourites</p>
-        <Link href="/lists" className="mt-2 inline-block text-sm text-primary hover:underline">
+        <Link
+          href="/lists"
+          className="text-primary mt-2 inline-block text-sm hover:underline"
+        >
           Create a list →
         </Link>
       </div>
@@ -1625,11 +1658,11 @@ function ListCard({ list }: { list: ListSummaryData }) {
   return (
     <Link
       href={`/lists/${list.id}`}
-      className="flex items-center justify-between rounded-lg border p-3 hover:bg-accent/50 transition-colors"
+      className="hover:bg-accent/50 flex items-center justify-between rounded-lg border p-3 transition-colors"
     >
       <div>
         <p className="font-medium">{list.name}</p>
-        <p className="text-sm text-muted-foreground">{list.shop_count} shops</p>
+        <p className="text-muted-foreground text-sm">{list.shop_count} shops</p>
       </div>
       <div className="flex items-center">
         <div className="flex -space-x-2">
@@ -1638,12 +1671,14 @@ function ListCard({ list }: { list: ListSummaryData }) {
               key={i}
               src={url}
               alt=""
-              className="h-10 w-10 rounded-full border-2 border-background object-cover"
+              className="border-background h-10 w-10 rounded-full border-2 object-cover"
             />
           ))}
         </div>
         {extraCount > 0 && (
-          <span className="ml-1 text-xs text-muted-foreground">+{extraCount}</span>
+          <span className="text-muted-foreground ml-1 text-xs">
+            +{extraCount}
+          </span>
         )}
       </div>
     </Link>
@@ -1671,6 +1706,7 @@ git commit -m "feat(profile): add ListsTab component with TDD"
 ### Task 13: Rebuild profile page with all sections
 
 **Files:**
+
 - Modify: `app/(protected)/profile/page.tsx`
 - Modify: `app/(protected)/profile/page.test.tsx`
 
@@ -1715,12 +1751,14 @@ describe('ProfilePage', () => {
     mockFetch.mockReset();
   });
 
-  function mockAllEndpoints(overrides: {
-    profile?: Record<string, unknown>;
-    stamps?: unknown[];
-    checkins?: unknown[];
-    listSummaries?: unknown[];
-  } = {}) {
+  function mockAllEndpoints(
+    overrides: {
+      profile?: Record<string, unknown>;
+      stamps?: unknown[];
+      checkins?: unknown[];
+      listSummaries?: unknown[];
+    } = {}
+  ) {
     mockFetch.mockImplementation((url: string) => {
       if (url.includes('/api/profile')) {
         return Promise.resolve({
@@ -1767,7 +1805,12 @@ describe('ProfilePage', () => {
           ok: true,
           json: async () =>
             overrides.listSummaries ?? [
-              { id: 'list-1', name: 'Favourites', shop_count: 3, preview_photos: [] },
+              {
+                id: 'list-1',
+                name: 'Favourites',
+                shop_count: 3,
+                preview_photos: [],
+              },
             ],
         });
       }
@@ -1801,7 +1844,9 @@ describe('ProfilePage', () => {
     render(<ProfilePage />, { wrapper });
 
     await waitFor(() => {
-      expect(screen.getByRole('tab', { name: /check-ins/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole('tab', { name: /check-ins/i })
+      ).toBeInTheDocument();
     });
 
     await user.click(screen.getByRole('tab', { name: /check-ins/i }));
@@ -1860,7 +1905,9 @@ export default function ProfilePage() {
   const { stamps, isLoading: stampsLoading } = useUserStamps();
   const { checkins, isLoading: checkinsLoading } = useUserCheckins();
   const { lists, isLoading: listsLoading } = useListSummaries();
-  const [selectedStamp, setSelectedStamp] = useState<(typeof stamps)[number] | null>(null);
+  const [selectedStamp, setSelectedStamp] = useState<
+    (typeof stamps)[number] | null
+  >(null);
 
   return (
     <main className="mx-auto max-w-lg px-4 py-6">
@@ -1939,6 +1986,7 @@ git commit -m "feat(profile): rebuild profile page with header, passport, checki
 ### Task 14: Add profile editing to Settings page
 
 **Files:**
+
 - Modify: `app/(protected)/settings/page.tsx`
 - Modify: `app/(protected)/settings/page.test.tsx`
 
@@ -1953,7 +2001,11 @@ describe('Profile editing', () => {
     mockFetch.mockReset();
     // Mock GET /api/profile for the initial load
     mockFetch.mockImplementation((url: string, init?: RequestInit) => {
-      if (typeof url === 'string' && url.includes('/api/profile') && (!init || init.method !== 'PATCH')) {
+      if (
+        typeof url === 'string' &&
+        url.includes('/api/profile') &&
+        (!init || init.method !== 'PATCH')
+      ) {
         return Promise.resolve({
           ok: true,
           json: async () => ({
@@ -1964,8 +2016,15 @@ describe('Profile editing', () => {
           }),
         });
       }
-      if (typeof url === 'string' && url.includes('/api/profile') && init?.method === 'PATCH') {
-        return Promise.resolve({ ok: true, json: async () => ({ message: 'Profile updated' }) });
+      if (
+        typeof url === 'string' &&
+        url.includes('/api/profile') &&
+        init?.method === 'PATCH'
+      ) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ message: 'Profile updated' }),
+        });
       }
       return Promise.resolve({ ok: true, json: async () => ({}) });
     });
@@ -2018,7 +2077,7 @@ Add above the Logout section in `app/(protected)/settings/page.tsx`:
 2. Add profile state (display name, avatar URL)
 3. Add a "Profile" section with:
    - Display name label + input (max 30 chars)
-   - Avatar section: circular preview + "Upload photo" button (file input, accepts image/*)
+   - Avatar section: circular preview + "Upload photo" button (file input, accepts image/\*)
    - On file select: upload to Supabase Storage `avatars/{user_id}/{timestamp}.{ext}`, get URL
    - "Save changes" button → `PATCH /api/profile` via `fetchWithAuth`
    - Loading + success/error states
@@ -2028,7 +2087,7 @@ Add above the Logout section in `app/(protected)/settings/page.tsx`:
 <section className="space-y-4 rounded-lg border p-6">
   <h2 className="text-lg font-semibold">Profile</h2>
   <div>
-    <label htmlFor="display-name" className="block text-sm font-medium mb-1">
+    <label htmlFor="display-name" className="mb-1 block text-sm font-medium">
       Display name
     </label>
     <input
@@ -2040,10 +2099,12 @@ Add above the Logout section in `app/(protected)/settings/page.tsx`:
       className="w-full rounded-md border px-3 py-2 text-sm"
       placeholder="Enter your display name"
     />
-    <p className="mt-1 text-xs text-muted-foreground">{displayName.length}/30</p>
+    <p className="text-muted-foreground mt-1 text-xs">
+      {displayName.length}/30
+    </p>
   </div>
   <div>
-    <p className="block text-sm font-medium mb-2">Avatar</p>
+    <p className="mb-2 block text-sm font-medium">Avatar</p>
     <div className="flex items-center gap-4">
       {/* Avatar preview + upload button */}
     </div>
@@ -2051,7 +2112,7 @@ Add above the Logout section in `app/(protected)/settings/page.tsx`:
   <button
     onClick={handleSaveProfile}
     disabled={saving}
-    className="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+    className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-md px-4 py-2 text-sm disabled:opacity-50"
   >
     {saving ? 'Saving...' : 'Save changes'}
   </button>
@@ -2061,6 +2122,7 @@ Add above the Logout section in `app/(protected)/settings/page.tsx`:
 ```
 
 Avatar upload handler:
+
 ```tsx
 async function handleAvatarUpload(file: File) {
   if (file.size > 1024 * 1024) {
@@ -2068,17 +2130,23 @@ async function handleAvatarUpload(file: File) {
     return;
   }
   const supabase = createClient();
-  const { data: { session } } = await supabase.auth.getSession();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
   if (!session) return;
 
   const ext = file.name.split('.').pop();
   const path = `${session.user.id}/${Date.now()}.${ext}`;
-  const { error } = await supabase.storage.from('avatars').upload(path, file, { upsert: true });
+  const { error } = await supabase.storage
+    .from('avatars')
+    .upload(path, file, { upsert: true });
   if (error) {
     setProfileError('Failed to upload avatar');
     return;
   }
-  const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path);
+  const {
+    data: { publicUrl },
+  } = supabase.storage.from('avatars').getPublicUrl(path);
   setAvatarUrl(publicUrl);
 }
 ```
@@ -2103,6 +2171,7 @@ git commit -m "feat(settings): add profile editing — display name + avatar upl
 ### Task 15: Update StampData type and useUserStamps hook
 
 **Files:**
+
 - Modify: `lib/hooks/use-user-stamps.ts`
 
 The `StampData` interface needs `shop_name` since the backend now returns it.
@@ -2262,22 +2331,27 @@ graph TD
 ```
 
 **Wave 1** (parallel — no dependencies):
+
 - Task 1: Install shadcn components + avatars storage bucket
 - Task 2: Backend Pydantic models
 
 **Wave 2** (parallel — depends on Wave 1):
+
 - Task 3: ProfileService with TDD ← Task 2
 - Task 5: Extend GET /stamps with shop_name ← Task 2
 - Task 6: Extend GET /checkins with shop data ← Task 2
 - Task 7: Add GET /lists/summaries ← Task 2
 
 **Wave 3** (depends on Wave 2):
+
 - Task 4: Profile API router ← Task 3
 
 **Wave 4** (depends on Waves 2-3):
+
 - Task 8: Frontend proxy routes + SWR hooks ← Tasks 4, 5, 6, 7
 
 **Wave 5** (parallel — depends on Wave 4):
+
 - Task 9: ProfileHeader component ← Tasks 1, 8
 - Task 10: StampDetailSheet component ← Task 8
 - Task 11: CheckinHistoryTab component ← Task 8
@@ -2285,8 +2359,10 @@ graph TD
 - Task 15: Update StampData type + factory ← Task 8
 
 **Wave 6** (parallel — depends on Wave 5):
+
 - Task 13: Rebuild profile page ← Tasks 9, 10, 11, 12, 15
 - Task 14: Add profile editing to settings ← Tasks 1, 8
 
 **Wave 7** (depends on Wave 6):
+
 - Task 16: Full integration verification ← Tasks 13, 14
