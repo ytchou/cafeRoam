@@ -619,6 +619,25 @@ Discovered gaps moved to → Quality Gate: Pre-Phase 2B section below.
 
 ---
 
+## Developer Tooling
+
+### Preflight Doctor (`make doctor`)
+> **Design Doc:** [docs/designs/2026-03-12-preflight-doctor-design.md](docs/designs/2026-03-12-preflight-doctor-design.md)
+> **Plan:** [docs/plans/2026-03-12-preflight-doctor-plan.md](docs/plans/2026-03-12-preflight-doctor-plan.md)
+
+**Chunk 1 — Script + Makefile:**
+- [ ] Create `scripts/doctor.sh` (12 diagnostic checks)
+- [ ] Add `make doctor` Makefile target
+
+**Chunk 2 — Documentation:**
+- [ ] Update CLAUDE.md with preflight rules
+- [ ] Update ERROR-PREVENTION.md with debugging loops entry
+
+**Chunk 3 — Verification:**
+- [ ] Manual acceptance criteria verification (all 4 scenarios)
+
+---
+
 ## Quality Gate: Pre-Phase 2B
 
 > **Design Doc:** [docs/designs/2026-03-05-pre-phase2b-quality-gate-design.md](docs/designs/2026-03-05-pre-phase2b-quality-gate-design.md)
@@ -820,6 +839,21 @@ Explicitly cut from V1. Revisit after Phase 3 validation data is in hand.
 - [ ] Recommendation engine trained on real usage data
 - [ ] Coverage expansion beyond Taipei
 - [ ] Native iOS/Android app (after Threads distribution is proven)
+
+### Incorrect-First-Attempts Prevention (Tooling)
+
+> **Design:** [docs/designs/2026-03-12-incorrect-first-attempts-prevention-design.md](docs/designs/2026-03-12-incorrect-first-attempts-prevention-design.md)
+> **Plan:** [docs/plans/2026-03-12-incorrect-first-attempts-prevention-plan.md](docs/plans/2026-03-12-incorrect-first-attempts-prevention-plan.md)
+
+- [x] Global CLAUDE.md — pre-flight checks + file ownership (done in brainstorming session)
+- [x] Feedback memories — branch discipline + supabase patterns (done in brainstorming session)
+- [ ] Pre-commit hook — branch guard + `.data[0]` + proxy layer checks (Task 1)
+- [ ] `docs/patterns/supabase-py.md` — correct API usage reference (Task 2)
+- [ ] Project CLAUDE.md — pre-flight + file ownership table (Task 3)
+- [ ] `/scope` SKILL.md — scaffold pre-commit + `docs/patterns/` for new projects (Task 4)
+- [ ] `/scope` templates — pre-flight + ownership sections (Task 5)
+
+---
 
 ### LINE Integration (V2)
 
