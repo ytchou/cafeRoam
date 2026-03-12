@@ -5,6 +5,6 @@ Claude should check this directory before writing any code that uses these libra
 
 ## Index
 
-| Library | Pattern doc | Last updated |
-|---------|-------------|-------------|
-| supabase-py (Python) | [supabase-py.md](supabase-py.md) | 2026-03-12 |
+| Library              | Pattern doc                      | Last updated |
+| -------------------- | -------------------------------- | ------------ |
+| supabase-py (Python) | [supabase-py.md](supabase-py.md) | 2026-03-12   |

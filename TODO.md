@@ -622,18 +622,22 @@ Discovered gaps moved to → Quality Gate: Pre-Phase 2B section below.
 ## Developer Tooling
 
 ### Preflight Doctor (`make doctor`)
+
 > **Design Doc:** [docs/designs/2026-03-12-preflight-doctor-design.md](docs/designs/2026-03-12-preflight-doctor-design.md)
 > **Plan:** [docs/plans/2026-03-12-preflight-doctor-plan.md](docs/plans/2026-03-12-preflight-doctor-plan.md)
 
 **Chunk 1 — Script + Makefile:**
+
 - [ ] Create `scripts/doctor.sh` (12 diagnostic checks)
 - [ ] Add `make doctor` Makefile target
 
 **Chunk 2 — Documentation:**
+
 - [ ] Update CLAUDE.md with preflight rules
 - [ ] Update ERROR-PREVENTION.md with debugging loops entry
 
 **Chunk 3 — Verification:**
+
 - [ ] Manual acceptance criteria verification (all 4 scenarios)
 
 ---

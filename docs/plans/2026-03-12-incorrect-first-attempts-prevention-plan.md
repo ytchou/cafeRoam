@@ -15,6 +15,7 @@
 **Tech Stack:** Bash (pre-commit hooks), Markdown (pattern docs), /scope skill templates
 
 **Acceptance Criteria:**
+
 - [ ] A commit attempted from `main` branch is blocked with a clear error and worktree instructions
 - [ ] A commit containing `.data[0]` anywhere in staged Python or TypeScript diffs is blocked
 - [ ] A commit containing supabase/DB calls inside `app/api/` routes is blocked with a clear error
@@ -25,6 +26,7 @@
 ---
 
 > **Context for executor:** The following tasks have already been completed in a prior session:
+>
 > - `~/.claude/CLAUDE.md` — pre-flight checks + file ownership sections added
 > - `~/.claude/projects/.../memory/feedback_branch_discipline.md` — created
 > - `~/.claude/projects/.../memory/feedback_supabase_patterns.md` — created
@@ -37,6 +39,7 @@
 ### Task 1: Upgrade the pre-commit hook
 
 **Files:**
+
 - Modify: `.git/hooks/pre-commit` (currently: `cd "$(git rev-parse --show-toplevel)" && pnpm exec lint-staged`)
 
 **No test file needed** — the hook IS the implementation. We test it by running the hook against known-bad staged content, then cleaning up.
@@ -48,6 +51,7 @@ cat .git/hooks/pre-commit
 ```
 
 Expected output:
+
 ```sh
 #!/bin/sh
 cd "$(git rev-parse --show-toplevel)" && pnpm exec lint-staged
@@ -121,6 +125,7 @@ ls -la .git/hooks/pre-commit
 ```
 
 Expected: file should have `-rwxr-xr-x` permissions. If not:
+
 ```bash
 chmod +x .git/hooks/pre-commit
 ```
@@ -134,6 +139,7 @@ git branch --show-current
 ```
 
 If on `main`:
+
 ```bash
 # Create a harmless temp file and stage it
 echo "test" > /tmp/hook-test-branch.txt
@@ -157,6 +163,7 @@ sh .git/hooks/pre-commit
 Expected: exits with non-zero and prints "ERROR: Unsafe .data[0] access detected"
 
 Clean up:
+
 ```bash
 git restore --staged docs/hook-test-temp.py
 rm docs/hook-test-temp.py
@@ -176,6 +183,7 @@ sh .git/hooks/pre-commit
 Expected: lint-staged runs (may pass or report no changes) — no guard errors.
 
 Clean up:
+
 ```bash
 git restore docs/designs/2026-03-12-incorrect-first-attempts-prevention-design.md
 git restore --staged docs/designs/2026-03-12-incorrect-first-attempts-prevention-design.md
@@ -191,6 +199,7 @@ git commit -m "feat: add pre-commit guards for branch, .data[0], and proxy layer
 ```
 
 Add a note in the README or CLAUDE.md that `scripts/hooks/pre-commit` should be installed on fresh clones:
+
 ```bash
 # Install hooks on fresh clone
 cp scripts/hooks/pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
@@ -201,6 +210,7 @@ cp scripts/hooks/pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-com
 ### Task 2: Create supabase-py pattern doc
 
 **Files:**
+
 - Create: `docs/patterns/supabase-py.md`
 - Create: `docs/patterns/README.md`
 
@@ -226,14 +236,14 @@ Claude should check this directory before writing any code that uses these libra
 
 ## Index
 
-| Library | Pattern doc | Last updated |
-|---------|-------------|-------------|
-| supabase-py (Python) | [supabase-py.md](supabase-py.md) | 2026-03-12 |
+| Library              | Pattern doc                      | Last updated |
+| -------------------- | -------------------------------- | ------------ |
+| supabase-py (Python) | [supabase-py.md](supabase-py.md) | 2026-03-12   |
 ```
 
 **Step 3: Create `docs/patterns/supabase-py.md`**
 
-```markdown
+````markdown
 # supabase-py Patterns — CafeRoam
 
 **Read this before writing any supabase-py code.**
@@ -249,18 +259,21 @@ These are the correct patterns for this codebase.
 from supabase import AsyncClient  # async client used via FastAPI Depends
 from core.db import first          # ALWAYS use this — never .data[0]
 ```
+````
 
 ---
 
 ## Querying rows
 
 ### Select multiple rows
+
 ```python
 response = await db.table("shops").select("id, name, city").execute()
 rows: list[dict] = response.data or []   # safe — .data can be empty list
 ```
 
 ### Select with filters
+
 ```python
 response = (
     await db.table("shops")
@@ -273,6 +286,7 @@ rows = response.data or []
 ```
 
 ### Select with negation filter
+
 ```python
 response = (
     await db.table("shops")
@@ -283,6 +297,7 @@ response = (
 ```
 
 ### Get exactly one row (raises if 0 or >1)
+
 ```python
 # Correct — use first() from core.db
 response = await db.table("shops").select("*").eq("id", shop_id).execute()
@@ -290,6 +305,7 @@ shop = first(response.data, "fetch shop by id")   # raises RuntimeError if empty
 ```
 
 ### NEVER do this
+
 ```python
 # WRONG — crashes on empty result with opaque IndexError
 shop = response.data[0]
@@ -303,6 +319,7 @@ response = await db.table("shops").select("*").eq("id", shop_id).single().execut
 ## Inserting rows
 
 ### Insert one row and return it
+
 ```python
 response = (
     await db.table("shops")
@@ -313,6 +330,7 @@ new_shop = first(response.data, "insert shop")
 ```
 
 ### Bulk insert (upsert)
+
 ```python
 response = (
     await db.table("shops")
@@ -327,6 +345,7 @@ inserted = response.data or []
 ## Updating rows
 
 ### Update and return updated row
+
 ```python
 response = (
     await db.table("shops")
@@ -338,6 +357,7 @@ updated = first(response.data, "update shop verification")
 ```
 
 ### Update without needing return value
+
 ```python
 await db.table("shops").update({"synced_at": now}).eq("id", shop_id).execute()
 # response.data may be empty — that's fine if you don't need the row back
@@ -357,6 +377,7 @@ exists = bool(response.data)   # True if any rows, False if empty
 ## Chaining order rules
 
 supabase-py chains are **builder pattern** — order follows this sequence:
+
 ```
 .table(name)
   → .select() / .insert() / .update() / .upsert() / .delete()
@@ -396,20 +417,22 @@ def first(rows: list[T], context: str = "query") -> T:
 ```
 
 When NOT to use `first()`: when empty results are expected (use `response.data or []` instead).
-```
+
+````
 
 **Step 4: Commit**
 
 ```bash
 git add docs/patterns/
 git commit -m "docs: add supabase-py pattern reference for correct API usage"
-```
+````
 
 ---
 
 ### Task 3: Update project CLAUDE.md
 
 **Files:**
+
 - Modify: `CLAUDE.md`
 
 **No test needed** — documentation only.
@@ -418,7 +441,7 @@ git commit -m "docs: add supabase-py pattern reference for correct API usage"
 
 Insert after the `## Commands` section (after the `ERROR-PREVENTION.md` reference line):
 
-```markdown
+````markdown
 ## Pre-Flight Checks (Before Writing Code)
 
 1. **Branch check**: Run `git branch --show-current`. If on `main`, create a worktree first:
@@ -427,9 +450,12 @@ Insert after the `## Commands` section (after the `ERROR-PREVENTION.md` referenc
    ln -s $(pwd)/.env.local .worktrees/<branch-name>/.env.local
    ln -s $(pwd)/backend/.env .worktrees/<branch-name>/backend/.env
    ```
+````
+
 2. **API patterns**: For supabase-py code, read [`docs/patterns/supabase-py.md`](docs/patterns/supabase-py.md) first.
 3. **Environment**: For DB/env-dependent work, run `make doctor` first.
-```
+
+````
 
 **Step 2: Add file ownership table to Coding Standards**
 
@@ -445,7 +471,7 @@ Insert at the end of the `## Coding Standards` section (after the Performance St
 | `backend/providers/` | External SDK adapters | Business logic |
 | `src/components/` | Rendering, event handlers | Direct API calls (use hooks in `src/hooks/`) |
 | `src/hooks/` | Data fetching, state management | UI rendering logic |
-```
+````
 
 **Step 3: Commit**
 
@@ -459,6 +485,7 @@ git commit -m "docs: add pre-flight checklist and file ownership table to CLAUDE
 ### Task 4: Update /scope SKILL.md to scaffold pre-commit hook + pattern docs
 
 **Files:**
+
 - Modify: `~/.claude/skills/scope/SKILL.md`
 
 **No test needed** — skill file update. Verify visually that the new steps are present.
@@ -474,91 +501,95 @@ grep -n "Step 5\|Project Initialization\|git init\|gitignore\|chmod\|hooks" \
 
 In the `## Step 5: Project Initialization` section, after step 4 (Create README.md), add a new step 4.5:
 
-```markdown
+````markdown
 4.5. **Install pre-commit hook** — create `scripts/hooks/pre-commit` with the standard guards, then install it:
 
-   ```bash
-   mkdir -p scripts/hooks
-   ```
+```bash
+mkdir -p scripts/hooks
+```
+````
 
-   Write `scripts/hooks/pre-commit`:
+Write `scripts/hooks/pre-commit`:
 
-   ```sh
-   #!/bin/sh
-   set -e
+```sh
+#!/bin/sh
+set -e
 
-   root="$(git rev-parse --show-toplevel)"
-   cd "$root"
+root="$(git rev-parse --show-toplevel)"
+cd "$root"
 
-   # Guard 1: Block commits directly to main
-   branch=$(git branch --show-current)
-   if [ "$branch" = "main" ] || [ "$branch" = "master" ]; then
-     echo ""
-     echo "ERROR: Direct commits to main are not allowed."
-     echo "Create a worktree: git worktree add .worktrees/<branch> -b <branch>"
-     echo ""
-     exit 1
-   fi
+# Guard 1: Block commits directly to main
+branch=$(git branch --show-current)
+if [ "$branch" = "main" ] || [ "$branch" = "master" ]; then
+  echo ""
+  echo "ERROR: Direct commits to main are not allowed."
+  echo "Create a worktree: git worktree add .worktrees/<branch> -b <branch>"
+  echo ""
+  exit 1
+fi
 
-   # Guard 2: Block unsafe .data[0] access
-   if git diff --cached | grep -E '^\+.*\.data\[0\]' > /dev/null 2>&1; then
-     echo ""
-     echo "ERROR: Unsafe .data[0] access in staged changes."
-     echo "Use the project's first() helper instead of .data[0]."
-     echo ""
-     exit 1
-   fi
+# Guard 2: Block unsafe .data[0] access
+if git diff --cached | grep -E '^\+.*\.data\[0\]' > /dev/null 2>&1; then
+  echo ""
+  echo "ERROR: Unsafe .data[0] access in staged changes."
+  echo "Use the project's first() helper instead of .data[0]."
+  echo ""
+  exit 1
+fi
 
-   # Guard 3: Block business logic in HTTP proxy layer (adapt path to project)
-   proxy_files=$(git diff --cached --name-only | grep '^app/api/' || true)
-   if [ -n "$proxy_files" ]; then
-     if git diff --cached -- 'app/api/' | grep -E '^\+.*(\.from\(|supabase\.|createClient|SELECT|INSERT|UPDATE|DELETE)' > /dev/null 2>&1; then
-       echo ""
-       echo "ERROR: Business logic detected in HTTP proxy layer (app/api/)."
-       echo "Move DB/service logic to the service layer."
-       echo ""
-       exit 1
-     fi
-   fi
+# Guard 3: Block business logic in HTTP proxy layer (adapt path to project)
+proxy_files=$(git diff --cached --name-only | grep '^app/api/' || true)
+if [ -n "$proxy_files" ]; then
+  if git diff --cached -- 'app/api/' | grep -E '^\+.*(\.from\(|supabase\.|createClient|SELECT|INSERT|UPDATE|DELETE)' > /dev/null 2>&1; then
+    echo ""
+    echo "ERROR: Business logic detected in HTTP proxy layer (app/api/)."
+    echo "Move DB/service logic to the service layer."
+    echo ""
+    exit 1
+  fi
+fi
 
-   # Run lint-staged (adapt to project's package manager: npm/pnpm/yarn)
-   # pnpm exec lint-staged
-   # npm exec lint-staged
-   ```
+# Run lint-staged (adapt to project's package manager: npm/pnpm/yarn)
+# pnpm exec lint-staged
+# npm exec lint-staged
+```
 
-   Then install and make executable:
-   ```bash
-   cp scripts/hooks/pre-commit .git/hooks/pre-commit
-   chmod +x .git/hooks/pre-commit
-   ```
+Then install and make executable:
 
-   Add a hook install note to README.md or CLAUDE.md Commands section:
-   ```bash
-   # After cloning, install git hooks:
-   cp scripts/hooks/pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
-   ```
+```bash
+cp scripts/hooks/pre-commit .git/hooks/pre-commit
+chmod +x .git/hooks/pre-commit
+```
 
-   **Note for executor:** The Guard 3 proxy path (`app/api/`) and the lint-staged runner line must be adapted to the actual project structure. Uncomment the right package manager line.
+Add a hook install note to README.md or CLAUDE.md Commands section:
+
+```bash
+# After cloning, install git hooks:
+cp scripts/hooks/pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
+```
+
+**Note for executor:** The Guard 3 proxy path (`app/api/`) and the lint-staged runner line must be adapted to the actual project structure. Uncomment the right package manager line.
 
 4.6. **Create docs/patterns/ directory** — create `docs/patterns/README.md`:
 
-   ```markdown
-   # API Patterns
+```markdown
+# API Patterns
 
-   Project-specific usage patterns for external libraries and SDKs.
-   Check this directory before writing code that uses these libraries.
+Project-specific usage patterns for external libraries and SDKs.
+Check this directory before writing code that uses these libraries.
 
-   ## Index
+## Index
 
-   *(Add entries here as incidents occur — one doc per library/SDK)*
-   ```
+_(Add entries here as incidents occur — one doc per library/SDK)_
 ```
+
+````
 
 **Step 3: Verify the added content reads naturally**
 
 ```bash
 grep -A5 "4.5\|4.6\|pre-commit\|patterns" ~/.claude/skills/scope/SKILL.md | head -30
-```
+````
 
 **Step 4: No commit needed** — skill files are in `~/.claude/` which is not a git repo tracked here.
 
@@ -567,6 +598,7 @@ grep -A5 "4.5\|4.6\|pre-commit\|patterns" ~/.claude/skills/scope/SKILL.md | head
 ### Task 5: Update /scope CLAUDE.md templates with pre-flight + file ownership
 
 **Files:**
+
 - Modify: `~/.claude/skills/scope/templates/CLAUDE-business.md`
 - Modify: `~/.claude/skills/scope/templates/CLAUDE-quicktool.md`
 
@@ -587,12 +619,12 @@ Append to the end of `~/.claude/skills/scope/templates/CLAUDE-business.md`:
 
 ## File Ownership (Before Editing Any File)
 
-| Path | Allowed | Not allowed |
-|------|---------|-------------|
+| Path                     | Allowed                         | Not allowed                            |
+| ------------------------ | ------------------------------- | -------------------------------------- |
 | HTTP proxy/gateway layer | HTTP wiring, request forwarding | Business logic, DB queries, validation |
-| Service layer | All business logic | Direct external SDK calls |
-| Provider/adapter layer | External SDK adapters | Business logic |
-| UI components | Rendering, event handlers | Direct API calls (use hooks/services) |
+| Service layer            | All business logic              | Direct external SDK calls              |
+| Provider/adapter layer   | External SDK adapters           | Business logic                         |
+| UI components            | Rendering, event handlers       | Direct API calls (use hooks/services)  |
 
 > Populate this table with the actual paths for this project during /scope.
 ```
@@ -639,11 +671,13 @@ graph TD
 ```
 
 **Wave 1** (parallel — no dependencies):
+
 - Task 1: Pre-commit hook
 - Task 2: supabase-py patterns doc
 - Task 5: Update /scope templates
 
 **Wave 2** (parallel — informed by Wave 1):
+
 - Task 3: Update project CLAUDE.md (links to supabase-py.md from Task 2)
 - Task 4: Update /scope SKILL.md (knows what hook to scaffold from Task 1)
 
@@ -655,6 +689,7 @@ After completing all tasks, update `TODO.md` with the following under a new sect
 
 ```markdown
 ### Incorrect-First-Attempts Prevention
+
 > **Design:** [docs/designs/2026-03-12-incorrect-first-attempts-prevention-design.md](docs/designs/2026-03-12-incorrect-first-attempts-prevention-design.md)
 > **Plan:** [docs/plans/2026-03-12-incorrect-first-attempts-prevention-plan.md](docs/plans/2026-03-12-incorrect-first-attempts-prevention-plan.md)
 

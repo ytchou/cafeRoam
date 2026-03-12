@@ -27,6 +27,7 @@ async def my_endpoint(
 ```
 
 Three client constructors exist in `backend/db/supabase_client.py`:
+
 - `get_user_client(token)` -- per-request, RLS-aware (user's JWT sets `auth.uid()`)
 - `get_anon_client()` -- cached singleton, RLS-aware, no user context
 - `get_service_role_client()` -- cached singleton, bypasses RLS (admin/workers only)
@@ -250,6 +251,7 @@ db.table("TABLE") -> operation -> filters -> modifiers -> .execute()
 ```
 
 Where:
+
 - **operation**: `.select()`, `.insert()`, `.update()`, `.delete()`, `.upsert()`
 - **filters**: `.eq()`, `.gte()`, `.lte()`, `.is_()`, `.not_.is_()`, `.in_()`
 - **modifiers**: `.order()`, `.limit()`, `.single()`

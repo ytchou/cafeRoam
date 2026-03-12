@@ -7,14 +7,14 @@
 
 ## Pass 1 — Full Discovery
 
-*Agents: Bug Hunter (Opus), Standards (Sonnet), Architecture (Opus), Plan Alignment (Sonnet)*
+_Agents: Bug Hunter (Opus), Standards (Sonnet), Architecture (Opus), Plan Alignment (Sonnet)_
 
 ### Issues Found (14 raw, 2 valid after dedup + validation)
 
-| Severity | File:Line | Description | Flagged By | Validation |
-|----------|-----------|-------------|------------|------------|
-| Important | scripts/hooks/pre-commit | No hook installation mechanism — script exists but nothing sets `core.hooksPath` or copies to `.git/hooks/` | Architecture | Valid |
-| Important | CLAUDE.md:142-148 | File Ownership table references `src/components/` and `src/hooks/` which don't exist in this project | Architecture | Valid |
+| Severity  | File:Line                | Description                                                                                                 | Flagged By   | Validation |
+| --------- | ------------------------ | ----------------------------------------------------------------------------------------------------------- | ------------ | ---------- |
+| Important | scripts/hooks/pre-commit | No hook installation mechanism — script exists but nothing sets `core.hooksPath` or copies to `.git/hooks/` | Architecture | Valid      |
+| Important | CLAUDE.md:142-148        | File Ownership table references `src/components/` and `src/hooks/` which don't exist in this project        | Architecture | Valid      |
 
 ### Validation Results — Skipped (false positives / out of scope)
 
@@ -37,10 +37,12 @@
 **Commit:** 2b143b9
 
 **Issues fixed:**
+
 - [Important] package.json — Added `"prepare": "git config core.hooksPath scripts/hooks"` so hooks auto-install after `pnpm install`
 - [Important] CLAUDE.md:127-128 — Fixed File Ownership paths: `src/components/` → `components/`, `src/hooks/` → `lib/hooks/`
 
 **Batch Test Run:**
+
 - `pnpm run lint` — PASS (1 pre-existing warning)
 - `pnpm test` — PASS (73 files, 461 tests)
 

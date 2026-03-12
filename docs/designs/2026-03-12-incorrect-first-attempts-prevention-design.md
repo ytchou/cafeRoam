@@ -5,6 +5,7 @@ Date: 2026-03-12
 ## Problem
 
 Claude frequently makes avoidable first-attempt mistakes:
+
 1. **Wrong branch** — commits directly to `main` instead of using a worktree
 2. **Pattern violations** — writes code that violates established project rules (`.data[0]` instead of `first()`, incorrect supabase-py API chaining)
 3. **Boundary violations** — adds business logic to thin proxy files or bypasses the provider abstraction
@@ -69,12 +70,12 @@ Added to `~/.claude/CLAUDE.md`:
 
 Never add business logic to proxy or adapter layers. The general rule applies across all projects:
 
-| Layer | Allowed | Not allowed |
-|-------|---------|-------------|
-| HTTP proxy/gateway (`app/api/`) | HTTP wiring, request forwarding | Business logic, DB queries, validation |
-| Service layer (`services/`) | All business logic | Direct external SDK calls |
-| Provider/adapter layer (`providers/`) | External SDK adapters | Business logic |
-| UI components | Rendering, event handlers | Direct API calls (use hooks/services) |
+| Layer                                 | Allowed                         | Not allowed                            |
+| ------------------------------------- | ------------------------------- | -------------------------------------- |
+| HTTP proxy/gateway (`app/api/`)       | HTTP wiring, request forwarding | Business logic, DB queries, validation |
+| Service layer (`services/`)           | All business logic              | Direct external SDK calls              |
+| Provider/adapter layer (`providers/`) | External SDK adapters           | Business logic                         |
+| UI components                         | Rendering, event handlers       | Direct API calls (use hooks/services)  |
 
 Check the project's CLAUDE.md for the project-specific ownership table.
 
@@ -96,25 +97,25 @@ Two new memories in the project's memory directory:
 
 ## Responsibility split
 
-| Layer | Location | How it gets there |
-|-------|----------|------------------|
-| Pre-commit branch guard | `.git/hooks/pre-commit` | `/scope` scaffolds |
-| Pre-commit pattern checks | `.git/hooks/pre-commit` | `/scope` scaffolds |
-| Pre-flight checks rule | `~/.claude/CLAUDE.md` | Direct edit |
-| File ownership principle | `~/.claude/CLAUDE.md` | Direct edit |
-| Pattern docs | `docs/patterns/` | `/scope` scaffolds placeholder; populate as incidents occur |
-| Feedback memories | `~/.claude/projects/.../memory/` | Direct write |
+| Layer                     | Location                         | How it gets there                                           |
+| ------------------------- | -------------------------------- | ----------------------------------------------------------- |
+| Pre-commit branch guard   | `.git/hooks/pre-commit`          | `/scope` scaffolds                                          |
+| Pre-commit pattern checks | `.git/hooks/pre-commit`          | `/scope` scaffolds                                          |
+| Pre-flight checks rule    | `~/.claude/CLAUDE.md`            | Direct edit                                                 |
+| File ownership principle  | `~/.claude/CLAUDE.md`            | Direct edit                                                 |
+| Pattern docs              | `docs/patterns/`                 | `/scope` scaffolds placeholder; populate as incidents occur |
+| Feedback memories         | `~/.claude/projects/.../memory/` | Direct write                                                |
 
 ## Defense matrix
 
-| Failure mode | Pre-commit | CLAUDE.md preflight | File ownership | Pattern docs | Memory |
-|---|---|---|---|---|---|
-| Commit to `main` | Blocks (L1) | Reminds | — | — | Reminds |
-| `.data[0]` any language | Blocks (L2) | — | — | Shows fix | Reminds |
-| Business logic in API proxy | Blocks (L2) | — | Guides | — | — |
-| Wrong supabase-py chaining | — | Preflight check | — | Shows correct pattern | Reminds |
-| Editing wrong layer | — | — | Guides | — | — |
-| Provider SDK bypass | Blocks (L2 via future pattern) | — | Guides | — | — |
+| Failure mode                | Pre-commit                     | CLAUDE.md preflight | File ownership | Pattern docs          | Memory  |
+| --------------------------- | ------------------------------ | ------------------- | -------------- | --------------------- | ------- |
+| Commit to `main`            | Blocks (L1)                    | Reminds             | —              | —                     | Reminds |
+| `.data[0]` any language     | Blocks (L2)                    | —                   | —              | Shows fix             | Reminds |
+| Business logic in API proxy | Blocks (L2)                    | —                   | Guides         | —                     | —       |
+| Wrong supabase-py chaining  | —                              | Preflight check     | —              | Shows correct pattern | Reminds |
+| Editing wrong layer         | —                              | —                   | Guides         | —                     | —       |
+| Provider SDK bypass         | Blocks (L2 via future pattern) | —                   | Guides         | —                     | —       |
 
 ## Out of scope
 
@@ -125,6 +126,7 @@ Two new memories in the project's memory directory:
 ## `/scope` changes required
 
 When `/scope` initializes a new project it must:
+
 1. Create `.git/hooks/pre-commit` with branch guard + baseline pattern checks
 2. `chmod +x .git/hooks/pre-commit`
 3. Create `docs/patterns/README.md` as placeholder
