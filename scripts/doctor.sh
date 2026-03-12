@@ -14,7 +14,6 @@ set -euo pipefail
 
 PASS=0
 FAIL=0
-TOTAL=0
 
 # Colors (disabled if not a terminal)
 if [ -t 1 ]; then
@@ -31,19 +30,17 @@ else
   NC=''
 fi
 
+_pass() { printf "${GREEN}[PASS]${NC} %s\n" "$1"; PASS=$((PASS + 1)); }
+_fail() { printf "${RED}[FAIL]${NC} %s\n" "$1"; printf "       ${YELLOW}Fix: %s${NC}\n" "$2"; FAIL=$((FAIL + 1)); }
+
 check() {
   local description="$1"
   local command="$2"
   local fix_hint="$3"
-  TOTAL=$((TOTAL + 1))
-
-  if eval "$command" > /dev/null 2>&1; then
-    printf "${GREEN}[PASS]${NC} %s\n" "$description"
-    PASS=$((PASS + 1))
+  if bash -c "$command" > /dev/null 2>&1; then
+    _pass "$description"
   else
-    printf "${RED}[FAIL]${NC} %s\n" "$description"
-    printf "       ${YELLOW}Fix: %s${NC}\n" "$fix_hint"
-    FAIL=$((FAIL + 1))
+    _fail "$description" "$fix_hint"
   fi
 }
 
@@ -51,25 +48,19 @@ check_env_var_localhost() {
   local file="$1"
   local var_name="$2"
   local description="$3"
-  TOTAL=$((TOTAL + 1))
 
   if [ ! -f "$file" ]; then
-    printf "${RED}[FAIL]${NC} %s\n" "$description"
-    printf "       ${YELLOW}Fix: File %s does not exist${NC}\n" "$file"
-    FAIL=$((FAIL + 1))
+    _fail "$description" "File $file does not exist"
     return
   fi
 
   local value
-  value=$(grep "^${var_name}=" "$file" 2>/dev/null | head -1 | cut -d'=' -f2-)
+  value=$(grep -F "^${var_name}=" "$file" 2>/dev/null | head -1 | cut -d'=' -f2- || true)
 
   if echo "$value" | grep -qE '(127\.0\.0\.1|localhost)'; then
-    printf "${GREEN}[PASS]${NC} %s\n" "$description"
-    PASS=$((PASS + 1))
+    _pass "$description"
   else
-    printf "${RED}[FAIL]${NC} %s\n" "$description"
-    printf "       ${YELLOW}Fix: Update %s in %s to http://127.0.0.1:54321${NC}\n" "$var_name" "$file"
-    FAIL=$((FAIL + 1))
+    _fail "$description" "Update $var_name in $file to http://127.0.0.1:54321"
   fi
 }
 
@@ -86,7 +77,7 @@ check "Docker running" \
   "Start Docker Desktop"
 
 check "Supabase DB healthy (127.0.0.1:54321)" \
-  "curl -sf http://127.0.0.1:54321/rest/v1/ -H 'apikey: placeholder' -o /dev/null -w '%{http_code}' | grep -q '.' " \
+  "curl -sf http://127.0.0.1:54321/rest/v1/ -H 'apikey: placeholder' -o /dev/null" \
   "Run: supabase start"
 
 check "Supabase Auth healthy" \
@@ -124,11 +115,11 @@ check "uv installed" \
   "Install uv: curl -LsSf https://astral.sh/uv/install.sh | sh"
 
 check "Backend deps synced" \
-  "cd ${PROJECT_ROOT}/backend && uv sync --frozen 2>&1 | grep -qv 'error'" \
+  "uv sync --frozen --check --directory ${PROJECT_ROOT}/backend" \
   "Run: cd backend && uv sync"
 
 check "pnpm deps installed" \
-  "cd ${PROJECT_ROOT} && pnpm ls --depth 0" \
+  "test -f ${PROJECT_ROOT}/node_modules/.modules.yaml" \
   "Run: pnpm install"
 
 printf "\n"
@@ -142,10 +133,10 @@ check "Migrations in sync" \
 # ─── Summary ──────────────────────────────────────────────────────────────────
 printf "\n────────────────────────────────\n"
 if [ "$FAIL" -eq 0 ]; then
-  printf "${GREEN}${BOLD}Result: All %d checks passed${NC}\n\n" "$TOTAL"
+  printf "${GREEN}${BOLD}Result: All %d checks passed${NC}\n\n" "$((PASS + FAIL))"
   exit 0
 else
-  printf "${RED}${BOLD}Result: %d/%d checks passed (%d failed)${NC}\n" "$PASS" "$TOTAL" "$FAIL"
+  printf "${RED}${BOLD}Result: %d/%d checks passed (%d failed)${NC}\n" "$PASS" "$((PASS + FAIL))" "$FAIL"
   printf "Fix the issues above before proceeding.\n\n"
   exit 1
 fi
