@@ -1,4 +1,4 @@
-.PHONY: help setup dev migrate seed reset-db workers-enrich workers-embed test lint
+.PHONY: help doctor setup dev migrate seed reset-db workers-enrich workers-embed test lint
 
 help:
 	@echo "CafeRoam — Available commands:"
@@ -10,7 +10,11 @@ help:
 	@echo "  make workers-enrich Run data enrichment worker locally"
 	@echo "  make workers-embed  Run embedding generation worker locally"
 	@echo "  make test           Run Vitest tests"
+	@echo "  make doctor         Run environment preflight check (run before starting work)"
 	@echo "  make lint           Run ESLint + Prettier check + TypeScript check"
+
+doctor:
+	@bash scripts/doctor.sh
 
 setup:
 	pnpm install

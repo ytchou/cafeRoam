@@ -627,7 +627,7 @@ Discovered gaps moved to → Quality Gate: Pre-Phase 2B section below.
 
 **Chunk 1 — Script + Makefile:**
 - [x] Create `scripts/doctor.sh` (12 diagnostic checks)
-- [ ] Add `make doctor` Makefile target
+- [x] Add `make doctor` Makefile target
 
 **Chunk 2 — Documentation:**
 - [x] Update CLAUDE.md with preflight rules
