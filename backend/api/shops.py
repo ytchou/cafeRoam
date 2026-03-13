@@ -1,6 +1,7 @@
 from typing import Any, cast
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic.alias_generators import to_camel
 
 from api.deps import get_admin_db, get_current_user, get_optional_user
 from core.db import first
@@ -39,7 +40,7 @@ async def list_shops(
         query = query.eq("processing_status", "live")
     query = query.limit(limit)
     response = query.execute()
-    return response.data
+    return [{to_camel(k): v for k, v in row.items()} for row in response.data]
 
 
 @router.get("/{shop_id}")
@@ -59,20 +60,17 @@ async def get_shop(shop_id: str) -> Any:
     shop: dict[str, Any] = cast("dict[str, Any]", response.data)
 
     photo_urls = [row["photo_url"] for row in (shop.pop("shop_photos", None) or [])]
-    tags = [row["tag_name"] for row in (shop.pop("shop_tags", None) or [])]
-
+    shop.pop("shop_tags", None)
     mode_scores = {
-        "work": shop.get("mode_work"),
-        "rest": shop.get("mode_rest"),
-        "social": shop.get("mode_social"),
+        "work": shop.pop("mode_work", None),
+        "rest": shop.pop("mode_rest", None),
+        "social": shop.pop("mode_social", None),
     }
 
-    return {
-        **shop,
-        "photo_urls": photo_urls,
-        "tags": tags,
-        "mode_scores": mode_scores,
-    }
+    response_data: dict[str, Any] = {to_camel(k): v for k, v in shop.items()}
+    response_data["photoUrls"] = photo_urls
+    response_data["modeScores"] = mode_scores
+    return response_data
 
 
 @router.get("/{shop_id}/checkins")
@@ -113,7 +111,7 @@ async def get_shop_checkins(
                 review_text=row.get("review_text"),
                 confirmed_tags=row.get("confirmed_tags"),
                 reviewed_at=row.get("reviewed_at"),
-            ).model_dump()
+            ).model_dump(by_alias=True)
             for row in rows
         ]
     else:
@@ -132,7 +130,7 @@ async def get_shop_checkins(
         return ShopCheckInPreview(
             count=response.count or 0,
             preview_photo_url=preview_url,
-        ).model_dump()
+        ).model_dump(by_alias=True)
 
 
 @router.get("/{shop_id}/reviews")
@@ -185,4 +183,4 @@ async def get_shop_reviews(
         reviews=reviews,
         total_count=total_count,
         average_rating=round(average_rating, 1),
-    ).model_dump()
+    ).model_dump(by_alias=True)
