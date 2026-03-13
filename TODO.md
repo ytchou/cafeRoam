@@ -782,6 +782,19 @@ This is the gate for Phase 2B. Shops must be imported, enriched, embedded, and p
 - [x] `shop_url_copied` PostHog event
 - [ ] `filter_applied` PostHog event
 
+**Chunk 7 — Deferred from Code Review (post-merge):**
+
+- [ ] `MapDesktopCard` component — desktop map sidebar card (flagged as missing in review)
+- [ ] Shop Detail sub-components: `ShopDescription`, `MenuHighlights`, `RecentCheckinsStrip`, `ShopMapThumbnail`
+- [ ] `taxonomy_tags` JOIN in `GET /shops/{id}` — return structured `{id, dimension, label, label_zh}` instead of flat strings
+- [ ] Viewport-only pin filtering in `MapView` — only render pins within the current map bounds
+- [ ] "我附近" suggestion chip — trigger geolocation on select instead of navigating with text query
+- [ ] Analytics: add `result_count` and `mode_chip_active` props to `search_submitted` event
+- [ ] Analytics: add `referrer` and `session_search_query` props to `shop_detail_viewed` event
+- [ ] Page-level tests: rewrite to mock at HTTP boundary, not internal components (`app/page.test.tsx`, `app/map/page.test.tsx`, `app/(protected)/search/page.test.tsx`)
+- [ ] Fix dual snake_case/camelCase `Shop` type — consolidate to one casing convention
+- [ ] Test naming: rewrite test names that describe rendering to describe user outcomes
+
 ### Performance (verified during implementation)
 
 - [ ] Mobile-first UI: design and test at 390px width first
