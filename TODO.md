@@ -810,7 +810,7 @@ This is the gate for Phase 2B. Shops must be imported, enriched, embedded, and p
 
 - [x] Integrate sub-components into ShopDetailClient
 - [x] Integrate MapDesktopCard + real data into map page
-- [ ] 我附近 geolocation chip wiring
+- [x] 我附近 geolocation chip wiring
 
 **Chunk 6 — Analytics (Wave 5-6):**
 
