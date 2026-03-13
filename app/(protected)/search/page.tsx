@@ -1,13 +1,29 @@
 'use client';
+import { useEffect, useRef } from 'react';
 import { useSearch } from '@/lib/hooks/use-search';
 import { useSearchState } from '@/lib/hooks/use-search-state';
 import { ShopCard } from '@/components/shops/shop-card';
 import { SuggestionChips } from '@/components/discovery/suggestion-chips';
 import { SearchBar } from '@/components/discovery/search-bar';
+import { useAnalytics } from '@/lib/posthog/use-analytics';
 
 export default function SearchPage() {
   const { query, mode, setQuery } = useSearchState();
   const { results, isLoading, error } = useSearch(query || null, mode);
+  const { capture } = useAnalytics();
+  const lastFiredQuery = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (query && !isLoading && query !== lastFiredQuery.current) {
+      capture('search_submitted', {
+        query_text: query,
+        result_count: results.length,
+        mode_chip_active: mode ?? null,
+      });
+      lastFiredQuery.current = query;
+      sessionStorage.setItem('last_search_query', query);
+    }
+  }, [query, isLoading, results.length, mode, capture]);
 
   return (
     <div className="min-h-screen bg-[#FAF7F4]">

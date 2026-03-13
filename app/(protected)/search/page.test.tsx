@@ -14,6 +14,10 @@ vi.mock('@/lib/hooks/use-search', () => ({
   useSearch: mockUseSearch,
 }));
 
+vi.mock('@/lib/posthog/use-analytics', () => ({
+  useAnalytics: () => ({ capture: vi.fn() }),
+}));
+
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn() }),
   useSearchParams: () => new URLSearchParams(),

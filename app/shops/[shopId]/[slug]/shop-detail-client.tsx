@@ -34,7 +34,16 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
   const tags = shop.taxonomyTags ?? [];
 
   useEffect(() => {
-    capture('shop_detail_viewed', { shop_id: shop.id });
+    const referrer = typeof document !== 'undefined' ? document.referrer : '';
+    const lastQuery =
+      typeof sessionStorage !== 'undefined'
+        ? sessionStorage.getItem('last_search_query')
+        : null;
+    capture('shop_detail_viewed', {
+      shop_id: shop.id,
+      referrer,
+      session_search_query: lastQuery,
+    });
   }, [capture, shop.id]);
 
   const shareUrl =

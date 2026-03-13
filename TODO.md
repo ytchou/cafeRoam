@@ -814,9 +814,9 @@ This is the gate for Phase 2B. Shops must be imported, enriched, embedded, and p
 
 **Chunk 6 — Analytics (Wave 5-6):**
 
-- [ ] filter_applied — verify already wired
-- [ ] search_submitted — add result_count, mode_chip_active
-- [ ] shop_detail_viewed — add referrer, session_search_query
+- [x] filter_applied — verify already wired
+- [x] search_submitted — add result_count, mode_chip_active
+- [x] shop_detail_viewed — add referrer, session_search_query
 
 **Chunk 7 — Test quality (Wave 7):**
 
