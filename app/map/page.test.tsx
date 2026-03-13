@@ -8,7 +8,8 @@ vi.mock("next/navigation", () => ({
 }));
 
 vi.mock("next/dynamic", () => ({
-  default: (..._args: unknown[]) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  default: (..._: any[]) => {
     const Mock = () => <div data-testid="map-view" />;
     Mock.displayName = "MockMapView";
     return Mock;
