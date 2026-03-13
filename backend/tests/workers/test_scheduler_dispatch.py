@@ -1,65 +1,48 @@
+"""Tests for scheduler job dispatch routing."""
+
 from datetime import UTC, datetime
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
 from models.types import Job, JobStatus, JobType
-from workers.scheduler import process_job_queue
+from workers.scheduler import _dispatch_job
 
 
-@pytest.mark.asyncio
-async def test_process_job_queue_dispatches_scrape_shop():
-    job = Job(
+def _make_job(job_type: JobType, payload: dict) -> Job:
+    return Job(
         id="j-1",
-        job_type=JobType.SCRAPE_SHOP,
-        payload={"shop_id": "s-1", "google_maps_url": "https://maps.google.com/?cid=123"},
+        job_type=job_type,
+        payload=payload,
         status=JobStatus.CLAIMED,
         attempts=1,
         scheduled_at=datetime(2026, 1, 1, tzinfo=UTC),
         created_at=datetime(2026, 1, 1, tzinfo=UTC),
     )
 
+
+@pytest.mark.asyncio
+async def test_dispatch_routes_scrape_shop_to_handler():
+    """When a SCRAPE_SHOP job is dispatched, the scrape_shop handler is called."""
+    job = _make_job(
+        JobType.SCRAPE_SHOP,
+        {"shop_id": "s-1", "google_maps_url": "https://maps.google.com/?cid=123"},
+    )
+
     with (
-        patch("workers.scheduler.get_service_role_client") as mock_get_db,
-        patch("workers.scheduler.JobQueue") as mock_queue_cls,
         patch("workers.scheduler.get_scraper_provider") as mock_get_scraper,
         patch("workers.scheduler.handle_scrape_shop", new_callable=AsyncMock) as mock_handler,
     ):
-        mock_queue = MagicMock()
-        mock_queue.claim = AsyncMock(return_value=job)
-        mock_queue.complete = AsyncMock()
-        mock_queue_cls.return_value = mock_queue
-        mock_get_db.return_value = MagicMock()
         mock_get_scraper.return_value = MagicMock()
-
-        await process_job_queue()
-
+        await _dispatch_job(job, MagicMock(), MagicMock())
         mock_handler.assert_called_once()
 
 
 @pytest.mark.asyncio
-async def test_process_job_queue_dispatches_publish_shop():
-    job = Job(
-        id="j-2",
-        job_type=JobType.PUBLISH_SHOP,
-        payload={"shop_id": "s-1"},
-        status=JobStatus.CLAIMED,
-        attempts=1,
-        scheduled_at=datetime(2026, 1, 1, tzinfo=UTC),
-        created_at=datetime(2026, 1, 1, tzinfo=UTC),
-    )
+async def test_dispatch_routes_publish_shop_to_handler():
+    """When a PUBLISH_SHOP job is dispatched, the publish_shop handler is called."""
+    job = _make_job(JobType.PUBLISH_SHOP, {"shop_id": "s-1"})
 
-    with (
-        patch("workers.scheduler.get_service_role_client") as mock_get_db,
-        patch("workers.scheduler.JobQueue") as mock_queue_cls,
-        patch("workers.scheduler.handle_publish_shop", new_callable=AsyncMock) as mock_handler,
-    ):
-        mock_queue = MagicMock()
-        mock_queue.claim = AsyncMock(return_value=job)
-        mock_queue.complete = AsyncMock()
-        mock_queue_cls.return_value = mock_queue
-        mock_get_db.return_value = MagicMock()
-
-        await process_job_queue()
-
+    with patch("workers.scheduler.handle_publish_shop", new_callable=AsyncMock) as mock_handler:
+        await _dispatch_job(job, MagicMock(), MagicMock())
         mock_handler.assert_called_once()

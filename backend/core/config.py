@@ -2,8 +2,6 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    """Application settings loaded from environment variables."""
-
     # Supabase
     supabase_url: str = "http://127.0.0.1:54321"
     supabase_anon_key: str = ""
@@ -47,6 +45,14 @@ class Settings(BaseSettings):
 
     # Admin
     admin_user_ids: list[str] = []
+
+    # Worker concurrency
+    worker_poll_interval_seconds: int = 5
+    worker_concurrency_enrich: int = 5
+    worker_concurrency_embed: int = 20
+    worker_concurrency_publish: int = 20
+    worker_concurrency_scrape: int = 1
+    worker_concurrency_default: int = 1
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8", "extra": "ignore"}
 
