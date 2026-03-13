@@ -14,14 +14,14 @@ export function useShops(options: UseShopsOptions = {}) {
   if (featured) params.set("featured", "true");
   params.set("limit", String(limit));
 
-  const { data, isLoading, error } = useSWR<{ shops: Shop[] }>(
+  const { data, isLoading, error } = useSWR<Shop[]>(
     `/api/shops?${params.toString()}`,
     fetchPublic,
     { revalidateOnFocus: false }
   );
 
   return {
-    shops: data?.shops ?? [],
+    shops: data ?? [],
     isLoading,
     error: error ?? null,
   };

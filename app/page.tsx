@@ -7,16 +7,13 @@ import { ModeChips } from "@/components/discovery/mode-chips";
 import { FilterPills } from "@/components/discovery/filter-pills";
 import { FilterSheet } from "@/components/discovery/filter-sheet";
 import { ShopCard } from "@/components/shops/shop-card";
+import { useShops } from "@/lib/hooks/use-shops";
+import type { SearchMode } from "@/lib/hooks/use-search-state";
 
-type Mode = "work" | "rest" | "social" | "specialty" | null;
-
-interface HomePageProps {
-  shops?: Parameters<typeof ShopCard>[0]["shop"][];
-}
-
-export default function HomePage({ shops = [] }: HomePageProps) {
+export default function HomePage() {
   const router = useRouter();
-  const [mode, setMode] = useState<Mode>(null);
+  const { shops } = useShops({ featured: true, limit: 12 });
+  const [mode, setMode] = useState<SearchMode>(null);
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
 
