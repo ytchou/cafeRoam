@@ -12,21 +12,14 @@ interface ShopData {
   name: string;
   slug?: string;
   rating?: number | null;
-  review_count?: number;
+  reviewCount?: number;
   description?: string | null;
-  photo_urls?: string[];
   photoUrls?: string[];
-  taxonomy_tags?: Array<{
+  taxonomyTags?: Array<{
     id: string;
-    label_zh?: string;
-    labelZh?: string;
-    label?: string;
-  }>;
-  tags?: Array<{
-    id: string;
-    label_zh?: string;
-    labelZh?: string;
-    label?: string;
+    dimension: string;
+    label: string;
+    labelZh: string;
   }>;
   mrt?: string;
 }
@@ -37,8 +30,8 @@ interface ShopDetailClientProps {
 
 export function ShopDetailClient({ shop }: ShopDetailClientProps) {
   const { capture } = useAnalytics();
-  const photos = shop.photo_urls ?? shop.photoUrls ?? [];
-  const tags = shop.taxonomy_tags ?? shop.tags ?? [];
+  const photos = shop.photoUrls ?? [];
+  const tags = shop.taxonomyTags ?? [];
 
   useEffect(() => {
     capture('shop_detail_viewed', { shop_id: shop.id });
@@ -55,7 +48,7 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
       <ShopIdentity
         name={shop.name}
         rating={shop.rating}
-        reviewCount={shop.review_count}
+        reviewCount={shop.reviewCount}
         mrt={shop.mrt}
       />
       {tags.length > 0 && <AttributeChips tags={tags} />}

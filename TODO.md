@@ -794,7 +794,7 @@ This is the gate for Phase 2B. Shops must be imported, enriched, embedded, and p
 
 **Chunk 3 — Frontend type cleanup (Wave 4):**
 
-- [ ] Remove dual-casing workarounds in AttributeChips, ShopDetailClient
+- [x] Remove dual-casing workarounds in AttributeChips, ShopDetailClient
 
 **Chunk 4 — New components (Wave 5):**
 
