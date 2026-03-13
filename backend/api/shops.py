@@ -45,17 +45,14 @@ async def list_shops(
 @router.get("/{shop_id}")
 async def get_shop(shop_id: str) -> Any:
     """Get a single shop by ID. Public — no auth required."""
-    db = get_admin_db()
-    try:
-        response = (
-            db.table("shops")
-            .select(f"{_SHOP_COLUMNS}, shop_photos(photo_url), shop_tags(tag_name)")
-            .eq("id", shop_id)
-            .single()
-            .execute()
-        )
-    except Exception:
-        raise HTTPException(status_code=404, detail="Shop not found")
+    db = get_anon_client()
+    response = (
+        db.table("shops")
+        .select(f"{_SHOP_COLUMNS}, shop_photos(photo_url), shop_tags(tag_name)")
+        .eq("id", shop_id)
+        .maybe_single()
+        .execute()
+    )
 
     shop = response.data
     if not shop:
