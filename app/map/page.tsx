@@ -1,6 +1,6 @@
 "use client";
 import dynamic from "next/dynamic";
-import { useState, Suspense } from "react";
+import { useMemo, useState, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import { SearchBar } from "@/components/discovery/search-bar";
 import { FilterPills } from "@/components/discovery/filter-pills";
@@ -25,7 +25,11 @@ export default function MapPage() {
   const [selectedShopId, setSelectedShopId] = useState<string | null>(null);
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
 
-  const selectedShop = PLACEHOLDER_SHOPS.find((s) => s.id === selectedShopId) ?? null;
+  const shopById = useMemo(
+    () => new Map(PLACEHOLDER_SHOPS.map((s) => [s.id, s])),
+    [],
+  );
+  const selectedShop = selectedShopId ? (shopById.get(selectedShopId) ?? null) : null;
 
   const handleSearch = (query: string) => {
     router.push(`/map?q=${encodeURIComponent(query)}`);
