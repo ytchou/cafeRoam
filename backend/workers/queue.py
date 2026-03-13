@@ -8,8 +8,6 @@ from models.types import Job, JobStatus, JobType
 
 
 class JobQueue:
-    """Postgres-backed job queue using FOR UPDATE SKIP LOCKED for atomic claiming."""
-
     def __init__(self, db: Client):
         self._db = db
 
@@ -20,7 +18,6 @@ class JobQueue:
         priority: int = 0,
         scheduled_at: datetime | None = None,
     ) -> str:
-        """Add a new job to the queue."""
         now = datetime.now(UTC)
         response = (
             self._db.table("job_queue")
@@ -41,23 +38,8 @@ class JobQueue:
         return str(first(rows, "enqueue job")["id"])
 
     async def claim(self, job_type: JobType | None = None) -> Job | None:
-        """Atomically claim the next pending job using FOR UPDATE SKIP LOCKED.
-
-        This calls a Supabase RPC function `claim_job` that runs:
-
-            UPDATE job_queue
-            SET status = 'claimed', claimed_at = now(), attempts = attempts + 1
-            WHERE id = (
-                SELECT id FROM job_queue
-                WHERE status = 'pending'
-                AND scheduled_at <= now()
-                AND (job_type = $1 OR $1 IS NULL)
-                ORDER BY priority DESC, scheduled_at ASC
-                FOR UPDATE SKIP LOCKED
-                LIMIT 1
-            )
-            RETURNING *;
-        """
+        """Calls RPC `claim_job` which atomically claims the next pending job
+        using FOR UPDATE SKIP LOCKED, ordered by priority DESC, scheduled_at ASC."""
         params: dict[str, str | None] = {"p_job_type": job_type.value if job_type else None}
         response = self._db.rpc("claim_job", params).execute()
 
@@ -66,8 +48,15 @@ class JobQueue:
         rows = cast("list[dict[str, Any]]", response.data)
         return Job(**first(rows, "claim job"))
 
+    async def claim_batch(self, job_type: JobType, limit: int = 1) -> list[Job]:
+        response = self._db.rpc(
+            "claim_jobs_batch", {"p_job_type": job_type.value, "p_limit": limit}
+        ).execute()
+        if not response.data:
+            return []
+        return [Job(**row) for row in cast("list[dict[str, Any]]", response.data)]
+
     async def complete(self, job_id: str, result: dict[str, Any] | None = None) -> None:
-        """Mark a job as completed."""
         self._db.table("job_queue").update(
             {
                 "status": JobStatus.COMPLETED.value,
@@ -76,7 +65,6 @@ class JobQueue:
         ).eq("id", job_id).execute()
 
     async def fail(self, job_id: str, error: str) -> None:
-        """Mark a job as failed. If under max_attempts, reset to pending with backoff."""
         response = (
             self._db.table("job_queue")
             .select("attempts, max_attempts")
