@@ -1,60 +1,53 @@
-"use client";
-import { useEffect } from "react";
-import { ShopHero } from "@/components/shops/shop-hero";
-import { ShopIdentity } from "@/components/shops/shop-identity";
-import { AttributeChips } from "@/components/shops/attribute-chips";
-import { ShareButton } from "@/components/shops/share-button";
-import { StickyCheckinBar } from "@/components/shops/sticky-checkin-bar";
-import { useAnalytics } from "@/lib/posthog/use-analytics";
+import { notFound, redirect } from "next/navigation";
+import type { Metadata } from "next";
+import { ShopDetailClient } from "./shop-detail-client";
+import { BACKEND_URL } from "@/lib/api/proxy";
 
-interface ShopData {
-  id: string;
-  name: string;
-  slug?: string;
-  rating?: number | null;
-  review_count?: number;
-  description?: string | null;
-  photo_urls?: string[];
-  photoUrls?: string[];
-  taxonomy_tags?: Array<{ id: string; label_zh?: string; labelZh?: string; label?: string }>;
-  tags?: Array<{ id: string; label_zh?: string; labelZh?: string; label?: string }>;
-  mrt?: string;
+interface Params {
+  shopId: string;
+  slug: string;
 }
 
-interface ShopDetailPageProps {
-  shop: ShopData;
+async function fetchShop(shopId: string) {
+  const res = await fetch(`${BACKEND_URL}/shops/${shopId}`, {
+    next: { revalidate: 300 },
+  });
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`Failed to fetch shop: ${res.status}`);
+  return res.json();
 }
 
-export default function ShopDetailPage({ shop }: ShopDetailPageProps) {
-  const { capture } = useAnalytics();
-  const photos = shop.photo_urls ?? shop.photoUrls ?? [];
-  const tags = shop.taxonomy_tags ?? shop.tags ?? [];
+export async function generateMetadata({
+  params,
+}: {
+  params: Params;
+}): Promise<Metadata> {
+  const shop = await fetchShop(params.shopId);
+  if (!shop) return { title: "Shop not found" };
 
-  useEffect(() => {
-    capture("shop_detail_viewed", { shop_id: shop.id });
-  }, [capture, shop.id]);
+  const photo = shop.photo_urls?.[0];
+  return {
+    title: `${shop.name} — 啡遊`,
+    description: shop.description ?? `探索 ${shop.name}，台灣精品咖啡廳。`,
+    openGraph: {
+      title: shop.name,
+      description: shop.description ?? `探索 ${shop.name}，台灣精品咖啡廳。`,
+      ...(photo ? { images: [{ url: photo, width: 1200, height: 630 }] } : {}),
+    },
+  };
+}
 
-  const shareUrl = typeof window !== "undefined"
-    ? `${window.location.origin}/shops/${shop.id}/${shop.slug ?? shop.id}`
-    : `/shops/${shop.id}/${shop.slug ?? shop.id}`;
+export default async function ShopDetailPage({ params }: { params: Params }) {
+  const shop = await fetchShop(params.shopId);
 
-  return (
-    <div className="min-h-screen bg-white pb-20">
-      <ShopHero photoUrls={photos} shopName={shop.name} />
-      <ShopIdentity
-        name={shop.name}
-        rating={shop.rating}
-        reviewCount={shop.review_count}
-        mrt={shop.mrt}
-      />
-      {tags.length > 0 && <AttributeChips tags={tags} />}
-      {shop.description && (
-        <p className="px-4 py-2 text-sm text-gray-600">{shop.description}</p>
-      )}
-      <div className="px-4 py-2">
-        <ShareButton shopId={shop.id} shopName={shop.name} shareUrl={shareUrl} />
-      </div>
-      <StickyCheckinBar shopId={shop.id} returnTo={`/shops/${shop.id}/${shop.slug}`} />
-    </div>
-  );
+  if (!shop) {
+    notFound();
+  }
+
+  // Canonical slug redirect — if URL slug doesn't match the stored slug, redirect
+  if (shop.slug && params.slug !== shop.slug) {
+    redirect(`/shops/${params.shopId}/${shop.slug}`);
+  }
+
+  return <ShopDetailClient shop={shop} />;
 }

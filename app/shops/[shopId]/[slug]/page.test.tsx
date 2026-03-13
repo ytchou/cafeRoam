@@ -20,7 +20,7 @@ vi.mock("@/components/shops/share-button", () => ({
   ShareButton: () => <button>Share</button>,
 }));
 
-import ShopDetailPage from "./page";
+import { ShopDetailClient } from "./shop-detail-client";
 
 const MOCK_SHOP = {
   id: "shop-001",
@@ -39,20 +39,20 @@ const MOCK_SHOP = {
   mode_scores: { work: 0.8, rest: 0.6, social: 0.3 },
 };
 
-describe("ShopDetailPage", () => {
-  it("renders shop name and rating for any visitor", () => {
-    render(<ShopDetailPage shop={MOCK_SHOP} />);
+describe("ShopDetailClient", () => {
+  it("a visitor can see the shop name and rating", () => {
+    render(<ShopDetailClient shop={MOCK_SHOP} />);
     expect(screen.getByText("山小孩咖啡")).toBeInTheDocument();
     expect(screen.getByText(/4\.6/)).toBeInTheDocument();
   });
 
-  it("renders attribute chips from taxonomy tags", () => {
-    render(<ShopDetailPage shop={MOCK_SHOP} />);
+  it("a visitor sees the shop's attribute tags at a glance", () => {
+    render(<ShopDetailClient shop={MOCK_SHOP} />);
     expect(screen.getByText("安靜")).toBeInTheDocument();
   });
 
-  it("renders description text", () => {
-    render(<ShopDetailPage shop={MOCK_SHOP} />);
+  it("a visitor can read the shop description", () => {
+    render(<ShopDetailClient shop={MOCK_SHOP} />);
     expect(screen.getByText("A cozy coffee shop")).toBeInTheDocument();
   });
 });
