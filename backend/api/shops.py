@@ -14,7 +14,7 @@ def _extract_display_name(row: dict[str, Any]) -> str | None:
     profiles = row.get("profiles")
     if not profiles:
         return None
-    return profiles.get("display_name")
+    return cast("str | None", profiles.get("display_name"))
 
 
 _SHOP_COLUMNS = (
@@ -54,9 +54,9 @@ async def get_shop(shop_id: str) -> Any:
         .execute()
     )
 
-    shop = response.data
-    if not shop:
+    if response is None or not response.data:
         raise HTTPException(status_code=404, detail="Shop not found")
+    shop: dict[str, Any] = cast("dict[str, Any]", response.data)
 
     photo_urls = [row["photo_url"] for row in (shop.pop("shop_photos", None) or [])]
     tags = [row["tag_name"] for row in (shop.pop("shop_tags", None) or [])]
