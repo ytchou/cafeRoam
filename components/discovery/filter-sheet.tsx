@@ -55,7 +55,7 @@ export function FilterSheet({ open, onClose, onApply, initialFilters }: FilterSh
   const handleClear = () => setSelected(new Set());
   const handleApply = () => {
     const selectedIds = Array.from(selected);
-    capture("filter_applied", { filter_type: "sheet", filter_values: selectedIds });
+    capture("filter_applied", { filter_type: "sheet", filter_value: selectedIds });
     onApply(selectedIds);
     onClose();
   };

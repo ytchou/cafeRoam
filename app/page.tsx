@@ -61,6 +61,7 @@ export default function HomePage() {
       </section>
 
       <FilterSheet
+        key={filterSheetOpen ? "open" : "closed"}
         open={filterSheetOpen}
         onClose={() => setFilterSheetOpen(false)}
         onApply={setActiveFilters}
