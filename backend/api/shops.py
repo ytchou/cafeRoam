@@ -6,7 +6,7 @@ from pydantic.alias_generators import to_camel
 from api.deps import get_admin_db, get_current_user, get_optional_user
 from core.db import first
 from db.supabase_client import get_anon_client
-from models.types import ShopCheckInPreview, ShopCheckInSummary, ShopReview, ShopReviewsResponse
+from models.types import ShopCheckInPreview, ShopCheckInSummary, ShopReview, ShopReviewsResponse, TaxonomyTag
 
 router = APIRouter(prefix="/shops", tags=["shops"])
 
@@ -49,7 +49,7 @@ async def get_shop(shop_id: str) -> Any:
     db = get_anon_client()
     response = (
         db.table("shops")
-        .select(f"{_SHOP_COLUMNS}, shop_photos(photo_url), shop_tags(tag_name)")
+        .select(f"{_SHOP_COLUMNS}, shop_photos(photo_url), shop_tags(tag_id, tag_name, taxonomy_tags(id, dimension, label, label_zh))")
         .eq("id", shop_id)
         .maybe_single()
         .execute()
@@ -60,7 +60,13 @@ async def get_shop(shop_id: str) -> Any:
     shop: dict[str, Any] = cast("dict[str, Any]", response.data)
 
     photo_urls = [row["photo_url"] for row in (shop.pop("shop_photos", None) or [])]
-    shop.pop("shop_tags", None)
+    raw_tags = shop.pop("shop_tags", None) or []
+    taxonomy_tags = []
+    for row in raw_tags:
+        nested = row.get("taxonomy_tags")
+        if nested:
+            tag = TaxonomyTag(**nested)
+            taxonomy_tags.append(tag.model_dump(by_alias=True))
     mode_scores = {
         "work": shop.pop("mode_work", None),
         "rest": shop.pop("mode_rest", None),
@@ -70,6 +76,7 @@ async def get_shop(shop_id: str) -> Any:
     response_data: dict[str, Any] = {to_camel(k): v for k, v in shop.items()}
     response_data["photoUrls"] = photo_urls
     response_data["modeScores"] = mode_scores
+    response_data["taxonomyTags"] = taxonomy_tags
     return response_data
 
 

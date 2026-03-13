@@ -141,6 +141,37 @@ class TestShopsAPI:
         data = response.json()
         assert data["modeScores"] == {"work": 0.8, "rest": 0.5, "social": 0.3}
 
+    def test_get_shop_detail_returns_structured_taxonomy_tags(self):
+        """GET /shops/{id} returns taxonomyTags as array of {id, dimension, label, labelZh}."""
+        shop_data = {
+            **SHOP_ROW,
+            "shop_photos": [],
+            "shop_tags": [
+                {
+                    "tag_id": "quiet",
+                    "tag_name": "quiet",
+                    "taxonomy_tags": {
+                        "id": "quiet",
+                        "dimension": "ambience",
+                        "label": "Quiet",
+                        "label_zh": "安靜",
+                    },
+                }
+            ],
+        }
+        shop_chain = _simple_select_chain(shop_data)
+
+        with patch("api.shops.get_anon_client") as mock_sb:
+            mock_sb.return_value = MagicMock(table=MagicMock(return_value=shop_chain))
+            response = client.get("/shops/shop-001")
+
+        data = response.json()
+        assert "taxonomyTags" in data
+        assert "tags" not in data
+        assert data["taxonomyTags"] == [
+            {"id": "quiet", "dimension": "ambience", "label": "Quiet", "labelZh": "安靜"}
+        ]
+
     def test_get_shop_detail_returns_camel_case_keys(self):
         """GET /shops/{id} response uses camelCase keys (photoUrls, modeScores, not photo_urls, mode_scores)."""
         shop_chain = _simple_select_chain({

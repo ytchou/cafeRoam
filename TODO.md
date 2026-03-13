@@ -790,7 +790,7 @@ This is the gate for Phase 2B. Shops must be imported, enriched, embedded, and p
 
 **Chunk 2 — Structured taxonomy_tags (Wave 3):**
 
-- [ ] GET /shops/{id} returns TaxonomyTag objects with dimension + labelZh (TDD)
+- [x] GET /shops/{id} returns TaxonomyTag objects with dimension + labelZh (TDD)
 
 **Chunk 3 — Frontend type cleanup (Wave 4):**
 
