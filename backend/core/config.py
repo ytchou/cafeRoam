@@ -1,7 +1,5 @@
 from pydantic_settings import BaseSettings
 
-from models.types import JobType
-
 
 class Settings(BaseSettings):
     # Supabase
@@ -55,19 +53,6 @@ class Settings(BaseSettings):
     worker_concurrency_publish: int = 20
     worker_concurrency_scrape: int = 1
     worker_concurrency_default: int = 1
-
-    def get_worker_concurrency(self, job_type: JobType) -> int:
-        match job_type:
-            case JobType.ENRICH_SHOP | JobType.ENRICH_MENU_PHOTO:
-                return self.worker_concurrency_enrich
-            case JobType.GENERATE_EMBEDDING:
-                return self.worker_concurrency_embed
-            case JobType.PUBLISH_SHOP:
-                return self.worker_concurrency_publish
-            case JobType.SCRAPE_BATCH | JobType.SCRAPE_SHOP:
-                return self.worker_concurrency_scrape
-            case _:
-                return self.worker_concurrency_default
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8", "extra": "ignore"}
 

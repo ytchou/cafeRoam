@@ -26,6 +26,7 @@ logger = structlog.get_logger()
 _SHORT_URL_HOSTS = {"goo.gl", "maps.app.goo.gl"}
 
 _PLACE_NAME_RE = re.compile(r"/maps/place/([^/@?#]+)")
+_PLACE_ID_RE = re.compile(r"^ChIJ")
 
 
 def extract_name_from_url(url: str) -> str | None:
@@ -45,7 +46,7 @@ def extract_name_from_url(url: str) -> str | None:
     name = urllib.parse.unquote_plus(raw).strip()
 
     # Skip bare place IDs — they look like "ChIJxxxxxx"
-    if re.match(r"^ChIJ", name):
+    if _PLACE_ID_RE.match(name):
         return None
 
     return name if len(name) >= 2 else None
@@ -80,43 +81,50 @@ def main() -> None:
     queued = 0
     skipped = 0
 
+    # Validate all inputs first, collect candidates
+    candidates: list[tuple[str, str]] = []  # (url, name)
     for url in args:
         url = url.strip()
 
-        # Validate URL format
         url_result = validate_google_maps_url(url)
         if not url_result.passed:
             print(f"  Skip (invalid URL): {url}")
             skipped += 1
             continue
 
-        # Resolve name
         name = explicit_name or extract_name_from_url(url)
         if not name:
-            print(
-                f"  Skip (cannot extract name from short URL — use --name): {url}"
-            )
+            print(f"  Skip (cannot extract name from short URL — use --name): {url}")
             skipped += 1
             continue
 
-        # Validate name
         name_result = validate_shop_name(name)
         if not name_result.passed:
             print(f"  Skip (invalid name '{name}'): {url}")
             skipped += 1
             continue
 
-        # Check for duplicate URL
-        existing = (
-            db.table("shops").select("id").eq("google_maps_url", url).execute()
-        )
-        if existing.data:
+        candidates.append((url, name))
+
+    if not candidates:
+        print(f"\nDone: {queued} queued, {skipped} skipped.")
+        return
+
+    # Batch duplicate check — one query for all candidate URLs
+    candidate_urls = [url for url, _ in candidates]
+    existing_response = (
+        db.table("shops").select("google_maps_url").in_("google_maps_url", candidate_urls).execute()
+    )
+    existing_urls = {row["google_maps_url"] for row in (existing_response.data or [])}
+
+    # Insert new shops
+    rows_to_insert = []
+    for url, name in candidates:
+        if url in existing_urls:
             print(f"  Skip (already exists): {name}")
             skipped += 1
-            continue
-
-        try:
-            db.table("shops").insert(
+        else:
+            rows_to_insert.append(
                 {
                     "name": name,
                     "address": "",
@@ -125,12 +133,17 @@ def main() -> None:
                     "source": "manual_url",
                     "google_maps_url": url,
                 }
-            ).execute()
-            print(f"  Queued: {name}")
-            queued += 1
+            )
+
+    if rows_to_insert:
+        try:
+            db.table("shops").insert(rows_to_insert).execute()
+            for row in rows_to_insert:
+                print(f"  Queued: {row['name']}")
+            queued += len(rows_to_insert)
         except Exception as e:
-            print(f"  Error inserting '{name}': {e}")
-            skipped += 1
+            print(f"  Error inserting shops: {e}")
+            skipped += len(rows_to_insert)
 
     print(f"\nDone: {queued} queued, {skipped} skipped.")
     if queued:

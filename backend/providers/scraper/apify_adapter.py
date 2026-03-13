@@ -48,8 +48,18 @@ class ApifyScraperAdapter:
         if not shops:
             return []
 
-        url_to_shop_id = {s.google_maps_url: s.shop_id for s in shops}
-        start_urls = [{"url": s.google_maps_url} for s in shops]
+        url_to_shop_id: dict[str, str] = {}
+        for s in shops:
+            if s.google_maps_url in url_to_shop_id:
+                logger.warning(
+                    "scrape_batch: duplicate URL in input, skipping",
+                    url=s.google_maps_url[:80],
+                    kept_shop_id=url_to_shop_id[s.google_maps_url],
+                    dropped_shop_id=s.shop_id,
+                )
+            else:
+                url_to_shop_id[s.google_maps_url] = s.shop_id
+        start_urls = [{"url": url} for url in url_to_shop_id]
 
         results = await self._run_actor(
             {

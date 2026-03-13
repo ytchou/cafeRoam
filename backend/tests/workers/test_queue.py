@@ -140,6 +140,62 @@ class TestJobQueue:
         assert update_call["status"] == JobStatus.PENDING.value
         assert "scheduled_at" in update_call
 
+    async def test_claim_batch_returns_jobs_up_to_limit(self, job_queue, mock_supabase):
+        """claim_batch calls claim_jobs_batch RPC and returns a list of claimed jobs."""
+        now = datetime.now(UTC).isoformat()
+        mock_supabase.rpc = MagicMock(
+            return_value=MagicMock(
+                execute=MagicMock(
+                    return_value=MagicMock(
+                        data=[
+                            {
+                                "id": "job-1",
+                                "job_type": "publish_shop",
+                                "payload": {"shop_id": "s1"},
+                                "status": "claimed",
+                                "priority": 0,
+                                "attempts": 1,
+                                "max_attempts": 3,
+                                "last_error": None,
+                                "scheduled_at": now,
+                                "claimed_at": now,
+                                "completed_at": None,
+                                "created_at": now,
+                            },
+                            {
+                                "id": "job-2",
+                                "job_type": "publish_shop",
+                                "payload": {"shop_id": "s2"},
+                                "status": "claimed",
+                                "priority": 0,
+                                "attempts": 1,
+                                "max_attempts": 3,
+                                "last_error": None,
+                                "scheduled_at": now,
+                                "claimed_at": now,
+                                "completed_at": None,
+                                "created_at": now,
+                            },
+                        ]
+                    )
+                )
+            )
+        )
+        jobs = await job_queue.claim_batch(JobType.PUBLISH_SHOP, limit=5)
+        assert len(jobs) == 2
+        assert all(j.status == JobStatus.CLAIMED for j in jobs)
+        mock_supabase.rpc.assert_called_once_with(
+            "claim_jobs_batch", {"p_job_type": "publish_shop", "p_limit": 5}
+        )
+
+    async def test_claim_batch_returns_empty_when_no_jobs(self, job_queue, mock_supabase):
+        """claim_batch returns an empty list when no pending jobs exist."""
+        mock_supabase.rpc = MagicMock(
+            return_value=MagicMock(execute=MagicMock(return_value=MagicMock(data=[])))
+        )
+        jobs = await job_queue.claim_batch(JobType.PUBLISH_SHOP, limit=5)
+        assert jobs == []
+
     async def test_fail_marks_permanently_failed_at_max_attempts(self, job_queue, mock_supabase):
         """At max_attempts: status is set to FAILED permanently."""
         select_response = MagicMock(data={"attempts": 3, "max_attempts": 3})

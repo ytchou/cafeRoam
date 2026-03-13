@@ -30,6 +30,9 @@ logger = structlog.get_logger()
 _in_flight: dict[JobType, int] = {jt: 0 for jt in JobType}
 _backoff_until: dict[JobType, datetime] = {}
 
+# Strong references to in-flight tasks prevent premature GC
+_tasks: set[asyncio.Task[None]] = set()
+
 # Taxonomy cache: (tags, expires_at)
 _taxonomy_cache: tuple[list[TaxonomyTag], datetime] | None = None
 _TAXONOMY_TTL = timedelta(minutes=5)
@@ -48,23 +51,29 @@ def _get_cached_taxonomy(db: Client) -> list[TaxonomyTag]:
 def _is_rate_limit_error(e: BaseException) -> bool:
     import httpx
 
-    try:
-        import anthropic
-
-        if isinstance(e, anthropic.RateLimitError):
-            return True
-    except ImportError:
-        pass
-    try:
-        import openai
-
-        if isinstance(e, openai.RateLimitError):
-            return True
-    except ImportError:
-        pass
     if isinstance(e, httpx.HTTPStatusError) and e.response.status_code == 429:
         return True
+    # Detect provider SDK rate limit errors by type + module name to avoid importing
+    # SDK types into the worker layer (CLAUDE.md provider abstraction rule).
+    if type(e).__name__ == "RateLimitError" and type(e).__module__.startswith(
+        ("anthropic", "openai")
+    ):
+        return True
     return "rate limit" in str(e).lower()
+
+
+def _get_job_concurrency(job_type: JobType) -> int:
+    match job_type:
+        case JobType.ENRICH_SHOP:
+            return settings.worker_concurrency_enrich
+        case JobType.GENERATE_EMBEDDING:
+            return settings.worker_concurrency_embed
+        case JobType.PUBLISH_SHOP:
+            return settings.worker_concurrency_publish
+        case JobType.SCRAPE_BATCH | JobType.SCRAPE_SHOP:
+            return settings.worker_concurrency_scrape
+        case _:
+            return settings.worker_concurrency_default
 
 
 async def _dispatch_job(job: Job, db: Client, queue: JobQueue) -> None:
@@ -127,21 +136,28 @@ async def _dispatch_job(job: Job, db: Client, queue: JobQueue) -> None:
 
 
 async def _run_job(job: Job) -> None:
-    db = get_service_role_client()
-    queue = JobQueue(db=db)
     job_type = job.job_type
     logger.info("Processing job", job_id=job.id, job_type=job_type)
+    queue: JobQueue | None = None
     try:
+        db = get_service_role_client()
+        queue = JobQueue(db=db)
         await _dispatch_job(job, db, queue)
         await queue.complete(job.id)
         logger.info("Job completed", job_id=job.id)
+    except asyncio.CancelledError:
+        logger.warning("Job cancelled during shutdown", job_id=job.id)
+        if queue is not None:
+            await queue.fail(job.id, error="Job cancelled during shutdown")
+        raise
     except Exception as e:
         logger.error("Job failed", job_id=job.id, error=str(e))
         sentry_sdk.capture_exception(e)
         if _is_rate_limit_error(e):
             _backoff_until[job_type] = datetime.now(UTC) + timedelta(seconds=30)
             logger.warning("Rate limited, backing off", job_type=job_type, seconds=30)
-        await queue.fail(job.id, error=str(e))
+        if queue is not None:
+            await queue.fail(job.id, error=str(e))
     finally:
         _in_flight[job_type] -= 1
 
@@ -152,7 +168,7 @@ async def process_job_type(job_type: JobType) -> None:
     if backoff and now < backoff:
         return
 
-    max_concurrency = settings.get_worker_concurrency(job_type)
+    max_concurrency = _get_job_concurrency(job_type)
     available = max_concurrency - _in_flight[job_type]
     if available <= 0:
         return
@@ -165,7 +181,9 @@ async def process_job_type(job_type: JobType) -> None:
 
     for job in jobs:
         _in_flight[job_type] += 1
-        asyncio.create_task(_run_job(job))
+        task = asyncio.create_task(_run_job(job))
+        _tasks.add(task)
+        task.add_done_callback(_tasks.discard)
 
 
 async def run_staleness_sweep() -> None:
