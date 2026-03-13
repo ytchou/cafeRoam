@@ -28,7 +28,7 @@ describe("useShops", () => {
   it("fetches featured shops", async () => {
     mockFetch.mockResolvedValue({
       ok: true,
-      json: async () => ({ shops: MOCK_SHOPS }),
+      json: async () => MOCK_SHOPS,
     });
     const { result } = renderHook(() => useShops({ featured: true, limit: 12 }), {
       wrapper: createWrapper(),
