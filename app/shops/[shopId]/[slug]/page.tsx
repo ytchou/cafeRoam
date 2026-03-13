@@ -32,8 +32,8 @@ export default function ShopDetailPage({ shop }: ShopDetailPageProps) {
 
   useEffect(() => {
     capture("shop_detail_viewed", { shop_id: shop.id });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [shop.id]);
+  }, [capture, shop.id]);
+
   const shareUrl = typeof window !== "undefined"
     ? `${window.location.origin}/shops/${shop.id}/${shop.slug ?? shop.id}`
     : `/shops/${shop.id}/${shop.slug ?? shop.id}`;

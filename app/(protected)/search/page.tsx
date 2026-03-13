@@ -9,14 +9,10 @@ export default function SearchPage() {
   const { query, mode, setQuery } = useSearchState();
   const { results, isLoading, error } = useSearch(query || null, mode);
 
-  const handleSearch = (q: string) => setQuery(q);
-  const handleSuggestion = (s: string) => setQuery(s);
-
   return (
     <div className="min-h-screen bg-[#FAF7F4]">
-      {/* Search header */}
       <div className="sticky top-0 bg-white border-b border-gray-100 px-4 py-3 z-10">
-        <SearchBar onSubmit={handleSearch} defaultQuery={query} />
+        <SearchBar onSubmit={setQuery} defaultQuery={query} />
       </div>
 
       <div className="px-4 py-4">
@@ -24,17 +20,12 @@ export default function SearchPage() {
           <div className="text-center py-12 text-gray-400">搜尋中…</div>
         )}
 
-        {!isLoading && !error && results.length === 0 && query && (
+        {!isLoading && !error && results.length === 0 && (
           <div className="text-center py-8">
-            <p className="text-gray-500 mb-4">沒有找到結果「{query}」</p>
-            <SuggestionChips onSelect={handleSuggestion} />
-          </div>
-        )}
-
-        {!isLoading && !error && results.length === 0 && !query && (
-          <div className="text-center py-8">
-            <p className="text-gray-500 mb-4">輸入關鍵字開始搜尋</p>
-            <SuggestionChips onSelect={handleSuggestion} />
+            <p className="text-gray-500 mb-4">
+              {query ? `沒有找到結果「${query}」` : "輸入關鍵字開始搜尋"}
+            </p>
+            <SuggestionChips onSelect={setQuery} />
           </div>
         )}
 

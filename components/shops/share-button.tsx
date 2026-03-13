@@ -20,7 +20,7 @@ export function ShareButton({ shopId, shopName, shareUrl }: ShareButtonProps) {
         capture('shop_url_copied', { shop_id: shopId, copy_method: 'native_share' });
         return;
       } catch {
-        // User cancelled or error — fall through to clipboard
+        // Fall through to clipboard
       }
     }
 

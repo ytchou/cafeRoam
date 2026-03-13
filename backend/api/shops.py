@@ -11,6 +11,13 @@ from models.types import ShopCheckInPreview, ShopCheckInSummary, ShopReview, Sho
 router = APIRouter(prefix="/shops", tags=["shops"])
 
 
+def _extract_display_name(row: dict[str, Any]) -> str | None:
+    profiles = row.get("profiles")
+    if not profiles:
+        return None
+    return profiles.get("display_name")
+
+
 @router.get("/")
 async def list_shops(
     city: str | None = None,
@@ -88,9 +95,7 @@ async def get_shop_checkins(
             ShopCheckInSummary(
                 id=row["id"],
                 user_id=row["user_id"],
-                display_name=(
-                    row.get("profiles", {}).get("display_name") if row.get("profiles") else None
-                ),
+                display_name=_extract_display_name(row),
                 photo_url=str(row["photo_urls"][0]) if row.get("photo_urls") else "",
                 note=row.get("note"),
                 created_at=row["created_at"],
@@ -152,9 +157,7 @@ async def get_shop_reviews(
         ShopReview(
             id=row["id"],
             user_id=row["user_id"],
-            display_name=(
-                row.get("profiles", {}).get("display_name") if row.get("profiles") else None
-            ),
+            display_name=_extract_display_name(row),
             stars=row["stars"],
             review_text=row.get("review_text"),
             confirmed_tags=row.get("confirmed_tags"),
@@ -165,7 +168,6 @@ async def get_shop_reviews(
 
     total_count = response.count or 0
 
-    # Compute average via DB function — avoids fetching all rows to Python
     avg_response = db.rpc("shop_avg_rating", {"p_shop_id": shop_id}).execute()
     average_rating = float(avg_response.data) if avg_response.data else 0.0
 

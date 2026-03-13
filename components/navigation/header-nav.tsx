@@ -16,17 +16,12 @@ export function HeaderNav({ onSearch, variant = "solid" }: HeaderNavProps) {
   return (
     <header className={`fixed top-0 left-0 right-0 z-40 ${bgClass}`}>
       <div className="max-w-6xl mx-auto px-4 h-16 flex items-center gap-4">
-        {/* Logo */}
         <Link href="/" className="text-xl font-bold text-[#E06B3F] flex-shrink-0">
           啡遊
         </Link>
-
-        {/* Search bar (center) */}
         <div className="flex-1 max-w-xl">
           <SearchBar onSubmit={onSearch} />
         </div>
-
-        {/* Nav links */}
         <nav className="flex items-center gap-4 flex-shrink-0">
           <Link href="/map" className="text-sm text-gray-600 hover:text-[#E06B3F] transition-colors">
             地圖

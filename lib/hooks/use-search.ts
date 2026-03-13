@@ -2,8 +2,7 @@
 import useSWR from "swr";
 import { fetchWithAuth } from "@/lib/api/fetch";
 import type { Shop } from "@/lib/types";
-
-export type SearchMode = "work" | "rest" | "social" | "specialty" | null;
+import type { SearchMode } from "./use-search-state";
 
 interface SearchResponse {
   results: Shop[];

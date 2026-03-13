@@ -21,7 +21,6 @@ export function SearchBar({ onSubmit, defaultQuery = "", autoFocus }: SearchBarP
 
   return (
     <form role="search" onSubmit={handleSubmit} className="relative flex items-center">
-      {/* Sparkle icon */}
       <span className="absolute left-3 pointer-events-none text-[#E06B3F]">
         <img
           src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23E06B3F' stroke-width='2'%3E%3Cpath d='M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5z'/%3E%3C/svg%3E"

@@ -11,7 +11,6 @@ const MapView = dynamic(
   { ssr: false },
 );
 
-// Placeholder shop data — will be replaced by useShops hook post-data-gate
 const PLACEHOLDER_SHOPS: Array<{
   id: string;
   name: string;
@@ -34,7 +33,6 @@ export default function MapPage() {
 
   return (
     <div className="relative h-screen w-full overflow-hidden">
-      {/* Map (full bleed) */}
       <div className="absolute inset-0">
         <Suspense
           fallback={
@@ -47,7 +45,6 @@ export default function MapPage() {
         </Suspense>
       </div>
 
-      {/* Search overlay */}
       <div className="absolute left-4 right-4 top-4 z-20">
         <div className="space-y-2 rounded-2xl bg-white/90 p-3 shadow backdrop-blur-md supports-[not(backdrop-filter)]:bg-white">
           <SearchBar onSubmit={handleSearch} />
@@ -63,7 +60,6 @@ export default function MapPage() {
         </div>
       </div>
 
-      {/* Selected shop card */}
       {selectedShop && (
         <MapMiniCard shop={selectedShop} onDismiss={() => setSelectedShopId(null)} />
       )}

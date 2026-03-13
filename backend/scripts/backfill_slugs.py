@@ -1,12 +1,11 @@
 """One-time script: generate slugs for all shops missing them."""
-import asyncio
 
 from core.config import settings
 from core.slugify import generate_slug
 from supabase import create_client
 
 
-async def main() -> None:
+def main() -> None:
     db = create_client(settings.supabase_url, settings.supabase_service_role_key)
     result = db.table("shops").select("id, name").is_("slug", "null").execute()
     shops = result.data or []
@@ -15,7 +14,6 @@ async def main() -> None:
     seen_slugs: set[str] = set()
     for shop in shops:
         slug = generate_slug(shop["name"])
-        # Handle collisions by appending short ID prefix
         if slug in seen_slugs:
             slug = f"{slug}-{shop['id'][:8]}"
         seen_slugs.add(slug)
@@ -27,4 +25,4 @@ async def main() -> None:
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()

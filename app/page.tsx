@@ -7,19 +7,11 @@ import { ModeChips } from "@/components/discovery/mode-chips";
 import { FilterPills } from "@/components/discovery/filter-pills";
 import { FilterSheet } from "@/components/discovery/filter-sheet";
 import { ShopCard } from "@/components/shops/shop-card";
-import type { Shop } from "@/lib/types";
 
 type Mode = "work" | "rest" | "social" | "specialty" | null;
 
-type ShopCardData = Pick<Shop, "id" | "name" | "rating"> & {
-  slug?: string;
-  mrt?: string;
-  photoUrls?: string[];
-  photo_urls?: string[];
-};
-
 interface HomePageProps {
-  shops?: ShopCardData[];
+  shops?: Parameters<typeof ShopCard>[0]["shop"][];
 }
 
 export default function HomePage({ shops = [] }: HomePageProps) {
@@ -43,7 +35,6 @@ export default function HomePage({ shops = [] }: HomePageProps) {
 
   return (
     <div className="min-h-screen bg-[#FAF7F4]">
-      {/* Hero section */}
       <section className="px-4 pt-8 pb-4 bg-[#E06B3F]">
         <h1 className="text-2xl font-bold text-white mb-4">啡遊</h1>
         <SearchBar onSubmit={handleSearch} autoFocus={false} />
@@ -52,7 +43,6 @@ export default function HomePage({ shops = [] }: HomePageProps) {
         </div>
       </section>
 
-      {/* Filters */}
       <div className="px-4 py-3 bg-white border-b border-gray-100 sticky top-0 z-10">
         <ModeChips activeMode={mode} onModeChange={setMode} />
         <div className="mt-2">
@@ -64,7 +54,6 @@ export default function HomePage({ shops = [] }: HomePageProps) {
         </div>
       </div>
 
-      {/* Featured shops */}
       <section className="px-4 py-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">精選咖啡廳</h2>
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
@@ -77,10 +66,7 @@ export default function HomePage({ shops = [] }: HomePageProps) {
       <FilterSheet
         open={filterSheetOpen}
         onClose={() => setFilterSheetOpen(false)}
-        onApply={(ids) => {
-          setActiveFilters(ids);
-          setFilterSheetOpen(false);
-        }}
+        onApply={setActiveFilters}
         initialFilters={activeFilters}
       />
     </div>
