@@ -15,9 +15,7 @@ vi.mock('./bottom-nav', () => ({
 }));
 
 vi.mock('./header-nav', () => ({
-  HeaderNav: ({ onSearch }: { onSearch: (q: string) => void }) => (
-    <header data-testid="header-nav" />
-  ),
+  HeaderNav: () => <header data-testid="header-nav" />,
 }));
 
 import { useIsDesktop } from '@/lib/hooks/use-media-query';
