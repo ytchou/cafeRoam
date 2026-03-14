@@ -69,6 +69,9 @@ export default function MapPage() {
                 if (next === 'list' && latitude == null) {
                   requestLocation();
                 }
+                if (next === 'list') {
+                  setSelectedShopId(null);
+                }
                 setViewMode(next);
               }}
               className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white"
