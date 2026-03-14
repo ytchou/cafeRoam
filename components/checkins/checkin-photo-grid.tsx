@@ -54,7 +54,6 @@ export function CheckInPhotoGrid({
 
   if (!data) return null;
 
-  // Authenticated: data is CheckInSummary[]
   if (isAuthenticated && Array.isArray(data)) {
     if (data.length === 0) return null;
 
@@ -78,7 +77,6 @@ export function CheckInPhotoGrid({
     );
   }
 
-  // Unauthenticated: data is CheckInPreview
   const preview = data as CheckInPreview;
   if (preview.count === 0) return null;
 
