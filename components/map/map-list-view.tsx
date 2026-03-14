@@ -26,11 +26,13 @@ function haversineDistance(
 export function MapListView({ shops, userLat, userLng }: MapListViewProps) {
   const sorted = useMemo(() => {
     if (userLat != null && userLng != null) {
-      return [...shops].sort(
-        (a, b) =>
-          haversineDistance(userLat, userLng, a.latitude, a.longitude) -
-          haversineDistance(userLat, userLng, b.latitude, b.longitude),
-      );
+      return [...shops]
+        .map((shop) => ({
+          shop,
+          dist: haversineDistance(userLat, userLng, shop.latitude, shop.longitude),
+        }))
+        .sort((a, b) => a.dist - b.dist)
+        .map(({ shop }) => shop);
     }
     return [...shops].sort((a, b) => a.name.localeCompare(b.name));
   }, [shops, userLat, userLng]);
