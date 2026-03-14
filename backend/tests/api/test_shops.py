@@ -174,11 +174,13 @@ class TestShopsAPI:
 
     def test_get_shop_detail_returns_camel_case_keys(self):
         """GET /shops/{id} response uses camelCase keys (photoUrls, modeScores, not photo_urls, mode_scores)."""
-        shop_chain = _simple_select_chain({
-            **SHOP_ROW,
-            "shop_photos": [{"photo_url": "https://example.com/p1.jpg"}],
-            "shop_tags": [],
-        })
+        shop_chain = _simple_select_chain(
+            {
+                **SHOP_ROW,
+                "shop_photos": [{"photo_url": "https://example.com/p1.jpg"}],
+                "shop_tags": [],
+            }
+        )
         with patch("api.shops.get_anon_client") as mock_sb:
             mock_sb.return_value = MagicMock(table=MagicMock(return_value=shop_chain))
             response = client.get("/shops/shop-001")
