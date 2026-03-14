@@ -26,7 +26,7 @@ export default function MapPage() {
 
   const { shops } = useShops({ featured: true, limit: 200 });
   const isDesktop = useIsDesktop();
-  const { latitude, longitude } = useGeolocation();
+  const { latitude, longitude, requestLocation } = useGeolocation();
 
   const shopById = useMemo(() => new Map(shops.map((s) => [s.id, s])), [shops]);
   const selectedShop = selectedShopId
@@ -64,7 +64,13 @@ export default function MapPage() {
               <SearchBar onSubmit={handleSearch} />
             </div>
             <button
-              onClick={() => setViewMode(viewMode === 'map' ? 'list' : 'map')}
+              onClick={() => {
+                const next = viewMode === 'map' ? 'list' : 'map';
+                if (next === 'list' && latitude == null) {
+                  requestLocation();
+                }
+                setViewMode(next);
+              }}
               className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white"
               aria-label={viewMode === 'map' ? 'Switch to list view' : 'Switch to map view'}
             >
