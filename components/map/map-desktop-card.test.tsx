@@ -17,8 +17,18 @@ const SHOP = {
   mrt: '大安站',
   photoUrls: ['https://example.com/p1.jpg', 'https://example.com/p2.jpg'],
   taxonomyTags: [
-    { id: 'quiet', dimension: 'ambience' as const, label: 'Quiet', labelZh: '安靜' },
-    { id: 'wifi', dimension: 'functionality' as const, label: 'Wi-Fi', labelZh: '有 Wi-Fi' },
+    {
+      id: 'quiet',
+      dimension: 'ambience' as const,
+      label: 'Quiet',
+      labelZh: '安靜',
+    },
+    {
+      id: 'wifi',
+      dimension: 'functionality' as const,
+      label: 'Wi-Fi',
+      labelZh: '有 Wi-Fi',
+    },
   ],
 };
 
@@ -42,13 +52,19 @@ describe('MapDesktopCard', () => {
 
   it('a user can click View Details to navigate to the shop page', async () => {
     render(<MapDesktopCard shop={SHOP} />);
-    await userEvent.click(screen.getByRole('button', { name: /查看詳情|View Details/i }));
-    expect(mockPush).toHaveBeenCalledWith('/shops/shop-001/shan-xiao-hai-ka-fei');
+    await userEvent.click(
+      screen.getByRole('button', { name: /查看詳情|View Details/i })
+    );
+    expect(mockPush).toHaveBeenCalledWith(
+      '/shops/shop-001/shan-xiao-hai-ka-fei'
+    );
   });
 
   it('a user can click Check In to navigate to the check-in page', async () => {
     render(<MapDesktopCard shop={SHOP} />);
-    await userEvent.click(screen.getByRole('button', { name: /打卡|Check In/i }));
+    await userEvent.click(
+      screen.getByRole('button', { name: /打卡|Check In/i })
+    );
     expect(mockPush).toHaveBeenCalledWith('/checkin/shop-001');
   });
 });

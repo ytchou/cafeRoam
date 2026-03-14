@@ -12,9 +12,7 @@ export function ShopDescription({ text }: ShopDescriptionProps) {
 
   return (
     <div className="px-4 py-2">
-      <p
-        className={`text-sm text-gray-600 ${expanded ? '' : 'line-clamp-2'}`}
-      >
+      <p className={`text-sm text-gray-600 ${expanded ? '' : 'line-clamp-2'}`}>
         {text}
       </p>
       {!expanded && text.length > 60 && (

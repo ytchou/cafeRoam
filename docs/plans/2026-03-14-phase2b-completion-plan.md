@@ -15,6 +15,7 @@
 **Tech Stack:** FastAPI + Pydantic (alias_generator), Next.js 16, react-map-gl, Mapbox Static Images API, Vitest + Testing Library, PostHog analytics
 
 **Acceptance Criteria:**
+
 - [ ] Backend API responses use camelCase JSON keys (e.g., `reviewCount`, `photoUrls`, `taxonomyTags`)
 - [ ] Shop detail page shows description with "Read more", menu highlights, check-in strip, and map thumbnail
 - [ ] Desktop map shows a 340px floating card on pin select with photos, identity, and dual action buttons
@@ -27,6 +28,7 @@
 ## Task 1: CamelModel base class for Pydantic camelCase serialization
 
 **Files:**
+
 - Modify: `backend/models/types.py:1-7`
 - Test: `backend/tests/models/test_camel_serialization.py` (create)
 
@@ -86,6 +88,7 @@ class Shop(CamelModel):
 ```
 
 Also update ALL other models that appear in API responses to inherit from `CamelModel`:
+
 - `User`, `ProfileResponse`, `ProfileUpdateRequest`
 - `CheckIn`, `CreateCheckInResponse`, `Stamp`, `StampWithShop`, `CheckInWithShop`
 - `ShopCheckInSummary`, `ShopCheckInPreview`
@@ -112,6 +115,7 @@ git commit -m "feat: add CamelModel base class for camelCase JSON serialization"
 ## Task 2: Update backend API endpoints to serialize with aliases
 
 **Files:**
+
 - Modify: `backend/api/shops.py:45-75` (get_shop), `backend/api/shops.py:78-135` (get_shop_checkins), `backend/api/shops.py:138-188` (get_shop_reviews), `backend/api/search.py:14-27` (search)
 - Test: `backend/tests/api/test_shops.py` (modify)
 
@@ -203,6 +207,7 @@ Update `backend/api/search.py` line 27 — `.model_dump(by_alias=True)`.
 **Step 4: Update existing tests to expect camelCase keys**
 
 In `test_shops.py`, update assertions:
+
 - `data["photo_urls"]` → `data["photoUrls"]`
 - `data["mode_scores"]` → `data["modeScores"]`
 - `data["slug"]` stays `data["slug"]` (single word, same in camelCase)
@@ -222,6 +227,7 @@ git commit -m "feat: serialize all API responses as camelCase"
 ## Task 3: Structured taxonomy_tags response in GET /shops/{id}
 
 **Files:**
+
 - Modify: `backend/api/shops.py:45-75`
 - Test: `backend/tests/api/test_shops.py` (add test)
 
@@ -270,11 +276,13 @@ Expected: FAIL — response has `tags` (flat strings), not `taxonomyTags` (struc
 Update `get_shop()` in `backend/api/shops.py`:
 
 1. Change the select to JOIN `taxonomy_tags` through `shop_tags`:
+
 ```python
 .select(f"{_SHOP_COLUMNS}, shop_photos(photo_url), shop_tags(tag_id, tag_name, taxonomy_tags(id, dimension, label, label_zh))")
 ```
 
 2. Replace tags extraction:
+
 ```python
     raw_tags = shop.pop("shop_tags", None) or []
     taxonomy_tags = []
@@ -304,6 +312,7 @@ git commit -m "feat: return structured taxonomyTags with dimension and labelZh i
 ## Task 4: Frontend type consolidation — remove dual-casing workarounds
 
 **Files:**
+
 - Modify: `components/shops/attribute-chips.tsx` (all lines)
 - Modify: `app/shops/[shopId]/[slug]/shop-detail-client.tsx:10-41`
 - Modify: `app/shops/[shopId]/[slug]/page.test.tsx:33-47`
@@ -362,6 +371,7 @@ interface ShopData {
 ```
 
 Remove the fallback lines:
+
 ```tsx
 // Before:
 const photos = shop.photo_urls ?? shop.photoUrls ?? [];
@@ -375,6 +385,7 @@ const tags = shop.taxonomyTags ?? [];
 **Step 3: Update the test mock data**
 
 In `page.test.tsx`, update `MOCK_SHOP`:
+
 ```tsx
 const MOCK_SHOP = {
   id: 'shop-001',
@@ -387,7 +398,9 @@ const MOCK_SHOP = {
   reviewCount: 287,
   description: 'A cozy coffee shop',
   photoUrls: ['https://example.com/photo.jpg'],
-  taxonomyTags: [{ id: 'quiet', dimension: 'ambience', label: 'Quiet', labelZh: '安靜' }],
+  taxonomyTags: [
+    { id: 'quiet', dimension: 'ambience', label: 'Quiet', labelZh: '安靜' },
+  ],
   modeScores: { work: 0.8, rest: 0.6, social: 0.3 },
 };
 ```
@@ -409,6 +422,7 @@ git commit -m "refactor: remove dual snake_case/camelCase workarounds — types 
 ## Task 5: MapDesktopCard component
 
 **Files:**
+
 - Create: `components/map/map-desktop-card.tsx`
 - Create: `components/map/map-desktop-card.test.tsx`
 - Modify: `app/map/page.tsx:1-79`
@@ -436,8 +450,18 @@ const SHOP = {
   mrt: '大安站',
   photoUrls: ['https://example.com/p1.jpg', 'https://example.com/p2.jpg'],
   taxonomyTags: [
-    { id: 'quiet', dimension: 'ambience' as const, label: 'Quiet', labelZh: '安靜' },
-    { id: 'wifi', dimension: 'functionality' as const, label: 'Wi-Fi', labelZh: '有 Wi-Fi' },
+    {
+      id: 'quiet',
+      dimension: 'ambience' as const,
+      label: 'Quiet',
+      labelZh: '安靜',
+    },
+    {
+      id: 'wifi',
+      dimension: 'functionality' as const,
+      label: 'Wi-Fi',
+      labelZh: '有 Wi-Fi',
+    },
   ],
 };
 
@@ -462,8 +486,12 @@ describe('MapDesktopCard', () => {
   it('a user can click View Details to navigate to the shop page', async () => {
     const user = userEvent.setup();
     render(<MapDesktopCard shop={SHOP} />);
-    await user.click(screen.getByRole('button', { name: /查看詳情|View Details/i }));
-    expect(mockPush).toHaveBeenCalledWith('/shops/shop-001/shan-xiao-hai-ka-fei');
+    await user.click(
+      screen.getByRole('button', { name: /查看詳情|View Details/i })
+    );
+    expect(mockPush).toHaveBeenCalledWith(
+      '/shops/shop-001/shan-xiao-hai-ka-fei'
+    );
   });
 
   it('a user can click Check In to navigate to the check-in page', async () => {
@@ -525,11 +553,11 @@ export function MapDesktopCard({ shop }: MapDesktopCardProps) {
       )}
 
       <h3 className="text-sm font-semibold">{shop.name}</h3>
-      {shop.mrt && (
-        <p className="mt-0.5 text-xs text-gray-500">{shop.mrt}</p>
-      )}
+      {shop.mrt && <p className="mt-0.5 text-xs text-gray-500">{shop.mrt}</p>}
       {shop.rating != null && (
-        <p className="mt-0.5 text-xs text-gray-500">★ {shop.rating.toFixed(1)}</p>
+        <p className="mt-0.5 text-xs text-gray-500">
+          ★ {shop.rating.toFixed(1)}
+        </p>
       )}
 
       {tags.length > 0 && (
@@ -583,6 +611,7 @@ git commit -m "feat: add MapDesktopCard component for desktop map view"
 ## Task 6: ShopDescription component
 
 **Files:**
+
 - Create: `components/shops/shop-description.tsx`
 - Create: `components/shops/shop-description.test.tsx`
 
@@ -596,7 +625,8 @@ import { describe, it, expect } from 'vitest';
 import { ShopDescription } from './shop-description';
 
 describe('ShopDescription', () => {
-  const longText = '這是一間位於大安區的咖啡廳，' +
+  const longText =
+    '這是一間位於大安區的咖啡廳，' +
     '提供手沖咖啡和自家烘焙的甜點。店內環境安靜舒適，適合工作和閱讀。' +
     '老闆是澳洲回來的咖啡師，特別注重豆子的產地和烘焙方式。';
 
@@ -611,7 +641,9 @@ describe('ShopDescription', () => {
     const button = screen.getByRole('button', { name: /更多|Read more/i });
     expect(button).toBeInTheDocument();
     await user.click(button);
-    expect(screen.queryByRole('button', { name: /更多|Read more/i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /更多|Read more/i })
+    ).not.toBeInTheDocument();
   });
 
   it('does not render when text is empty', () => {
@@ -644,9 +676,7 @@ export function ShopDescription({ text }: ShopDescriptionProps) {
 
   return (
     <div className="px-4 py-2">
-      <p
-        className={`text-sm text-gray-600 ${expanded ? '' : 'line-clamp-2'}`}
-      >
+      <p className={`text-sm text-gray-600 ${expanded ? '' : 'line-clamp-2'}`}>
         {text}
       </p>
       {!expanded && text.length > 60 && (
@@ -679,6 +709,7 @@ git commit -m "feat: add ShopDescription component with Read More expand"
 ## Task 7: MenuHighlights component
 
 **Files:**
+
 - Create: `components/shops/menu-highlights.tsx`
 - Create: `components/shops/menu-highlights.test.tsx`
 
@@ -748,7 +779,10 @@ export function MenuHighlights({ items }: MenuHighlightsProps) {
       <h3 className="mb-2 text-sm font-medium text-gray-900">推薦餐點</h3>
       <div className="space-y-1.5">
         {items.slice(0, 3).map((item) => (
-          <div key={item.name} className="flex items-center justify-between text-sm">
+          <div
+            key={item.name}
+            className="flex items-center justify-between text-sm"
+          >
             <span>
               {item.emoji} {item.name}
             </span>
@@ -778,6 +812,7 @@ git commit -m "feat: add MenuHighlights component capped at 3 items"
 ## Task 8: RecentCheckinsStrip component
 
 **Files:**
+
 - Create: `components/shops/recent-checkins-strip.tsx`
 - Create: `components/shops/recent-checkins-strip.test.tsx`
 
@@ -798,10 +833,23 @@ vi.mock('@/lib/hooks/use-user', () => ({
 
 import { RecentCheckinsStrip } from './recent-checkins-strip';
 
-const PREVIEW = { count: 12, previewPhotoUrl: 'https://example.com/preview.jpg' };
+const PREVIEW = {
+  count: 12,
+  previewPhotoUrl: 'https://example.com/preview.jpg',
+};
 const CHECKINS = [
-  { id: 'c1', displayName: 'Alice', photoUrl: 'https://example.com/c1.jpg', createdAt: '2026-03-10' },
-  { id: 'c2', displayName: 'Bob', photoUrl: 'https://example.com/c2.jpg', createdAt: '2026-03-09' },
+  {
+    id: 'c1',
+    displayName: 'Alice',
+    photoUrl: 'https://example.com/c1.jpg',
+    createdAt: '2026-03-10',
+  },
+  {
+    id: 'c2',
+    displayName: 'Bob',
+    photoUrl: 'https://example.com/c2.jpg',
+    createdAt: '2026-03-09',
+  },
 ];
 
 describe('RecentCheckinsStrip', () => {
@@ -821,7 +869,10 @@ describe('RecentCheckinsStrip', () => {
   it('does not render when count is zero', () => {
     mockUseUser.mockReturnValue({ user: null });
     const { container } = render(
-      <RecentCheckinsStrip preview={{ count: 0, previewPhotoUrl: null }} checkins={[]} />
+      <RecentCheckinsStrip
+        preview={{ count: 0, previewPhotoUrl: null }}
+        checkins={[]}
+      />
     );
     expect(container.firstChild).toBeNull();
   });
@@ -857,7 +908,10 @@ interface RecentCheckinsStripProps {
   checkins: CheckinItem[];
 }
 
-export function RecentCheckinsStrip({ preview, checkins }: RecentCheckinsStripProps) {
+export function RecentCheckinsStrip({
+  preview,
+  checkins,
+}: RecentCheckinsStripProps) {
   const { user } = useUser();
 
   if (preview.count === 0) return null;
@@ -913,6 +967,7 @@ git commit -m "feat: add RecentCheckinsStrip with auth-gated detail level"
 ## Task 9: ShopMapThumbnail component
 
 **Files:**
+
 - Create: `components/shops/shop-map-thumbnail.tsx`
 - Create: `components/shops/shop-map-thumbnail.test.tsx`
 
@@ -932,7 +987,9 @@ vi.mock('@/lib/hooks/use-media-query', () => ({
 }));
 
 vi.mock('react-map-gl/mapbox', () => ({
-  default: (props: Record<string, unknown>) => <div data-testid="interactive-map" {...props} />,
+  default: (props: Record<string, unknown>) => (
+    <div data-testid="interactive-map" {...props} />
+  ),
   Marker: () => <div data-testid="marker" />,
 }));
 
@@ -941,7 +998,13 @@ import { ShopMapThumbnail } from './shop-map-thumbnail';
 describe('ShopMapThumbnail', () => {
   it('on mobile, a visitor sees a static map image', () => {
     mockUseIsDesktop.mockReturnValue(false);
-    render(<ShopMapThumbnail latitude={25.033} longitude={121.543} shopName="山小孩咖啡" />);
+    render(
+      <ShopMapThumbnail
+        latitude={25.033}
+        longitude={121.543}
+        shopName="山小孩咖啡"
+      />
+    );
     const img = screen.getByRole('img', { name: /map/i });
     expect(img).toBeInTheDocument();
     expect(img.getAttribute('src')).toContain('api.mapbox.com/styles/v1');
@@ -949,7 +1012,13 @@ describe('ShopMapThumbnail', () => {
 
   it('on desktop, a visitor sees an interactive map embed', () => {
     mockUseIsDesktop.mockReturnValue(true);
-    render(<ShopMapThumbnail latitude={25.033} longitude={121.543} shopName="山小孩咖啡" />);
+    render(
+      <ShopMapThumbnail
+        latitude={25.033}
+        longitude={121.543}
+        shopName="山小孩咖啡"
+      />
+    );
     expect(screen.getByTestId('interactive-map')).toBeInTheDocument();
   });
 });
@@ -983,7 +1052,11 @@ interface ShopMapThumbnailProps {
   shopName: string;
 }
 
-export function ShopMapThumbnail({ latitude, longitude, shopName }: ShopMapThumbnailProps) {
+export function ShopMapThumbnail({
+  latitude,
+  longitude,
+  shopName,
+}: ShopMapThumbnailProps) {
   const isDesktop = useIsDesktop();
   const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 
@@ -1037,6 +1110,7 @@ git commit -m "feat: add ShopMapThumbnail — static image on mobile, interactiv
 ## Task 10: Integrate sub-components into ShopDetailClient
 
 **Files:**
+
 - Modify: `app/shops/[shopId]/[slug]/shop-detail-client.tsx` (all)
 
 No new test needed — this wires existing tested components into the page. Existing page test still passes.
@@ -1044,6 +1118,7 @@ No new test needed — this wires existing tested components into the page. Exis
 **Step 1: Update ShopDetailClient imports and rendering**
 
 Add imports:
+
 ```tsx
 import { ShopDescription } from '@/components/shops/shop-description';
 import { MenuHighlights } from '@/components/shops/menu-highlights';
@@ -1052,6 +1127,7 @@ import { ShopMapThumbnail } from '@/components/shops/shop-map-thumbnail';
 ```
 
 Update `ShopData` interface to include new fields:
+
 ```tsx
 interface ShopData {
   // ... existing fields ...
@@ -1059,23 +1135,41 @@ interface ShopData {
   latitude?: number;
   longitude?: number;
   checkinPreview?: { count: number; previewPhotoUrl: string | null };
-  recentCheckins?: Array<{ id: string; displayName: string | null; photoUrl: string; createdAt: string }>;
+  recentCheckins?: Array<{
+    id: string;
+    displayName: string | null;
+    photoUrl: string;
+    createdAt: string;
+  }>;
 }
 ```
 
 Replace the inline description `<p>` with `<ShopDescription>` and add new components in the render:
+
 ```tsx
-{shop.description && <ShopDescription text={shop.description} />}
-{shop.menuHighlights && <MenuHighlights items={shop.menuHighlights} />}
-{shop.latitude != null && shop.longitude != null && (
-  <ShopMapThumbnail latitude={shop.latitude} longitude={shop.longitude} shopName={shop.name} />
-)}
-{shop.checkinPreview && (
-  <RecentCheckinsStrip
-    preview={shop.checkinPreview}
-    checkins={shop.recentCheckins ?? []}
-  />
-)}
+{
+  shop.description && <ShopDescription text={shop.description} />;
+}
+{
+  shop.menuHighlights && <MenuHighlights items={shop.menuHighlights} />;
+}
+{
+  shop.latitude != null && shop.longitude != null && (
+    <ShopMapThumbnail
+      latitude={shop.latitude}
+      longitude={shop.longitude}
+      shopName={shop.name}
+    />
+  );
+}
+{
+  shop.checkinPreview && (
+    <RecentCheckinsStrip
+      preview={shop.checkinPreview}
+      checkins={shop.recentCheckins ?? []}
+    />
+  );
+}
 ```
 
 **Step 2: Run existing test to verify no regression**
@@ -1095,6 +1189,7 @@ git commit -m "feat: integrate ShopDescription, MenuHighlights, RecentCheckinsSt
 ## Task 11: Viewport-only pin filtering in MapView
 
 **Files:**
+
 - Modify: `components/map/map-view.tsx` (all)
 - Create: `components/map/map-view.test.tsx`
 
@@ -1106,7 +1201,13 @@ import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 
 vi.mock('react-map-gl/mapbox', () => {
-  const MockMap = ({ children, onMove }: { children: React.ReactNode; onMove?: (e: unknown) => void }) => {
+  const MockMap = ({
+    children,
+    onMove,
+  }: {
+    children: React.ReactNode;
+    onMove?: (e: unknown) => void;
+  }) => {
     // Simulate a viewport centered on Taipei
     if (onMove) {
       setTimeout(() => {
@@ -1115,8 +1216,8 @@ vi.mock('react-map-gl/mapbox', () => {
           target: {
             getBounds: () => ({
               getNorth: () => 25.06,
-              getSouth: () => 25.00,
-              getEast: () => 121.60,
+              getSouth: () => 25.0,
+              getEast: () => 121.6,
               getWest: () => 121.53,
             }),
           },
@@ -1126,8 +1227,21 @@ vi.mock('react-map-gl/mapbox', () => {
     return <div data-testid="map">{children}</div>;
   };
   MockMap.displayName = 'MockMap';
-  const MockMarker = ({ children, ...props }: { children: React.ReactNode; longitude: number; latitude: number }) => (
-    <div data-testid="marker" data-lng={props.longitude} data-lat={props.latitude}>{children}</div>
+  const MockMarker = ({
+    children,
+    ...props
+  }: {
+    children: React.ReactNode;
+    longitude: number;
+    latitude: number;
+  }) => (
+    <div
+      data-testid="marker"
+      data-lng={props.longitude}
+      data-lat={props.latitude}
+    >
+      {children}
+    </div>
   );
   MockMarker.displayName = 'MockMarker';
   return { default: MockMap, Marker: MockMarker };
@@ -1267,6 +1381,7 @@ git commit -m "feat: filter map pins to viewport bounds for performance"
 ## Task 12: Integrate MapDesktopCard into map page
 
 **Files:**
+
 - Modify: `app/map/page.tsx` (all)
 
 No new test — existing page test should still pass. This wires the desktop card.
@@ -1274,6 +1389,7 @@ No new test — existing page test should still pass. This wires the desktop car
 **Step 1: Update map page**
 
 Import `MapDesktopCard` and `useIsDesktop`:
+
 ```tsx
 import { MapDesktopCard } from '@/components/map/map-desktop-card';
 import { useIsDesktop } from '@/lib/hooks/use-media-query';
@@ -1281,19 +1397,26 @@ import { useShops } from '@/lib/hooks/use-shops';
 ```
 
 Replace `PLACEHOLDER_SHOPS` with real data from `useShops`:
+
 ```tsx
 const { shops } = useShops({ featured: true, limit: 200 });
 const isDesktop = useIsDesktop();
 ```
 
 Replace the conditional rendering at the bottom:
+
 ```tsx
-{selectedShop && !isDesktop && (
-  <MapMiniCard shop={selectedShop} onDismiss={() => setSelectedShopId(null)} />
-)}
-{selectedShop && isDesktop && (
-  <MapDesktopCard shop={selectedShop} />
-)}
+{
+  selectedShop && !isDesktop && (
+    <MapMiniCard
+      shop={selectedShop}
+      onDismiss={() => setSelectedShopId(null)}
+    />
+  );
+}
+{
+  selectedShop && isDesktop && <MapDesktopCard shop={selectedShop} />;
+}
 ```
 
 **Step 2: Run existing map test**
@@ -1313,6 +1436,7 @@ git commit -m "feat: integrate MapDesktopCard and real shop data into map page"
 ## Task 13: useGeolocation hook
 
 **Files:**
+
 - Create: `lib/hooks/use-geolocation.ts`
 - Create: `lib/hooks/use-geolocation.test.ts`
 
@@ -1438,6 +1562,7 @@ git commit -m "feat: add useGeolocation hook wrapping navigator.geolocation"
 ## Task 14: "我附近" geolocation chip integration
 
 **Files:**
+
 - Modify: `components/discovery/suggestion-chips.tsx` (all)
 - Modify: `components/discovery/suggestion-chips.test.tsx` (if exists, else create)
 - Modify: `app/page.tsx:20-25` (handleSearch)
@@ -1524,12 +1649,21 @@ import { useGeolocation } from '@/lib/hooks/use-geolocation';
 import { toast } from 'sonner';
 
 // Inside HomePage():
-const { requestLocation, latitude, longitude, error: geoError } = useGeolocation();
+const {
+  requestLocation,
+  latitude,
+  longitude,
+  error: geoError,
+} = useGeolocation();
 
 const handleNearMe = async () => {
   await requestLocation();
   if (latitude && longitude) {
-    const params = new URLSearchParams({ lat: String(latitude), lng: String(longitude), radius: '5' });
+    const params = new URLSearchParams({
+      lat: String(latitude),
+      lng: String(longitude),
+      radius: '5',
+    });
     if (mode) params.set('mode', mode);
     router.push(`/map?${params.toString()}`);
   } else {
@@ -1539,7 +1673,7 @@ const handleNearMe = async () => {
 };
 
 // In JSX, update SuggestionChips:
-<SuggestionChips onSelect={handleSearch} onNearMe={handleNearMe} />
+<SuggestionChips onSelect={handleSearch} onNearMe={handleNearMe} />;
 ```
 
 **Step 4: Run test to verify it passes**
@@ -1563,6 +1697,7 @@ git commit -m "feat: 我附近 chip triggers geolocation with toast fallback"
 ## Task 15: Analytics — verify filter_applied and enrich search_submitted
 
 **Files:**
+
 - Modify: `app/(protected)/search/page.tsx:1-46`
 - Modify: `app/shops/[shopId]/[slug]/shop-detail-client.tsx:43-45`
 
@@ -1604,9 +1739,10 @@ In `shop-detail-client.tsx`, update the `useEffect`:
 ```tsx
 useEffect(() => {
   const referrer = typeof document !== 'undefined' ? document.referrer : '';
-  const lastQuery = typeof sessionStorage !== 'undefined'
-    ? sessionStorage.getItem('last_search_query')
-    : null;
+  const lastQuery =
+    typeof sessionStorage !== 'undefined'
+      ? sessionStorage.getItem('last_search_query')
+      : null;
   capture('shop_detail_viewed', {
     shop_id: shop.id,
     referrer,
@@ -1641,6 +1777,7 @@ git commit -m "feat: enrich analytics — search_submitted gets result_count/mod
 ## Task 16: Page-level test rewrites — mock at HTTP boundary
 
 **Files:**
+
 - Modify: `app/page.test.tsx` (rewrite)
 - Modify: `app/map/page.test.tsx` (rewrite)
 - Modify: `app/(protected)/search/page.test.tsx` (rewrite)
@@ -1674,7 +1811,14 @@ vi.mock('@/lib/hooks/use-shops', () => ({
         rating: 4.6,
         reviewCount: 287,
         photoUrls: ['https://example.com/p1.jpg'],
-        taxonomyTags: [{ id: 'quiet', dimension: 'ambience', label: 'Quiet', labelZh: '安靜' }],
+        taxonomyTags: [
+          {
+            id: 'quiet',
+            dimension: 'ambience',
+            label: 'Quiet',
+            labelZh: '安靜',
+          },
+        ],
       },
       {
         id: 'shop-002',
@@ -1837,8 +1981,22 @@ describe('Search results page', () => {
     mockUseSearchState.mockReturnValue(defaultSearchState);
     mockUseSearch.mockReturnValue({
       results: [
-        { id: '1', name: '山小孩咖啡', slug: 'shan', rating: 4.6, photoUrls: [], taxonomyTags: [] },
-        { id: '2', name: '好咖啡', slug: 'hao', rating: 4.2, photoUrls: [], taxonomyTags: [] },
+        {
+          id: '1',
+          name: '山小孩咖啡',
+          slug: 'shan',
+          rating: 4.6,
+          photoUrls: [],
+          taxonomyTags: [],
+        },
+        {
+          id: '2',
+          name: '好咖啡',
+          slug: 'hao',
+          rating: 4.2,
+          photoUrls: [],
+          taxonomyTags: [],
+        },
       ],
       isLoading: false,
       error: null,
@@ -1850,14 +2008,22 @@ describe('Search results page', () => {
 
   it('When search returns no results, the user sees suggestion chips to try', () => {
     mockUseSearchState.mockReturnValue(defaultSearchState);
-    mockUseSearch.mockReturnValue({ results: [], isLoading: false, error: null });
+    mockUseSearch.mockReturnValue({
+      results: [],
+      isLoading: false,
+      error: null,
+    });
     render(<SearchPage />);
     expect(screen.getByText(/沒有找到結果/)).toBeInTheDocument();
   });
 
   it('While searching, the user sees a loading indicator', () => {
     mockUseSearchState.mockReturnValue(defaultSearchState);
-    mockUseSearch.mockReturnValue({ results: [], isLoading: true, error: null });
+    mockUseSearch.mockReturnValue({
+      results: [],
+      isLoading: true,
+      error: null,
+    });
     render(<SearchPage />);
     expect(screen.getByText(/搜尋中/)).toBeInTheDocument();
   });
@@ -1882,13 +2048,19 @@ vi.mock('next/navigation', () => ({
 }));
 
 vi.mock('next/image', () => ({
-  default: ({ src, alt }: { src: string; alt: string }) => <img src={src} alt={alt} />,
+  default: ({ src, alt }: { src: string; alt: string }) => (
+    <img src={src} alt={alt} />
+  ),
 }));
 
 vi.mock('next/link', () => ({
-  default: ({ children, href }: { children: React.ReactNode; href: string }) => (
-    <a href={href}>{children}</a>
-  ),
+  default: ({
+    children,
+    href,
+  }: {
+    children: React.ReactNode;
+    href: string;
+  }) => <a href={href}>{children}</a>,
 }));
 
 vi.mock('@/lib/hooks/use-user', () => ({
@@ -2051,18 +2223,23 @@ graph TD
 ```
 
 **Wave 1** (sequential — foundation):
+
 - Task 1: CamelModel base class
 
 **Wave 2** (sequential — depends on Wave 1):
+
 - Task 2: API camelCase serialization ← Task 1
 
 **Wave 3** (sequential — depends on Wave 2):
+
 - Task 3: Structured taxonomy_tags ← Task 2
 
 **Wave 4** (sequential — depends on Wave 3):
+
 - Task 4: Frontend type consolidation ← Task 3
 
 **Wave 5** (parallel — all depend on Wave 4, no file overlaps):
+
 - Task 5: MapDesktopCard ← Task 4
 - Task 6: ShopDescription ← Task 4
 - Task 7: MenuHighlights ← Task 4
@@ -2073,14 +2250,17 @@ graph TD
 - Task 15: Analytics enrichment ← Task 4
 
 **Wave 6** (parallel — depend on Wave 5):
+
 - Task 10: Sub-component integration ← Tasks 6, 7, 8, 9
 - Task 12: MapDesktopCard + map page integration ← Tasks 5, 11
 - Task 14: 我附近 geolocation chip ← Task 13
 
 **Wave 7** (sequential — depends on Wave 6):
+
 - Task 16: Page-level test rewrites ← Tasks 10, 12, 14, 15
 
 **Wave 8** (sequential — depends on Wave 7):
+
 - Task 17: Full verification ← Task 16
 
 ---
@@ -2092,16 +2272,20 @@ Update the Phase 2B section in TODO.md with the following chunk structure:
 ### Phase 2B Completion
 
 **Chunk 1 — Backend camelCase (Wave 1-2):**
+
 - [ ] CamelModel base class with Pydantic alias_generator
 - [ ] All API endpoints serialize as camelCase
 
 **Chunk 2 — Structured taxonomy_tags (Wave 3):**
+
 - [ ] GET /shops/{id} returns TaxonomyTag objects with dimension + labelZh
 
 **Chunk 3 — Frontend type cleanup (Wave 4):**
+
 - [ ] Remove dual-casing workarounds in AttributeChips, ShopDetailClient
 
 **Chunk 4 — New components (Wave 5):**
+
 - [ ] MapDesktopCard (TDD)
 - [ ] ShopDescription (TDD)
 - [ ] MenuHighlights (TDD)
@@ -2111,18 +2295,22 @@ Update the Phase 2B section in TODO.md with the following chunk structure:
 - [ ] useGeolocation hook (TDD)
 
 **Chunk 5 — Integration (Wave 6):**
+
 - [ ] Integrate sub-components into ShopDetailClient
 - [ ] Integrate MapDesktopCard + real data into map page
 - [ ] 我附近 geolocation chip wiring
 
 **Chunk 6 — Analytics (Wave 5-6):**
+
 - [ ] filter_applied — verify already wired ✓
 - [ ] search_submitted — add result_count, mode_chip_active
 - [ ] shop_detail_viewed — add referrer, session_search_query
 
 **Chunk 7 — Test quality (Wave 7):**
+
 - [ ] Rewrite page tests to mock at HTTP boundary
 - [ ] Rewrite test names to describe user outcomes
 
 **Chunk 8 — Verification (Wave 8):**
+
 - [ ] Full verification (pytest, vitest, ruff, mypy, pnpm build)

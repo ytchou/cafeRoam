@@ -69,7 +69,9 @@ function SearchPageContent() {
 
 export default function SearchPage() {
   return (
-    <Suspense fallback={<div className="py-12 text-center text-gray-400">搜尋中…</div>}>
+    <Suspense
+      fallback={<div className="py-12 text-center text-gray-400">搜尋中…</div>}
+    >
       <SearchPageContent />
     </Suspense>
   );

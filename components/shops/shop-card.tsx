@@ -22,7 +22,8 @@ export function ShopCard({ shop }: ShopCardProps) {
   }
 
   const locationLabel = shop.mrt ?? '';
-  const photoUrl = (shop.photo_urls ?? shop.photoUrls)?.[0] ?? '/placeholder-cafe.jpg';
+  const photoUrl =
+    (shop.photo_urls ?? shop.photoUrls)?.[0] ?? '/placeholder-cafe.jpg';
 
   return (
     <article

@@ -17,7 +17,11 @@ interface ShopMapThumbnailProps {
   shopName: string;
 }
 
-export function ShopMapThumbnail({ latitude, longitude, shopName }: ShopMapThumbnailProps) {
+export function ShopMapThumbnail({
+  latitude,
+  longitude,
+  shopName,
+}: ShopMapThumbnailProps) {
   const isDesktop = useIsDesktop();
   const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 

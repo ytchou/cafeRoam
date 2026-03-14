@@ -43,7 +43,9 @@ const MOCK_SHOP = {
   reviewCount: 287,
   description: 'A cozy coffee shop',
   photoUrls: ['https://example.com/photo.jpg'],
-  taxonomyTags: [{ id: 'quiet', dimension: 'ambience', label: 'Quiet', labelZh: '安靜' }],
+  taxonomyTags: [
+    { id: 'quiet', dimension: 'ambience', label: 'Quiet', labelZh: '安靜' },
+  ],
   modeScores: { work: 0.8, rest: 0.6, social: 0.3 },
 };
 

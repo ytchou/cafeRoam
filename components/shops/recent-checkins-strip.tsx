@@ -18,7 +18,10 @@ interface RecentCheckinsStripProps {
   checkins: CheckinItem[];
 }
 
-export function RecentCheckinsStrip({ preview, checkins }: RecentCheckinsStripProps) {
+export function RecentCheckinsStrip({
+  preview,
+  checkins,
+}: RecentCheckinsStripProps) {
   const { user } = useUser();
 
   if (preview.count === 0) return null;

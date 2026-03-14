@@ -23,10 +23,7 @@ export default function MapPage() {
   const { shops } = useShops({ featured: true, limit: 200 });
   const isDesktop = useIsDesktop();
 
-  const shopById = useMemo(
-    () => new Map(shops.map((s) => [s.id, s])),
-    [shops]
-  );
+  const shopById = useMemo(() => new Map(shops.map((s) => [s.id, s])), [shops]);
   const selectedShop = selectedShopId
     ? (shopById.get(selectedShopId) ?? null)
     : null;
@@ -65,11 +62,12 @@ export default function MapPage() {
       </div>
 
       {selectedShop && !isDesktop && (
-        <MapMiniCard shop={selectedShop} onDismiss={() => setSelectedShopId(null)} />
+        <MapMiniCard
+          shop={selectedShop}
+          onDismiss={() => setSelectedShopId(null)}
+        />
       )}
-      {selectedShop && isDesktop && (
-        <MapDesktopCard shop={selectedShop} />
-      )}
+      {selectedShop && isDesktop && <MapDesktopCard shop={selectedShop} />}
     </div>
   );
 }

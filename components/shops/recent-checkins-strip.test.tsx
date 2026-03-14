@@ -19,10 +19,23 @@ vi.mock('@/lib/supabase/client', () => ({
 
 import { RecentCheckinsStrip } from './recent-checkins-strip';
 
-const PREVIEW = { count: 12, previewPhotoUrl: 'https://example.com/preview.jpg' };
+const PREVIEW = {
+  count: 12,
+  previewPhotoUrl: 'https://example.com/preview.jpg',
+};
 const CHECKINS = [
-  { id: 'c1', displayName: 'Alice', photoUrl: 'https://example.com/c1.jpg', createdAt: '2026-03-10' },
-  { id: 'c2', displayName: 'Bob', photoUrl: 'https://example.com/c2.jpg', createdAt: '2026-03-09' },
+  {
+    id: 'c1',
+    displayName: 'Alice',
+    photoUrl: 'https://example.com/c1.jpg',
+    createdAt: '2026-03-10',
+  },
+  {
+    id: 'c2',
+    displayName: 'Bob',
+    photoUrl: 'https://example.com/c2.jpg',
+    createdAt: '2026-03-09',
+  },
 ];
 
 describe('RecentCheckinsStrip', () => {
@@ -42,7 +55,10 @@ describe('RecentCheckinsStrip', () => {
   it('does not render when count is zero', async () => {
     mockGetUser.mockResolvedValue({ data: { user: null } });
     const { container } = render(
-      <RecentCheckinsStrip preview={{ count: 0, previewPhotoUrl: null }} checkins={[]} />
+      <RecentCheckinsStrip
+        preview={{ count: 0, previewPhotoUrl: null }}
+        checkins={[]}
+      />
     );
     expect(container.firstChild).toBeNull();
   });

@@ -16,7 +16,10 @@ export function MenuHighlights({ items }: MenuHighlightsProps) {
       <h3 className="mb-2 text-sm font-medium text-gray-900">推薦餐點</h3>
       <div className="space-y-1.5">
         {items.slice(0, 3).map((item) => (
-          <div key={item.name} className="flex items-center justify-between text-sm">
+          <div
+            key={item.name}
+            className="flex items-center justify-between text-sm"
+          >
             <span>
               {item.emoji} {item.name}
             </span>

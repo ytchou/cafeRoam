@@ -30,7 +30,11 @@ export default function HomePage() {
   async function handleNearMe() {
     const coords = await requestLocation();
     if (coords) {
-      const params = new URLSearchParams({ lat: String(coords.latitude), lng: String(coords.longitude), radius: '5' });
+      const params = new URLSearchParams({
+        lat: String(coords.latitude),
+        lng: String(coords.longitude),
+        radius: '5',
+      });
       if (mode) params.set('mode', mode);
       router.push(`/map?${params.toString()}`);
     } else {

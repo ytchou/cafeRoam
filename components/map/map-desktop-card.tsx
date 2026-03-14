@@ -39,11 +39,11 @@ export function MapDesktopCard({ shop }: MapDesktopCardProps) {
       )}
 
       <h3 className="text-sm font-semibold">{shop.name}</h3>
-      {shop.mrt && (
-        <p className="mt-0.5 text-xs text-gray-500">{shop.mrt}</p>
-      )}
+      {shop.mrt && <p className="mt-0.5 text-xs text-gray-500">{shop.mrt}</p>}
       {shop.rating != null && (
-        <p className="mt-0.5 text-xs text-gray-500">★ {shop.rating.toFixed(1)}</p>
+        <p className="mt-0.5 text-xs text-gray-500">
+          ★ {shop.rating.toFixed(1)}
+        </p>
       )}
 
       {tags.length > 0 && (

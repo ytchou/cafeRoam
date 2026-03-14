@@ -31,7 +31,12 @@ interface ShopData {
   latitude?: number;
   longitude?: number;
   checkinPreview?: { count: number; previewPhotoUrl: string | null };
-  recentCheckins?: Array<{ id: string; displayName: string | null; photoUrl: string; createdAt: string }>;
+  recentCheckins?: Array<{
+    id: string;
+    displayName: string | null;
+    photoUrl: string;
+    createdAt: string;
+  }>;
 }
 
 interface ShopDetailClientProps {
@@ -75,7 +80,11 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
       {shop.description && <ShopDescription text={shop.description} />}
       {shop.menuHighlights && <MenuHighlights items={shop.menuHighlights} />}
       {shop.latitude != null && shop.longitude != null && (
-        <ShopMapThumbnail latitude={shop.latitude} longitude={shop.longitude} shopName={shop.name} />
+        <ShopMapThumbnail
+          latitude={shop.latitude}
+          longitude={shop.longitude}
+          shopName={shop.name}
+        />
       )}
       {shop.checkinPreview && (
         <RecentCheckinsStrip
@@ -90,10 +99,7 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
           shareUrl={shareUrl}
         />
       </div>
-      <StickyCheckinBar
-        shopId={shop.id}
-        returnTo={shopPath}
-      />
+      <StickyCheckinBar shopId={shop.id} returnTo={shopPath} />
     </div>
   );
 }
