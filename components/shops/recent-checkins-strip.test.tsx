@@ -1,12 +1,18 @@
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 
-const { mockUseUser } = vi.hoisted(() => ({
-  mockUseUser: vi.fn(),
+const mockGetUser = vi.fn();
+const mockOnAuthStateChange = vi.fn(() => ({
+  data: { subscription: { unsubscribe: vi.fn() } },
 }));
 
-vi.mock('@/lib/hooks/use-user', () => ({
-  useUser: mockUseUser,
+vi.mock('@/lib/supabase/client', () => ({
+  createClient: () => ({
+    auth: {
+      getUser: mockGetUser,
+      onAuthStateChange: mockOnAuthStateChange,
+    },
+  }),
 }));
 
 import { RecentCheckinsStrip } from './recent-checkins-strip';
@@ -18,21 +24,21 @@ const CHECKINS = [
 ];
 
 describe('RecentCheckinsStrip', () => {
-  it('an unauthenticated visitor sees check-in count and one preview photo', () => {
-    mockUseUser.mockReturnValue({ user: null });
+  it('an unauthenticated visitor sees check-in count and one preview photo', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: null } });
     render(<RecentCheckinsStrip preview={PREVIEW} checkins={[]} />);
-    expect(screen.getByText(/12/)).toBeInTheDocument();
+    expect(await screen.findByText(/12/)).toBeInTheDocument();
   });
 
-  it('an authenticated user sees individual check-in photos with usernames', () => {
-    mockUseUser.mockReturnValue({ user: { id: 'u1' } });
+  it('an authenticated user sees individual check-in photos with usernames', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: 'u1' } } });
     render(<RecentCheckinsStrip preview={PREVIEW} checkins={CHECKINS} />);
-    expect(screen.getByText('Alice')).toBeInTheDocument();
+    expect(await screen.findByText('Alice')).toBeInTheDocument();
     expect(screen.getByText('Bob')).toBeInTheDocument();
   });
 
-  it('does not render when count is zero', () => {
-    mockUseUser.mockReturnValue({ user: null });
+  it('does not render when count is zero', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: null } });
     const { container } = render(
       <RecentCheckinsStrip preview={{ count: 0, previewPhotoUrl: null }} checkins={[]} />
     );
