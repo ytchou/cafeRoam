@@ -34,7 +34,9 @@ describe('ShopDetailPage', () => {
     } as Response);
 
     await expect(
-      ShopDetailPage({ params: Promise.resolve({ shopId: 'a1b2c3d4', slug: 'fika-fika-cafe' }) })
+      ShopDetailPage({
+        params: Promise.resolve({ shopId: 'a1b2c3d4', slug: 'fika-fika-cafe' }),
+      })
     ).rejects.toThrow('NOT_FOUND');
 
     expect(notFound).toHaveBeenCalled();
@@ -47,7 +49,9 @@ describe('ShopDetailPage', () => {
       json: vi.fn().mockResolvedValue(mockShop),
     } as unknown as Response);
 
-    await ShopDetailPage({ params: Promise.resolve({ shopId: 'a1b2c3d4', slug: 'old-slug' }) });
+    await ShopDetailPage({
+      params: Promise.resolve({ shopId: 'a1b2c3d4', slug: 'old-slug' }),
+    });
 
     expect(redirect).toHaveBeenCalledWith('/shops/a1b2c3d4/fika-fika-cafe');
   });
