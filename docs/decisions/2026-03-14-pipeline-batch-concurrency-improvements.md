@@ -12,11 +12,11 @@
 
 **After:** `SCRAPE_BATCH` sends all URLs in one actor run. Apify crawls them concurrently internally. One cold start for N shops.
 
-| N shops | Before | After |
-|---------|--------|-------|
-| 10 | ~7.5 min scraping | ~1 min |
-| 15 | ~11 min scraping | ~54s |
-| 100 | ~75 min scraping | ~4–5 min (estimated) |
+| N shops | Before            | After                |
+| ------- | ----------------- | -------------------- |
+| 10      | ~7.5 min scraping | ~1 min               |
+| 15      | ~11 min scraping  | ~54s                 |
+| 100     | ~75 min scraping  | ~4–5 min (estimated) |
 
 The `scrape_batch` handler and `SCRAPE_BATCH` job type already existed. The `run_pipeline_batch.py` script was previously calling `handle_scrape_shop` per-shop — corrected to use `handle_scrape_batch`.
 
@@ -26,10 +26,10 @@ The `scrape_batch` handler and `SCRAPE_BATCH` job type already existed. The `run
 
 **After:** All Taiwan shops start the enrich/embed/publish chain concurrently, bounded by `asyncio.Semaphore(settings.worker_concurrency_enrich)` (default: 5).
 
-| N shops | Before | After |
-|---------|--------|-------|
-| 10 | ~200s enrich | ~40s (`ceil(10/5) × 20s`) |
-| 15 | ~300s enrich | ~60s (`ceil(10/5) × 20s`, 10 Taiwan) |
+| N shops | Before       | After                                |
+| ------- | ------------ | ------------------------------------ |
+| 10      | ~200s enrich | ~40s (`ceil(10/5) × 20s`)            |
+| 15      | ~300s enrich | ~60s (`ceil(10/5) × 20s`, 10 Taiwan) |
 
 Theoretical ceiling: `ceil(taiwan_count / concurrency) × avg_enrich_time`.
 
@@ -38,6 +38,7 @@ Theoretical ceiling: `ceil(taiwan_count / concurrency) × avg_enrich_time`.
 Non-Taiwan shops cannot be detected before scraping — the country is only known after Apify returns the address. The earliest possible rejection point is `persist_scraped_data`, shared by both single and batch scrape handlers.
 
 **Changes:**
+
 - `ScrapedShopData` now carries `country_code` (mapped from Apify's `countryCode` field)
 - `persist_scraped_data` checks `country_code == "TW"` (fallback: `"台灣" in address`) before writing reviews, photos, or enqueuing enrichment
 - Non-Taiwan shops get `processing_status = "out_of_region"` + `rejection_reason` stored on the shop record
@@ -48,6 +49,7 @@ Non-Taiwan shops cannot be detected before scraping — the country is only know
 ### 4. Batch run tracking in DB
 
 Each script invocation creates a `batch_runs` record and a `batch_run_shops` row per shop, capturing:
+
 - Per-shop status and elapsed time for each pipeline stage
 - `rejection_reason` for out-of-region shops
 - Aggregate counts (taiwan, out_of_region, not_found, live, errors)
@@ -56,10 +58,10 @@ This is the data source for the future admin dashboard pipeline view.
 
 ## Measured results (2026-03-14)
 
-| Batch | Shops | Taiwan | OOR | Wall time | vs. before |
-|-------|-------|--------|-----|-----------|------------|
-| Batch 2 (before fix) | 15 | 12 | 3 | 8m 00s | baseline |
-| Batch 3 (after fix)  | 15 | 10 | 5 | **1m 45s** | **4.6×** |
+| Batch                | Shops | Taiwan | OOR | Wall time  | vs. before |
+| -------------------- | ----- | ------ | --- | ---------- | ---------- |
+| Batch 2 (before fix) | 15    | 12     | 3   | 8m 00s     | baseline   |
+| Batch 3 (after fix)  | 15    | 10     | 5   | **1m 45s** | **4.6×**   |
 
 ## Consequences
 
