@@ -13,6 +13,7 @@ import asyncio
 import json
 import math
 import sys
+from datetime import date
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -29,8 +30,6 @@ from scripts.eval_utils import (
     warn,
 )
 
-# ── Thresholds ─────────────────────────────────────────────────────────────────
-
 THRESHOLDS = {
     "pass_rate": {"target": 70.0},
     "mean_ndcg5": {"target": 0.6},
@@ -43,8 +42,6 @@ _DEFAULT_QUERIES_FILE = (
     / "data-pipeline"
     / "search-queries.json"
 )
-
-# ── Metrics ────────────────────────────────────────────────────────────────────
 
 
 def _dcg(scores: list[float]) -> float:
@@ -62,9 +59,6 @@ def _mrr(scores: list[float]) -> float:
         if s >= 1:
             return round(1.0 / (i + 1), 4)
     return 0.0
-
-
-# ── Search RPC ─────────────────────────────────────────────────────────────────
 
 
 def _search(db, embedding: list[float], match_count: int) -> list[dict]:
@@ -119,8 +113,6 @@ def _load_shop_details(db, shop_ids: list[str]) -> dict[str, dict]:
     return result
 
 
-# ── LLM Judge ─────────────────────────────────────────────────────────────────
-
 _JUDGE_SYSTEM = """You are a search quality evaluator for a Taiwanese coffee shop directory.
 Rate each search result's relevance to the query on a scale of 0-2:
   0 = irrelevant (no relationship to query intent)
@@ -159,7 +151,6 @@ async def _judge(client: anthropic.AsyncAnthropic, prompt: str, n_results: int) 
     try:
         parsed = json.loads(text)
         ratings = parsed.get("ratings", [])
-        # Ensure we have ratings for all results
         if len(ratings) < n_results:
             ratings.extend(
                 {"rank": i + 1, "score": 0, "reason": "missing"}
@@ -171,14 +162,9 @@ async def _judge(client: anthropic.AsyncAnthropic, prompt: str, n_results: int) 
         return [{"rank": i + 1, "score": 0, "reason": "parse_error"} for i in range(n_results)]
 
 
-# ── Main ───────────────────────────────────────────────────────────────────────
-
-
 async def main(
     queries_file: Path, match_count: int, output_dir: Path | None, json_only: bool
 ) -> None:
-    from datetime import date
-
     if not queries_file.exists():
         warn(f"Queries file not found: {queries_file}")
         sys.exit(1)
@@ -201,23 +187,18 @@ async def main(
         expected_traits = q.get("expectedTraits", [])
 
         if not json_only:
-            print(f"  [{qid}] {query_text[:60]}", end=" … ", flush=True)
+            print(f"  [{qid}] {query_text[:60]}", end=" ... ", flush=True)
 
-        # Embed
         embedding = await embeddings.embed(query_text)
-
-        # Search
         raw_results = _search(db, embedding, match_count)
         shop_ids = [r["id"] for r in raw_results]
-
-        # Load shop details
         details = _load_shop_details(db, shop_ids)
 
-        # Build result list with details
         enriched_results = []
         for rank, r in enumerate(raw_results, 1):
             sid = r["id"]
             d = details.get(sid, {})
+            similarity = round(float(r.get("similarity", 0)), 4)
             enriched_results.append(
                 {
                     "rank": rank,
@@ -227,9 +208,8 @@ async def main(
                     "tags": d.get("tags", []),
                     "photo_count": d.get("photo_count", 0),
                     "review_count": d.get("review_count", 0),
-                    "similarity": round(float(r.get("similarity", 0)), 4),
-                    # eval doesn't use taxonomy boost
-                    "total_score": round(float(r.get("similarity", 0)), 4),
+                    "similarity": similarity,
+                    "total_score": similarity,
                 }
             )
 
@@ -249,7 +229,6 @@ async def main(
             )
             continue
 
-        # Judge
         prompt = _build_judge_prompt(query_text, expected_traits, enriched_results)
         ratings = await _judge(client, prompt, len(enriched_results))
 
@@ -282,7 +261,6 @@ async def main(
             }
         )
 
-    # Aggregate
     ndcg_values = [q["ndcg5"] for q in query_results]
     mrr_values = [q["mrr"] for q in query_results]
     top1_values = [q["top1_relevant"] for q in query_results]
@@ -291,7 +269,6 @@ async def main(
     mean_mrr = round(sum(mrr_values) / len(mrr_values), 4) if mrr_values else 0.0
     pass_rate = round(100.0 * sum(top1_values) / len(top1_values), 1) if top1_values else 0.0
 
-    # By category
     categories: dict[str, list[float]] = {}
     for q in query_results:
         cat = q["category"]

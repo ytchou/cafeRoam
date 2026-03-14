@@ -1,8 +1,4 @@
-"""Shared utilities for evaluation scripts.
-
-Provides output directory management, JSON persistence, and console
-formatting helpers (colored threshold lines, ASCII tables).
-"""
+"""Shared utilities for evaluation scripts."""
 
 from __future__ import annotations
 
@@ -22,18 +18,17 @@ _YELLOW = "\033[33m"
 _RESET = "\033[0m"
 
 
-def get_output_dir(script_name: str, base: Path | None = None) -> Path:
+def get_output_dir(base: Path | None = None) -> Path:
     """Return (and create) eval_outputs/YYYY-MM-DD/ directory."""
     root = base or _DEFAULT_OUTPUT_BASE
-    today = date.today().isoformat()
-    out = root / today
+    out = root / date.today().isoformat()
     out.mkdir(parents=True, exist_ok=True)
     return out
 
 
 def save_results(data: dict[str, Any], script_name: str, base: Path | None = None) -> Path:
     """Write data as indented JSON; return the file path."""
-    out_dir = get_output_dir(script_name, base)
+    out_dir = get_output_dir(base)
     path = out_dir / f"{script_name}.json"
     path.write_text(json.dumps(data, ensure_ascii=False, indent=2))
     return path
@@ -41,14 +36,15 @@ def save_results(data: dict[str, Any], script_name: str, base: Path | None = Non
 
 def print_threshold(name: str, target: float | bool, actual: float | bool, pass_bool: bool) -> None:
     """Print a single threshold result line with color."""
-    icon = f"{_GREEN}✓{_RESET}" if pass_bool else f"{_RED}✗{_RESET}"
+    icon = f"{_GREEN}PASS{_RESET}" if pass_bool else f"{_RED}FAIL{_RESET}"
     color = _GREEN if pass_bool else _RED
-    if isinstance(target, bool):
-        target_str = str(target)
+    target_str = str(target) if isinstance(target, bool) else f"{target}"
+    if isinstance(actual, bool):
         actual_str = str(actual)
+    elif isinstance(actual, float):
+        actual_str = f"{actual:.1f}"
     else:
-        target_str = f"{target}"
-        actual_str = f"{actual:.1f}" if isinstance(actual, float) else str(actual)
+        actual_str = str(actual)
     print(f"  {icon}  {name:<40}  target={target_str:<8}  actual={color}{actual_str}{_RESET}")
 
 

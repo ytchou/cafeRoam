@@ -11,6 +11,7 @@ from __future__ import annotations
 import asyncio
 import random
 import sys
+from datetime import date
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -23,8 +24,6 @@ from scripts.eval_utils import (
     warn,
 )
 
-# ── Thresholds ─────────────────────────────────────────────────────────────────
-
 THRESHOLDS = {
     "no_tag_over_60pct": {"target": True},
     "all_dimensions_above_50pct": {"target": True},
@@ -35,8 +34,6 @@ _OVER_REPRESENTED_PCT = 60.0
 _RARE_PCT = 2.0
 _DIMENSION_MIN_PCT = 50.0
 _LOW_CONFIDENCE_MAX = 0.5
-
-# ── Fetch helpers ──────────────────────────────────────────────────────────────
 
 
 def _fetch_live_shops(db) -> list[dict]:
@@ -66,11 +63,7 @@ def _fetch_reviews_for_shops(db, shop_ids: list[str]) -> dict[str, list[str]]:
     return result
 
 
-# ── Analysis ───────────────────────────────────────────────────────────────────
-
-
 def _tag_frequency(shop_tags: list[dict], tag_map: dict[str, dict], total_shops: int) -> list[dict]:
-    """Compute per-tag shop count, pct, avg confidence, and flag."""
     tag_shops: dict[str, set[str]] = {}
     tag_confidence_sum: dict[str, float] = {}
     tag_confidence_count: dict[str, int] = {}
@@ -118,7 +111,6 @@ def _dimension_coverage(
     tag_map: dict[str, dict],
     live_shop_ids: set[str],
 ) -> dict[str, dict]:
-    """For each dimension, % of live shops with at least one tag."""
     tag_dim: dict[str, str] = {t["id"]: t.get("dimension", "") for t in tag_map.values()}
     dim_shops: dict[str, set[str]] = {}
 
@@ -163,7 +155,6 @@ def _low_confidence_shops(
     shop_map: dict[str, dict],
     threshold: float = _LOW_CONFIDENCE_MAX,
 ) -> list[dict]:
-    """Shops where ALL assigned tags have confidence < threshold."""
     shop_max_conf: dict[str, float] = {}
     for st in shop_tags:
         sid = st["shop_id"]
@@ -189,7 +180,6 @@ def _text_grounding(
     tag_map: dict[str, dict],
     reviews_by_shop: dict[str, list[str]],
 ) -> dict:
-    """For each sample shop, check how many tags are grounded in text."""
     per_shop = []
 
     for shop in sample_shops:
@@ -246,12 +236,7 @@ def _text_grounding(
     }
 
 
-# ── Main ───────────────────────────────────────────────────────────────────────
-
-
 async def main(sample_size: int, output_dir: Path | None, json_only: bool) -> None:
-    from datetime import date
-
     db = get_service_role_client()
 
     if not json_only:
@@ -275,17 +260,11 @@ async def main(sample_size: int, output_dir: Path | None, json_only: bool) -> No
     if not json_only:
         print(f"done ({total} shops, {len(taxonomy_tags)} tags, {len(shop_tags)} assignments)\n")
 
-    # A. Tag frequency
     freq = _tag_frequency(shop_tags, tag_map, total)
-
-    # B. Dimension coverage
     dim_coverage = _dimension_coverage(shop_tags, tag_map, live_shop_ids)
-
-    # C. Confidence distribution
     conf_dist = _confidence_distribution(shop_tags)
     low_conf_shops = _low_confidence_shops(shop_tags, shop_map)
 
-    # D. Text grounding on sample
     n_sample = min(sample_size, total)
     sample_ids = random.sample(list(live_shop_ids), n_sample)
     sample_shops = [shop_map[sid] for sid in sample_ids]
@@ -294,9 +273,10 @@ async def main(sample_size: int, output_dir: Path | None, json_only: bool) -> No
         print(f"Running text grounding check on {n_sample} shops…", end=" ", flush=True)
 
     reviews_by_shop = _fetch_reviews_for_shops(db, sample_ids)
+    sample_id_set = set(sample_ids)
     shop_tags_by_shop: dict[str, list[dict]] = {}
     for st in shop_tags:
-        if st["shop_id"] in set(sample_ids):
+        if st["shop_id"] in sample_id_set:
             shop_tags_by_shop.setdefault(st["shop_id"], []).append(st)
 
     grounding = _text_grounding(sample_shops, shop_tags_by_shop, tag_map, reviews_by_shop)
@@ -304,7 +284,6 @@ async def main(sample_size: int, output_dir: Path | None, json_only: bool) -> No
     if not json_only:
         print("done\n")
 
-    # Thresholds
     over_represented = [r["id"] for r in freq if r["flag"] == "over_represented"]
     all_dims_above_50 = all(v["pct"] >= _DIMENSION_MIN_PCT for v in dim_coverage.values())
     mean_grounding_pct = round(grounding["mean_grounding_rate"] * 100, 1)
@@ -345,7 +324,6 @@ async def main(sample_size: int, output_dir: Path | None, json_only: bool) -> No
         print(str(path))
         return
 
-    # Console output
     print("Tag Frequency (top 15 + flagged)")
     flagged = [r for r in freq if r["flag"]]
     top15 = freq[:15]

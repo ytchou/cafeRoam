@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import asyncio
 import sys
+from datetime import date
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -22,16 +23,12 @@ from scripts.eval_utils import (
     warn,
 )
 
-# ── Thresholds ─────────────────────────────────────────────────────────────────
-
 THRESHOLDS = {
     "photos_present": {"target": 70},
     "reviews_present": {"target": 80},
     "tags_present": {"target": 85},
     "mean_quality": {"target": 60},
 }
-
-# ── Quality scoring weights ────────────────────────────────────────────────────
 
 _WEIGHTS = {"photos": 25, "reviews": 25, "tags": 25, "description": 15, "embedding": 10}
 
@@ -46,17 +43,8 @@ def _score_photos(n: int) -> float:
     return 100
 
 
-def _score_reviews(n: int) -> float:
-    if n == 0:
-        return 0
-    if n <= 2:
-        return 40
-    if n <= 5:
-        return 70
-    return 100
-
-
-def _score_tags(n: int) -> float:
+def _score_count(n: int) -> float:
+    """Score for reviews or tags based on count."""
     if n == 0:
         return 0
     if n <= 2:
@@ -69,15 +57,12 @@ def _score_tags(n: int) -> float:
 def _quality_score(photos: int, reviews: int, tags: int, has_desc: bool, has_emb: bool) -> float:
     raw = (
         _score_photos(photos) * _WEIGHTS["photos"]
-        + _score_reviews(reviews) * _WEIGHTS["reviews"]
-        + _score_tags(tags) * _WEIGHTS["tags"]
+        + _score_count(reviews) * _WEIGHTS["reviews"]
+        + _score_count(tags) * _WEIGHTS["tags"]
         + (100 if has_desc else 0) * _WEIGHTS["description"]
         + (100 if has_emb else 0) * _WEIGHTS["embedding"]
     )
     return raw / sum(_WEIGHTS.values())
-
-
-# ── SQL helpers ────────────────────────────────────────────────────────────────
 
 
 def _fetch_live_shops(db) -> list[dict]:
@@ -94,11 +79,13 @@ def _fetch_photo_counts(db, shop_ids: list[str]) -> dict[str, int]:
     rows = db.table("shop_photos").select("shop_id").in_("shop_id", shop_ids).execute()
     counts: dict[str, int] = {sid: 0 for sid in shop_ids}
     for r in rows.data:
-        counts[r["shop_id"]] = counts.get(r["shop_id"], 0) + 1
+        counts[r["shop_id"]] += 1
     return counts
 
 
-def _fetch_review_counts(db, shop_ids: list[str]) -> dict[str, int]:
+def _fetch_review_data(
+    db, shop_ids: list[str]
+) -> tuple[dict[str, int], dict[str, list[int]], dict[str, dict[str, int]]]:
     rows = db.table("shop_reviews").select("shop_id,text").in_("shop_id", shop_ids).execute()
     counts: dict[str, int] = {sid: 0 for sid in shop_ids}
     lengths: dict[str, list[int]] = {sid: [] for sid in shop_ids}
@@ -106,7 +93,7 @@ def _fetch_review_counts(db, shop_ids: list[str]) -> dict[str, int]:
 
     for r in rows.data:
         sid = r["shop_id"]
-        counts[sid] = counts.get(sid, 0) + 1
+        counts[sid] += 1
         text = r.get("text") or ""
         lengths[sid].append(len(text))
         lang = _detect_lang(text)
@@ -116,7 +103,6 @@ def _fetch_review_counts(db, shop_ids: list[str]) -> dict[str, int]:
 
 
 def _detect_lang(text: str) -> str:
-    """Rough language detection: CJK → zh, else en."""
     cjk = sum(1 for c in text if "\u4e00" <= c <= "\u9fff")
     return "zh" if cjk > len(text) * 0.1 else "en"
 
@@ -125,11 +111,8 @@ def _fetch_tag_counts(db, shop_ids: list[str]) -> dict[str, int]:
     rows = db.table("shop_tags").select("shop_id").in_("shop_id", shop_ids).execute()
     counts: dict[str, int] = {sid: 0 for sid in shop_ids}
     for r in rows.data:
-        counts[r["shop_id"]] = counts.get(r["shop_id"], 0) + 1
+        counts[r["shop_id"]] += 1
     return counts
-
-
-# ── Aggregation helpers ────────────────────────────────────────────────────────
 
 
 def _pct(n: int, total: int) -> float:
@@ -176,12 +159,7 @@ def _score_bucket(s: float) -> str:
     return "76-100"
 
 
-# ── Main ───────────────────────────────────────────────────────────────────────
-
-
 async def main(output_dir: Path | None, json_only: bool) -> None:
-    from datetime import date
-
     db = get_service_role_client()
 
     if not json_only:
@@ -197,13 +175,12 @@ async def main(output_dir: Path | None, json_only: bool) -> None:
     shop_ids = [s["id"] for s in shops]
 
     photo_counts = _fetch_photo_counts(db, shop_ids)
-    review_counts, review_lengths, lang_counts = _fetch_review_counts(db, shop_ids)
+    review_counts, review_lengths, lang_counts = _fetch_review_data(db, shop_ids)
     tag_counts = _fetch_tag_counts(db, shop_ids)
 
     if not json_only:
         print(f"done ({total} shops)\n")
 
-    # Per-shop scores
     shop_scores: list[dict] = []
     for s in shops:
         sid = s["id"]
@@ -240,23 +217,19 @@ async def main(output_dir: Path | None, json_only: bool) -> None:
 
     score_values = [s["score"] for s in shop_scores]
 
-    # Photo histogram
     photo_hist: dict[str, int] = {"0": 0, "1-3": 0, "4-10": 0, "10+": 0}
     for n in photo_counts.values():
         photo_hist[_photo_bucket(n)] += 1
 
-    # Score histogram
     score_hist: dict[str, int] = {"0-25": 0, "26-50": 0, "51-75": 0, "76-100": 0}
     for sv in score_values:
         score_hist[_score_bucket(sv)] += 1
 
-    # Review language aggregation
     agg_lang: dict[str, int] = {}
     for ld in lang_counts.values():
         for lang, cnt in ld.items():
             agg_lang[lang] = agg_lang.get(lang, 0) + cnt
 
-    # Median review text length
     all_lengths = [length for ls in review_lengths.values() for length in ls]
     median_len = int(_median([float(length) for length in all_lengths]))
 
@@ -272,54 +245,51 @@ async def main(output_dir: Path | None, json_only: bool) -> None:
         key=lambda x: x["score"],
     )
 
+    photos_pct = _pct(shops_with_photos, total)
+    reviews_pct = _pct(shops_with_reviews, total)
+    tags_pct = _pct(shops_with_tags, total)
+    mean_quality = round(_avg(score_values), 1)
+
+    def _check(metric: str, actual: float) -> dict:
+        target = THRESHOLDS[metric]["target"]
+        return {"target": target, "actual": actual, "pass": actual >= target}
+
     thresholds = {
-        "photos_present": {
-            "target": THRESHOLDS["photos_present"]["target"],
-            "actual": _pct(shops_with_photos, total),
-            "pass": _pct(shops_with_photos, total) >= THRESHOLDS["photos_present"]["target"],
-        },
-        "reviews_present": {
-            "target": THRESHOLDS["reviews_present"]["target"],
-            "actual": _pct(shops_with_reviews, total),
-            "pass": _pct(shops_with_reviews, total) >= THRESHOLDS["reviews_present"]["target"],
-        },
-        "tags_present": {
-            "target": THRESHOLDS["tags_present"]["target"],
-            "actual": _pct(shops_with_tags, total),
-            "pass": _pct(shops_with_tags, total) >= THRESHOLDS["tags_present"]["target"],
-        },
-        "mean_quality": {
-            "target": THRESHOLDS["mean_quality"]["target"],
-            "actual": round(_avg(score_values), 1),
-            "pass": _avg(score_values) >= THRESHOLDS["mean_quality"]["target"],
-        },
+        "photos_present": _check("photos_present", photos_pct),
+        "reviews_present": _check("reviews_present", reviews_pct),
+        "tags_present": _check("tags_present", tags_pct),
+        "mean_quality": _check("mean_quality", mean_quality),
     }
+
+    desc_pct = _pct(shops_with_desc, total)
+    emb_pct = _pct(shops_with_emb, total)
+    mode_pct = _pct(shops_with_mode, total)
 
     result = {
         "run_date": date.today().isoformat(),
         "total_live_shops": total,
         "coverage": {
             "photos": {
-                "present_pct": _pct(shops_with_photos, total),
+                "present_pct": photos_pct,
                 "avg_per_shop": _avg([float(n) for n in photo_counts.values()]),
                 "histogram": photo_hist,
             },
             "reviews": {
-                "present_pct": _pct(shops_with_reviews, total),
+                "present_pct": reviews_pct,
                 "avg_per_shop": _avg([float(n) for n in review_counts.values()]),
                 "median_length": median_len,
                 "language": agg_lang,
             },
             "tags": {
-                "present_pct": _pct(shops_with_tags, total),
+                "present_pct": tags_pct,
                 "avg_per_shop": _avg([float(n) for n in tag_counts.values()]),
             },
-            "description": {"present_pct": _pct(shops_with_desc, total)},
-            "embedding": {"present_pct": _pct(shops_with_emb, total)},
-            "mode_scores": {"present_pct": _pct(shops_with_mode, total)},
+            "description": {"present_pct": desc_pct},
+            "embedding": {"present_pct": emb_pct},
+            "mode_scores": {"present_pct": mode_pct},
         },
         "quality_scores": {
-            "mean": round(_avg(score_values), 1),
+            "mean": mean_quality,
             "median": _median(score_values),
             "p10": _percentile(score_values, 10),
             "histogram": score_hist,
@@ -337,7 +307,6 @@ async def main(output_dir: Path | None, json_only: bool) -> None:
         print(str(path))
         return
 
-    # Console output
     print("Coverage")
     cov = result["coverage"]
 
