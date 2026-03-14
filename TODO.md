@@ -845,7 +845,7 @@ This is the gate for Phase 2B. Shops must be imported, enriched, embedded, and p
 - [x] Verify Sentry CWV already active (tracesSampleRate: 0.1)
 - [x] Add `sizes` to ShopHero, CheckInPhotoGrid, StampPassport images
 - [x] Convert ProfileHeader avatar to next/image with sizes
-- [ ] Add Noto Sans TC font via next/font/google
+- [x] Add Noto Sans TC font via next/font/google
 
 **Chunk 2 — Map List-View Toggle (Wave 1-4):**
 
