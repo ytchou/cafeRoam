@@ -854,7 +854,7 @@ This is the gate for Phase 2B. Shops must be imported, enriched, embedded, and p
 
 **Chunk 3 — Verification (Wave 5):**
 
-- [ ] Full verification (vitest, type-check, lint, build)
+- [x] Full verification (vitest, type-check, lint, build)
 
 **Phase 2B is done when:** A non-team beta user can sign up, complete the PDPA consent flow, search semantically, find a coffee shop, check in with a photo, earn a stamp, leave a review, and view their profile — all without assistance. PostHog Live Events confirms all 7 instrumented events fire correctly.
 
