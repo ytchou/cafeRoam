@@ -15,7 +15,7 @@ import type { SearchMode } from '@/lib/hooks/use-search-state';
 export default function HomePage() {
   const router = useRouter();
   const { shops } = useShops({ featured: true, limit: 12 });
-  const { requestLocation, latitude, longitude } = useGeolocation();
+  const { requestLocation } = useGeolocation();
   const [mode, setMode] = useState<SearchMode>(null);
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
@@ -28,9 +28,9 @@ export default function HomePage() {
   }
 
   async function handleNearMe() {
-    await requestLocation();
-    if (latitude && longitude) {
-      const params = new URLSearchParams({ lat: String(latitude), lng: String(longitude), radius: '5' });
+    const coords = await requestLocation();
+    if (coords) {
+      const params = new URLSearchParams({ lat: String(coords.latitude), lng: String(coords.longitude), radius: '5' });
       if (mode) params.set('mode', mode);
       router.push(`/map?${params.toString()}`);
     } else {

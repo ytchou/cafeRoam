@@ -1,12 +1,17 @@
 'use client';
 import { useState, useCallback } from 'react';
 
+interface Coords {
+  latitude: number;
+  longitude: number;
+}
+
 interface GeolocationState {
   latitude: number | null;
   longitude: number | null;
   error: string | null;
   loading: boolean;
-  requestLocation: () => Promise<void>;
+  requestLocation: () => Promise<Coords | null>;
 }
 
 export function useGeolocation(): GeolocationState {
@@ -15,27 +20,31 @@ export function useGeolocation(): GeolocationState {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const requestLocation = useCallback(async () => {
+  const requestLocation = useCallback(async (): Promise<Coords | null> => {
     if (!navigator.geolocation) {
       setError('Geolocation not supported');
-      return;
+      return null;
     }
 
     setLoading(true);
     setError(null);
 
-    return new Promise<void>((resolve) => {
+    return new Promise<Coords | null>((resolve) => {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          setLatitude(position.coords.latitude);
-          setLongitude(position.coords.longitude);
+          const coords = {
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+          };
+          setLatitude(coords.latitude);
+          setLongitude(coords.longitude);
           setLoading(false);
-          resolve();
+          resolve(coords);
         },
         (err) => {
           setError(err.message);
           setLoading(false);
-          resolve();
+          resolve(null);
         },
         { enableHighAccuracy: false, timeout: 10000 }
       );

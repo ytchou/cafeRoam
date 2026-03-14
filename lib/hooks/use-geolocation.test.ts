@@ -17,25 +17,29 @@ describe('useGeolocation', () => {
     });
 
     const { result } = renderHook(() => useGeolocation());
+    let coords: { latitude: number; longitude: number } | null = null;
     await act(async () => {
-      await result.current.requestLocation();
+      coords = await result.current.requestLocation();
     });
 
+    expect(coords).toEqual({ latitude: 25.033, longitude: 121.565 });
     expect(result.current.latitude).toBe(25.033);
     expect(result.current.longitude).toBe(121.565);
     expect(result.current.error).toBeNull();
   });
 
-  it('returns error when geolocation is denied', async () => {
+  it('returns null when geolocation is denied', async () => {
     mockGetCurrentPosition.mockImplementation((_, error) => {
       error({ code: 1, message: 'User denied' });
     });
 
     const { result } = renderHook(() => useGeolocation());
+    let coords: { latitude: number; longitude: number } | null = null;
     await act(async () => {
-      await result.current.requestLocation();
+      coords = await result.current.requestLocation();
     });
 
+    expect(coords).toBeNull();
     expect(result.current.latitude).toBeNull();
     expect(result.current.error).toBeTruthy();
   });
