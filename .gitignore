@@ -23,7 +23,6 @@ node_modules/
 !ERROR-PREVENTION.md
 !SPEC_CHANGELOG.md
 !PRD_CHANGELOG.md
-!e2e/**/*.md
 
 # Next.js build output
 .next/
