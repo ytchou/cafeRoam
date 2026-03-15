@@ -39,9 +39,9 @@ class Shop(CamelModel):
     review_count: int
     price_range: str | None = None
     description: str | None = None
-    photo_urls: list[str]
+    photo_urls: list[str] = []
     menu_url: str | None = None
-    taxonomy_tags: list[TaxonomyTag]
+    taxonomy_tags: list[TaxonomyTag] = []
     mode_scores: ShopModeScores | None = None
     cafenomad_id: str | None = None
     google_place_id: str | None = None

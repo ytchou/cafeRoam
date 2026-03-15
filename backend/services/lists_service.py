@@ -5,7 +5,7 @@ from postgrest.exceptions import APIError
 from supabase import Client
 
 from core.db import first
-from models.types import List, ListItem, ListPin, ListSummary, ListWithItems, Shop
+from models.types import List, ListItem, ListPin, ListSummary, ListWithItems, Shop, TaxonomyTag
 
 
 class ListsService:
@@ -120,7 +120,11 @@ class ListsService:
         """
         response = (
             self._db.table("lists")
-            .select("id, list_items(shop_id, added_at, shops(*))")
+            .select(
+                "id, list_items(shop_id, added_at, "
+                "shops(*, shop_photos(url), "
+                "shop_tags(tag_id, taxonomy_tags(id, dimension, label, label_zh))))"
+            )
             .eq("id", list_id)
             .execute()
         )
@@ -130,8 +134,14 @@ class ListsService:
         shops = []
         for item in rows[0].get("list_items", []):
             shop_data = item.get("shops")
-            if shop_data:
-                shops.append(Shop(**shop_data))
+            if not shop_data:
+                continue
+            photo_urls = [p["url"] for p in (shop_data.pop("shop_photos", None) or [])]
+            raw_tags = shop_data.pop("shop_tags", None) or []
+            taxonomy_tags = [
+                TaxonomyTag(**row["taxonomy_tags"]) for row in raw_tags if row.get("taxonomy_tags")
+            ]
+            shops.append(Shop(**shop_data, photo_urls=photo_urls, taxonomy_tags=taxonomy_tags))
         return shops
 
     async def get_pins(self) -> list[ListPin]:
