@@ -1,19 +1,19 @@
-.PHONY: help doctor setup dev dev-all migrate seed seed-shops reset-db workers-enrich workers-embed test lint
+.PHONY: help doctor setup dev dev-all migrate seed-shops restore-seed-user reset-db workers-enrich workers-embed test lint
 
 help:
 	@echo "CafeRoam — Available commands:"
-	@echo "  make setup          Run full dev environment setup (install → supabase start → migrate → seed → dev)"
-	@echo "  make dev            Start Next.js dev server on :3000"
-	@echo "  make dev-all        Start frontend + backend concurrently (Supabase must already be running)"
-	@echo "  make migrate        Apply Supabase migrations"
-	@echo "  make seed           Seed ~50 Taipei shops from Cafe Nomad API"
-	@echo "  make seed-shops     Restore full scraped shop data (710 shops, 164 live) from supabase/seeds/shops_data.sql"
-	@echo "  make reset-db       Reset local database (run 'make seed-shops' after to restore scraped data)"
-	@echo "  make workers-enrich Run data enrichment worker locally"
-	@echo "  make workers-embed  Run embedding generation worker locally"
-	@echo "  make test           Run Vitest tests"
-	@echo "  make doctor         Run environment preflight check (run before starting work)"
-	@echo "  make lint           Run ESLint + Prettier check + TypeScript check"
+	@echo "  make setup               Run full dev environment setup (install → supabase start → migrate → dev)"
+	@echo "  make dev                 Start Next.js dev server on :3000"
+	@echo "  make dev-all             Start frontend + backend concurrently (Supabase must already be running)"
+	@echo "  make migrate             Apply Supabase migrations"
+	@echo "  make seed-shops          Restore full scraped shop data (710 shops, 164 live) from supabase/seeds/shops_data.sql"
+	@echo "  make restore-seed-user   Restore the local dev admin user via Supabase Admin API (safe — no data loss)"
+	@echo "  make reset-db            !! DESTRUCTIVE: wipes all data. Use only on a fresh clone. Run 'make seed-shops' after."
+	@echo "  make workers-enrich      Run data enrichment worker locally"
+	@echo "  make workers-embed       Run embedding generation worker locally"
+	@echo "  make test                Run Vitest tests"
+	@echo "  make doctor              Run environment preflight check (run before starting work)"
+	@echo "  make lint                Run ESLint + Prettier check + TypeScript check"
 
 doctor:
 	@bash scripts/doctor.sh
@@ -22,8 +22,11 @@ setup:
 	pnpm install
 	supabase start
 	supabase db push
-	pnpm db:seed
-	pnpm dev
+	@echo ""
+	@echo "Setup complete. Next steps:"
+	@echo "  make restore-seed-user   — create admin user (caferoam.tw@gmail.com / 00000000)"
+	@echo "  make seed-shops          — restore 164 live shops from supabase/seeds/shops_data.sql"
+	@echo "  make dev-all             — start frontend + backend"
 
 dev:
 	pnpm dev
@@ -37,8 +40,22 @@ migrate:
 	supabase db diff
 	supabase db push
 
-seed:
-	pnpm db:seed
+restore-seed-user:
+	@echo "Restoring local dev admin user (caferoam.tw@gmail.com)..."
+	@SERVICE_ROLE=$$(grep -E "^SUPABASE_SERVICE_ROLE_KEY" backend/.env | cut -d'=' -f2); \
+	curl -s -o /tmp/seed_user_result.json -w "%{http_code}" \
+	  -X POST "http://127.0.0.1:54321/auth/v1/admin/users" \
+	  -H "apikey: $$SERVICE_ROLE" \
+	  -H "Authorization: Bearer $$SERVICE_ROLE" \
+	  -H "Content-Type: application/json" \
+	  -d '{"id":"00000000-0000-0000-0000-000000000001","email":"caferoam.tw@gmail.com","password":"00000000","email_confirm":true,"app_metadata":{"is_admin":true,"provider":"email","providers":["email"]}}' \
+	  && echo "" \
+	  || true
+	@grep -q '"id":"00000000' /tmp/seed_user_result.json \
+	  && echo "Done — admin user restored (caferoam.tw@gmail.com / 00000000)" \
+	  || (grep -q "already been registered" /tmp/seed_user_result.json \
+	      && echo "Already exists — no action needed." \
+	      || (echo "Failed:" && cat /tmp/seed_user_result.json && exit 1))
 
 seed-shops:
 	@echo "Restoring scraped shop data from supabase/seeds/shops_data.sql..."
@@ -46,9 +63,13 @@ seed-shops:
 	@echo "Done — shop data restored."
 
 reset-db:
+	@echo "!! WARNING: This will wipe ALL local data (shops, users, check-ins, lists)."
+	@echo "   Use 'make restore-seed-user' to restore just the admin user without data loss."
+	@echo "   Press Ctrl+C to cancel, or wait 5 seconds to continue..."
+	@sleep 5
 	supabase db reset
 	@echo ""
-	@echo "Database reset. Run 'make seed-shops' to restore scraped shop data."
+	@echo "Database reset. Run 'make restore-seed-user && make seed-shops' to restore data."
 
 workers-enrich:
 	pnpm workers:enrich

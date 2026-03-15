@@ -1,6 +1,6 @@
 -- Seed: local development admin user
 -- UUID is fixed so ADMIN_USER_IDS in backend/.env never needs to change after resets.
--- Email: admin@caferoam.local  Password: admin123
+-- Email: caferoam.tw@gmail.com  Password: 00000000
 
 INSERT INTO auth.users (
   instance_id,

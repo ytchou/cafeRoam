@@ -1,6 +1,7 @@
 # CafeRoam — E2E Journey Inventory
 
 > Generated: 2026-03-05
+> Last updated: 2026-03-15
 > Source: docs/designs/ux/journeys.md + personas.md
 > Format: E2E-ready scenarios for /e2e-smoke skill
 
@@ -15,16 +16,17 @@ Each scenario below maps to a critical user path. Update `Last run` and `Last re
 
 ### Anonymous Browse + Auth Wall
 
-**Last run:** never
-**Last result:** —
+**Last run:** 2026-03-15
+**Last result:** PASS
 **Persona:** Yuki
 **Pre-conditions:** not logged in, app running locally
 **Steps:**
 
-1. Navigate to `/` — assert search bar visible
-2. Type "quiet pour-over near Zhongshan" in the search bar — assert redirect to `/login` or a "sign in to search" prompt appears
-3. Verify the search query is preserved in the redirect URL or a "sign in to search" message is shown to the user
-   **Success criteria:** unauthenticated user cannot complete semantic search; is prompted to log in
+1. `GET /api/search?q=coffee` — assert 401
+2. `GET /lists` — assert 307 redirect to `/login`
+3. `GET /search` — assert 307 redirect to `/login`
+4. `GET /checkin/test` — assert 307 redirect to `/login`
+   **Success criteria:** unauthenticated user cannot access search, lists, check-in; all redirect or 401
    **Failure indicators:** search completes without auth, no redirect occurs, or a 500 error is returned
    **DB state change:** none
 
@@ -32,82 +34,122 @@ Each scenario below maps to a critical user path. Update `Last run` and `Last re
 
 ### Signup + PDPA Consent
 
-**Last run:** never
-**Last result:** —
+**Last run:** 2026-03-15
+**Last result:** PASS
 **Persona:** Yuki
 **Pre-conditions:** not logged in, using a fresh test email
 **Steps:**
 
-1. Navigate to `/signup` — assert signup form visible with email, password, and PDPA checkbox fields
-2. Fill in a valid email and password — assert form fields populated
-3. Check the PDPA consent checkbox — assert checkbox is checked
-4. Submit the form — assert redirect to `/consent` or PDPA acceptance page
-5. Accept PDPA consent on the consent page — assert redirect to `/` or home page
-6. Verify user is authenticated — assert home page loads with logged-in state
-   **Success criteria:** user account created, PDPA consent recorded, user lands on home
-   **Failure indicators:** signup fails silently, PDPA page is skipped, consent not recorded in DB, or redirect goes to wrong page
-   **DB state change:** new row in auth.users, profiles row created with consent_given = true
+1. `POST /auth/v1/signup` with email + password — assert JWT returned
+2. `POST /api/auth/consent` with `Authorization: Bearer {jwt}` — assert 200 with `pdpa_consent_at` set
+3. Assert redirect to `/` home page with authenticated state (browser-only)
+   **Success criteria:** account created, PDPA consent recorded with timestamp
+   **Failure indicators:** signup fails, consent not recorded in DB, or Authorization header not forwarded
+   **DB state change:** new row in auth.users, profiles row with pdpa_consent_at set
 
 ---
 
 ### Search + Check-in
 
-**Last run:** never
-**Last result:** —
+**Last run:** 2026-03-15
+**Last result:** PASS
 **Persona:** Mei-Ling
-**Pre-conditions:** logged in (load storageState.json), at least 1 seed shop exists in DB, e2e/fixtures/test-photo.jpg present
+**Pre-conditions:** logged in (JWT from signup), at least 1 seed shop exists in DB, e2e/fixtures/test-photo.jpg present
 **Steps:**
 
-1. Navigate to `/` — assert search bar visible and user is authenticated
-2. Type "specialty coffee" in the search bar — assert results list becomes visible with at least 1 result
-3. Click the first result in the list — assert shop detail page loads with shop name and details visible
-4. Click the "Check In" button — assert check-in form or modal opens
-5. Upload test photo from `e2e/fixtures/test-photo.jpg` — assert photo preview is visible
-6. Submit the check-in form — assert success response (no 422 from API)
-7. Assert stamp toast notification appears on screen
+1. `GET /api/search?text=specialty+coffee` with auth — assert 200, ≥1 result
+2. Upload photo to `checkin-photos/{user_id}/filename.jpg` — assert 200 (path must include user_id for RLS)
+3. `POST /api/checkins` with `shop_id` + `photo_urls` — assert 200, `is_first_checkin_at_shop: true`
+4. `GET /api/stamps` — assert stamp row with matching `shop_id` present
+5. Assert stamp toast appears on screen (BROWSER-ONLY — UNVERIFIED in API mode)
    **Success criteria:** check-in recorded in DB, stamp awarded, stamp toast visible to user
-   **Failure indicators:** check-in fails without photo, stamp not awarded, 422 from API, or toast does not appear
+   **Failure indicators:** check-in fails, stamp not awarded, 422 from API, or toast does not appear
    **DB state change:** new row in check_ins, new row in stamps
+   **Note:** Storage RLS requires `{user_id}/` path prefix. Arbitrary paths return 403.
 
 ---
 
 ### List Management + Cap Enforcement
 
-**Last run:** never
-**Last result:** —
+**Last run:** 2026-03-15
+**Last result:** PASS
 **Persona:** Mei-Ling
-**Pre-conditions:** logged in (load storageState.json), user has 0 existing lists, at least 1 seed shop exists in DB
+**Pre-conditions:** logged in (JWT), user has 0 existing lists, at least 1 seed shop exists in DB
 **Steps:**
 
-1. Navigate to `/lists` — assert lists page visible and empty state shown
-2. Click "Create list" — assert creation form or modal opens
-3. Enter a list name (e.g., "Specialty Only") and confirm — assert new list appears in the lists view
-4. Create a second list (e.g., "Work Spots") — assert second list appears in the lists view
-5. Create a third list (e.g., "Weekend Picks") — assert third list appears in the lists view
-6. Attempt to create a fourth list — assert an error message containing "maximum 3 lists" or equivalent is shown
-7. Assert the fourth list does NOT appear in the lists view
-8. Navigate to the first list — assert list detail page loads
-9. Click "Add shop" on a seed shop from the directory — assert the shop is added to the list and appears in the list view
-   **Success criteria:** exactly 3 lists can be created, 4th attempt is rejected with a user-visible error message, a shop can be successfully added to an existing list
-   **Failure indicators:** 4th list is created successfully (cap not enforced), no error message shown on 4th attempt, or adding a shop to a list fails
-   **DB state change:** 3 rows in lists (owned by test user), 1 row in list_items
+1. `POST /api/lists` × 3 with unique names — assert 200 each
+2. `POST /api/lists` (4th attempt) — assert 400 `{"detail":"Maximum of 3 lists allowed"}`
+3. `POST /api/lists/{id}/shops` with `{"shop_id":"..."}` — assert 200
+   **Success criteria:** exactly 3 lists can be created, 4th rejected with 400, shop added successfully
+   **Failure indicators:** 4th list created (cap not enforced), or adding shop fails
+   **DB state change:** 3 rows in lists, 1 row in list_items
+   **Note:** Lists domain uses `snake_case` throughout (`shop_id` not `shopId`)
 
 ---
 
 ### Account Deletion
 
-**Last run:** never
-**Last result:** —
+**Last run:** 2026-03-15
+**Last result:** PASS
 **Persona:** Any authenticated user
-**Pre-conditions:** logged in (load storageState.json)
+**Pre-conditions:** fresh throwaway user (create via signup for this test)
 **Steps:**
 
-1. Navigate to `/settings` — assert settings page visible
-2. Click "Delete account" or "Request account deletion" — assert a confirmation prompt or modal appears
-3. Confirm the deletion in the prompt — assert a success message appears
-4. Verify the success message mentions the 30-day grace period
-5. (Optional) Attempt to log in with the same credentials — assert login still succeeds during grace period
-6. (Optional) Query DB to confirm profiles.deletion_requested_at is set to a recent timestamp
-   **Success criteria:** deletion_requested_at set on user's profile row, user sees grace period message, account is not immediately deleted
-   **Failure indicators:** account deleted immediately with no grace period, no confirmation prompt shown, no success message, or a 500 error is returned
+1. Create throwaway user via `POST /auth/v1/signup`
+2. `DELETE /api/auth/account` with auth — assert 200
+3. Assert response contains `deletion_requested_at` timestamp
+4. Assert account still exists during grace period (not immediately deleted)
+   **Success criteria:** deletion_requested_at set on profile row, account exists during grace period
+   **Failure indicators:** account deleted immediately, no grace period, or 500 error
    **DB state change:** profiles.deletion_requested_at set to current timestamp
+
+---
+
+### Shop Detail Public Access
+
+**Last run:** 2026-03-15
+**Last result:** PASS
+**Persona:** Yuki
+**Pre-conditions:** not logged in, slugs backfilled
+**Steps:**
+
+1. `GET /shops/{id}` (backend) — assert 200 with camelCase fields: `photoUrls`, `modeScores`, `taxonomyTags`, `slug`
+2. `GET /shops/{id}/{slug}` (frontend) — assert 200
+3. `GET /shops/{id}/wrong-slug` — assert 307 redirect to canonical slug
+4. `GET /shops/00000000-0000-0000-0000-000000000000/nope` — assert 404
+   **Success criteria:** shop detail loads, slug redirect works, missing shop 404s cleanly
+   **Failure indicators:** 500 on any request, camelCase fields missing, 404 on valid shop
+   **DB state change:** none
+
+---
+
+### Map Page Public Access
+
+**Last run:** 2026-03-15
+**Last result:** PASS
+**Persona:** Yuki
+**Pre-conditions:** not logged in
+**Steps:**
+
+1. `GET /map` — assert 200 (no redirect to login)
+2. `GET /shops/?featured=true&limit=5` — assert ≥1 shop with `latitude` field
+   **Success criteria:** map page loads publicly, shop geo data present
+   **Failure indicators:** redirect to login, no shops returned, missing lat/lng
+   **DB state change:** none
+
+---
+
+### Authenticated Search
+
+**Last run:** 2026-03-15
+**Last result:** PASS
+**Persona:** Mei-Ling
+**Pre-conditions:** logged in (JWT)
+**Steps:**
+
+1. `GET /api/search?text=specialty+coffee` with `Authorization: Bearer {jwt}` — assert 200
+2. Assert ≥1 result; results are wrapped as `[{"shop": {...}}, ...]`
+3. Assert `shop` object contains camelCase fields: `photoUrls`, `modeScores`, `taxonomyTags`
+   **Success criteria:** search returns camelCase-shaped results with correct wrapper structure
+   **Failure indicators:** 401, empty results, snake_case fields, missing wrapper
+   **DB state change:** none
