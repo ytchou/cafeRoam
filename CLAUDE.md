@@ -59,8 +59,9 @@ mypy .                         # Type check Python code
 supabase start                 # Start local Supabase (requires Docker)
 supabase db diff               # Check migration state BEFORE pushing
 supabase db push               # Apply migrations to local
-pnpm db:seed                   # Import ~50 Taipei shops from Cafe Nomad API
-supabase db reset              # Reset local DB + reseed
+make restore-seed-user         # Restore local dev admin user (safe — no data loss)
+make seed-shops                # Restore 164 live shops from supabase/seeds/shops_data.sql
+make reset-db                  # !! DESTRUCTIVE — wipes all data. Has a 5s warning prompt.
 ```
 
 **See [ERROR-PREVENTION.md](ERROR-PREVENTION.md)** for common migration errors.

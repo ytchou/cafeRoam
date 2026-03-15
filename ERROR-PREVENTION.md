@@ -65,7 +65,10 @@ Known errors, their symptoms, causes, and fixes. Add an entry every time you hit
 
 ```bash
 supabase db diff           # See what's different
-supabase db reset          # Nuclear option: reset local DB entirely and reapply all migrations
+supabase db push           # Re-apply any pending migrations
+# If supabase db push still fails with duplicate key errors in supabase_migrations:
+# Use psycopg2 (port 54322) to delete the offending tracking rows, then re-run db push.
+# See ERROR-PREVENTION entry "supabase db reset wipes live data" below — never use reset to fix this.
 ```
 
 **Prevention:** Never run schema-changing SQL directly in the Supabase dashboard. Always create a migration file via `supabase migration new [name]` and apply with `supabase db push`.
@@ -268,5 +271,38 @@ cd backend && uv run uvicorn main:app --reload --port 8000
 - If API calls return unexpected 401s or 500s, run `ps aux | grep uvicorn` to confirm only one backend is running and it's from the correct directory
 
 ---
+
+## `supabase db reset --local` Wipes All Live Data
+
+**Symptom:** All shops, check-ins, lists, and user-generated data vanish. `GET /shops/` returns `[]`. API endpoints return 500 because columns added by recent migrations (e.g. `slug`, `city`) no longer exist in the schema.
+
+**Root cause:** `supabase db reset --local` drops the entire `public` schema and recreates it from scratch. It wipes every row in every table — shops, users, check-ins, lists, stamps, embeddings. It is not a targeted seed restore.
+
+This was triggered in a session because `pnpm db:seed` (referenced in CLAUDE.md) didn't exist in `package.json`, and `supabase db reset` was incorrectly used as a fallback to restore the seed admin user.
+
+**Fix (after it runs and schema is missing recent columns):**
+
+```bash
+# 1. Apply the pending migrations that were not re-applied:
+supabase db push --local
+# If duplicate key errors in supabase_migrations, use psycopg2 on port 54322
+# to delete the offending tracking rows, then retry db push.
+
+# 2. Restore admin seed user (no data loss):
+make restore-seed-user
+
+# 3. Restore shop data from SQL dump:
+make seed-shops
+```
+
+**Prevention:**
+
+- **Never use `supabase db reset` to restore the admin user.** Use `make restore-seed-user` instead — it calls the Supabase Admin API and has zero data loss.
+- `make reset-db` now has a 5-second warning prompt before running reset. Do not bypass it.
+- If `pnpm db:seed` or any Makefile target fails with "command not found", stop and investigate — do not reach for `supabase db reset` as a fallback.
+- The canonical safe alternatives:
+  - Restore admin user only → `make restore-seed-user`
+  - Restore shop data only → `make seed-shops`
+  - Full wipe + rebuild (fresh clone scenario only) → `make reset-db` then `make restore-seed-user && make seed-shops`
 
 _Add entries here as you discover them._
