@@ -65,6 +65,12 @@ def get_current_user(token: str = Depends(_get_bearer_token)) -> dict[str, Any]:
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid token: missing user ID",
             )
+        app_metadata = payload.get("app_metadata", {})
+        if app_metadata.get("deletion_requested") is True:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Account is pending deletion",
+            )
         return {"id": user_id}
     except HTTPException:
         raise
