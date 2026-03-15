@@ -286,7 +286,7 @@ class TestListsService:
             await lists_service.rename(list_id=LIST_ID, name="New Name")
 
     async def test_get_list_shops_returns_full_shop_data(self, lists_service, mock_supabase):
-        """get_list_shops() returns full Shop objects for shops in an owned list."""
+        """get_list_shops() returns Shop objects with photos and tags joined from related tables."""
         now = datetime.now().isoformat()
         mock_supabase.table = MagicMock(
             return_value=MagicMock(
@@ -317,14 +317,15 @@ class TestListsService:
                                                             "review_count": 287,
                                                             "price_range": "$$",
                                                             "description": "安靜適合工作",
-                                                            "photo_urls": [],
                                                             "menu_url": None,
-                                                            "taxonomy_tags": [],
-                                                            "mode_scores": None,
                                                             "cafenomad_id": None,
                                                             "google_place_id": None,
                                                             "created_at": now,
                                                             "updated_at": now,
+                                                            "shop_photos": [
+                                                                {"url": "https://example.com/photo.jpg"}
+                                                            ],
+                                                            "shop_tags": [],
                                                         },
                                                     }
                                                 ],
@@ -342,6 +343,8 @@ class TestListsService:
         assert len(results) == 1
         assert results[0].name == "山小孩咖啡"
         assert results[0].latitude == 25.0216
+        assert results[0].photo_urls == ["https://example.com/photo.jpg"]
+        assert results[0].taxonomy_tags == []
 
     async def test_get_list_shops_raises_when_user_does_not_own_list(
         self, lists_service, mock_supabase

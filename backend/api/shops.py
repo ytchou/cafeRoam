@@ -170,7 +170,7 @@ async def get_shop_reviews(
             count="exact",
         )
         .eq("shop_id", shop_id)
-        .not_("stars", "is", "null")
+        .not_.is_("stars", "null")
         .order("reviewed_at", desc=True)
         .limit(limit)
         .offset(offset)
