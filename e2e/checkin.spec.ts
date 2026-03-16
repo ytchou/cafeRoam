@@ -27,16 +27,22 @@ test.describe('@critical J10 — Check-in: upload photo → submit → stamp awa
     await fileInput.setInputFiles(TEST_PHOTO);
 
     // Wait for photo preview — blob: URL is specific to client-side file upload previews
-    await expect(page.locator('img[src^="blob:"]')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('img[src^="blob:"]')).toBeVisible({
+      timeout: 10_000,
+    });
 
     // Submit the check-in
     const submitButton = page.getByRole('button', { name: /打卡|Check In/i });
     await submitButton.click();
 
     // Wait for successful navigation away from check-in page
-    await page.waitForURL(url => !url.pathname.startsWith('/checkin'), { timeout: 15_000 });
+    await page.waitForURL((url) => !url.pathname.startsWith('/checkin'), {
+      timeout: 15_000,
+    });
     // Verify success toast (Sonner toasts use data-sonner-toast attribute)
-    await expect(page.locator('[data-sonner-toast]')).toBeVisible({ timeout: 5_000 });
+    await expect(page.locator('[data-sonner-toast]')).toBeVisible({
+      timeout: 5_000,
+    });
   });
 });
 

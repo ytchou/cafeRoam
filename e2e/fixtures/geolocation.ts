@@ -5,7 +5,7 @@ export const OUTSIDE_TAIWAN = { latitude: 35.6762, longitude: 139.6503 }; // Tok
 
 export async function grantGeolocation(
   context: BrowserContext,
-  coords = TAIPEI_COORDS,
+  coords = TAIPEI_COORDS
 ) {
   await context.grantPermissions(['geolocation']);
   await context.setGeolocation(coords);

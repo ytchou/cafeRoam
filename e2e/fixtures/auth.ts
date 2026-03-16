@@ -10,7 +10,7 @@ const STORAGE_STATE_PATH = path.join(__dirname, '..', '.auth', 'user.json');
 async function loginFresh(
   browser: import('@playwright/test').Browser,
   email: string,
-  password: string,
+  password: string
 ): Promise<import('@playwright/test').BrowserContext> {
   const ctx = await browser.newContext();
   const pg = await ctx.newPage();
@@ -32,7 +32,7 @@ export const test = base.extend<{ authedPage: Page }>({
 
     if (!email || !password) {
       throw new Error(
-        'E2E_USER_EMAIL and E2E_USER_PASSWORD must be set for authenticated tests',
+        'E2E_USER_EMAIL and E2E_USER_PASSWORD must be set for authenticated tests'
       );
     }
 

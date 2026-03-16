@@ -70,7 +70,7 @@ test.describe('@critical J13 — Create 3 lists → 4th list → cap error', () 
       await page.getByRole('button', { name: 'Add' }).click();
       // Should show error toast about the 3-list limit
       await expect(
-        page.getByText(/3-list limit|reached the.*limit/i),
+        page.getByText(/3-list limit|reached the.*limit/i)
       ).toBeVisible({ timeout: 5_000 });
     } else {
       // Cap enforced by hiding input — verify counter still at 3/3
@@ -83,7 +83,7 @@ test.describe('@critical J13 — Create 3 lists → 4th list → cap error', () 
       const allLists = await listsResp.json();
       const testLists = Array.isArray(allLists)
         ? allLists.filter((l: { name: string }) =>
-            createdNames.includes(l.name),
+            createdNames.includes(l.name)
           )
         : [];
       for (const list of testLists as Array<{ id: string }>) {
