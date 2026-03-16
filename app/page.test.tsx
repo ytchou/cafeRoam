@@ -3,15 +3,7 @@ import { describe, it, expect, vi } from 'vitest';
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn() }),
-  useSearchParams: () => new URLSearchParams(),
-  usePathname: () => '/',
-}));
-
-vi.mock('next/image', () => ({
-  default: ({ src, alt }: { src: string; alt: string }) => (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img src={src} alt={alt} />
-  ),
+  useSearchParams: () => ({ get: () => null }),
 }));
 
 vi.mock('@/lib/hooks/use-shops', () => ({
@@ -19,47 +11,85 @@ vi.mock('@/lib/hooks/use-shops', () => ({
     shops: [
       {
         id: '1',
-        name: '山小孩咖啡',
-        slug: 'shan-xiao-hai-ka-fei',
-        rating: 4.6,
+        name: 'Test Cafe',
+        latitude: 25.03,
+        longitude: 121.56,
+        rating: 4.5,
+        slug: 'test-cafe',
+        photoUrls: [],
+        mrt: null,
+        address: '',
+        phone: null,
+        website: null,
+        openingHours: null,
+        reviewCount: 0,
+        priceRange: null,
+        description: null,
+        menuUrl: null,
+        taxonomyTags: [],
+        cafenomadId: null,
+        googlePlaceId: null,
+        createdAt: '',
+        updatedAt: '',
       },
-      { id: '2', name: '好咖啡', slug: 'hao-ka-fei', rating: 4.2 },
     ],
     isLoading: false,
     error: null,
   }),
 }));
 
-vi.mock('@/lib/posthog/use-analytics', () => ({
-  useAnalytics: () => ({ capture: vi.fn() }),
+vi.mock('@/lib/hooks/use-media-query', () => ({
+  useIsDesktop: () => false,
+}));
+
+vi.mock('@/lib/hooks/use-search', () => ({
+  useSearch: () => ({ results: [], isLoading: false }),
 }));
 
 vi.mock('@/lib/hooks/use-geolocation', () => ({
   useGeolocation: () => ({
-    requestLocation: vi.fn(),
     latitude: null,
     longitude: null,
     error: null,
     loading: false,
+    requestLocation: vi.fn(),
   }),
 }));
 
-import HomePage from './page';
+vi.mock('@/components/map/map-view', () => ({
+  MapView: ({ shops }: { shops: unknown[] }) => (
+    <div data-testid="map-view">Map with {shops.length} pins</div>
+  ),
+}));
 
-describe('Home page', () => {
-  it('When a visitor opens the home page, they see featured coffee shop names', () => {
-    render(<HomePage />);
-    expect(screen.getByText('山小孩咖啡')).toBeInTheDocument();
-    expect(screen.getByText('好咖啡')).toBeInTheDocument();
+vi.mock('next/dynamic', () => ({
+  __esModule: true,
+  default: () => {
+    const StubMapView = (props: Record<string, unknown>) => (
+      <div data-testid="map-view">
+        Map with {(props.shops as unknown[])?.length ?? 0} pins
+      </div>
+    );
+    return StubMapView;
+  },
+}));
+
+import FindPage from './page';
+
+describe('Find page (map)', () => {
+  it('When a user opens the Find tab, they see the map', () => {
+    render(<FindPage />);
+    expect(screen.getByTestId('map-view')).toBeInTheDocument();
   });
 
-  it('When a visitor opens the home page, they see the 精選咖啡廳 section heading', () => {
-    render(<HomePage />);
-    expect(screen.getByText('精選咖啡廳')).toBeInTheDocument();
+  it('When a user opens the Find tab, there is no list/map toggle button', () => {
+    render(<FindPage />);
+    expect(screen.queryByRole('button', { name: /list/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /map/i })).not.toBeInTheDocument();
   });
 
-  it('When a visitor opens the home page, they see the search bar', () => {
-    render(<HomePage />);
+  it('When a user opens the Find tab, they see the search bar', () => {
+    render(<FindPage />);
     expect(screen.getByRole('search')).toBeInTheDocument();
   });
 });

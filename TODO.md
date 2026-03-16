@@ -938,8 +938,8 @@ Adds the Explore tab and redesigns the four main sections of the app using Penci
 - [x] Update `bottom-nav.tsx` tabs to 地圖 / 探索 / 收藏 / 我的
 
 **Chunk 2 — Route Replacement:**
-- [ ] Replace `app/page.tsx` with map-only Find page
-- [ ] Delete `app/map/page.tsx` and `app/map/page.test.tsx`
+- [x] Replace `app/page.tsx` with map-only Find page
+- [x] Delete `app/map/page.tsx` and `app/map/page.test.tsx`
 
 **Chunk 3 — Redirect + Scaffold:**
 - [ ] Add `/map` → `/` permanent redirect in `next.config.ts`
