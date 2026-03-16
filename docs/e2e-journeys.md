@@ -1,7 +1,7 @@
 # CafeRoam — E2E Journey Inventory
 
 > Generated: 2026-03-05
-> Last updated: 2026-03-15
+> Last updated: 2026-03-16
 > Source: docs/designs/ux/journeys.md + personas.md
 > Format: E2E-ready scenarios for /e2e-smoke skill
 
@@ -120,6 +120,25 @@ Each scenario below maps to a critical user path. Update `Last run` and `Last re
    **Success criteria:** shop detail loads, slug redirect works, missing shop 404s cleanly
    **Failure indicators:** 500 on any request, camelCase fields missing, 404 on valid shop
    **DB state change:** none
+
+---
+
+### PWA Manifest Accessibility
+
+**Last run:** never
+**Last result:** PENDING
+**Persona:** Yuki (anonymous)
+**Pre-conditions:** not logged in, app running locally
+**Steps:**
+
+1. `GET /manifest.webmanifest` without auth — assert 200, `Content-Type` contains `application/manifest+json`
+2. Assert response JSON has `name: '啡遊 CafeRoam'`, `short_name: '啡遊'`, `display: 'standalone'`
+3. Assert `theme_color: '#6F4E37'` (brand coffee brown)
+4. Assert `icons` array contains entries for `/icon-192.png` (192×192), `/icon-512.png` (512×512), and `/icon-512-maskable.png` (maskable)
+   **Success criteria:** manifest returns valid JSON without requiring auth; icons and brand metadata are correct
+   **Failure indicators:** 307 redirect to `/login`, missing icons array, incorrect `display` value, or `theme_color` mismatch
+   **DB state change:** none
+   **Note:** Depends on `/manifest.webmanifest` being in `PUBLIC_ROUTES` in `middleware.ts`. Regression would silently break PWA installability on Chrome/Safari.
 
 ---
 

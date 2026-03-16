@@ -60,6 +60,7 @@ import { GET as pipelineStatusGET } from '../admin/shops/pipeline-status/route';
 import { PATCH as checkinReviewPATCH } from '../checkins/[id]/review/route';
 import { GET as shopCheckinsGET } from '../shops/[id]/checkins/route';
 import { GET as shopReviewsGET } from '../shops/[id]/reviews/route';
+import { GET as deadLetterGET } from '../admin/pipeline/dead-letter/route';
 
 const mockProxy = vi.mocked(proxyToBackend);
 const mockResponse = new Response('{}', { status: 200 });
@@ -474,6 +475,16 @@ describe('shops/[id]/reviews route', () => {
     expect(mockProxy).toHaveBeenCalledWith(
       expect.any(NextRequest),
       '/shops/shop-1/reviews'
+    );
+  });
+});
+
+describe('admin/pipeline/dead-letter route', () => {
+  it('GET proxies to /admin/pipeline/dead-letter', async () => {
+    await deadLetterGET(makeRequest());
+    expect(mockProxy).toHaveBeenCalledWith(
+      expect.any(NextRequest),
+      '/admin/pipeline/dead-letter'
     );
   });
 });
