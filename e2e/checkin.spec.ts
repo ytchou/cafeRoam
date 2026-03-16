@@ -35,8 +35,8 @@ test.describe('@critical J10 — Check-in: upload photo → submit → stamp awa
 
     // Wait for successful navigation away from check-in page
     await page.waitForURL(url => !url.pathname.startsWith('/checkin'), { timeout: 15_000 });
-    // Verify success toast (stamp awarded notification)
-    await expect(page.getByRole('status')).toBeVisible({ timeout: 5_000 });
+    // Verify success toast (Sonner toasts use data-sonner-toast attribute)
+    await expect(page.locator('[data-sonner-toast]')).toBeVisible({ timeout: 5_000 });
   });
 });
 
