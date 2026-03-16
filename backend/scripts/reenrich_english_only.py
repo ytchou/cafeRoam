@@ -37,9 +37,9 @@ def find_english_only_shops(db) -> list[dict]:
         .data
     )
     return [
-        r for r in rows
-        if r.get("description")
-        and not any("\u4e00" <= c <= "\u9fff" for c in r["description"])
+        r
+        for r in rows
+        if r.get("description") and not any("\u4e00" <= c <= "\u9fff" for c in r["description"])
     ]
 
 
@@ -100,7 +100,7 @@ async def main(dry_run: bool, concurrency: int) -> None:
     print(f"Found {len(shops)} shops with English-only descriptions:\n")
     for i, s in enumerate(shops, 1):
         preview = s["description"][:80].replace("\n", " ")
-        print(f"  {i:>2}. {s['name']:<35}  \"{preview}...\"")
+        print(f'  {i:>2}. {s["name"]:<35}  "{preview}..."')
 
     if dry_run:
         print("\nDry-run — stopping here.")
