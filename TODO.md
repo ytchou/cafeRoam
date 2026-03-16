@@ -912,9 +912,9 @@ This is the gate for Phase 2B. Shops must be imported, enriched, embedded, and p
 
 **Chunk 3 — Stubs + CI + Docs (Wave 3):**
 
-- [ ] Phase 2 stub specs: profile, feed, PWA, edge cases (J04-J30)
-- [ ] CI workflows: `e2e-critical.yml` (PR-blocking) + `e2e-nightly.yml` (cron)
-- [ ] Update `docs/e2e-journeys.md` with full journey matrix
+- [x] Phase 2 stub specs: profile, feed, PWA, edge cases (J04-J30)
+- [x] CI workflows: `e2e-critical.yml` (PR-blocking) + `e2e-nightly.yml` (cron)
+- [x] Update `docs/e2e-journeys.md` with full journey matrix
 
 **Chunk 4 — Verification (Wave 4):**
 
