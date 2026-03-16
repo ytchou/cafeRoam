@@ -2,7 +2,7 @@ from unittest.mock import MagicMock
 
 from fastapi.testclient import TestClient
 
-from api.deps import get_admin_db, get_current_user
+from api.deps import get_current_user, get_user_db
 from main import app
 
 client = TestClient(app)
@@ -18,7 +18,7 @@ class TestShopReviewsAPI:
         """Logged-in user gets reviews list, total count, and average rating for a shop."""
         mock_db = MagicMock()
         app.dependency_overrides[get_current_user] = lambda: {"id": "user-chen-wei"}
-        app.dependency_overrides[get_admin_db] = lambda: mock_db
+        app.dependency_overrides[get_user_db] = lambda: mock_db
         try:
             review_rows = [
                 {
@@ -65,7 +65,7 @@ class TestShopReviewsAPI:
         """When a shop has no reviews, the response has an empty list and 0.0 average."""
         mock_db = MagicMock()
         app.dependency_overrides[get_current_user] = lambda: {"id": "user-chen-wei"}
-        app.dependency_overrides[get_admin_db] = lambda: mock_db
+        app.dependency_overrides[get_user_db] = lambda: mock_db
         try:
             paginated_chain = mock_db.table.return_value.select.return_value.eq.return_value.not_.is_.return_value.order.return_value.limit.return_value.offset.return_value
             paginated_chain.execute.return_value = MagicMock(data=[], count=0)
