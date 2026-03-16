@@ -12,7 +12,7 @@
 This is the **source of truth** for all e2e test journeys. Each journey has:
 - A unique ID (J01–J30+) referenced in both this doc and the Playwright spec files
 - A priority level (Critical / High / Medium)
-- A status (Implemented = `@critical` tag / Stubbed = `test.fixme()`)
+- A status (Implemented = `@critical` tag / Stubbed = `test.fixme()` placeholder, Phase 2)
 
 **Running tests:**
 - `pnpm e2e:critical` — runs the 10 critical-path tests (PR-blocking in CI)

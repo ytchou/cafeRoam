@@ -5,11 +5,13 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
+  // workers: 1 in CI to prevent shared auth state race conditions across tests
   workers: process.env.CI ? 1 : undefined,
   reporter: process.env.CI ? 'github' : 'html',
   timeout: 30_000,
   use: {
     baseURL: process.env.E2E_BASE_URL ?? 'http://localhost:3000',
+    actionTimeout: 10_000,
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
   },

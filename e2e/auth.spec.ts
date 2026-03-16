@@ -6,7 +6,6 @@ test.describe('@critical J05 — Auth wall: protected routes redirect to login',
   }) => {
     await page.goto('/search');
     await page.waitForURL(/\/login/, { timeout: 10_000 });
-    expect(page.url()).toContain('/login');
   });
 
   test('unauthenticated user accessing /lists is redirected to /login', async ({
@@ -14,15 +13,13 @@ test.describe('@critical J05 — Auth wall: protected routes redirect to login',
   }) => {
     await page.goto('/lists');
     await page.waitForURL(/\/login/, { timeout: 10_000 });
-    expect(page.url()).toContain('/login');
   });
 
-  test('unauthenticated user accessing /checkin/test is redirected to /login', async ({
+  test('unauthenticated user accessing /checkin/:shopId is redirected to /login', async ({
     page,
   }) => {
-    await page.goto('/checkin/test');
+    await page.goto('/checkin/abc123');
     await page.waitForURL(/\/login/, { timeout: 10_000 });
-    expect(page.url()).toContain('/login');
   });
 
   test('unauthenticated user can access /map without redirect', async ({
