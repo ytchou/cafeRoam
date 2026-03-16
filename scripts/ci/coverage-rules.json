@@ -20,7 +20,7 @@
       "**/*.config.mjs",
       "**/middleware.ts",
       "**/scripts/prebuild/**",
-      "scripts/generate-pwa-icons.ts",
+      "**/scripts/generate-pwa-icons.ts",
       "layout.tsx",
       "*/components/ui/*.tsx"
     ]
