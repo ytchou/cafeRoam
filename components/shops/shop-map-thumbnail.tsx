@@ -28,6 +28,8 @@ export function ShopMapThumbnail({
   const isDesktop = useIsDesktop();
   const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 
+  if (!token) return null;
+
   if (isDesktop) {
     return (
       <div className={fullHeight ? 'h-full overflow-hidden' : 'h-[200px] overflow-hidden rounded-xl'}>

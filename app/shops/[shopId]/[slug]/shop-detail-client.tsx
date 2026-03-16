@@ -55,7 +55,7 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
 
   const { reviews, total, averageRating, isLoading, isAuthError } = useShopReviews(
     shop.id,
-    true
+    !!user
   );
 
   useEffect(() => {
@@ -98,7 +98,7 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
             total={total}
             averageRating={averageRating}
             isLoading={isLoading}
-            isAuthError={isAuthError && !user}
+            isAuthError={!user || isAuthError}
           />
           <div className="px-4 py-2">
             <ShareButton
