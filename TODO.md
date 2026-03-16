@@ -904,11 +904,11 @@ This is the gate for Phase 2B. Shops must be imported, enriched, embedded, and p
 
 **Chunk 2 — Critical Path Specs (Wave 2):**
 
-- [ ] Discovery specs: Near Me grant/deny + text search (J01-J03)
-- [ ] Auth specs: auth wall + signup PDPA (J05-J06)
-- [ ] Search spec: semantic search (J07)
-- [ ] Check-in specs: photo upload + validation (J10-J11)
-- [ ] Lists specs: CRUD + 3-list cap (J12-J13)
+- [x] Discovery specs: Near Me grant/deny + text search (J01-J03)
+- [x] Auth specs: auth wall + signup PDPA (J05-J06)
+- [x] Search spec: semantic search (J07)
+- [x] Check-in specs: photo upload + validation (J10-J11)
+- [x] Lists specs: CRUD + 3-list cap (J12-J13)
 
 **Chunk 3 — Stubs + CI + Docs (Wave 3):**
 
