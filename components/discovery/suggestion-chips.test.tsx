@@ -12,11 +12,11 @@ describe('SuggestionChips', () => {
     expect(onNearMe).not.toHaveBeenCalled();
   });
 
-  it('when a user taps "我附近", onNearMe fires instead of onSelect', () => {
+  it('when a user taps "附近的咖啡廳", onNearMe fires instead of onSelect', () => {
     const onSelect = vi.fn();
     const onNearMe = vi.fn();
     render(<SuggestionChips onSelect={onSelect} onNearMe={onNearMe} />);
-    fireEvent.click(screen.getByText('我附近'));
+    fireEvent.click(screen.getByText('附近的咖啡廳'));
     expect(onNearMe).toHaveBeenCalled();
     expect(onSelect).not.toHaveBeenCalled();
   });

@@ -31,12 +31,15 @@ export function MapListView({ shops, userLat, userLng }: MapListViewProps) {
       return [...shops]
         .map((shop) => ({
           shop,
-          dist: haversineDistance(
-            userLat,
-            userLng,
-            shop.latitude,
-            shop.longitude
-          ),
+          dist:
+            shop.latitude != null && shop.longitude != null
+              ? haversineDistance(
+                  userLat,
+                  userLng,
+                  shop.latitude,
+                  shop.longitude
+                )
+              : Infinity,
         }))
         .sort((a, b) => a.dist - b.dist)
         .map(({ shop }) => shop);
@@ -47,7 +50,7 @@ export function MapListView({ shops, userLat, userLng }: MapListViewProps) {
   if (sorted.length === 0) {
     return (
       <div className="flex h-full items-center justify-center text-gray-400">
-        No shops found
+        找不到符合的咖啡廳
       </div>
     );
   }

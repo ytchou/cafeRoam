@@ -90,3 +90,7 @@ e2e/.auth/
 # Playwright MCP logs and *.log files
 .playwright-mcp/
 *.log
+
+# Local design reference screenshots
+review-ref.png
+style-*.png

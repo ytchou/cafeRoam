@@ -1,4 +1,5 @@
 'use client';
+import Image from 'next/image';
 import { useUser } from '@/lib/hooks/use-user';
 
 interface CheckinPreview {
@@ -35,10 +36,12 @@ export function RecentCheckinsStrip({
         <div className="scrollbar-hide flex gap-3 overflow-x-auto">
           {checkins.map((ci) => (
             <div key={ci.id} className="flex-shrink-0 text-center">
-              <img
+              <Image
                 src={ci.photoUrl}
                 alt={`Check-in by ${ci.displayName ?? 'user'}`}
-                className="h-16 w-16 rounded-lg object-cover"
+                width={64}
+                height={64}
+                className="rounded-lg object-cover"
               />
               <p className="mt-1 text-xs text-gray-500">
                 {ci.displayName ?? '匿名'}
@@ -48,10 +51,12 @@ export function RecentCheckinsStrip({
         </div>
       ) : (
         preview.previewPhotoUrl && (
-          <img
+          <Image
             src={preview.previewPhotoUrl}
             alt="Recent check-in"
-            className="h-16 w-16 rounded-lg object-cover"
+            width={64}
+            height={64}
+            className="rounded-lg object-cover"
           />
         )
       )}

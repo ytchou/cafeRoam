@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Noto_Sans_TC } from 'next/font/google';
 import { PostHogProvider } from '@/lib/posthog/provider';
 import { SessionTracker } from '@/components/session-tracker';
 import { AppShell } from '@/components/navigation/app-shell';
+import { Agentation } from 'agentation';
 import './globals.css';
 
 const geistSans = Geist({
@@ -62,6 +63,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
         <PostHogProvider>
           <SessionTracker />
           <AppShell>{children}</AppShell>
+          {process.env.NODE_ENV === 'development' && <Agentation />}
         </PostHogProvider>
       </body>
     </html>

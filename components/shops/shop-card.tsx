@@ -22,25 +22,29 @@ export function ShopCard({ shop }: ShopCardProps) {
   }
 
   const locationLabel = shop.mrt ?? '';
-  const photoUrl =
-    (shop.photo_urls ?? shop.photoUrls)?.[0] ?? '/placeholder-cafe.jpg';
+  const photoUrl = (shop.photo_urls ?? shop.photoUrls)?.[0];
 
   return (
     <article
-      role="article"
       onClick={handleClick}
       className="cursor-pointer overflow-hidden rounded-xl border border-gray-100 bg-white transition-shadow hover:shadow-md"
     >
-      <div className="relative aspect-video">
-        <Image
-          src={photoUrl}
-          alt={shop.name}
-          fill
-          className="object-cover"
-          sizes="(min-width: 1024px) 33vw, 100vw"
-        />
+      <div className="relative aspect-[4/3] bg-gray-100">
+        {photoUrl ? (
+          <Image
+            src={photoUrl}
+            alt={shop.name}
+            fill
+            className="object-cover"
+            sizes="(min-width: 1024px) 25vw, 50vw"
+          />
+        ) : (
+          <div className="flex h-full items-center justify-center text-2xl font-bold text-gray-300">
+            {shop.name[0] ?? '?'}
+          </div>
+        )}
       </div>
-      <div className="p-3">
+      <div className="p-2">
         <h3 className="truncate text-sm font-semibold text-gray-900">
           {shop.name}
         </h3>

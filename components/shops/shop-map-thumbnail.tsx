@@ -1,4 +1,5 @@
 'use client';
+import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import { useIsDesktop } from '@/lib/hooks/use-media-query';
 
@@ -15,24 +16,34 @@ interface ShopMapThumbnailProps {
   latitude: number;
   longitude: number;
   shopName: string;
+  fullHeight?: boolean;
 }
 
 export function ShopMapThumbnail({
   latitude,
   longitude,
   shopName,
+  fullHeight = false,
 }: ShopMapThumbnailProps) {
   const isDesktop = useIsDesktop();
   const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 
+  if (!token) return null;
+
   if (isDesktop) {
     return (
-      <div className="h-[200px] overflow-hidden rounded-xl">
+      <div
+        className={
+          fullHeight
+            ? 'h-full overflow-hidden'
+            : 'h-[200px] overflow-hidden rounded-xl'
+        }
+      >
         <InteractiveMap
           mapboxAccessToken={token}
           initialViewState={{ longitude, latitude, zoom: 15 }}
           style={{ width: '100%', height: '100%' }}
-          mapStyle="mapbox://styles/mapbox/streets-v12"
+          mapStyle="mapbox://styles/mapbox/light-v11"
           interactive={false}
         >
           <MapMarker longitude={longitude} latitude={latitude}>
@@ -43,15 +54,16 @@ export function ShopMapThumbnail({
     );
   }
 
-  const staticUrl = `https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/pin-s+E06B3F(${longitude},${latitude})/${longitude},${latitude},15,0/400x200@2x?access_token=${token}`;
+  const staticUrl = `https://api.mapbox.com/styles/v1/mapbox/light-v11/static/pin-s+E06B3F(${longitude},${latitude})/${longitude},${latitude},15,0/400x200@2x?access_token=${token}`;
 
   return (
-    <div className="px-4 py-2">
-      <img
+    <div className="relative px-4 py-2">
+      <Image
         src={staticUrl}
         alt={`Map showing ${shopName}`}
+        width={400}
+        height={200}
         className="w-full rounded-xl"
-        loading="lazy"
       />
     </div>
   );

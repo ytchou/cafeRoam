@@ -1,7 +1,7 @@
 'use client';
 import dynamic from 'next/dynamic';
 import { useMemo, useState, Suspense } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { List, Map as MapIcon } from 'lucide-react';
 import { SearchBar } from '@/components/discovery/search-bar';
 import { FilterPills } from '@/components/discovery/filter-pills';
@@ -10,7 +10,9 @@ import { MapDesktopCard } from '@/components/map/map-desktop-card';
 import { MapListView } from '@/components/map/map-list-view';
 import { useIsDesktop } from '@/lib/hooks/use-media-query';
 import { useShops } from '@/lib/hooks/use-shops';
+import { useSearch } from '@/lib/hooks/use-search';
 import { useGeolocation } from '@/lib/hooks/use-geolocation';
+import type { SearchMode } from '@/lib/hooks/use-search-state';
 
 const MapView = dynamic(
   () =>
@@ -20,13 +22,27 @@ const MapView = dynamic(
 
 export default function MapPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const urlQuery = searchParams.get('q');
+  const urlMode = (searchParams.get('mode') ?? null) as SearchMode;
+
   const [selectedShopId, setSelectedShopId] = useState<string | null>(null);
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
   const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
 
-  const { shops } = useShops({ featured: true, limit: 200 });
+  const { shops: featuredShops } = useShops({ featured: true, limit: 200 });
+  const { results: searchResults, isLoading: searchLoading } = useSearch(
+    urlQuery,
+    urlMode
+  );
   const isDesktop = useIsDesktop();
   const { latitude, longitude, requestLocation } = useGeolocation();
+
+  const shops = useMemo(() => {
+    if (!urlQuery) return featuredShops;
+    if (searchLoading) return [];
+    return searchResults.length > 0 ? searchResults : featuredShops;
+  }, [urlQuery, searchLoading, searchResults, featuredShops]);
 
   const shopById = useMemo(() => new Map(shops.map((s) => [s.id, s])), [shops]);
   const selectedShop = selectedShopId
@@ -34,7 +50,34 @@ export default function MapPage() {
     : null;
 
   function handleSearch(query: string) {
-    router.push(`/map?q=${encodeURIComponent(query)}`);
+    const params = new URLSearchParams({ q: query });
+    if (urlMode) params.set('mode', urlMode);
+    router.push(`/map?${params.toString()}`);
+    setSelectedShopId(null);
+  }
+
+  function handleToggleView() {
+    const next = viewMode === 'map' ? 'list' : 'map';
+    if (next === 'list') {
+      if (latitude == null) requestLocation();
+      setSelectedShopId(null);
+    }
+    setViewMode(next);
+  }
+
+  function handleToggleFilter(filter: string) {
+    setActiveFilters((prev) =>
+      prev.includes(filter)
+        ? prev.filter((x) => x !== filter)
+        : [...prev, filter]
+    );
+  }
+
+  function getSearchStatusText(): string {
+    if (searchLoading) return '搜尋中…';
+    if (searchResults.length > 0)
+      return `找到 ${searchResults.length} 間咖啡廳`;
+    return '找不到符合的咖啡廳，顯示精選';
   }
 
   return (
@@ -61,19 +104,13 @@ export default function MapPage() {
         <div className="space-y-2 rounded-2xl bg-white/90 p-3 shadow backdrop-blur-md supports-[not(backdrop-filter)]:bg-white">
           <div className="flex items-center gap-2">
             <div className="flex-1">
-              <SearchBar onSubmit={handleSearch} />
+              <SearchBar
+                onSubmit={handleSearch}
+                defaultQuery={urlQuery ?? ''}
+              />
             </div>
             <button
-              onClick={() => {
-                const next = viewMode === 'map' ? 'list' : 'map';
-                if (next === 'list' && latitude == null) {
-                  requestLocation();
-                }
-                if (next === 'list') {
-                  setSelectedShopId(null);
-                }
-                setViewMode((v) => (v === 'map' ? 'list' : 'map'));
-              }}
+              onClick={handleToggleView}
               className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white"
               aria-label={
                 viewMode === 'map'
@@ -88,14 +125,14 @@ export default function MapPage() {
               )}
             </button>
           </div>
+          {urlQuery && (
+            <p className="text-xs text-gray-500">{getSearchStatusText()}</p>
+          )}
           <FilterPills
             activeFilters={activeFilters}
-            onToggle={(f) =>
-              setActiveFilters((prev) =>
-                prev.includes(f) ? prev.filter((x) => x !== f) : [...prev, f]
-              )
-            }
+            onToggle={handleToggleFilter}
             onOpenSheet={() => {}}
+            onNearMe={requestLocation}
           />
         </div>
       </div>
