@@ -26,10 +26,14 @@ export function createMockSupabaseAuth() {
     signUp: vi.fn(),
     signOut: vi.fn(),
     getSession: vi.fn(),
+    getUser: vi.fn(),
     exchangeCodeForSession: vi.fn(),
     refreshSession: vi
       .fn()
       .mockResolvedValue({ data: { session: {} }, error: null }),
+    onAuthStateChange: vi.fn(() => ({
+      data: { subscription: { unsubscribe: vi.fn() } },
+    })),
   };
 }
 

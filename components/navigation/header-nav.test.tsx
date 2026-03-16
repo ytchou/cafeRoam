@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { createMockSupabaseAuth } from '@/lib/test-utils/mocks';
 
 vi.mock('next/link', () => ({
   default: ({
@@ -24,9 +25,19 @@ vi.mock('@/components/discovery/search-bar', () => ({
   ),
 }));
 
+const mockAuth = createMockSupabaseAuth();
+vi.mock('@/lib/supabase/client', () => ({
+  createClient: () => ({ auth: mockAuth }),
+}));
+
 import { HeaderNav } from './header-nav';
 
 describe('HeaderNav', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockAuth.getSession.mockResolvedValue({ data: { session: null } });
+  });
+
   it('renders logo', () => {
     render(<HeaderNav onSearch={vi.fn()} />);
     expect(screen.getByText(/啡遊|CafeRoam/i)).toBeInTheDocument();
