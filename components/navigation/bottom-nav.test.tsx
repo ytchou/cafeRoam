@@ -26,7 +26,7 @@ vi.mock('next/link', () => ({
 }));
 
 describe('BottomNav', () => {
-  it('renders four navigation tabs with new labels', () => {
+  it('When a user opens the app, they see four navigation tabs: 地圖, 探索, 收藏, 我的', () => {
     render(<BottomNav />);
     expect(screen.getByText('地圖')).toBeInTheDocument();
     expect(screen.getByText('探索')).toBeInTheDocument();
@@ -34,13 +34,13 @@ describe('BottomNav', () => {
     expect(screen.getByText('我的')).toBeInTheDocument();
   });
 
-  it('highlights 地圖 tab when pathname is /', () => {
+  it('When a user is on the home page, the 地圖 tab appears active', () => {
     render(<BottomNav />);
     const mapLink = screen.getByText('地圖').closest('a');
     expect(mapLink).toHaveAttribute('data-active', 'true');
   });
 
-  it('tab links navigate to correct routes', () => {
+  it('When a user taps each tab, they are directed to the correct section of the app', () => {
     render(<BottomNav />);
     expect(screen.getByText('地圖').closest('a')).toHaveAttribute('href', '/');
     expect(screen.getByText('探索').closest('a')).toHaveAttribute('href', '/explore');

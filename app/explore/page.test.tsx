@@ -3,7 +3,7 @@ import { describe, it, expect } from 'vitest';
 import ExplorePage from './page';
 
 describe('Explore page', () => {
-  it('When a user taps the Explore tab, the page renders without crashing', () => {
+  it('When a user opens the Explore tab, they see the explore section', () => {
     render(<ExplorePage />);
     expect(screen.getByRole('main')).toBeInTheDocument();
   });

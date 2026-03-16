@@ -10,27 +10,27 @@ vi.mock('@/lib/hooks/use-shops', () => ({
   useShops: () => ({
     shops: [
       {
-        id: '1',
-        name: 'Test Cafe',
-        latitude: 25.03,
-        longitude: 121.56,
-        rating: 4.5,
-        slug: 'test-cafe',
+        id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+        name: '山小孩咖啡',
+        latitude: 25.0478,
+        longitude: 121.5319,
+        rating: 4.6,
+        slug: 'shan-xiao-hai-ka-fei',
         photoUrls: [],
-        mrt: null,
-        address: '',
+        mrt: '古亭',
+        address: '台北市大安區和平東路一段',
         phone: null,
         website: null,
         openingHours: null,
-        reviewCount: 0,
-        priceRange: null,
+        reviewCount: 42,
+        priceRange: '$$',
         description: null,
         menuUrl: null,
         taxonomyTags: [],
         cafenomadId: null,
         googlePlaceId: null,
-        createdAt: '',
-        updatedAt: '',
+        createdAt: '2025-01-15T08:00:00.000Z',
+        updatedAt: '2025-01-15T08:00:00.000Z',
       },
     ],
     isLoading: false,
@@ -54,12 +54,6 @@ vi.mock('@/lib/hooks/use-geolocation', () => ({
     loading: false,
     requestLocation: vi.fn(),
   }),
-}));
-
-vi.mock('@/components/map/map-view', () => ({
-  MapView: ({ shops }: { shops: unknown[] }) => (
-    <div data-testid="map-view">Map with {shops.length} pins</div>
-  ),
 }));
 
 vi.mock('next/dynamic', () => ({
