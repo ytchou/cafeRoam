@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { describe, it, expect, vi, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 vi.mock('react-map-gl/mapbox', () => ({
   default: (props: Record<string, unknown>) => (
@@ -22,8 +22,13 @@ function stubMatchMedia(matches: boolean) {
 }
 
 describe('ShopMapThumbnail', () => {
+  beforeEach(() => {
+    vi.stubEnv('NEXT_PUBLIC_MAPBOX_TOKEN', 'pk.test.mapboxtoken');
+  });
+
   afterEach(() => {
     vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
   });
 
   it('on mobile, a visitor sees a static map image', () => {
@@ -37,7 +42,8 @@ describe('ShopMapThumbnail', () => {
     );
     const img = screen.getByRole('img', { name: /map/i });
     expect(img).toBeInTheDocument();
-    expect(img.getAttribute('src')).toContain('api.mapbox.com/styles/v1');
+    const src = decodeURIComponent(img.getAttribute('src') ?? '');
+    expect(src).toContain('api.mapbox.com/styles/v1');
   });
 
   it('on desktop, a visitor sees an interactive map embed', async () => {

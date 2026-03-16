@@ -5,6 +5,7 @@ import { describe, it, expect, vi } from 'vitest';
 // Mock heavy dependencies at the boundary
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn() }),
+  useSearchParams: () => ({ get: () => null }),
 }));
 
 vi.mock('@/lib/hooks/use-shops', () => ({
@@ -41,6 +42,10 @@ vi.mock('@/lib/hooks/use-shops', () => ({
 
 vi.mock('@/lib/hooks/use-media-query', () => ({
   useIsDesktop: () => false,
+}));
+
+vi.mock('@/lib/hooks/use-search', () => ({
+  useSearch: () => ({ results: [], isLoading: false }),
 }));
 
 vi.mock('@/lib/hooks/use-geolocation', () => ({

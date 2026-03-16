@@ -30,6 +30,18 @@ vi.mock('@/components/shops/share-button', () => ({
 vi.mock('@/components/shops/shop-map-thumbnail', () => ({
   ShopMapThumbnail: () => <div data-testid="shop-map-thumbnail" />,
 }));
+vi.mock('@/lib/hooks/use-user', () => ({
+  useUser: () => ({ user: null, isLoading: false }),
+}));
+vi.mock('@/lib/hooks/use-shop-reviews', () => ({
+  useShopReviews: () => ({
+    reviews: [],
+    total: 0,
+    averageRating: 0,
+    isLoading: false,
+    isAuthError: false,
+  }),
+}));
 
 import { ShopDetailClient } from './shop-detail-client';
 
