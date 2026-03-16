@@ -64,6 +64,7 @@
     ]
   },
   "devDependencies": {
+    "@napi-rs/canvas": "^0.1.96",
     "@stryker-mutator/core": "^9.6.0",
     "@stryker-mutator/vitest-runner": "^9.6.0",
     "@tailwindcss/postcss": "^4",

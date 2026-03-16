@@ -860,108 +860,32 @@ This is the gate for Phase 2B. Shops must be imported, enriched, embedded, and p
 
 ---
 
-## Quality Gate: Pre-Phase 3 E2E Coverage
+## PWA: Installable App
 
-> Gate before recruiting beta users. Every item here must pass before Phase 3 begins.
->
-> Tags: `smoke` = happy-path (run via `/e2e-smoke`), `edge` = guard-rail (run via Playwright MCP).
+> Make CafeRoam installable on mobile home screens (Add to Home Screen).
+> Tier 1 only — installability + meta tags. No service worker / offline (Tier 2 post-launch).
 
-### Auth & PDPA
+> **Design Doc:** [docs/designs/2026-03-16-pwa-installable-app-design.md](docs/designs/2026-03-16-pwa-installable-app-design.md)
+> **Plan:** [docs/plans/2026-03-16-pwa-installable-app-plan.md](docs/plans/2026-03-16-pwa-installable-app-plan.md)
 
-- [ ] Guest browses home, map, and shop detail without being redirected `smoke`
-- [ ] Guest accessing `/search`, `/lists`, `/checkin/*` is redirected to login `smoke`
-- [ ] Email/password signup → PDPA consent page → home `smoke`
-- [ ] Email/password login → home `smoke`
-- [ ] Logout → guest state, protected routes blocked again `smoke`
-- [ ] Signup with PDPA checkbox unchecked → form blocked, cannot submit `edge`
-- [ ] OAuth callback (Google/LINE) without prior PDPA consent → redirected to `/consent` `edge`
-- [ ] Accessing `/consent` when already consented → redirected to home `edge`
-- [ ] Account deletion initiated → grace-period banner visible in settings `edge`
-- [ ] Cancel deletion within grace period → banner disappears, account active `edge`
-- [ ] Account in soft-delete state cannot access any protected route `edge`
+**Chunk 1 — Icons + Manifest:**
 
-### Search (Auth-Gated, Semantic)
+- [x] Install `@napi-rs/canvas` devDependency
+- [ ] Generate placeholder PWA icons (啡 on coffee brown #6F4E37) via `scripts/generate-pwa-icons.ts` (canvas-based, one-shot)
+- [ ] Create `app/manifest.ts` (Next.js native manifest export)
 
-- [ ] Authenticated user submits query → ranked results appear `smoke`
-- [ ] Mode chip (work / rest / social) changes result set `smoke`
-- [ ] Clicking a result navigates to correct shop detail `smoke`
-- [ ] Guest accessing `/search` directly → redirected to login `edge`
-- [ ] Empty query submitted → graceful empty-results state, no crash `edge`
-- [ ] Query with zero matches → "no results" message shown `edge`
-- [ ] Filter pills narrow results; removing pill restores broader set `edge`
+**Chunk 2 — Layout Metadata:**
 
-### Lists (Auth-Gated, 3-List Cap)
+- [ ] Add `viewport` export to `app/layout.tsx` (theme-color `#6F4E37`, width, scale)
+- [ ] Add `icons` + `appleWebApp` to metadata export in `app/layout.tsx`
 
-- [ ] Create a list → appears on `/lists` `smoke`
-- [ ] Rename a list → updated name shown immediately `smoke`
-- [ ] Delete a list → removed from `/lists` `smoke`
-- [ ] Bookmark a shop from shop detail → shop saved to a list `smoke`
-- [ ] `/lists/[listId]` renders shops on split map + list view `smoke`
-- [ ] User with 3 lists sees create button disabled or error on attempt `edge`
-- [ ] Direct `POST /lists` with 3 existing lists → API returns 400 `edge`
-- [ ] Remove a shop from a list → shop no longer shown in list detail `edge`
-- [ ] Empty list → empty state displayed in list detail `edge`
+**Chunk 3 — Verification:**
 
-### Check-in & Stamps
-
-- [ ] Navigate to `/checkin/[shopId]` → form loads with shop name `smoke`
-- [ ] Upload photo + submit → success state, stamp toast shown `smoke`
-- [ ] New stamp appears in profile passport grid `smoke`
-- [ ] Check-in history tab shows the new entry `smoke`
-- [ ] Submit check-in without any photo → blocked with validation error `edge`
-- [ ] Upload a 4th photo → rejected; max 3 enforced `edge`
-- [ ] Second check-in at the same shop → second stamp added (duplicate is intended) `edge`
-- [ ] Check-in with stars + tag confirmations + text note → review saved, shown on shop detail `edge`
-- [ ] Guest visiting shop detail → photo grid shows login CTA instead of photos `edge`
-
-### Shop Detail (Public Access)
-
-- [ ] Guest can open a shop detail page without login `smoke`
-- [ ] Page renders name, cover photo, taxonomy tags, map thumbnail `smoke`
-- [ ] Share button copies URL or triggers Web Share API `smoke`
-- [ ] Invalid shop slug → 404 page, no unhandled error `edge`
-- [ ] OG meta tags present (title, description, image) — verify `<head>` in page source `edge`
-- [ ] Authenticated user sees check-in photo grid (not the login CTA) `edge`
-
-### Profile
-
-- [ ] Profile page loads with stamp passport, check-in history tab, lists tab `smoke`
-- [ ] Tapping a stamp opens StampDetailSheet with shop name `smoke`
-- [ ] Update display name in settings → new name reflected on profile header `smoke`
-- [ ] Empty stamp passport → empty state shown (not a blank grid) `edge`
-- [ ] Empty check-in history → empty state shown `edge`
-- [ ] Avatar upload → new image displayed in profile header `edge`
-
-### PDPA Cascade (Critical — Must Pass Before Any Beta User Data Is Collected)
-
-- [ ] Account deletion initiated → `deletion_requested_at` set in DB `edge`
-- [ ] Soft-delete prevents login before 30-day grace period ends `edge`
-- [ ] Hard-delete job removes: check-in photos (Storage), check_ins, lists, stamps, profile row `edge`
-- [ ] After hard delete, no orphaned rows remain for the deleted user_id `edge`
-
-### Admin
-
-- [ ] Non-admin user accessing `/admin/*` → 403 or redirect `smoke`
-- [ ] Admin views pipeline overview with job counts `smoke`
-- [ ] Admin can manually enqueue a shop for re-enrichment `smoke`
-- [ ] Dead-letter queue shows failed jobs; retry succeeds for recoverable error `edge`
-
-### Analytics Events (PostHog)
-
-- [ ] `checkin_completed` fires with `shop_id`, `is_first_checkin_at_shop`, `has_text_note` `edge`
-- [ ] `search_submitted` fires with `result_count`, `mode_chip_active` `edge`
-- [ ] `shop_detail_viewed` fires with `referrer`, `session_search_query` `edge`
-- [ ] `session_start` fires on first page load with `previous_sessions` count `edge`
-- [ ] `filter_applied` fires when a filter pill or filter sheet option is toggled `edge`
-- [ ] `shop_url_copied` fires when share button is used `edge`
-
-### Verification Checklist
-
-- [ ] Run `/e2e-smoke` against local app (frontend :3000 + backend :8000 + Supabase running)
-- [ ] Run Playwright automation for all `edge` items above
-- [ ] Zero unhandled console errors on all `smoke` paths
-- [ ] All PostHog events verified in Live Events panel (real browser session)
-- [ ] `make doctor` passes with zero failures before running any browser tests
+- [ ] `pnpm build` passes with no type errors
+- [ ] DevTools > Application > Manifest shows valid manifest with 3 icons
+- [ ] Lighthouse PWA audit: "installable" passes
+- [ ] iOS Safari: Add to Home Screen shows correct icon + '啡遊' title
+- [ ] Android Chrome: install prompt / "Add to Home Screen" works
 
 ---
 
