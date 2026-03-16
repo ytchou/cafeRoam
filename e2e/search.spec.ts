@@ -10,9 +10,7 @@ test.describe('@critical J07 — Semantic search returns ranked results', () => 
     const searchForm = page.locator('form[role="search"]');
     const searchInput = searchForm.getByRole('textbox');
     await searchInput.fill('想找安靜可以工作的地方');
-    await searchForm.evaluate((form) =>
-      form.dispatchEvent(new Event('submit', { bubbles: true })),
-    );
+    await searchInput.press('Enter');
 
     // Wait for results to load (not "搜尋中…" loading state)
     await expect(page.getByText('搜尋中…')).toBeHidden({ timeout: 15_000 });

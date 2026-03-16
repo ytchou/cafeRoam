@@ -7,6 +7,24 @@ const __dirname = path.dirname(__filename);
 
 const STORAGE_STATE_PATH = path.join(__dirname, '..', '.auth', 'user.json');
 
+async function loginFresh(
+  browser: import('@playwright/test').Browser,
+  email: string,
+  password: string,
+): Promise<import('@playwright/test').BrowserContext> {
+  const ctx = await browser.newContext();
+  const pg = await ctx.newPage();
+  await pg.goto('/login');
+  await pg.fill('#email', email);
+  await pg.fill('#password', password);
+  await pg.click('button[type="submit"]');
+  await pg.waitForURL('/', { timeout: 15_000 });
+  await ctx.storageState({ path: STORAGE_STATE_PATH });
+  await pg.close();
+  await ctx.close();
+  return browser.newContext({ storageState: STORAGE_STATE_PATH });
+}
+
 export const test = base.extend<{ authedPage: Page }>({
   authedPage: async ({ browser }, use) => {
     const email = process.env.E2E_USER_EMAIL;
@@ -20,30 +38,20 @@ export const test = base.extend<{ authedPage: Page }>({
 
     let context;
     try {
-      // Try reusing existing session
-      context = await browser.newContext({
-        storageState: STORAGE_STATE_PATH,
-      });
+      context = await browser.newContext({ storageState: STORAGE_STATE_PATH });
     } catch {
-      // No stored session — login fresh
-      context = await browser.newContext();
-      const page = await context.newPage();
+      context = await loginFresh(browser, email, password);
+    }
 
-      await page.goto('/login');
-      await page.fill('#email', email);
-      await page.fill('#password', password);
-      await page.click('button[type="submit"]');
-      await page.waitForURL('/', { timeout: 15_000 });
+    // Validate session is still active (stored token may have expired)
+    const probe = await context.newPage();
+    await probe.goto('/', { waitUntil: 'commit' });
+    const isExpired = probe.url().includes('/login');
+    await probe.close();
 
-      // Save session for reuse
-      await context.storageState({ path: STORAGE_STATE_PATH });
-      await page.close();
-
-      // Re-create context with saved state
+    if (isExpired) {
       await context.close();
-      context = await browser.newContext({
-        storageState: STORAGE_STATE_PATH,
-      });
+      context = await loginFresh(browser, email, password);
     }
 
     const page = await context.newPage();

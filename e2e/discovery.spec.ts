@@ -59,9 +59,7 @@ test.describe('@critical J03 — Text search → results on map → shop detail'
     const searchForm = page.locator('form').first();
     const searchInput = searchForm.getByRole('textbox');
     await searchInput.fill('coffee');
-    await searchForm.evaluate((form) =>
-      form.dispatchEvent(new Event('submit', { bubbles: true })),
-    );
+    await searchInput.press('Enter');
 
     // Should navigate to /map with query
     await page.waitForURL(/\/map\?.*q=coffee/, { timeout: 10_000 });

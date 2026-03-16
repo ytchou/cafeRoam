@@ -19,8 +19,17 @@ test.describe('@critical J12 — Create list → add shop → shop appears in li
     // Verify the list appears on the page
     await expect(page.getByText(listName)).toBeVisible({ timeout: 10_000 });
 
-    // Cleanup: delete the list we just created
-    // (to avoid polluting the test account)
+    // Cleanup: delete the created list via API to avoid polluting the test account
+    const listsResp = await page.request.get('/api/lists');
+    if (listsResp.ok()) {
+      const lists = await listsResp.json();
+      const created = Array.isArray(lists)
+        ? lists.find((l: { name: string; id: string }) => l.name === listName)
+        : null;
+      if (created?.id) {
+        await page.request.delete(`/api/lists/${created.id}`);
+      }
+    }
   });
 });
 
@@ -39,30 +48,47 @@ test.describe('@critical J13 — Create 3 lists → 4th list → cap error', () 
     const counterText = await counter.textContent();
     const currentCount = parseInt(counterText?.split('/')[0]?.trim() ?? '0');
 
-    // Create lists up to the cap
+    // Create lists up to the cap, waiting for each to appear before creating next
+    const createdNames: string[] = [];
     const listsToCreate = 3 - currentCount;
     for (let i = 0; i < listsToCreate; i++) {
-      const input = page.getByPlaceholder('Create new list');
-      await input.fill(`Cap Test ${Date.now()}-${i}`);
+      const listInput = page.getByPlaceholder('Create new list');
+      const name = `Cap Test ${Date.now()}-${i}`;
+      await listInput.fill(name);
       await page.getByRole('button', { name: 'Add' }).click();
-      // Wait for list to appear before creating next
-      await page.waitForTimeout(500);
+      await expect(page.getByText(name)).toBeVisible({ timeout: 5_000 });
+      createdNames.push(name);
     }
 
     // The counter should now show "3 / 3"
     await expect(page.getByText('3 / 3')).toBeVisible({ timeout: 5_000 });
 
-    // The create input might be hidden or the 4th attempt should show an error
-    // Try to create a 4th list if the input is still visible
+    // Assert cap is enforced: either input is hidden (UI-level) or 4th attempt shows error
     const input = page.getByPlaceholder('Create new list');
     if (await input.isVisible()) {
       await input.fill('Over Limit');
       await page.getByRole('button', { name: 'Add' }).click();
-
       // Should show error toast about the 3-list limit
       await expect(
         page.getByText(/3-list limit|reached the.*limit/i),
       ).toBeVisible({ timeout: 5_000 });
+    } else {
+      // Cap enforced by hiding input — verify counter still at 3/3
+      await expect(page.getByText('3 / 3')).toBeVisible();
+    }
+
+    // Cleanup: delete lists created by this test run
+    const listsResp = await page.request.get('/api/lists');
+    if (listsResp.ok()) {
+      const allLists = await listsResp.json();
+      const testLists = Array.isArray(allLists)
+        ? allLists.filter((l: { name: string }) =>
+            createdNames.includes(l.name),
+          )
+        : [];
+      for (const list of testLists as Array<{ id: string }>) {
+        await page.request.delete(`/api/lists/${list.id}`);
+      }
     }
   });
 });

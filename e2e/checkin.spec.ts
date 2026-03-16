@@ -26,8 +26,8 @@ test.describe('@critical J10 — Check-in: upload photo → submit → stamp awa
     const fileInput = page.locator('[data-testid="photo-input"]');
     await fileInput.setInputFiles(TEST_PHOTO);
 
-    // Wait for photo preview to appear
-    await expect(page.getByRole('img')).toBeVisible({ timeout: 10_000 });
+    // Wait for photo preview — blob: URL is specific to client-side file upload previews
+    await expect(page.locator('img[src^="blob:"]')).toBeVisible({ timeout: 10_000 });
 
     // Submit the check-in
     const submitButton = page.getByRole('button', { name: /打卡|Check In/i });
