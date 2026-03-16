@@ -1,7 +1,7 @@
 /**
  * One-shot PWA icon generator.
  * Run: npx tsx scripts/generate-pwa-icons.ts
- * Output: public/icon-192.png, icon-512.png, icon-512-maskable.png, apple-touch-icon.png, favicon.ico
+ * Output: public/icon-192.png, icon-512.png, icon-512-maskable.png, apple-touch-icon.png, favicon.png
  */
 import { createCanvas } from '@napi-rs/canvas';
 import { writeFileSync, mkdirSync, existsSync } from 'fs';
@@ -24,7 +24,7 @@ const ICON_SPECS: IconSpec[] = [
   { filename: 'icon-512.png', size: 512 },
   { filename: 'icon-512-maskable.png', size: 512, maskable: true },
   { filename: 'apple-touch-icon.png', size: 180 },
-  { filename: 'favicon.ico', size: 32 },
+  { filename: 'favicon.png', size: 32 },
 ];
 
 function generateIcon({ filename, size, maskable, fontScale }: IconSpec): void {
