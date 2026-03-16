@@ -37,7 +37,7 @@ describe('middleware route guards', () => {
   });
 
   describe('public routes — pass through without auth', () => {
-    it.each(['/', '/login', '/signup', '/auth/callback', '/privacy'])(
+    it.each(['/', '/login', '/signup', '/auth/callback', '/privacy', '/manifest.webmanifest'])(
       '%s passes through without a session',
       async (pathname) => {
         mockUpdateSession.mockResolvedValue({
