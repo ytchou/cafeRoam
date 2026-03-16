@@ -23,7 +23,7 @@
       "**/scripts/generate-pwa-icons.ts",
       "layout.tsx",
       "*/components/ui/*.tsx",
-      "e2e/**"
+      "**/e2e/**"
     ]
   },
   "backend": {
