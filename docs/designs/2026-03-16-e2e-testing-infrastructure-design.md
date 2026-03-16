@@ -59,43 +59,43 @@ e2e/
 
 ### Critical Paths (PR-blocking) — Phase 1
 
-| ID | Journey | Spec file | Auth |
-|----|---------|-----------|------|
-| J01 | Near Me: grant geolocation → map centered with shop pins | `discovery.spec.ts` | No |
-| J02 | Near Me: deny geolocation → toast fallback + text search | `discovery.spec.ts` | No |
-| J03 | Text search → results on map → tap pin → shop detail card | `discovery.spec.ts` | No |
-| J05 | Auth wall: tap search/lists/check-in → redirect to login | `auth.spec.ts` | No |
-| J06 | Signup → PDPA consent → reach home | `auth.spec.ts` | No |
-| J07 | Semantic search: "想找安靜可以工作的地方" → ranked results | `search.spec.ts` | Yes |
-| J10 | Check-in: upload photo → submit → stamp awarded | `checkin.spec.ts` | Yes |
-| J11 | Check-in: attempt submit without photo → validation error | `checkin.spec.ts` | Yes |
-| J12 | Create list → add shop → shop appears in list | `lists.spec.ts` | Yes |
-| J13 | Create 3 lists → attempt 4th → cap error | `lists.spec.ts` | Yes |
+| ID  | Journey                                                    | Spec file           | Auth |
+| --- | ---------------------------------------------------------- | ------------------- | ---- |
+| J01 | Near Me: grant geolocation → map centered with shop pins   | `discovery.spec.ts` | No   |
+| J02 | Near Me: deny geolocation → toast fallback + text search   | `discovery.spec.ts` | No   |
+| J03 | Text search → results on map → tap pin → shop detail card  | `discovery.spec.ts` | No   |
+| J05 | Auth wall: tap search/lists/check-in → redirect to login   | `auth.spec.ts`      | No   |
+| J06 | Signup → PDPA consent → reach home                         | `auth.spec.ts`      | No   |
+| J07 | Semantic search: "想找安靜可以工作的地方" → ranked results | `search.spec.ts`    | Yes  |
+| J10 | Check-in: upload photo → submit → stamp awarded            | `checkin.spec.ts`   | Yes  |
+| J11 | Check-in: attempt submit without photo → validation error  | `checkin.spec.ts`   | Yes  |
+| J12 | Create list → add shop → shop appears in list              | `lists.spec.ts`     | Yes  |
+| J13 | Create 3 lists → attempt 4th → cap error                   | `lists.spec.ts`     | Yes  |
 
 ### Full Suite (nightly) — Phase 2 (`test.todo()` stubs)
 
-| ID | Journey | Priority | Spec file | Auth |
-|----|---------|----------|-----------|------|
-| J04 | Browse map → tap pin → shop detail sheet | High | `discovery.spec.ts` | No |
-| J08 | Mode chip: select "work" → filtered results | High | `search.spec.ts` | Yes |
-| J09 | Suggestion chip: tap preset → search executes | High | `search.spec.ts` | Yes |
-| J14 | Profile: check-in history + stamp collection | High | `profile.spec.ts` | Yes |
-| J15 | Account deletion: request → grace period | High | `profile.spec.ts` | Yes |
-| J16 | Activity feed: public access | Medium | `feed.spec.ts` | No |
-| J17 | PWA manifest: 200 + brand metadata + icons | Medium | `pwa.spec.ts` | No |
-| J18 | Shop detail: public access with OG tags | High | `discovery.spec.ts` | No |
-| J19 | Shop detail via slug redirect | Medium | `discovery.spec.ts` | No |
-| J20 | Near Me: coords outside Taiwan → boundary behavior | Medium | `edge-cases.spec.ts` | No |
-| J21 | Filter pills: toggle WiFi → results update | High | `search.spec.ts` | No |
-| J22 | Map ↔ List view toggle | Medium | `discovery.spec.ts` | No |
-| J23 | List view: shops sorted by distance | Medium | `discovery.spec.ts` | No |
-| J24 | Duplicate stamp at same shop (intended) | Medium | `checkin.spec.ts` | Yes |
-| J25 | Display name update | Medium | `profile.spec.ts` | Yes |
-| J26 | Delete list | Medium | `lists.spec.ts` | Yes |
-| J27 | Remove shop from list | Medium | `lists.spec.ts` | Yes |
-| J28 | Desktop: 2-column shop detail layout | Medium | `discovery.spec.ts` | No |
-| J29 | Mobile: mini card on pin tap | Medium | `discovery.spec.ts` | No |
-| J30 | Check-in with optional menu photo + text note | Medium | `checkin.spec.ts` | Yes |
+| ID  | Journey                                            | Priority | Spec file            | Auth |
+| --- | -------------------------------------------------- | -------- | -------------------- | ---- |
+| J04 | Browse map → tap pin → shop detail sheet           | High     | `discovery.spec.ts`  | No   |
+| J08 | Mode chip: select "work" → filtered results        | High     | `search.spec.ts`     | Yes  |
+| J09 | Suggestion chip: tap preset → search executes      | High     | `search.spec.ts`     | Yes  |
+| J14 | Profile: check-in history + stamp collection       | High     | `profile.spec.ts`    | Yes  |
+| J15 | Account deletion: request → grace period           | High     | `profile.spec.ts`    | Yes  |
+| J16 | Activity feed: public access                       | Medium   | `feed.spec.ts`       | No   |
+| J17 | PWA manifest: 200 + brand metadata + icons         | Medium   | `pwa.spec.ts`        | No   |
+| J18 | Shop detail: public access with OG tags            | High     | `discovery.spec.ts`  | No   |
+| J19 | Shop detail via slug redirect                      | Medium   | `discovery.spec.ts`  | No   |
+| J20 | Near Me: coords outside Taiwan → boundary behavior | Medium   | `edge-cases.spec.ts` | No   |
+| J21 | Filter pills: toggle WiFi → results update         | High     | `search.spec.ts`     | No   |
+| J22 | Map ↔ List view toggle                             | Medium   | `discovery.spec.ts`  | No   |
+| J23 | List view: shops sorted by distance                | Medium   | `discovery.spec.ts`  | No   |
+| J24 | Duplicate stamp at same shop (intended)            | Medium   | `checkin.spec.ts`    | Yes  |
+| J25 | Display name update                                | Medium   | `profile.spec.ts`    | Yes  |
+| J26 | Delete list                                        | Medium   | `lists.spec.ts`      | Yes  |
+| J27 | Remove shop from list                              | Medium   | `lists.spec.ts`      | Yes  |
+| J28 | Desktop: 2-column shop detail layout               | Medium   | `discovery.spec.ts`  | No   |
+| J29 | Mobile: mini card on pin tap                       | Medium   | `discovery.spec.ts`  | No   |
+| J30 | Check-in with optional menu photo + text note      | Medium   | `checkin.spec.ts`    | Yes  |
 
 ## CI Workflows
 
@@ -115,6 +115,7 @@ e2e/
 ### Tag-based filtering
 
 Critical tests use `@critical` in their `describe` block name:
+
 ```typescript
 test.describe('@critical J01 — Near Me: grant geolocation', () => { ... });
 ```

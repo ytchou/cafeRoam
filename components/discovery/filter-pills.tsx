@@ -29,7 +29,10 @@ export function FilterPills({
   }
 
   function handleNearMe() {
-    capture('filter_applied', { filter_type: 'quick', filter_value: 'distance' });
+    capture('filter_applied', {
+      filter_type: 'quick',
+      filter_value: 'distance',
+    });
     onNearMe?.();
   }
 
@@ -40,7 +43,14 @@ export function FilterPills({
         onClick={onOpenSheet}
         className="flex flex-shrink-0 items-center gap-1.5 rounded-full border border-gray-300 bg-white px-3 py-1.5 text-sm whitespace-nowrap text-gray-700 shadow-sm hover:bg-gray-50"
       >
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 16 16"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+        >
           <line x1="2" y1="4" x2="14" y2="4" />
           <line x1="2" y1="8" x2="14" y2="8" />
           <line x1="2" y1="12" x2="14" y2="12" />

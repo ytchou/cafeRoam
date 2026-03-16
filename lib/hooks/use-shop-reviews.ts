@@ -23,7 +23,11 @@ export function useShopReviews(shopId: string, enabled: boolean) {
     {
       revalidateOnFocus: false,
       onErrorRetry: (err, _key, _config, revalidate, { retryCount }) => {
-        if (err.message.includes('401') || err.message.includes('Not authenticated')) return;
+        if (
+          err.message.includes('401') ||
+          err.message.includes('Not authenticated')
+        )
+          return;
         if (retryCount >= 2) return;
         revalidate({ retryCount });
       },
@@ -37,6 +41,7 @@ export function useShopReviews(shopId: string, enabled: boolean) {
     isLoading,
     isAuthError:
       error != null &&
-      (error.message.includes('Not authenticated') || error.message.includes('401')),
+      (error.message.includes('Not authenticated') ||
+        error.message.includes('401')),
   };
 }

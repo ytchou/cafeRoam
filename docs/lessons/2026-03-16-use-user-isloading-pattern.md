@@ -1,4 +1,5 @@
 # useUser hook must expose isLoading to prevent auth-state flash
+
 **Date:** 2026-03-16
 **Context:** fix/home-page-filters — gating reviews fetch on auth state
 

@@ -14,7 +14,10 @@ function StarRating({ stars }: { stars: number }) {
   return (
     <div className="flex gap-0.5">
       {[1, 2, 3, 4, 5].map((n) => (
-        <span key={n} className={n <= stars ? 'text-[#E06B3F]' : 'text-gray-200'}>
+        <span
+          key={n}
+          className={n <= stars ? 'text-[#E06B3F]' : 'text-gray-200'}
+        >
           ★
         </span>
       ))}
@@ -51,7 +54,10 @@ export function ShopReviews({
       <div className="px-4 py-4">
         <h2 className="mb-2 text-sm font-semibold text-gray-900">打卡評價</h2>
         <p className="text-sm text-gray-500">
-          <Link href="/login" className="text-[#E06B3F] underline underline-offset-2">
+          <Link
+            href="/login"
+            className="text-[#E06B3F] underline underline-offset-2"
+          >
             登入
           </Link>{' '}
           後可查看其他人的評價
@@ -91,7 +97,9 @@ export function ShopReviews({
                   <span className="text-sm font-medium text-gray-900">
                     {review.displayName ?? '匿名'}
                   </span>
-                  <span className="text-xs text-gray-400">{formatDate(review.reviewedAt)}</span>
+                  <span className="text-xs text-gray-400">
+                    {formatDate(review.reviewedAt)}
+                  </span>
                 </div>
                 <StarRating stars={review.stars} />
                 {review.reviewText && (

@@ -40,11 +40,7 @@ export function SuggestionChips({ onSelect, onNearMe }: SuggestionChipsProps) {
           {chip}
         </button>
       ))}
-      <button
-        type="button"
-        onClick={handleNearMe}
-        className={CHIP_CLASS}
-      >
+      <button type="button" onClick={handleNearMe} className={CHIP_CLASS}>
         {NEAR_ME}
       </button>
     </div>

@@ -68,7 +68,7 @@ export function MapView({
 
   if (!mapboxToken) {
     return (
-      <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+      <div className="text-muted-foreground flex h-full items-center justify-center text-sm">
         地圖無法載入：缺少 Mapbox token
       </div>
     );

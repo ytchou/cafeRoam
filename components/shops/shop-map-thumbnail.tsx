@@ -32,7 +32,13 @@ export function ShopMapThumbnail({
 
   if (isDesktop) {
     return (
-      <div className={fullHeight ? 'h-full overflow-hidden' : 'h-[200px] overflow-hidden rounded-xl'}>
+      <div
+        className={
+          fullHeight
+            ? 'h-full overflow-hidden'
+            : 'h-[200px] overflow-hidden rounded-xl'
+        }
+      >
         <InteractiveMap
           mapboxAccessToken={token}
           initialViewState={{ longitude, latitude, zoom: 15 }}
