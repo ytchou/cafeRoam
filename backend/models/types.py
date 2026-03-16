@@ -43,6 +43,7 @@ class Shop(CamelModel):
     menu_url: str | None = None
     taxonomy_tags: list[TaxonomyTag] = []
     mode_scores: ShopModeScores | None = None
+    slug: str | None = None
     cafenomad_id: str | None = None
     google_place_id: str | None = None
     created_at: datetime

@@ -928,8 +928,7 @@ _Better Stack:_
 ### Quality Gate
 
 - [ ] Weekly curated email: implement real content algorithm (infrastructure is done — handler, scheduler, Resend provider all wired; only content logic is missing)
-- [ ] **[P3]** Add `slug: str | None = None` to Shop Pydantic model in `backend/models/types.py` — field is returned correctly but absent from model class (OpenAPI + type safety gap)
-- [ ] **[P3]** Rename `middleware.ts` → `proxy.ts` (or update file convention) — Next.js 16 deprecated the `middleware` filename in favour of `proxy`; currently logs a warning on every dev server start
+- [x] **[P3]** Add `slug: str | None = None` to Shop Pydantic model in `backend/models/types.py` — field is returned correctly but absent from model class (OpenAPI + type safety gap)
 - [ ] Map performance audit: test on low-end Android devices
 - [ ] Security review: RLS policies, PDPA flow, Sentry error baseline
 - [ ] SQL lint passing on all migrations
