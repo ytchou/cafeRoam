@@ -31,7 +31,10 @@ export default function MapPage() {
   const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
 
   const { shops: featuredShops } = useShops({ featured: true, limit: 200 });
-  const { results: searchResults, isLoading: searchLoading } = useSearch(urlQuery, urlMode);
+  const { results: searchResults, isLoading: searchLoading } = useSearch(
+    urlQuery,
+    urlMode
+  );
   const isDesktop = useIsDesktop();
   const { latitude, longitude, requestLocation } = useGeolocation();
 
@@ -42,7 +45,9 @@ export default function MapPage() {
   }, [urlQuery, searchLoading, searchResults, featuredShops]);
 
   const shopById = useMemo(() => new Map(shops.map((s) => [s.id, s])), [shops]);
-  const selectedShop = selectedShopId ? (shopById.get(selectedShopId) ?? null) : null;
+  const selectedShop = selectedShopId
+    ? (shopById.get(selectedShopId) ?? null)
+    : null;
 
   function handleSearch(query: string) {
     const params = new URLSearchParams({ q: query });
@@ -62,13 +67,16 @@ export default function MapPage() {
 
   function handleToggleFilter(filter: string) {
     setActiveFilters((prev) =>
-      prev.includes(filter) ? prev.filter((x) => x !== filter) : [...prev, filter]
+      prev.includes(filter)
+        ? prev.filter((x) => x !== filter)
+        : [...prev, filter]
     );
   }
 
   function getSearchStatusText(): string {
     if (searchLoading) return '搜尋中…';
-    if (searchResults.length > 0) return `找到 ${searchResults.length} 間咖啡廳`;
+    if (searchResults.length > 0)
+      return `找到 ${searchResults.length} 間咖啡廳`;
     return '找不到符合的咖啡廳，顯示精選';
   }
 
@@ -96,12 +104,19 @@ export default function MapPage() {
         <div className="space-y-2 rounded-2xl bg-white/90 p-3 shadow backdrop-blur-md supports-[not(backdrop-filter)]:bg-white">
           <div className="flex items-center gap-2">
             <div className="flex-1">
-              <SearchBar onSubmit={handleSearch} defaultQuery={urlQuery ?? ''} />
+              <SearchBar
+                onSubmit={handleSearch}
+                defaultQuery={urlQuery ?? ''}
+              />
             </div>
             <button
               onClick={handleToggleView}
               className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white"
-              aria-label={viewMode === 'map' ? 'Switch to list view' : 'Switch to map view'}
+              aria-label={
+                viewMode === 'map'
+                  ? 'Switch to list view'
+                  : 'Switch to map view'
+              }
             >
               {viewMode === 'map' ? (
                 <List className="h-5 w-5 text-gray-600" />
@@ -123,7 +138,10 @@ export default function MapPage() {
       </div>
 
       {viewMode === 'map' && selectedShop && !isDesktop && (
-        <MapMiniCard shop={selectedShop} onDismiss={() => setSelectedShopId(null)} />
+        <MapMiniCard
+          shop={selectedShop}
+          onDismiss={() => setSelectedShopId(null)}
+        />
       )}
       {viewMode === 'map' && selectedShop && isDesktop && (
         <MapDesktopCard shop={selectedShop} />

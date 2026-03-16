@@ -53,10 +53,8 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
   const tags = shop.taxonomyTags ?? [];
   const shopPath = `/shops/${shop.id}/${shop.slug ?? shop.id}`;
 
-  const { reviews, total, averageRating, isLoading, isAuthError } = useShopReviews(
-    shop.id,
-    !!user
-  );
+  const { reviews, total, averageRating, isLoading, isAuthError } =
+    useShopReviews(shop.id, !!user);
 
   useEffect(() => {
     capture('shop_detail_viewed', {
@@ -86,7 +84,9 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
           />
           {tags.length > 0 && <AttributeChips tags={tags as TaxonomyTag[]} />}
           {shop.description && <ShopDescription text={shop.description} />}
-          {shop.menuHighlights && <MenuHighlights items={shop.menuHighlights} />}
+          {shop.menuHighlights && (
+            <MenuHighlights items={shop.menuHighlights} />
+          )}
           {shop.checkinPreview && (
             <RecentCheckinsStrip
               preview={shop.checkinPreview}

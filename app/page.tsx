@@ -15,7 +15,12 @@ import type { Shop } from '@/lib/types';
 
 type SortKey = 'default' | 'rating';
 
-function applySort(shops: Shop[], mode: SearchMode, activeFilters: string[], sortBy: SortKey): Shop[] {
+function applySort(
+  shops: Shop[],
+  mode: SearchMode,
+  activeFilters: string[],
+  sortBy: SortKey
+): Shop[] {
   const sorted = [...shops];
 
   switch (mode) {
@@ -80,7 +85,9 @@ export default function HomePage() {
 
   function handleToggleFilter(filter: string) {
     setActiveFilters((prev) =>
-      prev.includes(filter) ? prev.filter((x) => x !== filter) : [...prev, filter]
+      prev.includes(filter)
+        ? prev.filter((x) => x !== filter)
+        : [...prev, filter]
     );
   }
 
@@ -109,7 +116,7 @@ export default function HomePage() {
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as SortKey)}
-            className="rounded-lg border border-gray-200 bg-white px-2 py-1 text-sm text-gray-600 focus:outline-none focus:ring-1 focus:ring-[#E06B3F]"
+            className="rounded-lg border border-gray-200 bg-white px-2 py-1 text-sm text-gray-600 focus:ring-1 focus:ring-[#E06B3F] focus:outline-none"
           >
             <option value="default">預設</option>
             <option value="rating">評分</option>

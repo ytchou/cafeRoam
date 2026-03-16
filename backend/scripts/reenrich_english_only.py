@@ -29,7 +29,13 @@ def _fmt(s: float) -> str:
 
 
 def find_english_only_shops(db) -> list[dict]:
-    rows = db.table("shops").select("id, name, description").eq("processing_status", "live").execute().data
+    rows = (
+        db.table("shops")
+        .select("id, name, description")
+        .eq("processing_status", "live")
+        .execute()
+        .data
+    )
     return [
         r for r in rows
         if r.get("description")
