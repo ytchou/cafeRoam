@@ -3,7 +3,7 @@ from typing import Any, cast
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic.alias_generators import to_camel
 
-from api.deps import get_admin_db, get_current_user, get_optional_user
+from api.deps import get_admin_db, get_current_user, get_optional_user, get_user_db
 from core.db import first
 from db.supabase_client import get_anon_client
 from models.types import (
@@ -162,7 +162,7 @@ async def get_shop_reviews(
     limit: int = Query(default=10, ge=1, le=50),
     offset: int = Query(default=0, ge=0),
     user: dict[str, Any] = Depends(get_current_user),  # noqa: B008
-    db: Any = Depends(get_admin_db),  # noqa: B008
+    db: Any = Depends(get_user_db),  # noqa: B008
 ) -> dict[str, Any]:
     """Get reviews for a shop. Auth-gated.
 
