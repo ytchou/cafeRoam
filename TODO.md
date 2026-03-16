@@ -876,8 +876,8 @@ This is the gate for Phase 2B. Shops must be imported, enriched, embedded, and p
 
 **Chunk 2 — Layout Metadata:**
 
-- [ ] Add `viewport` export to `app/layout.tsx` (theme-color `#6F4E37`, width, scale)
-- [ ] Add `icons` + `appleWebApp` to metadata export in `app/layout.tsx`
+- [x] Add `viewport` export to `app/layout.tsx` (theme-color `#6F4E37`, width, scale)
+- [x] Add `icons` + `appleWebApp` to metadata export in `app/layout.tsx`
 
 **Chunk 3 — Verification:**
 
