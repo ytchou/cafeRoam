@@ -22,7 +22,7 @@ export default function FindPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const urlQuery = searchParams.get('q');
-  const urlMode = (searchParams.get('mode') ?? null) as SearchMode;
+  const urlMode = searchParams.get('mode') as SearchMode;
 
   const [selectedShopId, setSelectedShopId] = useState<string | null>(null);
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
@@ -102,15 +102,15 @@ export default function FindPage() {
         </div>
       </div>
 
-      {selectedShop && !isDesktop && (
-        <MapMiniCard
-          shop={selectedShop}
-          onDismiss={() => setSelectedShopId(null)}
-        />
-      )}
-      {selectedShop && isDesktop && (
-        <MapDesktopCard shop={selectedShop} />
-      )}
+      {selectedShop &&
+        (isDesktop ? (
+          <MapDesktopCard shop={selectedShop} />
+        ) : (
+          <MapMiniCard
+            shop={selectedShop}
+            onDismiss={() => setSelectedShopId(null)}
+          />
+        ))}
     </div>
   );
 }
