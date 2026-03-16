@@ -93,10 +93,7 @@ function FindPageContent() {
       <div className="absolute top-4 right-4 left-4 z-20">
         <div className="space-y-2 rounded-2xl bg-white/90 p-3 shadow backdrop-blur-md supports-[not(backdrop-filter)]:bg-white">
           <div className="flex-1">
-            <SearchBar
-              onSubmit={handleSearch}
-              defaultQuery={urlQuery ?? ''}
-            />
+            <SearchBar onSubmit={handleSearch} defaultQuery={urlQuery ?? ''} />
           </div>
           {urlQuery && (
             <p className="text-xs text-gray-500">{getSearchStatusText()}</p>

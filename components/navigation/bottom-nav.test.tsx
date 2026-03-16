@@ -43,8 +43,17 @@ describe('BottomNav', () => {
   it('When a user taps each tab, they are directed to the correct section of the app', () => {
     render(<BottomNav />);
     expect(screen.getByText('地圖').closest('a')).toHaveAttribute('href', '/');
-    expect(screen.getByText('探索').closest('a')).toHaveAttribute('href', '/explore');
-    expect(screen.getByText('收藏').closest('a')).toHaveAttribute('href', '/lists');
-    expect(screen.getByText('我的').closest('a')).toHaveAttribute('href', '/profile');
+    expect(screen.getByText('探索').closest('a')).toHaveAttribute(
+      'href',
+      '/explore'
+    );
+    expect(screen.getByText('收藏').closest('a')).toHaveAttribute(
+      'href',
+      '/lists'
+    );
+    expect(screen.getByText('我的').closest('a')).toHaveAttribute(
+      'href',
+      '/profile'
+    );
   });
 });

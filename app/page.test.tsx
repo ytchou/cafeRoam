@@ -78,8 +78,12 @@ describe('Find page (map)', () => {
 
   it('When a user opens the Find tab, there is no list/map toggle button', () => {
     render(<FindPage />);
-    expect(screen.queryByRole('button', { name: /list/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /map/i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /list/i })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /map/i })
+    ).not.toBeInTheDocument();
   });
 
   it('When a user opens the Find tab, they see the search bar', () => {

@@ -5,9 +5,9 @@ import { Map, Compass, Heart, User } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 const TABS: { href: string; label: string; icon: LucideIcon }[] = [
-  { href: '/',        label: '地圖', icon: Map },
+  { href: '/', label: '地圖', icon: Map },
   { href: '/explore', label: '探索', icon: Compass },
-  { href: '/lists',   label: '收藏', icon: Heart },
+  { href: '/lists', label: '收藏', icon: Heart },
   { href: '/profile', label: '我的', icon: User },
 ];
 

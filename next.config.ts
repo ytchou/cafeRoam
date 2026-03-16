@@ -4,9 +4,7 @@ import { withSentryConfig } from '@sentry/nextjs';
 
 const nextConfig: NextConfig = {
   async redirects() {
-    return [
-      { source: '/map', destination: '/', permanent: true },
-    ];
+    return [{ source: '/map', destination: '/', permanent: true }];
   },
   turbopack: {
     root: path.resolve(__dirname),
