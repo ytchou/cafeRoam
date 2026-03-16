@@ -872,7 +872,7 @@ This is the gate for Phase 2B. Shops must be imported, enriched, embedded, and p
 
 - [x] Install `@napi-rs/canvas` devDependency
 - [x] Generate placeholder PWA icons (啡 on coffee brown #6F4E37) via `scripts/generate-pwa-icons.ts` (canvas-based, one-shot)
-- [ ] Create `app/manifest.ts` (Next.js native manifest export)
+- [x] Create `app/manifest.ts` (Next.js native manifest export)
 
 **Chunk 2 — Layout Metadata:**
 
