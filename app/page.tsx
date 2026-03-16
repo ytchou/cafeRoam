@@ -18,9 +18,17 @@ type SortKey = 'default' | 'rating';
 function applySort(shops: Shop[], mode: SearchMode, activeFilters: string[], sortBy: SortKey): Shop[] {
   const sorted = [...shops];
 
-  if (mode === 'work') return sorted.sort((a, b) => (b.modeWork ?? 0) - (a.modeWork ?? 0));
-  if (mode === 'rest') return sorted.sort((a, b) => (b.modeRest ?? 0) - (a.modeRest ?? 0));
-  if (mode === 'social') return sorted.sort((a, b) => (b.modeSocial ?? 0) - (a.modeSocial ?? 0));
+  switch (mode) {
+    case 'work':
+      return sorted.sort((a, b) => (b.modeWork ?? 0) - (a.modeWork ?? 0));
+    case 'rest':
+      return sorted.sort((a, b) => (b.modeRest ?? 0) - (a.modeRest ?? 0));
+    case 'social':
+      return sorted.sort((a, b) => (b.modeSocial ?? 0) - (a.modeSocial ?? 0));
+    default:
+      break;
+  }
+
   if (sortBy === 'rating' || activeFilters.includes('rating')) {
     return sorted.sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
   }

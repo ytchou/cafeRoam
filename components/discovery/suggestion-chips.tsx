@@ -20,6 +20,14 @@ interface SuggestionChipsProps {
 }
 
 export function SuggestionChips({ onSelect, onNearMe }: SuggestionChipsProps) {
+  function handleNearMe() {
+    if (onNearMe) {
+      onNearMe();
+    } else {
+      onSelect(NEAR_ME);
+    }
+  }
+
   return (
     <div className="scrollbar-hide flex gap-2 overflow-x-auto py-1">
       {TEXT_SUGGESTIONS.map((chip) => (
@@ -34,7 +42,7 @@ export function SuggestionChips({ onSelect, onNearMe }: SuggestionChipsProps) {
       ))}
       <button
         type="button"
-        onClick={() => (onNearMe ? onNearMe() : onSelect(NEAR_ME))}
+        onClick={handleNearMe}
         className={CHIP_CLASS}
       >
         {NEAR_ME}

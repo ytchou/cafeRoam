@@ -47,6 +47,27 @@ export default function MapPage() {
     setSelectedShopId(null);
   }
 
+  function handleToggleView() {
+    const next = viewMode === 'map' ? 'list' : 'map';
+    if (next === 'list') {
+      if (latitude == null) requestLocation();
+      setSelectedShopId(null);
+    }
+    setViewMode(next);
+  }
+
+  function handleToggleFilter(filter: string) {
+    setActiveFilters((prev) =>
+      prev.includes(filter) ? prev.filter((x) => x !== filter) : [...prev, filter]
+    );
+  }
+
+  function getSearchStatusText(): string {
+    if (searchLoading) return '搜尋中…';
+    if (searchResults.length > 0) return `找到 ${searchResults.length} 間咖啡廳`;
+    return '找不到符合的咖啡廳，顯示精選';
+  }
+
   return (
     <div className="relative h-screen w-full overflow-hidden">
       {viewMode === 'map' ? (
@@ -74,20 +95,9 @@ export default function MapPage() {
               <SearchBar onSubmit={handleSearch} defaultQuery={urlQuery ?? ''} />
             </div>
             <button
-              onClick={() => {
-                const next = viewMode === 'map' ? 'list' : 'map';
-                if (next === 'list' && latitude == null) {
-                  requestLocation();
-                }
-                if (next === 'list') {
-                  setSelectedShopId(null);
-                }
-                setViewMode((v) => (v === 'map' ? 'list' : 'map'));
-              }}
+              onClick={handleToggleView}
               className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white"
-              aria-label={
-                viewMode === 'map' ? 'Switch to list view' : 'Switch to map view'
-              }
+              aria-label={viewMode === 'map' ? 'Switch to list view' : 'Switch to map view'}
             >
               {viewMode === 'map' ? (
                 <List className="h-5 w-5 text-gray-600" />
@@ -97,21 +107,11 @@ export default function MapPage() {
             </button>
           </div>
           {urlQuery && (
-            <p className="text-xs text-gray-500">
-              {searchLoading
-                ? '搜尋中…'
-                : searchResults.length > 0
-                  ? `找到 ${searchResults.length} 間咖啡廳`
-                  : '找不到符合的咖啡廳，顯示精選'}
-            </p>
+            <p className="text-xs text-gray-500">{getSearchStatusText()}</p>
           )}
           <FilterPills
             activeFilters={activeFilters}
-            onToggle={(f) =>
-              setActiveFilters((prev) =>
-                prev.includes(f) ? prev.filter((x) => x !== f) : [...prev, f]
-              )
-            }
+            onToggle={handleToggleFilter}
             onOpenSheet={() => {}}
           />
         </div>

@@ -26,7 +26,6 @@ export function ShopCard({ shop }: ShopCardProps) {
 
   return (
     <article
-      role="article"
       onClick={handleClick}
       className="cursor-pointer overflow-hidden rounded-xl border border-gray-100 bg-white transition-shadow hover:shadow-md"
     >

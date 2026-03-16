@@ -35,6 +35,6 @@ export function useShopReviews(shopId: string, enabled: boolean) {
     total: data?.total ?? 0,
     averageRating: data?.averageRating ?? 0,
     isLoading,
-    isAuthError: !!error?.message.includes('Not authenticated'),
+    isAuthError: error?.message?.includes('Not authenticated') ?? false,
   };
 }

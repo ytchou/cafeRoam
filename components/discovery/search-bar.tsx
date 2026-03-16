@@ -21,12 +21,12 @@ export function SearchBar({
     setValue(defaultQuery);
   }, [defaultQuery]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!value.trim()) return;
     capture('search_submitted', { query_text: value.trim() });
     onSubmit(value.trim());
-  };
+  }
 
   return (
     <form

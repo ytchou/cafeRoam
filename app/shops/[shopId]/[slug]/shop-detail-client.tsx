@@ -59,15 +59,10 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
   );
 
   useEffect(() => {
-    const referrer = typeof document !== 'undefined' ? document.referrer : '';
-    const lastQuery =
-      typeof sessionStorage !== 'undefined'
-        ? sessionStorage.getItem('last_search_query')
-        : null;
     capture('shop_detail_viewed', {
       shop_id: shop.id,
-      referrer,
-      session_search_query: lastQuery,
+      referrer: document.referrer,
+      session_search_query: sessionStorage.getItem('last_search_query'),
     });
   }, [capture, shop.id]);
 
@@ -80,10 +75,7 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
 
   return (
     <div className="min-h-screen bg-white pb-20">
-      {/* Mobile: stacked. Desktop: two-column with sticky map rail on right */}
       <div className="lg:grid lg:grid-cols-[1fr_380px] lg:items-start">
-
-        {/* Left column */}
         <div>
           <ShopHero photoUrls={photos} shopName={shop.name} />
           <ShopIdentity
@@ -117,7 +109,6 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
           </div>
         </div>
 
-        {/* Right column — map (desktop only, hidden on mobile) */}
         {hasMap && (
           <div className="hidden lg:sticky lg:top-16 lg:block lg:border-l lg:border-gray-100">
             <div className="h-[calc(100vh-4rem)]">
@@ -132,7 +123,6 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
         )}
       </div>
 
-      {/* Mobile map — shown below content */}
       {hasMap && (
         <div className="lg:hidden">
           <ShopMapThumbnail

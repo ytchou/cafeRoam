@@ -21,6 +21,11 @@ export function FilterPills({
 }: FilterPillsProps) {
   const { capture } = useAnalytics();
 
+  function handleToggle(key: string) {
+    capture('filter_applied', { filter_type: 'quick', filter_value: key });
+    onToggle(key);
+  }
+
   return (
     <div className="flex items-center gap-2 py-1">
       <button
@@ -46,13 +51,7 @@ export function FilterPills({
               key={key}
               type="button"
               aria-pressed={isActive}
-              onClick={() => {
-                capture('filter_applied', {
-                  filter_type: 'quick',
-                  filter_value: key,
-                });
-                onToggle(key);
-              }}
+              onClick={() => handleToggle(key)}
               className={`flex-shrink-0 rounded-full border px-3 py-1.5 text-sm whitespace-nowrap transition-colors ${
                 isActive
                   ? 'border-[#E06B3F] bg-[#E06B3F] text-white'

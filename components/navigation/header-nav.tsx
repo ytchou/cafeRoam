@@ -55,21 +55,12 @@ export function HeaderNav({ onSearch, variant = 'solid' }: HeaderNavProps) {
           >
             收藏
           </Link>
-          {isLoggedIn ? (
-            <Link
-              href="/profile"
-              className="rounded-full bg-[#E06B3F] px-4 py-2 text-sm text-white transition-colors hover:bg-[#d05a2e]"
-            >
-              個人
-            </Link>
-          ) : (
-            <Link
-              href="/login"
-              className="rounded-full bg-[#E06B3F] px-4 py-2 text-sm text-white transition-colors hover:bg-[#d05a2e]"
-            >
-              登入
-            </Link>
-          )}
+          <Link
+            href={isLoggedIn ? '/profile' : '/login'}
+            className="rounded-full bg-[#E06B3F] px-4 py-2 text-sm text-white transition-colors hover:bg-[#d05a2e]"
+          >
+            {isLoggedIn ? '個人' : '登入'}
+          </Link>
         </nav>
       </div>
     </header>

@@ -45,7 +45,7 @@ export function MapListView({ shops, userLat, userLng }: MapListViewProps) {
   if (sorted.length === 0) {
     return (
       <div className="flex h-full items-center justify-center text-gray-400">
-        No shops found
+        找不到符合的咖啡廳
       </div>
     );
   }
