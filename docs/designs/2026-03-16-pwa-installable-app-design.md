@@ -57,7 +57,12 @@ export default function manifest(): MetadataRoute.Manifest {
     icons: [
       { src: '/icon-192.png', sizes: '192x192', type: 'image/png' },
       { src: '/icon-512.png', sizes: '512x512', type: 'image/png' },
-      { src: '/icon-512-maskable.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+      {
+        src: '/icon-512-maskable.png',
+        sizes: '512x512',
+        type: 'image/png',
+        purpose: 'maskable',
+      },
     ],
   };
 }
@@ -77,13 +82,13 @@ export default function manifest(): MetadataRoute.Manifest {
 
 ## Decisions
 
-| Decision | Choice | Rationale |
-|----------|--------|-----------|
-| Manifest approach | Next.js native `app/manifest.ts` | Type-safe, no extra dependencies, built-in to framework |
-| Icon generation | `@napi-rs/canvas` one-shot script | Pure Node, no native deps, good CJK text rendering |
-| Display mode | `standalone` | Native app feel, no browser chrome |
-| Service worker | None (Tier 1) | Installability doesn't require SW; offline is Tier 2 |
-| Install prompt | Browser native | No custom install banner; let the browser handle it |
+| Decision          | Choice                            | Rationale                                               |
+| ----------------- | --------------------------------- | ------------------------------------------------------- |
+| Manifest approach | Next.js native `app/manifest.ts`  | Type-safe, no extra dependencies, built-in to framework |
+| Icon generation   | `@napi-rs/canvas` one-shot script | Pure Node, no native deps, good CJK text rendering      |
+| Display mode      | `standalone`                      | Native app feel, no browser chrome                      |
+| Service worker    | None (Tier 1)                     | Installability doesn't require SW; offline is Tier 2    |
+| Install prompt    | Browser native                    | No custom install banner; let the browser handle it     |
 
 ## Explicitly Excluded
 

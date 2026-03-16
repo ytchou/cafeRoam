@@ -15,6 +15,7 @@
 **Tech Stack:** Next.js 16 (App Router metadata API), `@napi-rs/canvas` (devDependency, icon generation only), `tsx` (already installed)
 
 **Acceptance Criteria:**
+
 - [ ] `pnpm build` passes with no type errors
 - [ ] DevTools > Application > Manifest shows valid manifest with 3 icons (192, 512, 512-maskable)
 - [ ] Lighthouse PWA audit: "installable" check passes
@@ -26,6 +27,7 @@
 ### Task 1: Install `@napi-rs/canvas` devDependency
 
 **Files:**
+
 - Modify: `package.json` (devDependencies)
 
 **Step 1: Install the dependency**
@@ -56,6 +58,7 @@ git commit -m "chore: add @napi-rs/canvas devDependency for PWA icon generation"
 ### Task 2: Create icon generation script
 
 **Files:**
+
 - Create: `scripts/generate-pwa-icons.ts`
 
 **Step 1: Write the script**
@@ -111,7 +114,9 @@ function generateIcon({ filename, size, maskable }: IconSpec): void {
 
   const buffer = canvas.toBuffer('image/png');
   writeFileSync(join(PUBLIC_DIR, filename), buffer);
-  console.log(`  ✓ ${filename} (${size}×${size}${maskable ? ' maskable' : ''})`);
+  console.log(
+    `  ✓ ${filename} (${size}×${size}${maskable ? ' maskable' : ''})`
+  );
 }
 
 function generateFavicon(): void {
@@ -155,6 +160,7 @@ npx tsx scripts/generate-pwa-icons.ts
 ```
 
 Expected output:
+
 ```
 Generating PWA icons...
   ✓ icon-192.png (192×192)
@@ -166,6 +172,7 @@ Done. Icons written to public/
 ```
 
 Verify files exist:
+
 ```bash
 ls -la public/icon-192.png public/icon-512.png public/icon-512-maskable.png public/apple-touch-icon.png public/favicon.ico
 ```
@@ -184,6 +191,7 @@ git commit -m "feat: add PWA icon generation script and generated icons"
 ### Task 3: Create `app/manifest.ts`
 
 **Files:**
+
 - Create: `app/manifest.ts`
 
 **Step 1: Write the manifest**
@@ -237,6 +245,7 @@ git commit -m "feat: add Next.js web app manifest for PWA installability"
 ### Task 4: Update `app/layout.tsx` metadata
 
 **Files:**
+
 - Modify: `app/layout.tsx:1-29` (imports + metadata export + add viewport export)
 
 **Step 1: Update the layout**
@@ -262,7 +271,9 @@ export const metadata: Metadata = {
       { url: '/icon-192.png', sizes: '192x192', type: 'image/png' },
       { url: '/icon-512.png', sizes: '512x512', type: 'image/png' },
     ],
-    apple: [{ url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
+    apple: [
+      { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
+    ],
   },
   appleWebApp: {
     capable: true,
@@ -328,6 +339,7 @@ Expected: JSON output with `name`, `short_name`, `icons` array, `display: "stand
 **Step 3: Manual browser verification checklist**
 
 Open `http://localhost:3000` in Chrome:
+
 - [ ] DevTools > Application > Manifest shows valid manifest with 3 icons
 - [ ] Lighthouse > PWA > "installable" passes
 - [ ] Page source contains `<meta name="theme-color" content="#6F4E37">`
@@ -371,16 +383,20 @@ graph TD
 ```
 
 **Wave 1** (no dependencies):
+
 - Task 1: Install `@napi-rs/canvas` devDependency
 
 **Wave 2** (depends on Wave 1):
+
 - Task 2: Icon generation script + run it ← Task 1 (needs the canvas package)
 
 **Wave 3** (parallel — depends on Wave 2):
+
 - Task 3: `app/manifest.ts` ← Task 2 (references icons in `public/`)
 - Task 4: Update `app/layout.tsx` ← Task 2 (references icons in `public/`)
 
 **Wave 4** (depends on Wave 3):
+
 - Task 5: Full verification ← Task 3, Task 4
 
 ---

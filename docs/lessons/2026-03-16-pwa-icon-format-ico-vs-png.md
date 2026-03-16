@@ -1,4 +1,5 @@
 # favicon.ico as PNG bytes — format mismatch trap
+
 **Date:** 2026-03-16
 **Context:** PWA Tier 1 installability — icon generation script using @napi-rs/canvas
 

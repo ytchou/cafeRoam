@@ -37,17 +37,21 @@ describe('middleware route guards', () => {
   });
 
   describe('public routes — pass through without auth', () => {
-    it.each(['/', '/login', '/signup', '/auth/callback', '/privacy', '/manifest.webmanifest'])(
-      '%s passes through without a session',
-      async (pathname) => {
-        mockUpdateSession.mockResolvedValue({
-          user: null,
-          supabaseResponse: passThroughResponse,
-        });
-        const res = await middleware(makeRequest(pathname));
-        expect(res).toBe(passThroughResponse);
-      }
-    );
+    it.each([
+      '/',
+      '/login',
+      '/signup',
+      '/auth/callback',
+      '/privacy',
+      '/manifest.webmanifest',
+    ])('%s passes through without a session', async (pathname) => {
+      mockUpdateSession.mockResolvedValue({
+        user: null,
+        supabaseResponse: passThroughResponse,
+      });
+      const res = await middleware(makeRequest(pathname));
+      expect(res).toBe(passThroughResponse);
+    });
 
     it('/shops/cafe-abc (public prefix) passes through without session', async () => {
       mockUpdateSession.mockResolvedValue({
