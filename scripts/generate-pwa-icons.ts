@@ -15,28 +15,27 @@ const PUBLIC_DIR = join(import.meta.dirname, '..', 'public');
 interface IconSpec {
   filename: string;
   size: number;
-  maskable: boolean;
+  maskable?: boolean;
+  fontScale?: number;
 }
 
-const icons: IconSpec[] = [
-  { filename: 'icon-192.png', size: 192, maskable: false },
-  { filename: 'icon-512.png', size: 512, maskable: false },
+const ICON_SPECS: IconSpec[] = [
+  { filename: 'icon-192.png', size: 192 },
+  { filename: 'icon-512.png', size: 512 },
   { filename: 'icon-512-maskable.png', size: 512, maskable: true },
-  { filename: 'apple-touch-icon.png', size: 180, maskable: false },
+  { filename: 'apple-touch-icon.png', size: 180 },
+  { filename: 'favicon.ico', size: 32 },
 ];
 
-function generateIcon({ filename, size, maskable }: IconSpec): void {
+function generateIcon({ filename, size, maskable, fontScale }: IconSpec): void {
   const canvas = createCanvas(size, size);
   const ctx = canvas.getContext('2d');
 
-  // Fill background
   ctx.fillStyle = BG_COLOR;
   ctx.fillRect(0, 0, size, size);
 
-  // For maskable icons, the safe zone is the center 80% circle.
-  // Scale character down to fit within that zone.
-  const fontScale = maskable ? 0.5 : 0.7;
-  const fontSize = Math.round(size * fontScale);
+  const scale = fontScale ?? (maskable ? 0.5 : 0.7);
+  const fontSize = Math.round(size * scale);
 
   ctx.fillStyle = TEXT_COLOR;
   ctx.font = `bold ${fontSize}px sans-serif`;
@@ -46,28 +45,8 @@ function generateIcon({ filename, size, maskable }: IconSpec): void {
 
   const buffer = canvas.toBuffer('image/png');
   writeFileSync(join(PUBLIC_DIR, filename), buffer);
-  console.log(`  ✓ ${filename} (${size}×${size}${maskable ? ' maskable' : ''})`);
-}
-
-function generateFavicon(): void {
-  const size = 32;
-  const canvas = createCanvas(size, size);
-  const ctx = canvas.getContext('2d');
-
-  ctx.fillStyle = BG_COLOR;
-  ctx.fillRect(0, 0, size, size);
-
-  const fontSize = Math.round(size * 0.7);
-  ctx.fillStyle = TEXT_COLOR;
-  ctx.font = `bold ${fontSize}px sans-serif`;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(CHARACTER, size / 2, size / 2);
-
-  // Write as PNG (browsers accept PNG favicons; .ico is legacy but PNG works)
-  const buffer = canvas.toBuffer('image/png');
-  writeFileSync(join(PUBLIC_DIR, 'favicon.ico'), buffer);
-  console.log(`  ✓ favicon.ico (${size}×${size})`);
+  const suffix = maskable ? ' maskable' : '';
+  console.log(`  ${filename} (${size}x${size}${suffix})`);
 }
 
 // Main
@@ -76,8 +55,7 @@ if (!existsSync(PUBLIC_DIR)) {
 }
 
 console.log('Generating PWA icons...');
-for (const spec of icons) {
+for (const spec of ICON_SPECS) {
   generateIcon(spec);
 }
-generateFavicon();
 console.log('Done. Icons written to public/');

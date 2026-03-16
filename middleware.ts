@@ -1,8 +1,7 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { updateSession } from '@/lib/supabase/middleware';
 
-// Routes that don't require authentication
-const PUBLIC_ROUTES = [
+const PUBLIC_ROUTES = new Set([
   '/',
   '/login',
   '/signup',
@@ -10,18 +9,13 @@ const PUBLIC_ROUTES = [
   '/privacy',
   '/map',
   '/manifest.webmanifest',
-];
-// /api routes handle their own JWT auth via FastAPI — do not redirect them
+]);
 const PUBLIC_PREFIXES = ['/shops', '/api'];
-
-// Routes that require session but NOT pdpa consent
 const ONBOARDING_ROUTES = ['/onboarding/consent'];
-
-// Routes that require session + consent but serve deletion recovery
 const RECOVERY_ROUTES = ['/account/recover'];
 
 function isPublicRoute(pathname: string): boolean {
-  if (PUBLIC_ROUTES.includes(pathname)) return true;
+  if (PUBLIC_ROUTES.has(pathname)) return true;
   return PUBLIC_PREFIXES.some((prefix) => pathname.startsWith(prefix));
 }
 
