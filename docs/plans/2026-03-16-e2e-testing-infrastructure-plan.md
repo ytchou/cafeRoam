@@ -253,7 +253,7 @@ test.describe('@critical J01 — Near Me: grant geolocation → map with shop pi
     await page.goto('/');
 
     // Tap the "我附近" suggestion chip
-    await page.getByRole('button', { name: '我附近' }).click();
+    await page.getByRole('button', { name: '附近的咖啡廳' }).click();
 
     // Should navigate to /map with lat/lng query params
     await page.waitForURL(/\/map\?.*lat=/, { timeout: 10_000 });
@@ -274,7 +274,7 @@ test.describe('@critical J02 — Near Me: deny geolocation → fallback toast + 
     await page.goto('/');
 
     // Tap the "我附近" suggestion chip
-    await page.getByRole('button', { name: '我附近' }).click();
+    await page.getByRole('button', { name: '附近的咖啡廳' }).click();
 
     // Should show toast fallback message
     await expect(page.getByText('無法取得位置，改用文字搜尋')).toBeVisible({

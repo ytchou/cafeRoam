@@ -40,7 +40,7 @@ export function ShopCard({ shop }: ShopCardProps) {
           />
         ) : (
           <div className="flex h-full items-center justify-center text-2xl font-bold text-gray-300">
-            {shop.name[0]}
+            {shop.name[0] ?? '?'}
           </div>
         )}
       </div>
