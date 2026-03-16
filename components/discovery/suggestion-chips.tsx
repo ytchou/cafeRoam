@@ -1,7 +1,16 @@
 'use client';
 
-const TEXT_SUGGESTIONS = ['巴斯克蛋糕', '適合工作', '安靜一點'] as const;
-const NEAR_ME = '我附近' as const;
+const TEXT_SUGGESTIONS = [
+  '想找安靜可以工作的地方',
+  '有黑膠唱片的咖啡廳',
+  '適合約會的氣氛',
+  '有插座可以久坐',
+  '巴斯克蛋糕',
+  '可以帶狗',
+  '下午茶推薦',
+  '好拍照的咖啡廳',
+] as const;
+const NEAR_ME = '附近的咖啡廳' as const;
 const CHIP_CLASS =
   'flex-shrink-0 rounded-full border border-white/30 bg-white/20 px-3 py-1.5 text-sm whitespace-nowrap text-white hover:bg-white/30';
 

@@ -1,4 +1,5 @@
 'use client';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
 interface MapDesktopShop {
@@ -28,11 +29,13 @@ export function MapDesktopCard({ shop }: MapDesktopCardProps) {
       {photos.length > 0 && (
         <div className="mb-3 flex gap-2 overflow-x-auto">
           {photos.slice(0, 3).map((url, i) => (
-            <img
+            <Image
               key={i}
               src={url}
               alt={`${shop.name} photo ${i + 1}`}
-              className="h-16 w-16 flex-shrink-0 rounded-lg object-cover"
+              width={64}
+              height={64}
+              className="flex-shrink-0 rounded-lg object-cover"
             />
           ))}
         </div>

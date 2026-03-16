@@ -22,38 +22,48 @@ export function FilterPills({
   const { capture } = useAnalytics();
 
   return (
-    <div className="scrollbar-hide flex gap-2 overflow-x-auto py-1">
+    <div className="flex items-center gap-2 py-1">
       <button
         type="button"
         onClick={onOpenSheet}
-        className="flex flex-shrink-0 items-center gap-1 rounded-full border border-gray-300 bg-white px-3 py-1.5 text-sm whitespace-nowrap text-gray-700 shadow-sm hover:bg-gray-50"
+        className="flex flex-shrink-0 items-center gap-1.5 rounded-full border border-gray-300 bg-white px-3 py-1.5 text-sm whitespace-nowrap text-gray-700 shadow-sm hover:bg-gray-50"
       >
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <line x1="2" y1="4" x2="14" y2="4" />
+          <line x1="2" y1="8" x2="14" y2="8" />
+          <line x1="2" y1="12" x2="14" y2="12" />
+          <circle cx="5" cy="4" r="1.5" fill="white" />
+          <circle cx="10" cy="8" r="1.5" fill="white" />
+          <circle cx="6" cy="12" r="1.5" fill="white" />
+        </svg>
         篩選
       </button>
-      {QUICK_FILTERS.map(({ key, label }) => {
-        const isActive = activeFilters.includes(key);
-        return (
-          <button
-            key={key}
-            type="button"
-            aria-pressed={isActive}
-            onClick={() => {
-              capture('filter_applied', {
-                filter_type: 'quick',
-                filter_value: key,
-              });
-              onToggle(key);
-            }}
-            className={`flex-shrink-0 rounded-full border px-3 py-1.5 text-sm whitespace-nowrap transition-colors ${
-              isActive
-                ? 'border-[#E06B3F] bg-[#E06B3F] text-white'
-                : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
-            }`}
-          >
-            {label}
-          </button>
-        );
-      })}
+      <div className="scrollbar-hide flex flex-1 gap-2 overflow-x-auto">
+        {QUICK_FILTERS.map(({ key, label }) => {
+          const isActive = activeFilters.includes(key);
+          return (
+            <button
+              key={key}
+              type="button"
+              aria-pressed={isActive}
+              onClick={() => {
+                capture('filter_applied', {
+                  filter_type: 'quick',
+                  filter_value: key,
+                });
+                onToggle(key);
+              }}
+              className={`flex-shrink-0 rounded-full border px-3 py-1.5 text-sm whitespace-nowrap transition-colors ${
+                isActive
+                  ? 'border-[#E06B3F] bg-[#E06B3F] text-white'
+                  : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              {label}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }

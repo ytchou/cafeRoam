@@ -60,7 +60,7 @@ export function HeaderNav({ onSearch, variant = 'solid' }: HeaderNavProps) {
               href="/profile"
               className="rounded-full bg-[#E06B3F] px-4 py-2 text-sm text-white transition-colors hover:bg-[#d05a2e]"
             >
-              我的
+              個人
             </Link>
           ) : (
             <Link

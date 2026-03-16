@@ -78,27 +78,24 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-[#FAF7F4]">
       <section className="bg-[#E06B3F] px-4 pt-8 pb-4">
-        <h1 className="mb-4 text-2xl font-bold text-white">啡遊</h1>
         <SearchBar onSubmit={handleSearch} autoFocus={false} />
         <div className="mt-3">
           <SuggestionChips onSelect={handleSearch} onNearMe={handleNearMe} />
         </div>
       </section>
 
-      <div className="sticky top-0 z-10 border-b border-gray-100 bg-white px-4 py-3">
+      <div className="sticky top-0 z-10 border-b border-gray-100 bg-white px-4 py-3 md:flex md:items-center md:gap-4">
         <ModeChips activeMode={mode} onModeChange={setMode} />
-        <div className="mt-2">
-          <FilterPills
-            activeFilters={activeFilters}
-            onToggle={handleToggleFilter}
-            onOpenSheet={() => setFilterSheetOpen(true)}
-          />
-        </div>
+        <FilterPills
+          activeFilters={activeFilters}
+          onToggle={handleToggleFilter}
+          onOpenSheet={() => setFilterSheetOpen(true)}
+        />
       </div>
 
-      <section className="px-4 py-6">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-900">精選咖啡廳</h2>
+      <section className="px-4 py-4">
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-gray-500">精選咖啡廳</h2>
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as SortKey)}
@@ -108,7 +105,7 @@ export default function HomePage() {
             <option value="rating">評分</option>
           </select>
         </div>
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
           {displayedShops.map((shop) => (
             <ShopCard key={shop.id} shop={shop} />
           ))}

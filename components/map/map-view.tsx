@@ -34,8 +34,9 @@ interface MapViewProps {
 export function MapView({
   shops,
   onPinClick,
-  mapStyle = 'mapbox://styles/mapbox/streets-v12',
+  mapStyle = 'mapbox://styles/mapbox/light-v11',
 }: MapViewProps) {
+  const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
   const [bounds, setBounds] = useState<Bounds | null>(null);
 
   const handleMove = useCallback((e: ViewStateChangeEvent) => {
@@ -65,9 +66,17 @@ export function MapView({
     );
   }, [shops, bounds]);
 
+  if (!mapboxToken) {
+    return (
+      <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+        地圖無法載入：缺少 Mapbox token
+      </div>
+    );
+  }
+
   return (
     <Map
-      mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN}
+      mapboxAccessToken={mapboxToken}
       initialViewState={{ longitude: 121.5654, latitude: 25.033, zoom: 13 }}
       style={{ width: '100%', height: '100%' }}
       mapStyle={mapStyle}

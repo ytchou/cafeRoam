@@ -87,7 +87,7 @@ SYSTEM_PROMPT = (
     "- Assign a confidence score (0.0-1.0) to each tag based on how strongly "
     "the reviews support it.\n"
     "- Write a 2-3 sentence summary describing the shop's character — "
-    "what makes it special, who it's for.\n"
+    "what makes it special, who it's for. Write the summary in Traditional Chinese (繁體中文).\n"
     "- Select the 3-5 most informative review excerpts that would help someone "
     "decide whether to visit.\n"
     "- Classify the primary mode: work (focused tasks), rest (relaxation/reading), "
