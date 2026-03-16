@@ -918,8 +918,8 @@ This is the gate for Phase 2B. Shops must be imported, enriched, embedded, and p
 
 **Chunk 4 — Verification (Wave 4):**
 
-- [ ] Full e2e suite runs: 10 critical PASS + 13 stubs PENDING
-- [ ] Lint + type-check pass
+- [x] Full e2e suite runs: 10 critical PASS + 13 stubs PENDING
+- [x] Lint + type-check pass
 
 ---
 

@@ -1,5 +1,9 @@
 import { test, expect } from './fixtures/auth';
+import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const TEST_PHOTO = path.join(__dirname, 'fixtures', 'test-photo.jpg');
 
