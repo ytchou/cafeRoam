@@ -122,6 +122,27 @@ check "pnpm deps installed" \
   "test -f '${PROJECT_ROOT}/node_modules/.modules.yaml'" \
   "Run: pnpm install"
 
+check "Playwright browsers installed" \
+  "pnpm exec playwright --version > /dev/null 2>&1 && test -d '${PROJECT_ROOT}/node_modules/.cache/ms-playwright'" \
+  "Run: pnpm exec playwright install chromium webkit"
+
+printf "\n"
+
+# ─── E2E ──────────────────────────────────────────────────────────────────────
+printf "${BOLD}E2E (optional — only needed for e2e tests)${NC}\n"
+
+check "E2E_BASE_URL set or dev server available" \
+  "[ -n \"\${E2E_BASE_URL:-}\" ] || curl -sf http://localhost:3000 -o /dev/null" \
+  "Set E2E_BASE_URL in .env.local, or run: pnpm dev"
+
+check "E2E_USER_EMAIL set" \
+  "[ -n \"\${E2E_USER_EMAIL:-}\" ]" \
+  "Set E2E_USER_EMAIL in .env.local (test account email)"
+
+check "E2E_USER_PASSWORD set" \
+  "[ -n \"\${E2E_USER_PASSWORD:-}\" ]" \
+  "Set E2E_USER_PASSWORD in .env.local (test account password)"
+
 printf "\n"
 
 # ─── Data ─────────────────────────────────────────────────────────────────────

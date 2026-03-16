@@ -22,7 +22,8 @@
       "**/scripts/prebuild/**",
       "**/scripts/generate-pwa-icons.ts",
       "layout.tsx",
-      "*/components/ui/*.tsx"
+      "*/components/ui/*.tsx",
+      "**/e2e/**"
     ]
   },
   "backend": {

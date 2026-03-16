@@ -1,0 +1,48 @@
+name: E2E Critical Paths
+
+on:
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: e2e-critical-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e-critical:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # Skip when staging secrets are not configured (e.g. forks, early PRs)
+    if: ${{ secrets.E2E_STAGING_URL != '' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.node-version'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium webkit
+
+      - name: Run critical e2e tests
+        run: pnpm exec playwright test --grep @critical --project mobile
+        env:
+          E2E_BASE_URL: ${{ secrets.E2E_STAGING_URL }}
+          E2E_USER_EMAIL: ${{ secrets.E2E_USER_EMAIL }}
+          E2E_USER_PASSWORD: ${{ secrets.E2E_USER_PASSWORD }}
+
+      - name: Upload test results
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-critical
+          path: playwright-report/
+          retention-days: 7

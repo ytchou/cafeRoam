@@ -79,6 +79,11 @@ data/
 # Mutation testing reports
 reports/mutation/
 
+# Playwright
+test-results/
+playwright-report/
+blob-report/
+
 # E2E auth tokens (never commit)
 e2e/.auth/
 

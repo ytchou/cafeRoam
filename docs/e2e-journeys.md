@@ -2,173 +2,83 @@
 
 > Generated: 2026-03-05
 > Last updated: 2026-03-16
-> Source: docs/designs/ux/journeys.md + personas.md
-> Format: E2E-ready scenarios for /e2e-smoke skill
+> Source: docs/designs/2026-03-16-e2e-testing-infrastructure-design.md
+> Format: Playwright spec files in `e2e/` directory
 
 ---
 
 ## How to use this file
 
-Run `/e2e-smoke` — it reads this file in Phase 0 (REVIEW) to find stale scenarios and new candidates.
-Each scenario below maps to a critical user path. Update `Last run` and `Last result` after each run.
+This is the **source of truth** for all e2e test journeys. Each journey has:
+
+- A unique ID (J01–J30+) referenced in both this doc and the Playwright spec files
+- A priority level (Critical / High / Medium)
+- A status (Implemented = `@critical` tag / Stubbed = `test.fixme()` placeholder, Phase 2)
+
+**Running tests:**
+
+- `pnpm e2e:critical` — runs the 10 critical-path tests (PR-blocking in CI)
+- `pnpm e2e` — runs the full suite including stubs (nightly CI)
+
+**Adding new journeys:** Add to this doc first (assign an ID), then create the spec.
 
 ---
 
-### Anonymous Browse + Auth Wall
+## Critical Paths (PR-blocking)
 
-**Last run:** 2026-03-15
-**Last result:** PASS
-**Persona:** Yuki
-**Pre-conditions:** not logged in, app running locally
-**Steps:**
+| ID  | Journey                                                  | Spec                | Status      |
+| --- | -------------------------------------------------------- | ------------------- | ----------- |
+| J01 | Near Me: grant geolocation → map centered with shop pins | `discovery.spec.ts` | Implemented |
+| J02 | Near Me: deny geolocation → toast fallback + text search | `discovery.spec.ts` | Implemented |
+| J03 | Text search → results on map                             | `discovery.spec.ts` | Implemented |
+| J05 | Auth wall: protected routes redirect to /login           | `auth.spec.ts`      | Implemented |
+| J06 | Signup → PDPA consent checkbox required                  | `auth.spec.ts`      | Implemented |
+| J07 | Semantic search: Chinese query → ranked results          | `search.spec.ts`    | Implemented |
+| J10 | Check-in: upload photo → submit → stamp                  | `checkin.spec.ts`   | Implemented |
+| J11 | Check-in: no photo → submit disabled                     | `checkin.spec.ts`   | Implemented |
+| J12 | Create list → add shop → appears in list                 | `lists.spec.ts`     | Implemented |
+| J13 | 3 lists → 4th attempt → cap error                        | `lists.spec.ts`     | Implemented |
 
-1. `GET /api/search?q=coffee` — assert 401
-2. `GET /lists` — assert 307 redirect to `/login`
-3. `GET /search` — assert 307 redirect to `/login`
-4. `GET /checkin/test` — assert 307 redirect to `/login`
-   **Success criteria:** unauthenticated user cannot access search, lists, check-in; all redirect or 401
-   **Failure indicators:** search completes without auth, no redirect occurs, or a 500 error is returned
-   **DB state change:** none
+## Full Suite (nightly)
 
----
-
-### Signup + PDPA Consent
-
-**Last run:** 2026-03-15
-**Last result:** PASS
-**Persona:** Yuki
-**Pre-conditions:** not logged in, using a fresh test email
-**Steps:**
-
-1. `POST /auth/v1/signup` with email + password — assert JWT returned
-2. `POST /api/auth/consent` with `Authorization: Bearer {jwt}` — assert 200 with `pdpa_consent_at` set
-3. Assert redirect to `/` home page with authenticated state (browser-only)
-   **Success criteria:** account created, PDPA consent recorded with timestamp
-   **Failure indicators:** signup fails, consent not recorded in DB, or Authorization header not forwarded
-   **DB state change:** new row in auth.users, profiles row with pdpa_consent_at set
-
----
-
-### Search + Check-in
-
-**Last run:** 2026-03-15
-**Last result:** PASS
-**Persona:** Mei-Ling
-**Pre-conditions:** logged in (JWT from signup), at least 1 seed shop exists in DB, e2e/fixtures/test-photo.jpg present
-**Steps:**
-
-1. `GET /api/search?text=specialty+coffee` with auth — assert 200, ≥1 result
-2. Upload photo to `checkin-photos/{user_id}/filename.jpg` — assert 200 (path must include user_id for RLS)
-3. `POST /api/checkins` with `shop_id` + `photo_urls` — assert 200, `is_first_checkin_at_shop: true`
-4. `GET /api/stamps` — assert stamp row with matching `shop_id` present
-5. Assert stamp toast appears on screen (BROWSER-ONLY — UNVERIFIED in API mode)
-   **Success criteria:** check-in recorded in DB, stamp awarded, stamp toast visible to user
-   **Failure indicators:** check-in fails, stamp not awarded, 422 from API, or toast does not appear
-   **DB state change:** new row in check_ins, new row in stamps
-   **Note:** Storage RLS requires `{user_id}/` path prefix. Arbitrary paths return 403.
+| ID  | Journey                                       | Priority | Spec                 | Status  |
+| --- | --------------------------------------------- | -------- | -------------------- | ------- |
+| J04 | Browse map → tap pin → shop detail sheet      | High     | `discovery.spec.ts`  | Stubbed |
+| J08 | Mode chip: select "work" → filtered results   | High     | `search.spec.ts`     | Stubbed |
+| J09 | Suggestion chip: tap preset → search executes | High     | `search.spec.ts`     | Stubbed |
+| J14 | Profile: check-in history + stamp collection  | High     | `profile.spec.ts`    | Stubbed |
+| J15 | Account deletion: request → grace period      | High     | `profile.spec.ts`    | Stubbed |
+| J16 | Activity feed: public access                  | Medium   | `feed.spec.ts`       | Stubbed |
+| J17 | PWA manifest: 200 + brand metadata + icons    | Medium   | `pwa.spec.ts`        | Stubbed |
+| J18 | Shop detail: public access with OG tags       | High     | `discovery.spec.ts`  | Stubbed |
+| J19 | Shop detail via slug redirect                 | Medium   | `discovery.spec.ts`  | Stubbed |
+| J20 | Near Me: coords outside Taiwan                | Medium   | `edge-cases.spec.ts` | Stubbed |
+| J21 | Filter pills: toggle WiFi → results update    | High     | `search.spec.ts`     | Stubbed |
+| J22 | Map ↔ List view toggle                        | Medium   | `discovery.spec.ts`  | Stubbed |
+| J23 | List view: shops sorted by distance           | Medium   | `discovery.spec.ts`  | Stubbed |
+| J24 | Duplicate stamp at same shop                  | Medium   | `checkin.spec.ts`    | Stubbed |
+| J25 | Display name update                           | Medium   | `profile.spec.ts`    | Stubbed |
+| J26 | Delete list                                   | Medium   | `lists.spec.ts`      | Stubbed |
+| J27 | Remove shop from list                         | Medium   | `lists.spec.ts`      | Stubbed |
+| J28 | Desktop: 2-column shop detail layout          | Medium   | `discovery.spec.ts`  | Stubbed |
+| J29 | Mobile: mini card on pin tap                  | Medium   | `discovery.spec.ts`  | Stubbed |
+| J30 | Check-in: optional menu photo + text note     | Medium   | `checkin.spec.ts`    | Stubbed |
 
 ---
 
-### List Management + Cap Enforcement
+## Legacy API-Level Scenarios
 
-**Last run:** 2026-03-15
-**Last result:** PASS
-**Persona:** Mei-Ling
-**Pre-conditions:** logged in (JWT), user has 0 existing lists, at least 1 seed shop exists in DB
-**Steps:**
+The following scenarios were previously tracked as manual API-level tests.
+They remain valid but are now covered by Playwright specs or backend pytest.
 
-1. `POST /api/lists` × 3 with unique names — assert 200 each
-2. `POST /api/lists` (4th attempt) — assert 400 `{"detail":"Maximum of 3 lists allowed"}`
-3. `POST /api/lists/{id}/shops` with `{"shop_id":"..."}` — assert 200
-   **Success criteria:** exactly 3 lists can be created, 4th rejected with 400, shop added successfully
-   **Failure indicators:** 4th list created (cap not enforced), or adding shop fails
-   **DB state change:** 3 rows in lists, 1 row in list_items
-   **Note:** Lists domain uses `snake_case` throughout (`shop_id` not `shopId`)
-
----
-
-### Account Deletion
-
-**Last run:** 2026-03-15
-**Last result:** PASS
-**Persona:** Any authenticated user
-**Pre-conditions:** fresh throwaway user (create via signup for this test)
-**Steps:**
-
-1. Create throwaway user via `POST /auth/v1/signup`
-2. `DELETE /api/auth/account` with auth — assert 200
-3. Assert response contains `deletion_requested_at` timestamp
-4. Assert account still exists during grace period (not immediately deleted)
-   **Success criteria:** deletion_requested_at set on profile row, account exists during grace period
-   **Failure indicators:** account deleted immediately, no grace period, or 500 error
-   **DB state change:** profiles.deletion_requested_at set to current timestamp
-
----
-
-### Shop Detail Public Access
-
-**Last run:** 2026-03-15
-**Last result:** PASS
-**Persona:** Yuki
-**Pre-conditions:** not logged in, slugs backfilled
-**Steps:**
-
-1. `GET /shops/{id}` (backend) — assert 200 with camelCase fields: `photoUrls`, `modeScores`, `taxonomyTags`, `slug`
-2. `GET /shops/{id}/{slug}` (frontend) — assert 200
-3. `GET /shops/{id}/wrong-slug` — assert 307 redirect to canonical slug
-4. `GET /shops/00000000-0000-0000-0000-000000000000/nope` — assert 404
-   **Success criteria:** shop detail loads, slug redirect works, missing shop 404s cleanly
-   **Failure indicators:** 500 on any request, camelCase fields missing, 404 on valid shop
-   **DB state change:** none
-
----
-
-### PWA Manifest Accessibility
-
-**Last run:** never
-**Last result:** PENDING
-**Persona:** Yuki (anonymous)
-**Pre-conditions:** not logged in, app running locally
-**Steps:**
-
-1. `GET /manifest.webmanifest` without auth — assert 200, `Content-Type` contains `application/manifest+json`
-2. Assert response JSON has `name: '啡遊 CafeRoam'`, `short_name: '啡遊'`, `display: 'standalone'`
-3. Assert `theme_color: '#6F4E37'` (brand coffee brown)
-4. Assert `icons` array contains entries for `/icon-192.png` (192×192), `/icon-512.png` (512×512), and `/icon-512-maskable.png` (maskable)
-   **Success criteria:** manifest returns valid JSON without requiring auth; icons and brand metadata are correct
-   **Failure indicators:** 307 redirect to `/login`, missing icons array, incorrect `display` value, or `theme_color` mismatch
-   **DB state change:** none
-   **Note:** Depends on `/manifest.webmanifest` being in `PUBLIC_ROUTES` in `middleware.ts`. Regression would silently break PWA installability on Chrome/Safari.
-
----
-
-### Map Page Public Access
-
-**Last run:** 2026-03-15
-**Last result:** PASS
-**Persona:** Yuki
-**Pre-conditions:** not logged in
-**Steps:**
-
-1. `GET /map` — assert 200 (no redirect to login)
-2. `GET /shops/?featured=true&limit=5` — assert ≥1 shop with `latitude` field
-   **Success criteria:** map page loads publicly, shop geo data present
-   **Failure indicators:** redirect to login, no shops returned, missing lat/lng
-   **DB state change:** none
-
----
-
-### Authenticated Search
-
-**Last run:** 2026-03-15
-**Last result:** PASS
-**Persona:** Mei-Ling
-**Pre-conditions:** logged in (JWT)
-**Steps:**
-
-1. `GET /api/search?text=specialty+coffee` with `Authorization: Bearer {jwt}` — assert 200
-2. Assert ≥1 result; results are wrapped as `[{"shop": {...}}, ...]`
-3. Assert `shop` object contains camelCase fields: `photoUrls`, `modeScores`, `taxonomyTags`
-   **Success criteria:** search returns camelCase-shaped results with correct wrapper structure
-   **Failure indicators:** 401, empty results, snake_case fields, missing wrapper
-   **DB state change:** none
+| Scenario                          | Covered by                             |
+| --------------------------------- | -------------------------------------- |
+| Anonymous Browse + Auth Wall      | J05 (Playwright) + backend pytest      |
+| Signup + PDPA Consent             | J06 (Playwright) + backend pytest      |
+| Search + Check-in                 | J07, J10 (Playwright) + backend pytest |
+| List Management + Cap Enforcement | J12, J13 (Playwright) + backend pytest |
+| Account Deletion                  | J15 (Playwright stub) + backend pytest |
+| Shop Detail Public Access         | J18 (Playwright stub) + backend pytest |
+| Map Page Public Access            | J01, J03 (Playwright) + backend pytest |
+| Authenticated Search              | J07 (Playwright) + backend pytest      |
+| PWA Manifest                      | J17 (Playwright stub)                  |

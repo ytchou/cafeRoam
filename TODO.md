@@ -889,6 +889,40 @@ This is the gate for Phase 2B. Shops must be imported, enriched, embedded, and p
 
 ---
 
+## E2E Testing Infrastructure
+
+> Playwright-based browser e2e testing with two CI workflows.
+
+> **Design Doc:** [docs/designs/2026-03-16-e2e-testing-infrastructure-design.md](docs/designs/2026-03-16-e2e-testing-infrastructure-design.md)
+> **Plan:** [docs/plans/2026-03-16-e2e-testing-infrastructure-plan.md](docs/plans/2026-03-16-e2e-testing-infrastructure-plan.md)
+
+**Chunk 1 — Infrastructure (Wave 1):**
+
+- [x] Install Playwright + config (`playwright.config.ts`)
+- [x] Geolocation fixture (Taipei/Tokyo coords)
+- [x] Auth fixture (Supabase login + session reuse)
+
+**Chunk 2 — Critical Path Specs (Wave 2):**
+
+- [x] Discovery specs: Near Me grant/deny + text search (J01-J03)
+- [x] Auth specs: auth wall + signup PDPA (J05-J06)
+- [x] Search spec: semantic search (J07)
+- [x] Check-in specs: photo upload + validation (J10-J11)
+- [x] Lists specs: CRUD + 3-list cap (J12-J13)
+
+**Chunk 3 — Stubs + CI + Docs (Wave 3):**
+
+- [x] Phase 2 stub specs: profile, feed, PWA, edge cases (J04-J30)
+- [x] CI workflows: `e2e-critical.yml` (PR-blocking) + `e2e-nightly.yml` (cron)
+- [x] Update `docs/e2e-journeys.md` with full journey matrix
+
+**Chunk 4 — Verification (Wave 4):**
+
+- [x] Full e2e suite runs: 10 critical PASS + 13 stubs PENDING
+- [x] Lint + type-check pass
+
+---
+
 ## Phase 3: Beta & Launch — Target: Week 3-4
 
 30-50 person beta → public Threads launch.
