@@ -2,7 +2,6 @@ import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { BottomNav } from './bottom-nav';
 
-// Mock next/navigation
 vi.mock('next/navigation', () => ({
   usePathname: () => '/',
   Link: ({ children, href }: { children: React.ReactNode; href: string }) => (
@@ -10,7 +9,6 @@ vi.mock('next/navigation', () => ({
   ),
 }));
 
-// Mock next/link
 vi.mock('next/link', () => ({
   default: ({
     children,
@@ -28,34 +26,25 @@ vi.mock('next/link', () => ({
 }));
 
 describe('BottomNav', () => {
-  it('renders four navigation tabs', () => {
+  it('renders four navigation tabs with new labels', () => {
     render(<BottomNav />);
-    expect(screen.getByText('首頁')).toBeInTheDocument();
     expect(screen.getByText('地圖')).toBeInTheDocument();
+    expect(screen.getByText('探索')).toBeInTheDocument();
     expect(screen.getByText('收藏')).toBeInTheDocument();
     expect(screen.getByText('我的')).toBeInTheDocument();
   });
 
-  it('highlights the active tab based on current pathname', () => {
+  it('highlights 地圖 tab when pathname is /', () => {
     render(<BottomNav />);
-    // pathname is "/" so 首頁 should be active
-    const homeLink = screen.getByText('首頁').closest('a');
-    expect(homeLink).toHaveAttribute('data-active', 'true');
+    const mapLink = screen.getByText('地圖').closest('a');
+    expect(mapLink).toHaveAttribute('data-active', 'true');
   });
 
   it('tab links navigate to correct routes', () => {
     render(<BottomNav />);
-    expect(screen.getByText('地圖').closest('a')).toHaveAttribute(
-      'href',
-      '/map'
-    );
-    expect(screen.getByText('收藏').closest('a')).toHaveAttribute(
-      'href',
-      '/lists'
-    );
-    expect(screen.getByText('我的').closest('a')).toHaveAttribute(
-      'href',
-      '/profile'
-    );
+    expect(screen.getByText('地圖').closest('a')).toHaveAttribute('href', '/');
+    expect(screen.getByText('探索').closest('a')).toHaveAttribute('href', '/explore');
+    expect(screen.getByText('收藏').closest('a')).toHaveAttribute('href', '/lists');
+    expect(screen.getByText('我的').closest('a')).toHaveAttribute('href', '/profile');
   });
 });

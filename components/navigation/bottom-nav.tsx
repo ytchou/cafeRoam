@@ -3,9 +3,9 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 const TABS = [
-  { href: '/', label: '首頁', icon: 'home' },
-  { href: '/map', label: '地圖', icon: 'map' },
-  { href: '/lists', label: '收藏', icon: 'heart' },
+  { href: '/',        label: '地圖', icon: 'map' },
+  { href: '/explore', label: '探索', icon: 'compass' },
+  { href: '/lists',   label: '收藏', icon: 'heart' },
   { href: '/profile', label: '我的', icon: 'user' },
 ] as const;
 

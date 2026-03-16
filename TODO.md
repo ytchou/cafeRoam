@@ -935,7 +935,7 @@ Adds the Explore tab and redesigns the four main sections of the app using Penci
 > **Plan:** [docs/plans/2026-03-16-navigation-restructure-plan.md](docs/plans/2026-03-16-navigation-restructure-plan.md)
 
 **Chunk 1 — Bottom Nav:**
-- [ ] Update `bottom-nav.tsx` tabs to 地圖 / 探索 / 收藏 / 我的
+- [x] Update `bottom-nav.tsx` tabs to 地圖 / 探索 / 收藏 / 我的
 
 **Chunk 2 — Route Replacement:**
 - [ ] Replace `app/page.tsx` with map-only Find page
