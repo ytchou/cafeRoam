@@ -12,18 +12,25 @@ interface FilterPillsProps {
   activeFilters: string[];
   onToggle: (filter: string) => void;
   onOpenSheet: () => void;
+  onNearMe?: () => void;
 }
 
 export function FilterPills({
   activeFilters,
   onToggle,
   onOpenSheet,
+  onNearMe,
 }: FilterPillsProps) {
   const { capture } = useAnalytics();
 
   function handleToggle(key: string) {
     capture('filter_applied', { filter_type: 'quick', filter_value: key });
     onToggle(key);
+  }
+
+  function handleNearMe() {
+    capture('filter_applied', { filter_type: 'quick', filter_value: 'distance' });
+    onNearMe?.();
   }
 
   return (
@@ -45,6 +52,18 @@ export function FilterPills({
       </button>
       <div className="scrollbar-hide flex flex-1 gap-2 overflow-x-auto">
         {QUICK_FILTERS.map(({ key, label }) => {
+          if (key === 'distance' && onNearMe) {
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={handleNearMe}
+                className="flex-shrink-0 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-sm whitespace-nowrap text-gray-700 transition-colors hover:bg-gray-50"
+              >
+                {label}
+              </button>
+            );
+          }
           const isActive = activeFilters.includes(key);
           return (
             <button

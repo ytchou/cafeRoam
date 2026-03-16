@@ -73,11 +73,12 @@ export default function HomePage() {
     }
   }
 
+  function handleModeChange(newMode: SearchMode) {
+    setMode(newMode);
+    setSortBy('default');
+  }
+
   function handleToggleFilter(filter: string) {
-    if (filter === 'distance') {
-      handleNearMe();
-      return;
-    }
     setActiveFilters((prev) =>
       prev.includes(filter) ? prev.filter((x) => x !== filter) : [...prev, filter]
     );
@@ -93,11 +94,12 @@ export default function HomePage() {
       </section>
 
       <div className="sticky top-0 z-10 border-b border-gray-100 bg-white px-4 py-3 md:flex md:items-center md:gap-4">
-        <ModeChips activeMode={mode} onModeChange={setMode} />
+        <ModeChips activeMode={mode} onModeChange={handleModeChange} />
         <FilterPills
           activeFilters={activeFilters}
           onToggle={handleToggleFilter}
           onOpenSheet={() => setFilterSheetOpen(true)}
+          onNearMe={handleNearMe}
         />
       </div>
 

@@ -35,7 +35,11 @@ export default function MapPage() {
   const isDesktop = useIsDesktop();
   const { latitude, longitude, requestLocation } = useGeolocation();
 
-  const shops = urlQuery && searchResults.length > 0 ? searchResults : featuredShops;
+  const shops = useMemo(() => {
+    if (!urlQuery) return featuredShops;
+    if (searchLoading) return [];
+    return searchResults.length > 0 ? searchResults : featuredShops;
+  }, [urlQuery, searchLoading, searchResults, featuredShops]);
 
   const shopById = useMemo(() => new Map(shops.map((s) => [s.id, s])), [shops]);
   const selectedShop = selectedShopId ? (shopById.get(selectedShopId) ?? null) : null;
@@ -113,6 +117,7 @@ export default function MapPage() {
             activeFilters={activeFilters}
             onToggle={handleToggleFilter}
             onOpenSheet={() => {}}
+            onNearMe={requestLocation}
           />
         </div>
       </div>
