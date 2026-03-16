@@ -39,7 +39,7 @@ async def list_shops(
 ) -> list[Any]:
     """List shops. Public — no auth required."""
     db = get_anon_client()
-    query = db.table("shops").select(_SHOP_COLUMNS)
+    query = db.table("shops").select(f"{_SHOP_COLUMNS}, shop_photos(url)")
     if city:
         query = query.eq("city", city)
     if featured:
@@ -47,7 +47,13 @@ async def list_shops(
     query = query.limit(limit)
     response = query.execute()
     rows = cast("list[dict[str, Any]]", response.data or [])
-    return [{to_camel(k): v for k, v in row.items()} for row in rows]
+    result = []
+    for row in rows:
+        photo_urls = [p["url"] for p in (row.pop("shop_photos", None) or [])]
+        camel = {to_camel(k): v for k, v in row.items()}
+        camel["photoUrls"] = photo_urls
+        result.append(camel)
+    return result
 
 
 @router.get("/{shop_id}")

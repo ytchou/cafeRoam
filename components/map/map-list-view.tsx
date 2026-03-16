@@ -31,12 +31,10 @@ export function MapListView({ shops, userLat, userLng }: MapListViewProps) {
       return [...shops]
         .map((shop) => ({
           shop,
-          dist: haversineDistance(
-            userLat,
-            userLng,
-            shop.latitude,
-            shop.longitude
-          ),
+          dist:
+            shop.latitude != null && shop.longitude != null
+              ? haversineDistance(userLat, userLng, shop.latitude, shop.longitude)
+              : Infinity,
         }))
         .sort((a, b) => a.dist - b.dist)
         .map(({ shop }) => shop);

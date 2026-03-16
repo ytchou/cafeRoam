@@ -2,8 +2,8 @@ export interface Shop {
   id: string;
   name: string;
   address: string;
-  latitude: number;
-  longitude: number;
+  latitude: number | null;
+  longitude: number | null;
   mrt: string | null;
   phone: string | null;
   website: string | null;
@@ -18,8 +18,11 @@ export interface Shop {
   cafenomadId: string | null;
   googlePlaceId: string | null;
   createdAt: string;
-  updatedAt: string;
+  updatedAt?: string;
   slug?: string;
+  modeWork?: number | null;
+  modeRest?: number | null;
+  modeSocial?: number | null;
 }
 
 export interface ShopDetail extends Shop {

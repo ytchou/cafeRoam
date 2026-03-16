@@ -7,6 +7,13 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 interface Shop {
   id: string;
   name: string;
+  latitude: number | null;
+  longitude: number | null;
+}
+
+interface MappableShop {
+  id: string;
+  name: string;
   latitude: number;
   longitude: number;
 }
@@ -44,9 +51,12 @@ export function MapView({
     }
   }, []);
 
-  const visibleShops = useMemo(() => {
-    if (!bounds) return shops;
-    return shops.filter(
+  const visibleShops = useMemo((): MappableShop[] => {
+    const mappable = shops.filter(
+      (s): s is MappableShop => s.latitude != null && s.longitude != null
+    );
+    if (!bounds) return mappable;
+    return mappable.filter(
       (s) =>
         s.latitude >= bounds.south &&
         s.latitude <= bounds.north &&

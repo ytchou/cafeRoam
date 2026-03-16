@@ -23,6 +23,13 @@ export function FilterPills({
 
   return (
     <div className="scrollbar-hide flex gap-2 overflow-x-auto py-1">
+      <button
+        type="button"
+        onClick={onOpenSheet}
+        className="flex flex-shrink-0 items-center gap-1 rounded-full border border-gray-300 bg-white px-3 py-1.5 text-sm whitespace-nowrap text-gray-700 shadow-sm hover:bg-gray-50"
+      >
+        篩選
+      </button>
       {QUICK_FILTERS.map(({ key, label }) => {
         const isActive = activeFilters.includes(key);
         return (
@@ -47,13 +54,6 @@ export function FilterPills({
           </button>
         );
       })}
-      <button
-        type="button"
-        onClick={onOpenSheet}
-        className="flex flex-shrink-0 items-center gap-1 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-sm whitespace-nowrap text-gray-700 hover:bg-gray-50"
-      >
-        篩選
-      </button>
     </div>
   );
 }

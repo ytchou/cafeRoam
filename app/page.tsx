@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { SearchBar } from '@/components/discovery/search-bar';
@@ -11,14 +11,76 @@ import { ShopCard } from '@/components/shops/shop-card';
 import { useShops } from '@/lib/hooks/use-shops';
 import { useGeolocation } from '@/lib/hooks/use-geolocation';
 import type { SearchMode } from '@/lib/hooks/use-search-state';
+import type { Shop } from '@/lib/types';
+
+type SortKey = 'default' | 'rating';
+
+function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number) {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function applySort(
+  shops: Shop[],
+  mode: SearchMode,
+  activeFilters: string[],
+  sortBy: SortKey,
+  userLat: number | null,
+  userLng: number | null
+): Shop[] {
+  const sorted = [...shops];
+
+  if (activeFilters.includes('distance') && userLat != null && userLng != null) {
+    return sorted.sort((a, b) => {
+      const da =
+        a.latitude != null && a.longitude != null
+          ? haversineKm(userLat, userLng, a.latitude, a.longitude)
+          : Infinity;
+      const db =
+        b.latitude != null && b.longitude != null
+          ? haversineKm(userLat, userLng, b.latitude, b.longitude)
+          : Infinity;
+      return da - db;
+    });
+  }
+
+  if (mode === 'work') {
+    return sorted.sort((a, b) => (b.modeWork ?? 0) - (a.modeWork ?? 0));
+  }
+  if (mode === 'rest') {
+    return sorted.sort((a, b) => (b.modeRest ?? 0) - (a.modeRest ?? 0));
+  }
+  if (mode === 'social') {
+    return sorted.sort((a, b) => (b.modeSocial ?? 0) - (a.modeSocial ?? 0));
+  }
+
+  if (sortBy === 'rating' || activeFilters.includes('rating')) {
+    return sorted.sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
+  }
+
+  return sorted;
+}
 
 export default function HomePage() {
   const router = useRouter();
-  const { shops } = useShops({ featured: true, limit: 12 });
-  const { requestLocation } = useGeolocation();
+  const { shops } = useShops({ featured: true, limit: 50 });
+  const { latitude, longitude, requestLocation } = useGeolocation();
   const [mode, setMode] = useState<SearchMode>(null);
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
+  const [sortBy, setSortBy] = useState<SortKey>('default');
+
+  const displayedShops = useMemo(
+    () => applySort(shops, mode, activeFilters, sortBy, latitude ?? null, longitude ?? null).slice(0, 12),
+    [shops, mode, activeFilters, sortBy, latitude, longitude]
+  );
 
   function handleSearch(query: string) {
     const params = new URLSearchParams({ q: query });
@@ -43,11 +105,12 @@ export default function HomePage() {
     }
   }
 
-  function handleToggleFilter(filter: string) {
+  async function handleToggleFilter(filter: string) {
+    if (filter === 'distance' && latitude == null) {
+      await requestLocation();
+    }
     setActiveFilters((prev) =>
-      prev.includes(filter)
-        ? prev.filter((x) => x !== filter)
-        : [...prev, filter]
+      prev.includes(filter) ? prev.filter((x) => x !== filter) : [...prev, filter]
     );
   }
 
@@ -73,9 +136,19 @@ export default function HomePage() {
       </div>
 
       <section className="px-4 py-6">
-        <h2 className="mb-4 text-lg font-semibold text-gray-900">精選咖啡廳</h2>
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-gray-900">精選咖啡廳</h2>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as SortKey)}
+            className="rounded-lg border border-gray-200 bg-white px-2 py-1 text-sm text-gray-600 focus:outline-none focus:ring-1 focus:ring-[#E06B3F]"
+          >
+            <option value="default">預設</option>
+            <option value="rating">評分</option>
+          </select>
+        </div>
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-          {shops.map((shop) => (
+          {displayedShops.map((shop) => (
             <ShopCard key={shop.id} shop={shop} />
           ))}
         </div>
