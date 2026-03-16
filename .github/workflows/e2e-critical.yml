@@ -31,7 +31,7 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium webkit
 
       - name: Run critical e2e tests
-        run: pnpm e2e:critical -- --project mobile
+        run: pnpm exec playwright test --grep @critical --project mobile
         env:
           E2E_BASE_URL: ${{ secrets.E2E_STAGING_URL }}
           E2E_USER_EMAIL: ${{ secrets.E2E_USER_EMAIL }}
