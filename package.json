@@ -29,7 +29,10 @@
     "backend:test:coverage": "cd backend && uv run pytest --cov --cov-report=xml:coverage.xml --cov-branch -v",
     "mutation:frontend": "npx stryker run",
     "mutation:backend": "cd backend && uv run mutmut run",
-    "prepare": "git config core.hooksPath scripts/hooks"
+    "prepare": "git config core.hooksPath scripts/hooks",
+    "e2e": "playwright test",
+    "e2e:critical": "playwright test --grep @critical",
+    "e2e:ui": "playwright test --ui"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",
@@ -66,6 +69,7 @@
   },
   "devDependencies": {
     "@napi-rs/canvas": "^0.1.96",
+    "@playwright/test": "^1.58.2",
     "@stryker-mutator/core": "^9.6.0",
     "@stryker-mutator/vitest-runner": "^9.6.0",
     "@tailwindcss/postcss": "^4",
