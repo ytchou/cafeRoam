@@ -881,7 +881,7 @@ This is the gate for Phase 2B. Shops must be imported, enriched, embedded, and p
 
 **Chunk 3 — Verification:**
 
-- [ ] `pnpm build` passes with no type errors
+- [x] `pnpm build` passes with no type errors
 - [ ] DevTools > Application > Manifest shows valid manifest with 3 icons
 - [ ] Lighthouse PWA audit: "installable" passes
 - [ ] iOS Safari: Add to Home Screen shows correct icon + '啡遊' title

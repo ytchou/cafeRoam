@@ -9,6 +9,7 @@ const PUBLIC_ROUTES = [
   '/auth/callback',
   '/privacy',
   '/map',
+  '/manifest.webmanifest',
 ];
 // /api routes handle their own JWT auth via FastAPI — do not redirect them
 const PUBLIC_PREFIXES = ['/shops', '/api'];
