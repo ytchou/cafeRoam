@@ -13,6 +13,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "generate:icons": "tsx scripts/generate-pwa-icons.ts",
     "prebuild:pass0": "tsx scripts/prebuild/data-pipeline/pass0-seed.ts",
     "prebuild:pass1": "tsx scripts/prebuild/data-pipeline/pass1-verify.ts",
     "prebuild:pass2": "tsx scripts/prebuild/data-pipeline/pass2-scrape.ts",
