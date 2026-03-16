@@ -15,52 +15,12 @@ import type { Shop } from '@/lib/types';
 
 type SortKey = 'default' | 'rating';
 
-function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number) {
-  const R = 6371;
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLng = ((lng2 - lng1) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLng / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
-
-function applySort(
-  shops: Shop[],
-  mode: SearchMode,
-  activeFilters: string[],
-  sortBy: SortKey,
-  userLat: number | null,
-  userLng: number | null
-): Shop[] {
+function applySort(shops: Shop[], mode: SearchMode, activeFilters: string[], sortBy: SortKey): Shop[] {
   const sorted = [...shops];
 
-  if (activeFilters.includes('distance') && userLat != null && userLng != null) {
-    return sorted.sort((a, b) => {
-      const da =
-        a.latitude != null && a.longitude != null
-          ? haversineKm(userLat, userLng, a.latitude, a.longitude)
-          : Infinity;
-      const db =
-        b.latitude != null && b.longitude != null
-          ? haversineKm(userLat, userLng, b.latitude, b.longitude)
-          : Infinity;
-      return da - db;
-    });
-  }
-
-  if (mode === 'work') {
-    return sorted.sort((a, b) => (b.modeWork ?? 0) - (a.modeWork ?? 0));
-  }
-  if (mode === 'rest') {
-    return sorted.sort((a, b) => (b.modeRest ?? 0) - (a.modeRest ?? 0));
-  }
-  if (mode === 'social') {
-    return sorted.sort((a, b) => (b.modeSocial ?? 0) - (a.modeSocial ?? 0));
-  }
-
+  if (mode === 'work') return sorted.sort((a, b) => (b.modeWork ?? 0) - (a.modeWork ?? 0));
+  if (mode === 'rest') return sorted.sort((a, b) => (b.modeRest ?? 0) - (a.modeRest ?? 0));
+  if (mode === 'social') return sorted.sort((a, b) => (b.modeSocial ?? 0) - (a.modeSocial ?? 0));
   if (sortBy === 'rating' || activeFilters.includes('rating')) {
     return sorted.sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
   }
@@ -71,15 +31,15 @@ function applySort(
 export default function HomePage() {
   const router = useRouter();
   const { shops } = useShops({ featured: true, limit: 50 });
-  const { latitude, longitude, requestLocation } = useGeolocation();
+  const { requestLocation } = useGeolocation();
   const [mode, setMode] = useState<SearchMode>(null);
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
   const [sortBy, setSortBy] = useState<SortKey>('default');
 
   const displayedShops = useMemo(
-    () => applySort(shops, mode, activeFilters, sortBy, latitude ?? null, longitude ?? null).slice(0, 12),
-    [shops, mode, activeFilters, sortBy, latitude, longitude]
+    () => applySort(shops, mode, activeFilters, sortBy).slice(0, 12),
+    [shops, mode, activeFilters, sortBy]
   );
 
   function handleSearch(query: string) {
@@ -105,9 +65,10 @@ export default function HomePage() {
     }
   }
 
-  async function handleToggleFilter(filter: string) {
-    if (filter === 'distance' && latitude == null) {
-      await requestLocation();
+  function handleToggleFilter(filter: string) {
+    if (filter === 'distance') {
+      handleNearMe();
+      return;
     }
     setActiveFilters((prev) =>
       prev.includes(filter) ? prev.filter((x) => x !== filter) : [...prev, filter]
