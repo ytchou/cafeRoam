@@ -48,7 +48,7 @@ interface ShopDetailClientProps {
 
 export function ShopDetailClient({ shop }: ShopDetailClientProps) {
   const { capture } = useAnalytics();
-  const { user } = useUser();
+  const { user, isLoading: isUserLoading } = useUser();
   const photos = shop.photoUrls ?? [];
   const tags = shop.taxonomyTags ?? [];
   const shopPath = `/shops/${shop.id}/${shop.slug ?? shop.id}`;
@@ -98,7 +98,7 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
             total={total}
             averageRating={averageRating}
             isLoading={isLoading}
-            isAuthError={!user || isAuthError}
+            isAuthError={!isUserLoading && (!user || isAuthError)}
           />
           <div className="px-4 py-2">
             <ShareButton
