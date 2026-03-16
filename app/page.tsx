@@ -18,7 +18,7 @@ const MapView = dynamic(
   { ssr: false }
 );
 
-export default function FindPage() {
+function FindPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const urlQuery = searchParams.get('q');
@@ -36,10 +36,18 @@ export default function FindPage() {
   const { requestLocation } = useGeolocation();
 
   const shops = useMemo(() => {
-    if (!urlQuery) return featuredShops;
-    if (searchLoading) return [];
-    return searchResults.length > 0 ? searchResults : featuredShops;
-  }, [urlQuery, searchLoading, searchResults, featuredShops]);
+    const base = urlQuery
+      ? searchLoading
+        ? []
+        : searchResults.length > 0
+          ? searchResults
+          : featuredShops
+      : featuredShops;
+    if (activeFilters.includes('rating')) {
+      return [...base].sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
+    }
+    return base;
+  }, [urlQuery, searchLoading, searchResults, featuredShops, activeFilters]);
 
   const shopById = useMemo(() => new Map(shops.map((s) => [s.id, s])), [shops]);
   const selectedShop = selectedShopId
@@ -96,7 +104,6 @@ export default function FindPage() {
           <FilterPills
             activeFilters={activeFilters}
             onToggle={handleToggleFilter}
-            onOpenSheet={() => {}}
             onNearMe={requestLocation}
           />
         </div>
@@ -112,5 +119,13 @@ export default function FindPage() {
           />
         ))}
     </div>
+  );
+}
+
+export default function FindPage() {
+  return (
+    <Suspense>
+      <FindPageContent />
+    </Suspense>
   );
 }

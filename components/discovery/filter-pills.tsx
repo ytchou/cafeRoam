@@ -11,7 +11,7 @@ const QUICK_FILTERS = [
 interface FilterPillsProps {
   activeFilters: string[];
   onToggle: (filter: string) => void;
-  onOpenSheet: () => void;
+  onOpenSheet?: () => void;
   onNearMe?: () => void;
 }
 
@@ -38,7 +38,7 @@ export function FilterPills({
 
   return (
     <div className="flex items-center gap-2 py-1">
-      <button
+      {onOpenSheet && <button
         type="button"
         onClick={onOpenSheet}
         className="flex flex-shrink-0 items-center gap-1.5 rounded-full border border-gray-300 bg-white px-3 py-1.5 text-sm whitespace-nowrap text-gray-700 shadow-sm hover:bg-gray-50"
@@ -59,7 +59,7 @@ export function FilterPills({
           <circle cx="6" cy="12" r="1.5" fill="white" />
         </svg>
         篩選
-      </button>
+      </button>}
       <div className="scrollbar-hide flex flex-1 gap-2 overflow-x-auto">
         {QUICK_FILTERS.map(({ key, label }) => {
           if (key === 'distance' && onNearMe) {
