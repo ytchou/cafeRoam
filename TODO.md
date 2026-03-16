@@ -942,7 +942,7 @@ Adds the Explore tab and redesigns the four main sections of the app using Penci
 - [x] Delete `app/map/page.tsx` and `app/map/page.test.tsx`
 
 **Chunk 3 — Redirect + Scaffold:**
-- [ ] Add `/map` → `/` permanent redirect in `next.config.ts`
+- [x] Add `/map` → `/` permanent redirect in `next.config.ts`
 - [ ] Create `app/explore/page.tsx` scaffold
 
 ### Tarot — Surprise Me (Explore Layer 1)
