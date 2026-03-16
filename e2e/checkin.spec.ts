@@ -33,8 +33,10 @@ test.describe('@critical J10 — Check-in: upload photo → submit → stamp awa
     const submitButton = page.getByRole('button', { name: /打卡|Check In/i });
     await submitButton.click();
 
-    // Wait for success — page should navigate away or show success toast
-    await page.waitForURL(/(?!\/checkin)/, { timeout: 15_000 });
+    // Wait for successful navigation away from check-in page
+    await page.waitForURL(url => !url.pathname.startsWith('/checkin'), { timeout: 15_000 });
+    // Verify success toast (stamp awarded notification)
+    await expect(page.getByRole('status')).toBeVisible({ timeout: 5_000 });
   });
 });
 
