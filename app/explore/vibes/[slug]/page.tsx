@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect } from 'react';
+
+const BRICOLAGE_STYLE = { fontFamily: 'var(--font-bricolage), sans-serif' } as const;
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
@@ -11,13 +13,13 @@ export default function VibePage() {
   const router = useRouter();
   const { slug } = useParams<{ slug: string }>();
 
-  const { latitude, longitude, requestLocation } = useGeolocation();
+  const { latitude, longitude, loading: geoLoading, requestLocation } = useGeolocation();
 
   useEffect(() => {
     requestLocation();
   }, [requestLocation]);
 
-  const { response, isLoading, error } = useVibeShops(slug, latitude, longitude);
+  const { response, isLoading, error } = useVibeShops(slug, latitude, longitude, 5, geoLoading);
 
   if (isLoading) {
     return (
@@ -63,7 +65,7 @@ export default function VibePage() {
           <div>
             <h1
               className="text-xl font-bold text-[#1A1918]"
-              style={{ fontFamily: 'var(--font-bricolage), sans-serif' }}
+              style={BRICOLAGE_STYLE}
             >
               {vibe.name}
             </h1>

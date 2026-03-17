@@ -82,7 +82,8 @@ class VibeService:
             )
 
         results.sort(key=lambda r: (-r.overlap_score, -(r.rating or 0)))
-        return VibeShopsResponse(vibe=vibe, shops=results[:50], total_count=len(results))
+        returned = results[:50]
+        return VibeShopsResponse(vibe=vibe, shops=returned, total_count=len(returned))
 
     def _fetch_vibe(self, slug: str) -> VibeCollection:
         response = (

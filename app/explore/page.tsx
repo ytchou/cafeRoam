@@ -1,6 +1,9 @@
 'use client';
 
 import { useEffect, useCallback, useMemo } from 'react';
+
+const BRICOLAGE_STYLE = { fontFamily: 'var(--font-bricolage), var(--font-geist-sans), sans-serif' } as const;
+const BRICOLAGE_STYLE_SM = { fontFamily: 'var(--font-bricolage), sans-serif' } as const;
 import Link from 'next/link';
 import { useGeolocation } from '@/lib/hooks/use-geolocation';
 import { useTarotDraw } from '@/lib/hooks/use-tarot-draw';
@@ -49,10 +52,7 @@ export default function ExplorePage() {
       <div className="mb-4">
         <h1
           className="text-xl font-bold text-[#2C1810]"
-          style={{
-            fontFamily:
-              'var(--font-bricolage), var(--font-geist-sans), sans-serif',
-          }}
+          style={BRICOLAGE_STYLE}
         >
           ✦ Your Tarot Draw
         </h1>
@@ -118,7 +118,7 @@ export default function ExplorePage() {
           <div className="mb-3">
             <h2
               className="text-lg font-bold text-[#1A1918]"
-              style={{ fontFamily: 'var(--font-bricolage), sans-serif' }}
+              style={BRICOLAGE_STYLE_SM}
             >
               Browse by Vibe
             </h2>

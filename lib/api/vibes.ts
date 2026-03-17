@@ -14,8 +14,9 @@ export function buildVibeShopsUrl(
   const params = new URLSearchParams();
   if (lat != null) params.set('lat', String(lat));
   if (lng != null) params.set('lng', String(lng));
-  params.set('radius_km', String(radiusKm));
-  return `/api/explore/vibes/${slug}/shops?${params}`;
+  if (lat != null && lng != null) params.set('radius_km', String(radiusKm));
+  const query = params.toString();
+  return `/api/explore/vibes/${slug}/shops${query ? `?${query}` : ''}`;
 }
 
 export async function fetchVibeShops(
