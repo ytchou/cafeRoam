@@ -1,0 +1,148 @@
+from datetime import datetime
+from unittest.mock import MagicMock
+from zoneinfo import ZoneInfo
+
+from services.tarot_service import TarotService
+from tests.factories import make_tarot_shop_row
+
+TW = ZoneInfo("Asia/Taipei")
+
+# Fixed "now" on a Wednesday at 2pm — all default factory shops should be open
+FIXED_NOW = datetime(2026, 3, 18, 14, 0, tzinfo=TW)
+
+
+def _make_db_mock(rows: list[dict]) -> MagicMock:
+    """Mock Supabase client that returns given rows from table select."""
+    mock = MagicMock()
+    mock.table.return_value = mock
+    mock.select.return_value = mock
+    mock.eq.return_value = mock
+    mock.not_.return_value = mock
+    mock.gte.return_value = mock
+    mock.lte.return_value = mock
+    mock.limit.return_value = mock
+    mock.execute.return_value = MagicMock(data=rows)
+    return mock
+
+
+class TestTarotServiceDraw:
+    """Given a user location, draw 3 unique-title tarot cards from nearby open shops."""
+
+    async def test_returns_3_cards_from_sufficient_pool(self):
+        rows = [
+            make_tarot_shop_row(id="s1", tarot_title="The Scholar's Refuge"),
+            make_tarot_shop_row(id="s2", tarot_title="The Hidden Alcove"),
+            make_tarot_shop_row(id="s3", tarot_title="The Alchemist's Table"),
+            make_tarot_shop_row(id="s4", tarot_title="The Open Sky"),
+        ]
+        db = _make_db_mock(rows)
+        service = TarotService(db)
+        result = await service.draw(
+            lat=25.033, lng=121.543, radius_km=3.0, excluded_ids=[], now=FIXED_NOW
+        )
+        assert len(result) == 3
+
+    async def test_all_cards_have_unique_titles(self):
+        rows = [
+            make_tarot_shop_row(id="s1", tarot_title="The Scholar's Refuge"),
+            make_tarot_shop_row(id="s2", tarot_title="The Scholar's Refuge"),
+            make_tarot_shop_row(id="s3", tarot_title="The Hidden Alcove"),
+            make_tarot_shop_row(id="s4", tarot_title="The Alchemist's Table"),
+        ]
+        db = _make_db_mock(rows)
+        service = TarotService(db)
+        result = await service.draw(
+            lat=25.033, lng=121.543, radius_km=3.0, excluded_ids=[], now=FIXED_NOW
+        )
+        titles = [c.tarot_title for c in result]
+        assert len(titles) == len(set(titles))
+
+    async def test_excludes_recently_seen_shops(self):
+        rows = [
+            make_tarot_shop_row(id="s1", tarot_title="The Scholar's Refuge"),
+            make_tarot_shop_row(id="s2", tarot_title="The Hidden Alcove"),
+            make_tarot_shop_row(id="s3", tarot_title="The Alchemist's Table"),
+        ]
+        db = _make_db_mock(rows)
+        service = TarotService(db)
+        result = await service.draw(
+            lat=25.033, lng=121.543, radius_km=3.0, excluded_ids=["s1", "s2"], now=FIXED_NOW
+        )
+        result_ids = [c.shop_id for c in result]
+        assert "s1" not in result_ids
+        assert "s2" not in result_ids
+
+    async def test_returns_fewer_than_3_when_pool_is_small(self):
+        rows = [
+            make_tarot_shop_row(id="s1", tarot_title="The Scholar's Refuge"),
+        ]
+        db = _make_db_mock(rows)
+        service = TarotService(db)
+        result = await service.draw(
+            lat=25.033, lng=121.543, radius_km=3.0, excluded_ids=[], now=FIXED_NOW
+        )
+        assert len(result) == 1
+
+    async def test_returns_empty_list_when_no_shops(self):
+        db = _make_db_mock([])
+        service = TarotService(db)
+        result = await service.draw(
+            lat=25.033, lng=121.543, radius_km=3.0, excluded_ids=[], now=FIXED_NOW
+        )
+        assert result == []
+
+    async def test_filters_out_closed_shops(self):
+        # Sunday shop with Monday-only hours should be closed on Wednesday
+        rows = [
+            make_tarot_shop_row(
+                id="s1",
+                tarot_title="The Scholar's Refuge",
+                opening_hours=["Sunday: 9:00 AM - 5:00 PM"],
+            ),
+            make_tarot_shop_row(id="s2", tarot_title="The Hidden Alcove"),
+        ]
+        db = _make_db_mock(rows)
+        service = TarotService(db)
+        result = await service.draw(
+            lat=25.033, lng=121.543, radius_km=3.0, excluded_ids=[], now=FIXED_NOW
+        )
+        result_ids = [c.shop_id for c in result]
+        assert "s1" not in result_ids
+
+    async def test_includes_shops_with_null_hours_as_unknown(self):
+        rows = [
+            make_tarot_shop_row(id="s1", tarot_title="The Scholar's Refuge", opening_hours=None),
+        ]
+        db = _make_db_mock(rows)
+        service = TarotService(db)
+        result = await service.draw(
+            lat=25.033, lng=121.543, radius_km=3.0, excluded_ids=[], now=FIXED_NOW
+        )
+        assert len(result) == 1  # null hours = unknown = included
+
+    async def test_card_has_distance_km(self):
+        rows = [
+            make_tarot_shop_row(id="s1", tarot_title="The Scholar's Refuge"),
+        ]
+        db = _make_db_mock(rows)
+        service = TarotService(db)
+        result = await service.draw(
+            lat=25.033, lng=121.543, radius_km=3.0, excluded_ids=[], now=FIXED_NOW
+        )
+        assert result[0].distance_km >= 0
+
+    async def test_card_response_shape(self):
+        rows = [
+            make_tarot_shop_row(id="s1", tarot_title="The Scholar's Refuge"),
+        ]
+        db = _make_db_mock(rows)
+        service = TarotService(db)
+        result = await service.draw(
+            lat=25.033, lng=121.543, radius_km=3.0, excluded_ids=[], now=FIXED_NOW
+        )
+        card = result[0]
+        assert card.shop_id == "s1"
+        assert card.tarot_title == "The Scholar's Refuge"
+        assert card.flavor_text == "For those who seek quiet in an unquiet world."
+        assert card.name == "森日咖啡"
+        assert card.neighborhood == "台北市"

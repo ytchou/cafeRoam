@@ -3,11 +3,13 @@ import logging
 from anthropic import AsyncAnthropic
 from anthropic.types import Message
 
+from core.tarot_vocabulary import TAROT_TITLES, TITLE_TO_TAGS
 from models.types import (
     EnrichmentResult,
     MenuExtractionResult,
     ShopEnrichmentInput,
     ShopModeScores,
+    TarotEnrichmentResult,
     TaxonomyTag,
 )
 
@@ -77,6 +79,35 @@ EXTRACT_MENU_TOOL = {
         "required": ["items"],
     },
 }
+
+ASSIGN_TAROT_TOOL = {
+    "name": "assign_tarot",
+    "description": "Assign a mystical tarot archetype title and flavor text to a coffee shop",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "tarot_title": {
+                "type": "string",
+                "enum": TAROT_TITLES,
+                "description": "The tarot archetype title that best fits this shop",
+            },
+            "flavor_text": {
+                "type": "string",
+                "description": (
+                    "One evocative sentence in the style of a tarot reading. Max 80 characters."
+                ),
+            },
+        },
+        "required": ["tarot_title", "flavor_text"],
+    },
+}
+
+TAROT_SYSTEM_PROMPT = (
+    "You are a mystical coffee guide who assigns tarot archetype names to cafes. "
+    "Based on the shop's characteristics and reviews, pick the single best-fitting "
+    "title from the provided list. Write a one-line flavor text — evocative, "
+    "mysterious, and no longer than 80 characters."
+)
 
 SYSTEM_PROMPT = (
     "You are an expert on Taiwan's independent coffee shop scene. "
@@ -156,6 +187,34 @@ class AnthropicLLMAdapter:
             items=tool_input.get("items", []),
             raw_text=tool_input.get("raw_text"),
         )
+
+    async def assign_tarot(self, shop: ShopEnrichmentInput) -> TarotEnrichmentResult:
+        """Assign a tarot title and flavor text to a shop."""
+        lines = [f"Shop: {shop.name}"]
+        if shop.description:
+            lines.append(f"Description: {shop.description}")
+        if shop.reviews:
+            lines.append(f"Sample reviews: {'; '.join(shop.reviews[:5])}")
+        lines.append("")
+        lines.append("Title-to-tag reference (pick the best match):")
+        for title, tags in TITLE_TO_TAGS.items():
+            lines.append(f"  {title}: {', '.join(tags)}")
+
+        response = await self._client.messages.create(
+            model=self._model,
+            max_tokens=256,
+            system=TAROT_SYSTEM_PROMPT,
+            messages=[{"role": "user", "content": "\n".join(lines)}],
+            tools=[ASSIGN_TAROT_TOOL],
+            tool_choice={"type": "tool", "name": "assign_tarot"},
+        )
+
+        tool_input = self._extract_tool_input(response, "assign_tarot")
+        title = tool_input.get("tarot_title", "")
+        flavor = tool_input.get("flavor_text", "")
+        validated_title = title if title in TAROT_TITLES else None
+
+        return TarotEnrichmentResult(tarot_title=validated_title, flavor_text=flavor)
 
     def _build_enrich_prompt(self, shop: ShopEnrichmentInput) -> str:
         lines = [

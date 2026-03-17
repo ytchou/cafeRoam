@@ -61,6 +61,7 @@ import { PATCH as checkinReviewPATCH } from '../checkins/[id]/review/route';
 import { GET as shopCheckinsGET } from '../shops/[id]/checkins/route';
 import { GET as shopReviewsGET } from '../shops/[id]/reviews/route';
 import { GET as deadLetterGET } from '../admin/pipeline/dead-letter/route';
+import { GET as tarotDrawGET } from '../explore/tarot-draw/route';
 
 const mockProxy = vi.mocked(proxyToBackend);
 const mockResponse = new Response('{}', { status: 200 });
@@ -485,6 +486,16 @@ describe('admin/pipeline/dead-letter route', () => {
     expect(mockProxy).toHaveBeenCalledWith(
       expect.any(NextRequest),
       '/admin/pipeline/dead-letter'
+    );
+  });
+});
+
+describe('explore/tarot-draw route', () => {
+  it('GET proxies to /explore/tarot-draw', async () => {
+    await tarotDrawGET(makeRequest());
+    expect(mockProxy).toHaveBeenCalledWith(
+      expect.any(NextRequest),
+      '/explore/tarot-draw'
     );
   });
 });
