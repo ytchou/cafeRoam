@@ -1,69 +1,130 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { renderHook, waitFor, act } from '@testing-library/react';
 import { useTarotDraw } from './use-tarot-draw';
+import { STORAGE_KEY } from '@/lib/tarot/recently-seen';
 
-// Mock SWR at the module level
+// SWR is a framework data-fetching boundary — mock at this layer
 vi.mock('swr', () => ({
   default: vi.fn(),
-}));
-
-// Mock recently-seen
-vi.mock('@/lib/tarot/recently-seen', () => ({
-  getRecentlySeenIds: vi.fn(() => []),
-  addRecentlySeenIds: vi.fn(),
-  clearRecentlySeen: vi.fn(),
 }));
 
 import useSWR from 'swr';
 const mockUseSWR = vi.mocked(useSWR);
 
+function swrReturning(data: unknown, extra?: object) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return { data, error: undefined, isLoading: false, mutate: vi.fn(), ...extra } as any;
+}
+
 describe('useTarotDraw', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    localStorage.clear();
+    mockUseSWR.mockReturnValue(swrReturning(undefined, { isLoading: false }));
   });
 
-  it('returns null SWR key when coordinates are null', () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    mockUseSWR.mockReturnValue({ data: undefined, error: undefined, isLoading: false, mutate: vi.fn() } as any);
-
-    renderHook(() => useTarotDraw(null, null));
-
-    expect(mockUseSWR).toHaveBeenCalledWith(
-      null,
-      expect.any(Function),
-      expect.any(Object)
-    );
+  afterEach(() => {
+    localStorage.clear();
   });
 
-  it('constructs correct SWR key with coordinates', () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    mockUseSWR.mockReturnValue({ data: [], error: undefined, isLoading: false, mutate: vi.fn() } as any);
-
-    renderHook(() => useTarotDraw(25.033, 121.543));
-
+  it('returns no cards while coordinates are unavailable', () => {
+    mockUseSWR.mockReturnValue(swrReturning(undefined, { isLoading: false }));
+    const { result } = renderHook(() => useTarotDraw(null, null));
+    expect(result.current.cards).toEqual([]);
+    expect(result.current.isLoading).toBe(false);
+    // SWR should receive null key so it does not fetch
     const key = mockUseSWR.mock.calls[0][0];
-    expect(key).toContain('/api/explore/tarot-draw');
-    expect(key).toContain('lat=25.033');
-    expect(key).toContain('lng=121.543');
+    expect(key).toBeNull();
   });
 
-  it('returns empty cards array when data is undefined', () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    mockUseSWR.mockReturnValue({ data: undefined, error: undefined, isLoading: true, mutate: vi.fn() } as any);
-
+  it('returns no cards while loading', () => {
+    mockUseSWR.mockReturnValue(swrReturning(undefined, { isLoading: true }));
     const { result } = renderHook(() => useTarotDraw(25.033, 121.543));
-
     expect(result.current.cards).toEqual([]);
     expect(result.current.isLoading).toBe(true);
   });
 
-  it('returns cards from SWR data', () => {
-    const mockCards = [{ shopId: 's1', tarotTitle: 'The Crown' }];
+  it('returns cards from a successful draw', () => {
+    const mockCards = [{ shopId: 's1', tarotTitle: '山小孩咖啡館 — The Scholar' }];
+    mockUseSWR.mockReturnValue(swrReturning(mockCards));
+    const { result } = renderHook(() => useTarotDraw(25.033, 121.543));
+    expect(result.current.cards).toEqual(mockCards);
+  });
+
+  it('surfaces an error when the draw request fails', () => {
+    const fetchError = new Error('Network error');
+    mockUseSWR.mockReturnValue(swrReturning(undefined, { error: fetchError }));
+    const { result } = renderHook(() => useTarotDraw(25.033, 121.543));
+    expect(result.current.error).toBe(fetchError);
+  });
+
+  it('uses a 3km radius by default', () => {
+    mockUseSWR.mockReturnValue(swrReturning([]));
+    renderHook(() => useTarotDraw(25.033, 121.543));
+    const key = mockUseSWR.mock.calls[0][0] as string;
+    expect(key).toContain('radius_km=3');
+  });
+
+  it('fetches with an expanded radius after setRadiusKm is called', async () => {
+    mockUseSWR.mockReturnValue(swrReturning([]));
+    const { result } = renderHook(() => useTarotDraw(25.033, 121.543));
+
+    act(() => {
+      result.current.setRadiusKm(10);
+    });
+
+    await waitFor(() => {
+      const lastKey = mockUseSWR.mock.calls.at(-1)?.[0] as string;
+      expect(lastKey).toContain('radius_km=10');
+    });
+  });
+
+  it('excludes shops the user has already seen', () => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(['shop-abc', 'shop-def']));
+    mockUseSWR.mockReturnValue(swrReturning([]));
+    renderHook(() => useTarotDraw(25.033, 121.543));
+    const key = mockUseSWR.mock.calls[0][0] as string;
+    expect(key).toContain('excluded_ids=shop-abc,shop-def');
+  });
+
+  it('picks up newly seen shops when redrawn', async () => {
+    const afterRedrawCards = [{ shopId: 's2', tarotTitle: '探索者的居所' }];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    mockUseSWR.mockReturnValue({ data: mockCards, error: undefined, isLoading: false, mutate: vi.fn() } as any);
+    mockUseSWR.mockImplementation((key: unknown): any => {
+      if (typeof key === 'string' && key.includes('newly-seen-shop')) {
+        return swrReturning(afterRedrawCards);
+      }
+      return swrReturning([{ shopId: 's1', tarotTitle: '山小孩咖啡館' }]);
+    });
 
     const { result } = renderHook(() => useTarotDraw(25.033, 121.543));
 
-    expect(result.current.cards).toEqual(mockCards);
+    // Simulate TarotSpread writing a new seen ID to localStorage after a card tap
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(['newly-seen-shop']));
+
+    act(() => {
+      result.current.redraw();
+    });
+
+    await waitFor(() => {
+      const lastKey = mockUseSWR.mock.calls.at(-1)?.[0] as string;
+      expect(lastKey).toContain('excluded_ids=newly-seen-shop');
+    });
+  });
+
+  it('auto-clears seen shops and redraws when all nearby shops are exhausted', async () => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(['s1', 's2']));
+    mockUseSWR.mockReturnValue(swrReturning([]));
+
+    renderHook(() => useTarotDraw(25.033, 121.543));
+
+    await waitFor(() => {
+      expect(localStorage.getItem(STORAGE_KEY)).toBeNull();
+    });
+
+    // Key should be updated to drop excluded_ids after clear
+    const lastKey = mockUseSWR.mock.calls.at(-1)?.[0] as string;
+    expect(lastKey).not.toContain('s1');
+    expect(lastKey).not.toContain('s2');
   });
 });

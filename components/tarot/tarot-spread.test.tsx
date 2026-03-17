@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { TarotSpread } from './tarot-spread';
 import type { TarotCardData } from '@/types/tarot';
@@ -11,13 +11,6 @@ vi.mock('@/lib/posthog/use-analytics', () => ({
 // Mock next/navigation
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn() }),
-}));
-
-// Mock recently-seen
-vi.mock('@/lib/tarot/recently-seen', () => ({
-  getRecentlySeenIds: vi.fn(() => []),
-  addRecentlySeenIds: vi.fn(),
-  clearRecentlySeen: vi.fn(),
 }));
 
 // Mock the drawer to avoid portal issues
@@ -72,11 +65,14 @@ const mockCards: TarotCardData[] = [
 ];
 
 describe('TarotSpread', () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
   it('renders 3 face-down cards with titles', () => {
     render(<TarotSpread cards={mockCards} onDrawAgain={vi.fn()} />);
-    expect(screen.getByText(/THE SCHOLAR'S REFUGE/)).toBeInTheDocument();
-    expect(screen.getByText(/THE HIDDEN ALCOVE/)).toBeInTheDocument();
-    expect(screen.getByText(/THE ALCHEMIST'S TABLE/)).toBeInTheDocument();
+    expect(screen.getByText(/The Scholar's Refuge/)).toBeInTheDocument();
+    expect(screen.getByText(/The Hidden Alcove/)).toBeInTheDocument();
+    expect(screen.getByText(/The Alchemist's Table/)).toBeInTheDocument();
   });
 
   it('shows instruction text', () => {
@@ -95,7 +91,7 @@ describe('TarotSpread', () => {
 
   it('renders single card when only 1 available', () => {
     render(<TarotSpread cards={[mockCards[0]]} onDrawAgain={vi.fn()} />);
-    expect(screen.getByText(/THE SCHOLAR'S REFUGE/)).toBeInTheDocument();
-    expect(screen.queryByText(/THE HIDDEN ALCOVE/)).not.toBeInTheDocument();
+    expect(screen.getByText(/The Scholar's Refuge/)).toBeInTheDocument();
+    expect(screen.queryByText(/The Hidden Alcove/)).not.toBeInTheDocument();
   });
 });

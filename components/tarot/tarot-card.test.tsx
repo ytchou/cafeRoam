@@ -10,9 +10,9 @@ describe('TarotCard', () => {
     index: 0,
   };
 
-  it('displays the tarot title in uppercase', () => {
+  it('displays the tarot title', () => {
     render(<TarotCard {...defaultProps} />);
-    expect(screen.getByText("THE SCHOLAR'S REFUGE")).toBeInTheDocument();
+    expect(screen.getByText("The Scholar's Refuge")).toBeInTheDocument();
   });
 
   it('calls onTap when clicked', () => {

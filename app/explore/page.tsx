@@ -10,7 +10,7 @@ import { useAnalytics } from '@/lib/posthog/use-analytics';
 export default function ExplorePage() {
   const { capture } = useAnalytics();
   const { latitude, longitude, error: geoError, loading: geoLoading, requestLocation } = useGeolocation();
-  const { cards, isLoading, error, redraw } = useTarotDraw(latitude, longitude);
+  const { cards, isLoading, error, redraw, setRadiusKm } = useTarotDraw(latitude, longitude);
 
   useEffect(() => {
     requestLocation();
@@ -28,8 +28,8 @@ export default function ExplorePage() {
     capture('tarot_empty_state', {
       radius_km: 10,
     });
-    redraw();
-  }, [capture, redraw]);
+    setRadiusKm(10);
+  }, [capture, setRadiusKm]);
 
   return (
     <main className="min-h-screen bg-[#FAF7F4] px-5 pb-24 pt-6">

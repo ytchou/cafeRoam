@@ -57,7 +57,7 @@ describe('TarotRevealDrawer', () => {
         onDrawAgain={vi.fn()}
       />
     );
-    expect(screen.getByText("THE SCHOLAR'S REFUGE")).toBeInTheDocument();
+    expect(screen.getByText("The Scholar's Refuge")).toBeInTheDocument();
   });
 
   it('displays flavor text', () => {
