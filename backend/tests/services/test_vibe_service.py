@@ -123,9 +123,7 @@ class TestVibeServiceGetShopsForVibe:
         assert result.shops[0].shop_id == "shop-a"
         assert result.shops[0].overlap_score > result.shops[1].overlap_score
 
-    def test_raises_404_for_unknown_slug(self):
-        from fastapi import HTTPException
-
+    def test_raises_value_error_for_unknown_slug(self):
         mock = MagicMock()
         mock.table.return_value = mock
         mock.select.return_value = mock
@@ -134,9 +132,8 @@ class TestVibeServiceGetShopsForVibe:
         mock.execute.return_value = MagicMock(data=[])
 
         service = VibeService(mock)
-        with pytest.raises(HTTPException) as exc_info:
+        with pytest.raises(ValueError, match="nonexistent-slug"):
             service.get_shops_for_vibe("nonexistent-slug")
-        assert exc_info.value.status_code == 404
 
     def test_adds_distance_km_when_lat_lng_provided(self):
         vibe = make_vibe_row(tag_ids=["quiet"])
