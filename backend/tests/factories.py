@@ -135,3 +135,25 @@ def make_tarot_shop_row(**overrides: object) -> dict:
         ],
         **overrides,
     }
+
+
+def make_vibe_row(**overrides: object) -> dict:
+    """A vibe_collections row."""
+    defaults = {
+        "id": "vibe-study-cave",
+        "slug": "study-cave",
+        "name": "Study Cave",
+        "name_zh": "讀書洞穴",
+        "emoji": "📚",
+        "subtitle": "Quiet · WiFi",
+        "subtitle_zh": "安靜 · 有網路",
+        "tag_ids": ["quiet", "laptop_friendly", "wifi_available", "no_time_limit"],
+        "sort_order": 1,
+        "is_active": True,
+    }
+    return {**defaults, **overrides}
+
+
+def make_shop_tag_row(shop_id: str = "shop-d4e5f6", tag_id: str = "quiet") -> dict:
+    """A shop_tags join row."""
+    return {"shop_id": shop_id, "tag_id": tag_id}

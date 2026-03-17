@@ -990,7 +990,7 @@ Adds the Explore tab and redesigns the four main sections of the app using Penci
 - [x] Frontend TypeScript types: `types/vibes.ts`
 
 **Chunk 2 — Backend Service + API (Wave 2-3):**
-- [ ] `VibeService` with overlap scoring + geo filtering (TDD)
+- [x] `VibeService` with overlap scoring + geo filtering (TDD)
 - [ ] `GET /explore/vibes` endpoint with TDD
 - [ ] `GET /explore/vibes/{slug}/shops` endpoint with TDD
 
