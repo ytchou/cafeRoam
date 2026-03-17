@@ -11,7 +11,7 @@ const QUICK_FILTERS = [
 interface FilterPillsProps {
   activeFilters: string[];
   onToggle: (filter: string) => void;
-  onOpenSheet: () => void;
+  onOpenSheet?: () => void;
   onNearMe?: () => void;
 }
 
@@ -38,28 +38,30 @@ export function FilterPills({
 
   return (
     <div className="flex items-center gap-2 py-1">
-      <button
-        type="button"
-        onClick={onOpenSheet}
-        className="flex flex-shrink-0 items-center gap-1.5 rounded-full border border-gray-300 bg-white px-3 py-1.5 text-sm whitespace-nowrap text-gray-700 shadow-sm hover:bg-gray-50"
-      >
-        <svg
-          width="14"
-          height="14"
-          viewBox="0 0 16 16"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.5"
+      {onOpenSheet && (
+        <button
+          type="button"
+          onClick={onOpenSheet}
+          className="flex flex-shrink-0 items-center gap-1.5 rounded-full border border-gray-300 bg-white px-3 py-1.5 text-sm whitespace-nowrap text-gray-700 shadow-sm hover:bg-gray-50"
         >
-          <line x1="2" y1="4" x2="14" y2="4" />
-          <line x1="2" y1="8" x2="14" y2="8" />
-          <line x1="2" y1="12" x2="14" y2="12" />
-          <circle cx="5" cy="4" r="1.5" fill="white" />
-          <circle cx="10" cy="8" r="1.5" fill="white" />
-          <circle cx="6" cy="12" r="1.5" fill="white" />
-        </svg>
-        篩選
-      </button>
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 16 16"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+          >
+            <line x1="2" y1="4" x2="14" y2="4" />
+            <line x1="2" y1="8" x2="14" y2="8" />
+            <line x1="2" y1="12" x2="14" y2="12" />
+            <circle cx="5" cy="4" r="1.5" fill="white" />
+            <circle cx="10" cy="8" r="1.5" fill="white" />
+            <circle cx="6" cy="12" r="1.5" fill="white" />
+          </svg>
+          篩選
+        </button>
+      )}
       <div className="scrollbar-hide flex flex-1 gap-2 overflow-x-auto">
         {QUICK_FILTERS.map(({ key, label }) => {
           if (key === 'distance' && onNearMe) {

@@ -3,63 +3,91 @@ import { describe, it, expect, vi } from 'vitest';
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn() }),
-  useSearchParams: () => new URLSearchParams(),
-  usePathname: () => '/',
-}));
-
-vi.mock('next/image', () => ({
-  default: ({ src, alt }: { src: string; alt: string }) => (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img src={src} alt={alt} />
-  ),
+  useSearchParams: () => ({ get: () => null }),
 }));
 
 vi.mock('@/lib/hooks/use-shops', () => ({
   useShops: () => ({
     shops: [
       {
-        id: '1',
+        id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
         name: '山小孩咖啡',
-        slug: 'shan-xiao-hai-ka-fei',
+        latitude: 25.0478,
+        longitude: 121.5319,
         rating: 4.6,
+        slug: 'shan-xiao-hai-ka-fei',
+        photoUrls: [],
+        mrt: '古亭',
+        address: '台北市大安區和平東路一段',
+        phone: null,
+        website: null,
+        openingHours: null,
+        reviewCount: 42,
+        priceRange: '$$',
+        description: null,
+        menuUrl: null,
+        taxonomyTags: [],
+        cafenomadId: null,
+        googlePlaceId: null,
+        createdAt: '2025-01-15T08:00:00.000Z',
+        updatedAt: '2025-01-15T08:00:00.000Z',
       },
-      { id: '2', name: '好咖啡', slug: 'hao-ka-fei', rating: 4.2 },
     ],
     isLoading: false,
     error: null,
   }),
 }));
 
-vi.mock('@/lib/posthog/use-analytics', () => ({
-  useAnalytics: () => ({ capture: vi.fn() }),
+vi.mock('@/lib/hooks/use-media-query', () => ({
+  useIsDesktop: () => false,
+}));
+
+vi.mock('@/lib/hooks/use-search', () => ({
+  useSearch: () => ({ results: [], isLoading: false }),
 }));
 
 vi.mock('@/lib/hooks/use-geolocation', () => ({
   useGeolocation: () => ({
-    requestLocation: vi.fn(),
     latitude: null,
     longitude: null,
     error: null,
     loading: false,
+    requestLocation: vi.fn(),
   }),
 }));
 
-import HomePage from './page';
+vi.mock('next/dynamic', () => ({
+  __esModule: true,
+  default: () => {
+    const StubMapView = (props: Record<string, unknown>) => (
+      <div data-testid="map-view">
+        Map with {(props.shops as unknown[])?.length ?? 0} pins
+      </div>
+    );
+    return StubMapView;
+  },
+}));
 
-describe('Home page', () => {
-  it('When a visitor opens the home page, they see featured coffee shop names', () => {
-    render(<HomePage />);
-    expect(screen.getByText('山小孩咖啡')).toBeInTheDocument();
-    expect(screen.getByText('好咖啡')).toBeInTheDocument();
+import FindPage from './page';
+
+describe('Find page (map)', () => {
+  it('When a user opens the Find tab, they see the map', () => {
+    render(<FindPage />);
+    expect(screen.getByTestId('map-view')).toBeInTheDocument();
   });
 
-  it('When a visitor opens the home page, they see the 精選咖啡廳 section heading', () => {
-    render(<HomePage />);
-    expect(screen.getByText('精選咖啡廳')).toBeInTheDocument();
+  it('When a user opens the Find tab, there is no list/map toggle button', () => {
+    render(<FindPage />);
+    expect(
+      screen.queryByRole('button', { name: /list/i })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /map/i })
+    ).not.toBeInTheDocument();
   });
 
-  it('When a visitor opens the home page, they see the search bar', () => {
-    render(<HomePage />);
+  it('When a user opens the Find tab, they see the search bar', () => {
+    render(<FindPage />);
     expect(screen.getByRole('search')).toBeInTheDocument();
   });
 });

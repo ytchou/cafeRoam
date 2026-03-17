@@ -923,7 +923,123 @@ This is the gate for Phase 2B. Shops must be imported, enriched, embedded, and p
 
 ---
 
-## Phase 3: Beta & Launch — Target: Week 3-4
+## Phase 3: Explore Feature + UI Reconstruct
+
+Adds the Explore tab and redesigns the four main sections of the app using Pencil. All non-UI work is backend + basic functional frontend only — polish happens in the UI Reconstruct sections at the end.
+
+> **Design Doc:** [docs/designs/2026-03-16-explore-feature-design.md](docs/designs/2026-03-16-explore-feature-design.md)
+
+### Navigation Restructure
+
+> **Design Doc:** [docs/designs/2026-03-16-navigation-restructure-design.md](docs/designs/2026-03-16-navigation-restructure-design.md)
+> **Plan:** [docs/plans/2026-03-16-navigation-restructure-plan.md](docs/plans/2026-03-16-navigation-restructure-plan.md)
+
+**Chunk 1 — Bottom Nav:**
+
+- [x] Update `bottom-nav.tsx` tabs to 地圖 / 探索 / 收藏 / 我的
+
+**Chunk 2 — Route Replacement:**
+
+- [x] Replace `app/page.tsx` with map-only Find page
+- [x] Delete `app/map/page.tsx` and `app/map/page.test.tsx`
+
+**Chunk 3 — Redirect + Scaffold:**
+
+- [x] Add `/map` → `/` permanent redirect in `next.config.ts`
+- [x] Create `app/explore/page.tsx` scaffold
+
+### Tarot — Surprise Me (Explore Layer 1)
+
+_Backend + basic frontend only. UI polish handled in UI Reconstruct — Explore above._
+
+- [ ] Backend: `GET /shops/random` endpoint
+  - Accepts `lat`, `lng`, `radius_km` (default 3km)
+  - Filters to currently-open shops (respects `opening_hours`)
+  - Excludes recently-visited shops (cookie/localStorage for anonymous, DB for auth'd)
+- [ ] Backend: Recently-visited shop tracking for authenticated users (lightweight — last N shop IDs on check-in or detail view)
+- [ ] Frontend: `/explore` route + page scaffold (basic)
+- [ ] Frontend: Tarot hero card — functional tap-to-reveal, no visual polish yet
+- [ ] Frontend: Recently-visited tracking (localStorage for anonymous users)
+
+### Vibe Tags — Browse by Mood (Explore Layer 2)
+
+_Backend + basic frontend only. UI polish handled in UI Reconstruct — Explore above._
+
+Tags system is already in DB (100+ tags across 5 dimensions). Vibe tags are curated _combinations_ with editorial names — no new data, only a curation layer.
+
+- [ ] Design: Finalize 10-15 vibe collections (editorial name → existing taxonomy tag combo)
+- [ ] Backend: `GET /explore/vibes` — returns curated vibe definitions (static seed for V1)
+- [ ] Backend: `GET /explore/vibes/{slug}/shops` — shops matching a vibe's tag combo
+- [ ] Frontend: Vibe browsing strip (basic, functional)
+- [ ] Frontend: Vibe results list (basic)
+
+### Community Notes — Invite-Only Bloggers (Explore Layer 3)
+
+_Start after Tarot + Vibe Tags are live. Seed with beta blogger invites during Phase 4._
+
+- [ ] DB: `community_notes` table (author, shop_id optional, content, published_at, slug)
+- [ ] DB: `blogger` role in user permissions (invite-only grant)
+- [ ] Backend: Community notes CRUD API (read public, write requires blogger role)
+- [ ] Backend: `GET /explore/community` — paginated feed of published notes
+- [ ] Frontend: Community feed section on Explore page (basic list)
+- [ ] Frontend: Individual note page `/explore/notes/{slug}` (basic)
+- [ ] Ops: Grant `blogger` role to beta invitees (SQL or admin UI)
+
+### UI Reconstruct — Find
+
+_Designed in Pencil. Replaces current 首頁 + 地圖 split into a unified Find experience._
+
+- [ ] Pencil: Design Find page (map/list toggle, search bar, filter chips)
+- [ ] Pencil: Design shop card (list view) and map pin/popup (map view)
+- [ ] Pencil: Design Shop View (hero image, AI summary, tags, hours, reviews, claim page)
+- [ ] Pencil: Design filter panel bottom sheet (5 category tabs, 105 taxonomy tags, search)
+- [ ] Pencil: Design Shop View / Directions sheet (walk, drive, nearest MRT)
+- [ ] Frontend: Implement Find UI from Pencil designs
+
+### Shop View — Directions (implementation notes)
+
+_Build when implementing Shop View. All transport estimates via Mapbox — no Google Maps API needed._
+
+- [ ] Walking time — Mapbox Directions API, `walking` profile (lat/lng → shop)
+- [ ] Drive time — Mapbox Directions API, `driving-traffic` profile (same call, different profile)
+- [ ] Nearest MRT station — two-step:
+  - Hardcode Taipei MRT station dataset as a JSON file (~130 stations, lat/lng + name + exit info). Source from TDX API or OSM — never changes.
+  - Find nearest station with simple Haversine distance (no API call needed)
+  - Walking time to that station — Mapbox Directions API, `walking` profile
+- [ ] "Open in Google Maps" deep-link — `https://www.google.com/maps/dir/?api=1&destination={lat},{lng}`
+- [ ] "Open in Apple Maps" deep-link — `maps://maps.apple.com/?daddr={lat},{lng}`
+
+### UI Reconstruct — Explore
+
+_Designed in Pencil. Three-layer scroll: Tarot hero → Vibe strip → Community feed._
+
+- [ ] Pencil: Design Explore page (Tarot card, vibe mood strip, community feed placeholder)
+- [ ] Pencil: Design Tarot reveal card (shop detail overlay)
+- [ ] Pencil: Design vibe mood cards (horizontal scroll strip)
+- [ ] Pencil: Design vibe results page
+- [ ] Frontend: Implement Explore UI from Pencil designs
+
+### UI Reconstruct — Favorites
+
+_Designed in Pencil. Current lists UI gets a visual pass._
+
+- [ ] Pencil: Design Favorites page (list cards, empty state, 3-list cap indicator)
+- [ ] Pencil: Design list detail page (shop items within a list)
+- [ ] Frontend: Implement Favorites UI from Pencil designs
+
+### UI Reconstruct — Profile
+
+_Designed in Pencil. Stamps, check-in history, account settings._
+
+- [ ] Pencil: Design Profile page (stamp collection, check-in history, settings entry)
+- [ ] Pencil: Design stamp card and stamp collection grid
+- [ ] Frontend: Implement Profile UI from Pencil designs
+
+**Phase 3 is done when:** All four pages have Pencil designs approved and implemented. Explore tab is live with Tarot + Vibe Tags functional. At least 3 beta bloggers onboarded.
+
+---
+
+## Phase 4: Beta & Launch — Target: Week 3-4
 
 30-50 person beta → public Threads launch.
 
@@ -971,13 +1087,13 @@ _Better Stack:_
 
 - [ ] Public Threads launch post with beta user testimonials
 
-**Phase 3 is done when:** 20+ of 30 beta users say "better than Google Maps/Cafe Nomad." Public Threads post published. Better Stack shows 99%+ uptime during 2-week beta. 50+ WAU achieved.
+**Phase 4 is done when:** 20+ of 30 beta users say "better than Google Maps/Cafe Nomad." Public Threads post published. Better Stack shows 99%+ uptime during 2-week beta. 50+ WAU achieved.
 
 ---
 
 ## Backlog (Post-MVP)
 
-Explicitly cut from V1. Revisit after Phase 3 validation data is in hand.
+Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 
 ### Social & Community
 

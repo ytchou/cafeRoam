@@ -1,86 +1,64 @@
 'use client';
-import { useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { toast } from 'sonner';
+import dynamic from 'next/dynamic';
+import { useMemo, useState, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { SearchBar } from '@/components/discovery/search-bar';
-import { SuggestionChips } from '@/components/discovery/suggestion-chips';
-import { ModeChips } from '@/components/discovery/mode-chips';
 import { FilterPills } from '@/components/discovery/filter-pills';
-import { FilterSheet } from '@/components/discovery/filter-sheet';
-import { ShopCard } from '@/components/shops/shop-card';
+import { MapMiniCard } from '@/components/map/map-mini-card';
+import { MapDesktopCard } from '@/components/map/map-desktop-card';
+import { useIsDesktop } from '@/lib/hooks/use-media-query';
 import { useShops } from '@/lib/hooks/use-shops';
+import { useSearch } from '@/lib/hooks/use-search';
 import { useGeolocation } from '@/lib/hooks/use-geolocation';
 import type { SearchMode } from '@/lib/hooks/use-search-state';
-import type { Shop } from '@/lib/types';
 
-type SortKey = 'default' | 'rating';
+const MapView = dynamic(
+  () =>
+    import('@/components/map/map-view').then((m) => ({ default: m.MapView })),
+  { ssr: false }
+);
 
-function applySort(
-  shops: Shop[],
-  mode: SearchMode,
-  activeFilters: string[],
-  sortBy: SortKey
-): Shop[] {
-  const sorted = [...shops];
-
-  switch (mode) {
-    case 'work':
-      return sorted.sort((a, b) => (b.modeWork ?? 0) - (a.modeWork ?? 0));
-    case 'rest':
-      return sorted.sort((a, b) => (b.modeRest ?? 0) - (a.modeRest ?? 0));
-    case 'social':
-      return sorted.sort((a, b) => (b.modeSocial ?? 0) - (a.modeSocial ?? 0));
-    default:
-      break;
-  }
-
-  if (sortBy === 'rating' || activeFilters.includes('rating')) {
-    return sorted.sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
-  }
-
-  return sorted;
-}
-
-export default function HomePage() {
+function FindPageContent() {
   const router = useRouter();
-  const { shops } = useShops({ featured: true, limit: 50 });
-  const { requestLocation } = useGeolocation();
-  const [mode, setMode] = useState<SearchMode>(null);
-  const [activeFilters, setActiveFilters] = useState<string[]>([]);
-  const [filterSheetOpen, setFilterSheetOpen] = useState(false);
-  const [sortBy, setSortBy] = useState<SortKey>('default');
+  const searchParams = useSearchParams();
+  const urlQuery = searchParams.get('q');
+  const urlMode = searchParams.get('mode') as SearchMode;
 
-  const displayedShops = useMemo(
-    () => applySort(shops, mode, activeFilters, sortBy).slice(0, 12),
-    [shops, mode, activeFilters, sortBy]
+  const [selectedShopId, setSelectedShopId] = useState<string | null>(null);
+  const [activeFilters, setActiveFilters] = useState<string[]>([]);
+
+  const { shops: featuredShops } = useShops({ featured: true, limit: 200 });
+  const { results: searchResults, isLoading: searchLoading } = useSearch(
+    urlQuery,
+    urlMode
   );
+  const isDesktop = useIsDesktop();
+  const { requestLocation } = useGeolocation();
+
+  const shops = useMemo(() => {
+    const base = urlQuery
+      ? searchLoading
+        ? []
+        : searchResults.length > 0
+          ? searchResults
+          : featuredShops
+      : featuredShops;
+    if (activeFilters.includes('rating')) {
+      return [...base].sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
+    }
+    return base;
+  }, [urlQuery, searchLoading, searchResults, featuredShops, activeFilters]);
+
+  const shopById = useMemo(() => new Map(shops.map((s) => [s.id, s])), [shops]);
+  const selectedShop = selectedShopId
+    ? (shopById.get(selectedShopId) ?? null)
+    : null;
 
   function handleSearch(query: string) {
     const params = new URLSearchParams({ q: query });
-    if (mode) params.set('mode', mode);
-    if (activeFilters.length) params.set('filters', activeFilters.join(','));
-    router.push(`/map?${params.toString()}`);
-  }
-
-  async function handleNearMe() {
-    const coords = await requestLocation();
-    if (coords) {
-      const params = new URLSearchParams({
-        lat: String(coords.latitude),
-        lng: String(coords.longitude),
-        radius: '5',
-      });
-      if (mode) params.set('mode', mode);
-      router.push(`/map?${params.toString()}`);
-    } else {
-      toast('無法取得位置，改用文字搜尋');
-      handleSearch('我附近');
-    }
-  }
-
-  function handleModeChange(newMode: SearchMode) {
-    setMode(newMode);
-    setSortBy('default');
+    if (urlMode) params.set('mode', urlMode);
+    router.push(`/?${params.toString()}`);
+    setSelectedShopId(null);
   }
 
   function handleToggleFilter(filter: string) {
@@ -91,51 +69,60 @@ export default function HomePage() {
     );
   }
 
-  return (
-    <div className="min-h-screen bg-[#FAF7F4]">
-      <section className="bg-[#E06B3F] px-4 pt-8 pb-4">
-        <SearchBar onSubmit={handleSearch} autoFocus={false} />
-        <div className="mt-3">
-          <SuggestionChips onSelect={handleSearch} onNearMe={handleNearMe} />
-        </div>
-      </section>
+  function getSearchStatusText(): string {
+    if (searchLoading) return '搜尋中…';
+    if (searchResults.length > 0)
+      return `找到 ${searchResults.length} 間咖啡廳`;
+    return '找不到符合的咖啡廳，顯示精選';
+  }
 
-      <div className="sticky top-0 z-10 border-b border-gray-100 bg-white px-4 py-3 md:flex md:items-center md:gap-4">
-        <ModeChips activeMode={mode} onModeChange={handleModeChange} />
-        <FilterPills
-          activeFilters={activeFilters}
-          onToggle={handleToggleFilter}
-          onOpenSheet={() => setFilterSheetOpen(true)}
-          onNearMe={handleNearMe}
-        />
+  return (
+    <div className="relative h-screen w-full overflow-hidden">
+      <div className="absolute inset-0">
+        <Suspense
+          fallback={
+            <div className="flex h-full w-full items-center justify-center bg-gray-100 text-gray-400">
+              地圖載入中…
+            </div>
+          }
+        >
+          <MapView shops={shops} onPinClick={setSelectedShopId} />
+        </Suspense>
       </div>
 
-      <section className="px-4 py-4">
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-gray-500">精選咖啡廳</h2>
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as SortKey)}
-            className="rounded-lg border border-gray-200 bg-white px-2 py-1 text-sm text-gray-600 focus:ring-1 focus:ring-[#E06B3F] focus:outline-none"
-          >
-            <option value="default">預設</option>
-            <option value="rating">評分</option>
-          </select>
+      <div className="absolute top-4 right-4 left-4 z-20">
+        <div className="space-y-2 rounded-2xl bg-white/90 p-3 shadow backdrop-blur-md supports-[not(backdrop-filter)]:bg-white">
+          <div className="flex-1">
+            <SearchBar onSubmit={handleSearch} defaultQuery={urlQuery ?? ''} />
+          </div>
+          {urlQuery && (
+            <p className="text-xs text-gray-500">{getSearchStatusText()}</p>
+          )}
+          <FilterPills
+            activeFilters={activeFilters}
+            onToggle={handleToggleFilter}
+            onNearMe={requestLocation}
+          />
         </div>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-          {displayedShops.map((shop) => (
-            <ShopCard key={shop.id} shop={shop} />
-          ))}
-        </div>
-      </section>
+      </div>
 
-      <FilterSheet
-        key={filterSheetOpen ? 'open' : 'closed'}
-        open={filterSheetOpen}
-        onClose={() => setFilterSheetOpen(false)}
-        onApply={setActiveFilters}
-        initialFilters={activeFilters}
-      />
+      {selectedShop &&
+        (isDesktop ? (
+          <MapDesktopCard shop={selectedShop} />
+        ) : (
+          <MapMiniCard
+            shop={selectedShop}
+            onDismiss={() => setSelectedShopId(null)}
+          />
+        ))}
     </div>
+  );
+}
+
+export default function FindPage() {
+  return (
+    <Suspense>
+      <FindPageContent />
+    </Suspense>
   );
 }
