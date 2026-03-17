@@ -14,9 +14,16 @@ class TestTarotEnrichment:
     def adapter(self):
         taxonomy = [
             TaxonomyTag(id="quiet", dimension="ambience", label="Quiet", label_zh="安靜"),
-            TaxonomyTag(id="laptop_friendly", dimension="functionality", label="Laptop Friendly", label_zh="可帶筆電"),
+            TaxonomyTag(
+                id="laptop_friendly",
+                dimension="functionality",
+                label="Laptop Friendly",
+                label_zh="可帶筆電",
+            ),
         ]
-        return AnthropicLLMAdapter(api_key="test-key", model="claude-sonnet-4-20250514", taxonomy=taxonomy)
+        return AnthropicLLMAdapter(
+            api_key="test-key", model="claude-sonnet-4-20250514", taxonomy=taxonomy
+        )
 
     @pytest.fixture
     def mock_response(self):

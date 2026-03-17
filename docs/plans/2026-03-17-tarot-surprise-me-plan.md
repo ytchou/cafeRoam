@@ -15,6 +15,7 @@
 **Tech Stack:** FastAPI, Pydantic, Supabase PostgREST, SWR, Vaul drawer, html2canvas, Bricolage Grotesque font, PostHog analytics
 
 **Acceptance Criteria:**
+
 - [ ] A user on the Explore page sees 3 face-down tarot cards showing archetype titles, and can tap one to reveal the cafe behind it
 - [ ] Only shops that are currently open and within the user's radius appear in draws
 - [ ] "Draw Again" loads 3 fresh cards, excluding recently-seen shops
@@ -26,6 +27,7 @@
 ## Task 1: Database Migration — Add tarot_title and flavor_text columns
 
 **Files:**
+
 - Create: `supabase/migrations/20260317000001_add_tarot_columns.sql`
 
 No test needed — pure DDL migration.
@@ -55,6 +57,7 @@ git commit -m "feat(db): add tarot_title and flavor_text columns to shops"
 ## Task 2: is_open_now Utility (Backend)
 
 **Files:**
+
 - Create: `backend/core/opening_hours.py`
 - Create: `backend/tests/core/test_opening_hours.py`
 
@@ -281,6 +284,7 @@ git commit -m "feat(backend): is_open_now utility for opening hours parsing"
 ## Task 3: TarotCard Pydantic Model + Tarot Vocabulary Constant + Factory
 
 **Files:**
+
 - Modify: `backend/models/types.py` (add `TarotCard` model)
 - Create: `backend/core/tarot_vocabulary.py` (title→tag mapping constant)
 - Modify: `backend/tests/factories.py` (add `make_tarot_shop_row`)
@@ -444,6 +448,7 @@ git commit -m "feat(backend): TarotCard model, vocabulary constant, and test fac
 ## Task 4: TarotService (Backend)
 
 **Files:**
+
 - Create: `backend/services/tarot_service.py`
 - Create: `backend/tests/services/test_tarot_service.py`
 
@@ -749,6 +754,7 @@ git commit -m "feat(backend): TarotService with geo filter, open-now check, and 
 ## Task 5: API Endpoint + Router Registration
 
 **Files:**
+
 - Create: `backend/api/explore.py`
 - Modify: `backend/main.py` (add router import + include)
 - Create: `backend/tests/api/test_explore.py`
@@ -910,6 +916,7 @@ git commit -m "feat(backend): GET /explore/tarot-draw endpoint with geo + open-n
 ## Task 6: Next.js API Proxy Route
 
 **Files:**
+
 - Create: `app/api/explore/tarot-draw/route.ts`
 
 No test needed — thin proxy using existing `proxyToBackend` pattern.
@@ -943,6 +950,7 @@ git commit -m "feat(frontend): Next.js proxy route for /api/explore/tarot-draw"
 ## Task 7: Frontend Types + Font + Recently-Seen Utility
 
 **Files:**
+
 - Create: `types/tarot.ts`
 - Modify: `app/layout.tsx` (add Bricolage Grotesque font)
 - Create: `lib/tarot/recently-seen.ts`
@@ -1095,6 +1103,7 @@ git commit -m "feat(frontend): tarot types, Bricolage Grotesque font, recently-s
 ## Task 8: useTarotDraw SWR Hook
 
 **Files:**
+
 - Create: `lib/hooks/use-tarot-draw.ts`
 - Create: `lib/hooks/use-tarot-draw.test.ts`
 
@@ -1244,6 +1253,7 @@ git commit -m "feat(frontend): useTarotDraw SWR hook with recently-seen exclusio
 ## Task 9: TarotCard Component
 
 **Files:**
+
 - Create: `components/tarot/tarot-card.tsx`
 - Create: `components/tarot/tarot-card.test.tsx`
 
@@ -1327,14 +1337,19 @@ export function TarotCard({ title, isRevealed, onTap, index }: TarotCardProps) {
       }}
     >
       <span
-        className="font-bricolage text-lg font-bold uppercase tracking-[0.15em] text-[#C4922A]"
-        style={{ fontFamily: 'var(--font-bricolage), var(--font-geist-sans), sans-serif' }}
+        className="font-bricolage text-lg font-bold tracking-[0.15em] text-[#C4922A] uppercase"
+        style={{
+          fontFamily:
+            'var(--font-bricolage), var(--font-geist-sans), sans-serif',
+        }}
       >
-        ✦{'  '}{title}{'  '}✦
+        ✦{'  '}
+        {title}
+        {'  '}✦
       </span>
 
       {isRevealed && (
-        <span className="absolute bottom-2 right-3 rounded-full bg-[#C4922A]/20 px-2 py-0.5 text-xs text-[#C4922A]">
+        <span className="absolute right-3 bottom-2 rounded-full bg-[#C4922A]/20 px-2 py-0.5 text-xs text-[#C4922A]">
           ✓ Revealed
         </span>
       )}
@@ -1360,6 +1375,7 @@ git commit -m "feat(frontend): TarotCard face-down component with revealed state
 ## Task 10: TarotRevealDrawer + TarotEmptyState
 
 **Files:**
+
 - Create: `components/tarot/tarot-reveal-drawer.tsx`
 - Create: `components/tarot/tarot-reveal-drawer.test.tsx`
 - Create: `components/tarot/tarot-empty-state.tsx`
@@ -1500,11 +1516,7 @@ Expected: FAIL
 
 import Image from 'next/image';
 import Link from 'next/link';
-import {
-  Drawer,
-  DrawerContent,
-  DrawerTitle,
-} from '@/components/ui/drawer';
+import { Drawer, DrawerContent, DrawerTitle } from '@/components/ui/drawer';
 import { useAnalytics } from '@/lib/posthog/use-analytics';
 import type { TarotCardData } from '@/types/tarot';
 
@@ -1564,8 +1576,11 @@ export function TarotRevealDrawer({
         <div className="flex flex-col items-center gap-3 px-6 py-5">
           {/* Tarot title */}
           <h2
-            className="text-center text-xl font-bold uppercase tracking-[0.15em] text-[#2C1810]"
-            style={{ fontFamily: 'var(--font-bricolage), var(--font-geist-sans), sans-serif' }}
+            className="text-center text-xl font-bold tracking-[0.15em] text-[#2C1810] uppercase"
+            style={{
+              fontFamily:
+                'var(--font-bricolage), var(--font-geist-sans), sans-serif',
+            }}
           >
             {card.tarotTitle.toUpperCase()}
           </h2>
@@ -1579,13 +1594,13 @@ export function TarotRevealDrawer({
           </p>
 
           {/* Flavor text */}
-          <p className="mt-1 text-center text-sm italic text-gray-600">
+          <p className="mt-1 text-center text-sm text-gray-600 italic">
             &ldquo;{card.flavorText}&rdquo;
           </p>
         </div>
 
         {/* Actions */}
-        <div className="mt-auto flex flex-col gap-2 px-6 pb-8 pt-2">
+        <div className="mt-auto flex flex-col gap-2 px-6 pt-2 pb-8">
           <div className="flex gap-3">
             {onShareTap && (
               <button
@@ -1601,9 +1616,7 @@ export function TarotRevealDrawer({
             )}
             <Link
               href={shopPath}
-              onClick={() =>
-                capture('tarot_lets_go', { shop_id: card.shopId })
-              }
+              onClick={() => capture('tarot_lets_go', { shop_id: card.shopId })}
               className="flex flex-1 items-center justify-center rounded-full bg-[#2C1810] py-3 text-sm font-medium text-white transition-colors hover:bg-[#3D2920]"
             >
               Let&apos;s Go
@@ -1670,6 +1683,7 @@ git commit -m "feat(frontend): TarotRevealDrawer and TarotEmptyState components"
 ## Task 11: TarotSpread + Explore Page Assembly
 
 **Files:**
+
 - Create: `components/tarot/tarot-spread.tsx`
 - Create: `components/tarot/tarot-spread.test.tsx`
 - Modify: `app/explore/page.tsx` (replace scaffold with real page)
@@ -1858,7 +1872,13 @@ import { useAnalytics } from '@/lib/posthog/use-analytics';
 
 export default function ExplorePage() {
   const { capture } = useAnalytics();
-  const { latitude, longitude, error: geoError, loading: geoLoading, requestLocation } = useGeolocation();
+  const {
+    latitude,
+    longitude,
+    error: geoError,
+    loading: geoLoading,
+    requestLocation,
+  } = useGeolocation();
   const [radiusKm, setRadiusKm] = useState(3);
   const { cards, isLoading, error, redraw } = useTarotDraw(latitude, longitude);
 
@@ -1889,12 +1909,15 @@ export default function ExplorePage() {
   }, [latitude, longitude, capture, redraw]);
 
   return (
-    <main className="min-h-screen bg-[#FAF7F4] px-5 pb-24 pt-6">
+    <main className="min-h-screen bg-[#FAF7F4] px-5 pt-6 pb-24">
       {/* Section header */}
       <div className="mb-4">
         <h1
           className="text-xl font-bold text-[#2C1810]"
-          style={{ fontFamily: 'var(--font-bricolage), var(--font-geist-sans), sans-serif' }}
+          style={{
+            fontFamily:
+              'var(--font-bricolage), var(--font-geist-sans), sans-serif',
+          }}
         >
           ✦ Your Tarot Draw
         </h1>
@@ -1949,9 +1972,13 @@ export default function ExplorePage() {
       )}
 
       {/* Empty state */}
-      {!isLoading && !error && !geoError && cards.length === 0 && latitude != null && (
-        <TarotEmptyState onExpandRadius={handleExpandRadius} />
-      )}
+      {!isLoading &&
+        !error &&
+        !geoError &&
+        cards.length === 0 &&
+        latitude != null && (
+          <TarotEmptyState onExpandRadius={handleExpandRadius} />
+        )}
 
       {/* Cards */}
       {cards.length > 0 && (
@@ -1979,6 +2006,7 @@ git commit -m "feat(frontend): TarotSpread component and Explore page assembly"
 ## Task 12: Share Card Generation
 
 **Files:**
+
 - Create: `lib/tarot/share-card.ts`
 - Create: `lib/tarot/share-card.test.ts`
 - Modify: `components/tarot/tarot-spread.tsx` (wire share button)
@@ -1994,7 +2022,8 @@ import type { TarotCardData } from '@/types/tarot';
 // Mock html2canvas
 vi.mock('html2canvas', () => ({
   default: vi.fn().mockResolvedValue({
-    toBlob: (cb: (blob: Blob) => void) => cb(new Blob(['test'], { type: 'image/png' })),
+    toBlob: (cb: (blob: Blob) => void) =>
+      cb(new Blob(['test'], { type: 'image/png' })),
   }),
 }));
 
@@ -2151,6 +2180,7 @@ git commit -m "feat(frontend): share card generation via html2canvas + native sh
 ## Task 13: Enrichment Update — Tarot Title + Flavor Text Generation
 
 **Files:**
+
 - Modify: `backend/providers/llm/anthropic_adapter.py` (add tarot tool + method)
 - Modify: `backend/providers/llm/interface.py` (add protocol method)
 - Modify: `backend/workers/handlers/enrich_shop.py` (call tarot enrichment, write to DB)
@@ -2400,28 +2430,34 @@ graph TD
 ```
 
 **Wave 1** (parallel — no dependencies):
+
 - Task 1: DB Migration
 - Task 2: is_open_now utility
 - Task 3: Pydantic model + vocabulary + factory
 - Task 7: Frontend types + font + recently-seen
 
 **Wave 2** (parallel — depends on Wave 1):
+
 - Task 4: TarotService ← Task 2, 3
 - Task 9: TarotCard component ← Task 7
 - Task 10: TarotRevealDrawer + TarotEmptyState ← Task 7
 
 **Wave 3** (parallel — depends on Wave 2):
+
 - Task 5: API endpoint ← Task 4
 - Task 8: SWR hook ← Task 7
 - Task 13: Enrichment update ← Task 1, 3
 
 **Wave 4** (depends on Wave 3):
+
 - Task 6: Next.js proxy ← Task 5
 
 **Wave 5** (depends on Wave 4):
+
 - Task 11: TarotSpread + Explore page ← Task 6, 8, 9, 10
 
 **Wave 6** (depends on Wave 5):
+
 - Task 12: Share card generation ← Task 11
 
 ---
@@ -2432,27 +2468,32 @@ Chunked task checkboxes for TODO.md:
 
 ```markdown
 ### Tarot — Surprise Me (Explore Layer 1)
+
 > **Design Doc:** [docs/designs/2026-03-17-tarot-implementation-design.md](docs/designs/2026-03-17-tarot-implementation-design.md)
 > **Plan:** [docs/plans/2026-03-17-tarot-surprise-me-plan.md](docs/plans/2026-03-17-tarot-surprise-me-plan.md)
 
 **Chunk 1 — Foundation (Wave 1):**
+
 - [ ] DB migration: tarot_title + flavor_text columns
 - [ ] is_open_now utility with TDD
 - [ ] TarotCard Pydantic model + vocabulary constant + factory
 - [ ] Frontend types + Bricolage Grotesque font + recently-seen utility
 
 **Chunk 2 — Backend Service (Wave 2-4):**
+
 - [ ] TarotService with geo filter + open-now + title uniqueness
 - [ ] GET /explore/tarot-draw API endpoint
 - [ ] Next.js proxy route
 - [ ] Enrichment update: assign_tarot tool + enrich_shop integration
 
 **Chunk 3 — Frontend Components (Wave 2, 5-6):**
+
 - [ ] TarotCard face-down component
 - [ ] TarotRevealDrawer + TarotEmptyState
 - [ ] TarotSpread + Explore page assembly
 - [ ] Share card generation (html2canvas)
 
 **Chunk 4 — Hook + Integration:**
+
 - [ ] useTarotDraw SWR hook
 ```

@@ -21,7 +21,10 @@ export function TarotCard({ title, isRevealed, onTap }: TarotCardProps) {
     >
       <span
         className="font-bricolage flex items-center gap-3 text-lg font-bold tracking-[0.15em] text-[#C4922A]"
-        style={{ fontFamily: 'var(--font-bricolage), var(--font-geist-sans), sans-serif' }}
+        style={{
+          fontFamily:
+            'var(--font-bricolage), var(--font-geist-sans), sans-serif',
+        }}
       >
         <span aria-hidden="true">✦</span>
         <span className="uppercase">{title}</span>
@@ -29,7 +32,7 @@ export function TarotCard({ title, isRevealed, onTap }: TarotCardProps) {
       </span>
 
       {isRevealed && (
-        <span className="absolute bottom-2 right-3 rounded-full bg-[#C4922A]/20 px-2 py-0.5 text-xs text-[#C4922A]">
+        <span className="absolute right-3 bottom-2 rounded-full bg-[#C4922A]/20 px-2 py-0.5 text-xs text-[#C4922A]">
           ✓ Revealed
         </span>
       )}

@@ -45,7 +45,10 @@ export function TarotSpread({ cards, onDrawAgain }: TarotSpreadProps) {
     if (!selectedCard) return;
     try {
       const method = await shareCard(selectedCard);
-      capture('tarot_share_tapped', { shop_id: selectedCard.shopId, share_method: method });
+      capture('tarot_share_tapped', {
+        shop_id: selectedCard.shopId,
+        share_method: method,
+      });
     } catch {
       // Silent fail — share cancelled or unsupported
     }

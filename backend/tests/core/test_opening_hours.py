@@ -1,6 +1,5 @@
 # backend/tests/core/test_opening_hours.py
 from datetime import datetime
-
 from zoneinfo import ZoneInfo
 
 from core.opening_hours import is_open_now

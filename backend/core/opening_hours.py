@@ -23,9 +23,7 @@ _DAY_MAP = {
     "sunday": 6,
 }
 
-_TIME_RE = re.compile(
-    r"(\d{1,2}):(\d{2})\s*(AM|PM)?", re.IGNORECASE
-)
+_TIME_RE = re.compile(r"(\d{1,2}):(\d{2})\s*(AM|PM)?", re.IGNORECASE)
 _RANGE_SEP_RE = re.compile(r"\s*[-\u2013]\s*")
 
 
@@ -45,9 +43,7 @@ def _parse_time_to_minutes(time_str: str) -> int:
     return hour * 60 + minute
 
 
-def is_open_now(
-    opening_hours: list[str] | None, now: datetime
-) -> bool | None:
+def is_open_now(opening_hours: list[str] | None, now: datetime) -> bool | None:
     """Check if a shop is currently open.
 
     Returns True/False if opening_hours can be parsed, or None if

@@ -17,9 +17,16 @@ vi.mock('next/navigation', () => ({
 vi.mock('@/components/ui/drawer', () => ({
   Drawer: ({ children, open }: { children: React.ReactNode; open: boolean }) =>
     open ? <div>{children}</div> : null,
-  DrawerContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  DrawerTitle: ({ children, className }: { children: React.ReactNode; className?: string }) =>
-    <div className={className}>{children}</div>,
+  DrawerContent: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  DrawerTitle: ({
+    children,
+    className,
+  }: {
+    children: React.ReactNode;
+    className?: string;
+  }) => <div className={className}>{children}</div>,
 }));
 
 const mockCards: TarotCardData[] = [

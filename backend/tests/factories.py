@@ -128,6 +128,10 @@ def make_tarot_shop_row(**overrides: object) -> dict:
         "tarot_title": "The Scholar's Refuge",
         "flavor_text": "For those who seek quiet in an unquiet world.",
         "processing_status": "live",
-        "shop_photos": [{"url": "https://example.supabase.co/storage/v1/object/public/shop-photos/tarot-01/exterior.jpg"}],
+        "shop_photos": [
+            {
+                "url": "https://example.supabase.co/storage/v1/object/public/shop-photos/tarot-01/exterior.jpg"
+            }
+        ],
         **overrides,
     }

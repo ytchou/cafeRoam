@@ -1,5 +1,10 @@
 import type { Metadata, Viewport } from 'next';
-import { Bricolage_Grotesque, Geist, Geist_Mono, Noto_Sans_TC } from 'next/font/google';
+import {
+  Bricolage_Grotesque,
+  Geist,
+  Geist_Mono,
+  Noto_Sans_TC,
+} from 'next/font/google';
 import { PostHogProvider } from '@/lib/posthog/provider';
 import { SessionTracker } from '@/components/session-tracker';
 import { AppShell } from '@/components/navigation/app-shell';

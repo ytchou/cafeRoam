@@ -93,7 +93,9 @@ ASSIGN_TAROT_TOOL = {
             },
             "flavor_text": {
                 "type": "string",
-                "description": "One evocative sentence in the style of a tarot reading. Max 80 characters.",
+                "description": (
+                    "One evocative sentence in the style of a tarot reading. Max 80 characters."
+                ),
             },
         },
         "required": ["tarot_title", "flavor_text"],

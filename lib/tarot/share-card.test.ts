@@ -5,7 +5,8 @@ import type { TarotCardData } from '@/types/tarot';
 // Mock html2canvas
 vi.mock('html2canvas', () => ({
   default: vi.fn().mockResolvedValue({
-    toBlob: (cb: (blob: Blob) => void) => cb(new Blob(['test'], { type: 'image/png' })),
+    toBlob: (cb: (blob: Blob) => void) =>
+      cb(new Blob(['test'], { type: 'image/png' })),
   }),
 }));
 

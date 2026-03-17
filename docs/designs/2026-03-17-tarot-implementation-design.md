@@ -10,12 +10,12 @@
 
 Four parallel work streams:
 
-| Stream | Layer | Key deliverables |
-|--------|-------|-----------------|
-| **A. DB + Enrichment** | Backend | Migration for `tarot_title`/`flavor_text`, enrichment prompt update, `is_open_now` utility |
-| **B. API Endpoint** | Backend | `GET /explore/tarot-draw` + Next.js proxy route |
-| **C. Frontend Core** | Frontend | Tarot card components, SWR hook, page assembly |
-| **D. Share Card** | Frontend | Canvas-based image generation for Threads/IG share |
+| Stream                 | Layer    | Key deliverables                                                                           |
+| ---------------------- | -------- | ------------------------------------------------------------------------------------------ |
+| **A. DB + Enrichment** | Backend  | Migration for `tarot_title`/`flavor_text`, enrichment prompt update, `is_open_now` utility |
+| **B. API Endpoint**    | Backend  | `GET /explore/tarot-draw` + Next.js proxy route                                            |
+| **C. Frontend Core**   | Frontend | Tarot card components, SWR hook, page assembly                                             |
+| **D. Share Card**      | Frontend | Canvas-based image generation for Threads/IG share                                         |
 
 ---
 
@@ -77,6 +77,7 @@ No index needed — we query by location first, then filter in application code 
 Parses the `list[str]` format stored by scrapers (e.g., `"Monday: 9:00 AM - 6:00 PM"`). Returns `bool` for a given shop at the current time. All shops are in `Asia/Taipei` timezone.
 
 Edge cases handled:
+
 - 24-hour shops
 - Closed days (no entry for that weekday)
 - Midnight-crossing hours (e.g., `"Friday: 10:00 AM - 2:00 AM"`)
@@ -128,6 +129,7 @@ async def tarot_draw(
 ### E. Enrichment Update
 
 Extend the existing `ENRICH_SHOP` handler to generate `tarot_title` + `flavor_text`:
+
 - Add to the Claude tool schema so it picks the best-fitting title from the fixed vocabulary
 - `flavor_text` generated per-shop (one line, evocative)
 - Stored alongside existing enrichment fields
@@ -160,9 +162,10 @@ class TarotCard(CamelModel):
 ```typescript
 export function useTarotDraw(lat: number | null, lng: number | null) {
   const excludedIds = getRecentlySeenIds(); // from localStorage
-  const key = lat && lng
-    ? `/api/explore/tarot-draw?lat=${lat}&lng=${lng}&radius_km=3&excluded_ids=${excludedIds.join(',')}`
-    : null;
+  const key =
+    lat && lng
+      ? `/api/explore/tarot-draw?lat=${lat}&lng=${lng}&radius_km=3&excluded_ids=${excludedIds.join(',')}`
+      : null;
   const { data, error, isLoading, mutate } = useSWR(key, fetchPublic, {
     revalidateOnFocus: false,
   });
@@ -217,27 +220,27 @@ export function useTarotDraw(lat: number | null, lng: number | null) {
 
 ## Edge Cases
 
-| Scenario | Behavior |
-|----------|----------|
-| Location denied | "Enable location to discover nearby cafes." No cards. |
-| No shops open within radius | `TarotEmptyState` with "Expand radius" button (→ 10km) |
-| Fewer than 3 unique-title shops | Return 1–2 cards. Frontend adapts layout. |
-| No `tarot_title` on any shop | Same as empty state (enrichment must run first) |
-| Network error | SWR error → "Couldn't load your draw. Tap to retry." |
-| All nearby shops seen | Auto-clear localStorage seen list, re-draw |
+| Scenario                        | Behavior                                               |
+| ------------------------------- | ------------------------------------------------------ |
+| Location denied                 | "Enable location to discover nearby cafes." No cards.  |
+| No shops open within radius     | `TarotEmptyState` with "Expand radius" button (→ 10km) |
+| Fewer than 3 unique-title shops | Return 1–2 cards. Frontend adapts layout.              |
+| No `tarot_title` on any shop    | Same as empty state (enrichment must run first)        |
+| Network error                   | SWR error → "Couldn't load your draw. Tap to retry."   |
+| All nearby shops seen           | Auto-clear localStorage seen list, re-draw             |
 
 ---
 
 ## Analytics Events
 
-| Event | Properties | Trigger |
-|-------|-----------|---------|
-| `tarot_draw_loaded` | `card_count`, `lat`, `lng` | 3 cards rendered |
-| `tarot_card_tapped` | `shop_id`, `tarot_title`, `card_position` | Card reveal |
-| `tarot_share_tapped` | `shop_id`, `share_method` | Share button |
-| `tarot_lets_go` | `shop_id` | Navigate to shop |
-| `tarot_draw_again` | — | Draw Again button |
-| `tarot_empty_state` | `lat`, `lng`, `radius_km` | No shops available |
+| Event                | Properties                                | Trigger            |
+| -------------------- | ----------------------------------------- | ------------------ |
+| `tarot_draw_loaded`  | `card_count`, `lat`, `lng`                | 3 cards rendered   |
+| `tarot_card_tapped`  | `shop_id`, `tarot_title`, `card_position` | Card reveal        |
+| `tarot_share_tapped` | `shop_id`, `share_method`                 | Share button       |
+| `tarot_lets_go`      | `shop_id`                                 | Navigate to shop   |
+| `tarot_draw_again`   | —                                         | Draw Again button  |
+| `tarot_empty_state`  | `lat`, `lng`, `radius_km`                 | No shops available |
 
 ---
 
@@ -245,20 +248,20 @@ export function useTarotDraw(lat: number | null, lng: number | null) {
 
 ### Backend (pytest)
 
-| Test file | Coverage |
-|-----------|----------|
+| Test file               | Coverage                                                  |
+| ----------------------- | --------------------------------------------------------- |
 | `test_opening_hours.py` | Standard hours, 24h, closed days, midnight crossing, null |
-| `test_tarot_service.py` | Title uniqueness, exclusion, radius, fewer-than-3, empty |
-| `test_explore_api.py` | Response shape, query param validation, integration |
+| `test_tarot_service.py` | Title uniqueness, exclusion, radius, fewer-than-3, empty  |
+| `test_explore_api.py`   | Response shape, query param validation, integration       |
 
 ### Frontend (Vitest + Testing Library)
 
-| Test file | Coverage |
-|-----------|----------|
-| `TarotSpread.test.tsx` | Renders cards, tap opens drawer, draw again works |
-| `TarotCard.test.tsx` | Displays title, revealed state styling |
-| `use-tarot-draw.test.ts` | SWR hook with mock data, null coords |
-| `TarotRevealDrawer.test.tsx` | Shop data display, action buttons |
+| Test file                    | Coverage                                          |
+| ---------------------------- | ------------------------------------------------- |
+| `TarotSpread.test.tsx`       | Renders cards, tap opens drawer, draw again works |
+| `TarotCard.test.tsx`         | Displays title, revealed state styling            |
+| `use-tarot-draw.test.ts`     | SWR hook with mock data, null coords              |
+| `TarotRevealDrawer.test.tsx` | Shop data display, action buttons                 |
 
 ---
 

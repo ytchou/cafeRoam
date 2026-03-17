@@ -12,8 +12,13 @@ import useSWR from 'swr';
 const mockUseSWR = vi.mocked(useSWR);
 
 function swrReturning(data: unknown, extra?: object) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return { data, error: undefined, isLoading: false, mutate: vi.fn(), ...extra } as any;
+  return {
+    data,
+    error: undefined,
+    isLoading: false,
+    mutate: vi.fn(),
+    ...extra,
+  } as any; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
 describe('useTarotDraw', () => {
@@ -45,7 +50,9 @@ describe('useTarotDraw', () => {
   });
 
   it('returns cards from a successful draw', () => {
-    const mockCards = [{ shopId: 's1', tarotTitle: '山小孩咖啡館 — The Scholar' }];
+    const mockCards = [
+      { shopId: 's1', tarotTitle: '山小孩咖啡館 — The Scholar' },
+    ];
     mockUseSWR.mockReturnValue(swrReturning(mockCards));
     const { result } = renderHook(() => useTarotDraw(25.033, 121.543));
     expect(result.current.cards).toEqual(mockCards);

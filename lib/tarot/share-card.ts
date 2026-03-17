@@ -36,35 +36,78 @@ export async function generateShareCard(card: TarotCardData): Promise<Blob> {
     fontFamily: 'sans-serif',
   });
 
-  const header = makeEl('div', { color: '#C4922A', fontSize: '36px', marginBottom: '40px', letterSpacing: '4px' }, 'CafeRoam \u554A\u904A \u2726');
+  const header = makeEl(
+    'div',
+    {
+      color: '#C4922A',
+      fontSize: '36px',
+      marginBottom: '40px',
+      letterSpacing: '4px',
+    },
+    'CafeRoam \u554A\u904A \u2726'
+  );
   container.appendChild(header);
 
   if (card.coverPhotoUrl) {
     const img = document.createElement('img');
     img.src = card.coverPhotoUrl;
     img.crossOrigin = 'anonymous';
-    Object.assign(img.style, { width: '920px', height: '700px', objectFit: 'cover', borderRadius: '16px', marginBottom: '60px' });
-    container.appendChild(img);
-  } else {
-    const placeholder = makeEl('div', {
+    Object.assign(img.style, {
       width: '920px',
       height: '700px',
-      background: '#3D2920',
+      objectFit: 'cover',
       borderRadius: '16px',
       marginBottom: '60px',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      fontSize: '120px',
-      color: '#C4922A',
-    }, card.name.charAt(0) || '');
+    });
+    container.appendChild(img);
+  } else {
+    const placeholder = makeEl(
+      'div',
+      {
+        width: '920px',
+        height: '700px',
+        background: '#3D2920',
+        borderRadius: '16px',
+        marginBottom: '60px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: '120px',
+        color: '#C4922A',
+      },
+      card.name.charAt(0) || ''
+    );
     container.appendChild(placeholder);
   }
 
-  const title = makeEl('div', { color: '#F5EDE4', fontSize: '56px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '6px', textAlign: 'center', marginBottom: '30px' }, card.tarotTitle);
-  const name = makeEl('div', { color: '#F5EDE4', fontSize: '40px', marginBottom: '12px' }, card.name);
-  const neighborhood = makeEl('div', { color: '#C4922A', fontSize: '32px', marginBottom: '60px' }, card.neighborhood);
-  const date = makeEl('div', { color: '#C4922A', fontSize: '28px', letterSpacing: '2px' }, `Drawn ${today}`);
+  const title = makeEl(
+    'div',
+    {
+      color: '#F5EDE4',
+      fontSize: '56px',
+      fontWeight: '700',
+      textTransform: 'uppercase',
+      letterSpacing: '6px',
+      textAlign: 'center',
+      marginBottom: '30px',
+    },
+    card.tarotTitle
+  );
+  const name = makeEl(
+    'div',
+    { color: '#F5EDE4', fontSize: '40px', marginBottom: '12px' },
+    card.name
+  );
+  const neighborhood = makeEl(
+    'div',
+    { color: '#C4922A', fontSize: '32px', marginBottom: '60px' },
+    card.neighborhood
+  );
+  const date = makeEl(
+    'div',
+    { color: '#C4922A', fontSize: '28px', letterSpacing: '2px' },
+    `Drawn ${today}`
+  );
 
   container.appendChild(title);
   container.appendChild(name);
@@ -97,7 +140,9 @@ export async function generateShareCard(card: TarotCardData): Promise<Blob> {
   }
 }
 
-export async function shareCard(card: TarotCardData): Promise<'native' | 'download'> {
+export async function shareCard(
+  card: TarotCardData
+): Promise<'native' | 'download'> {
   const blob = await generateShareCard(card);
   const file = new File([blob], `caferoam-tarot-${card.shopId}.png`, {
     type: 'image/png',

@@ -19,7 +19,5 @@ async def tarot_draw(
     parsed_excluded = [s.strip() for s in excluded_ids.split(",") if s.strip()]
     db = get_anon_client()
     service = TarotService(db)
-    cards = await service.draw(
-        lat=lat, lng=lng, radius_km=radius_km, excluded_ids=parsed_excluded
-    )
+    cards = await service.draw(lat=lat, lng=lng, radius_km=radius_km, excluded_ids=parsed_excluded)
     return [c.model_dump(by_alias=True) for c in cards]

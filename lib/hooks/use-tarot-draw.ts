@@ -3,12 +3,17 @@
 import { useState, useEffect, useCallback } from 'react';
 import useSWR from 'swr';
 import { fetchPublic } from '@/lib/api/fetch';
-import { getRecentlySeenIds, clearRecentlySeen } from '@/lib/tarot/recently-seen';
+import {
+  getRecentlySeenIds,
+  clearRecentlySeen,
+} from '@/lib/tarot/recently-seen';
 import type { TarotCardData } from '@/types/tarot';
 
 export function useTarotDraw(lat: number | null, lng: number | null) {
   const [radiusKm, setRadiusKm] = useState(3);
-  const [excludedIds, setExcludedIds] = useState<string[]>(() => getRecentlySeenIds());
+  const [excludedIds, setExcludedIds] = useState<string[]>(() =>
+    getRecentlySeenIds()
+  );
 
   const key =
     lat != null && lng != null

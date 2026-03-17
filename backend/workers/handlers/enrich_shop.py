@@ -23,7 +23,10 @@ async def handle_enrich_shop(
 
     shop_response = (
         db.table("shops")
-        .select("id, name, description, categories, price_range, socket, limited_time, rating, review_count")
+        .select(
+            "id, name, description, categories, price_range, "
+            "socket, limited_time, rating, review_count"
+        )
         .eq("id", shop_id)
         .single()
         .execute()

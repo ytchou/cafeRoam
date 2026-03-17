@@ -954,24 +954,28 @@ Adds the Explore tab and redesigns the four main sections of the app using Penci
 > **Plan:** [docs/plans/2026-03-17-tarot-surprise-me-plan.md](docs/plans/2026-03-17-tarot-surprise-me-plan.md)
 
 **Chunk 1 — Foundation (Wave 1):**
+
 - [x] DB migration: tarot_title + flavor_text columns
 - [x] is_open_now utility with TDD
 - [x] TarotCard Pydantic model + vocabulary constant + factory
 - [x] Frontend types + Bricolage Grotesque font + recently-seen utility
 
 **Chunk 2 — Backend Service (Wave 2-4):**
+
 - [x] TarotService with geo filter + open-now + title uniqueness
 - [x] GET /explore/tarot-draw API endpoint
 - [x] Next.js proxy route
 - [x] Enrichment update: assign_tarot tool + enrich_shop integration
 
 **Chunk 3 — Frontend Components (Wave 2, 5-6):**
+
 - [x] TarotCard face-down component
 - [x] TarotRevealDrawer + TarotEmptyState
 - [x] TarotSpread + Explore page assembly
 - [x] Share card generation (html2canvas)
 
 **Chunk 4 — Hook + Integration:**
+
 - [x] useTarotDraw SWR hook
 
 ### Vibe Tags — Browse by Mood (Explore Layer 2)

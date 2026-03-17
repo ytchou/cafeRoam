@@ -9,8 +9,17 @@ import { useAnalytics } from '@/lib/posthog/use-analytics';
 
 export default function ExplorePage() {
   const { capture } = useAnalytics();
-  const { latitude, longitude, error: geoError, loading: geoLoading, requestLocation } = useGeolocation();
-  const { cards, isLoading, error, redraw, setRadiusKm } = useTarotDraw(latitude, longitude);
+  const {
+    latitude,
+    longitude,
+    error: geoError,
+    loading: geoLoading,
+    requestLocation,
+  } = useGeolocation();
+  const { cards, isLoading, error, redraw, setRadiusKm } = useTarotDraw(
+    latitude,
+    longitude
+  );
 
   useEffect(() => {
     requestLocation();
@@ -32,11 +41,14 @@ export default function ExplorePage() {
   }, [capture, setRadiusKm]);
 
   return (
-    <main className="min-h-screen bg-[#FAF7F4] px-5 pb-24 pt-6">
+    <main className="min-h-screen bg-[#FAF7F4] px-5 pt-6 pb-24">
       <div className="mb-4">
         <h1
           className="text-xl font-bold text-[#2C1810]"
-          style={{ fontFamily: 'var(--font-bricolage), var(--font-geist-sans), sans-serif' }}
+          style={{
+            fontFamily:
+              'var(--font-bricolage), var(--font-geist-sans), sans-serif',
+          }}
         >
           ✦ Your Tarot Draw
         </h1>
@@ -87,13 +99,15 @@ export default function ExplorePage() {
         </div>
       )}
 
-      {!isLoading && !error && !geoError && cards.length === 0 && latitude != null && (
-        <TarotEmptyState onExpandRadius={handleExpandRadius} />
-      )}
+      {!isLoading &&
+        !error &&
+        !geoError &&
+        cards.length === 0 &&
+        latitude != null && (
+          <TarotEmptyState onExpandRadius={handleExpandRadius} />
+        )}
 
-      {cards.length > 0 && (
-        <TarotSpread cards={cards} onDrawAgain={redraw} />
-      )}
+      {cards.length > 0 && <TarotSpread cards={cards} onDrawAgain={redraw} />}
     </main>
   );
 }

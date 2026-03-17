@@ -1,6 +1,11 @@
 from typing import Protocol
 
-from models.types import EnrichmentResult, MenuExtractionResult, ShopEnrichmentInput, TarotEnrichmentResult
+from models.types import (
+    EnrichmentResult,
+    MenuExtractionResult,
+    ShopEnrichmentInput,
+    TarotEnrichmentResult,
+)
 
 
 class LLMProvider(Protocol):

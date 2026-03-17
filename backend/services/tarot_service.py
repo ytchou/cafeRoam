@@ -57,9 +57,7 @@ class TarotService:
         for c in candidates:
             by_title.setdefault(c["tarot_title"], []).append(c)
 
-        unique_pool: list[dict[str, Any]] = [
-            random.choice(shops) for shops in by_title.values()
-        ]
+        unique_pool: list[dict[str, Any]] = [random.choice(shops) for shops in by_title.values()]
 
         chosen = random.sample(unique_pool, min(3, len(unique_pool)))
 

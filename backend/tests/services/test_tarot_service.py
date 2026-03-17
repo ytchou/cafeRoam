@@ -37,7 +37,9 @@ class TestTarotServiceDraw:
         ]
         db = _make_db_mock(rows)
         service = TarotService(db)
-        result = await service.draw(lat=25.033, lng=121.543, radius_km=3.0, excluded_ids=[], now=FIXED_NOW)
+        result = await service.draw(
+            lat=25.033, lng=121.543, radius_km=3.0, excluded_ids=[], now=FIXED_NOW
+        )
         assert len(result) == 3
 
     async def test_all_cards_have_unique_titles(self):
@@ -49,7 +51,9 @@ class TestTarotServiceDraw:
         ]
         db = _make_db_mock(rows)
         service = TarotService(db)
-        result = await service.draw(lat=25.033, lng=121.543, radius_km=3.0, excluded_ids=[], now=FIXED_NOW)
+        result = await service.draw(
+            lat=25.033, lng=121.543, radius_km=3.0, excluded_ids=[], now=FIXED_NOW
+        )
         titles = [c.tarot_title for c in result]
         assert len(titles) == len(set(titles))
 
@@ -61,7 +65,9 @@ class TestTarotServiceDraw:
         ]
         db = _make_db_mock(rows)
         service = TarotService(db)
-        result = await service.draw(lat=25.033, lng=121.543, radius_km=3.0, excluded_ids=["s1", "s2"], now=FIXED_NOW)
+        result = await service.draw(
+            lat=25.033, lng=121.543, radius_km=3.0, excluded_ids=["s1", "s2"], now=FIXED_NOW
+        )
         result_ids = [c.shop_id for c in result]
         assert "s1" not in result_ids
         assert "s2" not in result_ids
@@ -72,13 +78,17 @@ class TestTarotServiceDraw:
         ]
         db = _make_db_mock(rows)
         service = TarotService(db)
-        result = await service.draw(lat=25.033, lng=121.543, radius_km=3.0, excluded_ids=[], now=FIXED_NOW)
+        result = await service.draw(
+            lat=25.033, lng=121.543, radius_km=3.0, excluded_ids=[], now=FIXED_NOW
+        )
         assert len(result) == 1
 
     async def test_returns_empty_list_when_no_shops(self):
         db = _make_db_mock([])
         service = TarotService(db)
-        result = await service.draw(lat=25.033, lng=121.543, radius_km=3.0, excluded_ids=[], now=FIXED_NOW)
+        result = await service.draw(
+            lat=25.033, lng=121.543, radius_km=3.0, excluded_ids=[], now=FIXED_NOW
+        )
         assert result == []
 
     async def test_filters_out_closed_shops(self):
@@ -93,7 +103,9 @@ class TestTarotServiceDraw:
         ]
         db = _make_db_mock(rows)
         service = TarotService(db)
-        result = await service.draw(lat=25.033, lng=121.543, radius_km=3.0, excluded_ids=[], now=FIXED_NOW)
+        result = await service.draw(
+            lat=25.033, lng=121.543, radius_km=3.0, excluded_ids=[], now=FIXED_NOW
+        )
         result_ids = [c.shop_id for c in result]
         assert "s1" not in result_ids
 
@@ -103,7 +115,9 @@ class TestTarotServiceDraw:
         ]
         db = _make_db_mock(rows)
         service = TarotService(db)
-        result = await service.draw(lat=25.033, lng=121.543, radius_km=3.0, excluded_ids=[], now=FIXED_NOW)
+        result = await service.draw(
+            lat=25.033, lng=121.543, radius_km=3.0, excluded_ids=[], now=FIXED_NOW
+        )
         assert len(result) == 1  # null hours = unknown = included
 
     async def test_card_has_distance_km(self):
@@ -112,7 +126,9 @@ class TestTarotServiceDraw:
         ]
         db = _make_db_mock(rows)
         service = TarotService(db)
-        result = await service.draw(lat=25.033, lng=121.543, radius_km=3.0, excluded_ids=[], now=FIXED_NOW)
+        result = await service.draw(
+            lat=25.033, lng=121.543, radius_km=3.0, excluded_ids=[], now=FIXED_NOW
+        )
         assert result[0].distance_km >= 0
 
     async def test_card_response_shape(self):
@@ -121,7 +137,9 @@ class TestTarotServiceDraw:
         ]
         db = _make_db_mock(rows)
         service = TarotService(db)
-        result = await service.draw(lat=25.033, lng=121.543, radius_km=3.0, excluded_ids=[], now=FIXED_NOW)
+        result = await service.draw(
+            lat=25.033, lng=121.543, radius_km=3.0, excluded_ids=[], now=FIXED_NOW
+        )
         card = result[0]
         assert card.shop_id == "s1"
         assert card.tarot_title == "The Scholar's Refuge"

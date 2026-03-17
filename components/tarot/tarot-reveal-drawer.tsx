@@ -2,11 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import {
-  Drawer,
-  DrawerContent,
-  DrawerTitle,
-} from '@/components/ui/drawer';
+import { Drawer, DrawerContent, DrawerTitle } from '@/components/ui/drawer';
 import { useAnalytics } from '@/lib/posthog/use-analytics';
 import type { TarotCardData } from '@/types/tarot';
 
@@ -62,8 +58,11 @@ export function TarotRevealDrawer({
 
         <div className="flex flex-col items-center gap-3 px-6 py-5">
           <h2
-            className="text-center text-xl font-bold uppercase tracking-[0.15em] text-[#2C1810]"
-            style={{ fontFamily: 'var(--font-bricolage), var(--font-geist-sans), sans-serif' }}
+            className="text-center text-xl font-bold tracking-[0.15em] text-[#2C1810] uppercase"
+            style={{
+              fontFamily:
+                'var(--font-bricolage), var(--font-geist-sans), sans-serif',
+            }}
           >
             {card.tarotTitle}
           </h2>
@@ -75,12 +74,12 @@ export function TarotRevealDrawer({
             {card.rating != null && ` · ★${card.rating}`}
           </p>
 
-          <p className="mt-1 text-center text-sm italic text-gray-600">
+          <p className="mt-1 text-center text-sm text-gray-600 italic">
             &ldquo;{card.flavorText}&rdquo;
           </p>
         </div>
 
-        <div className="mt-auto flex flex-col gap-2 px-6 pb-8 pt-2">
+        <div className="mt-auto flex flex-col gap-2 px-6 pt-2 pb-8">
           <div className="flex gap-3">
             {onShareTap && (
               <button
@@ -93,9 +92,7 @@ export function TarotRevealDrawer({
             )}
             <Link
               href={shopPath}
-              onClick={() =>
-                capture('tarot_lets_go', { shop_id: card.shopId })
-              }
+              onClick={() => capture('tarot_lets_go', { shop_id: card.shopId })}
               className="flex flex-1 items-center justify-center rounded-full bg-[#2C1810] py-3 text-sm font-medium text-white transition-colors hover:bg-[#3D2920]"
             >
               Let&apos;s Go
