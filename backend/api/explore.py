@@ -25,7 +25,7 @@ async def tarot_draw(
 
 
 @router.get("/vibes")
-def list_vibes() -> list[dict]:
+def list_vibes() -> list[dict[str, object]]:
     """Return all active vibe collections. Public — no auth required."""
     db = get_anon_client()
     service = VibeService(db)
@@ -39,7 +39,7 @@ def vibe_shops(
     lat: float | None = Query(default=None, ge=-90.0, le=90.0),
     lng: float | None = Query(default=None, ge=-180.0, le=180.0),
     radius_km: float = Query(default=5.0, ge=0.5, le=20.0),
-) -> dict:
+) -> dict[str, object]:
     """Return shops matching a vibe, ranked by tag overlap. Public — no auth required."""
     db = get_anon_client()
     service = VibeService(db)

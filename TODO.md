@@ -1002,7 +1002,7 @@ Adds the Explore tab and redesigns the four main sections of the app using Penci
 - [x] `/explore/vibes/[slug]` results page with TDD
 
 **Chunk 4 — Verification (Wave 5):**
-- [ ] Full verification (pytest, vitest, ruff, mypy, pnpm build)
+- [x] Full verification (pytest, vitest, ruff, mypy, pnpm build)
 
 ### Community Notes — Invite-Only Bloggers (Explore Layer 3)
 
