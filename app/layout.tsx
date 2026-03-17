@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Geist, Geist_Mono, Noto_Sans_TC } from 'next/font/google';
+import { Bricolage_Grotesque, Geist, Geist_Mono, Noto_Sans_TC } from 'next/font/google';
 import { PostHogProvider } from '@/lib/posthog/provider';
 import { SessionTracker } from '@/components/session-tracker';
 import { AppShell } from '@/components/navigation/app-shell';
@@ -18,6 +18,13 @@ const geistMono = Geist_Mono({
 
 const notoSansTC = Noto_Sans_TC({
   variable: '--font-noto-sans-tc',
+  subsets: ['latin'],
+  weight: ['400', '700'],
+  display: 'swap',
+});
+
+const bricolageGrotesque = Bricolage_Grotesque({
+  variable: '--font-bricolage',
   subsets: ['latin'],
   weight: ['400', '700'],
   display: 'swap',
@@ -58,7 +65,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="zh-TW">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${notoSansTC.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${notoSansTC.variable} ${bricolageGrotesque.variable} antialiased`}
       >
         <PostHogProvider>
           <SessionTracker />

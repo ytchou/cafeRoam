@@ -954,10 +954,10 @@ Adds the Explore tab and redesigns the four main sections of the app using Penci
 > **Plan:** [docs/plans/2026-03-17-tarot-surprise-me-plan.md](docs/plans/2026-03-17-tarot-surprise-me-plan.md)
 
 **Chunk 1 — Foundation (Wave 1):**
-- [ ] DB migration: tarot_title + flavor_text columns
-- [ ] is_open_now utility with TDD
-- [ ] TarotCard Pydantic model + vocabulary constant + factory
-- [ ] Frontend types + Bricolage Grotesque font + recently-seen utility
+- [x] DB migration: tarot_title + flavor_text columns
+- [x] is_open_now utility with TDD
+- [x] TarotCard Pydantic model + vocabulary constant + factory
+- [x] Frontend types + Bricolage Grotesque font + recently-seen utility
 
 **Chunk 2 — Backend Service (Wave 2-4):**
 - [ ] TarotService with geo filter + open-now + title uniqueness

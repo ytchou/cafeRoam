@@ -247,6 +247,20 @@ class SearchResult(CamelModel):
     total_score: float
 
 
+class TarotCard(CamelModel):
+    shop_id: str
+    tarot_title: str
+    flavor_text: str
+    is_open_now: bool
+    distance_km: float
+    name: str
+    neighborhood: str
+    cover_photo_url: str | None = None
+    rating: float | None = None
+    review_count: int = 0
+    slug: str | None = None
+
+
 class ShopEnrichmentInput(BaseModel):
     name: str
     reviews: list[str]

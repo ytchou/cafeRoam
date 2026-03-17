@@ -101,3 +101,33 @@ def make_stamp(**overrides: object) -> dict:
         "earned_at": _TS,
     }
     return {**defaults, **overrides}
+
+
+def make_tarot_shop_row(**overrides: object) -> dict:
+    """Shop row with tarot enrichment fields, as returned by Supabase."""
+    return {
+        "id": "shop-tarot-01",
+        "name": "森日咖啡",
+        "slug": "sen-ri-ka-fei",
+        "address": "台北市中山區南京東路二段178號",
+        "city": "台北市",
+        "latitude": 25.0522,
+        "longitude": 121.5343,
+        "mrt": "松江南京",
+        "rating": 4.5,
+        "review_count": 142,
+        "opening_hours": [
+            "Monday: 8:00 AM - 9:00 PM",
+            "Tuesday: 8:00 AM - 9:00 PM",
+            "Wednesday: 8:00 AM - 9:00 PM",
+            "Thursday: 8:00 AM - 9:00 PM",
+            "Friday: 8:00 AM - 10:00 PM",
+            "Saturday: 9:00 AM - 10:00 PM",
+            "Sunday: 9:00 AM - 6:00 PM",
+        ],
+        "tarot_title": "The Scholar's Refuge",
+        "flavor_text": "For those who seek quiet in an unquiet world.",
+        "processing_status": "live",
+        "shop_photos": [{"url": "https://example.supabase.co/storage/v1/object/public/shop-photos/tarot-01/exterior.jpg"}],
+        **overrides,
+    }
