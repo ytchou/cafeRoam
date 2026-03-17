@@ -261,6 +261,36 @@ class TarotCard(CamelModel):
     slug: str | None = None
 
 
+class VibeCollection(CamelModel):
+    id: str
+    slug: str
+    name: str
+    name_zh: str
+    emoji: str | None = None
+    subtitle: str | None = None
+    subtitle_zh: str | None = None
+    tag_ids: list[str]
+    sort_order: int
+
+
+class VibeShopResult(CamelModel):
+    shop_id: str
+    name: str
+    slug: str | None = None
+    rating: float | None = None
+    review_count: int = 0
+    cover_photo_url: str | None = None
+    distance_km: float | None = None
+    overlap_score: float
+    matched_tag_labels: list[str] = []
+
+
+class VibeShopsResponse(CamelModel):
+    vibe: VibeCollection
+    shops: list[VibeShopResult]
+    total_count: int
+
+
 class ShopEnrichmentInput(BaseModel):
     name: str
     reviews: list[str]
