@@ -115,19 +115,13 @@ export default function ExplorePage() {
 
       {previewVibes.length > 0 && (
         <section className="mt-8">
-          <div className="mb-3 flex items-center justify-between">
+          <div className="mb-3">
             <h2
               className="text-lg font-bold text-[#1A1918]"
               style={{ fontFamily: 'var(--font-bricolage), sans-serif' }}
             >
               Browse by Vibe
             </h2>
-            <Link
-              href="/explore/vibes"
-              className="text-sm font-medium text-[#3D8A5A]"
-            >
-              See all
-            </Link>
           </div>
           <div className="grid grid-cols-3 gap-2">
             {previewVibes.map((vibe) => (

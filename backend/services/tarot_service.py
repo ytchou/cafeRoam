@@ -1,5 +1,4 @@
 import asyncio
-import math
 import random
 from datetime import datetime
 from typing import Any, cast
@@ -7,20 +6,11 @@ from zoneinfo import ZoneInfo
 
 from supabase import Client
 
+from core.geo import bounding_box, haversine
 from core.opening_hours import is_open_now
 from models.types import TarotCard
 
 TW = ZoneInfo("Asia/Taipei")
-
-_EARTH_RADIUS_KM = 6371.0
-
-
-def _haversine(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
-    lat1, lng1, lat2, lng2 = map(math.radians, [lat1, lng1, lat2, lng2])
-    dlat = lat2 - lat1
-    dlng = lng2 - lng1
-    a = math.sin(dlat / 2) ** 2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlng / 2) ** 2
-    return _EARTH_RADIUS_KM * 2 * math.asin(math.sqrt(a))
 
 
 class TarotService:
@@ -67,8 +57,7 @@ class TarotService:
         self, lat: float, lng: float, radius_km: float
     ) -> list[dict[str, Any]]:
         """Query shops within bounding box using PostgREST filters."""
-        lat_delta = radius_km / 111.0
-        lng_delta = radius_km / (111.0 * math.cos(math.radians(lat)))
+        lat_min, lat_max, lng_min, lng_max = bounding_box(lat, lng, radius_km)
 
         def _query() -> list[dict[str, Any]]:
             response = (
@@ -80,10 +69,10 @@ class TarotService:
                 )
                 .eq("processing_status", "live")
                 .not_("tarot_title", "is", "null")
-                .gte("latitude", lat - lat_delta)
-                .lte("latitude", lat + lat_delta)
-                .gte("longitude", lng - lng_delta)
-                .lte("longitude", lng + lng_delta)
+                .gte("latitude", lat_min)
+                .lte("latitude", lat_max)
+                .gte("longitude", lng_min)
+                .lte("longitude", lng_max)
                 .limit(200)
                 .execute()
             )
@@ -104,7 +93,7 @@ class TarotService:
             flavor_text=row.get("flavor_text") or "",
             is_open_now=is_open_now(row.get("opening_hours"), now) is True,
             distance_km=round(
-                _haversine(user_lat, user_lng, row["latitude"], row["longitude"]),
+                haversine(user_lat, user_lng, row["latitude"], row["longitude"]),
                 1,
             ),
             name=row["name"],

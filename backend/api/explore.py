@@ -1,6 +1,6 @@
 from typing import Any
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, HTTPException, Query
 
 from db.supabase_client import get_anon_client
 from services.tarot_service import TarotService
@@ -43,5 +43,8 @@ def vibe_shops(
     """Return shops matching a vibe, ranked by tag overlap. Public — no auth required."""
     db = get_anon_client()
     service = VibeService(db)
-    result = service.get_shops_for_vibe(slug=slug, lat=lat, lng=lng, radius_km=radius_km)
+    try:
+        result = service.get_shops_for_vibe(slug=slug, lat=lat, lng=lng, radius_km=radius_km)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
     return result.model_dump(by_alias=True)
