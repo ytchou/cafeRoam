@@ -27,35 +27,38 @@
     ]
   },
   "backend": {
-    "display_prefix": "/backend/",
-    "stack_detection_paths": ["backend/"],
+    "display_prefix": "",
+    "stack_detection_paths": [".py"],
     "critical_paths": [
-      "backend/services/search_service.py",
-      "backend/services/checkin_service.py",
-      "backend/services/lists_service.py",
-      "backend/providers/llm/anthropic_adapter.py",
-      "backend/providers/embeddings/openai_adapter.py",
-      "backend/providers/email/resend_adapter.py",
-      "backend/providers/maps/mapbox_adapter.py",
-      "backend/providers/analytics/posthog_adapter.py",
-      "backend/api/shops.py",
-      "backend/api/search.py",
-      "backend/api/checkins.py",
-      "backend/api/lists.py",
-      "backend/api/stamps.py"
+      "services/search_service.py",
+      "services/checkin_service.py",
+      "services/lists_service.py",
+      "services/tarot_service.py",
+      "services/vibe_service.py",
+      "providers/llm/anthropic_adapter.py",
+      "providers/embeddings/openai_adapter.py",
+      "providers/email/resend_adapter.py",
+      "providers/maps/mapbox_adapter.py",
+      "providers/analytics/posthog_adapter.py",
+      "api/shops.py",
+      "api/search.py",
+      "api/checkins.py",
+      "api/lists.py",
+      "api/stamps.py",
+      "api/explore.py"
     ],
     "critical_patterns": [
-      "backend/services/*.py",
-      "backend/providers/**/*_adapter.py",
-      "backend/api/*.py"
+      "services/*.py",
+      "providers/**/*_adapter.py",
+      "api/*.py"
     ],
     "critical_threshold": 80,
     "default_threshold": 45,
     "exclude_patterns": [
       "**/__init__.py",
       "**/conftest.py",
-      "backend/tests/**",
-      "backend/.venv/**"
+      "tests/**",
+      ".venv/**"
     ]
   }
 }
