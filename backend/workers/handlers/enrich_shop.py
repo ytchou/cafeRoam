@@ -72,6 +72,20 @@ async def handle_enrich_shop(
         ]
         db.table("shop_tags").insert(tag_rows).execute()
 
+    # Tarot enrichment — assign title + flavor text
+    try:
+        tarot = await llm.assign_tarot(enrichment_input)
+        if tarot.tarot_title:
+            db.table("shops").update(
+                {
+                    "tarot_title": tarot.tarot_title,
+                    "flavor_text": tarot.flavor_text,
+                }
+            ).eq("id", shop_id).execute()
+            logger.info("Tarot assigned", shop_id=shop_id, title=tarot.tarot_title)
+    except Exception:
+        logger.warning("Tarot enrichment failed — continuing", shop_id=shop_id, exc_info=True)
+
     # Queue embedding generation — forward submission context + batch tracking
     enqueue_payload: dict[str, Any] = {"shop_id": shop_id}
     if payload.get("submission_id"):

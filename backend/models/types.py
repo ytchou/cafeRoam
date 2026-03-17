@@ -289,6 +289,11 @@ class MenuExtractionResult(BaseModel):
     raw_text: str | None = None
 
 
+class TarotEnrichmentResult(BaseModel):
+    tarot_title: str | None = None
+    flavor_text: str = ""
+
+
 class GeocodingResult(BaseModel):
     latitude: float
     longitude: float

@@ -961,9 +961,9 @@ Adds the Explore tab and redesigns the four main sections of the app using Penci
 
 **Chunk 2 — Backend Service (Wave 2-4):**
 - [x] TarotService with geo filter + open-now + title uniqueness
-- [ ] GET /explore/tarot-draw API endpoint
+- [x] GET /explore/tarot-draw API endpoint
 - [ ] Next.js proxy route
-- [ ] Enrichment update: assign_tarot tool + enrich_shop integration
+- [x] Enrichment update: assign_tarot tool + enrich_shop integration
 
 **Chunk 3 — Frontend Components (Wave 2, 5-6):**
 - [x] TarotCard face-down component
@@ -972,7 +972,7 @@ Adds the Explore tab and redesigns the four main sections of the app using Penci
 - [ ] Share card generation (html2canvas)
 
 **Chunk 4 — Hook + Integration:**
-- [ ] useTarotDraw SWR hook
+- [x] useTarotDraw SWR hook
 
 ### Vibe Tags — Browse by Mood (Explore Layer 2)
 
