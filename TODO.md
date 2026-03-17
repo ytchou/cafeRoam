@@ -980,15 +980,29 @@ Adds the Explore tab and redesigns the four main sections of the app using Penci
 
 ### Vibe Tags — Browse by Mood (Explore Layer 2)
 
-_Backend + basic frontend only. UI polish handled in UI Reconstruct — Explore above._
+> **Design Doc:** [docs/designs/2026-03-17-vibe-tags-design.md](docs/designs/2026-03-17-vibe-tags-design.md)
+> **Plan:** [docs/plans/2026-03-17-vibe-tags-plan.md](docs/plans/2026-03-17-vibe-tags-plan.md)
 
-Tags system is already in DB (100+ tags across 5 dimensions). Vibe tags are curated _combinations_ with editorial names — no new data, only a curation layer.
+**Chunk 1 — DB + Models (Wave 1):**
+- [x] Design: Finalize 10 vibe collections (editorial name → existing taxonomy tag combo)
+- [ ] DB migration: `vibe_collections` table + 10 seed vibes
+- [ ] Backend Pydantic models: `VibeCollection`, `VibeShopResult`, `VibeShopsResponse`
+- [ ] Frontend TypeScript types: `types/vibes.ts`
 
-- [ ] Design: Finalize 10-15 vibe collections (editorial name → existing taxonomy tag combo)
-- [ ] Backend: `GET /explore/vibes` — returns curated vibe definitions (static seed for V1)
-- [ ] Backend: `GET /explore/vibes/{slug}/shops` — shops matching a vibe's tag combo
-- [ ] Frontend: Vibe browsing strip (basic, functional)
-- [ ] Frontend: Vibe results list (basic)
+**Chunk 2 — Backend Service + API (Wave 2-3):**
+- [ ] `VibeService` with overlap scoring + geo filtering (TDD)
+- [ ] `GET /explore/vibes` endpoint with TDD
+- [ ] `GET /explore/vibes/{slug}/shops` endpoint with TDD
+
+**Chunk 3 — Frontend (Wave 2-4):**
+- [ ] API client (`lib/api/vibes.ts`) + Next.js proxy routes
+- [ ] `useVibes` SWR hook with TDD
+- [ ] `useVibeShops` SWR hook with TDD
+- [ ] Explore page: wire vibe strip section with TDD
+- [ ] `/explore/vibes/[slug]` results page with TDD
+
+**Chunk 4 — Verification (Wave 5):**
+- [ ] Full verification (pytest, vitest, ruff, mypy, pnpm build)
 
 ### Community Notes — Invite-Only Bloggers (Explore Layer 3)
 
