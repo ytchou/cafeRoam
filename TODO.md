@@ -987,7 +987,7 @@ Adds the Explore tab and redesigns the four main sections of the app using Penci
 - [x] Design: Finalize 10 vibe collections (editorial name → existing taxonomy tag combo)
 - [x] DB migration: `vibe_collections` table + 10 seed vibes
 - [x] Backend Pydantic models: `VibeCollection`, `VibeShopResult`, `VibeShopsResponse`
-- [ ] Frontend TypeScript types: `types/vibes.ts`
+- [x] Frontend TypeScript types: `types/vibes.ts`
 
 **Chunk 2 — Backend Service + API (Wave 2-3):**
 - [ ] `VibeService` with overlap scoring + geo filtering (TDD)
