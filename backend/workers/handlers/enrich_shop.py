@@ -21,7 +21,13 @@ async def handle_enrich_shop(
     shop_id = payload["shop_id"]
     logger.info("Enriching shop", shop_id=shop_id)
 
-    shop_response = db.table("shops").select("*").eq("id", shop_id).single().execute()
+    shop_response = (
+        db.table("shops")
+        .select("id, name, description, categories, price_range, socket, limited_time, rating, review_count")
+        .eq("id", shop_id)
+        .single()
+        .execute()
+    )
     shop = cast("dict[str, Any]", shop_response.data)
 
     reviews_response = db.table("shop_reviews").select("text").eq("shop_id", shop_id).execute()

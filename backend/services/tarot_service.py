@@ -104,7 +104,7 @@ class TarotService:
             shop_id=row["id"],
             tarot_title=row["tarot_title"],
             flavor_text=row.get("flavor_text") or "",
-            is_open_now=is_open_now(row.get("opening_hours"), now) is not False,
+            is_open_now=is_open_now(row.get("opening_hours"), now) is True,
             distance_km=round(
                 _haversine(user_lat, user_lng, row["latitude"], row["longitude"]),
                 1,

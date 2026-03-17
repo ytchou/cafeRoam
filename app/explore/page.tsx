@@ -29,7 +29,7 @@ export default function ExplorePage() {
       radius_km: 10,
     });
     redraw();
-  }, [latitude, longitude, capture, redraw]);
+  }, [capture, redraw]);
 
   return (
     <main className="min-h-screen bg-[#FAF7F4] px-5 pb-24 pt-6">

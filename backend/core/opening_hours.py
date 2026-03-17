@@ -26,6 +26,7 @@ _DAY_MAP = {
 _TIME_RE = re.compile(
     r"(\d{1,2}):(\d{2})\s*(AM|PM)?", re.IGNORECASE
 )
+_RANGE_SEP_RE = re.compile(r"\s*[-\u2013]\s*")
 
 
 def _parse_time_to_minutes(time_str: str) -> int:
@@ -84,7 +85,7 @@ def is_open_now(
             continue
 
         # Parse time range: "9:00 AM - 6:00 PM" or "09:00 - 18:00"
-        parts = re.split(r"\s*[-\u2013]\s*", time_part)
+        parts = _RANGE_SEP_RE.split(time_part)
         if len(parts) != 2:
             continue
 
