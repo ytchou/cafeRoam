@@ -43,6 +43,7 @@ export function SearchBar({
           fill="none"
           stroke="#E06B3F"
           strokeWidth={2}
+          role="img"
           aria-label="search"
         >
           <path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5z" />

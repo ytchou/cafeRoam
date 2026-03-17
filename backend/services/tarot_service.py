@@ -71,8 +71,8 @@ class TarotService:
         lng_delta = radius_km / (111.0 * math.cos(math.radians(lat)))
 
         def _query() -> list[dict[str, Any]]:
-            response = (  # type: ignore[operator]  # supabase-py stubs lose type after not_()
-                self._db.table("shops")
+            response = (
+                self._db.table("shops")  # type: ignore[operator]  # supabase-py stubs after not_()
                 .select(
                     "id, name, slug, address, city, latitude, longitude, "
                     "rating, review_count, opening_hours, tarot_title, flavor_text, "
