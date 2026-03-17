@@ -950,16 +950,29 @@ Adds the Explore tab and redesigns the four main sections of the app using Penci
 
 ### Tarot — Surprise Me (Explore Layer 1)
 
-_Backend + basic frontend only. UI polish handled in UI Reconstruct — Explore above._
+> **Design Doc:** [docs/designs/2026-03-17-tarot-implementation-design.md](docs/designs/2026-03-17-tarot-implementation-design.md)
+> **Plan:** [docs/plans/2026-03-17-tarot-surprise-me-plan.md](docs/plans/2026-03-17-tarot-surprise-me-plan.md)
 
-- [ ] Backend: `GET /shops/random` endpoint
-  - Accepts `lat`, `lng`, `radius_km` (default 3km)
-  - Filters to currently-open shops (respects `opening_hours`)
-  - Excludes recently-visited shops (cookie/localStorage for anonymous, DB for auth'd)
-- [ ] Backend: Recently-visited shop tracking for authenticated users (lightweight — last N shop IDs on check-in or detail view)
-- [ ] Frontend: `/explore` route + page scaffold (basic)
-- [ ] Frontend: Tarot hero card — functional tap-to-reveal, no visual polish yet
-- [ ] Frontend: Recently-visited tracking (localStorage for anonymous users)
+**Chunk 1 — Foundation (Wave 1):**
+- [ ] DB migration: tarot_title + flavor_text columns
+- [ ] is_open_now utility with TDD
+- [ ] TarotCard Pydantic model + vocabulary constant + factory
+- [ ] Frontend types + Bricolage Grotesque font + recently-seen utility
+
+**Chunk 2 — Backend Service (Wave 2-4):**
+- [ ] TarotService with geo filter + open-now + title uniqueness
+- [ ] GET /explore/tarot-draw API endpoint
+- [ ] Next.js proxy route
+- [ ] Enrichment update: assign_tarot tool + enrich_shop integration
+
+**Chunk 3 — Frontend Components (Wave 2, 5-6):**
+- [ ] TarotCard face-down component
+- [ ] TarotRevealDrawer + TarotEmptyState
+- [ ] TarotSpread + Explore page assembly
+- [ ] Share card generation (html2canvas)
+
+**Chunk 4 — Hook + Integration:**
+- [ ] useTarotDraw SWR hook
 
 ### Vibe Tags — Browse by Mood (Explore Layer 2)
 
@@ -1013,9 +1026,11 @@ _Build when implementing Shop View. All transport estimates via Mapbox — no Go
 
 _Designed in Pencil. Three-layer scroll: Tarot hero → Vibe strip → Community feed._
 
-- [ ] Pencil: Design Explore page (Tarot card, vibe mood strip, community feed placeholder)
-- [ ] Pencil: Design Tarot reveal card (shop detail overlay)
-- [ ] Pencil: Design vibe mood cards (horizontal scroll strip)
+> **Design:** [docs/designs/2026-03-17-explore-tarot-redesign.md](docs/designs/2026-03-17-explore-tarot-redesign.md) — 3-card spread mechanic, horizontal cards, full-screen reveal modal.
+
+- [ ] Pencil: Design Explore page — 3-card spread state (horizontal face-down cards with tarot titles, vibe strip, community feed) — frame UOZmR needs redesign
+- [ ] Pencil: Design Explore / Tarot Revealed — full-screen modal (shop photo, tarot title, flavor text, share + navigate CTAs)
+- [ ] Pencil: Design vibe mood cards (horizontal scroll strip) — vibe strip already in UOZmR, needs polish
 - [ ] Pencil: Design vibe results page
 - [ ] Frontend: Implement Explore UI from Pencil designs
 
@@ -1023,7 +1038,7 @@ _Designed in Pencil. Three-layer scroll: Tarot hero → Vibe strip → Community
 
 _Designed in Pencil. Current lists UI gets a visual pass._
 
-- [ ] Pencil: Design Favorites page (list cards, empty state, 3-list cap indicator)
+- [x] Pencil: Design Favorites page (list cards, mini map, 2/3 cap indicator, empty slot) — frame P7hXw
 - [ ] Pencil: Design list detail page (shop items within a list)
 - [ ] Frontend: Implement Favorites UI from Pencil designs
 
@@ -1031,8 +1046,8 @@ _Designed in Pencil. Current lists UI gets a visual pass._
 
 _Designed in Pencil. Stamps, check-in history, account settings._
 
-- [ ] Pencil: Design Profile page (stamp collection, check-in history, settings entry)
-- [ ] Pencil: Design stamp card and stamp collection grid
+- [x] Pencil: Design Profile page (brown header, stamp passport, check-in history tab) — frame HhuNs
+- [x] Pencil: Design stamp passport grid (4×3, filled + locked states) — included in Profile frame
 - [ ] Frontend: Implement Profile UI from Pencil designs
 
 **Phase 3 is done when:** All four pages have Pencil designs approved and implemented. Explore tab is live with Tarot + Vibe Tags functional. At least 3 beta bloggers onboarded.
