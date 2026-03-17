@@ -968,7 +968,7 @@ Adds the Explore tab and redesigns the four main sections of the app using Penci
 **Chunk 3 — Frontend Components (Wave 2, 5-6):**
 - [x] TarotCard face-down component
 - [x] TarotRevealDrawer + TarotEmptyState
-- [ ] TarotSpread + Explore page assembly
+- [x] TarotSpread + Explore page assembly
 - [ ] Share card generation (html2canvas)
 
 **Chunk 4 — Hook + Integration:**
