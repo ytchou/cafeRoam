@@ -995,7 +995,7 @@ Adds the Explore tab and redesigns the four main sections of the app using Penci
 - [ ] `GET /explore/vibes/{slug}/shops` endpoint with TDD
 
 **Chunk 3 — Frontend (Wave 2-4):**
-- [ ] API client (`lib/api/vibes.ts`) + Next.js proxy routes
+- [x] API client (`lib/api/vibes.ts`) + Next.js proxy routes
 - [ ] `useVibes` SWR hook with TDD
 - [ ] `useVibeShops` SWR hook with TDD
 - [ ] Explore page: wire vibe strip section with TDD
