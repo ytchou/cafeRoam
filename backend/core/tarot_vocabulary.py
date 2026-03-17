@@ -4,7 +4,6 @@ Each shop is assigned one title during enrichment based on its taxonomy tags.
 The enrichment prompt selects the best-fitting title from this list.
 """
 
-# Ordered list of all valid tarot titles.
 TAROT_TITLES: list[str] = [
     "The Scholar's Refuge",
     "The Enchanted Corner",
@@ -28,8 +27,6 @@ TAROT_TITLES: list[str] = [
     "The Library",
 ]
 
-# Tag combinations that map to each title.
-# Used in the enrichment prompt so Claude picks the best match.
 TITLE_TO_TAGS: dict[str, list[str]] = {
     "The Scholar's Refuge": ["quiet", "laptop_friendly", "wifi_available"],
     "The Enchanted Corner": ["cozy", "photogenic", "good_espresso"],

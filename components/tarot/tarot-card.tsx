@@ -26,7 +26,7 @@ export function TarotCard({ title, isRevealed, onTap, index }: TarotCardProps) {
         style={{ fontFamily: 'var(--font-bricolage), var(--font-geist-sans), sans-serif' }}
       >
         <span aria-hidden="true">✦</span>
-        <span className="uppercase">{title.toUpperCase()}</span>
+        <span className="uppercase">{title}</span>
         <span aria-hidden="true">✦</span>
       </span>
 

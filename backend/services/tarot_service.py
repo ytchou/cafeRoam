@@ -1,10 +1,11 @@
+import asyncio
 import math
 import random
 from datetime import datetime
 from typing import Any, cast
+from zoneinfo import ZoneInfo
 
 from supabase import Client
-from zoneinfo import ZoneInfo
 
 from core.opening_hours import is_open_now
 from models.types import TarotCard
@@ -68,8 +69,6 @@ class TarotService:
         self, lat: float, lng: float, radius_km: float
     ) -> list[dict[str, Any]]:
         """Query shops within bounding box using PostgREST filters."""
-        import asyncio
-
         lat_delta = radius_km / 111.0
         lng_delta = radius_km / (111.0 * math.cos(math.radians(lat)))
 
@@ -98,7 +97,8 @@ class TarotService:
         self, row: dict[str, Any], user_lat: float, user_lng: float, now: datetime
     ) -> TarotCard:
         photos = row.get("shop_photos") or []
-        cover = photos[0]["url"] if photos else None
+        first_photo = next(iter(photos), None)
+        cover = first_photo["url"] if first_photo else None
 
         return TarotCard(
             shop_id=row["id"],

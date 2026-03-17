@@ -65,7 +65,7 @@ export function TarotRevealDrawer({
             className="text-center text-xl font-bold uppercase tracking-[0.15em] text-[#2C1810]"
             style={{ fontFamily: 'var(--font-bricolage), var(--font-geist-sans), sans-serif' }}
           >
-            {card.tarotTitle.toUpperCase()}
+            {card.tarotTitle}
           </h2>
 
           <p className="text-lg font-semibold text-gray-800">{card.name}</p>

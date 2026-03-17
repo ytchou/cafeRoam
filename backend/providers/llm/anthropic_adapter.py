@@ -210,11 +210,9 @@ class AnthropicLLMAdapter:
         tool_input = self._extract_tool_input(response, "assign_tarot")
         title = tool_input.get("tarot_title", "")
         flavor = tool_input.get("flavor_text", "")
+        validated_title = title if title in TAROT_TITLES else None
 
-        if title not in TAROT_TITLES:
-            return TarotEnrichmentResult(tarot_title=None, flavor_text=flavor)
-
-        return TarotEnrichmentResult(tarot_title=title, flavor_text=flavor)
+        return TarotEnrichmentResult(tarot_title=validated_title, flavor_text=flavor)
 
     def _build_enrich_prompt(self, shop: ShopEnrichmentInput) -> str:
         lines = [

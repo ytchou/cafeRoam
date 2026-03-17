@@ -21,16 +21,13 @@ async def handle_enrich_shop(
     shop_id = payload["shop_id"]
     logger.info("Enriching shop", shop_id=shop_id)
 
-    # Load shop data
     shop_response = db.table("shops").select("*").eq("id", shop_id).single().execute()
     shop = cast("dict[str, Any]", shop_response.data)
 
-    # Load reviews
     reviews_response = db.table("shop_reviews").select("text").eq("shop_id", shop_id).execute()
     review_rows = cast("list[dict[str, Any]]", reviews_response.data)
     reviews = [r["text"] for r in review_rows if r.get("text")]
 
-    # Build enrichment input
     enrichment_input = ShopEnrichmentInput(
         name=shop["name"],
         reviews=reviews,
@@ -43,10 +40,8 @@ async def handle_enrich_shop(
         review_count=shop.get("review_count"),
     )
 
-    # Call LLM for enrichment
     result = await llm.enrich_shop(enrichment_input)
 
-    # Write enrichment result — mode scores and summary to shops table
     mode = result.mode_scores
     db.table("shops").update(
         {
@@ -59,7 +54,7 @@ async def handle_enrich_shop(
         }
     ).eq("id", shop_id).execute()
 
-    # Replace tags: delete old, then insert new (re-enrichment replaces, not appends)
+    # Re-enrichment replaces tags, not appends
     db.table("shop_tags").delete().eq("shop_id", shop_id).execute()
     if result.tags:
         tag_rows = [
@@ -72,7 +67,6 @@ async def handle_enrich_shop(
         ]
         db.table("shop_tags").insert(tag_rows).execute()
 
-    # Tarot enrichment — assign title + flavor text
     try:
         tarot = await llm.assign_tarot(enrichment_input)
         if tarot.tarot_title:
@@ -86,14 +80,10 @@ async def handle_enrich_shop(
     except Exception:
         logger.warning("Tarot enrichment failed — continuing", shop_id=shop_id, exc_info=True)
 
-    # Queue embedding generation — forward submission context + batch tracking
     enqueue_payload: dict[str, Any] = {"shop_id": shop_id}
-    if payload.get("submission_id"):
-        enqueue_payload["submission_id"] = payload["submission_id"]
-    if payload.get("submitted_by"):
-        enqueue_payload["submitted_by"] = payload["submitted_by"]
-    if payload.get("batch_id"):
-        enqueue_payload["batch_id"] = payload["batch_id"]
+    for key in ("submission_id", "submitted_by", "batch_id"):
+        if payload.get(key):
+            enqueue_payload[key] = payload[key]
 
     await queue.enqueue(
         job_type=JobType.GENERATE_EMBEDDING,

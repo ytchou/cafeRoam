@@ -96,7 +96,7 @@ export default function ExplorePage() {
       )}
 
       {cards.length > 0 && (
-        <TarotSpread cards={cards} onDrawAgain={() => redraw()} />
+        <TarotSpread cards={cards} onDrawAgain={redraw} />
       )}
     </main>
   );
