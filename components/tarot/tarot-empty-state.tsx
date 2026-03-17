@@ -7,7 +7,7 @@ interface TarotEmptyStateProps {
 export function TarotEmptyState({ onExpandRadius }: TarotEmptyStateProps) {
   return (
     <div className="flex flex-col items-center gap-4 rounded-xl bg-white/60 px-6 py-10 text-center">
-      <span className="text-3xl">☕</span>
+      <span className="text-3xl text-[#C4922A]" aria-hidden="true">✦</span>
       <p className="text-sm text-gray-600">
         No cafes open nearby right now. Try a larger radius or come back later.
       </p>

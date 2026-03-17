@@ -59,7 +59,6 @@ export function TarotSpread({ cards, onDrawAgain }: TarotSpreadProps) {
           title={card.tarotTitle}
           isRevealed={revealedIds.has(card.shopId)}
           onTap={() => handleCardTap(card, i)}
-          index={i}
         />
       ))}
 

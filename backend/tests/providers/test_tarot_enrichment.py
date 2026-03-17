@@ -34,14 +34,14 @@ class TestTarotEnrichment:
     @pytest.mark.asyncio
     async def test_assigns_valid_tarot_title(self, adapter, mock_response):
         adapter._client.messages.create = AsyncMock(return_value=mock_response)
-        shop = ShopEnrichmentInput(name="Test Shop", reviews=["Very quiet place"])
+        shop = ShopEnrichmentInput(name="山小孩咖啡", reviews=["非常安靜，適合工作，空間寬敞"])
         result = await adapter.assign_tarot(shop)
         assert result.tarot_title in TAROT_TITLES
 
     @pytest.mark.asyncio
     async def test_returns_flavor_text(self, adapter, mock_response):
         adapter._client.messages.create = AsyncMock(return_value=mock_response)
-        shop = ShopEnrichmentInput(name="Test Shop", reviews=["Great pour over"])
+        shop = ShopEnrichmentInput(name="山小孩咖啡", reviews=["手沖咖啡很棒，店員親切"])
         result = await adapter.assign_tarot(shop)
         assert len(result.flavor_text) > 0
 
@@ -57,6 +57,6 @@ class TestTarotEnrichment:
         msg = MagicMock()
         msg.content = [block]
         adapter._client.messages.create = AsyncMock(return_value=msg)
-        shop = ShopEnrichmentInput(name="Test Shop", reviews=["Nice"])
+        shop = ShopEnrichmentInput(name="山小孩咖啡", reviews=["環境舒適，推薦下午來"])
         result = await adapter.assign_tarot(shop)
         assert result.tarot_title is None  # Rejected — not in vocabulary

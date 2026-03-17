@@ -7,7 +7,6 @@ describe('TarotCard', () => {
     title: "The Scholar's Refuge",
     isRevealed: false,
     onTap: vi.fn(),
-    index: 0,
   };
 
   it('displays the tarot title', () => {

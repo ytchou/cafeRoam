@@ -4,10 +4,9 @@ interface TarotCardProps {
   title: string;
   isRevealed: boolean;
   onTap: () => void;
-  index: number;
 }
 
-export function TarotCard({ title, isRevealed, onTap, index }: TarotCardProps) {
+export function TarotCard({ title, isRevealed, onTap }: TarotCardProps) {
   return (
     <button
       type="button"
@@ -17,7 +16,6 @@ export function TarotCard({ title, isRevealed, onTap, index }: TarotCardProps) {
       }`}
       style={{
         height: 140,
-        animationDelay: `${index * 150}ms`,
         boxShadow: isRevealed ? 'none' : '0 0 0 1px #C4922A inset',
       }}
     >
