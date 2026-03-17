@@ -935,19 +935,22 @@ Adds the Explore tab and redesigns the four main sections of the app using Penci
 > **Plan:** [docs/plans/2026-03-16-navigation-restructure-plan.md](docs/plans/2026-03-16-navigation-restructure-plan.md)
 
 **Chunk 1 — Bottom Nav:**
+
 - [x] Update `bottom-nav.tsx` tabs to 地圖 / 探索 / 收藏 / 我的
 
 **Chunk 2 — Route Replacement:**
+
 - [x] Replace `app/page.tsx` with map-only Find page
 - [x] Delete `app/map/page.tsx` and `app/map/page.test.tsx`
 
 **Chunk 3 — Redirect + Scaffold:**
+
 - [x] Add `/map` → `/` permanent redirect in `next.config.ts`
 - [x] Create `app/explore/page.tsx` scaffold
 
 ### Tarot — Surprise Me (Explore Layer 1)
 
-*Backend + basic frontend only. UI polish handled in UI Reconstruct — Explore above.*
+_Backend + basic frontend only. UI polish handled in UI Reconstruct — Explore above._
 
 - [ ] Backend: `GET /shops/random` endpoint
   - Accepts `lat`, `lng`, `radius_km` (default 3km)
@@ -960,9 +963,9 @@ Adds the Explore tab and redesigns the four main sections of the app using Penci
 
 ### Vibe Tags — Browse by Mood (Explore Layer 2)
 
-*Backend + basic frontend only. UI polish handled in UI Reconstruct — Explore above.*
+_Backend + basic frontend only. UI polish handled in UI Reconstruct — Explore above._
 
-Tags system is already in DB (100+ tags across 5 dimensions). Vibe tags are curated *combinations* with editorial names — no new data, only a curation layer.
+Tags system is already in DB (100+ tags across 5 dimensions). Vibe tags are curated _combinations_ with editorial names — no new data, only a curation layer.
 
 - [ ] Design: Finalize 10-15 vibe collections (editorial name → existing taxonomy tag combo)
 - [ ] Backend: `GET /explore/vibes` — returns curated vibe definitions (static seed for V1)
@@ -972,7 +975,7 @@ Tags system is already in DB (100+ tags across 5 dimensions). Vibe tags are cura
 
 ### Community Notes — Invite-Only Bloggers (Explore Layer 3)
 
-*Start after Tarot + Vibe Tags are live. Seed with beta blogger invites during Phase 4.*
+_Start after Tarot + Vibe Tags are live. Seed with beta blogger invites during Phase 4._
 
 - [ ] DB: `community_notes` table (author, shop_id optional, content, published_at, slug)
 - [ ] DB: `blogger` role in user permissions (invite-only grant)
@@ -984,7 +987,7 @@ Tags system is already in DB (100+ tags across 5 dimensions). Vibe tags are cura
 
 ### UI Reconstruct — Find
 
-*Designed in Pencil. Replaces current 首頁 + 地圖 split into a unified Find experience.*
+_Designed in Pencil. Replaces current 首頁 + 地圖 split into a unified Find experience._
 
 - [ ] Pencil: Design Find page (map/list toggle, search bar, filter chips)
 - [ ] Pencil: Design shop card (list view) and map pin/popup (map view)
@@ -995,7 +998,7 @@ Tags system is already in DB (100+ tags across 5 dimensions). Vibe tags are cura
 
 ### Shop View — Directions (implementation notes)
 
-*Build when implementing Shop View. All transport estimates via Mapbox — no Google Maps API needed.*
+_Build when implementing Shop View. All transport estimates via Mapbox — no Google Maps API needed._
 
 - [ ] Walking time — Mapbox Directions API, `walking` profile (lat/lng → shop)
 - [ ] Drive time — Mapbox Directions API, `driving-traffic` profile (same call, different profile)
@@ -1008,7 +1011,7 @@ Tags system is already in DB (100+ tags across 5 dimensions). Vibe tags are cura
 
 ### UI Reconstruct — Explore
 
-*Designed in Pencil. Three-layer scroll: Tarot hero → Vibe strip → Community feed.*
+_Designed in Pencil. Three-layer scroll: Tarot hero → Vibe strip → Community feed._
 
 - [ ] Pencil: Design Explore page (Tarot card, vibe mood strip, community feed placeholder)
 - [ ] Pencil: Design Tarot reveal card (shop detail overlay)
@@ -1018,7 +1021,7 @@ Tags system is already in DB (100+ tags across 5 dimensions). Vibe tags are cura
 
 ### UI Reconstruct — Favorites
 
-*Designed in Pencil. Current lists UI gets a visual pass.*
+_Designed in Pencil. Current lists UI gets a visual pass._
 
 - [ ] Pencil: Design Favorites page (list cards, empty state, 3-list cap indicator)
 - [ ] Pencil: Design list detail page (shop items within a list)
@@ -1026,7 +1029,7 @@ Tags system is already in DB (100+ tags across 5 dimensions). Vibe tags are cura
 
 ### UI Reconstruct — Profile
 
-*Designed in Pencil. Stamps, check-in history, account settings.*
+_Designed in Pencil. Stamps, check-in history, account settings._
 
 - [ ] Pencil: Design Profile page (stamp collection, check-in history, settings entry)
 - [ ] Pencil: Design stamp card and stamp collection grid

@@ -19,10 +19,10 @@ The existing Find tab (Home + Map) is utilitarian — it serves users who have i
 
 The Find/Explore split preserves a meaningful intent distinction:
 
-| Tab | Mental model | User headspace |
-|---|---|---|
-| Find | I have a goal. Help me locate it. | Purposeful |
-| Explore | I'm open. Show me something. | Wandering |
+| Tab     | Mental model                      | User headspace |
+| ------- | --------------------------------- | -------------- |
+| Find    | I have a goal. Help me locate it. | Purposeful     |
+| Explore | I'm open. Show me something.      | Wandering      |
 
 ## Explore Page Architecture
 
@@ -39,6 +39,7 @@ From the Community        ← blog/note feed (Phase 2, grows downward)
 ### Layer 1: Tarot — Surprise Me
 
 Random shop discovery with light intelligence:
+
 - **Location-aware:** radius defaulting to 3km from user location
 - **Open-now:** filters by current time against `opening_hours`
 - **Not-recently-visited:** excludes shops seen in the last N visits (localStorage for anonymous, DB for auth'd)
@@ -51,15 +52,15 @@ The `taxonomy_tags` DB already has 100+ tags across 5 dimensions. Vibe tags are 
 
 Example vibe mappings (to be finalized before implementation):
 
-| Vibe name | Tag combination |
-|---|---|
-| Study Cave | `laptop_friendly`, `quiet`, `power_outlets`, `wifi_available` |
-| First Date Spot | `cozy`, `photogenic`, `good_espresso`, `quiet` |
-| Hidden Gem | `hidden_gem`, `local_favorite` |
-| Weekend Brunch | `brunch`, `photogenic`, `casual` |
-| Deep Work HQ | `deep_work`, `laptop_friendly`, `wifi_available`, `quiet` |
-| Espresso Nerd | `self_roasted`, `espresso`, `pour_over` |
-| Outdoor Escape | `outdoor_seating`, `scenic_view`, `forest_style` |
+| Vibe name       | Tag combination                                               |
+| --------------- | ------------------------------------------------------------- |
+| Study Cave      | `laptop_friendly`, `quiet`, `power_outlets`, `wifi_available` |
+| First Date Spot | `cozy`, `photogenic`, `good_espresso`, `quiet`                |
+| Hidden Gem      | `hidden_gem`, `local_favorite`                                |
+| Weekend Brunch  | `brunch`, `photogenic`, `casual`                              |
+| Deep Work HQ    | `deep_work`, `laptop_friendly`, `wifi_available`, `quiet`     |
+| Espresso Nerd   | `self_roasted`, `espresso`, `pour_over`                       |
+| Outdoor Escape  | `outdoor_seating`, `scenic_view`, `forest_style`              |
 
 Target: 10-15 vibes. Curate, don't enumerate.
 

@@ -15,6 +15,7 @@
 **Tech Stack:** Next.js 15 App Router, TypeScript strict, Vitest + Testing Library
 
 **Acceptance Criteria:**
+
 - [ ] A user visiting `/` sees the map (not the old featured-shops grid)
 - [ ] A user visiting `/map` is permanently redirected to `/`
 - [ ] The bottom nav shows four tabs: 地圖, 探索, 收藏, 我的 — in that order
@@ -30,6 +31,7 @@
 ### Task 1: Update bottom nav tabs
 
 **Files:**
+
 - Modify: `components/navigation/bottom-nav.tsx`
 - Test: `components/navigation/bottom-nav.test.tsx`
 
@@ -83,9 +85,18 @@ describe('BottomNav', () => {
   it('tab links navigate to correct routes', () => {
     render(<BottomNav />);
     expect(screen.getByText('地圖').closest('a')).toHaveAttribute('href', '/');
-    expect(screen.getByText('探索').closest('a')).toHaveAttribute('href', '/explore');
-    expect(screen.getByText('收藏').closest('a')).toHaveAttribute('href', '/lists');
-    expect(screen.getByText('我的').closest('a')).toHaveAttribute('href', '/profile');
+    expect(screen.getByText('探索').closest('a')).toHaveAttribute(
+      'href',
+      '/explore'
+    );
+    expect(screen.getByText('收藏').closest('a')).toHaveAttribute(
+      'href',
+      '/lists'
+    );
+    expect(screen.getByText('我的').closest('a')).toHaveAttribute(
+      'href',
+      '/profile'
+    );
   });
 });
 ```
@@ -104,9 +115,9 @@ Replace the `TABS` constant:
 
 ```tsx
 const TABS = [
-  { href: '/',        label: '地圖', icon: 'map' },
+  { href: '/', label: '地圖', icon: 'map' },
   { href: '/explore', label: '探索', icon: 'compass' },
-  { href: '/lists',   label: '收藏', icon: 'heart' },
+  { href: '/lists', label: '收藏', icon: 'heart' },
   { href: '/profile', label: '我的', icon: 'user' },
 ] as const;
 ```
@@ -131,6 +142,7 @@ git commit -m "feat: update bottom nav to 地圖/探索/收藏/我的"
 ### Task 2: Replace `app/page.tsx` (Home → Find/Map) and delete `app/map/`
 
 **Files:**
+
 - Replace: `app/page.tsx`
 - Replace: `app/page.test.tsx`
 - Delete: `app/map/page.tsx`
@@ -227,8 +239,12 @@ describe('Find page (map)', () => {
 
   it('When a user opens the Find tab, there is no list/map toggle button', () => {
     render(<FindPage />);
-    expect(screen.queryByRole('button', { name: /list/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /map/i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /list/i })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /map/i })
+    ).not.toBeInTheDocument();
   });
 
   it('When a user opens the Find tab, they see the search bar', () => {
@@ -276,10 +292,7 @@ return (
     <div className="absolute top-4 right-4 left-4 z-20">
       <div className="space-y-2 rounded-2xl bg-white/90 p-3 shadow backdrop-blur-md supports-[not(backdrop-filter)]:bg-white">
         <div className="flex-1">
-          <SearchBar
-            onSubmit={handleSearch}
-            defaultQuery={urlQuery ?? ''}
-          />
+          <SearchBar onSubmit={handleSearch} defaultQuery={urlQuery ?? ''} />
         </div>
         {urlQuery && (
           <p className="text-xs text-gray-500">{getSearchStatusText()}</p>
@@ -299,9 +312,7 @@ return (
         onDismiss={() => setSelectedShopId(null)}
       />
     )}
-    {selectedShop && isDesktop && (
-      <MapDesktopCard shop={selectedShop} />
-    )}
+    {selectedShop && isDesktop && <MapDesktopCard shop={selectedShop} />}
   </div>
 );
 ```
@@ -347,6 +358,7 @@ git commit -m "feat: replace Home with map-only Find page at /, remove /map rout
 ### Task 3: Add `/map` → `/` permanent redirect
 
 **Files:**
+
 - Modify: `next.config.ts`
 
 No test needed — Next.js redirects are framework infrastructure, not testable in Vitest. Verified manually.
@@ -361,9 +373,7 @@ const nextConfig: NextConfig = {
     root: path.resolve(__dirname),
   },
   async redirects() {
-    return [
-      { source: '/map', destination: '/', permanent: true },
-    ];
+    return [{ source: '/map', destination: '/', permanent: true }];
   },
   images: {
     // ... existing remotePatterns unchanged
@@ -391,6 +401,7 @@ git commit -m "feat: add permanent redirect /map → /"
 ### Task 4: Create `app/explore/page.tsx` scaffold
 
 **Files:**
+
 - Create: `app/explore/page.tsx`
 - Create: `app/explore/page.test.tsx`
 
@@ -423,10 +434,7 @@ Expected: FAIL — module not found
 
 ```tsx
 export default function ExplorePage() {
-  return (
-    <main className="min-h-screen bg-[#FAF7F4]">
-    </main>
-  );
+  return <main className="min-h-screen bg-[#FAF7F4]"></main>;
 }
 ```
 
@@ -473,6 +481,7 @@ graph TD
 ```
 
 **Wave 1** (all parallel — no shared files):
+
 - Task 1: Bottom nav labels + routes
 - Task 2: Replace `app/page.tsx`, delete `app/map/`
 - Task 3: Add redirect in `next.config.ts`
