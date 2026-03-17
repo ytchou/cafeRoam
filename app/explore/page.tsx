@@ -20,16 +20,12 @@ export default function ExplorePage() {
     if (cards.length > 0 && latitude && longitude) {
       capture('tarot_draw_loaded', {
         card_count: cards.length,
-        lat: latitude,
-        lng: longitude,
       });
     }
   }, [cards.length, latitude, longitude, capture]);
 
   const handleExpandRadius = useCallback(() => {
     capture('tarot_empty_state', {
-      lat: latitude,
-      lng: longitude,
       radius_km: 10,
     });
     redraw();

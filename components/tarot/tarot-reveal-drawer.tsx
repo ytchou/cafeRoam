@@ -85,10 +85,7 @@ export function TarotRevealDrawer({
             {onShareTap && (
               <button
                 type="button"
-                onClick={() => {
-                  capture('tarot_share_tapped', { shop_id: card.shopId });
-                  onShareTap();
-                }}
+                onClick={onShareTap}
                 className="flex-1 rounded-full border border-[#C4922A] py-3 text-sm font-medium text-[#C4922A] transition-colors hover:bg-[#C4922A]/10"
               >
                 Share My Draw

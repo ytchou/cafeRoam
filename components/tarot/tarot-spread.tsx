@@ -44,11 +44,12 @@ export function TarotSpread({ cards, onDrawAgain }: TarotSpreadProps) {
   const handleShare = useCallback(async () => {
     if (!selectedCard) return;
     try {
-      await shareCard(selectedCard);
+      const method = await shareCard(selectedCard);
+      capture('tarot_share_tapped', { shop_id: selectedCard.shopId, share_method: method });
     } catch {
       // Silent fail — share cancelled or unsupported
     }
-  }, [selectedCard]);
+  }, [selectedCard, capture]);
 
   return (
     <div className="flex flex-col gap-3">

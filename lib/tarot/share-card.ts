@@ -1,61 +1,103 @@
 import html2canvas from 'html2canvas';
 import type { TarotCardData } from '@/types/tarot';
 
-export async function generateShareCard(card: TarotCardData): Promise<Blob> {
-  const container = document.createElement('div');
-  container.style.cssText =
-    'position:fixed;left:-9999px;top:0;width:1080px;height:1920px;background:#2C1810;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px;box-sizing:border-box;font-family:sans-serif;';
+function setText(el: HTMLElement, text: string): void {
+  el.textContent = text;
+}
 
+function makeEl(
+  tag: string,
+  styles: Partial<CSSStyleDeclaration>,
+  content?: string
+): HTMLElement {
+  const el = document.createElement(tag);
+  Object.assign(el.style, styles);
+  if (content !== undefined) setText(el, content);
+  return el;
+}
+
+export async function generateShareCard(card: TarotCardData): Promise<Blob> {
   const today = new Date().toISOString().slice(0, 10).replace(/-/g, '.');
 
-  container.innerHTML = `
-    <div style="color:#C4922A;font-size:36px;margin-bottom:40px;letter-spacing:4px;">
-      CafeRoam 啡遊 ✦
-    </div>
-    ${
-      card.coverPhotoUrl
-        ? `<img src="${card.coverPhotoUrl}" crossorigin="anonymous" style="width:920px;height:700px;object-fit:cover;border-radius:16px;margin-bottom:60px;" />`
-        : `<div style="width:920px;height:700px;background:#3D2920;border-radius:16px;margin-bottom:60px;display:flex;align-items:center;justify-content:center;font-size:120px;color:#C4922A;">${card.name[0]}</div>`
-    }
-    <div style="color:#F5EDE4;font-size:56px;font-weight:700;text-transform:uppercase;letter-spacing:6px;text-align:center;margin-bottom:30px;">
-      ${card.tarotTitle}
-    </div>
-    <div style="color:#F5EDE4;font-size:40px;margin-bottom:12px;">
-      ${card.name}
-    </div>
-    <div style="color:#C4922A;font-size:32px;margin-bottom:60px;">
-      ${card.neighborhood}
-    </div>
-    <div style="color:#C4922A;font-size:28px;letter-spacing:2px;">
-      Drawn ${today}
-    </div>
-  `;
+  const container = document.createElement('div');
+  Object.assign(container.style, {
+    position: 'fixed',
+    left: '-9999px',
+    top: '0',
+    width: '1080px',
+    height: '1920px',
+    background: '#2C1810',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '80px',
+    boxSizing: 'border-box',
+    fontFamily: 'sans-serif',
+  });
+
+  const header = makeEl('div', { color: '#C4922A', fontSize: '36px', marginBottom: '40px', letterSpacing: '4px' }, 'CafeRoam \u554A\u904A \u2726');
+  container.appendChild(header);
+
+  if (card.coverPhotoUrl) {
+    const img = document.createElement('img');
+    img.src = card.coverPhotoUrl;
+    img.crossOrigin = 'anonymous';
+    Object.assign(img.style, { width: '920px', height: '700px', objectFit: 'cover', borderRadius: '16px', marginBottom: '60px' });
+    container.appendChild(img);
+  } else {
+    const placeholder = makeEl('div', {
+      width: '920px',
+      height: '700px',
+      background: '#3D2920',
+      borderRadius: '16px',
+      marginBottom: '60px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      fontSize: '120px',
+      color: '#C4922A',
+    }, card.name.charAt(0) || '');
+    container.appendChild(placeholder);
+  }
+
+  const title = makeEl('div', { color: '#F5EDE4', fontSize: '56px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '6px', textAlign: 'center', marginBottom: '30px' }, card.tarotTitle);
+  const name = makeEl('div', { color: '#F5EDE4', fontSize: '40px', marginBottom: '12px' }, card.name);
+  const neighborhood = makeEl('div', { color: '#C4922A', fontSize: '32px', marginBottom: '60px' }, card.neighborhood);
+  const date = makeEl('div', { color: '#C4922A', fontSize: '28px', letterSpacing: '2px' }, `Drawn ${today}`);
+
+  container.appendChild(title);
+  container.appendChild(name);
+  container.appendChild(neighborhood);
+  container.appendChild(date);
 
   document.body.appendChild(container);
 
-  const canvas = await html2canvas(container, {
-    width: 1080,
-    height: 1920,
-    scale: 1,
-    useCORS: true,
-    backgroundColor: '#2C1810',
-  });
+  try {
+    const canvas = await html2canvas(container, {
+      width: 1080,
+      height: 1920,
+      scale: 1,
+      useCORS: true,
+      backgroundColor: '#2C1810',
+    });
 
-  document.body.removeChild(container);
-
-  return new Promise<Blob>((resolve, reject) => {
-    canvas.toBlob(
-      (blob) => {
-        if (blob) resolve(blob);
-        else reject(new Error('Failed to generate share card'));
-      },
-      'image/png',
-      1.0
-    );
-  });
+    return new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob(
+        (blob) => {
+          if (blob) resolve(blob);
+          else reject(new Error('Failed to generate share card'));
+        },
+        'image/png',
+        1.0
+      );
+    });
+  } finally {
+    document.body.removeChild(container);
+  }
 }
 
-export async function shareCard(card: TarotCardData): Promise<void> {
+export async function shareCard(card: TarotCardData): Promise<'native' | 'download'> {
   const blob = await generateShareCard(card);
   const file = new File([blob], `caferoam-tarot-${card.shopId}.png`, {
     type: 'image/png',
@@ -64,14 +106,18 @@ export async function shareCard(card: TarotCardData): Promise<void> {
   if (navigator.share && navigator.canShare?.({ files: [file] })) {
     await navigator.share({
       files: [file],
-      title: `${card.tarotTitle} — CafeRoam 啡遊`,
+      title: `${card.tarotTitle} \u2014 CafeRoam \u554A\u904A`,
     });
-  } else {
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = file.name;
-    a.click();
-    URL.revokeObjectURL(url);
+    return 'native';
   }
+
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = file.name;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  return 'download';
 }
