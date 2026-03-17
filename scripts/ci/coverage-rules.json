@@ -24,7 +24,7 @@
       "layout.tsx",
       "*/components/ui/*.tsx",
       "**/e2e/**",
-      "types/**/*.ts"
+      "**/types/*.ts"
     ]
   },
   "backend": {
