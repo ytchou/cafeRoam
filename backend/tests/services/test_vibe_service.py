@@ -1,8 +1,9 @@
-import pytest
 from unittest.mock import MagicMock
 
+import pytest
+
 from services.vibe_service import VibeService
-from tests.factories import make_vibe_row, make_shop_tag_row, make_tarot_shop_row
+from tests.factories import make_shop_tag_row, make_tarot_shop_row, make_vibe_row
 
 
 def _make_db_mock_for_vibes(

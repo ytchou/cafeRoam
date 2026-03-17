@@ -991,8 +991,8 @@ Adds the Explore tab and redesigns the four main sections of the app using Penci
 
 **Chunk 2 — Backend Service + API (Wave 2-3):**
 - [x] `VibeService` with overlap scoring + geo filtering (TDD)
-- [ ] `GET /explore/vibes` endpoint with TDD
-- [ ] `GET /explore/vibes/{slug}/shops` endpoint with TDD
+- [x] `GET /explore/vibes` endpoint with TDD
+- [x] `GET /explore/vibes/{slug}/shops` endpoint with TDD
 
 **Chunk 3 — Frontend (Wave 2-4):**
 - [x] API client (`lib/api/vibes.ts`) + Next.js proxy routes
