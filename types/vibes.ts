@@ -1,5 +1,3 @@
-// types/vibes.ts
-
 export interface VibeCollection {
   id: string;
   slug: string;

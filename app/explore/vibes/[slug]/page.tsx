@@ -9,8 +9,7 @@ import { useVibeShops } from '@/lib/hooks/use-vibe-shops';
 
 export default function VibePage() {
   const router = useRouter();
-  const params = useParams<{ slug: string }>();
-  const slug = params.slug;
+  const { slug } = useParams<{ slug: string }>();
 
   const { latitude, longitude, requestLocation } = useGeolocation();
 

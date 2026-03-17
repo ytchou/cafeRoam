@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { useGeolocation } from '@/lib/hooks/use-geolocation';
 import { useTarotDraw } from '@/lib/hooks/use-tarot-draw';
@@ -23,6 +23,7 @@ export default function ExplorePage() {
     longitude
   );
   const { vibes } = useVibes();
+  const previewVibes = useMemo(() => vibes.slice(0, 6), [vibes]);
 
   useEffect(() => {
     requestLocation();
@@ -112,7 +113,7 @@ export default function ExplorePage() {
 
       {cards.length > 0 && <TarotSpread cards={cards} onDrawAgain={redraw} />}
 
-      {vibes.length > 0 && (
+      {previewVibes.length > 0 && (
         <section className="mt-8">
           <div className="mb-3 flex items-center justify-between">
             <h2
@@ -129,7 +130,7 @@ export default function ExplorePage() {
             </Link>
           </div>
           <div className="grid grid-cols-3 gap-2">
-            {vibes.slice(0, 6).map((vibe) => (
+            {previewVibes.map((vibe) => (
               <Link
                 key={vibe.slug}
                 href={`/explore/vibes/${vibe.slug}`}

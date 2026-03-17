@@ -8,6 +8,7 @@ from supabase import Client
 from models.types import VibeCollection, VibeShopResult, VibeShopsResponse
 
 _EARTH_RADIUS_KM = 6371.0
+_VIBE_COLS = "id, slug, name, name_zh, emoji, subtitle, subtitle_zh, tag_ids, sort_order"
 
 
 def _haversine(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
@@ -26,7 +27,7 @@ class VibeService:
         """Return all active vibe collections ordered by sort_order."""
         response = (
             self._db.table("vibe_collections")
-            .select("id, slug, name, name_zh, emoji, subtitle, subtitle_zh, tag_ids, sort_order")
+            .select(_VIBE_COLS)
             .eq("is_active", True)
             .order("sort_order")
             .execute()
@@ -90,7 +91,7 @@ class VibeService:
     def _fetch_vibe(self, slug: str) -> VibeCollection:
         response = (
             self._db.table("vibe_collections")
-            .select("id, slug, name, name_zh, emoji, subtitle, subtitle_zh, tag_ids, sort_order")
+            .select(_VIBE_COLS)
             .eq("slug", slug)
             .eq("is_active", True)
             .execute()
