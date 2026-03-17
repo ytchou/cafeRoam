@@ -960,14 +960,14 @@ Adds the Explore tab and redesigns the four main sections of the app using Penci
 - [x] Frontend types + Bricolage Grotesque font + recently-seen utility
 
 **Chunk 2 — Backend Service (Wave 2-4):**
-- [ ] TarotService with geo filter + open-now + title uniqueness
+- [x] TarotService with geo filter + open-now + title uniqueness
 - [ ] GET /explore/tarot-draw API endpoint
 - [ ] Next.js proxy route
 - [ ] Enrichment update: assign_tarot tool + enrich_shop integration
 
 **Chunk 3 — Frontend Components (Wave 2, 5-6):**
-- [ ] TarotCard face-down component
-- [ ] TarotRevealDrawer + TarotEmptyState
+- [x] TarotCard face-down component
+- [x] TarotRevealDrawer + TarotEmptyState
 - [ ] TarotSpread + Explore page assembly
 - [ ] Share card generation (html2canvas)
 
