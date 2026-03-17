@@ -7,7 +7,13 @@ import useSWR from 'swr';
 const mockUseSWR = vi.mocked(useSWR);
 
 function swrReturning(data: unknown, extra?: object) {
-  return { data, error: undefined, isLoading: false, mutate: vi.fn(), ...extra } as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  return {
+    data,
+    error: undefined,
+    isLoading: false,
+    mutate: vi.fn(),
+    ...extra,
+  } as any; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
 describe('useVibes', () => {

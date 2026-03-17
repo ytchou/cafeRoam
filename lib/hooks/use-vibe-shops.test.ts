@@ -7,7 +7,13 @@ import useSWR from 'swr';
 const mockUseSWR = vi.mocked(useSWR);
 
 function swrReturning(data: unknown, extra?: object) {
-  return { data, error: undefined, isLoading: false, mutate: vi.fn(), ...extra } as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  return {
+    data,
+    error: undefined,
+    isLoading: false,
+    mutate: vi.fn(),
+    ...extra,
+  } as any; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
 describe('useVibeShops', () => {
@@ -21,7 +27,11 @@ describe('useVibeShops', () => {
   });
 
   it('returns shop results on success', () => {
-    const mockResponse = { vibe: { slug: 'study-cave' }, shops: [{ shopId: 'shop-a' }], totalCount: 1 };
+    const mockResponse = {
+      vibe: { slug: 'study-cave' },
+      shops: [{ shopId: 'shop-a' }],
+      totalCount: 1,
+    };
     mockUseSWR.mockReturnValue(swrReturning(mockResponse));
     const { result } = renderHook(() => useVibeShops('study-cave'));
     expect(result.current.response?.shops).toHaveLength(1);

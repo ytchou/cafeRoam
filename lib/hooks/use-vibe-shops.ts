@@ -12,7 +12,8 @@ export function useVibeShops(
   radiusKm = 5,
   geoLoading = false
 ) {
-  const key = slug && !geoLoading ? buildVibeShopsUrl(slug, lat, lng, radiusKm) : null;
+  const key =
+    slug && !geoLoading ? buildVibeShopsUrl(slug, lat, lng, radiusKm) : null;
 
   const { data, error, isLoading } = useSWR<VibeShopsResponse>(
     key,

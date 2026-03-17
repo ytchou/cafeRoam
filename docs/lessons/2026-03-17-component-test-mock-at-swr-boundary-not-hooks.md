@@ -8,6 +8,7 @@
 **Root cause:** The component had internal hooks as the first dependency visible to the test author. Mocking the closest thing to hand is natural but wrong.
 
 **Prevention:**
+
 1. Always mock at the SWR boundary: `vi.mock('swr', () => ({ default: vi.fn() }))`
 2. Use `vi.mocked(useSWR).mockImplementation((key) => { if (key === '/api/explore/vibes') return { data: [...] }; ... })`
 3. The real `useVibes` hook then runs its actual logic through the mocked SWR. A rename or transform in the hook will surface as a test failure — which is the correct behavior.

@@ -15,6 +15,7 @@
 **Tech Stack:** FastAPI + Supabase Python (backend), Next.js 16 App Router + SWR + Tailwind (frontend), pytest (backend tests), Vitest + Testing Library (frontend tests).
 
 **Acceptance Criteria:**
+
 - [ ] A user on the Explore page sees a "Browse by Vibe" grid with 6 vibe cards (emoji + name + subtitle)
 - [ ] Tapping a vibe card navigates to `/explore/vibes/[slug]` and shows a list of matching shops
 - [ ] Shops are sorted by tag overlap score; distance badges appear if location was already granted
@@ -26,6 +27,7 @@
 ## Task 1: DB Migration — vibe_collections table + seed
 
 **Files:**
+
 - Create: `supabase/migrations/20260317000002_vibe_collections.sql`
 
 **No test needed** — migration DDL; correctness verified by `supabase db push` output.
@@ -77,9 +79,11 @@ supabase db push
 ```
 
 Expected: each migration logged, no errors. Confirm with:
+
 ```bash
 supabase db diff
 ```
+
 Expected output: "No schema changes found."
 
 **Step 3: Commit**
@@ -94,6 +98,7 @@ git commit -m "feat: add vibe_collections migration with 10 seed vibes"
 ## Task 2: Backend Pydantic models
 
 **Files:**
+
 - Modify: `backend/models/types.py` (append new models at end of file)
 
 **No separate test needed** — models are validated implicitly by all service and API tests that follow.
@@ -145,6 +150,7 @@ git commit -m "feat: add VibeCollection, VibeShopResult, VibeShopsResponse model
 ## Task 3: Frontend TypeScript types
 
 **Files:**
+
 - Create: `types/vibes.ts`
 
 **No separate test needed** — types are verified by TypeScript compiler in later tasks.
@@ -197,6 +203,7 @@ git commit -m "feat: add VibeCollection, VibeShopResult TypeScript types"
 ## Task 4: VibeService with TDD
 
 **Files:**
+
 - Create: `backend/services/vibe_service.py`
 - Create: `backend/tests/services/test_vibe_service.py`
 - Modify: `backend/tests/factories.py` (add `make_vibe_row`, `make_shop_tag_row`)
@@ -420,6 +427,7 @@ class TestVibeServiceGetShopsForVibe:
 ```bash
 cd backend && uv run pytest tests/services/test_vibe_service.py -v
 ```
+
 Expected: `ModuleNotFoundError: No module named 'services.vibe_service'`
 
 **Step 4: Implement VibeService**
@@ -584,6 +592,7 @@ class VibeService:
 ```bash
 cd backend && uv run pytest tests/services/test_vibe_service.py -v
 ```
+
 Expected: all 8 tests PASS.
 
 **Step 6: Lint + type check**
@@ -591,6 +600,7 @@ Expected: all 8 tests PASS.
 ```bash
 cd backend && uv run ruff check services/vibe_service.py && uv run mypy services/vibe_service.py
 ```
+
 Expected: no errors.
 
 **Step 7: Commit**
@@ -605,6 +615,7 @@ git commit -m "feat: add VibeService with overlap scoring and geo filtering (TDD
 ## Task 5: Frontend API client + Next.js proxy routes
 
 **Files:**
+
 - Create: `lib/api/vibes.ts`
 - Create: `app/api/explore/vibes/route.ts`
 - Create: `app/api/explore/vibes/[slug]/shops/route.ts`
@@ -675,6 +686,7 @@ export async function GET(
 ```bash
 pnpm type-check
 ```
+
 Expected: no errors.
 
 **Step 4: Commit**
@@ -689,6 +701,7 @@ git commit -m "feat: add vibes API client and Next.js proxy routes"
 ## Task 6: Backend API routes + route tests
 
 **Files:**
+
 - Modify: `backend/api/explore.py`
 - Modify: `backend/tests/api/test_explore.py`
 
@@ -808,6 +821,7 @@ class TestVibeShopsEndpoint:
 ```bash
 cd backend && uv run pytest tests/api/test_explore.py::TestVibesListEndpoint tests/api/test_explore.py::TestVibeShopsEndpoint -v
 ```
+
 Expected: FAIL — routes don't exist yet.
 
 **Step 3: Add routes to explore.py**
@@ -845,6 +859,7 @@ def vibe_shops(
 ```bash
 cd backend && uv run pytest tests/api/test_explore.py -v
 ```
+
 Expected: all tests PASS (new + pre-existing Tarot tests).
 
 **Step 5: Full backend verification**
@@ -852,6 +867,7 @@ Expected: all tests PASS (new + pre-existing Tarot tests).
 ```bash
 cd backend && uv run pytest && uv run ruff check . && uv run mypy .
 ```
+
 Expected: all pass.
 
 **Step 6: Commit**
@@ -866,6 +882,7 @@ git commit -m "feat: add GET /explore/vibes and GET /explore/vibes/{slug}/shops 
 ## Task 7: useVibes + useVibeShops hooks with TDD
 
 **Files:**
+
 - Create: `lib/hooks/use-vibes.ts`
 - Create: `lib/hooks/use-vibes.test.ts`
 - Create: `lib/hooks/use-vibe-shops.ts`
@@ -884,7 +901,13 @@ import useSWR from 'swr';
 const mockUseSWR = vi.mocked(useSWR);
 
 function swrReturning(data: unknown, extra?: object) {
-  return { data, error: undefined, isLoading: false, mutate: vi.fn(), ...extra } as any;
+  return {
+    data,
+    error: undefined,
+    isLoading: false,
+    mutate: vi.fn(),
+    ...extra,
+  } as any;
 }
 
 describe('useVibes', () => {
@@ -926,7 +949,13 @@ import useSWR from 'swr';
 const mockUseSWR = vi.mocked(useSWR);
 
 function swrReturning(data: unknown, extra?: object) {
-  return { data, error: undefined, isLoading: false, mutate: vi.fn(), ...extra } as any;
+  return {
+    data,
+    error: undefined,
+    isLoading: false,
+    mutate: vi.fn(),
+    ...extra,
+  } as any;
 }
 
 describe('useVibeShops', () => {
@@ -940,7 +969,11 @@ describe('useVibeShops', () => {
   });
 
   it('returns shop results on success', () => {
-    const mockResponse = { vibe: { slug: 'study-cave' }, shops: [{ shopId: 'shop-a' }], totalCount: 1 };
+    const mockResponse = {
+      vibe: { slug: 'study-cave' },
+      shops: [{ shopId: 'shop-a' }],
+      totalCount: 1,
+    };
     mockUseSWR.mockReturnValue(swrReturning(mockResponse));
     const { result } = renderHook(() => useVibeShops('study-cave'));
     expect(result.current.response?.shops).toHaveLength(1);
@@ -976,6 +1009,7 @@ describe('useVibeShops', () => {
 ```bash
 pnpm test -- lib/hooks/use-vibes.test.ts lib/hooks/use-vibe-shops.test.ts
 ```
+
 Expected: `Cannot find module './use-vibes'`
 
 **Step 4: Implement hooks**
@@ -1039,6 +1073,7 @@ export function useVibeShops(
 ```bash
 pnpm test -- lib/hooks/use-vibes.test.ts lib/hooks/use-vibe-shops.test.ts
 ```
+
 Expected: all 8 tests PASS.
 
 **Step 6: Commit**
@@ -1053,6 +1088,7 @@ git commit -m "feat: add useVibes and useVibeShops SWR hooks (TDD)"
 ## Task 8: Explore page — wire vibe strip section
 
 **Files:**
+
 - Modify: `app/explore/page.tsx`
 
 **Step 1: Write failing test**
@@ -1106,6 +1142,7 @@ describe('ExplorePage', () => {
 ```bash
 pnpm test -- app/explore/page.test.tsx
 ```
+
 Expected: test fails — `Browse by Vibe` not found in DOM.
 
 **Step 3: Update explore page to add vibe section**
@@ -1121,39 +1158,41 @@ import Link from 'next/link';
 const { vibes } = useVibes();
 
 // Add below the tarot section (before closing </main>):
-{vibes.length > 0 && (
-  <section className="mt-8">
-    <div className="mb-3 flex items-center justify-between">
-      <h2
-        className="text-lg font-bold text-[#1A1918]"
-        style={{ fontFamily: 'var(--font-bricolage), sans-serif' }}
-      >
-        Browse by Vibe
-      </h2>
-      <Link
-        href="/explore/vibes"
-        className="text-sm font-medium text-[#3D8A5A]"
-      >
-        See all
-      </Link>
-    </div>
-    <div className="grid grid-cols-3 gap-2">
-      {vibes.slice(0, 6).map((vibe) => (
-        <Link
-          key={vibe.slug}
-          href={`/explore/vibes/${vibe.slug}`}
-          className="flex flex-col gap-1.5 rounded-2xl border border-gray-100 bg-white px-4 py-3"
+{
+  vibes.length > 0 && (
+    <section className="mt-8">
+      <div className="mb-3 flex items-center justify-between">
+        <h2
+          className="text-lg font-bold text-[#1A1918]"
+          style={{ fontFamily: 'var(--font-bricolage), sans-serif' }}
         >
-          <span className="text-xl">{vibe.emoji}</span>
-          <span className="text-[13px] font-semibold text-[#1A1918] leading-tight">
-            {vibe.name}
-          </span>
-          <span className="text-[11px] text-gray-400">{vibe.subtitle}</span>
+          Browse by Vibe
+        </h2>
+        <Link
+          href="/explore/vibes"
+          className="text-sm font-medium text-[#3D8A5A]"
+        >
+          See all
         </Link>
-      ))}
-    </div>
-  </section>
-)}
+      </div>
+      <div className="grid grid-cols-3 gap-2">
+        {vibes.slice(0, 6).map((vibe) => (
+          <Link
+            key={vibe.slug}
+            href={`/explore/vibes/${vibe.slug}`}
+            className="flex flex-col gap-1.5 rounded-2xl border border-gray-100 bg-white px-4 py-3"
+          >
+            <span className="text-xl">{vibe.emoji}</span>
+            <span className="text-[13px] leading-tight font-semibold text-[#1A1918]">
+              {vibe.name}
+            </span>
+            <span className="text-[11px] text-gray-400">{vibe.subtitle}</span>
+          </Link>
+        ))}
+      </div>
+    </section>
+  );
+}
 ```
 
 **Step 4: Run test to verify it passes**
@@ -1161,6 +1200,7 @@ const { vibes } = useVibes();
 ```bash
 pnpm test -- app/explore/page.test.tsx
 ```
+
 Expected: all tests PASS (new + pre-existing tarot tests).
 
 **Step 5: Commit**
@@ -1175,6 +1215,7 @@ git commit -m "feat: wire vibe strip section into Explore page"
 ## Task 9: /explore/vibes/[slug] results page
 
 **Files:**
+
 - Create: `app/explore/vibes/[slug]/page.tsx`
 - Create: `app/explore/vibes/[slug]/page.test.tsx`
 
@@ -1269,6 +1310,7 @@ describe('VibePage — /explore/vibes/[slug]', () => {
 ```bash
 pnpm test -- "app/explore/vibes/\[slug\]/page.test.tsx"
 ```
+
 Expected: `Cannot find module './page'`
 
 **Step 3: Implement results page**
@@ -1295,14 +1337,21 @@ export default function VibePage() {
     requestLocation();
   }, [requestLocation]);
 
-  const { response, isLoading, error } = useVibeShops(slug, latitude, longitude);
+  const { response, isLoading, error } = useVibeShops(
+    slug,
+    latitude,
+    longitude
+  );
 
   if (isLoading) {
     return (
       <main className="min-h-screen bg-[#FAF7F4] px-5 pt-6 pb-24">
         <div className="mb-4 h-8 w-40 animate-pulse rounded-lg bg-gray-200" />
         {[0, 1, 2, 4, 5].map((i) => (
-          <div key={i} className="mb-3 h-20 animate-pulse rounded-xl bg-gray-200" />
+          <div
+            key={i}
+            className="mb-3 h-20 animate-pulse rounded-xl bg-gray-200"
+          />
         ))}
       </main>
     );
@@ -1318,7 +1367,9 @@ export default function VibePage() {
         >
           ← Back
         </button>
-        <p className="text-sm text-gray-500">Couldn&apos;t load shops. Please try again.</p>
+        <p className="text-sm text-gray-500">
+          Couldn&apos;t load shops. Please try again.
+        </p>
       </main>
     );
   }
@@ -1374,7 +1425,7 @@ export default function VibePage() {
                 ) : (
                   <div className="h-14 w-14 rounded-lg bg-gray-100" />
                 )}
-                <div className="flex-1 min-w-0">
+                <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold text-[#1A1918]">
                     {shop.name}
                   </p>
@@ -1400,6 +1451,7 @@ export default function VibePage() {
 ```bash
 pnpm test -- "app/explore/vibes/\[slug\]/page.test.tsx"
 ```
+
 Expected: all tests PASS.
 
 **Step 5: Commit**
@@ -1420,6 +1472,7 @@ git commit -m "feat: add /explore/vibes/[slug] results page with TDD"
 ```bash
 cd backend && uv run pytest -v
 ```
+
 Expected: all tests pass (no regressions).
 
 **Step 2: Backend lint + type check**
@@ -1427,6 +1480,7 @@ Expected: all tests pass (no regressions).
 ```bash
 cd backend && uv run ruff check . && uv run mypy .
 ```
+
 Expected: no errors.
 
 **Step 3: Frontend full test suite**
@@ -1434,6 +1488,7 @@ Expected: no errors.
 ```bash
 pnpm test
 ```
+
 Expected: all tests pass.
 
 **Step 4: Frontend lint + type check**
@@ -1441,6 +1496,7 @@ Expected: all tests pass.
 ```bash
 pnpm lint && pnpm type-check
 ```
+
 Expected: no errors.
 
 **Step 5: Production build**
@@ -1448,6 +1504,7 @@ Expected: no errors.
 ```bash
 pnpm build
 ```
+
 Expected: build succeeds with no type errors.
 
 **Step 6: Final commit (if any fixups needed)**
@@ -1497,23 +1554,28 @@ graph TD
 ```
 
 **Wave 1** (parallel — no dependencies):
+
 - Task 1: DB Migration
 - Task 2: Pydantic Models
 - Task 3: Frontend Types
 
 **Wave 2** (parallel — depends on Wave 1):
+
 - Task 4: VibeService ← Task 1, Task 2
 - Task 5: API Client + Proxies ← Task 3
 
 **Wave 3** (parallel — depends on Wave 2):
+
 - Task 6: API Routes ← Task 4
 - Task 7: SWR Hooks ← Task 5
 
 **Wave 4** (parallel — depends on Wave 3):
+
 - Task 8: Explore Page Wiring ← Task 7
 - Task 9: Results Page ← Task 7
 
 **Wave 5** (sequential — depends on all):
+
 - Task 10: Full Verification
 
 ---

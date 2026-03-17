@@ -2,8 +2,12 @@
 
 import { useEffect, useCallback, useMemo } from 'react';
 
-const BRICOLAGE_STYLE = { fontFamily: 'var(--font-bricolage), var(--font-geist-sans), sans-serif' } as const;
-const BRICOLAGE_STYLE_SM = { fontFamily: 'var(--font-bricolage), sans-serif' } as const;
+const BRICOLAGE_STYLE = {
+  fontFamily: 'var(--font-bricolage), var(--font-geist-sans), sans-serif',
+} as const;
+const BRICOLAGE_STYLE_SM = {
+  fontFamily: 'var(--font-bricolage), sans-serif',
+} as const;
 import Link from 'next/link';
 import { useGeolocation } from '@/lib/hooks/use-geolocation';
 import { useTarotDraw } from '@/lib/hooks/use-tarot-draw';
@@ -131,10 +135,12 @@ export default function ExplorePage() {
                 className="flex flex-col gap-1.5 rounded-2xl border border-gray-100 bg-white px-4 py-3"
               >
                 <span className="text-xl">{vibe.emoji}</span>
-                <span className="text-[13px] font-semibold text-[#1A1918] leading-tight">
+                <span className="text-[13px] leading-tight font-semibold text-[#1A1918]">
                   {vibe.name}
                 </span>
-                <span className="text-[11px] text-gray-400">{vibe.subtitle}</span>
+                <span className="text-[11px] text-gray-400">
+                  {vibe.subtitle}
+                </span>
               </Link>
             ))}
           </div>

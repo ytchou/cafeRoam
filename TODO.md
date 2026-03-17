@@ -984,17 +984,20 @@ Adds the Explore tab and redesigns the four main sections of the app using Penci
 > **Plan:** [docs/plans/2026-03-17-vibe-tags-plan.md](docs/plans/2026-03-17-vibe-tags-plan.md)
 
 **Chunk 1 — DB + Models (Wave 1):**
+
 - [x] Design: Finalize 10 vibe collections (editorial name → existing taxonomy tag combo)
 - [x] DB migration: `vibe_collections` table + 10 seed vibes
 - [x] Backend Pydantic models: `VibeCollection`, `VibeShopResult`, `VibeShopsResponse`
 - [x] Frontend TypeScript types: `types/vibes.ts`
 
 **Chunk 2 — Backend Service + API (Wave 2-3):**
+
 - [x] `VibeService` with overlap scoring + geo filtering (TDD)
 - [x] `GET /explore/vibes` endpoint with TDD
 - [x] `GET /explore/vibes/{slug}/shops` endpoint with TDD
 
 **Chunk 3 — Frontend (Wave 2-4):**
+
 - [x] API client (`lib/api/vibes.ts`) + Next.js proxy routes
 - [x] `useVibes` SWR hook with TDD
 - [x] `useVibeShops` SWR hook with TDD
@@ -1002,6 +1005,7 @@ Adds the Explore tab and redesigns the four main sections of the app using Penci
 - [x] `/explore/vibes/[slug]` results page with TDD
 
 **Chunk 4 — Verification (Wave 5):**
+
 - [x] Full verification (pytest, vitest, ruff, mypy, pnpm build)
 
 ### Community Notes — Invite-Only Bloggers (Explore Layer 3)

@@ -1,7 +1,6 @@
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from fastapi import HTTPException
 from fastapi.testclient import TestClient
 
 from main import app
@@ -144,7 +143,10 @@ class TestVibesListEndpoint:
     """GET /explore/vibes returns all active vibe collections."""
 
     def test_returns_200_with_vibes_list(self):
-        with patch("api.explore.VibeService") as mock_svc:
+        with (
+            patch("api.explore.get_anon_client", return_value=MagicMock()),
+            patch("api.explore.VibeService") as mock_svc,
+        ):
             mock_svc.return_value.get_vibes.return_value = MOCK_VIBES
             response = client.get("/explore/vibes")
         assert response.status_code == 200
@@ -154,13 +156,19 @@ class TestVibesListEndpoint:
         assert data[0]["nameZh"] == "讀書洞穴"
 
     def test_is_public_no_auth_required(self):
-        with patch("api.explore.VibeService") as mock_svc:
+        with (
+            patch("api.explore.get_anon_client", return_value=MagicMock()),
+            patch("api.explore.VibeService") as mock_svc,
+        ):
             mock_svc.return_value.get_vibes.return_value = []
             response = client.get("/explore/vibes")
         assert response.status_code == 200
 
     def test_returns_empty_list_when_no_vibes(self):
-        with patch("api.explore.VibeService") as mock_svc:
+        with (
+            patch("api.explore.get_anon_client", return_value=MagicMock()),
+            patch("api.explore.VibeService") as mock_svc,
+        ):
             mock_svc.return_value.get_vibes.return_value = []
             response = client.get("/explore/vibes")
         assert response.json() == []
@@ -170,7 +178,10 @@ class TestVibeShopsEndpoint:
     """GET /explore/vibes/{slug}/shops returns shops matching a vibe."""
 
     def test_returns_200_with_shops(self):
-        with patch("api.explore.VibeService") as mock_svc:
+        with (
+            patch("api.explore.get_anon_client", return_value=MagicMock()),
+            patch("api.explore.VibeService") as mock_svc,
+        ):
             mock_svc.return_value.get_shops_for_vibe.return_value = MOCK_VIBE_SHOPS_RESPONSE
             response = client.get("/explore/vibes/study-cave/shops")
         assert response.status_code == 200
@@ -180,15 +191,21 @@ class TestVibeShopsEndpoint:
         assert data["vibe"]["slug"] == "study-cave"
 
     def test_returns_404_for_unknown_slug(self):
-        with patch("api.explore.VibeService") as mock_svc:
-            mock_svc.return_value.get_shops_for_vibe.side_effect = HTTPException(
-                status_code=404, detail="Vibe 'unknown' not found"
+        with (
+            patch("api.explore.get_anon_client", return_value=MagicMock()),
+            patch("api.explore.VibeService") as mock_svc,
+        ):
+            mock_svc.return_value.get_shops_for_vibe.side_effect = ValueError(
+                "Vibe 'unknown' not found"
             )
             response = client.get("/explore/vibes/unknown/shops")
         assert response.status_code == 404
 
     def test_accepts_optional_geo_params(self):
-        with patch("api.explore.VibeService") as mock_svc:
+        with (
+            patch("api.explore.get_anon_client", return_value=MagicMock()),
+            patch("api.explore.VibeService") as mock_svc,
+        ):
             mock_svc.return_value.get_shops_for_vibe.return_value = MOCK_VIBE_SHOPS_RESPONSE
             response = client.get(
                 "/explore/vibes/study-cave/shops?lat=25.033&lng=121.543&radius_km=3"
@@ -200,7 +217,10 @@ class TestVibeShopsEndpoint:
         assert call_kwargs["radius_km"] == pytest.approx(3.0)
 
     def test_works_without_geo_params(self):
-        with patch("api.explore.VibeService") as mock_svc:
+        with (
+            patch("api.explore.get_anon_client", return_value=MagicMock()),
+            patch("api.explore.VibeService") as mock_svc,
+        ):
             mock_svc.return_value.get_shops_for_vibe.return_value = MOCK_VIBE_SHOPS_RESPONSE
             response = client.get("/explore/vibes/study-cave/shops")
         assert response.status_code == 200

@@ -2,7 +2,9 @@
 
 import { useEffect } from 'react';
 
-const BRICOLAGE_STYLE = { fontFamily: 'var(--font-bricolage), sans-serif' } as const;
+const BRICOLAGE_STYLE = {
+  fontFamily: 'var(--font-bricolage), sans-serif',
+} as const;
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
@@ -13,20 +15,34 @@ export default function VibePage() {
   const router = useRouter();
   const { slug } = useParams<{ slug: string }>();
 
-  const { latitude, longitude, loading: geoLoading, requestLocation } = useGeolocation();
+  const {
+    latitude,
+    longitude,
+    loading: geoLoading,
+    requestLocation,
+  } = useGeolocation();
 
   useEffect(() => {
     requestLocation();
   }, [requestLocation]);
 
-  const { response, isLoading, error } = useVibeShops(slug, latitude, longitude, 5, geoLoading);
+  const { response, isLoading, error } = useVibeShops(
+    slug,
+    latitude,
+    longitude,
+    5,
+    geoLoading
+  );
 
   if (isLoading) {
     return (
       <main className="min-h-screen bg-[#FAF7F4] px-5 pt-6 pb-24">
         <div className="mb-4 h-8 w-40 animate-pulse rounded-lg bg-gray-200" />
         {[0, 1, 2, 3, 4].map((i) => (
-          <div key={i} className="mb-3 h-20 animate-pulse rounded-xl bg-gray-200" />
+          <div
+            key={i}
+            className="mb-3 h-20 animate-pulse rounded-xl bg-gray-200"
+          />
         ))}
       </main>
     );
@@ -42,7 +58,9 @@ export default function VibePage() {
         >
           ← Back
         </button>
-        <p className="text-sm text-gray-500">Couldn&apos;t load shops. Please try again.</p>
+        <p className="text-sm text-gray-500">
+          Couldn&apos;t load shops. Please try again.
+        </p>
       </main>
     );
   }

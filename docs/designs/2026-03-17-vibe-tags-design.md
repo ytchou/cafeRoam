@@ -38,6 +38,7 @@ No RLS required (public read-only). Partial index on `is_active = true` for fast
 ### Matching Logic
 
 **ANY-match + rank by overlap:**
+
 - A shop must have ≥ 1 tag from `tag_ids` to appear in results
 - Score = `matched_tag_count / total_tag_count_in_vibe` (0.0–1.0)
 - Results sorted by `overlap_score DESC`, then `rating DESC` as tiebreaker
@@ -46,6 +47,7 @@ No RLS required (public read-only). Partial index on `is_active = true` for fast
 ### Geo Handling
 
 Same bounding-box + Haversine pattern as Tarot:
+
 1. If `lat`/`lng` provided: apply bounding-box pre-filter in SQL (fast), then Haversine distance in Python
 2. Results include `distance_km` when geo is available
 3. Client may re-sort by distance; default sort is overlap score
@@ -57,18 +59,18 @@ Shops with `NULL` coordinates are excluded only when geo params are provided; ot
 
 ## Seed Vibe Collections (10 vibes)
 
-| slug | name | name_zh | emoji | subtitle | tag_ids |
-|---|---|---|---|---|---|
-| `study-cave` | Study Cave | 讀書洞穴 | 📚 | Quiet · WiFi | `quiet, laptop_friendly, wifi_available, no_time_limit` |
-| `first-date` | First Date | 約會聖地 | 💕 | Cozy · Pretty | `cozy, photogenic, soft_lighting, small_intimate` |
-| `deep-work` | Deep Work | 專注工作 | ⚡ | Focus · Power | `laptop_friendly, power_outlets, no_time_limit, quiet` |
-| `espresso-nerd` | Espresso Nerd | 咖啡控 | ☕ | Single-origin · Craft | `specialty_coffee_focused, self_roasted, pour_over, espresso_focused` |
-| `hidden-gem` | Hidden Gem | 隱藏版 | 💎 | Off the map · Indie | `hidden_gem, alley_cafe, wenqing` |
-| `weekend-brunch` | Weekend Brunch | 週末早午餐 | 🍳 | Lazy · Social | `food_menu, brunch_hours, lively, weekend_only` |
-| `late-night-owl` | Late Night Owl | 夜貓基地 | 🌙 | Open late · Vibe | `late_night, open_evenings, good_music, lively` |
-| `cat-cafe` | Cat Café | 貓咪咖啡 | 🐱 | Cats · Cozy | `has_cats, store_cat, cozy` |
-| `slow-morning` | Slow Morning | 慢慢來 | 🌅 | Early · Quiet | `early_bird, slow_morning, quiet, soft_lighting` |
-| `digital-nomad` | Digital Nomad | 遊牧工作者 | 💻 | Plugged in · All day | `laptop_friendly, power_outlets, wifi_available, all_day, no_time_limit` |
+| slug             | name           | name_zh    | emoji | subtitle              | tag_ids                                                                  |
+| ---------------- | -------------- | ---------- | ----- | --------------------- | ------------------------------------------------------------------------ |
+| `study-cave`     | Study Cave     | 讀書洞穴   | 📚    | Quiet · WiFi          | `quiet, laptop_friendly, wifi_available, no_time_limit`                  |
+| `first-date`     | First Date     | 約會聖地   | 💕    | Cozy · Pretty         | `cozy, photogenic, soft_lighting, small_intimate`                        |
+| `deep-work`      | Deep Work      | 專注工作   | ⚡    | Focus · Power         | `laptop_friendly, power_outlets, no_time_limit, quiet`                   |
+| `espresso-nerd`  | Espresso Nerd  | 咖啡控     | ☕    | Single-origin · Craft | `specialty_coffee_focused, self_roasted, pour_over, espresso_focused`    |
+| `hidden-gem`     | Hidden Gem     | 隱藏版     | 💎    | Off the map · Indie   | `hidden_gem, alley_cafe, wenqing`                                        |
+| `weekend-brunch` | Weekend Brunch | 週末早午餐 | 🍳    | Lazy · Social         | `food_menu, brunch_hours, lively, weekend_only`                          |
+| `late-night-owl` | Late Night Owl | 夜貓基地   | 🌙    | Open late · Vibe      | `late_night, open_evenings, good_music, lively`                          |
+| `cat-cafe`       | Cat Café       | 貓咪咖啡   | 🐱    | Cats · Cozy           | `has_cats, store_cat, cozy`                                              |
+| `slow-morning`   | Slow Morning   | 慢慢來     | 🌅    | Early · Quiet         | `early_bird, slow_morning, quiet, soft_lighting`                         |
+| `digital-nomad`  | Digital Nomad  | 遊牧工作者 | 💻    | Plugged in · All day  | `laptop_friendly, power_outlets, wifi_available, all_day, no_time_limit` |
 
 ---
 
@@ -76,12 +78,12 @@ Shops with `NULL` coordinates are excluded only when geo params are provided; ot
 
 ### Files
 
-| File | Role |
-|---|---|
-| `supabase/migrations/YYYYMMDD_vibe_collections.sql` | Table + seed data + index |
-| `backend/models/types.py` | `VibeCollection`, `VibeShopResult` Pydantic models |
-| `backend/services/vibe_service.py` | `VibeService` — list + shop matching logic |
-| `backend/api/explore.py` | Two new routes added to existing explore router |
+| File                                                | Role                                               |
+| --------------------------------------------------- | -------------------------------------------------- |
+| `supabase/migrations/YYYYMMDD_vibe_collections.sql` | Table + seed data + index                          |
+| `backend/models/types.py`                           | `VibeCollection`, `VibeShopResult` Pydantic models |
+| `backend/services/vibe_service.py`                  | `VibeService` — list + shop matching logic         |
+| `backend/api/explore.py`                            | Two new routes added to existing explore router    |
 
 ### API Endpoints
 
@@ -138,18 +140,19 @@ class VibeService:
 
 ### New Files
 
-| File | Role |
-|---|---|
-| `lib/api/vibes.ts` | API client functions (`getVibes`, `getVibeShops`) |
-| `hooks/use-vibes.ts` | SWR hook for `GET /explore/vibes` |
-| `hooks/use-vibe-shops.ts` | SWR hook for `GET /explore/vibes/{slug}/shops` |
-| `app/explore/vibes/[slug]/page.tsx` | Vibe results page |
-| `app/api/explore/vibes/route.ts` | Next.js proxy |
-| `app/api/explore/vibes/[slug]/shops/route.ts` | Next.js proxy |
+| File                                          | Role                                              |
+| --------------------------------------------- | ------------------------------------------------- |
+| `lib/api/vibes.ts`                            | API client functions (`getVibes`, `getVibeShops`) |
+| `hooks/use-vibes.ts`                          | SWR hook for `GET /explore/vibes`                 |
+| `hooks/use-vibe-shops.ts`                     | SWR hook for `GET /explore/vibes/{slug}/shops`    |
+| `app/explore/vibes/[slug]/page.tsx`           | Vibe results page                                 |
+| `app/api/explore/vibes/route.ts`              | Next.js proxy                                     |
+| `app/api/explore/vibes/[slug]/shops/route.ts` | Next.js proxy                                     |
 
 ### Explore Page (existing — wired up)
 
 The `Vibe Tags Section` is already designed in Pencil (`UOZmR` frame, node `Byveh`). Wiring:
+
 - `useVibes()` hook populates the 2×3 grid
 - Each card: emoji icon + name + subtitle (from `subtitle` field)
 - Tap → `router.push('/explore/vibes/[slug]')`
@@ -158,6 +161,7 @@ The `Vibe Tags Section` is already designed in Pencil (`UOZmR` frame, node `Byve
 ### `/explore/vibes/[slug]` Results Page
 
 Layout:
+
 ```
 [Back arrow]  [emoji] Vibe Name / nameZh
               "N shops nearby" or "N shops found"
@@ -188,6 +192,7 @@ Results page is client-rendered (uses `useVibeShops` SWR hook). Location is read
 ## Testing Strategy
 
 ### Backend (pytest, TDD)
+
 - `test_vibe_service.py`:
   - `get_vibes()` returns ordered active vibes
   - `get_shops_for_vibe()` — overlap scoring (1/4, 2/4, 3/4, 4/4)
@@ -201,6 +206,7 @@ Results page is client-rendered (uses `useVibeShops` SWR hook). Location is read
   - Geo params optional: works with and without lat/lng
 
 ### Frontend (Vitest)
+
 - `use-vibes.test.ts`: fetch, loading state, error state
 - `use-vibe-shops.test.ts`: fetch with/without geo, loading, error, empty state
 - `vibes/[slug]/page.test.tsx`: renders shop list, distance badges when geo present, empty state
@@ -210,6 +216,7 @@ Results page is client-rendered (uses `useVibeShops` SWR hook). Location is read
 ## Scope Boundaries
 
 **In scope:**
+
 - `vibe_collections` DB table + 10 seed vibes
 - `GET /explore/vibes` and `GET /explore/vibes/{slug}/shops` endpoints
 - `VibeService` with overlap scoring + geo filtering
@@ -218,6 +225,7 @@ Results page is client-rendered (uses `useVibeShops` SWR hook). Location is read
 - `/explore/vibes/[slug]` results page
 
 **Out of scope:**
+
 - `/explore/vibes` all-vibes page (Pencil design pending)
 - Admin UI for managing vibe collections
 - Personalized vibe sorting or user-preference weighting

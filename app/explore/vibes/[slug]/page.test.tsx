@@ -9,7 +9,13 @@ vi.mock('next/navigation', () => ({
   useParams: () => ({ slug: 'study-cave' }),
 }));
 vi.mock('@/lib/hooks/use-geolocation', () => ({
-  useGeolocation: () => ({ latitude: null, longitude: null, error: null, loading: false, requestLocation: vi.fn() }),
+  useGeolocation: () => ({
+    latitude: null,
+    longitude: null,
+    error: null,
+    loading: false,
+    requestLocation: vi.fn(),
+  }),
 }));
 
 const MOCK_VIBE = {
@@ -41,39 +47,51 @@ const MOCK_RESPONSE = {
 };
 
 function mockVibeShopsLoaded() {
-  vi.mocked(useSWR).mockImplementation(() => ({
-    data: MOCK_RESPONSE,
-    isLoading: false,
-    error: null,
-  }) as ReturnType<typeof useSWR>);
+  vi.mocked(useSWR).mockImplementation(
+    () =>
+      ({
+        data: MOCK_RESPONSE,
+        isLoading: false,
+        error: null,
+      }) as ReturnType<typeof useSWR>
+  );
 }
 
 function mockVibeShopsLoading() {
-  vi.mocked(useSWR).mockImplementation(() => ({
-    data: undefined,
-    isLoading: true,
-    error: null,
-  }) as ReturnType<typeof useSWR>);
+  vi.mocked(useSWR).mockImplementation(
+    () =>
+      ({
+        data: undefined,
+        isLoading: true,
+        error: null,
+      }) as ReturnType<typeof useSWR>
+  );
 }
 
 function mockVibeShopsEmpty() {
-  vi.mocked(useSWR).mockImplementation(() => ({
-    data: { vibe: MOCK_VIBE, shops: [], totalCount: 0 },
-    isLoading: false,
-    error: null,
-  }) as ReturnType<typeof useSWR>);
+  vi.mocked(useSWR).mockImplementation(
+    () =>
+      ({
+        data: { vibe: MOCK_VIBE, shops: [], totalCount: 0 },
+        isLoading: false,
+        error: null,
+      }) as ReturnType<typeof useSWR>
+  );
 }
 
 function mockVibeShopsWithDistance() {
-  vi.mocked(useSWR).mockImplementation(() => ({
-    data: {
-      vibe: MOCK_VIBE,
-      shops: [{ ...MOCK_SHOP, distanceKm: 1.2 }],
-      totalCount: 1,
-    },
-    isLoading: false,
-    error: null,
-  }) as ReturnType<typeof useSWR>);
+  vi.mocked(useSWR).mockImplementation(
+    () =>
+      ({
+        data: {
+          vibe: MOCK_VIBE,
+          shops: [{ ...MOCK_SHOP, distanceKm: 1.2 }],
+          totalCount: 1,
+        },
+        isLoading: false,
+        error: null,
+      }) as ReturnType<typeof useSWR>
+  );
 }
 
 beforeEach(() => {
@@ -103,13 +121,17 @@ describe('VibePage — /explore/vibes/[slug]', () => {
   it('shows loading skeletons while data is being fetched', () => {
     mockVibeShopsLoading();
     render(<VibePage />);
-    expect(document.querySelectorAll('.animate-pulse').length).toBeGreaterThan(0);
+    expect(document.querySelectorAll('.animate-pulse').length).toBeGreaterThan(
+      0
+    );
   });
 
   it('shows empty state message when no shops match the vibe', () => {
     mockVibeShopsEmpty();
     render(<VibePage />);
-    expect(screen.getByText('No shops found for this vibe.')).toBeInTheDocument();
+    expect(
+      screen.getByText('No shops found for this vibe.')
+    ).toBeInTheDocument();
   });
 
   it('shows distance badge when distanceKm is present', () => {
