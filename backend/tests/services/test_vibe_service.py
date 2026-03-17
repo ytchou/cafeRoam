@@ -26,9 +26,9 @@ def _make_db_mock_for_vibes(
     # Sequence .execute() calls in order: vibes → tags → shops
     execute_mock = MagicMock()
     execute_mock.side_effect = [
-        MagicMock(data=vibe_rows),   # 1st call: vibe_collections query
-        MagicMock(data=tag_rows),    # 2nd call: shop_tags query
-        MagicMock(data=shop_rows),   # 3rd call: shops query
+        MagicMock(data=vibe_rows),  # 1st call: vibe_collections query
+        MagicMock(data=tag_rows),  # 2nd call: shop_tags query
+        MagicMock(data=shop_rows),  # 3rd call: shops query
     ]
     mock.execute = execute_mock
     return mock

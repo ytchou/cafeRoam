@@ -12,9 +12,7 @@ def haversine(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
     return _EARTH_RADIUS_KM * 2 * math.asin(math.sqrt(a))
 
 
-def bounding_box(
-    lat: float, lng: float, radius_km: float
-) -> tuple[float, float, float, float]:
+def bounding_box(lat: float, lng: float, radius_km: float) -> tuple[float, float, float, float]:
     """Return (lat_min, lat_max, lng_min, lng_max) for a bounding box around a point."""
     lat_delta = radius_km / 111.0
     lng_delta = radius_km / (111.0 * math.cos(math.radians(lat)))

@@ -39,9 +39,7 @@ class VibeService:
         if not shop_matches:
             return VibeShopsResponse(vibe=vibe, shops=[], total_count=0)
 
-        shop_rows = self._fetch_shop_details(
-            list(shop_matches.keys()), lat, lng, radius_km
-        )
+        shop_rows = self._fetch_shop_details(list(shop_matches.keys()), lat, lng, radius_km)
 
         total_tags = len(vibe.tag_ids)
         results: list[VibeShopResult] = []
@@ -63,9 +61,7 @@ class VibeService:
                 and row.get("latitude") is not None
                 and row.get("longitude") is not None
             ):
-                distance_km = round(
-                    haversine(lat, lng, row["latitude"], row["longitude"]), 1
-                )
+                distance_km = round(haversine(lat, lng, row["latitude"], row["longitude"]), 1)
 
             results.append(
                 VibeShopResult(
@@ -133,8 +129,7 @@ class VibeService:
         if lat is not None and lng is not None:
             lat_min, lat_max, lng_min, lng_max = bounding_box(lat, lng, radius_km)
             builder = (
-                builder
-                .not_("latitude", "is", "null")
+                builder.not_("latitude", "is", "null")
                 .gte("latitude", lat_min)
                 .lte("latitude", lat_max)
                 .gte("longitude", lng_min)
