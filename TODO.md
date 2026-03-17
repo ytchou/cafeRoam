@@ -999,7 +999,7 @@ Adds the Explore tab and redesigns the four main sections of the app using Penci
 - [x] `useVibes` SWR hook with TDD
 - [x] `useVibeShops` SWR hook with TDD
 - [x] Explore page: wire vibe strip section with TDD
-- [ ] `/explore/vibes/[slug]` results page with TDD
+- [x] `/explore/vibes/[slug]` results page with TDD
 
 **Chunk 4 — Verification (Wave 5):**
 - [ ] Full verification (pytest, vitest, ruff, mypy, pnpm build)
