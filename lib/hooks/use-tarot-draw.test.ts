@@ -119,6 +119,27 @@ describe('useTarotDraw', () => {
     });
   });
 
+  it('skips fetching when only lat is provided but lng is null', () => {
+    renderHook(() => useTarotDraw(25.033, null));
+    const key = mockUseSWR.mock.calls[0][0];
+    expect(key).toBeNull();
+  });
+
+  it('skips fetching when only lng is provided but lat is null', () => {
+    renderHook(() => useTarotDraw(null, 121.543));
+    const key = mockUseSWR.mock.calls[0][0];
+    expect(key).toBeNull();
+  });
+
+  it('does not clear seen list when the draw returns cards', async () => {
+    const mockCards = [{ shopId: 's1', tarotTitle: '山小孩咖啡館' }];
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(['s1']));
+    mockUseSWR.mockReturnValue(swrReturning(mockCards));
+    renderHook(() => useTarotDraw(25.033, 121.543));
+    // localStorage should remain intact — no auto-clear when cards are present
+    expect(localStorage.getItem(STORAGE_KEY)).not.toBeNull();
+  });
+
   it('auto-clears seen shops and redraws when all nearby shops are exhausted', async () => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(['s1', 's2']));
     mockUseSWR.mockReturnValue(swrReturning([]));

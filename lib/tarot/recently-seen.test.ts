@@ -47,4 +47,9 @@ describe('recently-seen localStorage utility', () => {
     localStorage.setItem(STORAGE_KEY, 'not-json');
     expect(getRecentlySeenIds()).toEqual([]);
   });
+
+  it('returns empty array when stored value is valid JSON but not an array', () => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ shop: 'data' }));
+    expect(getRecentlySeenIds()).toEqual([]);
+  });
 });

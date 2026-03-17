@@ -6,6 +6,9 @@ export default {
     '!**/*.test.*',
     '!**/*.d.ts',
     '!**/test-utils/**',
+    // share-card.ts wraps html2canvas + navigator.share — browser APIs that
+    // cannot be meaningfully mutation-tested via jsdom.
+    '!lib/tarot/share-card.ts',
   ],
   testRunner: 'vitest',
   plugins: ['@stryker-mutator/vitest-runner'],
