@@ -5,6 +5,7 @@ import { TarotCard } from './tarot-card';
 import { TarotRevealDrawer } from './tarot-reveal-drawer';
 import { useAnalytics } from '@/lib/posthog/use-analytics';
 import { addRecentlySeenIds } from '@/lib/tarot/recently-seen';
+import { shareCard } from '@/lib/tarot/share-card';
 import type { TarotCardData } from '@/types/tarot';
 
 interface TarotSpreadProps {
@@ -40,6 +41,15 @@ export function TarotSpread({ cards, onDrawAgain }: TarotSpreadProps) {
     onDrawAgain();
   }, [onDrawAgain]);
 
+  const handleShare = useCallback(async () => {
+    if (!selectedCard) return;
+    try {
+      await shareCard(selectedCard);
+    } catch {
+      // Silent fail — share cancelled or unsupported
+    }
+  }, [selectedCard]);
+
   return (
     <div className="flex flex-col gap-3">
       {cards.map((card, i) => (
@@ -61,6 +71,7 @@ export function TarotSpread({ cards, onDrawAgain }: TarotSpreadProps) {
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
         onDrawAgain={handleDrawAgain}
+        onShareTap={handleShare}
       />
     </div>
   );
