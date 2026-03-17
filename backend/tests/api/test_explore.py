@@ -1,4 +1,4 @@
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 from fastapi.testclient import TestClient
 
@@ -28,9 +28,11 @@ class TestTarotDrawEndpoint:
     """GET /explore/tarot-draw returns tarot cards for nearby open shops."""
 
     def test_returns_200_with_valid_params(self):
-        with patch("api.explore.TarotService") as mock_service:
-            instance = mock_service.return_value
-            instance.draw = AsyncMock(return_value=MOCK_CARDS)
+        with (
+            patch("api.explore.get_anon_client", return_value=MagicMock()),
+            patch("api.explore.TarotService") as mock_service,
+        ):
+            mock_service.return_value.draw = AsyncMock(return_value=MOCK_CARDS)
             response = client.get("/explore/tarot-draw?lat=25.033&lng=121.543")
         assert response.status_code == 200
         data = response.json()
@@ -40,9 +42,11 @@ class TestTarotDrawEndpoint:
         assert data[0]["isOpenNow"] is True
 
     def test_is_public_no_auth_required(self):
-        with patch("api.explore.TarotService") as mock_service:
-            instance = mock_service.return_value
-            instance.draw = AsyncMock(return_value=[])
+        with (
+            patch("api.explore.get_anon_client", return_value=MagicMock()),
+            patch("api.explore.TarotService") as mock_service,
+        ):
+            mock_service.return_value.draw = AsyncMock(return_value=[])
             response = client.get("/explore/tarot-draw?lat=25.033&lng=121.543")
         assert response.status_code == 200
 
@@ -55,7 +59,10 @@ class TestTarotDrawEndpoint:
         assert response.status_code == 422
 
     def test_radius_defaults_to_3(self):
-        with patch("api.explore.TarotService") as mock_service:
+        with (
+            patch("api.explore.get_anon_client", return_value=MagicMock()),
+            patch("api.explore.TarotService") as mock_service,
+        ):
             instance = mock_service.return_value
             instance.draw = AsyncMock(return_value=[])
             client.get("/explore/tarot-draw?lat=25.033&lng=121.543")
@@ -63,7 +70,10 @@ class TestTarotDrawEndpoint:
             assert call_kwargs["radius_km"] == 3.0
 
     def test_custom_radius(self):
-        with patch("api.explore.TarotService") as mock_service:
+        with (
+            patch("api.explore.get_anon_client", return_value=MagicMock()),
+            patch("api.explore.TarotService") as mock_service,
+        ):
             instance = mock_service.return_value
             instance.draw = AsyncMock(return_value=[])
             client.get("/explore/tarot-draw?lat=25.033&lng=121.543&radius_km=10")
@@ -71,7 +81,10 @@ class TestTarotDrawEndpoint:
             assert call_kwargs["radius_km"] == 10.0
 
     def test_excluded_ids_parsed(self):
-        with patch("api.explore.TarotService") as mock_service:
+        with (
+            patch("api.explore.get_anon_client", return_value=MagicMock()),
+            patch("api.explore.TarotService") as mock_service,
+        ):
             instance = mock_service.return_value
             instance.draw = AsyncMock(return_value=[])
             client.get("/explore/tarot-draw?lat=25.033&lng=121.543&excluded_ids=s1,s2,s3")
@@ -79,7 +92,10 @@ class TestTarotDrawEndpoint:
             assert call_kwargs["excluded_ids"] == ["s1", "s2", "s3"]
 
     def test_empty_excluded_ids(self):
-        with patch("api.explore.TarotService") as mock_service:
+        with (
+            patch("api.explore.get_anon_client", return_value=MagicMock()),
+            patch("api.explore.TarotService") as mock_service,
+        ):
             instance = mock_service.return_value
             instance.draw = AsyncMock(return_value=[])
             client.get("/explore/tarot-draw?lat=25.033&lng=121.543&excluded_ids=")
