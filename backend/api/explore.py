@@ -2,8 +2,9 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from api.deps import get_current_user
-from db.supabase_client import get_anon_client, get_service_role_client
+from api.deps import get_current_user, get_user_db
+from db.supabase_client import get_anon_client
+from supabase import Client
 from services.community_service import CommunityService
 from services.tarot_service import TarotService
 from services.vibe_service import VibeService
@@ -76,9 +77,9 @@ def community_feed(
 def community_like_toggle(
     checkin_id: str,
     user: dict[str, Any] = Depends(get_current_user),  # noqa: B008
+    db: Client = Depends(get_user_db),  # noqa: B008
 ) -> dict[str, int]:
     """Toggle like on a community note. Auth required."""
-    db = get_service_role_client()
     service = CommunityService(db)
     count = service.toggle_like(checkin_id, user["id"])
     return {"likeCount": count}
@@ -88,9 +89,9 @@ def community_like_toggle(
 def community_like_check(
     checkin_id: str,
     user: dict[str, Any] = Depends(get_current_user),  # noqa: B008
+    db: Client = Depends(get_user_db),  # noqa: B008
 ) -> dict[str, bool]:
     """Check if current user has liked a note. Auth required."""
-    db = get_service_role_client()
     service = CommunityService(db)
     liked = service.is_liked(checkin_id, user["id"])
     return {"liked": liked}
