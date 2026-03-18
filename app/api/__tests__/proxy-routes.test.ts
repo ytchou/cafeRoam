@@ -62,6 +62,12 @@ import { GET as shopCheckinsGET } from '../shops/[id]/checkins/route';
 import { GET as shopReviewsGET } from '../shops/[id]/reviews/route';
 import { GET as deadLetterGET } from '../admin/pipeline/dead-letter/route';
 import { GET as tarotDrawGET } from '../explore/tarot-draw/route';
+import { GET as communityFeedGET } from '../explore/community/route';
+import { GET as communityPreviewGET } from '../explore/community/preview/route';
+import {
+  GET as communityLikeGET,
+  POST as communityLikePOST,
+} from '../explore/community/[checkinId]/like/route';
 
 const mockProxy = vi.mocked(proxyToBackend);
 const mockResponse = new Response('{}', { status: 200 });
@@ -496,6 +502,48 @@ describe('explore/tarot-draw route', () => {
     expect(mockProxy).toHaveBeenCalledWith(
       expect.any(NextRequest),
       '/explore/tarot-draw'
+    );
+  });
+});
+
+describe('explore/community route', () => {
+  it('GET proxies to /explore/community', async () => {
+    await communityFeedGET(makeRequest());
+    expect(mockProxy).toHaveBeenCalledWith(
+      expect.any(NextRequest),
+      '/explore/community'
+    );
+  });
+});
+
+describe('explore/community/preview route', () => {
+  it('GET proxies to /explore/community/preview', async () => {
+    await communityPreviewGET(makeRequest());
+    expect(mockProxy).toHaveBeenCalledWith(
+      expect.any(NextRequest),
+      '/explore/community/preview'
+    );
+  });
+});
+
+describe('explore/community/[checkinId]/like route', () => {
+  it('GET checks like status for the given check-in', async () => {
+    await communityLikeGET(makeRequest(), {
+      params: Promise.resolve({ checkinId: 'ci-1' }),
+    });
+    expect(mockProxy).toHaveBeenCalledWith(
+      expect.any(NextRequest),
+      '/explore/community/ci-1/like'
+    );
+  });
+
+  it('POST toggles like for the given check-in', async () => {
+    await communityLikePOST(makeRequest(), {
+      params: Promise.resolve({ checkinId: 'ci-1' }),
+    });
+    expect(mockProxy).toHaveBeenCalledWith(
+      expect.any(NextRequest),
+      '/explore/community/ci-1/like'
     );
   });
 });
