@@ -157,3 +157,37 @@ def make_vibe_row(**overrides: object) -> dict:
 def make_shop_tag_row(shop_id: str = "shop-d4e5f6", tag_id: str = "quiet") -> dict:
     """A shop_tags join row."""
     return {"shop_id": shop_id, "tag_id": tag_id}
+
+
+def make_user_role(**overrides: object) -> dict:
+    defaults = {
+        "id": "role-r1s2t3",
+        "user_id": "user-a1b2c3",
+        "role": "blogger",
+        "granted_at": _TS,
+        "granted_by": "admin-x9y8z7",
+    }
+    return {**defaults, **overrides}
+
+
+def make_community_note_row(**overrides: object) -> dict:
+    """A joined row combining check_in + profile + shop + like count,
+    as returned by the CommunityService query."""
+    defaults = {
+        "checkin_id": "ci-j0k1l2",
+        "review_text": "Hinoki Coffee has the most incredible natural light in the afternoons. Brought my Kindle and ended up reading for three hours.",
+        "stars": 5,
+        "photo_urls": [
+            "https://example.supabase.co/storage/v1/object/public/checkin-photos/user-a1b2c3/photo1.jpg"
+        ],
+        "created_at": "2026-03-15T14:30:00",
+        "user_id": "user-a1b2c3",
+        "display_name": "Mei-Ling ☕",
+        "avatar_url": None,
+        "role": "blogger",
+        "shop_name": "Hinoki Coffee",
+        "shop_slug": "hinoki-coffee",
+        "shop_district": "大安",
+        "like_count": 12,
+    }
+    return {**defaults, **overrides}

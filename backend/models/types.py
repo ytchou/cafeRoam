@@ -291,6 +291,39 @@ class VibeShopsResponse(CamelModel):
     total_count: int
 
 
+class UserRole(CamelModel):
+    id: str
+    user_id: str
+    role: str
+    granted_at: datetime
+    granted_by: str | None = None
+
+
+class CommunityNoteAuthor(CamelModel):
+    user_id: str
+    display_name: str
+    avatar_url: str | None = None
+    role_label: str
+
+
+class CommunityNoteCard(CamelModel):
+    checkin_id: str
+    author: CommunityNoteAuthor
+    review_text: str
+    star_rating: int | None = None
+    cover_photo_url: str | None = None
+    shop_name: str
+    shop_slug: str
+    shop_district: str | None = None
+    like_count: int = 0
+    created_at: datetime
+
+
+class CommunityFeedResponse(CamelModel):
+    notes: list[CommunityNoteCard]
+    next_cursor: str | None = None
+
+
 class ShopEnrichmentInput(BaseModel):
     name: str
     reviews: list[str]

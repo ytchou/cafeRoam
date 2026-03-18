@@ -1018,7 +1018,7 @@ _Highlighted check-in reviews from partner/blogger users. Reuses existing check-
 
 - [x] DB migration: `user_roles` table (user_id, role, granted_at, granted_by) — multi-role join table
 - [x] DB migration: `community_note_likes` table (checkin_id, user_id) with RLS
-- [ ] Backend: `UserRole`, `CommunityNoteCard`, `CommunityFeedResponse` Pydantic models
+- [x] Backend: `UserRole`, `CommunityNoteCard`, `CommunityFeedResponse` Pydantic models
 - [ ] Backend: `CommunityService` (preview, feed, toggle_like) with TDD
 - [ ] Backend: `GET /explore/community/preview` + `GET /explore/community` endpoints with TDD
 - [ ] Backend: `POST /explore/community/{checkin_id}/like` endpoint (auth-gated) with TDD
