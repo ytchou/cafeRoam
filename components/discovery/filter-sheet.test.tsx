@@ -6,9 +6,6 @@ vi.mock('@/lib/posthog/use-analytics', () => ({
   useAnalytics: () => ({ capture: vi.fn() }),
 }));
 
-import { FilterSheet } from './filter-sheet';
-
-// Mock vaul Drawer since it requires a real DOM portal
 vi.mock('vaul', () => ({
   Drawer: {
     Root: ({ children, open }: { children: React.ReactNode; open: boolean }) =>
@@ -23,51 +20,72 @@ vi.mock('vaul', () => ({
   },
 }));
 
+import { FilterSheet } from './filter-sheet';
+
 describe('FilterSheet', () => {
-  it('renders taxonomy dimension sections with checkboxes', () => {
+  it('renders 5 category tabs', () => {
     render(
-      <FilterSheet
-        open={true}
-        onClose={vi.fn()}
-        onApply={vi.fn()}
-        initialFilters={[]}
-      />
+      <FilterSheet open={true} onClose={vi.fn()} onApply={vi.fn()} initialFilters={[]} />
     );
-    // Should show at least one dimension section
-    expect(screen.getByTestId('drawer')).toBeInTheDocument();
-    // Should show checkboxes
-    const checkboxes = screen.getAllByRole('checkbox');
-    expect(checkboxes.length).toBeGreaterThan(0);
+    expect(screen.getByRole('tab', { name: /functionality/i })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /time/i })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /ambience/i })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /mode/i })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /food/i })).toBeInTheDocument();
+  });
+
+  it('shows tag chips for the active Functionality tab', () => {
+    render(
+      <FilterSheet open={true} onClose={vi.fn()} onApply={vi.fn()} initialFilters={[]} />
+    );
+    expect(screen.getByRole('button', { name: /wifi/i })).toBeInTheDocument();
+  });
+
+  it('searching filters visible tag chips across all tabs', async () => {
+    render(
+      <FilterSheet open={true} onClose={vi.fn()} onApply={vi.fn()} initialFilters={[]} />
+    );
+    const searchInput = screen.getByPlaceholderText(/search/i);
+    await userEvent.type(searchInput, 'matcha');
+    // matcha is in Food tab — should surface regardless of active tab
+    expect(screen.getByRole('button', { name: /matcha/i })).toBeInTheDocument();
+    // wifi should not be visible when searching matcha
+    expect(screen.queryByRole('button', { name: /^wifi$/i })).not.toBeInTheDocument();
+  });
+
+  it('clicking a tag chip toggles it as selected', async () => {
+    render(
+      <FilterSheet open={true} onClose={vi.fn()} onApply={vi.fn()} initialFilters={[]} />
+    );
+    const wifiChip = screen.getByRole('button', { name: /wifi/i });
+    await userEvent.click(wifiChip);
+    expect(wifiChip).toHaveAttribute('aria-pressed', 'true');
   });
 
   it('clicking apply fires onApply with selected tag IDs', async () => {
     const onApply = vi.fn();
     render(
-      <FilterSheet
-        open={true}
-        onClose={vi.fn()}
-        onApply={onApply}
-        initialFilters={[]}
-      />
+      <FilterSheet open={true} onClose={vi.fn()} onApply={onApply} initialFilters={[]} />
     );
-    const checkboxes = screen.getAllByRole('checkbox');
-    await userEvent.click(checkboxes[0]);
-    await userEvent.click(screen.getByText('套用'));
-    expect(onApply).toHaveBeenCalledWith(expect.any(Array));
+    await userEvent.click(screen.getByRole('button', { name: /wifi/i }));
+    await userEvent.click(screen.getByRole('button', { name: /show/i }));
+    expect(onApply).toHaveBeenCalledWith(['wifi']);
   });
 
-  it('clicking clear resets all selections', async () => {
+  it('clicking Clear All resets all selections', async () => {
     const onApply = vi.fn();
     render(
-      <FilterSheet
-        open={true}
-        onClose={vi.fn()}
-        onApply={onApply}
-        initialFilters={['wifi']}
-      />
+      <FilterSheet open={true} onClose={vi.fn()} onApply={onApply} initialFilters={['wifi']} />
     );
-    await userEvent.click(screen.getByText('清除'));
-    await userEvent.click(screen.getByText('套用'));
+    await userEvent.click(screen.getByRole('button', { name: /clear all/i }));
+    await userEvent.click(screen.getByRole('button', { name: /show/i }));
     expect(onApply).toHaveBeenCalledWith([]);
+  });
+
+  it('shows selected count badge when filters are active', () => {
+    render(
+      <FilterSheet open={true} onClose={vi.fn()} onApply={vi.fn()} initialFilters={['wifi', 'outlet']} />
+    );
+    expect(screen.getByText('2')).toBeInTheDocument();
   });
 });

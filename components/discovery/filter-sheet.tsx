@@ -1,33 +1,90 @@
 'use client';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Drawer } from 'vaul';
 import { useAnalytics } from '@/lib/posthog/use-analytics';
 
-const FILTER_DIMENSIONS = [
+interface Tag {
+  id: string;
+  label: string;
+}
+
+interface TabCategory {
+  key: string;
+  label: string;
+  tags: Tag[];
+}
+
+const FILTER_TABS: TabCategory[] = [
   {
-    label: '功能',
+    key: 'functionality',
+    label: 'Functionality',
     tags: [
-      { id: 'wifi', label_zh: '有 Wi-Fi' },
-      { id: 'outlet', label_zh: '有插座' },
-      { id: 'work_friendly', label_zh: '適合工作' },
+      { id: 'wifi', label: 'WiFi' },
+      { id: 'outlet', label: 'Outlet' },
+      { id: 'seating', label: 'Seating' },
+      { id: 'work_friendly', label: 'Work Friendly' },
+      { id: 'pet_friendly', label: 'Pet Friendly' },
+      { id: 'accessible', label: 'Accessible' },
+      { id: 'parking', label: 'Parking' },
+      { id: 'takeaway', label: 'Takeaway' },
+      { id: 'reservable', label: 'Reservable' },
+      { id: 'no_laptop', label: 'No Laptop' },
+      { id: 'cash_only', label: 'Cash Only' },
+      { id: 'brings_own_cup', label: 'Brings Own Cup' },
     ],
   },
   {
-    label: '氛圍',
+    key: 'time',
+    label: 'Time',
     tags: [
-      { id: 'quiet', label_zh: '安靜' },
-      { id: 'cozy', label_zh: '舒適' },
-      { id: 'spacious', label_zh: '寬敞' },
+      { id: 'no_time_limit', label: 'No Time Limit' },
+      { id: 'open_late', label: 'Open Late' },
+      { id: 'early_bird', label: 'Early Bird' },
+      { id: 'open_weekend', label: 'Open Weekend' },
+      { id: 'open_24hr', label: 'Open 24hr' },
     ],
   },
   {
-    label: '時間',
+    key: 'ambience',
+    label: 'Ambience',
     tags: [
-      { id: 'open_late', label_zh: '營業到晚上' },
-      { id: 'open_weekend', label_zh: '週末營業' },
+      { id: 'quiet', label: 'Quiet' },
+      { id: 'cozy', label: 'Cozy' },
+      { id: 'lively', label: 'Lively' },
+      { id: 'chit_chat', label: 'Chit Chat' },
+      { id: 'romantic', label: 'Romantic' },
+      { id: 'minimalist', label: 'Minimalist' },
+      { id: 'industrial', label: 'Industrial' },
+      { id: 'vintage', label: 'Vintage' },
+    ],
+  },
+  {
+    key: 'mode',
+    label: 'Mode',
+    tags: [
+      { id: 'work', label: 'Work' },
+      { id: 'rest', label: 'Rest' },
+      { id: 'social', label: 'Social' },
+      { id: 'specialty', label: 'Specialty' },
+    ],
+  },
+  {
+    key: 'food',
+    label: 'Food',
+    tags: [
+      { id: 'espresso', label: 'Espresso' },
+      { id: 'pour_over', label: 'Pour Over' },
+      { id: 'matcha', label: 'Matcha' },
+      { id: 'pastries', label: 'Pastries' },
+      { id: 'brunch', label: 'Brunch' },
+      { id: 'vegan', label: 'Vegan' },
+      { id: 'dessert', label: 'Dessert' },
+      { id: 'sandwich', label: 'Sandwich' },
     ],
   },
 ];
+
+const ALL_TAGS: Tag[] = FILTER_TABS.flatMap((tab) => tab.tags);
 
 interface FilterSheetProps {
   open: boolean;
@@ -45,7 +102,26 @@ export function FilterSheet({
   const [selected, setSelected] = useState<Set<string>>(
     new Set(initialFilters)
   );
+  const [activeTab, setActiveTab] = useState<string>('functionality');
+  const [searchQuery, setSearchQuery] = useState('');
   const { capture } = useAnalytics();
+
+  const isSearching = searchQuery.trim().length > 0;
+
+  const filteredTags = useMemo(() => {
+    if (!isSearching) return null;
+    const query = searchQuery.trim().toLowerCase();
+    return ALL_TAGS.filter(
+      (tag) =>
+        tag.label.toLowerCase().includes(query) ||
+        tag.id.toLowerCase().includes(query)
+    );
+  }, [searchQuery, isSearching]);
+
+  const activeTabData = useMemo(
+    () => FILTER_TABS.find((tab) => tab.key === activeTab),
+    [activeTab]
+  );
 
   const toggle = (id: string) => {
     setSelected((prev) => {
@@ -59,7 +135,11 @@ export function FilterSheet({
     });
   };
 
-  const handleClear = () => setSelected(new Set());
+  const handleClear = () => {
+    setSelected(new Set());
+    setSearchQuery('');
+  };
+
   const handleApply = () => {
     const selectedIds = Array.from(selected);
     capture('filter_applied', {
@@ -70,54 +150,98 @@ export function FilterSheet({
     onClose();
   };
 
+  const tagsToShow = isSearching ? filteredTags ?? [] : activeTabData?.tags ?? [];
+
   return (
     <Drawer.Root open={open} onOpenChange={(o: boolean) => !o && onClose()}>
       <Drawer.Portal>
         <Drawer.Overlay className="fixed inset-0 bg-black/40" />
-        <Drawer.Content className="fixed right-0 bottom-0 left-0 max-h-[85vh] overflow-y-auto rounded-t-[10px] bg-white p-4">
+        <Drawer.Content className="fixed right-0 bottom-0 left-0 flex max-h-[85vh] flex-col rounded-t-[10px] bg-white">
           <Drawer.Handle />
-          <Drawer.Title className="mb-4 text-lg font-semibold">
-            篩選
-          </Drawer.Title>
-          <div className="space-y-6">
-            {FILTER_DIMENSIONS.map((dim) => (
-              <div key={dim.label}>
-                <h3 className="mb-2 text-sm font-medium text-gray-500">
-                  {dim.label}
-                </h3>
-                <div className="space-y-2">
-                  {dim.tags.map((tag) => (
-                    <label
-                      key={tag.id}
-                      className="flex cursor-pointer items-center gap-3"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selected.has(tag.id)}
-                        onChange={() => toggle(tag.id)}
-                        className="rounded border-gray-300 text-[#E06B3F] focus:ring-[#E06B3F]"
-                      />
-                      <span className="text-sm">{tag.label_zh}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            ))}
+          <div className="flex items-center justify-between px-4 pt-3 pb-2">
+            <Drawer.Title className="text-lg font-semibold">
+              Filters
+            </Drawer.Title>
+            <div className="flex items-center gap-2">
+              {selected.size > 0 && (
+                <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[#2C1810] px-1.5 text-xs font-medium text-white">
+                  {selected.size}
+                </span>
+              )}
+              <button
+                type="button"
+                onClick={handleClear}
+                aria-label="Clear all"
+                className="text-sm text-gray-500 hover:text-gray-700"
+              >
+                Clear All
+              </button>
+            </div>
           </div>
-          <div className="mt-6 flex gap-3 border-t pt-4">
-            <button
-              type="button"
-              onClick={handleClear}
-              className="flex-1 rounded-full border border-gray-200 py-2.5 text-sm text-gray-600"
+
+          <div className="px-4 pb-3">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search filters..."
+              className="w-full rounded-lg border border-[#E5E4E1] bg-[#F5F4F1] px-3 py-2 text-sm outline-none placeholder:text-gray-400 focus:border-[#2C1810]"
+            />
+          </div>
+
+          {!isSearching && (
+            <div
+              className="flex gap-2 overflow-x-auto px-4 pb-3"
+              role="tablist"
             >
-              清除
-            </button>
+              {FILTER_TABS.map((tab) => (
+                <button
+                  key={tab.key}
+                  role="tab"
+                  aria-selected={activeTab === tab.key}
+                  onClick={() => setActiveTab(tab.key)}
+                  className={`shrink-0 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
+                    activeTab === tab.key
+                      ? 'bg-[#2C1810] text-white'
+                      : 'bg-[#F5F4F1] text-gray-500'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+          )}
+
+          <div className="flex-1 overflow-y-auto px-4 pb-4">
+            <div className="flex flex-wrap gap-2">
+              {tagsToShow.map((tag) => {
+                const isSelected = selected.has(tag.id);
+                return (
+                  <button
+                    key={tag.id}
+                    type="button"
+                    aria-pressed={isSelected}
+                    onClick={() => toggle(tag.id)}
+                    className={`rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
+                      isSelected
+                        ? 'border-[#2C1810] bg-[#2C1810] text-white'
+                        : 'border-[#E5E4E1] bg-white text-gray-700'
+                    }`}
+                  >
+                    {tag.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="border-t px-4 py-3">
             <button
               type="button"
               onClick={handleApply}
-              className="flex-1 rounded-full bg-[#E06B3F] py-2.5 text-sm font-medium text-white"
+              className="w-full rounded-full bg-[#2C1810] py-2.5 text-sm font-medium text-white"
             >
-              套用
+              Show places
             </button>
           </div>
         </Drawer.Content>
