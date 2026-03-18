@@ -24,8 +24,19 @@ _NOTE_SELECT = (
     "user_id,"
     "profiles!check_ins_user_id_fkey(display_name, avatar_url),"
     "shops!check_ins_shop_id_fkey(name, slug, district),"
-    "user_roles!inner(role)"
+    "user_roles!inner(role),"
+    "community_note_likes(count)"
 )
+
+
+def _extract_count(count_rows: list[dict[str, Any]] | None) -> int:
+    """Extract the count value from a PostgREST count aggregate response."""
+    if not count_rows:
+        return 0
+    first = next(iter(count_rows), None)
+    if not first:
+        return 0
+    return int(first.get("count", 0))
 
 
 class CommunityService:
@@ -35,8 +46,8 @@ class CommunityService:
     def get_preview(self, limit: int = 3) -> list[CommunityNoteCard]:
         response = (
             self._db.table("check_ins")
-            .select(_NOTE_SELECT, count="exact")
-            .neq("review_text", "null")
+            .select(_NOTE_SELECT)
+            .not_.is_("review_text", "null")
             .order("created_at", desc=True)
             .limit(limit)
             .execute()
@@ -49,8 +60,8 @@ class CommunityService:
     ) -> CommunityFeedResponse:
         query = (
             self._db.table("check_ins")
-            .select(_NOTE_SELECT, count="exact")
-            .neq("review_text", "null")
+            .select(_NOTE_SELECT)
+            .not_.is_("review_text", "null")
             .order("created_at", desc=True)
             .limit(limit + 1)
         )
@@ -154,6 +165,6 @@ class CommunityService:
             shop_name=shop_name,
             shop_slug=shop_slug,
             shop_district=shop_district,
-            like_count=row.get("like_count", 0),
+            like_count=_extract_count(row.get("community_note_likes")),
             created_at=row["created_at"],
         )
