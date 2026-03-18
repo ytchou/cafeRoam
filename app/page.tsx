@@ -224,6 +224,7 @@ function FindPageContent() {
         ))}
 
       <FilterSheet
+        key={filterSheetOpen ? 'sheet-open' : 'sheet-closed'}
         open={filterSheetOpen}
         onClose={() => setFilterSheetOpen(false)}
         onApply={handleFilterApply}

@@ -84,10 +84,13 @@ describe('DirectionsSheet', () => {
     render(<DirectionsSheet open={true} onClose={vi.fn()} shop={shop} />);
 
     // nearestMrtStation runs against real taipei-mrt-stations.json — any station
-    // near 25.033, 121.565 (central Taipei) should appear
+    // near 25.033, 121.565 (central Taipei) should appear with the format:
+    // "{name_en} ({name_zh}) · {line} · ~N min walk"
     await waitFor(() => {
-      // The MRT row renders: "{name_en} ({name_zh}) · {line} · ~N min walk"
-      expect(screen.getByText(/·/)).toBeInTheDocument();
+      // Match the station row pattern: English name followed by Chinese in parens
+      expect(
+        screen.getByText(/[A-Za-z]+ \([^\)]+\) ·/)
+      ).toBeInTheDocument();
     });
   });
 
