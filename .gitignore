@@ -74,7 +74,7 @@ __pycache__/
 .pytest_cache/
 
 # Pre-build pipeline data (large JSON files)
-data/
+/data/
 
 # Mutation testing reports
 reports/mutation/
