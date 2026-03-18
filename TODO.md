@@ -1011,6 +1011,7 @@ Adds the Explore tab and redesigns the four main sections of the app using Penci
 ### Community Notes — Partner Reviews (Explore Layer 3)
 
 > **Design Doc:** [docs/designs/2026-03-18-community-notes-design.md](docs/designs/2026-03-18-community-notes-design.md)
+> **Plan:** [docs/plans/2026-03-18-community-notes-plan.md](docs/plans/2026-03-18-community-notes-plan.md)
 > **ADR:** [docs/decisions/2026-03-18-user-roles-join-table.md](docs/decisions/2026-03-18-user-roles-join-table.md)
 
 _Highlighted check-in reviews from partner/blogger users. Reuses existing check-in data — no separate content type. Seed with beta blogger invites during Phase 4._
