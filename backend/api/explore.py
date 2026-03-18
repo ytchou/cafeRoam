@@ -1,8 +1,10 @@
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 
-from db.supabase_client import get_anon_client
+from api.deps import get_current_user
+from db.supabase_client import get_anon_client, get_service_role_client
+from services.community_service import CommunityService
 from services.tarot_service import TarotService
 from services.vibe_service import VibeService
 
@@ -48,3 +50,51 @@ def vibe_shops(
     except ValueError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     return result.model_dump(by_alias=True)
+
+
+# ── Community Notes ──────────────────────────────────────
+
+
+@router.get("/community/preview")
+def community_preview() -> list[dict[str, object]]:
+    """Top 3 partner reviews for Explore page. Public — no auth required."""
+    db = get_anon_client()
+    service = CommunityService(db)
+    cards = service.get_preview(limit=3)
+    return [c.model_dump(by_alias=True) for c in cards]
+
+
+@router.get("/community")
+def community_feed(
+    cursor: str | None = Query(default=None),
+    limit: int = Query(default=10, ge=1, le=50),
+) -> dict[str, object]:
+    """Paginated feed of partner reviews. Public — no auth required."""
+    db = get_anon_client()
+    service = CommunityService(db)
+    result = service.get_feed(cursor=cursor, limit=limit)
+    return result.model_dump(by_alias=True)
+
+
+@router.post("/community/{checkin_id}/like")
+def community_like_toggle(
+    checkin_id: str,
+    user: dict[str, Any] = Depends(get_current_user),  # noqa: B008
+) -> dict[str, int]:
+    """Toggle like on a community note. Auth required."""
+    db = get_service_role_client()
+    service = CommunityService(db)
+    count = service.toggle_like(checkin_id, user["id"])
+    return {"likeCount": count}
+
+
+@router.get("/community/{checkin_id}/like")
+def community_like_check(
+    checkin_id: str,
+    user: dict[str, Any] = Depends(get_current_user),  # noqa: B008
+) -> dict[str, bool]:
+    """Check if current user has liked a note. Auth required."""
+    db = get_service_role_client()
+    service = CommunityService(db)
+    liked = service.is_liked(checkin_id, user["id"])
+    return {"liked": liked}
