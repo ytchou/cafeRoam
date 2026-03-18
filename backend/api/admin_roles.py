@@ -71,7 +71,7 @@ def list_roles(
 ) -> list[dict[str, Any]]:
     """List all role grants, optionally filtered by role."""
     db = get_service_role_client()
-    query = db.table("user_roles").select("*").order("granted_at", desc=True)
+    query = db.table("user_roles").select("id, user_id, role, granted_at, granted_by").order("granted_at", desc=True)
     if role:
         query = query.eq("role", role)
     response = query.execute()
