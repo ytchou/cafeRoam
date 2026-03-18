@@ -12,7 +12,10 @@ function mockIntersectionObserver(triggerImmediately = false) {
   const disconnect = vi.fn();
   const MockObserver = vi.fn((callback: IntersectionObserverCallback) => {
     if (triggerImmediately) {
-      callback([{ isIntersecting: true }] as IntersectionObserverEntry[], {} as IntersectionObserver);
+      callback(
+        [{ isIntersecting: true }] as IntersectionObserverEntry[],
+        {} as IntersectionObserver
+      );
     }
     return { observe, disconnect };
   });
@@ -26,7 +29,10 @@ describe('CommunityCard', () => {
   beforeEach(() => {
     vi.unstubAllGlobals();
     // Default no-op stub so tests that don't care about viewport behaviour still work
-    vi.stubGlobal('IntersectionObserver', vi.fn(() => ({ observe: vi.fn(), disconnect: vi.fn() })));
+    vi.stubGlobal(
+      'IntersectionObserver',
+      vi.fn(() => ({ observe: vi.fn(), disconnect: vi.fn() }))
+    );
   });
 
   it('fires community_note_viewed analytics when the card enters the viewport', () => {

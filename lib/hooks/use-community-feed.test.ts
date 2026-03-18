@@ -14,7 +14,13 @@ import swr from 'swr';
 const swrMock = vi.mocked(swr);
 
 function swrReturning(data: unknown, isLoading = false) {
-  return { data, isLoading, error: null, mutate: vi.fn(), isValidating: false } as ReturnType<typeof swr>;
+  return {
+    data,
+    isLoading,
+    error: null,
+    mutate: vi.fn(),
+    isValidating: false,
+  } as ReturnType<typeof swr>;
 }
 
 describe('useCommunityFeed', () => {
@@ -48,7 +54,7 @@ describe('useCommunityFeed', () => {
     expect(swrMock).toHaveBeenCalledWith(
       '/api/explore/community?cursor=2026-03-14T10%3A00%3A00',
       expect.any(Function),
-      expect.any(Object),
+      expect.any(Object)
     );
   });
 });

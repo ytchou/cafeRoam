@@ -15,6 +15,7 @@
 **Tech Stack:** FastAPI, Supabase Postgres, Pydantic, Next.js App Router, SWR, Tailwind CSS
 
 **Acceptance Criteria:**
+
 - [ ] A visitor browsing the Explore page sees a "From the Community" section with up to 3 partner review cards
 - [ ] Tapping "See all" navigates to a paginated feed of all partner reviews
 - [ ] An authenticated user can heart a community note and see the updated count
@@ -26,6 +27,7 @@
 ### Task 1: DB Migrations
 
 **Files:**
+
 - Create: `supabase/migrations/20260318000001_user_roles.sql`
 - Create: `supabase/migrations/20260318000002_community_note_likes.sql`
 
@@ -87,6 +89,7 @@ git commit -m "feat(db): add user_roles and community_note_likes tables"
 ### Task 2: Backend Pydantic Models + Test Factories
 
 **Files:**
+
 - Modify: `backend/models/types.py` (append new models at end)
 - Modify: `backend/tests/factories.py` (append new factories at end)
 
@@ -181,6 +184,7 @@ git commit -m "feat(models): add Community Notes models and test factories"
 ### Task 3: CommunityService — Tests + Implementation
 
 **Files:**
+
 - Create: `backend/tests/services/test_community_service.py`
 - Create: `backend/services/community_service.py`
 
@@ -563,14 +567,16 @@ git commit -m "feat(service): CommunityService with preview, feed, and like togg
 ### Task 4: Explore API Endpoints — Tests + Implementation
 
 **Files:**
+
 - Create: `backend/tests/api/test_community_api.py`
 - Modify: `backend/api/explore.py` (add 4 new routes)
 
 **API Contract:**
+
 ```yaml
 GET /explore/community/preview:
   auth: none
-  response: CommunityNoteCard[]   # camelCase
+  response: CommunityNoteCard[] # camelCase
 
 GET /explore/community:
   auth: none
@@ -828,17 +834,19 @@ git commit -m "feat(api): community notes preview, feed, and like endpoints"
 ### Task 5: Admin Roles API — Tests + Implementation
 
 **Files:**
+
 - Create: `backend/tests/api/test_admin_roles.py`
 - Create: `backend/api/admin_roles.py`
 - Modify: `backend/main.py` (register new router)
 
 **API Contract:**
+
 ```yaml
 POST /admin/roles:
   auth: admin
   request:
     user_id: string
-    role: string  # one of: blogger, paid_user, partner, admin
+    role: string # one of: blogger, paid_user, partner, admin
   response:
     id: string
     userId: string
@@ -850,14 +858,14 @@ POST /admin/roles:
 DELETE /admin/roles/{user_id}/{role}:
   auth: admin
   response:
-    message: "Role revoked"
+    message: 'Role revoked'
   errors:
     404: role not found
 
 GET /admin/roles:
   auth: admin
   query:
-    role: string | null  # filter by role
+    role: string | null # filter by role
   response: UserRole[]
 ```
 
@@ -1079,6 +1087,7 @@ git commit -m "feat(admin): roles API — grant, revoke, and list user roles"
 ### Task 6: Frontend Types + Test Factories
 
 **Files:**
+
 - Create: `types/community.ts`
 - Modify: `lib/test-utils/factories.ts` (append new factories)
 
@@ -1156,6 +1165,7 @@ git commit -m "feat(types): Community Notes TypeScript types and test factory"
 ### Task 7: Frontend SWR Hooks — Tests + Implementation
 
 **Files:**
+
 - Create: `lib/hooks/use-community-preview.test.ts`
 - Create: `lib/hooks/use-community-preview.ts`
 - Create: `lib/hooks/use-community-feed.test.ts`
@@ -1181,13 +1191,26 @@ import swr from 'swr';
 
 const swrMock = vi.mocked(swr);
 
-function swrReturning(data: unknown, isLoading = false, error: Error | null = null) {
-  return { data, isLoading, error, mutate: vi.fn(), isValidating: false } as ReturnType<typeof swr>;
+function swrReturning(
+  data: unknown,
+  isLoading = false,
+  error: Error | null = null
+) {
+  return {
+    data,
+    isLoading,
+    error,
+    mutate: vi.fn(),
+    isValidating: false,
+  } as ReturnType<typeof swr>;
 }
 
 describe('useCommunityPreview', () => {
   it('returns preview cards when data is loaded', () => {
-    const cards = [makeCommunityNote(), makeCommunityNote({ checkinId: 'ci-2' })];
+    const cards = [
+      makeCommunityNote(),
+      makeCommunityNote({ checkinId: 'ci-2' }),
+    ];
     swrMock.mockReturnValue(swrReturning(cards));
 
     const { result } = renderHook(() => useCommunityPreview());
@@ -1213,7 +1236,7 @@ describe('useCommunityPreview', () => {
     expect(swrMock).toHaveBeenCalledWith(
       '/api/explore/community/preview',
       expect.any(Function),
-      expect.any(Object),
+      expect.any(Object)
     );
   });
 });
@@ -1274,7 +1297,13 @@ import swr from 'swr';
 const swrMock = vi.mocked(swr);
 
 function swrReturning(data: unknown, isLoading = false) {
-  return { data, isLoading, error: null, mutate: vi.fn(), isValidating: false } as ReturnType<typeof swr>;
+  return {
+    data,
+    isLoading,
+    error: null,
+    mutate: vi.fn(),
+    isValidating: false,
+  } as ReturnType<typeof swr>;
 }
 
 describe('useCommunityFeed', () => {
@@ -1308,7 +1337,7 @@ describe('useCommunityFeed', () => {
     expect(swrMock).toHaveBeenCalledWith(
       '/api/explore/community?cursor=2026-03-14T10%3A00%3A00',
       expect.any(Function),
-      expect.any(Object),
+      expect.any(Object)
     );
   });
 });
@@ -1363,6 +1392,7 @@ git commit -m "feat(hooks): useCommunityPreview and useCommunityFeed SWR hooks"
 ### Task 8: Frontend Proxy Routes
 
 **Files:**
+
 - Create: `app/api/explore/community/preview/route.ts`
 - Create: `app/api/explore/community/route.ts`
 - Create: `app/api/explore/community/[checkinId]/like/route.ts`
@@ -1435,6 +1465,7 @@ git commit -m "feat(proxy): community notes proxy routes (preview, feed, like)"
 ### Task 9: CommunityCard Component — Test + Implementation
 
 **Files:**
+
 - Create: `components/community/community-card.test.tsx`
 - Create: `components/community/community-card.tsx`
 
@@ -1573,6 +1604,7 @@ git commit -m "feat(ui): CommunityCard compact component for Explore preview"
 ### Task 10: CommunityCardFull + LikeButton Components — Tests + Implementation
 
 **Files:**
+
 - Create: `components/community/like-button.test.tsx`
 - Create: `components/community/like-button.tsx`
 - Create: `components/community/community-card-full.test.tsx`
@@ -1818,6 +1850,7 @@ git commit -m "feat(ui): CommunityCardFull and LikeButton components"
 ### Task 11: Explore Page — Community Section Integration
 
 **Files:**
+
 - Modify: `app/explore/page.tsx` (add Community section)
 - Modify: `app/explore/page.test.tsx` (add community tests)
 
@@ -1876,27 +1909,29 @@ const { notes: communityNotes } = useCommunityPreview();
 Add JSX after the Vibe Tags section (before the closing tag of the scrollable content area):
 
 ```tsx
-{communityNotes.length > 0 && (
-  <section className="flex flex-col gap-3">
-    <div className="flex items-center justify-between">
-      <h2
-        className="text-lg font-bold text-gray-900"
-        style={{ fontFamily: 'var(--font-bricolage), sans-serif' }}
-      >
-        From the Community
-      </h2>
-      <Link
-        href="/explore/community"
-        className="text-xs font-medium text-[#8B5E3C]"
-      >
-        See all →
-      </Link>
-    </div>
-    {communityNotes.map((note) => (
-      <CommunityCard key={note.checkinId} note={note} />
-    ))}
-  </section>
-)}
+{
+  communityNotes.length > 0 && (
+    <section className="flex flex-col gap-3">
+      <div className="flex items-center justify-between">
+        <h2
+          className="text-lg font-bold text-gray-900"
+          style={{ fontFamily: 'var(--font-bricolage), sans-serif' }}
+        >
+          From the Community
+        </h2>
+        <Link
+          href="/explore/community"
+          className="text-xs font-medium text-[#8B5E3C]"
+        >
+          See all →
+        </Link>
+      </div>
+      {communityNotes.map((note) => (
+        <CommunityCard key={note.checkinId} note={note} />
+      ))}
+    </section>
+  );
+}
 ```
 
 **Step 4: Run test to verify it passes**
@@ -1916,6 +1951,7 @@ git commit -m "feat(explore): add From the Community section to Explore page"
 ### Task 12: Community Feed Page — Test + Implementation
 
 **Files:**
+
 - Create: `app/explore/community/page.test.tsx`
 - Create: `app/explore/community/page.tsx`
 
@@ -2133,6 +2169,7 @@ git commit -m "feat(page): Community feed page with paginated partner reviews"
 ### Task 13: Analytics Events
 
 **Files:**
+
 - Modify: `app/explore/page.tsx` (add `community_note_viewed` event)
 - Modify: `app/explore/community/page.tsx` (add `community_feed_opened` + `community_note_liked`)
 
@@ -2266,15 +2303,18 @@ graph TD
 ```
 
 **Wave 1** (parallel — no dependencies):
+
 - Task 1: DB Migrations
 - Task 2: Backend Models + Factories
 - Task 6: Frontend Types + Factories
 
 **Wave 2** (parallel — depends on Wave 1):
+
 - Task 3: CommunityService ← Tasks 1, 2
 - Task 5: Admin Roles API ← Task 2
 
 **Wave 3** (parallel — depends on Waves 1-2):
+
 - Task 4: Explore API endpoints ← Task 3
 - Task 7: SWR Hooks ← Task 6
 - Task 8: Proxy Routes ← Task 6
@@ -2282,11 +2322,14 @@ graph TD
 - Task 10: CommunityCardFull + LikeButton ← Task 6
 
 **Wave 4** (parallel — depends on Wave 3):
+
 - Task 11: Explore page integration ← Tasks 7, 9
 - Task 12: Community feed page ← Tasks 7, 8, 10
 
 **Wave 5** (depends on Wave 4):
+
 - Task 13: Analytics events ← Tasks 11, 12
 
 **Wave 6** (depends on all):
+
 - Task 14: Full verification ← Task 13

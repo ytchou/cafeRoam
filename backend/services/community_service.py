@@ -54,9 +54,7 @@ class CommunityService:
         rows = cast("list[dict[str, Any]]", response.data or [])
         return [self._row_to_card(row) for row in rows]
 
-    def get_feed(
-        self, cursor: str | None, limit: int = 10
-    ) -> CommunityFeedResponse:
+    def get_feed(self, cursor: str | None, limit: int = 10) -> CommunityFeedResponse:
         query = (
             self._db.table("check_ins")
             .select(_NOTE_SELECT)
@@ -93,9 +91,9 @@ class CommunityService:
         )
 
         if existing.data:
-            self._db.table("community_note_likes").delete().eq(
-                "checkin_id", checkin_id
-            ).eq("user_id", user_id).execute()
+            self._db.table("community_note_likes").delete().eq("checkin_id", checkin_id).eq(
+                "user_id", user_id
+            ).execute()
         else:
             self._db.table("community_note_likes").insert(
                 {"checkin_id": checkin_id, "user_id": user_id}

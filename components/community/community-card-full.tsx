@@ -64,7 +64,11 @@ export function CommunityCardFull({
             <span className="text-[10px] text-gray-400">
               {formatRelativeTime(note.createdAt)}
             </span>
-            <LikeButton count={note.likeCount} liked={liked} onToggle={onLikeToggle} />
+            <LikeButton
+              count={note.likeCount}
+              liked={liked}
+              onToggle={onLikeToggle}
+            />
           </div>
         </div>
       </div>

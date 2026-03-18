@@ -9,7 +9,7 @@ export function useCommunityPreview() {
   const { data, isLoading, error } = useSWR<CommunityNoteCard[]>(
     '/api/explore/community/preview',
     fetchPublic,
-    { revalidateOnFocus: false },
+    { revalidateOnFocus: false }
   );
 
   return {

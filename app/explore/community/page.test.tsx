@@ -31,7 +31,10 @@ import CommunityFeedPage from './page';
 const MOCK_FEED = {
   notes: [
     makeCommunityNote({ checkinId: 'ci-1' }),
-    makeCommunityNote({ checkinId: 'ci-2', reviewText: 'Simple Kaffa is incredible.' }),
+    makeCommunityNote({
+      checkinId: 'ci-2',
+      reviewText: 'Simple Kaffa is incredible.',
+    }),
   ],
   nextCursor: '2026-03-14T10:00:00',
 };
@@ -48,7 +51,13 @@ describe('Community Feed Page', () => {
           isValidating: false,
         };
       }
-      return { data: undefined, isLoading: false, error: null, mutate: vi.fn(), isValidating: false };
+      return {
+        data: undefined,
+        isLoading: false,
+        error: null,
+        mutate: vi.fn(),
+        isValidating: false,
+      };
     }) as typeof swr);
   });
 
@@ -59,7 +68,9 @@ describe('Community Feed Page', () => {
 
   it('renders community note cards', () => {
     render(<CommunityFeedPage />);
-    expect(screen.getByText(/most incredible natural light/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/most incredible natural light/)
+    ).toBeInTheDocument();
     expect(screen.getByText(/Simple Kaffa is incredible/)).toBeInTheDocument();
   });
 

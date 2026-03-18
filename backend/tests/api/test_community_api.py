@@ -97,7 +97,8 @@ class TestCommunityFeed:
             mock_cls.return_value.get_feed.return_value = feed
             client.get("/explore/community?cursor=2026-03-14T10:00:00&limit=5")
             mock_cls.return_value.get_feed.assert_called_once_with(
-                cursor="2026-03-14T10:00:00", limit=5,
+                cursor="2026-03-14T10:00:00",
+                limit=5,
             )
 
 
@@ -109,7 +110,10 @@ class TestCommunityLikeToggle:
         assert response.status_code == 401
 
     def test_returns_200_with_like_count_when_authenticated(self):
-        app.dependency_overrides[get_current_user] = lambda: {"id": "user-a1b2c3", "email": "test@example.com"}
+        app.dependency_overrides[get_current_user] = lambda: {
+            "id": "user-a1b2c3",
+            "email": "test@example.com",
+        }
         try:
             with (
                 patch("api.explore.get_service_role_client", return_value=MagicMock()),
@@ -132,7 +136,10 @@ class TestCommunityLikeCheck:
         assert response.status_code == 401
 
     def test_returns_liked_status_when_authenticated(self):
-        app.dependency_overrides[get_current_user] = lambda: {"id": "user-a1b2c3", "email": "test@example.com"}
+        app.dependency_overrides[get_current_user] = lambda: {
+            "id": "user-a1b2c3",
+            "email": "test@example.com",
+        }
         try:
             with (
                 patch("api.explore.get_service_role_client", return_value=MagicMock()),

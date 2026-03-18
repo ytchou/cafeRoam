@@ -14,7 +14,7 @@ export function useCommunityFeed(cursor: string | null) {
   const { data, isLoading, error, mutate } = useSWR<CommunityFeedResponse>(
     url,
     fetchPublic,
-    { revalidateOnFocus: false },
+    { revalidateOnFocus: false }
   );
 
   return {

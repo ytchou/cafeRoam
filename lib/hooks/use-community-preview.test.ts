@@ -13,13 +13,26 @@ import swr from 'swr';
 
 const swrMock = vi.mocked(swr);
 
-function swrReturning(data: unknown, isLoading = false, error: Error | null = null) {
-  return { data, isLoading, error, mutate: vi.fn(), isValidating: false } as ReturnType<typeof swr>;
+function swrReturning(
+  data: unknown,
+  isLoading = false,
+  error: Error | null = null
+) {
+  return {
+    data,
+    isLoading,
+    error,
+    mutate: vi.fn(),
+    isValidating: false,
+  } as ReturnType<typeof swr>;
 }
 
 describe('useCommunityPreview', () => {
   it('returns preview cards when data is loaded', () => {
-    const cards = [makeCommunityNote(), makeCommunityNote({ checkinId: 'ci-2' })];
+    const cards = [
+      makeCommunityNote(),
+      makeCommunityNote({ checkinId: 'ci-2' }),
+    ];
     swrMock.mockReturnValue(swrReturning(cards));
 
     const { result } = renderHook(() => useCommunityPreview());
@@ -45,7 +58,7 @@ describe('useCommunityPreview', () => {
     expect(swrMock).toHaveBeenCalledWith(
       '/api/explore/community/preview',
       expect.any(Function),
-      expect.any(Object),
+      expect.any(Object)
     );
   });
 });

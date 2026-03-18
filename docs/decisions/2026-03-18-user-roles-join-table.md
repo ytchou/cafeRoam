@@ -19,6 +19,7 @@ Community Notes requires identifying partner/blogger users to surface their chec
 ## Rationale
 
 A join table is the right fit because:
+
 1. **Multiple concurrent roles** — a user can be `blogger` + `paid_user` without conflict
 2. **SQL-queryable** — community feed queries can `JOIN user_roles` directly, no JWT parsing
 3. **Audit trail** — `granted_at` + `granted_by` columns track who granted each role and when

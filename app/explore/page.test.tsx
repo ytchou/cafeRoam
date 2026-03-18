@@ -11,7 +11,10 @@ vi.mock('@/lib/posthog/use-analytics', () => ({
 }));
 
 beforeEach(() => {
-  vi.stubGlobal('IntersectionObserver', vi.fn(() => ({ observe: vi.fn(), disconnect: vi.fn() })));
+  vi.stubGlobal(
+    'IntersectionObserver',
+    vi.fn(() => ({ observe: vi.fn(), disconnect: vi.fn() }))
+  );
 });
 
 const MOCK_COMMUNITY = [

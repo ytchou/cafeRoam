@@ -54,9 +54,7 @@ def revoke_role(
     db: Client = Depends(get_admin_db),  # noqa: B008
 ) -> dict[str, str]:
     """Revoke a role from a user."""
-    response = (
-        db.table("user_roles").delete().eq("user_id", user_id).eq("role", role).execute()
-    )
+    response = db.table("user_roles").delete().eq("user_id", user_id).eq("role", role).execute()
     deleted = cast("list[dict[str, Any]]", response.data or [])
     if not deleted:
         raise HTTPException(status_code=404, detail="Role not found")

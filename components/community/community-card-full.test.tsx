@@ -11,16 +11,27 @@ const defaultNote = makeCommunityNote() as unknown as CommunityNoteCard;
 describe('CommunityCardFull', () => {
   it('displays the cover photo when available', () => {
     render(
-      <CommunityCardFull note={defaultNote} liked={false} onLikeToggle={vi.fn()} />
+      <CommunityCardFull
+        note={defaultNote}
+        liked={false}
+        onLikeToggle={vi.fn()}
+      />
     );
 
     const img = screen.getByRole('img');
-    expect(img).toHaveAttribute('alt', expect.stringContaining('Hinoki Coffee'));
+    expect(img).toHaveAttribute(
+      'alt',
+      expect.stringContaining('Hinoki Coffee')
+    );
   });
 
   it('displays the author badge', () => {
     render(
-      <CommunityCardFull note={defaultNote} liked={false} onLikeToggle={vi.fn()} />
+      <CommunityCardFull
+        note={defaultNote}
+        liked={false}
+        onLikeToggle={vi.fn()}
+      />
     );
 
     expect(screen.getByText('Mei-Ling ☕')).toBeInTheDocument();
@@ -28,7 +39,11 @@ describe('CommunityCardFull', () => {
 
   it('displays the full review text', () => {
     render(
-      <CommunityCardFull note={defaultNote} liked={false} onLikeToggle={vi.fn()} />
+      <CommunityCardFull
+        note={defaultNote}
+        liked={false}
+        onLikeToggle={vi.fn()}
+      />
     );
 
     expect(
@@ -38,7 +53,11 @@ describe('CommunityCardFull', () => {
 
   it('displays the shop tag with district', () => {
     render(
-      <CommunityCardFull note={defaultNote} liked={false} onLikeToggle={vi.fn()} />
+      <CommunityCardFull
+        note={defaultNote}
+        liked={false}
+        onLikeToggle={vi.fn()}
+      />
     );
 
     expect(screen.getByText(/Hinoki Coffee · 大安/)).toBeInTheDocument();
@@ -46,7 +65,11 @@ describe('CommunityCardFull', () => {
 
   it('displays the like count', () => {
     render(
-      <CommunityCardFull note={defaultNote} liked={false} onLikeToggle={vi.fn()} />
+      <CommunityCardFull
+        note={defaultNote}
+        liked={false}
+        onLikeToggle={vi.fn()}
+      />
     );
 
     expect(screen.getByText('12')).toBeInTheDocument();

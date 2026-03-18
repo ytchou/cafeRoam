@@ -13,9 +13,13 @@ export default function CommunityFeedPage() {
   const router = useRouter();
   const [cursor, setCursor] = useState<string | null>(null);
   const { notes, nextCursor, isLoading, mutate } = useCommunityFeed(cursor);
-  const { likedIds: serverLikedIds } = useLikeStatus(notes.map((n) => n.checkinId));
+  const { likedIds: serverLikedIds } = useLikeStatus(
+    notes.map((n) => n.checkinId)
+  );
   // localToggles tracks explicit user overrides: true = force-liked, false = force-unliked
-  const [localToggles, setLocalToggles] = useState<Map<string, boolean>>(new Map());
+  const [localToggles, setLocalToggles] = useState<Map<string, boolean>>(
+    new Map()
+  );
   const { capture } = useAnalytics();
 
   const likedSet = useMemo(() => {
@@ -51,7 +55,7 @@ export default function CommunityFeedPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F4F1]">
-      <header className="sticky top-0 z-10 bg-[#F5F4F1] px-5 pb-3 pt-4">
+      <header className="sticky top-0 z-10 bg-[#F5F4F1] px-5 pt-4 pb-3">
         <div className="flex items-center gap-3">
           <button
             type="button"
@@ -78,7 +82,7 @@ export default function CommunityFeedPage() {
         </div>
       </header>
 
-      <div className="flex flex-col gap-4 px-5 pb-24 pt-2">
+      <div className="flex flex-col gap-4 px-5 pt-2 pb-24">
         {notes.map((note) => (
           <CommunityCardFull
             key={note.checkinId}
