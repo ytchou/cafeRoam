@@ -52,12 +52,8 @@ def vibe_shops(
     return result.model_dump(by_alias=True)
 
 
-# ── Community Notes ──────────────────────────────────────
-
-
 @router.get("/community/preview")
 def community_preview() -> list[dict[str, object]]:
-    """Top 3 partner reviews for Explore page. Public — no auth required."""
     db = get_anon_client()
     service = CommunityService(db)
     cards = service.get_preview(limit=3)

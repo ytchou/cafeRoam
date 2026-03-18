@@ -1,5 +1,3 @@
-"""Admin endpoints for managing user roles."""
-
 from typing import Any, cast
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -46,7 +44,7 @@ def grant_role(
         raise
 
     rows = cast("list[dict[str, Any]]", response.data or [])
-    return rows[0] if rows else {}
+    return next(iter(rows), {})
 
 
 @router.delete("/{user_id}/{role}")

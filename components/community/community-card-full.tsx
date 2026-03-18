@@ -7,26 +7,12 @@ import Link from 'next/link';
 import type { CommunityNoteCard } from '@/types/community';
 
 import { LikeButton } from './like-button';
+import { formatRelativeTime, getInitial } from './utils';
 
 interface CommunityCardFullProps {
   note: CommunityNoteCard;
   liked: boolean;
   onLikeToggle: () => void;
-}
-
-function getInitial(name: string): string {
-  return name.replace(/[^\p{L}]/gu, '').charAt(0).toUpperCase() || '?';
-}
-
-function formatRelativeTime(dateStr: string): string {
-  const diff = Date.now() - new Date(dateStr).getTime();
-  const days = Math.floor(diff / 86400000);
-  if (days < 1) return 'today';
-  if (days === 1) return '1d ago';
-  if (days < 7) return `${days}d ago`;
-  const weeks = Math.floor(days / 7);
-  if (weeks === 1) return '1w ago';
-  return `${weeks}w ago`;
 }
 
 export function CommunityCardFull({

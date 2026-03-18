@@ -1,5 +1,3 @@
-"""Service for surfacing partner/blogger check-in reviews as Community Notes."""
-
 from typing import Any, cast
 
 from supabase import Client
@@ -17,8 +15,6 @@ _ROLE_LABELS: dict[str, str] = {
     "paid_user": "Supporter",
 }
 
-# Columns selected from the joined query.
-# We use a Supabase foreign-key join to pull profile + shop + role in one query.
 _NOTE_SELECT = (
     "id,"
     "review_text,"
@@ -115,12 +111,10 @@ class CommunityService:
         return result.data is not None
 
     def _row_to_card(self, row: dict[str, Any]) -> CommunityNoteCard:
-        # Row may be nested (from real Supabase join) or flat (from test factories)
         profile = row.get("profiles") or {}
         shop = row.get("shops") or {}
         user_roles_data = row.get("user_roles") or [{}]
 
-        # Support flat factory format
         if isinstance(profile, dict):
             display_name = profile.get("display_name") or row.get("display_name", "Anonymous")
             avatar_url = profile.get("avatar_url") or row.get("avatar_url")
@@ -137,15 +131,13 @@ class CommunityService:
             shop_slug = row.get("shop_slug", "")
             shop_district = row.get("shop_district")
 
-        if isinstance(user_roles_data, list) and user_roles_data:
-            role = user_roles_data[0].get("role", "blogger") if isinstance(user_roles_data[0], dict) else "blogger"
-        else:
-            role = row.get("role", "blogger")
+        roles_list = user_roles_data if isinstance(user_roles_data, list) else []
+        first_role = next((r for r in roles_list if isinstance(r, dict)), None)
+        role = first_role.get("role", "blogger") if first_role else row.get("role", "blogger")
 
         photo_urls = row.get("photo_urls") or []
         cover = photo_urls[0] if photo_urls else None
 
-        # Use "id" from real DB rows, or "checkin_id" from flat factory rows
         checkin_id = row.get("id") or row.get("checkin_id", "")
 
         return CommunityNoteCard(
