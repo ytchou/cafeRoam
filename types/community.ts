@@ -1,5 +1,4 @@
 export interface CommunityNoteAuthor {
-  userId: string;
   displayName: string;
   avatarUrl: string | null;
   roleLabel: string;

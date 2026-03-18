@@ -300,7 +300,6 @@ class UserRole(CamelModel):
 
 
 class CommunityNoteAuthor(CamelModel):
-    user_id: str
     display_name: str
     avatar_url: str | None = None
     role_label: str

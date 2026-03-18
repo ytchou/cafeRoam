@@ -21,7 +21,6 @@ _NOTE_SELECT = (
     "stars,"
     "photo_urls,"
     "created_at,"
-    "user_id,"
     "profiles!check_ins_user_id_fkey(display_name, avatar_url),"
     "shops!check_ins_shop_id_fkey(name, slug, district),"
     "user_roles!inner(role),"
@@ -154,7 +153,6 @@ class CommunityService:
         return CommunityNoteCard(
             checkin_id=checkin_id,
             author=CommunityNoteAuthor(
-                user_id=row["user_id"],
                 display_name=display_name,
                 avatar_url=avatar_url,
                 role_label=_ROLE_LABELS.get(role, "Contributor"),
