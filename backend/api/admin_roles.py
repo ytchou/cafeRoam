@@ -2,9 +2,9 @@ from typing import Any, cast
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
+from supabase import Client
 
-from api.deps import require_admin
-from db.supabase_client import get_service_role_client
+from api.deps import get_admin_db, require_admin
 
 router = APIRouter(prefix="/admin/roles", tags=["admin"])
 
@@ -20,12 +20,11 @@ class GrantRoleRequest(BaseModel):
 def grant_role(
     body: GrantRoleRequest,
     user: dict[str, Any] = Depends(require_admin),  # noqa: B008
+    db: Client = Depends(get_admin_db),  # noqa: B008
 ) -> dict[str, Any]:
     """Grant a role to a user."""
     if body.role not in _VALID_ROLES:
         raise HTTPException(status_code=400, detail=f"Invalid role: {body.role}")
-
-    db = get_service_role_client()
     try:
         response = (
             db.table("user_roles")
@@ -52,9 +51,9 @@ def revoke_role(
     user_id: str,
     role: str,
     _admin: dict[str, Any] = Depends(require_admin),  # noqa: B008
+    db: Client = Depends(get_admin_db),  # noqa: B008
 ) -> dict[str, str]:
     """Revoke a role from a user."""
-    db = get_service_role_client()
     response = (
         db.table("user_roles").delete().eq("user_id", user_id).eq("role", role).execute()
     )
@@ -68,10 +67,14 @@ def revoke_role(
 def list_roles(
     role: str | None = None,
     _admin: dict[str, Any] = Depends(require_admin),  # noqa: B008
+    db: Client = Depends(get_admin_db),  # noqa: B008
 ) -> list[dict[str, Any]]:
     """List all role grants, optionally filtered by role."""
-    db = get_service_role_client()
-    query = db.table("user_roles").select("id, user_id, role, granted_at, granted_by").order("granted_at", desc=True)
+    query = (
+        db.table("user_roles")
+        .select("id, user_id, role, granted_at, granted_by")
+        .order("granted_at", desc=True)
+    )
     if role:
         query = query.eq("role", role)
     response = query.execute()

@@ -121,25 +121,16 @@ class CommunityService:
         return result.data is not None
 
     def _row_to_card(self, row: dict[str, Any]) -> CommunityNoteCard:
-        profile = row.get("profiles") or {}
-        shop = row.get("shops") or {}
+        profile: dict[str, Any] = row.get("profiles") or {}
+        shop: dict[str, Any] = row.get("shops") or {}
         user_roles_data = row.get("user_roles") or [{}]
 
-        if isinstance(profile, dict):
-            display_name = profile.get("display_name") or row.get("display_name", "Anonymous")
-            avatar_url = profile.get("avatar_url") or row.get("avatar_url")
-        else:
-            display_name = row.get("display_name", "Anonymous")
-            avatar_url = row.get("avatar_url")
+        display_name: str = profile.get("display_name") or "Anonymous"
+        avatar_url: str | None = profile.get("avatar_url")
 
-        if isinstance(shop, dict):
-            shop_name = shop.get("name") or row.get("shop_name", "")
-            shop_slug = shop.get("slug") or row.get("shop_slug", "")
-            shop_district = shop.get("district") or row.get("shop_district")
-        else:
-            shop_name = row.get("shop_name", "")
-            shop_slug = row.get("shop_slug", "")
-            shop_district = row.get("shop_district")
+        shop_name: str = shop.get("name") or ""
+        shop_slug: str = shop.get("slug") or ""
+        shop_district: str | None = shop.get("district")
 
         roles_list = user_roles_data if isinstance(user_roles_data, list) else []
         first_role = next((r for r in roles_list if isinstance(r, dict)), None)
