@@ -4,6 +4,11 @@ import path from 'path';
 export default defineConfig({
   test: {
     globals: true,
+    pool: 'forks',
+    poolOptions: {
+      forks: { minForks: 0 },
+    },
+    teardownTimeout: 30_000,
     include: [
       'scripts/**/*.test.ts',
       'lib/**/*.test.ts',
