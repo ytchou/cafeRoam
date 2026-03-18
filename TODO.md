@@ -1008,16 +1008,26 @@ Adds the Explore tab and redesigns the four main sections of the app using Penci
 
 - [x] Full verification (pytest, vitest, ruff, mypy, pnpm build)
 
-### Community Notes — Invite-Only Bloggers (Explore Layer 3)
+### Community Notes — Partner Reviews (Explore Layer 3)
 
-_Start after Tarot + Vibe Tags are live. Seed with beta blogger invites during Phase 4._
+> **Design Doc:** [docs/designs/2026-03-18-community-notes-design.md](docs/designs/2026-03-18-community-notes-design.md)
+> **ADR:** [docs/decisions/2026-03-18-user-roles-join-table.md](docs/decisions/2026-03-18-user-roles-join-table.md)
 
-- [ ] DB: `community_notes` table (author, shop_id optional, content, published_at, slug)
-- [ ] DB: `blogger` role in user permissions (invite-only grant)
-- [ ] Backend: Community notes CRUD API (read public, write requires blogger role)
-- [ ] Backend: `GET /explore/community` — paginated feed of published notes
-- [ ] Frontend: Community feed section on Explore page (basic list)
-- [ ] Frontend: Individual note page `/explore/notes/{slug}` (basic)
+_Highlighted check-in reviews from partner/blogger users. Reuses existing check-in data — no separate content type. Seed with beta blogger invites during Phase 4._
+
+- [ ] DB migration: `user_roles` table (user_id, role, granted_at, granted_by) — multi-role join table
+- [ ] DB migration: `community_note_likes` table (checkin_id, user_id) with RLS
+- [ ] Backend: `UserRole`, `CommunityNoteCard`, `CommunityFeedResponse` Pydantic models
+- [ ] Backend: `CommunityService` (preview, feed, toggle_like) with TDD
+- [ ] Backend: `GET /explore/community/preview` + `GET /explore/community` endpoints with TDD
+- [ ] Backend: `POST /explore/community/{checkin_id}/like` endpoint (auth-gated) with TDD
+- [ ] Backend: Admin roles API (`POST /admin/roles`, `DELETE /admin/roles/{user_id}/{role}`, `GET /admin/roles`)
+- [ ] Frontend: `CommunityCard` + `CommunityCardFull` + `LikeButton` components with TDD
+- [ ] Frontend: `useCommunityPreview`, `useCommunityFeed`, `useLikeStatus` SWR hooks with TDD
+- [ ] Frontend: Explore page "From the Community" section (Layer 3) with TDD
+- [ ] Frontend: `/explore/community` feed page with TDD
+- [ ] Frontend: Proxy routes (preview, feed, like)
+- [ ] Analytics: `community_note_viewed`, `community_note_liked`, `community_feed_opened`
 - [ ] Ops: Grant `blogger` role to beta invitees (SQL or admin UI)
 
 ### UI Reconstruct — Find
@@ -1137,6 +1147,9 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 - [ ] Public user profiles + social check-in feed
 - [ ] Shareable curated lists (Letterboxd model: "My top 5 study cafes in Da'an")
 - [ ] Community data contributions (flag outdated info, add new shops)
+- [ ] Editorial community notes — standalone content type (not tied to check-ins), blogger writing UI, multi-shop lists, content moderation
+- [ ] Comment threads on community notes
+- [ ] Blogger profile pages (public-facing partner profiles)
 
 ### Monetization & Business
 
