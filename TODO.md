@@ -1042,7 +1042,7 @@ _Designed in Pencil. Replaces current 首頁 + 地圖 split into a unified Find 
 
 **Chunk 2 — Integration (Wave 2–3):**
 - [x] Create `DirectionsSheet` component (Task 6)
-- [ ] Refactor `app/page.tsx` — view toggle + wire all components (Task 7)
+- [x] Refactor `app/page.tsx` — view toggle + wire all components (Task 7)
 - [ ] Wire `DirectionsSheet` into Shop View (Task 8)
 
 **Chunk 3 — Verification:**

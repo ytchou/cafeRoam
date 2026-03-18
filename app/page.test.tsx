@@ -3,7 +3,28 @@ import { describe, it, expect, vi } from 'vitest';
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn() }),
-  useSearchParams: () => ({ get: () => null }),
+  useSearchParams: () => new URLSearchParams(),
+  usePathname: () => '/',
+}));
+
+vi.mock('@/lib/posthog/use-analytics', () => ({
+  useAnalytics: () => ({ capture: vi.fn() }),
+}));
+
+vi.mock('vaul', () => ({
+  Drawer: {
+    Root: ({ children, open }: { children: React.ReactNode; open: boolean }) =>
+      open ? <div>{children}</div> : null,
+    Portal: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+    Overlay: () => null,
+    Content: ({ children }: { children: React.ReactNode }) => (
+      <div>{children}</div>
+    ),
+    Handle: () => null,
+    Title: ({ children }: { children: React.ReactNode }) => (
+      <h2>{children}</h2>
+    ),
+  },
 }));
 
 vi.mock('@/lib/hooks/use-shops', () => ({
@@ -76,14 +97,14 @@ describe('Find page (map)', () => {
     expect(screen.getByTestId('map-view')).toBeInTheDocument();
   });
 
-  it('When a user opens the Find tab, there is no list/map toggle button', () => {
+  it('When a user opens the Find tab, the map/list toggle buttons are present', () => {
     render(<FindPage />);
     expect(
-      screen.queryByRole('button', { name: /list/i })
-    ).not.toBeInTheDocument();
+      screen.getByRole('button', { name: /list view/i })
+    ).toBeInTheDocument();
     expect(
-      screen.queryByRole('button', { name: /map/i })
-    ).not.toBeInTheDocument();
+      screen.getByRole('button', { name: /map view/i })
+    ).toBeInTheDocument();
   });
 
   it('When a user opens the Find tab, they see the search bar', () => {
