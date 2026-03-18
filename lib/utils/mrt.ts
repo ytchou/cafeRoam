@@ -25,6 +25,9 @@ export type MrtStationWithDistance = MrtStation & { dist: number };
 
 export function nearestMrtStation(lat: number, lng: number): MrtStationWithDistance {
   const stations = stationsData as MrtStation[];
+  if (stations.length === 0) {
+    throw new Error('MRT station dataset is empty');
+  }
   let nearest: MrtStationWithDistance | undefined;
   for (const station of stations) {
     const dist = haversineKm(lat, lng, station.lat, station.lng);

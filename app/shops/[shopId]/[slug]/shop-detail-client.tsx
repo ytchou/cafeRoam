@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Navigation } from 'lucide-react';
 import type { TaxonomyTag } from '@/lib/types';
 import { ShopHero } from '@/components/shops/shop-hero';
@@ -73,6 +73,14 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
       : shopPath;
 
   const hasMap = shop.latitude != null && shop.longitude != null;
+
+  const directionsShop = useMemo(
+    () =>
+      hasMap
+        ? { id: shop.id, name: shop.name, latitude: shop.latitude!, longitude: shop.longitude! }
+        : null,
+    [hasMap, shop.id, shop.name, shop.latitude, shop.longitude]
+  );
 
   return (
     <div className="min-h-screen bg-white pb-20">
@@ -149,16 +157,11 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
 
       <StickyCheckinBar shopId={shop.id} returnTo={shopPath} />
 
-      {hasMap && (
+      {hasMap && directionsShop && (
         <DirectionsSheet
           open={directionsOpen}
           onClose={() => setDirectionsOpen(false)}
-          shop={{
-            id: shop.id,
-            name: shop.name,
-            latitude: shop.latitude!,
-            longitude: shop.longitude!,
-          }}
+          shop={directionsShop}
         />
       )}
     </div>

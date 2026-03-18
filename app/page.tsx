@@ -29,6 +29,7 @@ function FindPageContent() {
     view,
     setQuery,
     toggleFilter,
+    setFilters,
     setView,
   } = useSearchState();
   const { capture } = useAnalytics();
@@ -82,25 +83,17 @@ function FindPageContent() {
     setSelectedShopId(null);
   }
 
-  function handleViewToggle(newView: 'map' | 'list') {
+  const handleViewToggle = useCallback((newView: 'map' | 'list') => {
     if (newView === view) return;
     capture('view_toggled', { to_view: newView });
     setView(newView);
-  }
+  }, [view, capture, setView]);
 
   const handleFilterApply = useCallback(
     (selectedIds: string[]) => {
-      const currentSet = new Set(filters);
-      const newSet = new Set(selectedIds);
-
-      for (const f of currentSet) {
-        if (!newSet.has(f)) toggleFilter(f);
-      }
-      for (const f of newSet) {
-        if (!currentSet.has(f)) toggleFilter(f);
-      }
+      setFilters(selectedIds);
     },
-    [filters, toggleFilter]
+    [setFilters]
   );
 
   function getSearchStatusText(): string {
@@ -110,7 +103,7 @@ function FindPageContent() {
     return '找不到符合的咖啡廳，顯示精選';
   }
 
-  const viewToggleButtons = (
+  const viewToggleButtons = useMemo(() => (
     <div className="flex items-center gap-1 rounded-full bg-[#F5F4F1] p-0.5">
       <button
         type="button"
@@ -139,7 +132,7 @@ function FindPageContent() {
         List
       </button>
     </div>
-  );
+  ), [view, handleViewToggle]);
 
   if (view === 'list') {
     return (
@@ -169,6 +162,7 @@ function FindPageContent() {
         </div>
 
         <FilterSheet
+          key={filterSheetOpen ? 'sheet-open' : 'sheet-closed'}
           open={filterSheetOpen}
           onClose={() => setFilterSheetOpen(false)}
           onApply={handleFilterApply}
@@ -213,6 +207,8 @@ function FindPageContent() {
         </div>
       </div>
 
+      {/* TODO: design specifies a persistent bottom card with horizontal MapMiniCard scroll here.
+           Deferred to follow-up — toggle pill is a simplified substitute. */}
       <div className="absolute right-4 bottom-36 z-20">
         {viewToggleButtons}
       </div>

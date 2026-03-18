@@ -14,6 +14,9 @@ interface TabCategory {
   tags: Tag[];
 }
 
+// Tag IDs must stay in sync with the backend taxonomy dimension values.
+// Full set is ~105 tags; this list is a curated subset for launch.
+// Future: drive from /api/taxonomy to avoid drift.
 const FILTER_TABS: TabCategory[] = [
   {
     key: 'functionality',

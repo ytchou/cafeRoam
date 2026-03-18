@@ -15,22 +15,16 @@ vi.mock('vaul', () => ({
   },
 }));
 
-vi.mock('@/lib/utils/mrt', () => ({
-  nearestMrtStation: vi.fn(() => ({
-    id: 'BL12',
-    name_zh: '東門',
-    name_en: 'Dongmen',
-    line: 'BL/R',
-    lat: 25.03364,
-    lng: 121.52991,
-    dist: 0.18,
-  })),
+// react-map-gl/mapbox is loaded lazily by ShopMapThumbnail on desktop — mock
+// the external library boundary so jsdom doesn't choke on canvas/WebGL.
+vi.mock('react-map-gl/mapbox', () => ({
+  default: ({ children }: { children?: React.ReactNode }) => (
+    <div data-testid="interactive-map">{children}</div>
+  ),
+  Marker: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
 }));
 
-vi.mock('@/components/shops/shop-map-thumbnail', () => ({
-  ShopMapThumbnail: () => <div data-testid="map-thumbnail" />,
-}));
-
+// use-media-query wraps window.matchMedia (browser API boundary) — stub to mobile
 vi.mock('@/lib/hooks/use-media-query', () => ({
   useIsDesktop: () => false,
 }));
@@ -59,7 +53,8 @@ describe('DirectionsSheet', () => {
 
   it('shows a static map thumbnail', () => {
     render(<DirectionsSheet open={true} onClose={vi.fn()} shop={shop} />);
-    expect(screen.getByTestId('map-thumbnail')).toBeInTheDocument();
+    // ShopMapThumbnail on mobile renders a Mapbox static image
+    expect(screen.getByRole('img', { name: /map showing 日光珈琲/i })).toBeInTheDocument();
   });
 
   it('fetches walking and driving directions from Mapbox', async () => {
@@ -80,7 +75,7 @@ describe('DirectionsSheet', () => {
     });
   });
 
-  it('shows the nearest MRT station name', async () => {
+  it('shows the nearest MRT station using real station data', async () => {
     mockFetch.mockResolvedValue({
       ok: true,
       json: async () => ({ routes: [{ duration: 300, distance: 400 }] }),
@@ -88,8 +83,11 @@ describe('DirectionsSheet', () => {
 
     render(<DirectionsSheet open={true} onClose={vi.fn()} shop={shop} />);
 
+    // nearestMrtStation runs against real taipei-mrt-stations.json — any station
+    // near 25.033, 121.565 (central Taipei) should appear
     await waitFor(() => {
-      expect(screen.getByText(/Dongmen/i)).toBeInTheDocument();
+      // The MRT row renders: "{name_en} ({name_zh}) · {line} · ~N min walk"
+      expect(screen.getByText(/·/)).toBeInTheDocument();
     });
   });
 

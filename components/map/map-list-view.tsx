@@ -3,6 +3,8 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { ChevronRight } from 'lucide-react';
 
+const ROW_STYLE = { minHeight: 80 };
+
 interface ShopListItem {
   id: string;
   slug: string;
@@ -40,7 +42,7 @@ export function MapListView({ shops }: MapListViewProps) {
           key={shop.id}
           type="button"
           className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-gray-50"
-          style={{ minHeight: 80 }}
+          style={ROW_STYLE}
           onClick={() => router.push(`/shops/${shop.id}/${shop.slug}`)}
         >
           <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-xl bg-gray-100">
@@ -67,13 +69,15 @@ export function MapListView({ shops }: MapListViewProps) {
               {shop.distance_m != null && (
                 <span>{formatDistance(shop.distance_m)}</span>
               )}
-              <span
-                className={
-                  shop.is_open ? 'text-green-600' : 'text-gray-400'
-                }
-              >
-                {shop.is_open ? 'Open' : 'Closed'}
-              </span>
+              {shop.is_open != null && (
+                <span
+                  className={
+                    shop.is_open ? 'text-green-600' : 'text-gray-400'
+                  }
+                >
+                  {shop.is_open ? 'Open' : 'Closed'}
+                </span>
+              )}
             </div>
           </div>
           <ChevronRight size={16} className="flex-shrink-0 text-gray-300" />

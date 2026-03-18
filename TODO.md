@@ -1046,7 +1046,7 @@ _Designed in Pencil. Replaces current 首頁 + 地圖 split into a unified Find 
 - [x] Wire `DirectionsSheet` into Shop View (Task 8)
 
 **Chunk 3 — Verification:**
-- [ ] `pnpm test` + `pnpm type-check` + `pnpm build` all pass (Task 9)
+- [x] `pnpm test` + `pnpm type-check` + `pnpm build` all pass (Task 9)
 
 ### Shop View — Directions (implementation notes)
 

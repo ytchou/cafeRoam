@@ -31,9 +31,9 @@ vi.mock('@/lib/hooks/use-shops', () => ({
   useShops: () => ({
     shops: [
       {
-        id: 's1',
-        name: 'Brew Bar',
-        slug: 'brew-bar',
+        id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+        name: '自由時光咖啡 Liberty Hour',
+        slug: 'liberty-hour',
         latitude: 25.03,
         longitude: 121.56,
         rating: 4.5,
@@ -133,7 +133,7 @@ describe('FindPage', () => {
     render(<FindPage />);
     expect(screen.queryByTestId('map-view')).not.toBeInTheDocument();
     // Should show the shop name from the list
-    expect(screen.getByText('Brew Bar')).toBeInTheDocument();
+    expect(screen.getByText('自由時光咖啡 Liberty Hour')).toBeInTheDocument();
   });
 
   it('tapping the list toggle updates URL to ?view=list', async () => {
@@ -142,7 +142,7 @@ describe('FindPage', () => {
     expect(mockPush).toHaveBeenCalledWith(expect.stringContaining('view=list'));
   });
 
-  it('fires view_toggled analytics event on toggle', async () => {
+  it('switching views records a view_toggle analytics event so product can track the feature', async () => {
     render(<FindPage />);
     await userEvent.click(screen.getByRole('button', { name: /list view/i }));
     expect(mockCapture).toHaveBeenCalledWith('view_toggled', {

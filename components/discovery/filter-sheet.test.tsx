@@ -23,7 +23,7 @@ vi.mock('vaul', () => ({
 import { FilterSheet } from './filter-sheet';
 
 describe('FilterSheet', () => {
-  it('renders 5 category tabs', () => {
+  it('a user opening the filter sheet sees the 5 filter categories', () => {
     render(
       <FilterSheet open={true} onClose={vi.fn()} onApply={vi.fn()} initialFilters={[]} />
     );
@@ -34,7 +34,7 @@ describe('FilterSheet', () => {
     expect(screen.getByRole('tab', { name: /food/i })).toBeInTheDocument();
   });
 
-  it('shows tag chips for the active Functionality tab', () => {
+  it('a user on the Functionality tab sees relevant tags like WiFi and Outlet', () => {
     render(
       <FilterSheet open={true} onClose={vi.fn()} onApply={vi.fn()} initialFilters={[]} />
     );

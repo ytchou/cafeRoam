@@ -60,11 +60,12 @@ async function fetchRoute(
   fromLat: number,
   toLng: number,
   toLat: number,
-  token: string
+  token: string,
+  signal: AbortSignal
 ): Promise<RouteInfo | null> {
   try {
     const url = `https://api.mapbox.com/directions/v5/mapbox/${profile}/${fromLng},${fromLat};${toLng},${toLat}?access_token=${token}&overview=false`;
-    const res = await fetch(url);
+    const res = await fetch(url, { signal });
     if (!res.ok) return null;
     const data = await res.json();
     const route = data.routes?.[0];
@@ -103,9 +104,9 @@ export function DirectionsSheet({
     dispatch({ type: 'fetch_start' });
 
     const [walk, drive, mrtWalk] = await Promise.all([
-      fetchRoute('walking', originLng, originLat, shop.longitude, shop.latitude, token),
-      fetchRoute('driving-traffic', originLng, originLat, shop.longitude, shop.latitude, token),
-      fetchRoute('walking', mrtStation.lng, mrtStation.lat, shop.longitude, shop.latitude, token),
+      fetchRoute('walking', originLng, originLat, shop.longitude, shop.latitude, token, signal),
+      fetchRoute('driving-traffic', originLng, originLat, shop.longitude, shop.latitude, token, signal),
+      fetchRoute('walking', mrtStation.lng, mrtStation.lat, shop.longitude, shop.latitude, token, signal),
     ]);
 
     if (!signal.aborted) {

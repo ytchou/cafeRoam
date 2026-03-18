@@ -31,7 +31,7 @@ const shops = [
 ];
 
 describe('MapListView', () => {
-  it('renders a list item for each shop', () => {
+  it('a user browsing list view sees all nearby shops', () => {
     render(<MapListView shops={shops} />);
     expect(screen.getByText('日光珈琲 Sunlight Coffee')).toBeInTheDocument();
     expect(screen.getByText('春日烘焙 Spring Roasters')).toBeInTheDocument();
@@ -50,7 +50,7 @@ describe('MapListView', () => {
     expect(mockPush).toHaveBeenCalledWith('/shops/shop-abc/sunlight-coffee');
   });
 
-  it('renders an empty state when there are no shops', () => {
+  it('a user with no matching shops sees an empty state message', () => {
     render(<MapListView shops={[]} />);
     expect(screen.getByText(/no shops/i)).toBeInTheDocument();
   });
