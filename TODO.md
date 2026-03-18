@@ -1028,7 +1028,7 @@ _Highlighted check-in reviews from partner/blogger users. Reuses existing check-
 - [x] Frontend: Explore page "From the Community" section (Layer 3) with TDD
 - [x] Frontend: `/explore/community` feed page with TDD
 - [ ] Frontend: Proxy routes (preview, feed, like)
-- [ ] Analytics: `community_note_viewed`, `community_note_liked`, `community_feed_opened`
+- [x] Analytics: `community_note_viewed`, `community_note_liked`, `community_feed_opened`
 - [ ] Ops: Grant `blogger` role to beta invitees (SQL or admin UI)
 
 ### UI Reconstruct — Find
