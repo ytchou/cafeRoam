@@ -19,6 +19,7 @@ describe('useSearchState', () => {
     mockSearchParams.delete('q');
     mockSearchParams.delete('mode');
     mockSearchParams.delete('filters');
+    mockSearchParams.delete('view');
   });
 
   it('reads query from ?q= URL param', () => {
@@ -64,5 +65,33 @@ describe('useSearchState', () => {
       result.current.clearAll();
     });
     expect(mockPush).toHaveBeenCalledWith(expect.stringMatching(/^\//));
+  });
+
+  it('returns view as "map" when ?view param is absent', () => {
+    const { result } = renderHook(() => useSearchState());
+    expect(result.current.view).toBe('map');
+  });
+
+  it('reads view from ?view=list URL param', () => {
+    mockSearchParams.set('view', 'list');
+    const { result } = renderHook(() => useSearchState());
+    expect(result.current.view).toBe('list');
+  });
+
+  it('setView updates ?view param', () => {
+    const { result } = renderHook(() => useSearchState());
+    act(() => {
+      result.current.setView('list');
+    });
+    const calledUrl = mockPush.mock.calls[0][0] as string;
+    expect(calledUrl).toContain('view=list');
+  });
+
+  it('clearAll removes view param', () => {
+    mockSearchParams.set('view', 'list');
+    const { result } = renderHook(() => useSearchState());
+    act(() => { result.current.clearAll(); });
+    const calledUrl = mockPush.mock.calls[0][0] as string;
+    expect(calledUrl).not.toContain('view=');
   });
 });
