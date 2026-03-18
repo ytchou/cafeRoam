@@ -128,16 +128,18 @@ class TestListRoles:
 
     def test_returns_all_roles(self):
         mock_db = MagicMock()
-        mock_db.table.return_value.select.return_value.order.return_value.execute.return_value = MagicMock(
-            data=[
-                {
-                    "id": "r1",
-                    "user_id": "u1",
-                    "role": "blogger",
-                    "granted_at": "2026-03-18T10:00:00",
-                    "granted_by": _ADMIN_ID,
-                },
-            ]
+        mock_db.table.return_value.select.return_value.order.return_value.execute.return_value = (
+            MagicMock(
+                data=[
+                    {
+                        "id": "r1",
+                        "user_id": "u1",
+                        "role": "blogger",
+                        "granted_at": "2026-03-18T10:00:00",
+                        "granted_by": _ADMIN_ID,
+                    },
+                ]
+            )
         )
         app.dependency_overrides[get_current_user] = _admin_user
         app.dependency_overrides[get_admin_db] = lambda: mock_db
