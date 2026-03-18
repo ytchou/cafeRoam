@@ -1038,7 +1038,7 @@ _Designed in Pencil. Replaces current 首頁 + 地圖 split into a unified Find 
 - [x] Create MRT stations JSON + `nearestMrtStation` utility (Task 2)
 - [x] Rewrite `FilterSheet` — 5 tabs + tag search (Task 3)
 - [x] Update `MapView` — branded coffee cup pins (Task 4)
-- [ ] Create `MapListView` component — vertical list (Task 5)
+- [x] Create `MapListView` component — vertical list (Task 5)
 
 **Chunk 2 — Integration (Wave 2–3):**
 - [ ] Create `DirectionsSheet` component (Task 6)
