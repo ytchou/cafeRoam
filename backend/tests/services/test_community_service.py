@@ -1,14 +1,10 @@
 """Tests for CommunityService — surfaces partner check-in reviews."""
 
-from datetime import datetime
 from unittest.mock import MagicMock
-
-import pytest
 
 from models.types import CommunityFeedResponse, CommunityNoteCard
 from services.community_service import CommunityService
 from tests.factories import make_community_note_row
-
 
 # ── Helpers ─────────────────────────────────────────────
 

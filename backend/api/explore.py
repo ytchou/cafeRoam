@@ -1,10 +1,10 @@
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from supabase import Client
 
 from api.deps import get_current_user, get_user_db
 from db.supabase_client import get_anon_client
-from supabase import Client
 from services.community_service import CommunityService
 from services.tarot_service import TarotService
 from services.vibe_service import VibeService
