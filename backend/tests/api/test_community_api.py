@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 
 from fastapi.testclient import TestClient
 
-from api.deps import get_current_user
+from api.deps import get_current_user, get_user_db
 from main import app
 from models.types import CommunityFeedResponse, CommunityNoteAuthor, CommunityNoteCard
 
@@ -13,7 +13,6 @@ client = TestClient(app)
 _MOCK_CARD = CommunityNoteCard(
     checkin_id="ci-1",
     author=CommunityNoteAuthor(
-        user_id="user-a1b2c3",
         display_name="Mei-Ling ☕",
         avatar_url=None,
         role_label="Coffee blogger",
@@ -113,11 +112,9 @@ class TestCommunityLikeToggle:
             "id": "user-a1b2c3",
             "email": "test@example.com",
         }
+        app.dependency_overrides[get_user_db] = lambda: MagicMock()
         try:
-            with (
-                patch("api.explore.get_service_role_client", return_value=MagicMock()),
-                patch("api.explore.CommunityService") as mock_cls,
-            ):
+            with patch("api.explore.CommunityService") as mock_cls:
                 mock_cls.return_value.toggle_like.return_value = 13
                 response = client.post("/explore/community/ci-1/like")
 
@@ -125,6 +122,7 @@ class TestCommunityLikeToggle:
             assert response.json()["likeCount"] == 13
         finally:
             app.dependency_overrides.pop(get_current_user, None)
+            app.dependency_overrides.pop(get_user_db, None)
 
 
 class TestCommunityLikeCheck:
@@ -139,11 +137,9 @@ class TestCommunityLikeCheck:
             "id": "user-a1b2c3",
             "email": "test@example.com",
         }
+        app.dependency_overrides[get_user_db] = lambda: MagicMock()
         try:
-            with (
-                patch("api.explore.get_service_role_client", return_value=MagicMock()),
-                patch("api.explore.CommunityService") as mock_cls,
-            ):
+            with patch("api.explore.CommunityService") as mock_cls:
                 mock_cls.return_value.is_liked.return_value = True
                 response = client.get("/explore/community/ci-1/like")
 
@@ -151,3 +147,4 @@ class TestCommunityLikeCheck:
             assert response.json()["liked"] is True
         finally:
             app.dependency_overrides.pop(get_current_user, None)
+            app.dependency_overrides.pop(get_user_db, None)

@@ -24,7 +24,7 @@ def _make_db_mock(
     mock.eq.return_value = mock
     mock.neq.return_value = mock
     mock.is_.return_value = mock
-    mock.not_.return_value = mock
+    mock.not_ = mock  # accessed as property in supabase-py, not called
     mock.order.return_value = mock
     mock.limit.return_value = mock
     mock.lt.return_value = mock
