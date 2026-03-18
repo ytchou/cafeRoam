@@ -1022,14 +1022,31 @@ _Start after Tarot + Vibe Tags are live. Seed with beta blogger invites during P
 
 ### UI Reconstruct — Find
 
+> **Design Doc:** [docs/designs/2026-03-18-find-ui-reconstruct-design.md](docs/designs/2026-03-18-find-ui-reconstruct-design.md)
+> **Plan:** [docs/plans/2026-03-18-find-ui-reconstruct-plan.md](docs/plans/2026-03-18-find-ui-reconstruct-plan.md)
+
 _Designed in Pencil. Replaces current 首頁 + 地圖 split into a unified Find experience._
 
-- [ ] Pencil: Design Find page (map/list toggle, search bar, filter chips)
-- [ ] Pencil: Design shop card (list view) and map pin/popup (map view)
-- [ ] Pencil: Design Shop View (hero image, AI summary, tags, hours, reviews, claim page)
-- [ ] Pencil: Design filter panel bottom sheet (5 category tabs, 105 taxonomy tags, search)
-- [ ] Pencil: Design Shop View / Directions sheet (walk, drive, nearest MRT)
-- [ ] Frontend: Implement Find UI from Pencil designs
+- [x] Pencil: Design Find page (map/list toggle, search bar, filter chips) — frame `c62Ni`
+- [x] Pencil: Design shop card (list view) and map pin/popup (map view) — frame `MygeB`
+- [x] Pencil: Design Shop View (hero image, AI summary, tags, hours, reviews, claim page) — frame `3hOsp`
+- [x] Pencil: Design filter panel bottom sheet (5 category tabs, 105 taxonomy tags, search) — frame `vEqbC`
+- [x] Pencil: Design Shop View / Directions sheet (walk, drive, nearest MRT) — frame `ENKsc`
+
+**Chunk 1 — Foundations (Wave 1, parallel):**
+- [ ] Add `view` param to `useSearchState` hook (Task 1)
+- [ ] Create MRT stations JSON + `nearestMrtStation` utility (Task 2)
+- [ ] Rewrite `FilterSheet` — 5 tabs + tag search (Task 3)
+- [ ] Update `MapView` — branded coffee cup pins (Task 4)
+- [ ] Create `MapListView` component — vertical list (Task 5)
+
+**Chunk 2 — Integration (Wave 2–3):**
+- [ ] Create `DirectionsSheet` component (Task 6)
+- [ ] Refactor `app/page.tsx` — view toggle + wire all components (Task 7)
+- [ ] Wire `DirectionsSheet` into Shop View (Task 8)
+
+**Chunk 3 — Verification:**
+- [ ] `pnpm test` + `pnpm type-check` + `pnpm build` all pass (Task 9)
 
 ### Shop View — Directions (implementation notes)
 
