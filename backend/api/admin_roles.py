@@ -51,7 +51,7 @@ def grant_role(
 def revoke_role(
     user_id: str,
     role: str,
-    admin: dict[str, Any] = Depends(require_admin),  # noqa: B008
+    _admin: dict[str, Any] = Depends(require_admin),  # noqa: B008
 ) -> dict[str, str]:
     """Revoke a role from a user."""
     db = get_service_role_client()
@@ -67,7 +67,7 @@ def revoke_role(
 @router.get("")
 def list_roles(
     role: str | None = None,
-    admin: dict[str, Any] = Depends(require_admin),  # noqa: B008
+    _admin: dict[str, Any] = Depends(require_admin),  # noqa: B008
 ) -> list[dict[str, Any]]:
     """List all role grants, optionally filtered by role."""
     db = get_service_role_client()
