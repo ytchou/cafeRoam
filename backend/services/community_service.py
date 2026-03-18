@@ -90,7 +90,7 @@ class CommunityService:
             .execute()
         )
 
-        if existing.data:
+        if existing is not None and existing.data:
             self._db.table("community_note_likes").delete().eq("checkin_id", checkin_id).eq(
                 "user_id", user_id
             ).execute()
@@ -101,11 +101,11 @@ class CommunityService:
 
         count_resp = (
             self._db.table("community_note_likes")
-            .select("id", count="exact")
+            .select("id")
             .eq("checkin_id", checkin_id)
             .execute()
         )
-        return count_resp.count or 0
+        return len(count_resp.data or [])
 
     def is_liked(self, checkin_id: str, user_id: str) -> bool:
         result = (
@@ -116,7 +116,7 @@ class CommunityService:
             .maybe_single()
             .execute()
         )
-        return result.data is not None
+        return result is not None and result.data is not None
 
     def _row_to_card(self, row: dict[str, Any]) -> CommunityNoteCard:
         profile: dict[str, Any] = row.get("profiles") or {}

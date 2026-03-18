@@ -46,8 +46,8 @@ def _make_db_mock(
         execute_responses.append(MagicMock(data=None))
 
     if like_count is not None:
-        # Response 3: count query after mutation
-        execute_responses.append(MagicMock(data=None, count=like_count))
+        # Response 3: count query after mutation — data list length = count
+        execute_responses.append(MagicMock(data=[{"id": f"like-{i}"} for i in range(like_count)]))
 
     if execute_responses:
         mock.execute.side_effect = execute_responses
