@@ -17,6 +17,11 @@ vi.mock('@/lib/supabase/client', () => ({
   }),
 }));
 
+vi.mock('@/lib/api/fetch', () => ({
+  fetchWithAuth: vi.fn().mockResolvedValue({ liked: false }),
+  fetchPublic: vi.fn(),
+}));
+
 import swr from 'swr';
 
 const swrMock = vi.mocked(swr);

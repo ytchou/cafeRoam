@@ -2,18 +2,30 @@
 
 import { ArrowLeft, ChevronDown } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { CommunityCardFull } from '@/components/community/community-card-full';
 import { useCommunityFeed } from '@/lib/hooks/use-community-feed';
+import { useLikeStatus } from '@/lib/hooks/use-like-status';
 import { useAnalytics } from '@/lib/posthog/use-analytics';
 
 export default function CommunityFeedPage() {
   const router = useRouter();
   const [cursor, setCursor] = useState<string | null>(null);
   const { notes, nextCursor, isLoading, mutate } = useCommunityFeed(cursor);
-  const [likedSet, setLikedSet] = useState<Set<string>>(new Set());
+  const { likedIds: serverLikedIds } = useLikeStatus(notes.map((n) => n.checkinId));
+  // localToggles tracks explicit user overrides: true = force-liked, false = force-unliked
+  const [localToggles, setLocalToggles] = useState<Map<string, boolean>>(new Map());
   const { capture } = useAnalytics();
+
+  const likedSet = useMemo(() => {
+    const result = new Set(serverLikedIds);
+    for (const [id, liked] of localToggles) {
+      if (liked) result.add(id);
+      else result.delete(id);
+    }
+    return result;
+  }, [serverLikedIds, localToggles]);
 
   useEffect(() => {
     capture('community_feed_opened', { referrer: document.referrer });
@@ -21,15 +33,8 @@ export default function CommunityFeedPage() {
 
   const handleLikeToggle = useCallback(
     async (checkinId: string) => {
-      setLikedSet((prev) => {
-        const next = new Set(prev);
-        if (next.has(checkinId)) {
-          next.delete(checkinId);
-        } else {
-          next.add(checkinId);
-        }
-        return next;
-      });
+      const nowLiked = !likedSet.has(checkinId);
+      setLocalToggles((prev) => new Map(prev).set(checkinId, nowLiked));
 
       try {
         await fetch(`/api/explore/community/${checkinId}/like`, {
@@ -38,18 +43,10 @@ export default function CommunityFeedPage() {
         mutate();
         capture('community_note_liked', { checkin_id: checkinId });
       } catch {
-        setLikedSet((prev) => {
-          const next = new Set(prev);
-          if (next.has(checkinId)) {
-            next.delete(checkinId);
-          } else {
-            next.add(checkinId);
-          }
-          return next;
-        });
+        setLocalToggles((prev) => new Map(prev).set(checkinId, !nowLiked));
       }
     },
-    [mutate, capture]
+    [likedSet, mutate, capture]
   );
 
   return (
