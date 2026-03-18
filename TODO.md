@@ -1023,7 +1023,7 @@ _Highlighted check-in reviews from partner/blogger users. Reuses existing check-
 - [x] Backend: `GET /explore/community/preview` + `GET /explore/community` endpoints with TDD
 - [x] Backend: `POST /explore/community/{checkin_id}/like` endpoint (auth-gated) with TDD
 - [x] Backend: Admin roles API (`POST /admin/roles`, `DELETE /admin/roles/{user_id}/{role}`, `GET /admin/roles`)
-- [ ] Frontend: `CommunityCard` + `CommunityCardFull` + `LikeButton` components with TDD
+- [x] Frontend: `CommunityCard` + `CommunityCardFull` + `LikeButton` components with TDD
 - [x] Frontend: `useCommunityPreview`, `useCommunityFeed`, `useLikeStatus` SWR hooks with TDD
 - [ ] Frontend: Explore page "From the Community" section (Layer 3) with TDD
 - [ ] Frontend: `/explore/community` feed page with TDD

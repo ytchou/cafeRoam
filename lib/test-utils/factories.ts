@@ -124,7 +124,7 @@ export function makeCommunityNote(
       roleLabel: 'Coffee blogger',
     },
     reviewText:
-      'Hinoki Coffee has the most incredible natural light in the afternoons.',
+      'The most incredible natural light floods in during the afternoons. Perfect for long work sessions.',
     starRating: 5,
     coverPhotoUrl:
       'https://example.supabase.co/storage/v1/object/public/checkin-photos/photo1.jpg',
