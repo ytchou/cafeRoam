@@ -15,6 +15,8 @@ import { TarotSpread } from '@/components/tarot/tarot-spread';
 import { TarotEmptyState } from '@/components/tarot/tarot-empty-state';
 import { useAnalytics } from '@/lib/posthog/use-analytics';
 import { useVibes } from '@/lib/hooks/use-vibes';
+import { CommunityCard } from '@/components/community/community-card';
+import { useCommunityPreview } from '@/lib/hooks/use-community-preview';
 
 export default function ExplorePage() {
   const { capture } = useAnalytics();
@@ -31,6 +33,7 @@ export default function ExplorePage() {
   );
   const { vibes } = useVibes();
   const previewVibes = useMemo(() => vibes.slice(0, 6), [vibes]);
+  const { notes: communityNotes } = useCommunityPreview();
 
   useEffect(() => {
     requestLocation();
@@ -144,6 +147,28 @@ export default function ExplorePage() {
               </Link>
             ))}
           </div>
+        </section>
+      )}
+
+      {communityNotes.length > 0 && (
+        <section className="mt-8 flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <h2
+              className="text-lg font-bold text-gray-900"
+              style={{ fontFamily: 'var(--font-bricolage), sans-serif' }}
+            >
+              From the Community
+            </h2>
+            <Link
+              href="/explore/community"
+              className="text-xs font-medium text-[#8B5E3C]"
+            >
+              See all →
+            </Link>
+          </div>
+          {communityNotes.map((note) => (
+            <CommunityCard key={note.checkinId} note={note} />
+          ))}
         </section>
       )}
     </main>
