@@ -86,7 +86,7 @@ function FindPageContent() {
             </div>
           }
         >
-          <MapView shops={shops} onPinClick={setSelectedShopId} />
+          <MapView shops={shops} onPinClick={setSelectedShopId} selectedShopId={selectedShopId} />
         </Suspense>
       </div>
 
