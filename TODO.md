@@ -1016,8 +1016,8 @@ Adds the Explore tab and redesigns the four main sections of the app using Penci
 
 _Highlighted check-in reviews from partner/blogger users. Reuses existing check-in data — no separate content type. Seed with beta blogger invites during Phase 4._
 
-- [ ] DB migration: `user_roles` table (user_id, role, granted_at, granted_by) — multi-role join table
-- [ ] DB migration: `community_note_likes` table (checkin_id, user_id) with RLS
+- [x] DB migration: `user_roles` table (user_id, role, granted_at, granted_by) — multi-role join table
+- [x] DB migration: `community_note_likes` table (checkin_id, user_id) with RLS
 - [ ] Backend: `UserRole`, `CommunityNoteCard`, `CommunityFeedResponse` Pydantic models
 - [ ] Backend: `CommunityService` (preview, feed, toggle_like) with TDD
 - [ ] Backend: `GET /explore/community/preview` + `GET /explore/community` endpoints with TDD
