@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
+import { beforeEach, describe, it, expect, vi } from 'vitest';
 import useSWR from 'swr';
 import ExplorePage from './page';
 import { makeCommunityNote } from '@/lib/test-utils/factories';
@@ -27,6 +27,10 @@ vi.mock('@/lib/hooks/use-tarot-draw', () => ({
 vi.mock('@/lib/posthog/use-analytics', () => ({
   useAnalytics: () => ({ capture: vi.fn() }),
 }));
+
+beforeEach(() => {
+  vi.stubGlobal('IntersectionObserver', vi.fn(() => ({ observe: vi.fn(), disconnect: vi.fn() })));
+});
 
 const MOCK_COMMUNITY = [
   makeCommunityNote(),
