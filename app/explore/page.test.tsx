@@ -6,24 +6,6 @@ import { makeCommunityNote } from '@/lib/test-utils/factories';
 
 vi.mock('@/lib/tarot/share-card', () => ({ shareCard: vi.fn() }));
 vi.mock('swr', () => ({ default: vi.fn() }));
-vi.mock('@/lib/hooks/use-geolocation', () => ({
-  useGeolocation: () => ({
-    latitude: null,
-    longitude: null,
-    error: null,
-    loading: false,
-    requestLocation: vi.fn(),
-  }),
-}));
-vi.mock('@/lib/hooks/use-tarot-draw', () => ({
-  useTarotDraw: () => ({
-    cards: [],
-    isLoading: false,
-    error: null,
-    redraw: vi.fn(),
-    setRadiusKm: vi.fn(),
-  }),
-}));
 vi.mock('@/lib/posthog/use-analytics', () => ({
   useAnalytics: () => ({ capture: vi.fn() }),
 }));
