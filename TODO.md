@@ -1041,7 +1041,7 @@ _Designed in Pencil. Replaces current 首頁 + 地圖 split into a unified Find 
 - [x] Create `MapListView` component — vertical list (Task 5)
 
 **Chunk 2 — Integration (Wave 2–3):**
-- [ ] Create `DirectionsSheet` component (Task 6)
+- [x] Create `DirectionsSheet` component (Task 6)
 - [ ] Refactor `app/page.tsx` — view toggle + wire all components (Task 7)
 - [ ] Wire `DirectionsSheet` into Shop View (Task 8)
 

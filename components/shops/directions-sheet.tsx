@@ -1,0 +1,245 @@
+'use client';
+
+import { useCallback, useEffect, useMemo, useReducer } from 'react';
+import { Drawer } from 'vaul';
+import { ShopMapThumbnail } from '@/components/shops/shop-map-thumbnail';
+import { nearestMrtStation } from '@/lib/utils/mrt';
+
+interface DirectionsShop {
+  id: string;
+  name: string;
+  latitude: number;
+  longitude: number;
+}
+
+interface DirectionsSheetProps {
+  open: boolean;
+  onClose: () => void;
+  shop: DirectionsShop;
+  userLat?: number;
+  userLng?: number;
+}
+
+interface RouteInfo {
+  durationMin: number;
+  distanceM: number;
+}
+
+interface RoutesState {
+  loading: boolean;
+  walkRoute: RouteInfo | null;
+  driveRoute: RouteInfo | null;
+  mrtWalkRoute: RouteInfo | null;
+}
+
+type RoutesAction =
+  | { type: 'fetch_start' }
+  | { type: 'fetch_done'; walkRoute: RouteInfo | null; driveRoute: RouteInfo | null; mrtWalkRoute: RouteInfo | null };
+
+const initialState: RoutesState = {
+  loading: false,
+  walkRoute: null,
+  driveRoute: null,
+  mrtWalkRoute: null,
+};
+
+function routesReducer(state: RoutesState, action: RoutesAction): RoutesState {
+  switch (action.type) {
+    case 'fetch_start':
+      return { loading: true, walkRoute: null, driveRoute: null, mrtWalkRoute: null };
+    case 'fetch_done':
+      return { loading: false, walkRoute: action.walkRoute, driveRoute: action.driveRoute, mrtWalkRoute: action.mrtWalkRoute };
+    default:
+      return state;
+  }
+}
+
+async function fetchRoute(
+  profile: string,
+  fromLng: number,
+  fromLat: number,
+  toLng: number,
+  toLat: number,
+  token: string
+): Promise<RouteInfo | null> {
+  try {
+    const url = `https://api.mapbox.com/directions/v5/mapbox/${profile}/${fromLng},${fromLat};${toLng},${toLat}?access_token=${token}&overview=false`;
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const data = await res.json();
+    const route = data.routes?.[0];
+    if (!route) return null;
+    return {
+      durationMin: Math.round(route.duration / 60),
+      distanceM: Math.round(route.distance),
+    };
+  } catch {
+    return null;
+  }
+}
+
+export function DirectionsSheet({
+  open,
+  onClose,
+  shop,
+  userLat,
+  userLng,
+}: DirectionsSheetProps) {
+  const [state, dispatch] = useReducer(routesReducer, initialState);
+  const { loading, walkRoute, driveRoute, mrtWalkRoute } = state;
+
+  const mrtStation = useMemo(
+    () => nearestMrtStation(shop.latitude, shop.longitude),
+    [shop.latitude, shop.longitude]
+  );
+
+  const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
+
+  const originLng = userLng ?? shop.longitude;
+  const originLat = userLat ?? shop.latitude;
+
+  const fetchDirections = useCallback(async (signal: AbortSignal) => {
+    if (!token) return;
+    dispatch({ type: 'fetch_start' });
+
+    const [walk, drive, mrtWalk] = await Promise.all([
+      fetchRoute('walking', originLng, originLat, shop.longitude, shop.latitude, token),
+      fetchRoute('driving-traffic', originLng, originLat, shop.longitude, shop.latitude, token),
+      fetchRoute('walking', mrtStation.lng, mrtStation.lat, shop.longitude, shop.latitude, token),
+    ]);
+
+    if (!signal.aborted) {
+      dispatch({ type: 'fetch_done', walkRoute: walk, driveRoute: drive, mrtWalkRoute: mrtWalk });
+    }
+  }, [token, originLng, originLat, shop.longitude, shop.latitude, mrtStation.lng, mrtStation.lat]);
+
+  useEffect(() => {
+    if (!open || !token) return;
+
+    const abortController = new AbortController();
+    fetchDirections(abortController.signal);
+
+    return () => {
+      abortController.abort();
+    };
+  }, [open, token, fetchDirections]);
+
+  const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${shop.latitude},${shop.longitude}`;
+  const appleMapsUrl = `maps://maps.apple.com/?daddr=${shop.latitude},${shop.longitude}`;
+
+  return (
+    <Drawer.Root open={open} onOpenChange={(o: boolean) => !o && onClose()}>
+      <Drawer.Portal>
+        <Drawer.Overlay className="fixed inset-0 bg-black/40" />
+        <Drawer.Content className="fixed right-0 bottom-0 left-0 flex max-h-[85vh] flex-col rounded-t-[10px] bg-white">
+          <Drawer.Handle />
+          <div className="px-4 pt-3 pb-2">
+            <Drawer.Title className="text-lg font-semibold">
+              Directions to {shop.name}
+            </Drawer.Title>
+          </div>
+
+          <ShopMapThumbnail
+            latitude={shop.latitude}
+            longitude={shop.longitude}
+            shopName={shop.name}
+          />
+
+          <div className="space-y-3 px-4 py-4">
+            {walkRoute && (
+              <div className="flex items-center gap-3 text-sm">
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#F5F4F1]">
+                  <WalkIcon />
+                </span>
+                <span>~{walkRoute.durationMin} min walk</span>
+              </div>
+            )}
+
+            {driveRoute && (
+              <div className="flex items-center gap-3 text-sm">
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#F5F4F1]">
+                  <CarIcon />
+                </span>
+                <span>~{driveRoute.durationMin} min drive</span>
+              </div>
+            )}
+
+            {mrtStation && (
+              <div className="flex items-center gap-3 text-sm">
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#F5F4F1]">
+                  <TrainIcon />
+                </span>
+                <span>
+                  {mrtStation.name_en} ({mrtStation.name_zh}) &middot; {mrtStation.line}
+                  {mrtWalkRoute
+                    ? ` · ~${mrtWalkRoute.durationMin} min walk`
+                    : mrtStation.dist < 1
+                      ? ` · ${Math.round(mrtStation.dist * 1000)}m`
+                      : ` · ${mrtStation.dist.toFixed(1)}km`}
+                </span>
+              </div>
+            )}
+
+            {loading && !walkRoute && !driveRoute && (
+              <p className="text-sm text-gray-400">Calculating routes...</p>
+            )}
+          </div>
+
+          <div className="flex gap-3 border-t px-4 py-3">
+            <a
+              href={googleMapsUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex flex-1 items-center justify-center gap-2 rounded-full border border-[#E5E4E1] py-2.5 text-sm font-medium text-[#2C1810]"
+            >
+              Google Maps
+            </a>
+            <a
+              href={appleMapsUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex flex-1 items-center justify-center gap-2 rounded-full border border-[#E5E4E1] py-2.5 text-sm font-medium text-[#2C1810]"
+            >
+              Apple Maps
+            </a>
+          </div>
+        </Drawer.Content>
+      </Drawer.Portal>
+    </Drawer.Root>
+  );
+}
+
+function WalkIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="5" r="2" />
+      <path d="M10 22V18l-2-4 4-3 2 3v9" />
+      <path d="M10 14l-2 2" />
+      <path d="M14 14l2-2" />
+    </svg>
+  );
+}
+
+function CarIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9L18 10l-2.7-3.6A1.5 1.5 0 0 0 14.1 6H9.9a1.5 1.5 0 0 0-1.2.6L6 10l-2.5 1.1C2.7 11.3 2 12.1 2 13v3c0 .6.4 1 1 1h2" />
+      <circle cx="7" cy="17" r="2" />
+      <circle cx="17" cy="17" r="2" />
+    </svg>
+  );
+}
+
+function TrainIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="4" y="3" width="16" height="16" rx="2" />
+      <path d="M4 11h16" />
+      <path d="M12 3v8" />
+      <path d="m8 19-2 3" />
+      <path d="m18 22-2-3" />
+      <circle cx="8" cy="15" r="1" />
+      <circle cx="16" cy="15" r="1" />
+    </svg>
+  );
+}
