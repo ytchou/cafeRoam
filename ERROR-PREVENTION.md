@@ -305,4 +305,31 @@ make seed-shops
   - Restore shop data only → `make seed-shops`
   - Full wipe + rebuild (fresh clone scenario only) → `make reset-db` then `make restore-seed-user && make seed-shops`
 
+## DB Column Name Masked by Mock Test
+
+**Symptom:** Backend API silently returns `null` for a field in production. Unit tests pass. No error is raised. The field appears to work because the mock injects the value directly — the real DB is never queried.
+
+**Root cause:** A plan or design doc specifies a DB column name that doesn't match the actual migration schema. The TDD test mock injects a hardcoded response keyed by the wrong name (e.g., `"diary_note": None`). Because the mock bypasses the query entirely, the test passes even though the SELECT references a non-existent column. The bug reaches production invisibly.
+
+Common trigger: design doc written before the migration, or design doc using a different naming convention from the schema (e.g., API field name `diary_note` ≠ DB column `note`).
+
+**Fix:**
+
+```python
+# In the API handler, verify the SELECT string references the actual column name:
+# Wrong — column doesn't exist in migration:
+.select("..., check_ins(photo_urls, diary_note)")
+# Correct — matches migration schema:
+.select("..., check_ins(photo_urls, note)")
+
+# In the response transform, map DB column → API field name explicitly:
+row["diary_note"] = checkin_data.get("note")  # maps DB column "note" to API field "diary_note"
+```
+
+**Prevention:**
+
+- When a plan/design doc specifies a DB column name used in a JOIN select, cross-reference the latest migration file before writing the query or the test mock
+- Run `grep -r "column_name" supabase/migrations/` to confirm the column exists before writing tests
+- Mock data keys in backend tests must match the DB schema (what the real query returns), not the API response shape
+
 _Add entries here as you discover them._
