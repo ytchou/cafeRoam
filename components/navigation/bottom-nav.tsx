@@ -15,7 +15,7 @@ export function BottomNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed right-0 bottom-0 left-0 z-40 px-4 pb-4">
+    <nav className="fixed right-0 bottom-0 left-0 z-40 px-4" style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}>
       <div
         data-testid="tab-bar-pill"
         className="flex rounded-[36px] bg-white p-1 shadow-[0_4px_20px_#0000001A] h-[62px]"
