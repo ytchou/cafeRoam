@@ -157,3 +157,44 @@ def make_vibe_row(**overrides: object) -> dict:
 def make_shop_tag_row(shop_id: str = "shop-d4e5f6", tag_id: str = "quiet") -> dict:
     """A shop_tags join row."""
     return {"shop_id": shop_id, "tag_id": tag_id}
+
+
+def make_user_role(**overrides: object) -> dict:
+    defaults = {
+        "id": "role-r1s2t3",
+        "user_id": "user-a1b2c3",
+        "role": "blogger",
+        "granted_at": _TS,
+        "granted_by": "admin-x9y8z7",
+    }
+    return {**defaults, **overrides}
+
+
+def make_community_note_row(**overrides: object) -> dict:
+    """A joined row as returned by the CommunityService PostgREST query.
+
+    Accepts convenience overrides (checkin_id, display_name, avatar_url,
+    shop_name, shop_slug, shop_district) which are mapped to the correct
+    nested structure that PostgREST returns for JOIN queries.
+    """
+    checkin_id = overrides.pop("checkin_id", "ci-j0k1l2")
+    display_name = overrides.pop("display_name", "Mei-Ling ☕")
+    avatar_url = overrides.pop("avatar_url", None)
+    shop_name = overrides.pop("shop_name", "Hinoki Coffee")
+    shop_slug = overrides.pop("shop_slug", "hinoki-coffee")
+    shop_district = overrides.pop("shop_district", "大安")
+
+    defaults: dict = {
+        "id": checkin_id,
+        "review_text": "Hinoki Coffee has the most incredible natural light in the afternoons. Brought my Kindle and ended up reading for three hours.",
+        "stars": 5,
+        "photo_urls": [
+            "https://example.supabase.co/storage/v1/object/public/checkin-photos/user-a1b2c3/photo1.jpg"
+        ],
+        "created_at": "2026-03-15T14:30:00",
+        "profiles": {"display_name": display_name, "avatar_url": avatar_url},
+        "shops": {"name": shop_name, "slug": shop_slug, "district": shop_district},
+        "user_roles": [{"role": "blogger"}],
+        "community_note_likes": [{"count": 12}],
+    }
+    return {**defaults, **overrides}

@@ -1,6 +1,16 @@
 'use client';
 
-import { useEffect, useCallback, useMemo } from 'react';
+import Link from 'next/link';
+import { useCallback, useEffect, useMemo } from 'react';
+
+import { CommunityCard } from '@/components/community/community-card';
+import { TarotEmptyState } from '@/components/tarot/tarot-empty-state';
+import { TarotSpread } from '@/components/tarot/tarot-spread';
+import { useAnalytics } from '@/lib/posthog/use-analytics';
+import { useCommunityPreview } from '@/lib/hooks/use-community-preview';
+import { useGeolocation } from '@/lib/hooks/use-geolocation';
+import { useTarotDraw } from '@/lib/hooks/use-tarot-draw';
+import { useVibes } from '@/lib/hooks/use-vibes';
 
 const BRICOLAGE_STYLE = {
   fontFamily: 'var(--font-bricolage), var(--font-geist-sans), sans-serif',
@@ -8,13 +18,6 @@ const BRICOLAGE_STYLE = {
 const BRICOLAGE_STYLE_SM = {
   fontFamily: 'var(--font-bricolage), sans-serif',
 } as const;
-import Link from 'next/link';
-import { useGeolocation } from '@/lib/hooks/use-geolocation';
-import { useTarotDraw } from '@/lib/hooks/use-tarot-draw';
-import { TarotSpread } from '@/components/tarot/tarot-spread';
-import { TarotEmptyState } from '@/components/tarot/tarot-empty-state';
-import { useAnalytics } from '@/lib/posthog/use-analytics';
-import { useVibes } from '@/lib/hooks/use-vibes';
 
 export default function ExplorePage() {
   const { capture } = useAnalytics();
@@ -31,6 +34,7 @@ export default function ExplorePage() {
   );
   const { vibes } = useVibes();
   const previewVibes = useMemo(() => vibes.slice(0, 6), [vibes]);
+  const { notes: communityNotes } = useCommunityPreview();
 
   useEffect(() => {
     requestLocation();
@@ -144,6 +148,28 @@ export default function ExplorePage() {
               </Link>
             ))}
           </div>
+        </section>
+      )}
+
+      {communityNotes.length > 0 && (
+        <section className="mt-8 flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <h2
+              className="text-lg font-bold text-gray-900"
+              style={BRICOLAGE_STYLE_SM}
+            >
+              From the Community
+            </h2>
+            <Link
+              href="/explore/community"
+              className="text-xs font-medium text-[#8B5E3C]"
+            >
+              See all →
+            </Link>
+          </div>
+          {communityNotes.map((note) => (
+            <CommunityCard key={note.checkinId} note={note} />
+          ))}
         </section>
       )}
     </main>

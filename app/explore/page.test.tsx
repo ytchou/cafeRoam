@@ -1,30 +1,26 @@
 import { render, screen } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
+import { beforeEach, describe, it, expect, vi } from 'vitest';
 import useSWR from 'swr';
 import ExplorePage from './page';
+import { makeCommunityNote } from '@/lib/test-utils/factories';
 
+vi.mock('@/lib/tarot/share-card', () => ({ shareCard: vi.fn() }));
 vi.mock('swr', () => ({ default: vi.fn() }));
-vi.mock('@/lib/hooks/use-geolocation', () => ({
-  useGeolocation: () => ({
-    latitude: null,
-    longitude: null,
-    error: null,
-    loading: false,
-    requestLocation: vi.fn(),
-  }),
-}));
-vi.mock('@/lib/hooks/use-tarot-draw', () => ({
-  useTarotDraw: () => ({
-    cards: [],
-    isLoading: false,
-    error: null,
-    redraw: vi.fn(),
-    setRadiusKm: vi.fn(),
-  }),
-}));
 vi.mock('@/lib/posthog/use-analytics', () => ({
   useAnalytics: () => ({ capture: vi.fn() }),
 }));
+
+beforeEach(() => {
+  vi.stubGlobal(
+    'IntersectionObserver',
+    vi.fn(() => ({ observe: vi.fn(), disconnect: vi.fn() }))
+  );
+});
+
+const MOCK_COMMUNITY = [
+  makeCommunityNote(),
+  makeCommunityNote({ checkinId: 'ci-2' }),
+];
 
 const MOCK_VIBES = [
   {
@@ -54,6 +50,13 @@ function setupSwrMock() {
         typeof useSWR
       >;
     }
+    if (key === '/api/explore/community/preview') {
+      return {
+        data: MOCK_COMMUNITY,
+        error: null,
+        isLoading: false,
+      } as ReturnType<typeof useSWR>;
+    }
     return { data: undefined, error: null, isLoading: false } as ReturnType<
       typeof useSWR
     >;
@@ -81,5 +84,20 @@ describe('ExplorePage — vibe strip', () => {
     expect(screen.getByText('Study Cave')).toBeInTheDocument();
     expect(screen.getByText('Quiet · WiFi')).toBeInTheDocument();
     expect(screen.getByText('First Date')).toBeInTheDocument();
+  });
+});
+
+describe('Community Notes section', () => {
+  it('shows From the Community heading when notes exist', () => {
+    setupSwrMock();
+    render(<ExplorePage />);
+    expect(screen.getByText('From the Community')).toBeInTheDocument();
+  });
+
+  it('shows See all link that navigates to /explore/community', () => {
+    setupSwrMock();
+    render(<ExplorePage />);
+    const link = screen.getByText(/See all/);
+    expect(link.closest('a')).toHaveAttribute('href', '/explore/community');
   });
 });
