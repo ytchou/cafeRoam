@@ -12,6 +12,7 @@ import type { LayoutShop } from '@/lib/types';
 interface ListDesktopLayoutProps {
   shops: LayoutShop[];
   count: number;
+  selectedShopId?: string | null;
   onShopClick: (id: string) => void;
   query: string;
   activeFilters: string[];
@@ -23,6 +24,7 @@ interface ListDesktopLayoutProps {
   onFilterOpen: () => void;
   onFilterClose: () => void;
   onFilterApply: (filters: string[]) => void;
+  onLocationRequest?: () => void;
   onSort?: () => void;
 }
 

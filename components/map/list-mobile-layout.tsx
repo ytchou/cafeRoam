@@ -24,6 +24,7 @@ interface ListMobileLayoutProps {
   onFilterOpen: () => void;
   onFilterClose: () => void;
   onFilterApply: (filters: string[]) => void;
+  onLocationRequest?: () => void;
 }
 
 export function ListMobileLayout({
