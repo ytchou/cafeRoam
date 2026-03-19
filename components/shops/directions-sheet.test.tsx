@@ -57,7 +57,7 @@ describe('DirectionsSheet', () => {
     expect(screen.getByRole('img', { name: /map showing 日光珈琲/i })).toBeInTheDocument();
   });
 
-  it('fetches walking and driving directions from Mapbox', async () => {
+  it('a user who has shared their location sees walk and drive times from Mapbox', async () => {
     const durationResponse = (seconds: number) => ({
       ok: true,
       json: async () => ({ routes: [{ duration: seconds, distance: 500 }] }),
@@ -67,12 +67,38 @@ describe('DirectionsSheet', () => {
       .mockResolvedValueOnce(durationResponse(180)) // drive
       .mockResolvedValueOnce(durationResponse(240)); // mrt walk
 
-    render(<DirectionsSheet open={true} onClose={vi.fn()} shop={shop} />);
+    render(
+      <DirectionsSheet
+        open={true}
+        onClose={vi.fn()}
+        shop={shop}
+        userLat={25.04}
+        userLng={121.55}
+      />
+    );
 
     await waitFor(() => {
       expect(screen.getByText(/7 min walk/i)).toBeInTheDocument();
       expect(screen.getByText(/3 min drive/i)).toBeInTheDocument();
     });
+  });
+
+  it('a user without location only fetches the MRT leg, not walk/drive routes', async () => {
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({ routes: [{ duration: 300, distance: 400 }] }),
+    });
+
+    render(<DirectionsSheet open={true} onClose={vi.fn()} shop={shop} />);
+
+    await waitFor(() => {
+      // MRT row should still appear
+      expect(screen.getByText(/[A-Za-z]+ \([^\)]+\) ·/)).toBeInTheDocument();
+    });
+    // Only one fetch call — MRT walk; walk/drive skipped without user location
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    expect(mockFetch.mock.calls[0][0]).toContain('walking');
+    expect(mockFetch.mock.calls[0][0]).not.toContain('driving-traffic');
   });
 
   it('shows the nearest MRT station using real station data', async () => {

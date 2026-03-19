@@ -21,7 +21,7 @@ interface MapListViewProps {
 
 function formatDistance(meters: number | null): string {
   if (meters == null) return '';
-  return meters < 1000 ? `${meters}m` : `${(meters / 1000).toFixed(1)}km`;
+  return meters < 1000 ? `${Math.round(meters)}m` : `${(meters / 1000).toFixed(1)}km`;
 }
 
 export function MapListView({ shops }: MapListViewProps) {

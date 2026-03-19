@@ -62,19 +62,24 @@ vi.mock('@/lib/hooks/use-search', () => ({
   useSearch: () => ({ results: [], isLoading: false }),
 }));
 
-vi.mock('@/lib/hooks/use-geolocation', () => ({
-  useGeolocation: () => ({
-    requestLocation: vi.fn(),
-    latitude: null,
-    longitude: null,
-    error: null,
-    loading: false,
-  }),
-}));
-
-vi.mock('@/lib/hooks/use-media-query', () => ({
-  useIsDesktop: () => false,
-}));
+// Stub browser APIs at the boundary rather than mocking internal hook wrappers
+Object.defineProperty(navigator, 'geolocation', {
+  writable: true,
+  value: { getCurrentPosition: vi.fn(), watchPosition: vi.fn(), clearWatch: vi.fn() },
+});
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  value: vi.fn((query: string) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  })),
+});
 
 const mockCapture = vi.fn();
 vi.mock('@/lib/posthog/use-analytics', () => ({

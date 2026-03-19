@@ -57,7 +57,7 @@ describe('useSearchState', () => {
     expect(calledUrl).toContain('q=cappuccino');
   });
 
-  it('clearAll removes all search params', () => {
+  it('a user who taps clear sees all filters and query removed from the URL', () => {
     mockSearchParams.set('q', 'latte');
     mockSearchParams.set('mode', 'work');
     const { result } = renderHook(() => useSearchState());
@@ -67,12 +67,12 @@ describe('useSearchState', () => {
     expect(mockPush).toHaveBeenCalledWith(expect.stringMatching(/^\//));
   });
 
-  it('returns view as "map" when ?view param is absent', () => {
+  it('a user opening the page with no params lands on the map view by default', () => {
     const { result } = renderHook(() => useSearchState());
     expect(result.current.view).toBe('map');
   });
 
-  it('reads view from ?view=list URL param', () => {
+  it('a user returning to a list-view URL sees the list view', () => {
     mockSearchParams.set('view', 'list');
     const { result } = renderHook(() => useSearchState());
     expect(result.current.view).toBe('list');

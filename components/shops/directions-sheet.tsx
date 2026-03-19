@@ -96,23 +96,26 @@ export function DirectionsSheet({
 
   const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 
-  const originLng = userLng ?? shop.longitude;
-  const originLat = userLat ?? shop.latitude;
-
   const fetchDirections = useCallback(async (signal: AbortSignal) => {
     if (!token) return;
     dispatch({ type: 'fetch_start' });
 
+    const hasUserLocation = userLat !== undefined && userLng !== undefined;
+
     const [walk, drive, mrtWalk] = await Promise.all([
-      fetchRoute('walking', originLng, originLat, shop.longitude, shop.latitude, token, signal),
-      fetchRoute('driving-traffic', originLng, originLat, shop.longitude, shop.latitude, token, signal),
+      hasUserLocation
+        ? fetchRoute('walking', userLng, userLat, shop.longitude, shop.latitude, token, signal)
+        : Promise.resolve(null),
+      hasUserLocation
+        ? fetchRoute('driving-traffic', userLng, userLat, shop.longitude, shop.latitude, token, signal)
+        : Promise.resolve(null),
       fetchRoute('walking', mrtStation.lng, mrtStation.lat, shop.longitude, shop.latitude, token, signal),
     ]);
 
     if (!signal.aborted) {
       dispatch({ type: 'fetch_done', walkRoute: walk, driveRoute: drive, mrtWalkRoute: mrtWalk });
     }
-  }, [token, originLng, originLat, shop.longitude, shop.latitude, mrtStation.lng, mrtStation.lat]);
+  }, [token, userLat, userLng, shop.longitude, shop.latitude, mrtStation.lng, mrtStation.lat]);
 
   useEffect(() => {
     if (!open || !token) return;
@@ -126,7 +129,7 @@ export function DirectionsSheet({
   }, [open, token, fetchDirections]);
 
   const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${shop.latitude},${shop.longitude}`;
-  const appleMapsUrl = `maps://maps.apple.com/?daddr=${shop.latitude},${shop.longitude}`;
+  const appleMapsUrl = `https://maps.apple.com/?daddr=${shop.latitude},${shop.longitude}`;
 
   return (
     <Drawer.Root open={open} onOpenChange={(o: boolean) => !o && onClose()}>
