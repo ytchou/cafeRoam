@@ -12,13 +12,13 @@ vi.mock('next/link', () => ({
   ),
 }));
 
-describe('HeaderNav', () => {
-  it('renders logo with 啡遊 CafeRoam', () => {
+describe('a user interacting with the HeaderNav', () => {
+  it('a user sees the 啡遊 CafeRoam brand logo in the header', () => {
     render(<HeaderNav activeTab="find" />);
     expect(screen.getByText('啡遊 CafeRoam')).toBeInTheDocument();
   });
 
-  it('renders 4 nav items', () => {
+  it('a user sees all four main navigation destinations in the header', () => {
     render(<HeaderNav activeTab="find" />);
     expect(screen.getByText('Find')).toBeInTheDocument();
     expect(screen.getByText('Explore')).toBeInTheDocument();
@@ -26,13 +26,13 @@ describe('HeaderNav', () => {
     expect(screen.getByText('Profile')).toBeInTheDocument();
   });
 
-  it('shows Find as active when activeTab is find', () => {
+  it('a user on the Find page sees the Find tab highlighted as active', () => {
     render(<HeaderNav activeTab="find" />);
     const findLink = screen.getByText('Find').closest('a');
     expect(findLink).toHaveAttribute('data-active', 'true');
   });
 
-  it('renders search button', () => {
+  it('a user sees a search button in the header to open search', () => {
     render(<HeaderNav activeTab="find" />);
     expect(screen.getByRole('button', { name: /search/i })).toBeInTheDocument();
   });

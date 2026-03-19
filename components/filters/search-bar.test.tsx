@@ -3,18 +3,18 @@ import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi } from 'vitest';
 import { SearchBar } from './search-bar';
 
-describe('SearchBar', () => {
-  it('renders placeholder text', () => {
+describe('a user interacting with the SearchBar', () => {
+  it('a user sees a search input with placeholder text guiding them to search coffee shops', () => {
     render(<SearchBar onSearch={() => {}} onFilterClick={() => {}} />);
     expect(screen.getByPlaceholderText('Search coffee shops...')).toBeInTheDocument();
   });
 
-  it('renders filter button', () => {
+  it('a user sees a filter button to open advanced filtering options', () => {
     render(<SearchBar onSearch={() => {}} onFilterClick={() => {}} />);
     expect(screen.getByRole('button', { name: /filter/i })).toBeInTheDocument();
   });
 
-  it('calls onSearch when form submitted', async () => {
+  it('a user typing a query and submitting triggers a search', async () => {
     const user = userEvent.setup();
     const onSearch = vi.fn();
     render(<SearchBar onSearch={onSearch} onFilterClick={() => {}} />);
@@ -24,14 +24,14 @@ describe('SearchBar', () => {
     expect(onSearch).toHaveBeenCalledWith('latte art');
   });
 
-  it('does not submit empty search', async () => {
+  it('a user submitting an empty search sees no results triggered', async () => {
     const onSearch = vi.fn();
     render(<SearchBar onSearch={onSearch} onFilterClick={() => {}} />);
     fireEvent.submit(screen.getByPlaceholderText('Search coffee shops...').closest('form')!);
     expect(onSearch).not.toHaveBeenCalled();
   });
 
-  it('calls onFilterClick when filter button clicked', async () => {
+  it('a user tapping the filter button opens the filter panel', async () => {
     const user = userEvent.setup();
     const onFilterClick = vi.fn();
     render(<SearchBar onSearch={() => {}} onFilterClick={onFilterClick} />);
@@ -39,7 +39,7 @@ describe('SearchBar', () => {
     expect(onFilterClick).toHaveBeenCalledOnce();
   });
 
-  it('pre-fills with defaultQuery', () => {
+  it('a user returning to a previous search sees their prior query pre-filled', () => {
     render(<SearchBar onSearch={() => {}} onFilterClick={() => {}} defaultQuery="mocha" />);
     expect(screen.getByDisplayValue('mocha')).toBeInTheDocument();
   });

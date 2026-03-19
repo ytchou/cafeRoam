@@ -12,34 +12,34 @@ const shop = {
   photo_urls: ['https://example.com/brew.jpg'],
 };
 
-describe('ShopCardCompact', () => {
-  it('renders shop name', () => {
+describe('a user interacting with the ShopCardCompact', () => {
+  it('a user browsing list view sees the shop name', () => {
     render(<ShopCardCompact shop={shop} onClick={() => {}} />);
     expect(screen.getByText('The Brew House')).toBeInTheDocument();
   });
 
-  it('renders rating and meta text', () => {
+  it('a user sees the shop rating to help decide where to go', () => {
     render(<ShopCardCompact shop={shop} onClick={() => {}} />);
     expect(screen.getByText(/4\.8/)).toBeInTheDocument();
   });
 
-  it('renders shop photo', () => {
+  it('a user sees a photo of the shop in the compact card', () => {
     render(<ShopCardCompact shop={shop} onClick={() => {}} />);
     expect(screen.getByRole('img', { name: 'The Brew House' })).toBeInTheDocument();
   });
 
-  it('renders chevron arrow', () => {
+  it('a user sees a chevron arrow indicating the card is tappable for more details', () => {
     render(<ShopCardCompact shop={shop} onClick={() => {}} />);
     expect(screen.getByTestId('compact-card-arrow')).toBeInTheDocument();
   });
 
-  it('shows selected state with accent border and highlight bg', () => {
+  it('a user sees the card highlighted when it corresponds to the selected map pin', () => {
     const { container } = render(<ShopCardCompact shop={shop} onClick={() => {}} selected />);
     const article = container.querySelector('article');
     expect(article).toHaveAttribute('data-selected', 'true');
   });
 
-  it('calls onClick when clicked', async () => {
+  it('a user tapping a compact card triggers navigation to the shop detail', async () => {
     const user = userEvent.setup();
     const onClick = vi.fn();
     render(<ShopCardCompact shop={shop} onClick={onClick} />);

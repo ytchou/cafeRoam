@@ -17,35 +17,35 @@ const shop = {
   ],
 };
 
-describe('ShopCardCarousel', () => {
-  it('renders shop name', () => {
+describe('a user interacting with the ShopCardCarousel', () => {
+  it('a user swiping through the map carousel sees the shop name', () => {
     render(<ShopCardCarousel shop={shop} onClick={() => {}} />);
     expect(screen.getByText('The Brew House')).toBeInTheDocument();
   });
 
-  it('renders rating with star', () => {
+  it('a user sees the shop star rating in the carousel card', () => {
     render(<ShopCardCarousel shop={shop} onClick={() => {}} />);
     expect(screen.getByText('4.8')).toBeInTheDocument();
   });
 
-  it('renders review count', () => {
+  it('a user sees how many reviews the shop has received', () => {
     render(<ShopCardCarousel shop={shop} onClick={() => {}} />);
     expect(screen.getByText('(324)')).toBeInTheDocument();
   });
 
-  it('renders taxonomy tags', () => {
+  it('a user sees taxonomy tags describing the shop character', () => {
     render(<ShopCardCarousel shop={shop} onClick={() => {}} />);
     expect(screen.getByText('Latte Art')).toBeInTheDocument();
     expect(screen.getByText('WiFi')).toBeInTheDocument();
   });
 
-  it('renders shop photo', () => {
+  it('a user sees a photo of the shop in the carousel card', () => {
     render(<ShopCardCarousel shop={shop} onClick={() => {}} />);
     const img = screen.getByRole('img', { name: 'The Brew House' });
     expect(img).toHaveAttribute('src', expect.stringContaining('brew.jpg'));
   });
 
-  it('calls onClick when card is clicked', async () => {
+  it('a user tapping a carousel card triggers navigation to the shop detail', async () => {
     const user = userEvent.setup();
     const onClick = vi.fn();
     render(<ShopCardCarousel shop={shop} onClick={onClick} />);

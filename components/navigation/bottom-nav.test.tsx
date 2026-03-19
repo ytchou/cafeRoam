@@ -13,8 +13,8 @@ vi.mock('next/link', () => ({
   ),
 }));
 
-describe('BottomNav', () => {
-  it('renders 4 tabs with Chinese labels', () => {
+describe('a user interacting with the BottomNav', () => {
+  it('a user sees the four main navigation tabs in Chinese', () => {
     render(<BottomNav />);
     expect(screen.getByText('地圖')).toBeInTheDocument();
     expect(screen.getByText('探索')).toBeInTheDocument();
@@ -22,19 +22,19 @@ describe('BottomNav', () => {
     expect(screen.getByText('我的')).toBeInTheDocument();
   });
 
-  it('has pill-shaped container', () => {
+  it('a user sees the nav bar as a pill-shaped tab bar', () => {
     const { container } = render(<BottomNav />);
     const pill = container.querySelector('[data-testid="tab-bar-pill"]');
     expect(pill).toBeInTheDocument();
   });
 
-  it('shows active state for current route', () => {
+  it('a user on the map page sees the map tab highlighted as active', () => {
     render(<BottomNav />);
     const findTab = screen.getByText('地圖').closest('[data-tab]');
     expect(findTab).toHaveAttribute('data-active', 'true');
   });
 
-  it('links to correct routes', () => {
+  it('a user tapping a tab navigates to the correct section of the app', () => {
     render(<BottomNav />);
     expect(screen.getByText('探索').closest('a')).toHaveAttribute('href', '/explore');
     expect(screen.getByText('收藏').closest('a')).toHaveAttribute('href', '/lists');

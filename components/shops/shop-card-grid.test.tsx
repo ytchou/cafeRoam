@@ -16,28 +16,28 @@ const shop = {
   ],
 };
 
-describe('ShopCardGrid', () => {
-  it('renders shop name', () => {
+describe('a user interacting with the ShopCardGrid', () => {
+  it('a user browsing grid view sees the shop name', () => {
     render(<ShopCardGrid shop={shop} onClick={() => {}} />);
     expect(screen.getByText('The Brew House')).toBeInTheDocument();
   });
 
-  it('renders photo', () => {
+  it('a user sees a photo of the shop in the grid card', () => {
     render(<ShopCardGrid shop={shop} onClick={() => {}} />);
     expect(screen.getByRole('img', { name: 'The Brew House' })).toBeInTheDocument();
   });
 
-  it('renders rating', () => {
+  it('a user sees the shop rating in the grid card', () => {
     render(<ShopCardGrid shop={shop} onClick={() => {}} />);
     expect(screen.getByText(/4\.8/)).toBeInTheDocument();
   });
 
-  it('renders open status when provided', () => {
+  it('a user sees an open status badge when the shop is currently open', () => {
     render(<ShopCardGrid shop={{ ...shop, is_open: true }} onClick={() => {}} />);
     expect(screen.getByText('Open')).toBeInTheDocument();
   });
 
-  it('calls onClick when card is clicked', async () => {
+  it('a user tapping a grid card triggers navigation to the shop detail', async () => {
     const user = userEvent.setup();
     const onClick = vi.fn();
     render(<ShopCardGrid shop={shop} onClick={onClick} />);

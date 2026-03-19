@@ -7,24 +7,24 @@ const shops = [
   { ...makeShop(), id: 'shop-2', name: 'Velvet Bean', photo_urls: ['https://example.com/2.jpg'] },
 ];
 
-describe('ShopCarousel', () => {
-  it('renders all shop cards', () => {
+describe('a user interacting with the ShopCarousel', () => {
+  it('a user browsing the map sees all nearby shops listed in the carousel', () => {
     render(<ShopCarousel shops={shops} onShopClick={() => {}} />);
     expect(screen.getByText('Brew House')).toBeInTheDocument();
     expect(screen.getByText('Velvet Bean')).toBeInTheDocument();
   });
 
-  it('renders section header', () => {
+  it('a user sees the section heading identifying the nearby shops carousel', () => {
     render(<ShopCarousel shops={shops} onShopClick={() => {}} />);
     expect(screen.getByText('Nearby Coffee Shops')).toBeInTheDocument();
   });
 
-  it('renders shop count', () => {
+  it('a user sees how many nearby shops are available', () => {
     render(<ShopCarousel shops={shops} onShopClick={() => {}} />);
     expect(screen.getByText('2 places')).toBeInTheDocument();
   });
 
-  it('has horizontal scroll container', () => {
+  it('a user can scroll horizontally through the shop cards', () => {
     const { container } = render(<ShopCarousel shops={shops} onShopClick={() => {}} />);
     expect(container.querySelector('[data-testid="carousel-scroll"]')).toBeInTheDocument();
   });

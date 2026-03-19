@@ -3,13 +3,13 @@ import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi } from 'vitest';
 import { CollapseToggle } from './collapse-toggle';
 
-describe('CollapseToggle', () => {
-  it('renders a button', () => {
+describe('a user interacting with the CollapseToggle', () => {
+  it('a user sees a collapse button when the panel is expanded', () => {
     render(<CollapseToggle collapsed={false} onClick={() => {}} />);
     expect(screen.getByRole('button', { name: /collapse/i })).toBeInTheDocument();
   });
 
-  it('calls onClick when clicked', async () => {
+  it('a user tapping the toggle triggers the panel to collapse or expand', async () => {
     const user = userEvent.setup();
     const onClick = vi.fn();
     render(<CollapseToggle collapsed={false} onClick={onClick} />);
@@ -17,7 +17,7 @@ describe('CollapseToggle', () => {
     expect(onClick).toHaveBeenCalledOnce();
   });
 
-  it('shows expand label when collapsed', () => {
+  it('a user sees an expand button when the panel is collapsed', () => {
     render(<CollapseToggle collapsed={true} onClick={() => {}} />);
     expect(screen.getByRole('button', { name: /expand/i })).toBeInTheDocument();
   });
