@@ -10,6 +10,7 @@ const NAV_ITEMS: { href: string; label: string; icon: LucideIcon; tab: string }[
   { href: '/lists', label: 'Favorites', icon: Bookmark, tab: 'favorites' },
   { href: '/profile', label: 'Profile', icon: User, tab: 'profile' },
 ];
+const NAV_ITEMS_BY_HREF = new Map(NAV_ITEMS.map((item) => [item.href, item]));
 
 interface HeaderNavProps {
   activeTab?: string;
@@ -17,9 +18,7 @@ interface HeaderNavProps {
 
 export function HeaderNav({ activeTab }: HeaderNavProps) {
   const pathname = usePathname();
-  const currentTab =
-    activeTab ??
-    (NAV_ITEMS.find((item) => item.href === pathname)?.tab ?? 'find');
+  const currentTab = activeTab ?? (NAV_ITEMS_BY_HREF.get(pathname)?.tab ?? 'find');
 
   return (
     <header className="fixed top-0 right-0 left-0 z-40 flex items-center justify-between h-16 px-8 bg-white border-b border-[#D1D0CD]">
