@@ -20,8 +20,10 @@ def auth_headers():
 def make_db_mock(rows: list) -> MagicMock:
     """Return a Supabase client mock whose execute().data returns rows.
 
-    Binds the response at the execute() level so the mock is not sensitive
-    to the exact query-builder call chain (select/eq/order/limit ordering).
+    Centralises the mock chain so tests don't repeat it inline. Note: the
+    chain (table→select→eq→order→execute) is still encoded here, so adding
+    or reordering query-builder calls in production code requires updating
+    this fixture.
     """
     db = MagicMock()
     execute_result = MagicMock()

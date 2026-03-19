@@ -48,7 +48,7 @@ export function PolaroidCard({
       )}
       style={{ transform: `rotate(${rotation}deg)` }}
       onClick={onClick}
-      onKeyDown={onClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') onClick(); } : undefined}
+      onKeyDown={onClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } } : undefined}
     >
       {showPin && (
         <div
