@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { StampDetailSheet } from './stamp-detail-sheet';
+import { makeStamp } from '@/lib/test-utils/factories';
 
 describe('StampDetailSheet', () => {
   const stamp = {
@@ -15,7 +16,7 @@ describe('StampDetailSheet', () => {
 
   it('renders shop name and earned date when mounted', () => {
     render(<StampDetailSheet stamp={stamp} onClose={vi.fn()} />);
-    expect(screen.getByText('Fika Coffee')).toBeInTheDocument();
+    expect(screen.getAllByText('Fika Coffee').length).toBeGreaterThan(0);
     expect(screen.getByText(/2026/)).toBeInTheDocument();
   });
 
@@ -30,6 +31,25 @@ describe('StampDetailSheet', () => {
       <StampDetailSheet stamp={stamp} onClose={vi.fn()} />
     );
     unmount();
-    expect(screen.queryByText('Fika Coffee')).not.toBeInTheDocument();
+    expect(screen.queryAllByText('Fika Coffee')).toHaveLength(0);
+  });
+
+  it('displays diary note when present', () => {
+    const stamp = makeStamp({ diary_note: 'finally found my writing spot' });
+    render(<StampDetailSheet stamp={stamp} onClose={vi.fn()} />);
+    expect(screen.getByText(/finally found my writing spot/)).toBeInTheDocument();
+  });
+
+  it('does not render diary section when diary_note is null', () => {
+    const stamp = makeStamp({ diary_note: null });
+    render(<StampDetailSheet stamp={stamp} onClose={vi.fn()} />);
+    expect(screen.queryByTestId('diary-note')).not.toBeInTheDocument();
+  });
+
+  it('shows the check-in photo in the polaroid card', () => {
+    const stamp = makeStamp({ photo_url: 'https://example.com/photo.jpg' });
+    render(<StampDetailSheet stamp={stamp} onClose={vi.fn()} />);
+    const img = screen.getByRole('img', { name: stamp.shop_name as string });
+    expect(img).toBeInTheDocument();
   });
 });
