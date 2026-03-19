@@ -1075,14 +1075,14 @@ _Designed in Pencil. Replaces current 首頁 + 地圖 split into a unified Find 
 
 - [x] Task 2: FilterTag (active/inactive pill)
 - [x] Task 3: ViewToggle (map/list segmented toggle)
-- [ ] Task 5: SearchBar rebuild (filter button + design styling)
-- [ ] Task 6: ShopCardCarousel (mobile map bottom card)
-- [ ] Task 7: ShopCardCompact (list row + desktop panel with selected state)
-- [ ] Task 8: ShopCardGrid (desktop 3-column photo card)
-- [ ] Task 9: MapPin SVG (default/active states)
-- [ ] Task 10: CollapseToggle (desktop panel strip)
-- [ ] Task 11: BottomNav rebuild (pill-shaped tab bar)
-- [ ] Task 12: HeaderNav rebuild (logo + pill nav + avatar)
+- [x] Task 5: SearchBar rebuild (filter button + design styling)
+- [x] Task 6: ShopCardCarousel (mobile map bottom card)
+- [x] Task 7: ShopCardCompact (list row + desktop panel with selected state)
+- [x] Task 8: ShopCardGrid (desktop 3-column photo card)
+- [x] Task 9: MapPin SVG (default/active states)
+- [x] Task 10: CollapseToggle (desktop panel strip)
+- [x] Task 11: BottomNav rebuild (pill-shaped tab bar)
+- [x] Task 12: HeaderNav rebuild (logo + pill nav + avatar)
 
 **Chunk 3 — Compound Components (Wave 3, parallel):**
 
