@@ -1088,7 +1088,7 @@ _Designed in Pencil. Replaces current 首頁 + 地圖 split into a unified Find 
 
 - [x] Task 4: CountHeader (count + ViewToggle + sort)
 - [x] Task 13: FilterSheet rebuild (vaul drawer + dialog modal)
-- [ ] Task 14: ShopCarousel (horizontal scroll container)
+- [x] Task 14: ShopCarousel (horizontal scroll container)
 
 **Chunk 4 — Layout + Integration (Wave 4-5):**
 
