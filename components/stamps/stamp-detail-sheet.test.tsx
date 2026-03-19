@@ -4,15 +4,14 @@ import { StampDetailSheet } from './stamp-detail-sheet';
 import { makeStamp } from '@/lib/test-utils/factories';
 
 describe('StampDetailSheet', () => {
-  const stamp = {
+  const stamp = makeStamp({
     id: 'stamp-1',
-    user_id: 'user-123',
     shop_id: 'shop-a',
     check_in_id: 'ci-1',
     design_url: '/stamps/shop-a.svg',
     earned_at: '2026-03-01T10:30:00Z',
     shop_name: 'Fika Coffee',
-  };
+  });
 
   it('renders shop name and earned date when mounted', () => {
     render(<StampDetailSheet stamp={stamp} onClose={vi.fn()} />);
