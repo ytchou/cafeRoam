@@ -1121,7 +1121,7 @@ _Designed in Pencil. Stamps, check-in history, account settings._
 
 **Chunk 3 — Pages + Integration (Wave 4):**
 - [x] Task 7: Frontend — `/profile/memories` cork board page
-- [ ] Task 8: Frontend — Update profile page (swap StampPassport → PolaroidSection, remove Lists tab)
+- [x] Task 8: Frontend — Update profile page (swap StampPassport → PolaroidSection, remove Lists tab)
 
 **Phase 3 is done when:** All four pages have Pencil designs approved and implemented. Explore tab is live with Tarot + Vibe Tags functional. At least 3 beta bloggers onboarded.
 

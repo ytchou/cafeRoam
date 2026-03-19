@@ -49,7 +49,6 @@ describe('ProfilePage', () => {
       profile?: Record<string, unknown>;
       stamps?: unknown[];
       checkins?: unknown[];
-      listSummaries?: unknown[];
     } = {}
   ) {
     mockFetch.mockImplementation((url: string) => {
@@ -60,7 +59,6 @@ describe('ProfilePage', () => {
             overrides.profile ?? {
               display_name: 'Mei-Ling',
               avatar_url: null,
-              stamp_count: 2,
               checkin_count: 1,
             },
         });
@@ -93,75 +91,42 @@ describe('ProfilePage', () => {
             ],
         });
       }
-      if (url.includes('/api/lists/summaries')) {
-        return Promise.resolve({
-          ok: true,
-          json: async () =>
-            overrides.listSummaries ?? [
-              {
-                id: 'list-1',
-                name: 'Favourites',
-                shop_count: 3,
-                preview_photos: [],
-              },
-            ],
-        });
-      }
       return Promise.resolve({ ok: true, json: async () => ({}) });
     });
   }
 
-  it('renders profile header with display name and stats', async () => {
+  it('renders profile header with display name and check-in count', async () => {
     mockAllEndpoints();
     render(<ProfilePage />, { wrapper });
 
     await waitFor(() => {
       expect(screen.getByText('Mei-Ling')).toBeInTheDocument();
     });
-    expect(screen.getByText(/2 stamps/)).toBeInTheDocument();
     expect(screen.getByText(/1 check-in/)).toBeInTheDocument();
   });
 
-  it('renders the stamp passport section', async () => {
+  it('renders the polaroid memories section', async () => {
     mockAllEndpoints();
     render(<ProfilePage />, { wrapper });
 
     await waitFor(() => {
-      expect(screen.getByText(/my passport/i)).toBeInTheDocument();
+      expect(screen.getByText(/my memories/i)).toBeInTheDocument();
     });
   });
 
-  it('shows check-ins tab content', async () => {
+  it('shows check-in history section', async () => {
     mockAllEndpoints();
-    const user = userEvent.setup();
     render(<ProfilePage />, { wrapper });
 
     await waitFor(() => {
-      expect(
-        screen.getByRole('tab', { name: /check-ins/i })
-      ).toBeInTheDocument();
+      expect(screen.getByText('Check-in History')).toBeInTheDocument();
     });
 
-    await user.click(screen.getByRole('tab', { name: /check-ins/i }));
-
     await waitFor(() => {
-      expect(screen.getByText('Fika Coffee')).toBeInTheDocument();
-    });
-  });
-
-  it('shows lists tab content', async () => {
-    mockAllEndpoints();
-    const user = userEvent.setup();
-    render(<ProfilePage />, { wrapper });
-
-    await waitFor(() => {
-      expect(screen.getByRole('tab', { name: /lists/i })).toBeInTheDocument();
-    });
-
-    await user.click(screen.getByRole('tab', { name: /lists/i }));
-
-    await waitFor(() => {
-      expect(screen.getByText('Favourites')).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'Fika Coffee' })).toHaveAttribute(
+        'href',
+        '/shop/shop-a'
+      );
     });
   });
 
@@ -181,7 +146,7 @@ describe('ProfilePage', () => {
     });
   });
 
-  it('shows empty passport state when user has no stamps', async () => {
+  it('shows empty memories state when user has no stamps', async () => {
     mockAllEndpoints({ stamps: [] });
     render(<ProfilePage />, { wrapper });
 
@@ -190,7 +155,7 @@ describe('ProfilePage', () => {
         stamp_count: 0,
       });
     });
-    expect(screen.getByText(/my passport/i)).toBeInTheDocument();
+    expect(screen.getByText(/my memories/i)).toBeInTheDocument();
   });
 
   it('opens stamp detail sheet when user taps a stamp', async () => {
@@ -201,9 +166,9 @@ describe('ProfilePage', () => {
     render(<ProfilePage />, { wrapper });
 
     await waitFor(() => {
-      expect(screen.getByTestId('stamp-slot-filled')).toBeInTheDocument();
+      expect(screen.getByTestId('polaroid-preview-card')).toBeInTheDocument();
     });
-    await user.click(screen.getByTestId('stamp-slot-filled'));
+    await user.click(screen.getByTestId('polaroid-preview-card'));
 
     await waitFor(() => {
       expect(screen.getByText('山小孩咖啡')).toBeInTheDocument();
