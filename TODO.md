@@ -1116,7 +1116,7 @@ _Designed in Pencil. Stamps, check-in history, account settings._
 - [x] Task 3: Frontend — PolaroidCard component
 - [x] Task 9: Frontend — Update StampDetailSheet with diary note and tilt
 
-- [ ] Task 5: Frontend — PolaroidSection (profile preview)
+- [x] Task 5: Frontend — PolaroidSection (profile preview)
 - [ ] Task 6: Frontend — CorkBoard (scattered + grid toggle)
 
 **Chunk 3 — Pages + Integration (Wave 4):**
