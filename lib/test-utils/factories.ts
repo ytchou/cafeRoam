@@ -111,3 +111,28 @@ export function makeStamp(overrides: Record<string, unknown> = {}) {
     ...overrides,
   };
 }
+
+export function makeCommunityNote(
+  overrides: Record<string, unknown> = {}
+): Record<string, unknown> {
+  return {
+    checkinId: 'ci-comm-01',
+    author: {
+      userId: 'user-a1b2c3',
+      displayName: 'Mei-Ling ☕',
+      avatarUrl: null,
+      roleLabel: 'Coffee blogger',
+    },
+    reviewText:
+      'The most incredible natural light floods in during the afternoons. Perfect for long work sessions.',
+    starRating: 5,
+    coverPhotoUrl:
+      'https://example.supabase.co/storage/v1/object/public/checkin-photos/photo1.jpg',
+    shopName: 'Hinoki Coffee',
+    shopSlug: 'hinoki-coffee',
+    shopDistrict: '大安',
+    likeCount: 12,
+    createdAt: '2026-03-15T14:30:00',
+    ...overrides,
+  };
+}
