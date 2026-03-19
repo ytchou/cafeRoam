@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('react-map-gl/mapbox', () => {
   const MockMap = ({
@@ -38,6 +38,7 @@ vi.mock('react-map-gl/mapbox', () => {
     onClick?: () => void;
     longitude: number;
     latitude: number;
+    anchor?: string;
   }) => (
     <div
       data-testid="marker"
@@ -78,19 +79,37 @@ const REALISTIC_SHOPS = [
 ];
 
 describe('MapView', () => {
+  beforeEach(() => {
+    vi.stubEnv('NEXT_PUBLIC_MAPBOX_TOKEN', 'pk.test-token');
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
   it('a visitor opening the map sees all shop pins before any panning occurs', () => {
-    render(<MapView shops={SHOPS} onPinClick={vi.fn()} />);
+    render(
+      <MapView shops={SHOPS} onPinClick={vi.fn()} selectedShopId={null} />
+    );
     const markers = screen.getAllByTestId('marker');
     expect(markers.length).toBe(3);
   });
 
   it('a visitor opening the map sees the map canvas', () => {
-    render(<MapView shops={SHOPS} onPinClick={vi.fn()} />);
+    render(
+      <MapView shops={SHOPS} onPinClick={vi.fn()} selectedShopId={null} />
+    );
     expect(screen.getByTestId('map')).toBeInTheDocument();
   });
 
   it('a visitor sees a pin for each shop on the map', () => {
-    render(<MapView shops={REALISTIC_SHOPS} onPinClick={vi.fn()} />);
+    render(
+      <MapView
+        shops={REALISTIC_SHOPS}
+        onPinClick={vi.fn()}
+        selectedShopId={null}
+      />
+    );
 
     expect(screen.getByTestId('map')).toBeInTheDocument();
     expect(
@@ -103,12 +122,58 @@ describe('MapView', () => {
 
   it('a visitor clicking a pin calls onPinClick with the shop ID', async () => {
     const onPinClick = vi.fn();
-    render(<MapView shops={REALISTIC_SHOPS} onPinClick={onPinClick} />);
+    render(
+      <MapView
+        shops={REALISTIC_SHOPS}
+        onPinClick={onPinClick}
+        selectedShopId={null}
+      />
+    );
 
     await userEvent.click(
       screen.getByRole('button', { name: '湛盧咖啡 Zhanlu Coffee' })
     );
 
     expect(onPinClick).toHaveBeenCalledWith('shop-1');
+  });
+
+  it('a visitor tapping a pin sees the selected pin highlighted in coral', () => {
+    render(
+      <MapView
+        shops={REALISTIC_SHOPS}
+        onPinClick={vi.fn()}
+        selectedShopId="shop-1"
+      />
+    );
+    const selectedPin = screen.getByRole('button', {
+      name: '湛盧咖啡 Zhanlu Coffee',
+    });
+    expect(selectedPin).toHaveAttribute('data-selected', 'true');
+  });
+
+  it('a visitor sees unselected pins without the selected data attribute', () => {
+    render(
+      <MapView
+        shops={REALISTIC_SHOPS}
+        onPinClick={vi.fn()}
+        selectedShopId="shop-1"
+      />
+    );
+    const unselectedPin = screen.getByRole('button', {
+      name: '山頂咖啡 Summit Coffee',
+    });
+    expect(unselectedPin).not.toHaveAttribute('data-selected');
+  });
+
+  it('a visitor sees an error message when Mapbox token is missing', () => {
+    vi.stubEnv('NEXT_PUBLIC_MAPBOX_TOKEN', '');
+    render(
+      <MapView
+        shops={REALISTIC_SHOPS}
+        onPinClick={vi.fn()}
+        selectedShopId={null}
+      />
+    );
+    expect(screen.getByText(/Mapbox token/i)).toBeInTheDocument();
   });
 });

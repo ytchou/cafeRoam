@@ -8,9 +8,12 @@ export interface SearchState {
   query: string;
   mode: SearchMode;
   filters: string[];
+  view: 'map' | 'list';
   setQuery: (q: string) => void;
   setMode: (mode: SearchMode) => void;
   toggleFilter: (filter: string) => void;
+  setFilters: (filters: string[]) => void;
+  setView: (view: 'map' | 'list') => void;
   clearAll: () => void;
 }
 
@@ -26,6 +29,9 @@ export function useSearchState(): SearchState {
     () => (filtersRaw ? filtersRaw.split(',').filter(Boolean) : []),
     [filtersRaw]
   );
+
+  const rawView = searchParams.get('view');
+  const view: 'map' | 'list' = rawView === 'list' ? 'list' : 'map';
 
   const buildUrl = useCallback(
     (updates: Record<string, string | null>) => {
@@ -67,9 +73,34 @@ export function useSearchState(): SearchState {
     [router, buildUrl, filters]
   );
 
+  const setFilters = useCallback(
+    (nextFilters: string[]) => {
+      router.push(buildUrl({ filters: nextFilters.join(',') || null }));
+    },
+    [router, buildUrl]
+  );
+
+  const setView = useCallback(
+    (v: 'map' | 'list') => {
+      router.push(buildUrl({ view: v }));
+    },
+    [router, buildUrl]
+  );
+
   const clearAll = useCallback(() => {
-    router.push(buildUrl({ q: null, mode: null, filters: null }));
+    router.push(buildUrl({ q: null, mode: null, filters: null, view: null }));
   }, [router, buildUrl]);
 
-  return { query, mode, filters, setQuery, setMode, toggleFilter, clearAll };
+  return {
+    query,
+    mode,
+    filters,
+    view,
+    setQuery,
+    setMode,
+    toggleFilter,
+    setFilters,
+    setView,
+    clearAll,
+  };
 }

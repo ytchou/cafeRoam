@@ -1,5 +1,6 @@
 'use client';
-import { useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { Navigation } from 'lucide-react';
 import type { TaxonomyTag } from '@/lib/types';
 import { ShopHero } from '@/components/shops/shop-hero';
 import { ShopIdentity } from '@/components/shops/shop-identity';
@@ -11,6 +12,7 @@ import { MenuHighlights } from '@/components/shops/menu-highlights';
 import { RecentCheckinsStrip } from '@/components/shops/recent-checkins-strip';
 import { ShopMapThumbnail } from '@/components/shops/shop-map-thumbnail';
 import { ShopReviews } from '@/components/shops/shop-reviews';
+import { DirectionsSheet } from '@/components/shops/directions-sheet';
 import { useShopReviews } from '@/lib/hooks/use-shop-reviews';
 import { useUser } from '@/lib/hooks/use-user';
 import { useAnalytics } from '@/lib/posthog/use-analytics';
@@ -49,6 +51,7 @@ interface ShopDetailClientProps {
 export function ShopDetailClient({ shop }: ShopDetailClientProps) {
   const { capture } = useAnalytics();
   const { user, isLoading: isUserLoading } = useUser();
+  const [directionsOpen, setDirectionsOpen] = useState(false);
   const photos = shop.photoUrls ?? [];
   const tags = shop.taxonomyTags ?? [];
   const shopPath = `/shops/${shop.id}/${shop.slug ?? shop.id}`;
@@ -70,6 +73,19 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
       : shopPath;
 
   const hasMap = shop.latitude != null && shop.longitude != null;
+
+  const directionsShop = useMemo(
+    () =>
+      hasMap
+        ? {
+            id: shop.id,
+            name: shop.name,
+            latitude: shop.latitude!,
+            longitude: shop.longitude!,
+          }
+        : null,
+    [hasMap, shop.id, shop.name, shop.latitude, shop.longitude]
+  );
 
   return (
     <div className="min-h-screen bg-white pb-20">
@@ -100,7 +116,18 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
             isLoading={isLoading}
             isAuthError={!isUserLoading && (!user || isAuthError)}
           />
-          <div className="px-4 py-2">
+          <div className="flex items-center gap-2 px-4 py-2">
+            {hasMap && (
+              <button
+                type="button"
+                onClick={() => setDirectionsOpen(true)}
+                className="flex items-center gap-1.5 rounded-full border border-gray-200 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                aria-label="Get There"
+              >
+                <Navigation size={14} />
+                Get There
+              </button>
+            )}
             <ShareButton
               shopId={shop.id}
               shopName={shop.name}
@@ -134,6 +161,14 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
       )}
 
       <StickyCheckinBar shopId={shop.id} returnTo={shopPath} />
+
+      {hasMap && directionsShop && (
+        <DirectionsSheet
+          open={directionsOpen}
+          onClose={() => setDirectionsOpen(false)}
+          shop={directionsShop}
+        />
+      )}
     </div>
   );
 }

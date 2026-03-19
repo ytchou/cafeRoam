@@ -28,12 +28,76 @@ interface Bounds {
 interface MapViewProps {
   shops: Shop[];
   onPinClick: (shopId: string) => void;
+  selectedShopId: string | null;
   mapStyle?: string;
+}
+
+const PIN_DEFAULT_SIZE = 40;
+const PIN_BUTTON_STYLE = { minWidth: 44, minHeight: 44 };
+const PIN_SELECTED_SIZE = 44;
+const PIN_DEFAULT_COLOR = '#8B5E3C';
+const PIN_SELECTED_COLOR = '#FF6B6B';
+const TIP_HEIGHT = 10;
+
+function CoffeePinIcon({ selected }: { selected: boolean }) {
+  const size = selected ? PIN_SELECTED_SIZE : PIN_DEFAULT_SIZE;
+  const color = selected ? PIN_SELECTED_COLOR : PIN_DEFAULT_COLOR;
+  const iconSize = Math.round(size * 0.5);
+  const radius = size / 2;
+
+  return (
+    <svg
+      width={size}
+      height={size + TIP_HEIGHT}
+      viewBox={`0 0 ${size} ${size + TIP_HEIGHT}`}
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
+      <circle cx={radius} cy={radius} r={radius} fill={color} />
+      <polygon
+        points={`${radius - 6},${size - 2} ${radius},${size + TIP_HEIGHT} ${radius + 6},${size - 2}`}
+        fill={color}
+      />
+      {/* Lucide Coffee icon paths inlined to avoid foreignObject cross-environment issues */}
+      <g
+        transform={`translate(${(size - iconSize) / 2}, ${(size - iconSize) / 2})`}
+        stroke="white"
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
+      >
+        <path
+          d={`M${iconSize * 0.146} ${iconSize * 0.333}h${iconSize * 0.542}a${iconSize * 0.167} ${iconSize * 0.167} 0 0 1 0 ${iconSize * 0.333}h-${iconSize * 0.542}z`}
+        />
+        <path
+          d={`M${iconSize * 0.688} ${iconSize * 0.5}a${iconSize * 0.208} ${iconSize * 0.208} 0 0 0 0-${iconSize * 0.333}`}
+        />
+        <path
+          d={`M${iconSize * 0.083} ${iconSize * 0.667}l${iconSize * 0.125} ${iconSize * 0.25}h${iconSize * 0.583}l${iconSize * 0.125}-${iconSize * 0.25}`}
+        />
+        <line
+          x1={iconSize * 0.333}
+          y1={iconSize * 0.167}
+          x2={iconSize * 0.292}
+          y2={iconSize * 0.333}
+        />
+        <line
+          x1={iconSize * 0.5}
+          y1={iconSize * 0.083}
+          x2={iconSize * 0.458}
+          y2={iconSize * 0.333}
+        />
+      </g>
+    </svg>
+  );
 }
 
 export function MapView({
   shops,
   onPinClick,
+  selectedShopId,
   mapStyle = 'mapbox://styles/mapbox/light-v11',
 }: MapViewProps) {
   const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
@@ -82,19 +146,27 @@ export function MapView({
       mapStyle={mapStyle}
       onMove={handleMove}
     >
-      {visibleShops.map((shop) => (
-        <Marker
-          key={shop.id}
-          longitude={shop.longitude}
-          latitude={shop.latitude}
-          onClick={() => onPinClick(shop.id)}
-        >
-          <button
-            className="h-4 w-4 rounded-full border-2 border-white bg-[#E06B3F] shadow"
-            aria-label={shop.name}
-          />
-        </Marker>
-      ))}
+      {visibleShops.map((shop) => {
+        const isSelected = shop.id === selectedShopId;
+        return (
+          <Marker
+            key={shop.id}
+            longitude={shop.longitude}
+            latitude={shop.latitude}
+            anchor="bottom"
+            onClick={() => onPinClick(shop.id)}
+          >
+            <button
+              data-selected={isSelected || undefined}
+              aria-label={shop.name}
+              className="cursor-pointer border-none bg-transparent p-0"
+              style={PIN_BUTTON_STYLE}
+            >
+              <CoffeePinIcon selected={isSelected} />
+            </button>
+          </Marker>
+        );
+      })}
     </Map>
   );
 }
