@@ -23,9 +23,7 @@ export function SearchBar({
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const trimmed = value.trim();
-    if (!trimmed) return;
-    onSearch(trimmed);
+    onSearch(value.trim());
   }
 
   return (

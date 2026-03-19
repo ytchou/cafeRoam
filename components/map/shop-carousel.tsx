@@ -1,20 +1,10 @@
 'use client';
 import { useRef, useEffect } from 'react';
 import { ShopCardCarousel } from '@/components/shops/shop-card-carousel';
-
-interface CarouselShop {
-  id: string;
-  name: string;
-  rating: number | null;
-  photo_urls?: string[];
-  photoUrls?: string[];
-  taxonomyTags?: Array<{ id: string; label: string; labelZh: string }>;
-  review_count?: number;
-  reviewCount?: number;
-}
+import type { LayoutShop } from '@/lib/types';
 
 interface ShopCarouselProps {
-  shops: CarouselShop[];
+  shops: LayoutShop[];
   onShopClick: (shopId: string) => void;
   selectedShopId?: string | null;
 }

@@ -1,21 +1,10 @@
 'use client';
 import Image from 'next/image';
 import { Star } from 'lucide-react';
-
-interface CarouselShop {
-  id: string;
-  name: string;
-  rating: number | null;
-  review_count?: number;
-  reviewCount?: number;
-  photo_urls?: string[];
-  photoUrls?: string[];
-  taxonomyTags?: Array<{ id: string; label: string; labelZh: string }>;
-  distance_km?: number | null;
-}
+import type { LayoutShop } from '@/lib/types';
 
 interface ShopCardCarouselProps {
-  shop: CarouselShop;
+  shop: LayoutShop;
   onClick: () => void;
   distanceText?: string;
 }
