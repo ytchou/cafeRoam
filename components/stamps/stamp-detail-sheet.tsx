@@ -10,18 +10,10 @@ import {
 } from '@/components/ui/drawer';
 import { Button } from '@/components/ui/button';
 import { formatDate } from '@/lib/utils';
+import type { StampData } from '@/lib/hooks/use-user-stamps';
 
 interface StampDetailSheetProps {
-  stamp: {
-    id: string;
-    shop_id: string;
-    shop_name: string | null;
-    design_url: string;
-    earned_at: string;
-    photo_url?: string | null;
-    district?: string | null;
-    diary_note?: string | null;
-  };
+  stamp: StampData;
   onClose: () => void;
 }
 
