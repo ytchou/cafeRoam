@@ -6,15 +6,18 @@ describe('ProfileHeader', () => {
   const defaultProps = {
     displayName: 'Mei-Ling',
     avatarUrl: null as string | null,
-    stampCount: 12,
     checkinCount: 8,
   };
 
-  it('renders display name and stats', () => {
+  it('renders display name and check-in count', () => {
     render(<ProfileHeader {...defaultProps} />);
     expect(screen.getByText('Mei-Ling')).toBeInTheDocument();
-    expect(screen.getByText(/12 stamps/)).toBeInTheDocument();
-    expect(screen.getByText(/8 check-ins/)).toBeInTheDocument();
+    expect(screen.getByText('8 check-ins')).toBeInTheDocument();
+  });
+
+  it('does not display stamp count', () => {
+    render(<ProfileHeader {...defaultProps} />);
+    expect(screen.queryByText(/stamp/i)).not.toBeInTheDocument();
   });
 
   it('shows initials when no avatar URL', () => {

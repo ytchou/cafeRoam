@@ -11,6 +11,9 @@ export interface StampData {
   design_url: string;
   earned_at: string;
   shop_name: string | null; // from JOIN; null if shop was deleted
+  photo_url: string | null;
+  district: string | null;
+  diary_note: string | null;
 }
 
 const fetcher = (url: string) => fetchWithAuth(url);
