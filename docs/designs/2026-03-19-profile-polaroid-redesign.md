@@ -34,6 +34,7 @@ New `PolaroidSection` component renders the 4 most recent stamps as a 2-column p
 Section header: **"My Memories"** (no stamp count inline)
 
 Each card:
+
 - Check-in photo (full-bleed, square crop)
 - White bottom strip (~20% card height)
 - Shop name (small, semi-bold)
@@ -55,6 +56,7 @@ Remove the Lists tab. `useListSummaries` hook import removed from `page.tsx`. Re
 ### Layout Toggle
 
 Top-right corner: two icon buttons (grid icon, scatter icon).
+
 - Active state: filled icon, darker background pill
 - Preference persisted in `localStorage` under key `caferoam:memories_view`
 - Default: **scattered**
@@ -62,6 +64,7 @@ Top-right corner: two icon buttons (grid icon, scatter icon).
 ### Cork Board Background
 
 Warm cork texture rendered entirely in CSS — no image asset:
+
 - Background color: `#C8A97B`
 - Overlaid radial gradient dots at varying opacities to simulate cork grain
 - Applied to the page container, not individual cards
@@ -125,9 +128,9 @@ Replaces the current minimal drawer with a richer memory view:
 ### Frontend — `StampData` type (new optional fields)
 
 ```ts
-photo_url: string | null      // check_ins.photo_urls[0]
-district: string | null        // shops.district
-diary_note: string | null      // check_ins.diary_note (if column exists)
+photo_url: string | null; // check_ins.photo_urls[0]
+district: string | null; // shops.district
+diary_note: string | null; // check_ins.diary_note (if column exists)
 ```
 
 ### Backend — `/api/stamps` endpoint
@@ -142,22 +145,22 @@ Return new fields: `photo_url`, `district`, `diary_note`.
 
 ## New Files
 
-| File | Purpose |
-|------|---------|
-| `components/stamps/polaroid-card.tsx` | Single polaroid card (photo + white strip + pin) |
-| `components/stamps/polaroid-section.tsx` | 2-col preview on profile page (4 items + "View All") |
-| `components/stamps/cork-board.tsx` | Full cork board with scatter/grid toggle |
-| `app/(protected)/profile/memories/page.tsx` | Route for the memory board |
+| File                                        | Purpose                                              |
+| ------------------------------------------- | ---------------------------------------------------- |
+| `components/stamps/polaroid-card.tsx`       | Single polaroid card (photo + white strip + pin)     |
+| `components/stamps/polaroid-section.tsx`    | 2-col preview on profile page (4 items + "View All") |
+| `components/stamps/cork-board.tsx`          | Full cork board with scatter/grid toggle             |
+| `app/(protected)/profile/memories/page.tsx` | Route for the memory board                           |
 
 ## Modified Files
 
-| File | Change |
-|------|--------|
-| `components/profile/profile-header.tsx` | Remove `stampCount` prop + stat display |
-| `app/(protected)/profile/page.tsx` | Swap `StampPassport` → `PolaroidSection`; remove Lists tab + hook |
-| `components/stamps/stamp-detail-sheet.tsx` | Add diary note, tilted polaroid layout, updated props |
-| `lib/hooks/use-user-stamps.ts` | Add `photo_url`, `district`, `diary_note` to `StampData` |
-| `backend/api/stamps.py` | JOIN with `check_ins` + `shops`; return new fields |
+| File                                       | Change                                                            |
+| ------------------------------------------ | ----------------------------------------------------------------- |
+| `components/profile/profile-header.tsx`    | Remove `stampCount` prop + stat display                           |
+| `app/(protected)/profile/page.tsx`         | Swap `StampPassport` → `PolaroidSection`; remove Lists tab + hook |
+| `components/stamps/stamp-detail-sheet.tsx` | Add diary note, tilted polaroid layout, updated props             |
+| `lib/hooks/use-user-stamps.ts`             | Add `photo_url`, `district`, `diary_note` to `StampData`          |
+| `backend/api/stamps.py`                    | JOIN with `check_ins` + `shops`; return new fields                |
 
 ---
 

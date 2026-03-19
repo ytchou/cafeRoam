@@ -20,7 +20,7 @@ interface StampDetailSheetProps {
 export function StampDetailSheet({ stamp, onClose }: StampDetailSheetProps) {
   const earnedDate = formatDate(stamp.earned_at);
   const shopName = stamp.shop_name ?? 'Unknown Shop';
-  const tilt = stamp.id ? ((stamp.id.charCodeAt(0) % 7) - 3) : 0;
+  const tilt = stamp.id ? (stamp.id.charCodeAt(0) % 7) - 3 : 0;
 
   return (
     <Drawer open onOpenChange={(isOpen) => !isOpen && onClose()}>
@@ -52,7 +52,8 @@ export function StampDetailSheet({ stamp, onClose }: StampDetailSheetProps) {
             <div className="mt-1 px-1">
               <p className="truncate text-sm font-semibold">{shopName}</p>
               <p className="text-xs text-gray-500">
-                {stamp.district && `${stamp.district} · `}{earnedDate}
+                {stamp.district && `${stamp.district} · `}
+                {earnedDate}
               </p>
             </div>
           </div>
@@ -64,7 +65,7 @@ export function StampDetailSheet({ stamp, onClose }: StampDetailSheetProps) {
               data-testid="diary-note"
               className="w-full max-w-xs rounded-lg bg-amber-50 px-4 py-3"
             >
-              <p className="text-center text-sm italic text-gray-700">
+              <p className="text-center text-sm text-gray-700 italic">
                 &ldquo;{stamp.diary_note}&rdquo;
               </p>
             </div>

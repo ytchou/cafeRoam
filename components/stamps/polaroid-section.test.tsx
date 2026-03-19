@@ -11,7 +11,9 @@ describe('PolaroidSection', () => {
 
   it('renders empty state when no stamps', () => {
     render(<PolaroidSection stamps={[]} />);
-    expect(screen.getByText(/Your memories will appear here/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Your memories will appear here/)
+    ).toBeInTheDocument();
   });
 
   it('renders at most 4 polaroid cards', () => {
@@ -32,6 +34,8 @@ describe('PolaroidSection', () => {
 
   it('does not render "View All" when there are no stamps', () => {
     render(<PolaroidSection stamps={[]} />);
-    expect(screen.queryByRole('link', { name: /View All/i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('link', { name: /View All/i })
+    ).not.toBeInTheDocument();
   });
 });

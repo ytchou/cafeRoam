@@ -29,7 +29,9 @@ describe('PolaroidCard', () => {
   });
 
   it('applies rotation style when rotation prop is provided', () => {
-    const { container } = render(<PolaroidCard {...defaultProps} rotation={5} />);
+    const { container } = render(
+      <PolaroidCard {...defaultProps} rotation={5} />
+    );
     const card = container.firstElementChild as HTMLElement;
     expect(card.style.transform).toContain('rotate(5deg)');
   });

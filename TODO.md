@@ -1104,15 +1104,18 @@ _Designed in Pencil. Stamps, check-in history, account settings._
 - [ ] Frontend: Implement Profile UI from Pencil designs
 
 ### Profile Polaroid Redesign
+
 > **Design Doc:** [docs/designs/2026-03-19-profile-polaroid-redesign.md](docs/designs/2026-03-19-profile-polaroid-redesign.md)
 > **Plan:** [docs/plans/2026-03-19-profile-polaroid-redesign-plan.md](docs/plans/2026-03-19-profile-polaroid-redesign-plan.md)
 
 **Chunk 1 — Backend + Types (Wave 1):**
+
 - [x] Task 1: Backend — Extend stamps API with photo_url, district, diary_note
 - [x] Task 2: Frontend — Update StampData type and factory
 - [x] Task 4: Frontend — Remove stamp count from ProfileHeader
 
 **Chunk 2 — New Components (Wave 2-3):**
+
 - [x] Task 3: Frontend — PolaroidCard component
 - [x] Task 9: Frontend — Update StampDetailSheet with diary note and tilt
 
@@ -1120,6 +1123,7 @@ _Designed in Pencil. Stamps, check-in history, account settings._
 - [x] Task 6: Frontend — CorkBoard (scattered + grid toggle)
 
 **Chunk 3 — Pages + Integration (Wave 4):**
+
 - [x] Task 7: Frontend — `/profile/memories` cork board page
 - [x] Task 8: Frontend — Update profile page (swap StampPassport → PolaroidSection, remove Lists tab)
 

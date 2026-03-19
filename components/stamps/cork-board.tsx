@@ -48,7 +48,9 @@ export function CorkBoard({ stamps, onStampClick }: CorkBoardProps) {
     return (
       <div className="flex flex-col items-center justify-center py-24 text-center">
         <p className="text-lg text-gray-500">No memories yet</p>
-        <p className="mt-1 text-sm text-gray-400">Check in to your first cafe to start your memory board</p>
+        <p className="mt-1 text-sm text-gray-400">
+          Check in to your first cafe to start your memory board
+        </p>
       </div>
     );
   }
@@ -62,10 +64,42 @@ export function CorkBoard({ stamps, onStampClick }: CorkBoardProps) {
           className={`rounded-lg p-2 ${view === 'scatter' ? 'bg-gray-200 text-gray-900' : 'text-gray-400 hover:text-gray-600'}`}
         >
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-            <rect x="1" y="2" width="7" height="7" rx="1" fill="currentColor" transform="rotate(-5 4.5 5.5)" />
-            <rect x="11" y="1" width="7" height="7" rx="1" fill="currentColor" transform="rotate(3 14.5 4.5)" />
-            <rect x="3" y="12" width="7" height="7" rx="1" fill="currentColor" transform="rotate(4 6.5 15.5)" />
-            <rect x="12" y="11" width="7" height="7" rx="1" fill="currentColor" transform="rotate(-3 15.5 14.5)" />
+            <rect
+              x="1"
+              y="2"
+              width="7"
+              height="7"
+              rx="1"
+              fill="currentColor"
+              transform="rotate(-5 4.5 5.5)"
+            />
+            <rect
+              x="11"
+              y="1"
+              width="7"
+              height="7"
+              rx="1"
+              fill="currentColor"
+              transform="rotate(3 14.5 4.5)"
+            />
+            <rect
+              x="3"
+              y="12"
+              width="7"
+              height="7"
+              rx="1"
+              fill="currentColor"
+              transform="rotate(4 6.5 15.5)"
+            />
+            <rect
+              x="12"
+              y="11"
+              width="7"
+              height="7"
+              rx="1"
+              fill="currentColor"
+              transform="rotate(-3 15.5 14.5)"
+            />
           </svg>
         </button>
         <button
@@ -75,9 +109,30 @@ export function CorkBoard({ stamps, onStampClick }: CorkBoardProps) {
         >
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
             <rect x="1" y="1" width="8" height="8" rx="1" fill="currentColor" />
-            <rect x="11" y="1" width="8" height="8" rx="1" fill="currentColor" />
-            <rect x="1" y="11" width="8" height="8" rx="1" fill="currentColor" />
-            <rect x="11" y="11" width="8" height="8" rx="1" fill="currentColor" />
+            <rect
+              x="11"
+              y="1"
+              width="8"
+              height="8"
+              rx="1"
+              fill="currentColor"
+            />
+            <rect
+              x="1"
+              y="11"
+              width="8"
+              height="8"
+              rx="1"
+              fill="currentColor"
+            />
+            <rect
+              x="11"
+              y="11"
+              width="8"
+              height="8"
+              rx="1"
+              fill="currentColor"
+            />
           </svg>
         </button>
       </div>

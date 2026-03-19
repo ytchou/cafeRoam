@@ -15,6 +15,7 @@
 **Tech Stack:** Next.js 16, TypeScript, Tailwind CSS, shadcn/ui Drawer, SWR, FastAPI, Supabase PostgREST
 
 **Acceptance Criteria:**
+
 - [ ] Profile page shows 4 most recent polaroids with check-in photos, shop name, and district — tapping "View All" navigates to `/profile/memories`
 - [ ] Cork board page shows all polaroids with a working scattered/grid toggle that persists across sessions
 - [ ] Profile header no longer displays stamp count
@@ -26,6 +27,7 @@
 ### Task 1: Backend — Extend stamps API with photo_url and district
 
 **Files:**
+
 - Modify: `backend/api/stamps.py:12-32`
 - Test: `backend/tests/test_stamps_api.py`
 
@@ -123,6 +125,7 @@ git commit -m "feat(api): extend stamps endpoint with photo_url, district, diary
 ### Task 2: Frontend — Update StampData type and factory
 
 **Files:**
+
 - Modify: `lib/hooks/use-user-stamps.ts:6-14`
 - Modify: `lib/test-utils/factories.ts:101-113`
 
@@ -190,6 +193,7 @@ git commit -m "feat(types): add photo_url, district, diary_note to StampData"
 ### Task 3: Frontend — PolaroidCard component
 
 **Files:**
+
 - Create: `components/stamps/polaroid-card.tsx`
 - Create: `components/stamps/polaroid-card.test.tsx`
 
@@ -359,6 +363,7 @@ git commit -m "feat: PolaroidCard component with pin, rotation, and photo displa
 ### Task 4: Frontend — Remove stamp count from ProfileHeader
 
 **Files:**
+
 - Modify: `components/profile/profile-header.tsx:4-9,39`
 - Modify: `components/profile/profile-header.test.tsx`
 
@@ -446,6 +451,7 @@ git commit -m "feat: remove stamp count from profile header"
 ### Task 5: Frontend — PolaroidSection (profile preview)
 
 **Files:**
+
 - Create: `components/stamps/polaroid-section.tsx`
 - Create: `components/stamps/polaroid-section.test.tsx`
 
@@ -571,6 +577,7 @@ git commit -m "feat: PolaroidSection preview component for profile page"
 ### Task 6: Frontend — CorkBoard component (scattered + grid toggle)
 
 **Files:**
+
 - Create: `components/stamps/cork-board.tsx`
 - Create: `components/stamps/cork-board.test.tsx`
 
@@ -830,6 +837,7 @@ git commit -m "feat: CorkBoard component with scatter/grid toggle and localStora
 ### Task 7: Frontend — `/profile/memories` page
 
 **Files:**
+
 - Create: `app/(protected)/profile/memories/page.tsx`
 - Create: `app/(protected)/profile/memories/page.test.tsx`
 
@@ -986,12 +994,14 @@ git commit -m "feat: /profile/memories cork board page"
 ### Task 8: Frontend — Update profile page (swap components, remove lists tab)
 
 **Files:**
+
 - Modify: `app/(protected)/profile/page.tsx`
 - Modify: `app/(protected)/profile/page.test.tsx`
 
 **Step 1: Update tests**
 
 In `page.test.tsx`:
+
 - Remove all imports/references to `ListsTab` and `useListSummaries`
 - Remove the "Lists" tab test assertions
 - Replace `StampPassport` assertions with `PolaroidSection` assertions (check for "My Memories" heading, "View All" link)
@@ -1080,6 +1090,7 @@ export default function ProfilePage() {
 ```
 
 Key changes:
+
 - Removed `useListSummaries`, `ListsTab`, `Tabs`/`TabsList`/`TabsTrigger`/`TabsContent` imports
 - Removed `stampCount` prop from `ProfileHeader`
 - Replaced `StampPassport` with `PolaroidSection`
@@ -1107,6 +1118,7 @@ git commit -m "feat: swap StampPassport for PolaroidSection, remove Lists tab fr
 ### Task 9: Frontend — Update StampDetailSheet with diary note and tilt
 
 **Files:**
+
 - Modify: `components/stamps/stamp-detail-sheet.tsx`
 - Modify: `components/stamps/stamp-detail-sheet.test.tsx`
 
@@ -1287,19 +1299,23 @@ graph TD
 ```
 
 **Wave 1** (parallel — no dependencies):
+
 - Task 1: Backend stamps API (adds photo_url, district, diary_note to response)
 - Task 2: Frontend StampData types + factory
 - Task 4: ProfileHeader (remove stamp count)
 
 **Wave 2** (parallel — depends on Wave 1):
+
 - Task 3: PolaroidCard component ← Task 2
 - Task 9: StampDetailSheet update ← Task 2
 
 **Wave 3** (parallel — depends on Wave 2):
+
 - Task 5: PolaroidSection ← Task 3
 - Task 6: CorkBoard ← Task 3
 
 **Wave 4** (parallel — depends on Wave 3):
+
 - Task 7: Memories page ← Task 6
 - Task 8: Profile page update ← Task 4, Task 5
 

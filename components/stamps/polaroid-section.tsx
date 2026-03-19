@@ -9,7 +9,10 @@ interface PolaroidSectionProps {
   onStampClick?: (stamp: StampData) => void;
 }
 
-export function PolaroidSection({ stamps, onStampClick }: PolaroidSectionProps) {
+export function PolaroidSection({
+  stamps,
+  onStampClick,
+}: PolaroidSectionProps) {
   const previewStamps = stamps.slice(0, MAX_PREVIEW);
 
   return (

@@ -36,7 +36,9 @@ describe('StampDetailSheet', () => {
   it('displays diary note when present', () => {
     const stamp = makeStamp({ diary_note: 'finally found my writing spot' });
     render(<StampDetailSheet stamp={stamp} onClose={vi.fn()} />);
-    expect(screen.getByText(/finally found my writing spot/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/finally found my writing spot/)
+    ).toBeInTheDocument();
   });
 
   it('does not render diary section when diary_note is null', () => {
