@@ -20,7 +20,8 @@ async def get_my_stamps(
         lambda: (
             db.table("stamps")
             .select(
-                "id, user_id, shop_id, check_in_id, design_url, earned_at, shops(name, district), check_ins(photo_urls, note)"
+                "id, user_id, shop_id, check_in_id, design_url, earned_at,"
+                " shops(name, district), check_ins(photo_urls, note)"
             )
             .eq("user_id", user["id"])
             .order("earned_at", desc=True)
