@@ -4,21 +4,17 @@ import { useState, useEffect, useRef } from 'react';
 import { useUserStamps } from '@/lib/hooks/use-user-stamps';
 import { useUserProfile } from '@/lib/hooks/use-user-profile';
 import { useUserCheckins } from '@/lib/hooks/use-user-checkins';
-import { useListSummaries } from '@/lib/hooks/use-list-summaries';
 import { useAnalytics } from '@/lib/posthog/use-analytics';
-import { StampPassport } from '@/components/stamps/stamp-passport';
+import { PolaroidSection } from '@/components/stamps/polaroid-section';
 import { StampDetailSheet } from '@/components/stamps/stamp-detail-sheet';
 import { ProfileHeader } from '@/components/profile/profile-header';
 import { CheckinHistoryTab } from '@/components/profile/checkin-history-tab';
-import { ListsTab } from '@/components/profile/lists-tab';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { StampData } from '@/lib/hooks/use-user-stamps';
 
 export default function ProfilePage() {
   const { profile, isLoading: profileLoading } = useUserProfile();
   const { stamps, isLoading: stampsLoading } = useUserStamps();
   const { checkins, isLoading: checkinsLoading } = useUserCheckins();
-  const { lists, isLoading: listsLoading } = useListSummaries();
   const [selectedStamp, setSelectedStamp] = useState<StampData | null>(null);
   const { capture } = useAnalytics();
   const hasFiredRef = useRef(false);
@@ -40,7 +36,6 @@ export default function ProfilePage() {
         <ProfileHeader
           displayName={profile?.display_name ?? null}
           avatarUrl={profile?.avatar_url ?? null}
-          stampCount={profile?.stamp_count ?? 0}
           checkinCount={profile?.checkin_count ?? 0}
         />
       )}
@@ -51,29 +46,17 @@ export default function ProfilePage() {
             <div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600" />
           </div>
         ) : (
-          <StampPassport
+          <PolaroidSection
             stamps={stamps}
             onStampClick={(stamp) => setSelectedStamp(stamp)}
           />
         )}
       </section>
 
-      <Tabs defaultValue="checkins">
-        <TabsList className="w-full">
-          <TabsTrigger value="checkins" className="flex-1">
-            Check-ins
-          </TabsTrigger>
-          <TabsTrigger value="lists" className="flex-1">
-            Lists
-          </TabsTrigger>
-        </TabsList>
-        <TabsContent value="checkins">
-          <CheckinHistoryTab checkins={checkins} isLoading={checkinsLoading} />
-        </TabsContent>
-        <TabsContent value="lists">
-          <ListsTab lists={lists} isLoading={listsLoading} />
-        </TabsContent>
-      </Tabs>
+      <section>
+        <h2 className="mb-4 text-lg font-semibold">Check-in History</h2>
+        <CheckinHistoryTab checkins={checkins} isLoading={checkinsLoading} />
+      </section>
 
       {selectedStamp && (
         <StampDetailSheet

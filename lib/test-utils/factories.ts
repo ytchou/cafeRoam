@@ -108,6 +108,10 @@ export function makeStamp(overrides: Record<string, unknown> = {}) {
       'https://example.supabase.co/storage/v1/object/public/stamps/d4e5f6.png',
     earned_at: TS,
     shop_name: '咖啡廳 Coffee Lab',
+    photo_url:
+      'https://example.supabase.co/storage/v1/object/public/checkin-photos/user-a1b2c3/photo1.jpg',
+    district: '大安',
+    diary_note: null,
     ...overrides,
   };
 }
