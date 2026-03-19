@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends
 from supabase import Client
 
 from api.deps import get_current_user, get_user_db
+from core.db import first
 
 router = APIRouter(prefix="/stamps", tags=["stamps"])
 
@@ -18,7 +19,7 @@ async def get_my_stamps(
     response = await asyncio.to_thread(
         lambda: (
             db.table("stamps")
-            .select("*, shops(name, district), check_ins(photo_urls, diary_note)")
+            .select("id, user_id, shop_id, check_in_id, design_url, earned_at, shops(name, district), check_ins(photo_urls, note)")
             .eq("user_id", user["id"])
             .order("earned_at", desc=True)
             .execute()
@@ -31,7 +32,7 @@ async def get_my_stamps(
         row["shop_name"] = shop_data.get("name")
         row["district"] = shop_data.get("district")
         photo_urls = checkin_data.get("photo_urls") or []
-        row["photo_url"] = photo_urls[0] if photo_urls else None
-        row["diary_note"] = checkin_data.get("diary_note")
+        row["photo_url"] = first(photo_urls, "stamp photo_url") if photo_urls else None
+        row["diary_note"] = checkin_data.get("note")
         results.append(row)
     return results
