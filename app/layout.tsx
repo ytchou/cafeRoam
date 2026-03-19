@@ -1,15 +1,24 @@
 import type { Metadata, Viewport } from 'next';
 import {
   Bricolage_Grotesque,
+  DM_Sans,
   Geist,
   Geist_Mono,
   Noto_Sans_TC,
 } from 'next/font/google';
+
 import { PostHogProvider } from '@/lib/posthog/provider';
 import { SessionTracker } from '@/components/session-tracker';
 import { AppShell } from '@/components/navigation/app-shell';
 import { Agentation } from 'agentation';
 import './globals.css';
+
+const dmSans = DM_Sans({
+  variable: '--font-dm-sans',
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  display: 'swap',
+});
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -70,7 +79,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="zh-TW">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${notoSansTC.variable} ${bricolageGrotesque.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${notoSansTC.variable} ${bricolageGrotesque.variable} ${dmSans.variable} antialiased`}
       >
         <PostHogProvider>
           <SessionTracker />

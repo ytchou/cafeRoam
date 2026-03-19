@@ -1069,7 +1069,7 @@ _Designed in Pencil. Replaces current 首頁 + 地圖 split into a unified Find 
 
 **Chunk 1 — Foundation (Wave 1):**
 
-- [ ] Task 1: Typography & CSS (DM Sans + design tokens)
+- [x] Task 1: Typography & CSS (DM Sans + design tokens)
 
 **Chunk 2 — Reusable Components (Wave 2, parallel):**
 
