@@ -33,18 +33,22 @@ def make_db_mock(rows: list) -> MagicMock:
 
 
 class TestGetStamps:
-    def test_authenticated_user_sees_cafe_name_on_their_stamp(self, client: TestClient, auth_headers: dict):
-        db = make_db_mock([
-            {
-                "id": "stamp-1",
-                "user_id": "user-123",
-                "shop_id": "shop-a",
-                "check_in_id": "ci-1",
-                "design_url": "/stamps/shop-a.svg",
-                "earned_at": "2026-03-01T00:00:00Z",
-                "shops": {"name": "Fika Coffee"},
-            }
-        ])
+    def test_authenticated_user_sees_cafe_name_on_their_stamp(
+        self, client: TestClient, auth_headers: dict
+    ):
+        db = make_db_mock(
+            [
+                {
+                    "id": "stamp-1",
+                    "user_id": "user-123",
+                    "shop_id": "shop-a",
+                    "check_in_id": "ci-1",
+                    "design_url": "/stamps/shop-a.svg",
+                    "earned_at": "2026-03-01T00:00:00Z",
+                    "shops": {"name": "Fika Coffee"},
+                }
+            ]
+        )
 
         app.dependency_overrides[get_current_user] = lambda: {"id": "user-123"}
         app.dependency_overrides[get_user_db] = lambda: db
@@ -58,19 +62,26 @@ class TestGetStamps:
             app.dependency_overrides.pop(get_current_user, None)
             app.dependency_overrides.pop(get_user_db, None)
 
-    def test_authenticated_user_sees_photo_and_district_on_their_stamp(self, client: TestClient, auth_headers: dict):
-        db = make_db_mock([
-            {
-                "id": "stamp-1",
-                "user_id": "user-123",
-                "shop_id": "shop-a",
-                "check_in_id": "ci-1",
-                "design_url": "/stamps/shop-a.svg",
-                "earned_at": "2026-03-01T00:00:00Z",
-                "shops": {"name": "Fika Coffee", "district": "大安"},
-                "check_ins": {"photo_urls": ["https://storage.example.com/photo1.jpg"], "note": None},
-            }
-        ])
+    def test_authenticated_user_sees_photo_and_district_on_their_stamp(
+        self, client: TestClient, auth_headers: dict
+    ):
+        db = make_db_mock(
+            [
+                {
+                    "id": "stamp-1",
+                    "user_id": "user-123",
+                    "shop_id": "shop-a",
+                    "check_in_id": "ci-1",
+                    "design_url": "/stamps/shop-a.svg",
+                    "earned_at": "2026-03-01T00:00:00Z",
+                    "shops": {"name": "Fika Coffee", "district": "大安"},
+                    "check_ins": {
+                        "photo_urls": ["https://storage.example.com/photo1.jpg"],
+                        "note": None,
+                    },
+                }
+            ]
+        )
 
         app.dependency_overrides[get_current_user] = lambda: {"id": "user-123"}
         app.dependency_overrides[get_user_db] = lambda: db
