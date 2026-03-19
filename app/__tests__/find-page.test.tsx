@@ -65,10 +65,12 @@ vi.mock('@/lib/hooks/use-search', () => ({
 // Stub browser APIs at the boundary rather than mocking internal hook wrappers
 Object.defineProperty(navigator, 'geolocation', {
   writable: true,
+  configurable: true,
   value: { getCurrentPosition: vi.fn(), watchPosition: vi.fn(), clearWatch: vi.fn() },
 });
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
+  configurable: true,
   value: vi.fn((query: string) => ({
     matches: false,
     media: query,
