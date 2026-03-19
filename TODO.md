@@ -1110,7 +1110,7 @@ _Designed in Pencil. Stamps, check-in history, account settings._
 **Chunk 1 — Backend + Types (Wave 1):**
 - [x] Task 1: Backend — Extend stamps API with photo_url, district, diary_note
 - [x] Task 2: Frontend — Update StampData type and factory
-- [ ] Task 4: Frontend — Remove stamp count from ProfileHeader
+- [x] Task 4: Frontend — Remove stamp count from ProfileHeader
 
 **Chunk 2 — New Components (Wave 2-3):**
 - [ ] Task 3: Frontend — PolaroidCard component

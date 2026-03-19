@@ -4,14 +4,12 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 interface ProfileHeaderProps {
   displayName: string | null;
   avatarUrl: string | null;
-  stampCount: number;
   checkinCount: number;
 }
 
 export function ProfileHeader({
   displayName,
   avatarUrl,
-  stampCount,
   checkinCount,
 }: ProfileHeaderProps) {
   const name = displayName || 'User';
@@ -36,7 +34,7 @@ export function ProfileHeader({
       <div className="flex-1">
         <h1 className="text-xl font-bold">{name}</h1>
         <p className="text-muted-foreground text-sm">
-          {stampCount} stamps &middot; {checkinCount} check-ins
+          {checkinCount} check-ins
         </p>
         <Link href="/settings" className="text-primary text-sm hover:underline">
           Edit Profile &rarr;
