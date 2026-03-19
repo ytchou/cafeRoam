@@ -1113,8 +1113,8 @@ _Designed in Pencil. Stamps, check-in history, account settings._
 - [x] Task 4: Frontend — Remove stamp count from ProfileHeader
 
 **Chunk 2 — New Components (Wave 2-3):**
-- [ ] Task 3: Frontend — PolaroidCard component
-- [ ] Task 9: Frontend — Update StampDetailSheet with diary note and tilt
+- [x] Task 3: Frontend — PolaroidCard component
+- [x] Task 9: Frontend — Update StampDetailSheet with diary note and tilt
 - [ ] Task 5: Frontend — PolaroidSection (profile preview)
 - [ ] Task 6: Frontend — CorkBoard (scattered + grid toggle)
 
