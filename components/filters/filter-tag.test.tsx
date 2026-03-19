@@ -9,16 +9,16 @@ describe('FilterTag', () => {
     expect(screen.getByText('WiFi')).toBeInTheDocument();
   });
 
-  it('renders with inactive styles by default', () => {
+  it('appears unselected by default', () => {
     render(<FilterTag label="WiFi" onClick={() => {}} />);
     const button = screen.getByRole('button', { name: /wifi/i });
-    expect(button).toHaveClass('bg-white');
+    expect(button).not.toHaveAttribute('data-active');
   });
 
-  it('renders with active styles when active prop is true', () => {
+  it('appears selected when the active prop is true', () => {
     render(<FilterTag label="WiFi" active onClick={() => {}} />);
     const button = screen.getByRole('button', { name: /wifi/i });
-    expect(button).toHaveClass('bg-[var(--tag-active-bg)]');
+    expect(button).toHaveAttribute('data-active', 'true');
   });
 
   it('calls onClick when clicked', async () => {

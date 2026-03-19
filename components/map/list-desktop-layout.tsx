@@ -1,29 +1,13 @@
 'use client';
+import { useMemo } from 'react';
 import { SearchBar } from '@/components/filters/search-bar';
 import { FilterTag } from '@/components/filters/filter-tag';
+import { QUICK_FILTERS } from '@/components/filters/quick-filters';
 import { CountHeader } from '@/components/discovery/count-header';
 import { ShopCardGrid } from '@/components/shops/shop-card-grid';
 import { FilterSheet } from '@/components/filters/filter-sheet';
 import { HeaderNav } from '@/components/navigation/header-nav';
-
-const QUICK_FILTERS = [
-  { id: 'open_now', label: 'Open Now', dot: '#3D8A5A' },
-  { id: 'wifi', label: 'WiFi' },
-  { id: 'outlet', label: 'Outlet' },
-  { id: 'quiet', label: 'Quiet' },
-  { id: 'rating', label: 'Top Rated' },
-];
-
-interface LayoutShop {
-  id: string;
-  name: string;
-  rating: number | null;
-  photo_urls?: string[];
-  photoUrls?: string[];
-  distance_m?: number | null;
-  is_open?: boolean | null;
-  taxonomyTags?: Array<{ id: string; label: string; labelZh: string }>;
-}
+import type { LayoutShop } from '@/lib/types';
 
 interface ListDesktopLayoutProps {
   shops: LayoutShop[];
@@ -58,6 +42,8 @@ export function ListDesktopLayout({
   onFilterApply,
   onSort,
 }: ListDesktopLayoutProps) {
+  const activeFilterSet = useMemo(() => new Set(activeFilters), [activeFilters]);
+
   return (
     <div className="flex h-screen w-full flex-col bg-[var(--background)]">
       <HeaderNav activeTab="find" />
@@ -70,7 +56,7 @@ export function ListDesktopLayout({
               key={f.id}
               label={f.label}
               dot={f.dot}
-              active={activeFilters.includes(f.id)}
+              active={activeFilterSet.has(f.id)}
               onClick={() => onFilterToggle(f.id)}
             />
           ))}

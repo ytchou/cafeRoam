@@ -1,29 +1,13 @@
 'use client';
+import { useMemo } from 'react';
 import { SearchBar } from '@/components/filters/search-bar';
 import { FilterTag } from '@/components/filters/filter-tag';
+import { QUICK_FILTERS } from '@/components/filters/quick-filters';
 import { CountHeader } from '@/components/discovery/count-header';
 import { ShopCardCompact } from '@/components/shops/shop-card-compact';
 import { FilterSheet } from '@/components/filters/filter-sheet';
 import { BottomNav } from '@/components/navigation/bottom-nav';
-
-const QUICK_FILTERS = [
-  { id: 'open_now', label: 'Open Now', dot: '#3D8A5A' },
-  { id: 'wifi', label: 'WiFi' },
-  { id: 'outlet', label: 'Outlet' },
-  { id: 'quiet', label: 'Quiet' },
-  { id: 'rating', label: 'Top Rated' },
-];
-
-interface LayoutShop {
-  id: string;
-  name: string;
-  rating: number | null;
-  photo_urls?: string[];
-  photoUrls?: string[];
-  distance_m?: number | null;
-  is_open?: boolean | null;
-  taxonomyTags?: Array<{ id: string; label: string; labelZh: string }>;
-}
+import type { LayoutShop } from '@/lib/types';
 
 interface ListMobileLayoutProps {
   shops: LayoutShop[];
@@ -58,6 +42,8 @@ export function ListMobileLayout({
   onFilterClose,
   onFilterApply,
 }: ListMobileLayoutProps) {
+  const activeFilterSet = useMemo(() => new Set(activeFilters), [activeFilters]);
+
   return (
     <div className="flex h-screen w-full flex-col bg-[var(--background)]">
       <div className="flex flex-col gap-2 bg-white px-4 pt-4 pb-2 shadow-sm">
@@ -68,7 +54,7 @@ export function ListMobileLayout({
               key={f.id}
               label={f.label}
               dot={f.dot}
-              active={activeFilters.includes(f.id)}
+              active={activeFilterSet.has(f.id)}
               onClick={() => onFilterToggle(f.id)}
             />
           ))}

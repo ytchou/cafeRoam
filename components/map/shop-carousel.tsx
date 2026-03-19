@@ -24,11 +24,11 @@ export function ShopCarousel({ shops, onShopClick, selectedShopId }: ShopCarouse
 
   useEffect(() => {
     if (!selectedShopId || !scrollRef.current) return;
-    const idx = shops.findIndex((s) => s.id === selectedShopId);
-    if (idx < 0) return;
-    const card = scrollRef.current.children[idx] as HTMLElement | undefined;
+    const card = scrollRef.current.querySelector<HTMLElement>(
+      `[data-shop-id="${selectedShopId}"]`
+    );
     card?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-  }, [selectedShopId, shops]);
+  }, [selectedShopId]);
 
   return (
     <div className="flex flex-col gap-3">
@@ -46,11 +46,12 @@ export function ShopCarousel({ shops, onShopClick, selectedShopId }: ShopCarouse
         className="flex gap-3 overflow-x-auto px-5 pb-2 scrollbar-none"
       >
         {shops.map((shop) => (
-          <ShopCardCarousel
-            key={shop.id}
-            shop={shop}
-            onClick={() => onShopClick(shop.id)}
-          />
+          <div key={shop.id} data-shop-id={shop.id}>
+            <ShopCardCarousel
+              shop={shop}
+              onClick={() => onShopClick(shop.id)}
+            />
+          </div>
         ))}
       </div>
     </div>

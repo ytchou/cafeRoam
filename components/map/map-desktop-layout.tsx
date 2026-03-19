@@ -1,42 +1,18 @@
 'use client';
-import { useState, Suspense } from 'react';
-import dynamic from 'next/dynamic';
+import { useState, useMemo, Suspense } from 'react';
 import { SearchBar } from '@/components/filters/search-bar';
 import { FilterTag } from '@/components/filters/filter-tag';
+import { QUICK_FILTERS } from '@/components/filters/quick-filters';
 import { CountHeader } from '@/components/discovery/count-header';
 import { ShopCardCompact } from '@/components/shops/shop-card-compact';
 import { FilterSheet } from '@/components/filters/filter-sheet';
 import { CollapseToggle } from '@/components/map/collapse-toggle';
 import { HeaderNav } from '@/components/navigation/header-nav';
-
-const MapView = dynamic(
-  () => import('@/components/map/map-view').then((m) => ({ default: m.MapView })),
-  { ssr: false }
-);
-
-const QUICK_FILTERS = [
-  { id: 'open_now', label: 'Open Now', dot: '#3D8A5A' },
-  { id: 'wifi', label: 'WiFi' },
-  { id: 'outlet', label: 'Outlet' },
-  { id: 'quiet', label: 'Quiet' },
-  { id: 'rating', label: 'Top Rated' },
-];
-
-interface LayoutShop {
-  id: string;
-  name: string;
-  rating: number | null;
-  photo_urls?: string[];
-  photoUrls?: string[];
-  distance_m?: number | null;
-  is_open?: boolean | null;
-  taxonomyTags?: Array<{ id: string; label: string; labelZh: string }>;
-  latitude: number | null;
-  longitude: number | null;
-}
+import { MapViewDynamic as MapView } from '@/components/map/map-view-dynamic';
+import type { MappableLayoutShop } from '@/lib/types';
 
 interface MapDesktopLayoutProps {
-  shops: LayoutShop[];
+  shops: MappableLayoutShop[];
   count: number;
   selectedShopId: string | null;
   onShopClick: (id: string) => void;
@@ -69,6 +45,7 @@ export function MapDesktopLayout({
   onFilterApply,
 }: MapDesktopLayoutProps) {
   const [panelCollapsed, setPanelCollapsed] = useState(false);
+  const activeFilterSet = useMemo(() => new Set(activeFilters), [activeFilters]);
 
   return (
     <div className="flex h-screen w-full flex-col">
@@ -85,7 +62,7 @@ export function MapDesktopLayout({
                     key={f.id}
                     label={f.label}
                     dot={f.dot}
-                    active={activeFilters.includes(f.id)}
+                    active={activeFilterSet.has(f.id)}
                     onClick={() => onFilterToggle(f.id)}
                   />
                 ))}

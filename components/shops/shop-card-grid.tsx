@@ -22,7 +22,7 @@ interface ShopCardGridProps {
 
 export function ShopCardGrid({ shop, onClick }: ShopCardGridProps) {
   const photos = shop.photo_urls ?? shop.photoUrls ?? [];
-  const photoUrl = photos.length > 0 ? photos[0] : null;
+  const photoUrl = photos.at(0) ?? null;
 
   return (
     <article

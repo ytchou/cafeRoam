@@ -31,7 +31,7 @@ function formatMeta(shop: CompactShop): string {
 
 export function ShopCardCompact({ shop, onClick, selected = false }: ShopCardCompactProps) {
   const photos = shop.photo_urls ?? shop.photoUrls ?? [];
-  const photoUrl = photos.length > 0 ? photos[0] : null;
+  const photoUrl = photos.at(0) ?? null;
 
   return (
     <article
@@ -50,7 +50,7 @@ export function ShopCardCompact({ shop, onClick, selected = false }: ShopCardCom
         </div>
       ) : (
         <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[10px] bg-[var(--muted)] text-[var(--text-tertiary)] text-xs">
-          ☕
+          No photo
         </div>
       )}
       <div className="flex flex-col gap-1 flex-1 min-w-0">

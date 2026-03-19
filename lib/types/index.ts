@@ -119,6 +119,25 @@ export interface SearchResult {
   totalScore: number;
 }
 
+// Shared view types for map/list layout components
+export interface LayoutShop {
+  id: string;
+  name: string;
+  rating: number | null;
+  photo_urls?: string[];
+  photoUrls?: string[];
+  distance_m?: number | null;
+  is_open?: boolean | null;
+  taxonomyTags?: Array<{ id: string; label: string; labelZh: string }>;
+  review_count?: number;
+  reviewCount?: number;
+}
+
+export interface MappableLayoutShop extends LayoutShop {
+  latitude: number | null;
+  longitude: number | null;
+}
+
 export interface SearchQuery {
   text: string;
   filters?: {

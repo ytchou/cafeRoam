@@ -73,6 +73,9 @@ function FindPageContent() {
     [setFilters]
   );
 
+  const handleFilterOpen = useCallback(() => setFilterSheetOpen(true), []);
+  const handleFilterClose = useCallback(() => setFilterSheetOpen(false), []);
+
   const layoutProps = {
     shops,
     count: shops.length,
@@ -85,8 +88,8 @@ function FindPageContent() {
     onViewChange: handleViewChange,
     onSearch: handleSearch,
     filterSheetOpen,
-    onFilterOpen: () => setFilterSheetOpen(true),
-    onFilterClose: () => setFilterSheetOpen(false),
+    onFilterOpen: handleFilterOpen,
+    onFilterClose: handleFilterClose,
     onFilterApply: handleFilterApply,
     onLocationRequest: requestLocation,
   };

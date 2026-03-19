@@ -10,18 +10,10 @@ vi.mock('@/lib/hooks/use-media-query', () => ({
   useIsDesktop: vi.fn(),
 }));
 
-vi.mock('./bottom-nav', () => ({
-  BottomNav: () => <nav data-testid="bottom-nav" />,
-}));
-
-vi.mock('./header-nav', () => ({
-  HeaderNav: () => <header data-testid="header-nav" />,
-}));
-
 import { useIsDesktop } from '@/lib/hooks/use-media-query';
 
 describe('AppShell', () => {
-  it('on mobile, renders BottomNav but not HeaderNav', () => {
+  it('on mobile, shows bottom tab bar but not desktop header', () => {
     vi.mocked(useIsDesktop).mockReturnValue(false);
 
     render(
@@ -30,11 +22,13 @@ describe('AppShell', () => {
       </AppShell>
     );
 
-    expect(screen.getByTestId('bottom-nav')).toBeInTheDocument();
-    expect(screen.queryByTestId('header-nav')).not.toBeInTheDocument();
+    // BottomNav renders Chinese tab labels
+    expect(screen.getByText('地圖')).toBeInTheDocument();
+    // HeaderNav desktop header should not appear
+    expect(screen.queryByText('啡遊 CafeRoam')).not.toBeInTheDocument();
   });
 
-  it('on desktop, renders HeaderNav but not BottomNav', () => {
+  it('on desktop, shows header navigation but not mobile tab bar', () => {
     vi.mocked(useIsDesktop).mockReturnValue(true);
 
     render(
@@ -43,7 +37,9 @@ describe('AppShell', () => {
       </AppShell>
     );
 
-    expect(screen.getByTestId('header-nav')).toBeInTheDocument();
-    expect(screen.queryByTestId('bottom-nav')).not.toBeInTheDocument();
+    // HeaderNav renders the logo text
+    expect(screen.getByText('啡遊 CafeRoam')).toBeInTheDocument();
+    // BottomNav Chinese tabs should not appear
+    expect(screen.queryByText('地圖')).not.toBeInTheDocument();
   });
 });

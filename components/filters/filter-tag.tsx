@@ -14,6 +14,7 @@ export function FilterTag({ label, icon: Icon, dot, active = false, onClick }: F
     <button
       type="button"
       aria-label={label}
+      data-active={active || undefined}
       onClick={onClick}
       className={`flex items-center gap-1.5 rounded-full px-4 h-9 font-[family-name:var(--font-body)] text-[13px] font-medium transition-colors whitespace-nowrap ${
         active

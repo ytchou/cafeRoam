@@ -23,7 +23,7 @@ interface ShopCardCarouselProps {
 export function ShopCardCarousel({ shop, onClick, distanceText }: ShopCardCarouselProps) {
   const photos = shop.photo_urls ?? shop.photoUrls ?? [];
   const reviewCount = shop.review_count ?? shop.reviewCount ?? 0;
-  const photoUrl = photos.length > 0 ? photos[0] : null;
+  const photoUrl = photos.at(0) ?? null;
 
   return (
     <article

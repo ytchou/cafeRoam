@@ -1,44 +1,18 @@
 'use client';
-import dynamic from 'next/dynamic';
-import { Suspense } from 'react';
+import { useMemo, Suspense } from 'react';
 import { Locate } from 'lucide-react';
 import { SearchBar } from '@/components/filters/search-bar';
 import { FilterTag } from '@/components/filters/filter-tag';
+import { QUICK_FILTERS } from '@/components/filters/quick-filters';
 import { CountHeader } from '@/components/discovery/count-header';
 import { ShopCarousel } from '@/components/map/shop-carousel';
 import { FilterSheet } from '@/components/filters/filter-sheet';
 import { BottomNav } from '@/components/navigation/bottom-nav';
-
-const MapView = dynamic(
-  () => import('@/components/map/map-view').then((m) => ({ default: m.MapView })),
-  { ssr: false }
-);
-
-const QUICK_FILTERS = [
-  { id: 'open_now', label: 'Open Now', dot: '#3D8A5A' },
-  { id: 'wifi', label: 'WiFi' },
-  { id: 'outlet', label: 'Outlet' },
-  { id: 'quiet', label: 'Quiet' },
-  { id: 'rating', label: 'Top Rated' },
-];
-
-interface LayoutShop {
-  id: string;
-  name: string;
-  rating: number | null;
-  review_count?: number;
-  reviewCount?: number;
-  photo_urls?: string[];
-  photoUrls?: string[];
-  taxonomyTags?: Array<{ id: string; label: string; labelZh: string }>;
-  distance_m?: number | null;
-  is_open?: boolean | null;
-  latitude: number | null;
-  longitude: number | null;
-}
+import { MapViewDynamic as MapView } from '@/components/map/map-view-dynamic';
+import type { MappableLayoutShop } from '@/lib/types';
 
 interface MapMobileLayoutProps {
-  shops: LayoutShop[];
+  shops: MappableLayoutShop[];
   count: number;
   selectedShopId: string | null;
   onShopClick: (id: string) => void;
@@ -72,6 +46,8 @@ export function MapMobileLayout({
   onFilterApply,
   onLocationRequest,
 }: MapMobileLayoutProps) {
+  const activeFilterSet = useMemo(() => new Set(activeFilters), [activeFilters]);
+
   return (
     <div className="relative h-screen w-full overflow-hidden">
       <div className="absolute inset-0">
@@ -98,7 +74,7 @@ export function MapMobileLayout({
               key={f.id}
               label={f.label}
               dot={f.dot}
-              active={activeFilters.includes(f.id)}
+              active={activeFilterSet.has(f.id)}
               onClick={() => onFilterToggle(f.id)}
             />
           ))}
