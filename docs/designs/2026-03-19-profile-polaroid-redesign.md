@@ -56,7 +56,7 @@ Remove the Lists tab. `useListSummaries` hook import removed from `page.tsx`. Re
 
 Top-right corner: two icon buttons (grid icon, scatter icon).
 - Active state: filled icon, darker background pill
-- Preference persisted in `localStorage` under key `caferoam_memories_view`
+- Preference persisted in `localStorage` under key `caferoam:memories_view`
 - Default: **scattered**
 
 ### Cork Board Background
