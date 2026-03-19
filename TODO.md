@@ -1034,6 +1034,7 @@ _Designed in Pencil. Replaces current 首頁 + 地圖 split into a unified Find 
 - [x] Pencil: Design Shop View / Directions sheet (walk, drive, nearest MRT) — frame `ENKsc`
 
 **Chunk 1 — Foundations (Wave 1, parallel):**
+
 - [x] Add `view` param to `useSearchState` hook (Task 1)
 - [x] Create MRT stations JSON + `nearestMrtStation` utility (Task 2)
 - [x] Rewrite `FilterSheet` — 5 tabs + tag search (Task 3)
@@ -1041,11 +1042,13 @@ _Designed in Pencil. Replaces current 首頁 + 地圖 split into a unified Find 
 - [x] Create `MapListView` component — vertical list (Task 5)
 
 **Chunk 2 — Integration (Wave 2–3):**
+
 - [x] Create `DirectionsSheet` component (Task 6)
 - [x] Refactor `app/page.tsx` — view toggle + wire all components (Task 7)
 - [x] Wire `DirectionsSheet` into Shop View (Task 8)
 
 **Chunk 3 — Verification:**
+
 - [x] `pnpm test` + `pnpm type-check` + `pnpm build` all pass (Task 9)
 
 ### Shop View — Directions (implementation notes)

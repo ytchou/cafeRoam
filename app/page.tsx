@@ -83,11 +83,14 @@ function FindPageContent() {
     setSelectedShopId(null);
   }
 
-  const handleViewToggle = useCallback((newView: 'map' | 'list') => {
-    if (newView === view) return;
-    capture('view_toggled', { to_view: newView });
-    setView(newView);
-  }, [view, capture, setView]);
+  const handleViewToggle = useCallback(
+    (newView: 'map' | 'list') => {
+      if (newView === view) return;
+      capture('view_toggled', { to_view: newView });
+      setView(newView);
+    },
+    [view, capture, setView]
+  );
 
   const handleFilterApply = useCallback(
     (selectedIds: string[]) => {
@@ -103,36 +106,35 @@ function FindPageContent() {
     return '找不到符合的咖啡廳，顯示精選';
   }
 
-  const viewToggleButtons = useMemo(() => (
-    <div className="flex items-center gap-1 rounded-full bg-[#F5F4F1] p-0.5">
-      <button
-        type="button"
-        aria-label="Map view"
-        onClick={() => handleViewToggle('map')}
-        className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
-          view === 'map'
-            ? 'bg-[#2C1810] text-white'
-            : 'text-gray-500'
-        }`}
-      >
-        <MapIcon size={14} />
-        Map
-      </button>
-      <button
-        type="button"
-        aria-label="List view"
-        onClick={() => handleViewToggle('list')}
-        className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
-          view === 'list'
-            ? 'bg-[#2C1810] text-white'
-            : 'text-gray-500'
-        }`}
-      >
-        <List size={14} />
-        List
-      </button>
-    </div>
-  ), [view, handleViewToggle]);
+  const viewToggleButtons = useMemo(
+    () => (
+      <div className="flex items-center gap-1 rounded-full bg-[#F5F4F1] p-0.5">
+        <button
+          type="button"
+          aria-label="Map view"
+          onClick={() => handleViewToggle('map')}
+          className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
+            view === 'map' ? 'bg-[#2C1810] text-white' : 'text-gray-500'
+          }`}
+        >
+          <MapIcon size={14} />
+          Map
+        </button>
+        <button
+          type="button"
+          aria-label="List view"
+          onClick={() => handleViewToggle('list')}
+          className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
+            view === 'list' ? 'bg-[#2C1810] text-white' : 'text-gray-500'
+          }`}
+        >
+          <List size={14} />
+          List
+        </button>
+      </div>
+    ),
+    [view, handleViewToggle]
+  );
 
   if (view === 'list') {
     return (
@@ -209,9 +211,7 @@ function FindPageContent() {
 
       {/* TODO: design specifies a persistent bottom card with horizontal MapMiniCard scroll here.
            Deferred to follow-up — toggle pill is a simplified substitute. */}
-      <div className="absolute right-4 bottom-36 z-20">
-        {viewToggleButtons}
-      </div>
+      <div className="absolute right-4 bottom-36 z-20">{viewToggleButtons}</div>
 
       {selectedShop &&
         (isDesktop ? (

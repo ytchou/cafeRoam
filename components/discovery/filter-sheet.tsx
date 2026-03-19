@@ -153,7 +153,9 @@ export function FilterSheet({
     onClose();
   };
 
-  const tagsToShow = isSearching ? filteredTags ?? [] : activeTabData?.tags ?? [];
+  const tagsToShow = isSearching
+    ? (filteredTags ?? [])
+    : (activeTabData?.tags ?? []);
 
   return (
     <Drawer.Root open={open} onOpenChange={(o: boolean) => !o && onClose()}>

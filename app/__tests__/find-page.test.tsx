@@ -6,9 +6,15 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 vi.mock('next/dynamic', () => ({
   default: () => {
     const MockMap = (props: Record<string, unknown>) => (
-      <div data-testid="map-view" data-selected={props.selectedShopId as string}>
+      <div
+        data-testid="map-view"
+        data-selected={props.selectedShopId as string}
+      >
         {(props.shops as Array<{ id: string }>)?.map((s) => (
-          <button key={s.id} onClick={() => (props.onPinClick as (id: string) => void)?.(s.id)}>
+          <button
+            key={s.id}
+            onClick={() => (props.onPinClick as (id: string) => void)?.(s.id)}
+          >
             pin-{s.id}
           </button>
         ))}
@@ -66,7 +72,11 @@ vi.mock('@/lib/hooks/use-search', () => ({
 Object.defineProperty(navigator, 'geolocation', {
   writable: true,
   configurable: true,
-  value: { getCurrentPosition: vi.fn(), watchPosition: vi.fn(), clearWatch: vi.fn() },
+  value: {
+    getCurrentPosition: vi.fn(),
+    watchPosition: vi.fn(),
+    clearWatch: vi.fn(),
+  },
 });
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
@@ -90,22 +100,15 @@ vi.mock('@/lib/posthog/use-analytics', () => ({
 
 vi.mock('vaul', () => ({
   Drawer: {
-    Root: ({
-      children,
-      open,
-    }: {
-      children: React.ReactNode;
-      open: boolean;
-    }) => (open ? <div>{children}</div> : null),
+    Root: ({ children, open }: { children: React.ReactNode; open: boolean }) =>
+      open ? <div>{children}</div> : null,
     Portal: ({ children }: { children: React.ReactNode }) => <>{children}</>,
     Overlay: () => null,
     Content: ({ children }: { children: React.ReactNode }) => (
       <div>{children}</div>
     ),
     Handle: () => null,
-    Title: ({ children }: { children: React.ReactNode }) => (
-      <h2>{children}</h2>
-    ),
+    Title: ({ children }: { children: React.ReactNode }) => <h2>{children}</h2>,
   },
 }));
 

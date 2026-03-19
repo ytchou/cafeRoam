@@ -21,9 +21,7 @@ vi.mock('vaul', () => ({
       <div>{children}</div>
     ),
     Handle: () => null,
-    Title: ({ children }: { children: React.ReactNode }) => (
-      <h2>{children}</h2>
-    ),
+    Title: ({ children }: { children: React.ReactNode }) => <h2>{children}</h2>,
   },
 }));
 
@@ -67,7 +65,11 @@ vi.mock('@/lib/hooks/use-search', () => ({
 Object.defineProperty(navigator, 'geolocation', {
   writable: true,
   configurable: true,
-  value: { getCurrentPosition: vi.fn(), watchPosition: vi.fn(), clearWatch: vi.fn() },
+  value: {
+    getCurrentPosition: vi.fn(),
+    watchPosition: vi.fn(),
+    clearWatch: vi.fn(),
+  },
 });
 Object.defineProperty(window, 'matchMedia', {
   writable: true,

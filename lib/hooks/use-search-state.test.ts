@@ -90,7 +90,9 @@ describe('useSearchState', () => {
   it('clearAll removes view param', () => {
     mockSearchParams.set('view', 'list');
     const { result } = renderHook(() => useSearchState());
-    act(() => { result.current.clearAll(); });
+    act(() => {
+      result.current.clearAll();
+    });
     const calledUrl = mockPush.mock.calls[0][0] as string;
     expect(calledUrl).not.toContain('view=');
   });

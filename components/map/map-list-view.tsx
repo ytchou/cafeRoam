@@ -21,7 +21,9 @@ interface MapListViewProps {
 
 function formatDistance(meters: number | null): string {
   if (meters == null) return '';
-  return meters < 1000 ? `${Math.round(meters)}m` : `${(meters / 1000).toFixed(1)}km`;
+  return meters < 1000
+    ? `${Math.round(meters)}m`
+    : `${(meters / 1000).toFixed(1)}km`;
 }
 
 export function MapListView({ shops }: MapListViewProps) {
@@ -63,17 +65,13 @@ export function MapListView({ shops }: MapListViewProps) {
               {shop.name}
             </p>
             <div className="mt-0.5 flex items-center gap-2 text-xs text-gray-500">
-              {shop.rating != null && (
-                <span>★ {shop.rating.toFixed(1)}</span>
-              )}
+              {shop.rating != null && <span>★ {shop.rating.toFixed(1)}</span>}
               {shop.distance_m != null && (
                 <span>{formatDistance(shop.distance_m)}</span>
               )}
               {shop.is_open != null && (
                 <span
-                  className={
-                    shop.is_open ? 'text-green-600' : 'text-gray-400'
-                  }
+                  className={shop.is_open ? 'text-green-600' : 'text-gray-400'}
                 >
                   {shop.is_open ? 'Open' : 'Closed'}
                 </span>

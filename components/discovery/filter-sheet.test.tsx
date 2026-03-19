@@ -25,9 +25,16 @@ import { FilterSheet } from './filter-sheet';
 describe('FilterSheet', () => {
   it('a user opening the filter sheet sees the 5 filter categories', () => {
     render(
-      <FilterSheet open={true} onClose={vi.fn()} onApply={vi.fn()} initialFilters={[]} />
+      <FilterSheet
+        open={true}
+        onClose={vi.fn()}
+        onApply={vi.fn()}
+        initialFilters={[]}
+      />
     );
-    expect(screen.getByRole('tab', { name: /functionality/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('tab', { name: /functionality/i })
+    ).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /time/i })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /ambience/i })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /mode/i })).toBeInTheDocument();
@@ -36,26 +43,43 @@ describe('FilterSheet', () => {
 
   it('a user on the Functionality tab sees relevant tags like WiFi and Outlet', () => {
     render(
-      <FilterSheet open={true} onClose={vi.fn()} onApply={vi.fn()} initialFilters={[]} />
+      <FilterSheet
+        open={true}
+        onClose={vi.fn()}
+        onApply={vi.fn()}
+        initialFilters={[]}
+      />
     );
     expect(screen.getByRole('button', { name: /wifi/i })).toBeInTheDocument();
   });
 
   it('searching filters visible tag chips across all tabs', async () => {
     render(
-      <FilterSheet open={true} onClose={vi.fn()} onApply={vi.fn()} initialFilters={[]} />
+      <FilterSheet
+        open={true}
+        onClose={vi.fn()}
+        onApply={vi.fn()}
+        initialFilters={[]}
+      />
     );
     const searchInput = screen.getByPlaceholderText(/search/i);
     await userEvent.type(searchInput, 'matcha');
     // matcha is in Food tab — should surface regardless of active tab
     expect(screen.getByRole('button', { name: /matcha/i })).toBeInTheDocument();
     // wifi should not be visible when searching matcha
-    expect(screen.queryByRole('button', { name: /^wifi$/i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /^wifi$/i })
+    ).not.toBeInTheDocument();
   });
 
   it('clicking a tag chip toggles it as selected', async () => {
     render(
-      <FilterSheet open={true} onClose={vi.fn()} onApply={vi.fn()} initialFilters={[]} />
+      <FilterSheet
+        open={true}
+        onClose={vi.fn()}
+        onApply={vi.fn()}
+        initialFilters={[]}
+      />
     );
     const wifiChip = screen.getByRole('button', { name: /wifi/i });
     await userEvent.click(wifiChip);
@@ -65,7 +89,12 @@ describe('FilterSheet', () => {
   it('clicking apply fires onApply with selected tag IDs', async () => {
     const onApply = vi.fn();
     render(
-      <FilterSheet open={true} onClose={vi.fn()} onApply={onApply} initialFilters={[]} />
+      <FilterSheet
+        open={true}
+        onClose={vi.fn()}
+        onApply={onApply}
+        initialFilters={[]}
+      />
     );
     await userEvent.click(screen.getByRole('button', { name: /wifi/i }));
     await userEvent.click(screen.getByRole('button', { name: /show/i }));
@@ -75,7 +104,12 @@ describe('FilterSheet', () => {
   it('clicking Clear All resets all selections', async () => {
     const onApply = vi.fn();
     render(
-      <FilterSheet open={true} onClose={vi.fn()} onApply={onApply} initialFilters={['wifi']} />
+      <FilterSheet
+        open={true}
+        onClose={vi.fn()}
+        onApply={onApply}
+        initialFilters={['wifi']}
+      />
     );
     await userEvent.click(screen.getByRole('button', { name: /clear all/i }));
     await userEvent.click(screen.getByRole('button', { name: /show/i }));
@@ -84,7 +118,12 @@ describe('FilterSheet', () => {
 
   it('shows selected count badge when filters are active', () => {
     render(
-      <FilterSheet open={true} onClose={vi.fn()} onApply={vi.fn()} initialFilters={['wifi', 'outlet']} />
+      <FilterSheet
+        open={true}
+        onClose={vi.fn()}
+        onApply={vi.fn()}
+        initialFilters={['wifi', 'outlet']}
+      />
     );
     expect(screen.getByText('2')).toBeInTheDocument();
   });

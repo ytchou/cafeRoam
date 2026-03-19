@@ -15,6 +15,7 @@
 **Tech Stack:** Next.js 16 App Router, React, TypeScript strict, Tailwind CSS, `react-map-gl` (Mapbox), `vaul` (drawer), Vitest + Testing Library, `lucide-react`
 
 **Acceptance Criteria:**
+
 - [ ] A visitor landing on the Find page sees coffee cup map pins; tapping a pin highlights it in coral
 - [ ] A visitor can tap the list icon in the "Nearby Coffee Shops" header to switch to a full list view (URL updates to `?view=list`)
 - [ ] A visitor tapping the filter button opens a sheet with 5 tabs (Functionality/Time/Ambience/Mode/Food) and can search across all tags
@@ -26,6 +27,7 @@
 ## Task 1: Add `view` param to `useSearchState`
 
 **Files:**
+
 - Modify: `lib/hooks/use-search-state.ts`
 - Modify: `lib/hooks/use-search-state.test.ts`
 
@@ -36,38 +38,40 @@
 Add to `lib/hooks/use-search-state.test.ts` — inside the existing `describe('useSearchState')` block, add a `beforeEach` reset of `view` and append these tests:
 
 ```typescript
-  beforeEach(() => {
-    // add to existing beforeEach:
-    mockSearchParams.delete('view');
-  });
+beforeEach(() => {
+  // add to existing beforeEach:
+  mockSearchParams.delete('view');
+});
 
-  it('returns view as "map" when ?view param is absent', () => {
-    const { result } = renderHook(() => useSearchState());
-    expect(result.current.view).toBe('map');
-  });
+it('returns view as "map" when ?view param is absent', () => {
+  const { result } = renderHook(() => useSearchState());
+  expect(result.current.view).toBe('map');
+});
 
-  it('reads view from ?view=list URL param', () => {
-    mockSearchParams.set('view', 'list');
-    const { result } = renderHook(() => useSearchState());
-    expect(result.current.view).toBe('list');
-  });
+it('reads view from ?view=list URL param', () => {
+  mockSearchParams.set('view', 'list');
+  const { result } = renderHook(() => useSearchState());
+  expect(result.current.view).toBe('list');
+});
 
-  it('setView updates ?view param', () => {
-    const { result } = renderHook(() => useSearchState());
-    act(() => {
-      result.current.setView('list');
-    });
-    const calledUrl = mockPush.mock.calls[0][0] as string;
-    expect(calledUrl).toContain('view=list');
+it('setView updates ?view param', () => {
+  const { result } = renderHook(() => useSearchState());
+  act(() => {
+    result.current.setView('list');
   });
+  const calledUrl = mockPush.mock.calls[0][0] as string;
+  expect(calledUrl).toContain('view=list');
+});
 
-  it('clearAll removes view param', () => {
-    mockSearchParams.set('view', 'list');
-    const { result } = renderHook(() => useSearchState());
-    act(() => { result.current.clearAll(); });
-    const calledUrl = mockPush.mock.calls[0][0] as string;
-    expect(calledUrl).not.toContain('view=');
+it('clearAll removes view param', () => {
+  mockSearchParams.set('view', 'list');
+  const { result } = renderHook(() => useSearchState());
+  act(() => {
+    result.current.clearAll();
   });
+  const calledUrl = mockPush.mock.calls[0][0] as string;
+  expect(calledUrl).not.toContain('view=');
+});
 ```
 
 **Step 2: Run tests to verify they fail**
@@ -76,6 +80,7 @@ Add to `lib/hooks/use-search-state.test.ts` — inside the existing `describe('u
 cd /Users/ytchou/Project/caferoam/.worktrees/feat/find-ui-reconstruct-design
 pnpm test lib/hooks/use-search-state.test.ts
 ```
+
 Expected: 4 new tests FAIL — `result.current.view` is undefined, `result.current.setView` is not a function.
 
 **Step 3: Implement**
@@ -112,6 +117,7 @@ In `lib/hooks/use-search-state.ts`:
 ```bash
 pnpm test lib/hooks/use-search-state.test.ts
 ```
+
 Expected: all tests pass.
 
 **Step 5: Commit**
@@ -126,6 +132,7 @@ git commit -m "feat: add view param (map|list) to useSearchState"
 ## Task 2: Create `lib/data/taipei-mrt-stations.json` + `lib/utils/mrt.ts`
 
 **Files:**
+
 - Create: `lib/data/taipei-mrt-stations.json`
 - Create: `lib/utils/mrt.ts`
 - Create: `lib/utils/mrt.test.ts`
@@ -143,14 +150,14 @@ import { nearestMrtStation } from './mrt';
 describe('nearestMrtStation', () => {
   it('returns the closest station to a given coordinate', () => {
     // Yongkang Street area (~25.0330, 121.5298) — nearest is Dongmen
-    const result = nearestMrtStation(25.0330, 121.5298);
+    const result = nearestMrtStation(25.033, 121.5298);
     expect(result.name_en).toBe('Dongmen');
     expect(result.dist).toBeGreaterThan(0);
     expect(result.dist).toBeLessThan(1); // less than 1km
   });
 
   it('includes station line and lat/lng in the result', () => {
-    const result = nearestMrtStation(25.0478, 121.5170); // near Gongguan
+    const result = nearestMrtStation(25.0478, 121.517); // near Gongguan
     expect(result).toHaveProperty('name_zh');
     expect(result).toHaveProperty('line');
     expect(result).toHaveProperty('lat');
@@ -164,6 +171,7 @@ describe('nearestMrtStation', () => {
 ```bash
 pnpm test lib/utils/mrt.test.ts
 ```
+
 Expected: FAIL — `Cannot find module './mrt'`.
 
 **Step 3: Create the MRT station data**
@@ -172,55 +180,398 @@ Create `lib/data/taipei-mrt-stations.json` — a representative subset of Taipei
 
 ```json
 [
-  { "id": "BL12", "name_zh": "東門", "name_en": "Dongmen", "line": "BL/R", "lat": 25.03364, "lng": 121.52991 },
-  { "id": "G07", "name_zh": "公館", "name_en": "Gongguan", "line": "G", "lat": 25.01417, "lng": 121.53456 },
-  { "id": "R10", "name_zh": "大安森林公園", "name_en": "Da'an Forest Park", "line": "R", "lat": 25.02974, "lng": 121.53560 },
-  { "id": "R09", "name_zh": "大安", "name_en": "Da'an", "line": "R", "lat": 25.03342, "lng": 121.54393 },
-  { "id": "BL14", "name_zh": "忠孝新生", "name_en": "Zhongxiao Xinsheng", "line": "BL", "lat": 25.04244, "lng": 121.53031 },
-  { "id": "BL15", "name_zh": "忠孝復興", "name_en": "Zhongxiao Fuxing", "line": "BL/BR", "lat": 25.04158, "lng": 121.54461 },
-  { "id": "BL16", "name_zh": "忠孝敦化", "name_en": "Zhongxiao Dunhua", "line": "BL", "lat": 25.04083, "lng": 121.55095 },
-  { "id": "R06", "name_zh": "中山國中", "name_en": "Zhongshan Junior High School", "line": "R", "lat": 25.05830, "lng": 121.54393 },
-  { "id": "R07", "name_zh": "南京復興", "name_en": "Nanjing Fuxing", "line": "R", "lat": 25.05193, "lng": 121.54393 },
-  { "id": "R08", "name_zh": "忠孝復興", "name_en": "Zhongxiao Fuxing", "line": "R/BR", "lat": 25.04158, "lng": 121.54461 },
-  { "id": "BL11", "name_zh": "中正紀念堂", "name_en": "Chiang Kai-shek Memorial Hall", "line": "BL/G", "lat": 25.03362, "lng": 121.52163 },
-  { "id": "G09", "name_zh": "古亭", "name_en": "Guting", "line": "G/O", "lat": 25.02507, "lng": 121.52872 },
-  { "id": "O06", "name_zh": "頂溪", "name_en": "Dingxi", "line": "O", "lat": 25.01255, "lng": 121.51407 },
-  { "id": "BL13", "name_zh": "古亭", "name_en": "Guting", "line": "BL", "lat": 25.02507, "lng": 121.52872 },
-  { "id": "R05", "name_zh": "雙連", "name_en": "Shuanglian", "line": "R", "lat": 25.06328, "lng": 121.52363 },
-  { "id": "R04", "name_zh": "民權西路", "name_en": "Minquan W. Rd.", "line": "R/O", "lat": 25.07083, "lng": 121.52000 },
-  { "id": "BL07", "name_zh": "西門", "name_en": "Ximen", "line": "BL/G", "lat": 25.04222, "lng": 121.50820 },
-  { "id": "BL08", "name_zh": "台大醫院", "name_en": "NTU Hospital", "line": "BL", "lat": 25.04416, "lng": 121.51617 },
-  { "id": "BL09", "name_zh": "台北車站", "name_en": "Taipei Main Station", "line": "BL/R", "lat": 25.04756, "lng": 121.51700 },
-  { "id": "BL10", "name_zh": "善導寺", "name_en": "Shandao Temple", "line": "BL", "lat": 25.04437, "lng": 121.52680 },
-  { "id": "G10", "name_zh": "台電大樓", "name_en": "Taipower Building", "line": "G", "lat": 25.01826, "lng": 121.53127 },
-  { "id": "G11", "name_zh": "師大路", "name_en": "Shida Rd.", "line": "G", "lat": 25.01416, "lng": 121.53126 },
-  { "id": "BR12", "name_zh": "大安森林公園", "name_en": "Da'an Forest Park", "line": "BR", "lat": 25.02974, "lng": 121.53560 },
-  { "id": "BR13", "name_zh": "六張犁", "name_en": "Liuzhangli", "line": "BR", "lat": 25.02333, "lng": 121.55580 },
-  { "id": "O01", "name_zh": "南勢角", "name_en": "Nanshijiao", "line": "O", "lat": 24.99416, "lng": 121.51415 },
-  { "id": "O02", "name_zh": "景安", "name_en": "Jing'an", "line": "O", "lat": 25.00160, "lng": 121.51400 },
-  { "id": "O03", "name_zh": "永安市場", "name_en": "Yongan Market", "line": "O", "lat": 25.00749, "lng": 121.51316 },
-  { "id": "O04", "name_zh": "頂溪", "name_en": "Dingxi", "line": "O", "lat": 25.01255, "lng": 121.51407 },
-  { "id": "O05", "name_zh": "永春", "name_en": "Yongchun", "line": "O", "lat": 25.03799, "lng": 121.57993 },
-  { "id": "G01", "name_zh": "新店", "name_en": "Xindian", "line": "G", "lat": 24.97067, "lng": 121.53810 },
-  { "id": "G02", "name_zh": "新店區公所", "name_en": "Xindian City Hall", "line": "G", "lat": 24.97556, "lng": 121.53960 },
-  { "id": "G03", "name_zh": "七張", "name_en": "Qizhang", "line": "G", "lat": 24.98239, "lng": 121.54127 },
-  { "id": "G04", "name_zh": "大坪林", "name_en": "Dapinglin", "line": "G", "lat": 24.99202, "lng": 121.54155 },
-  { "id": "G05", "name_zh": "景美", "name_en": "Jingmei", "line": "G", "lat": 24.99958, "lng": 121.54155 },
-  { "id": "G06", "name_zh": "萬隆", "name_en": "Wanlong", "line": "G", "lat": 25.00666, "lng": 121.53640 },
-  { "id": "G08", "name_zh": "台電大樓", "name_en": "Taipower Building", "line": "G", "lat": 25.01826, "lng": 121.53127 },
-  { "id": "R01", "name_zh": "淡水", "name_en": "Tamsui", "line": "R", "lat": 25.17541, "lng": 121.45182 },
-  { "id": "R16", "name_zh": "象山", "name_en": "Xiangshan", "line": "R", "lat": 25.02800, "lng": 121.56700 },
-  { "id": "R15", "name_zh": "台北101/世貿", "name_en": "Taipei 101/World Trade Center", "line": "R", "lat": 25.03315, "lng": 121.56380 },
-  { "id": "R14", "name_zh": "信義安和", "name_en": "Xinyi Anhe", "line": "R", "lat": 25.03340, "lng": 121.55278 },
-  { "id": "R13", "name_zh": "大安", "name_en": "Da'an", "line": "R", "lat": 25.03342, "lng": 121.54393 },
-  { "id": "R12", "name_zh": "科技大樓", "name_en": "Technology Building", "line": "R", "lat": 25.03440, "lng": 121.54395 },
-  { "id": "R11", "name_zh": "六張犁", "name_en": "Liuzhangli", "line": "R", "lat": 25.02333, "lng": 121.55580 },
-  { "id": "BL17", "name_zh": "國父紀念館", "name_en": "Sun Yat-sen Memorial Hall", "line": "BL", "lat": 25.04034, "lng": 121.55771 },
-  { "id": "BL18", "name_zh": "市政府", "name_en": "City Hall", "line": "BL", "lat": 25.04088, "lng": 121.56467 },
-  { "id": "BL19", "name_zh": "永春", "name_en": "Yongchun", "line": "BL", "lat": 25.03799, "lng": 121.57993 },
-  { "id": "BL20", "name_zh": "後山埤", "name_en": "Houshanpi", "line": "BL", "lat": 25.03802, "lng": 121.58685 },
-  { "id": "BL21", "name_zh": "昆陽", "name_en": "Kunyang", "line": "BL", "lat": 25.04034, "lng": 121.59476 },
-  { "id": "BL22", "name_zh": "南港", "name_en": "Nangang", "line": "BL", "lat": 25.05250, "lng": 121.60675 }
+  {
+    "id": "BL12",
+    "name_zh": "東門",
+    "name_en": "Dongmen",
+    "line": "BL/R",
+    "lat": 25.03364,
+    "lng": 121.52991
+  },
+  {
+    "id": "G07",
+    "name_zh": "公館",
+    "name_en": "Gongguan",
+    "line": "G",
+    "lat": 25.01417,
+    "lng": 121.53456
+  },
+  {
+    "id": "R10",
+    "name_zh": "大安森林公園",
+    "name_en": "Da'an Forest Park",
+    "line": "R",
+    "lat": 25.02974,
+    "lng": 121.5356
+  },
+  {
+    "id": "R09",
+    "name_zh": "大安",
+    "name_en": "Da'an",
+    "line": "R",
+    "lat": 25.03342,
+    "lng": 121.54393
+  },
+  {
+    "id": "BL14",
+    "name_zh": "忠孝新生",
+    "name_en": "Zhongxiao Xinsheng",
+    "line": "BL",
+    "lat": 25.04244,
+    "lng": 121.53031
+  },
+  {
+    "id": "BL15",
+    "name_zh": "忠孝復興",
+    "name_en": "Zhongxiao Fuxing",
+    "line": "BL/BR",
+    "lat": 25.04158,
+    "lng": 121.54461
+  },
+  {
+    "id": "BL16",
+    "name_zh": "忠孝敦化",
+    "name_en": "Zhongxiao Dunhua",
+    "line": "BL",
+    "lat": 25.04083,
+    "lng": 121.55095
+  },
+  {
+    "id": "R06",
+    "name_zh": "中山國中",
+    "name_en": "Zhongshan Junior High School",
+    "line": "R",
+    "lat": 25.0583,
+    "lng": 121.54393
+  },
+  {
+    "id": "R07",
+    "name_zh": "南京復興",
+    "name_en": "Nanjing Fuxing",
+    "line": "R",
+    "lat": 25.05193,
+    "lng": 121.54393
+  },
+  {
+    "id": "R08",
+    "name_zh": "忠孝復興",
+    "name_en": "Zhongxiao Fuxing",
+    "line": "R/BR",
+    "lat": 25.04158,
+    "lng": 121.54461
+  },
+  {
+    "id": "BL11",
+    "name_zh": "中正紀念堂",
+    "name_en": "Chiang Kai-shek Memorial Hall",
+    "line": "BL/G",
+    "lat": 25.03362,
+    "lng": 121.52163
+  },
+  {
+    "id": "G09",
+    "name_zh": "古亭",
+    "name_en": "Guting",
+    "line": "G/O",
+    "lat": 25.02507,
+    "lng": 121.52872
+  },
+  {
+    "id": "O06",
+    "name_zh": "頂溪",
+    "name_en": "Dingxi",
+    "line": "O",
+    "lat": 25.01255,
+    "lng": 121.51407
+  },
+  {
+    "id": "BL13",
+    "name_zh": "古亭",
+    "name_en": "Guting",
+    "line": "BL",
+    "lat": 25.02507,
+    "lng": 121.52872
+  },
+  {
+    "id": "R05",
+    "name_zh": "雙連",
+    "name_en": "Shuanglian",
+    "line": "R",
+    "lat": 25.06328,
+    "lng": 121.52363
+  },
+  {
+    "id": "R04",
+    "name_zh": "民權西路",
+    "name_en": "Minquan W. Rd.",
+    "line": "R/O",
+    "lat": 25.07083,
+    "lng": 121.52
+  },
+  {
+    "id": "BL07",
+    "name_zh": "西門",
+    "name_en": "Ximen",
+    "line": "BL/G",
+    "lat": 25.04222,
+    "lng": 121.5082
+  },
+  {
+    "id": "BL08",
+    "name_zh": "台大醫院",
+    "name_en": "NTU Hospital",
+    "line": "BL",
+    "lat": 25.04416,
+    "lng": 121.51617
+  },
+  {
+    "id": "BL09",
+    "name_zh": "台北車站",
+    "name_en": "Taipei Main Station",
+    "line": "BL/R",
+    "lat": 25.04756,
+    "lng": 121.517
+  },
+  {
+    "id": "BL10",
+    "name_zh": "善導寺",
+    "name_en": "Shandao Temple",
+    "line": "BL",
+    "lat": 25.04437,
+    "lng": 121.5268
+  },
+  {
+    "id": "G10",
+    "name_zh": "台電大樓",
+    "name_en": "Taipower Building",
+    "line": "G",
+    "lat": 25.01826,
+    "lng": 121.53127
+  },
+  {
+    "id": "G11",
+    "name_zh": "師大路",
+    "name_en": "Shida Rd.",
+    "line": "G",
+    "lat": 25.01416,
+    "lng": 121.53126
+  },
+  {
+    "id": "BR12",
+    "name_zh": "大安森林公園",
+    "name_en": "Da'an Forest Park",
+    "line": "BR",
+    "lat": 25.02974,
+    "lng": 121.5356
+  },
+  {
+    "id": "BR13",
+    "name_zh": "六張犁",
+    "name_en": "Liuzhangli",
+    "line": "BR",
+    "lat": 25.02333,
+    "lng": 121.5558
+  },
+  {
+    "id": "O01",
+    "name_zh": "南勢角",
+    "name_en": "Nanshijiao",
+    "line": "O",
+    "lat": 24.99416,
+    "lng": 121.51415
+  },
+  {
+    "id": "O02",
+    "name_zh": "景安",
+    "name_en": "Jing'an",
+    "line": "O",
+    "lat": 25.0016,
+    "lng": 121.514
+  },
+  {
+    "id": "O03",
+    "name_zh": "永安市場",
+    "name_en": "Yongan Market",
+    "line": "O",
+    "lat": 25.00749,
+    "lng": 121.51316
+  },
+  {
+    "id": "O04",
+    "name_zh": "頂溪",
+    "name_en": "Dingxi",
+    "line": "O",
+    "lat": 25.01255,
+    "lng": 121.51407
+  },
+  {
+    "id": "O05",
+    "name_zh": "永春",
+    "name_en": "Yongchun",
+    "line": "O",
+    "lat": 25.03799,
+    "lng": 121.57993
+  },
+  {
+    "id": "G01",
+    "name_zh": "新店",
+    "name_en": "Xindian",
+    "line": "G",
+    "lat": 24.97067,
+    "lng": 121.5381
+  },
+  {
+    "id": "G02",
+    "name_zh": "新店區公所",
+    "name_en": "Xindian City Hall",
+    "line": "G",
+    "lat": 24.97556,
+    "lng": 121.5396
+  },
+  {
+    "id": "G03",
+    "name_zh": "七張",
+    "name_en": "Qizhang",
+    "line": "G",
+    "lat": 24.98239,
+    "lng": 121.54127
+  },
+  {
+    "id": "G04",
+    "name_zh": "大坪林",
+    "name_en": "Dapinglin",
+    "line": "G",
+    "lat": 24.99202,
+    "lng": 121.54155
+  },
+  {
+    "id": "G05",
+    "name_zh": "景美",
+    "name_en": "Jingmei",
+    "line": "G",
+    "lat": 24.99958,
+    "lng": 121.54155
+  },
+  {
+    "id": "G06",
+    "name_zh": "萬隆",
+    "name_en": "Wanlong",
+    "line": "G",
+    "lat": 25.00666,
+    "lng": 121.5364
+  },
+  {
+    "id": "G08",
+    "name_zh": "台電大樓",
+    "name_en": "Taipower Building",
+    "line": "G",
+    "lat": 25.01826,
+    "lng": 121.53127
+  },
+  {
+    "id": "R01",
+    "name_zh": "淡水",
+    "name_en": "Tamsui",
+    "line": "R",
+    "lat": 25.17541,
+    "lng": 121.45182
+  },
+  {
+    "id": "R16",
+    "name_zh": "象山",
+    "name_en": "Xiangshan",
+    "line": "R",
+    "lat": 25.028,
+    "lng": 121.567
+  },
+  {
+    "id": "R15",
+    "name_zh": "台北101/世貿",
+    "name_en": "Taipei 101/World Trade Center",
+    "line": "R",
+    "lat": 25.03315,
+    "lng": 121.5638
+  },
+  {
+    "id": "R14",
+    "name_zh": "信義安和",
+    "name_en": "Xinyi Anhe",
+    "line": "R",
+    "lat": 25.0334,
+    "lng": 121.55278
+  },
+  {
+    "id": "R13",
+    "name_zh": "大安",
+    "name_en": "Da'an",
+    "line": "R",
+    "lat": 25.03342,
+    "lng": 121.54393
+  },
+  {
+    "id": "R12",
+    "name_zh": "科技大樓",
+    "name_en": "Technology Building",
+    "line": "R",
+    "lat": 25.0344,
+    "lng": 121.54395
+  },
+  {
+    "id": "R11",
+    "name_zh": "六張犁",
+    "name_en": "Liuzhangli",
+    "line": "R",
+    "lat": 25.02333,
+    "lng": 121.5558
+  },
+  {
+    "id": "BL17",
+    "name_zh": "國父紀念館",
+    "name_en": "Sun Yat-sen Memorial Hall",
+    "line": "BL",
+    "lat": 25.04034,
+    "lng": 121.55771
+  },
+  {
+    "id": "BL18",
+    "name_zh": "市政府",
+    "name_en": "City Hall",
+    "line": "BL",
+    "lat": 25.04088,
+    "lng": 121.56467
+  },
+  {
+    "id": "BL19",
+    "name_zh": "永春",
+    "name_en": "Yongchun",
+    "line": "BL",
+    "lat": 25.03799,
+    "lng": 121.57993
+  },
+  {
+    "id": "BL20",
+    "name_zh": "後山埤",
+    "name_en": "Houshanpi",
+    "line": "BL",
+    "lat": 25.03802,
+    "lng": 121.58685
+  },
+  {
+    "id": "BL21",
+    "name_zh": "昆陽",
+    "name_en": "Kunyang",
+    "line": "BL",
+    "lat": 25.04034,
+    "lng": 121.59476
+  },
+  {
+    "id": "BL22",
+    "name_zh": "南港",
+    "name_en": "Nangang",
+    "line": "BL",
+    "lat": 25.0525,
+    "lng": 121.60675
+  }
 ]
 ```
 
@@ -240,7 +591,12 @@ export interface MrtStation {
   lng: number;
 }
 
-function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
+function haversineKm(
+  lat1: number,
+  lng1: number,
+  lat2: number,
+  lng2: number
+): number {
   const R = 6371;
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
   const dLng = ((lng2 - lng1) * Math.PI) / 180;
@@ -252,7 +608,10 @@ function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): nu
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-export function nearestMrtStation(lat: number, lng: number): MrtStation & { dist: number } {
+export function nearestMrtStation(
+  lat: number,
+  lng: number
+): MrtStation & { dist: number } {
   const stations = stationsData as MrtStation[];
   return stations.reduce(
     (nearest, station) => {
@@ -269,6 +628,7 @@ export function nearestMrtStation(lat: number, lng: number): MrtStation & { dist
 ```bash
 pnpm test lib/utils/mrt.test.ts
 ```
+
 Expected: both tests pass.
 
 **Step 6: Commit**
@@ -283,6 +643,7 @@ git commit -m "feat: add Taipei MRT stations JSON + nearestMrtStation utility"
 ## Task 3: Update `filter-sheet.tsx` — 5 tabs, tag search, expanded taxonomy
 
 **Files:**
+
 - Modify: `components/discovery/filter-sheet.tsx`
 - Modify: `components/discovery/filter-sheet.test.tsx`
 
@@ -391,6 +752,7 @@ describe('FilterSheet', () => {
 ```bash
 pnpm test components/discovery/filter-sheet.test.tsx
 ```
+
 Expected: multiple tests FAIL — no tabs rendered, no search input.
 
 **Step 3: Implement the new FilterSheet**
@@ -623,6 +985,7 @@ export function FilterSheet({ open, onClose, onApply, initialFilters }: FilterSh
 ```bash
 pnpm test components/discovery/filter-sheet.test.tsx
 ```
+
 Expected: all 7 tests pass.
 
 **Step 5: Commit**
@@ -637,6 +1000,7 @@ git commit -m "feat: filter sheet — 5 tabs (Functionality/Time/Ambience/Mode/F
 ## Task 4: Update `map-view.tsx` — branded coffee cup pins
 
 **Files:**
+
 - Modify: `components/map/map-view.tsx`
 - Create: `components/map/map-view.test.tsx`
 
@@ -724,6 +1088,7 @@ describe('MapView', () => {
 ```bash
 pnpm test components/map/map-view.test.tsx
 ```
+
 Expected: FAIL — `selectedShopId` prop not accepted, no `data-selected` attribute.
 
 **Step 3: Implement branded pins**
@@ -875,6 +1240,7 @@ export function MapView({
 ```bash
 pnpm test components/map/map-view.test.tsx
 ```
+
 Expected: all 5 tests pass.
 
 **Step 5: Commit**
@@ -889,6 +1255,7 @@ git commit -m "feat: branded coffee cup map pins — brown default, coral select
 ## Task 5: Create `components/map/map-list-view.tsx`
 
 **Files:**
+
 - Create: `components/map/map-list-view.tsx`
 - Create: `components/map/map-list-view.test.tsx`
 
@@ -963,6 +1330,7 @@ describe('MapListView', () => {
 ```bash
 pnpm test components/map/map-list-view.test.tsx
 ```
+
 Expected: FAIL — `Cannot find module './map-list-view'`.
 
 **Step 3: Implement**
@@ -1051,6 +1419,7 @@ export function MapListView({ shops }: MapListViewProps) {
 ```bash
 pnpm test components/map/map-list-view.test.tsx
 ```
+
 Expected: all 4 tests pass.
 
 **Step 5: Commit**
@@ -1065,6 +1434,7 @@ git commit -m "feat: MapListView component — vertical shop list for list view 
 ## Task 6: Create `components/shops/directions-sheet.tsx`
 
 **Files:**
+
 - Create: `components/shops/directions-sheet.tsx`
 - Create: `components/shops/directions-sheet.test.tsx`
 
@@ -1180,6 +1550,7 @@ describe('DirectionsSheet', () => {
 ```bash
 pnpm test components/shops/directions-sheet.test.tsx
 ```
+
 Expected: FAIL — `Cannot find module './directions-sheet'`.
 
 **Step 3: Implement**
@@ -1350,6 +1721,7 @@ export function DirectionsSheet({ open, onClose, shop }: DirectionsSheetProps) {
 ```bash
 pnpm test components/shops/directions-sheet.test.tsx
 ```
+
 Expected: all 4 tests pass.
 
 **Step 5: Commit**
@@ -1364,6 +1736,7 @@ git commit -m "feat: DirectionsSheet — walk/drive/MRT times + Google/Apple Map
 ## Task 7: Refactor `app/page.tsx` — view toggle + wire all components
 
 **Files:**
+
 - Modify: `app/page.tsx`
 - Create: `app/__tests__/find-page.test.tsx`
 
@@ -1482,6 +1855,7 @@ describe('FindPage', () => {
 ```bash
 pnpm test app/__tests__/find-page.test.tsx
 ```
+
 Expected: FAIL — view toggle button not found, list view not conditional.
 
 **Step 3: Refactor `app/page.tsx`**
@@ -1683,6 +2057,7 @@ export default function FindPage() {
 ```bash
 pnpm test app/__tests__/find-page.test.tsx
 ```
+
 Expected: all 4 tests pass.
 
 **Step 5: Commit**
@@ -1697,6 +2072,7 @@ git commit -m "feat: Find page — map/list view toggle, filter sheet integratio
 ## Task 8: Wire `DirectionsSheet` into Shop View
 
 **Files:**
+
 - Modify: `app/shops/[shopId]/[slug]/shop-detail-client.tsx`
 - No new test file needed (existing shop detail tests cover the page; we only add a button wiring)
 
@@ -1721,6 +2097,7 @@ If no test file exists, document: _No test added — DirectionsSheet is already 
 **Step 3: Add DirectionsSheet import and state**
 
 Find the "Get There" button in `shop-detail-client.tsx` and:
+
 1. Add `import { DirectionsSheet } from '@/components/shops/directions-sheet'` at the top
 2. Add `const [directionsOpen, setDirectionsOpen] = useState(false)` to the component state
 3. Wire the "Get There" button's `onClick` to `setDirectionsOpen(true)`
@@ -1731,6 +2108,7 @@ Find the "Get There" button in `shop-detail-client.tsx` and:
 ```bash
 pnpm type-check
 ```
+
 Expected: no errors.
 
 **Step 5: Commit**
@@ -1751,6 +2129,7 @@ git commit -m "feat: wire DirectionsSheet to Get There button in Shop View"
 ```bash
 pnpm test
 ```
+
 Expected: all tests pass.
 
 **Step 2: Type-check**
@@ -1758,6 +2137,7 @@ Expected: all tests pass.
 ```bash
 pnpm type-check
 ```
+
 Expected: no errors.
 
 **Step 3: Build**
@@ -1765,6 +2145,7 @@ Expected: no errors.
 ```bash
 pnpm build
 ```
+
 Expected: build succeeds with no errors.
 
 **Step 4: Lint**
@@ -1772,11 +2153,13 @@ Expected: build succeeds with no errors.
 ```bash
 pnpm lint
 ```
+
 Expected: no errors (the `stryker.config.mjs` warning pre-exists and is not introduced by this work).
 
 **Step 5: Commit if any fixups were needed**
 
 If any fixes were required in Steps 1-4:
+
 ```bash
 git add -A
 git commit -m "fix: type-check and lint issues in Find UI reconstruct"
@@ -1817,6 +2200,7 @@ graph TD
 ```
 
 **Wave 1** (parallel — no dependencies):
+
 - Task 1: `useSearchState` — add `view` param
 - Task 2: MRT stations JSON + `nearestMrtStation` utility
 - Task 3: `FilterSheet` — 5-tab rewrite with tag search
@@ -1824,11 +2208,14 @@ graph TD
 - Task 5: `MapListView` — new vertical list component
 
 **Wave 2** (parallel — depends on Wave 1):
+
 - Task 6: `DirectionsSheet` ← Task 2 (uses `nearestMrtStation`)
 - Task 7: `app/page.tsx` refactor ← Tasks 1, 3, 4, 5
 
 **Wave 3** (sequential — depends on Wave 2):
+
 - Task 8: Wire `DirectionsSheet` → Shop View ← Task 6
 
 **Wave 4** (sequential — depends on Wave 3):
+
 - Task 9: Final verification ← all tasks

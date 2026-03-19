@@ -54,7 +54,9 @@ describe('DirectionsSheet', () => {
   it('shows a static map thumbnail', () => {
     render(<DirectionsSheet open={true} onClose={vi.fn()} shop={shop} />);
     // ShopMapThumbnail on mobile renders a Mapbox static image
-    expect(screen.getByRole('img', { name: /map showing 日光珈琲/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('img', { name: /map showing 日光珈琲/i })
+    ).toBeInTheDocument();
   });
 
   it('a user who has shared their location sees walk and drive times from Mapbox', async () => {
@@ -114,15 +116,17 @@ describe('DirectionsSheet', () => {
     // "{name_en} ({name_zh}) · {line} · ~N min walk"
     await waitFor(() => {
       // Match the station row pattern: English name followed by Chinese in parens
-      expect(
-        screen.getByText(/[A-Za-z]+ \([^\)]+\) ·/)
-      ).toBeInTheDocument();
+      expect(screen.getByText(/[A-Za-z]+ \([^\)]+\) ·/)).toBeInTheDocument();
     });
   });
 
   it('renders Google Maps and Apple Maps deep link buttons', () => {
     render(<DirectionsSheet open={true} onClose={vi.fn()} shop={shop} />);
-    expect(screen.getByRole('link', { name: /google maps/i })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /apple maps/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: /google maps/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: /apple maps/i })
+    ).toBeInTheDocument();
   });
 });

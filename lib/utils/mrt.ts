@@ -9,7 +9,12 @@ export interface MrtStation {
   lng: number;
 }
 
-function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
+function haversineKm(
+  lat1: number,
+  lng1: number,
+  lat2: number,
+  lng2: number
+): number {
   const R = 6371;
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
   const dLng = ((lng2 - lng1) * Math.PI) / 180;
@@ -23,7 +28,10 @@ function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): nu
 
 export type MrtStationWithDistance = MrtStation & { dist: number };
 
-export function nearestMrtStation(lat: number, lng: number): MrtStationWithDistance {
+export function nearestMrtStation(
+  lat: number,
+  lng: number
+): MrtStationWithDistance {
   const stations = stationsData as MrtStation[];
   if (stations.length === 0) {
     throw new Error('MRT station dataset is empty');

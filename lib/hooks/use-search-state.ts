@@ -91,5 +91,16 @@ export function useSearchState(): SearchState {
     router.push(buildUrl({ q: null, mode: null, filters: null, view: null }));
   }, [router, buildUrl]);
 
-  return { query, mode, filters, view, setQuery, setMode, toggleFilter, setFilters, setView, clearAll };
+  return {
+    query,
+    mode,
+    filters,
+    view,
+    setQuery,
+    setMode,
+    toggleFilter,
+    setFilters,
+    setView,
+    clearAll,
+  };
 }

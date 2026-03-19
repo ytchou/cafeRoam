@@ -77,7 +77,12 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
   const directionsShop = useMemo(
     () =>
       hasMap
-        ? { id: shop.id, name: shop.name, latitude: shop.latitude!, longitude: shop.longitude! }
+        ? {
+            id: shop.id,
+            name: shop.name,
+            latitude: shop.latitude!,
+            longitude: shop.longitude!,
+          }
         : null,
     [hasMap, shop.id, shop.name, shop.latitude, shop.longitude]
   );

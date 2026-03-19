@@ -101,16 +101,17 @@ Single-column scroll. Answers "is this place right for me?" in order:
 
 ### URL-driven state (shared with existing implementation)
 
-| Param | Values | Component |
-|---|---|---|
-| `?q=<query>` | text search string | `SearchBar` |
-| `?mode=work\|rest\|social\|specialty` | optional, single-select | `ModeChips` (in FilterSheet) |
-| `?filters=wifi,outlet,...` | comma-separated tag IDs | `FilterPills` / `FilterSheet` |
-| `?view=list\|map` | toggle state | new — controls Map View vs List View |
+| Param                                 | Values                  | Component                            |
+| ------------------------------------- | ----------------------- | ------------------------------------ |
+| `?q=<query>`                          | text search string      | `SearchBar`                          |
+| `?mode=work\|rest\|social\|specialty` | optional, single-select | `ModeChips` (in FilterSheet)         |
+| `?filters=wifi,outlet,...`            | comma-separated tag IDs | `FilterPills` / `FilterSheet`        |
+| `?view=list\|map`                     | toggle state            | new — controls Map View vs List View |
 
 ### View toggle implementation
 
 The `?view=list` URL param controls which Find state is shown:
+
 - `view=map` (default): full-screen Mapbox with bottom card area.
 - `view=list`: list-only view with no map.
 
@@ -130,13 +131,13 @@ Per spec: unauthenticated users can access map, list, filter, and shop detail. S
 
 ## Analytics
 
-| Event | Trigger | Properties |
-|---|---|---|
-| `search_submitted` | SearchBar submit | `query_text`, `mode_chip_active`, `result_count` |
-| `filter_applied` | FilterPills / FilterSheet apply | `filter_type` ('quick'\|'sheet'), `filter_value` |
-| `shop_detail_viewed` | Shop View mount | `shop_id`, `referrer`, `session_search_query` |
-| `shop_url_copied` | ShareButton | `shop_id`, `copy_method` |
-| `view_toggled` | map/list toggle | `to_view` ('map'\|'list') — **new event** |
+| Event                | Trigger                         | Properties                                       |
+| -------------------- | ------------------------------- | ------------------------------------------------ |
+| `search_submitted`   | SearchBar submit                | `query_text`, `mode_chip_active`, `result_count` |
+| `filter_applied`     | FilterPills / FilterSheet apply | `filter_type` ('quick'\|'sheet'), `filter_value` |
+| `shop_detail_viewed` | Shop View mount                 | `shop_id`, `referrer`, `session_search_query`    |
+| `shop_url_copied`    | ShareButton                     | `shop_id`, `copy_method`                         |
+| `view_toggled`       | map/list toggle                 | `to_view` ('map'\|'list') — **new event**        |
 
 ---
 
@@ -144,20 +145,20 @@ Per spec: unauthenticated users can access map, list, filter, and shop detail. S
 
 ### Components to create/update
 
-| Component | Action | Notes |
-|---|---|---|
-| `app/page.tsx` | Update | Add `?view` param support; split into `MapFindView` + `ListFindView` sub-components |
-| `components/map/map-view.tsx` | Update | Branded pins (coffee cup icon + drop tip polygon), selected state uses `$--accent-coral` |
-| `components/map/map-mini-card.tsx` | Keep | No changes needed |
-| `components/map/map-desktop-card.tsx` | Keep | No changes needed |
-| `components/map/map-list-view.tsx` | Update | Wire as the list-view state for mobile (currently used only on desktop) |
-| `components/discovery/filter-pills.tsx` | Update | Wire `onOpenSheet` callback to open `FilterSheet` |
-| `components/discovery/filter-sheet.tsx` | Update | Add 5th "Food" tab; extend tag lists |
-| `components/discovery/mode-chips.tsx` | Update | Wire into Filter Sheet "Mode" tab (currently unused on Find page) |
-| `lib/hooks/use-search-state.ts` | Update | Add `view` param ('map'\|'list') with 'map' default |
-| `lib/data/taipei-mrt-stations.json` | Create | ~130 Taipei MRT stations (lat/lng, name, line, exit info) |
-| `app/shops/[shopId]/[slug]/shop-detail-client.tsx` | Keep | Already complete; claim banner already present |
-| `components/shops/directions-sheet.tsx` | Create | New: Mapbox static map thumbnail + walk/drive/MRT times + deep links |
+| Component                                          | Action | Notes                                                                                    |
+| -------------------------------------------------- | ------ | ---------------------------------------------------------------------------------------- |
+| `app/page.tsx`                                     | Update | Add `?view` param support; split into `MapFindView` + `ListFindView` sub-components      |
+| `components/map/map-view.tsx`                      | Update | Branded pins (coffee cup icon + drop tip polygon), selected state uses `$--accent-coral` |
+| `components/map/map-mini-card.tsx`                 | Keep   | No changes needed                                                                        |
+| `components/map/map-desktop-card.tsx`              | Keep   | No changes needed                                                                        |
+| `components/map/map-list-view.tsx`                 | Update | Wire as the list-view state for mobile (currently used only on desktop)                  |
+| `components/discovery/filter-pills.tsx`            | Update | Wire `onOpenSheet` callback to open `FilterSheet`                                        |
+| `components/discovery/filter-sheet.tsx`            | Update | Add 5th "Food" tab; extend tag lists                                                     |
+| `components/discovery/mode-chips.tsx`              | Update | Wire into Filter Sheet "Mode" tab (currently unused on Find page)                        |
+| `lib/hooks/use-search-state.ts`                    | Update | Add `view` param ('map'\|'list') with 'map' default                                      |
+| `lib/data/taipei-mrt-stations.json`                | Create | ~130 Taipei MRT stations (lat/lng, name, line, exit info)                                |
+| `app/shops/[shopId]/[slug]/shop-detail-client.tsx` | Keep   | Already complete; claim banner already present                                           |
+| `components/shops/directions-sheet.tsx`            | Create | New: Mapbox static map thumbnail + walk/drive/MRT times + deep links                     |
 
 ### Mapbox pin implementation
 
@@ -165,21 +166,24 @@ Custom markers via `react-map-gl` `<Marker>` component with a React element chil
 
 ```tsx
 // Pin states
-const defaultPin = { fill: '$--map-pin', size: 40 }
-const selectedPin = { fill: '$--accent-coral', size: 44 }  // 10% larger on selection
+const defaultPin = { fill: '$--map-pin', size: 40 };
+const selectedPin = { fill: '$--accent-coral', size: 44 }; // 10% larger on selection
 ```
 
 ### MRT station lookup
 
 ```typescript
 // lib/utils/mrt.ts
-import stations from '@/lib/data/taipei-mrt-stations.json'
+import stations from '@/lib/data/taipei-mrt-stations.json';
 
 export function nearestMrtStation(lat: number, lng: number) {
-  return stations.reduce((nearest, station) => {
-    const dist = haversine(lat, lng, station.lat, station.lng)
-    return dist < nearest.dist ? { ...station, dist } : nearest
-  }, { dist: Infinity } as MrtStation & { dist: number })
+  return stations.reduce(
+    (nearest, station) => {
+      const dist = haversine(lat, lng, station.lat, station.lng);
+      return dist < nearest.dist ? { ...station, dist } : nearest;
+    },
+    { dist: Infinity } as MrtStation & { dist: number }
+  );
 }
 ```
 

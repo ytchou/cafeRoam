@@ -34,7 +34,12 @@ interface RoutesState {
 
 type RoutesAction =
   | { type: 'fetch_start' }
-  | { type: 'fetch_done'; walkRoute: RouteInfo | null; driveRoute: RouteInfo | null; mrtWalkRoute: RouteInfo | null };
+  | {
+      type: 'fetch_done';
+      walkRoute: RouteInfo | null;
+      driveRoute: RouteInfo | null;
+      mrtWalkRoute: RouteInfo | null;
+    };
 
 const initialState: RoutesState = {
   loading: false,
@@ -46,9 +51,19 @@ const initialState: RoutesState = {
 function routesReducer(state: RoutesState, action: RoutesAction): RoutesState {
   switch (action.type) {
     case 'fetch_start':
-      return { loading: true, walkRoute: null, driveRoute: null, mrtWalkRoute: null };
+      return {
+        loading: true,
+        walkRoute: null,
+        driveRoute: null,
+        mrtWalkRoute: null,
+      };
     case 'fetch_done':
-      return { loading: false, walkRoute: action.walkRoute, driveRoute: action.driveRoute, mrtWalkRoute: action.mrtWalkRoute };
+      return {
+        loading: false,
+        walkRoute: action.walkRoute,
+        driveRoute: action.driveRoute,
+        mrtWalkRoute: action.mrtWalkRoute,
+      };
     default:
       return state;
   }
@@ -96,26 +111,66 @@ export function DirectionsSheet({
 
   const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 
-  const fetchDirections = useCallback(async (signal: AbortSignal) => {
-    if (!token) return;
-    dispatch({ type: 'fetch_start' });
+  const fetchDirections = useCallback(
+    async (signal: AbortSignal) => {
+      if (!token) return;
+      dispatch({ type: 'fetch_start' });
 
-    const hasUserLocation = userLat !== undefined && userLng !== undefined;
+      const hasUserLocation = userLat !== undefined && userLng !== undefined;
 
-    const [walk, drive, mrtWalk] = await Promise.all([
-      hasUserLocation
-        ? fetchRoute('walking', userLng, userLat, shop.longitude, shop.latitude, token, signal)
-        : Promise.resolve(null),
-      hasUserLocation
-        ? fetchRoute('driving-traffic', userLng, userLat, shop.longitude, shop.latitude, token, signal)
-        : Promise.resolve(null),
-      fetchRoute('walking', mrtStation.lng, mrtStation.lat, shop.longitude, shop.latitude, token, signal),
-    ]);
+      const [walk, drive, mrtWalk] = await Promise.all([
+        hasUserLocation
+          ? fetchRoute(
+              'walking',
+              userLng,
+              userLat,
+              shop.longitude,
+              shop.latitude,
+              token,
+              signal
+            )
+          : Promise.resolve(null),
+        hasUserLocation
+          ? fetchRoute(
+              'driving-traffic',
+              userLng,
+              userLat,
+              shop.longitude,
+              shop.latitude,
+              token,
+              signal
+            )
+          : Promise.resolve(null),
+        fetchRoute(
+          'walking',
+          mrtStation.lng,
+          mrtStation.lat,
+          shop.longitude,
+          shop.latitude,
+          token,
+          signal
+        ),
+      ]);
 
-    if (!signal.aborted) {
-      dispatch({ type: 'fetch_done', walkRoute: walk, driveRoute: drive, mrtWalkRoute: mrtWalk });
-    }
-  }, [token, userLat, userLng, shop.longitude, shop.latitude, mrtStation.lng, mrtStation.lat]);
+      if (!signal.aborted) {
+        dispatch({
+          type: 'fetch_done',
+          walkRoute: walk,
+          driveRoute: drive,
+          mrtWalkRoute: mrtWalk,
+        });
+      }
+    },
+    [
+      token,
+      userLat,
+      userLng,
+      shop.longitude,
+      shop.latitude,
+      mrtStation.lng,
+      mrtStation.lat,
+    ]
+  );
 
   useEffect(() => {
     if (!open || !token) return;
@@ -174,7 +229,8 @@ export function DirectionsSheet({
                   <TrainIcon />
                 </span>
                 <span>
-                  {mrtStation.name_en} ({mrtStation.name_zh}) &middot; {mrtStation.line}
+                  {mrtStation.name_en} ({mrtStation.name_zh}) &middot;{' '}
+                  {mrtStation.line}
                   {mrtWalkRoute
                     ? ` · ~${mrtWalkRoute.durationMin} min walk`
                     : mrtStation.dist < 1
@@ -215,7 +271,16 @@ export function DirectionsSheet({
 
 function WalkIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <circle cx="12" cy="5" r="2" />
       <path d="M10 22V18l-2-4 4-3 2 3v9" />
       <path d="M10 14l-2 2" />
@@ -226,7 +291,16 @@ function WalkIcon() {
 
 function CarIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9L18 10l-2.7-3.6A1.5 1.5 0 0 0 14.1 6H9.9a1.5 1.5 0 0 0-1.2.6L6 10l-2.5 1.1C2.7 11.3 2 12.1 2 13v3c0 .6.4 1 1 1h2" />
       <circle cx="7" cy="17" r="2" />
       <circle cx="17" cy="17" r="2" />
@@ -236,7 +310,16 @@ function CarIcon() {
 
 function TrainIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <rect x="4" y="3" width="16" height="16" rx="2" />
       <path d="M4 11h16" />
       <path d="M12 3v8" />
