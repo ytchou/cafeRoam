@@ -1062,6 +1062,39 @@ _Designed in Pencil. Replaces current 首頁 + 地圖 split into a unified Find 
 
 - [x] `pnpm test` + `pnpm type-check` + `pnpm build` all pass (Task 9)
 
+### Map View UI Rebuild (from Pencil designs)
+
+> **Design Doc:** [docs/designs/2026-03-19-map-view-rebuild-design.md](docs/designs/2026-03-19-map-view-rebuild-design.md)
+> **Plan:** [docs/plans/2026-03-19-map-view-ui-rebuild-plan.md](docs/plans/2026-03-19-map-view-ui-rebuild-plan.md)
+
+**Chunk 1 — Foundation (Wave 1):**
+
+- [ ] Task 1: Typography & CSS (DM Sans + design tokens)
+
+**Chunk 2 — Reusable Components (Wave 2, parallel):**
+
+- [ ] Task 2: FilterTag (active/inactive pill)
+- [ ] Task 3: ViewToggle (map/list segmented toggle)
+- [ ] Task 5: SearchBar rebuild (filter button + design styling)
+- [ ] Task 6: ShopCardCarousel (mobile map bottom card)
+- [ ] Task 7: ShopCardCompact (list row + desktop panel with selected state)
+- [ ] Task 8: ShopCardGrid (desktop 3-column photo card)
+- [ ] Task 9: MapPin SVG (default/active states)
+- [ ] Task 10: CollapseToggle (desktop panel strip)
+- [ ] Task 11: BottomNav rebuild (pill-shaped tab bar)
+- [ ] Task 12: HeaderNav rebuild (logo + pill nav + avatar)
+
+**Chunk 3 — Compound Components (Wave 3, parallel):**
+
+- [ ] Task 4: CountHeader (count + ViewToggle + sort)
+- [ ] Task 13: FilterSheet rebuild (vaul drawer + dialog modal)
+- [ ] Task 14: ShopCarousel (horizontal scroll container)
+
+**Chunk 4 — Layout + Integration (Wave 4-5):**
+
+- [ ] Task 15: Layout components + page.tsx integration
+- [ ] Task 16: Delete old components + rename nav files
+
 ### Shop View — Directions (implementation notes)
 
 _Build when implementing Shop View. All transport estimates via Mapbox — no Google Maps API needed._
