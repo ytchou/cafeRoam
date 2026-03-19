@@ -1,32 +1,20 @@
 import { render, screen } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
+import { vi } from 'vitest';
 import { BottomNav } from './bottom-nav';
 
 vi.mock('next/navigation', () => ({
-  usePathname: () => '/',
-  Link: ({ children, href }: { children: React.ReactNode; href: string }) => (
-    <a href={href}>{children}</a>
-  ),
+  usePathname: vi.fn(() => '/'),
 }));
 
 vi.mock('next/link', () => ({
-  default: ({
-    children,
-    href,
-    ...rest
-  }: {
-    children: React.ReactNode;
-    href: string;
-    [key: string]: unknown;
-  }) => (
-    <a href={href} {...rest}>
-      {children}
-    </a>
+  default: ({ children, href, ...props }: { children: React.ReactNode; href: string; [key: string]: unknown }) => (
+    <a href={href} {...props}>{children}</a>
   ),
 }));
 
 describe('BottomNav', () => {
-  it('When a user opens the app, they see four navigation tabs: 地圖, 探索, 收藏, 我的', () => {
+  it('renders 4 tabs with Chinese labels', () => {
     render(<BottomNav />);
     expect(screen.getByText('地圖')).toBeInTheDocument();
     expect(screen.getByText('探索')).toBeInTheDocument();
@@ -34,26 +22,22 @@ describe('BottomNav', () => {
     expect(screen.getByText('我的')).toBeInTheDocument();
   });
 
-  it('When a user is on the home page, the 地圖 tab appears active', () => {
-    render(<BottomNav />);
-    const mapLink = screen.getByText('地圖').closest('a');
-    expect(mapLink).toHaveAttribute('data-active', 'true');
+  it('has pill-shaped container', () => {
+    const { container } = render(<BottomNav />);
+    const pill = container.querySelector('[data-testid="tab-bar-pill"]');
+    expect(pill).toBeInTheDocument();
   });
 
-  it('When a user taps each tab, they are directed to the correct section of the app', () => {
+  it('shows active state for current route', () => {
     render(<BottomNav />);
-    expect(screen.getByText('地圖').closest('a')).toHaveAttribute('href', '/');
-    expect(screen.getByText('探索').closest('a')).toHaveAttribute(
-      'href',
-      '/explore'
-    );
-    expect(screen.getByText('收藏').closest('a')).toHaveAttribute(
-      'href',
-      '/lists'
-    );
-    expect(screen.getByText('我的').closest('a')).toHaveAttribute(
-      'href',
-      '/profile'
-    );
+    const findTab = screen.getByText('地圖').closest('[data-tab]');
+    expect(findTab).toHaveAttribute('data-active', 'true');
+  });
+
+  it('links to correct routes', () => {
+    render(<BottomNav />);
+    expect(screen.getByText('探索').closest('a')).toHaveAttribute('href', '/explore');
+    expect(screen.getByText('收藏').closest('a')).toHaveAttribute('href', '/lists');
+    expect(screen.getByText('我的').closest('a')).toHaveAttribute('href', '/profile');
   });
 });

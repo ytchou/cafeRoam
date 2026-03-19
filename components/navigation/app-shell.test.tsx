@@ -10,12 +10,12 @@ vi.mock('@/lib/hooks/use-media-query', () => ({
   useIsDesktop: vi.fn(),
 }));
 
-vi.mock('./bottom-nav-new', () => ({
-  BottomNavNew: () => <nav data-testid="bottom-nav" />,
+vi.mock('./bottom-nav', () => ({
+  BottomNav: () => <nav data-testid="bottom-nav" />,
 }));
 
-vi.mock('./header-nav-new', () => ({
-  HeaderNavNew: () => <header data-testid="header-nav" />,
+vi.mock('./header-nav', () => ({
+  HeaderNav: () => <header data-testid="header-nav" />,
 }));
 
 import { useIsDesktop } from '@/lib/hooks/use-media-query';

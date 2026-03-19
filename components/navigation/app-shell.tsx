@@ -1,8 +1,8 @@
 'use client';
 import { usePathname } from 'next/navigation';
 import { useIsDesktop } from '@/lib/hooks/use-media-query';
-import { BottomNavNew } from './bottom-nav-new';
-import { HeaderNavNew } from './header-nav-new';
+import { BottomNav } from './bottom-nav';
+import { HeaderNav } from './header-nav';
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const isDesktop = useIsDesktop();
@@ -11,11 +11,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      {isDesktop && !isFindPage && <HeaderNavNew />}
+      {isDesktop && !isFindPage && <HeaderNav />}
       <main className={isDesktop && !isFindPage ? 'pt-16' : isFindPage ? '' : 'pb-16'}>
         {children}
       </main>
-      {!isDesktop && !isFindPage && <BottomNavNew />}
+      {!isDesktop && !isFindPage && <BottomNav />}
     </>
   );
 }

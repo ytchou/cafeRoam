@@ -4,7 +4,7 @@ import { FilterTag } from '@/components/filters/filter-tag';
 import { CountHeader } from '@/components/discovery/count-header';
 import { ShopCardGrid } from '@/components/shops/shop-card-grid';
 import { FilterSheet } from '@/components/filters/filter-sheet';
-import { HeaderNavNew } from '@/components/navigation/header-nav-new';
+import { HeaderNav } from '@/components/navigation/header-nav';
 
 const QUICK_FILTERS = [
   { id: 'open_now', label: 'Open Now', dot: '#3D8A5A' },
@@ -60,7 +60,7 @@ export function ListDesktopLayout({
 }: ListDesktopLayoutProps) {
   return (
     <div className="flex h-screen w-full flex-col bg-[var(--background)]">
-      <HeaderNavNew activeTab="find" />
+      <HeaderNav activeTab="find" />
 
       <div className="flex flex-col gap-2 bg-white px-8 pt-20 pb-3 shadow-sm">
         <SearchBar onSearch={onSearch} onFilterClick={onFilterOpen} defaultQuery={query} />

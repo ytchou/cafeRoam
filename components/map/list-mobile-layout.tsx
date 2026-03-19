@@ -4,7 +4,7 @@ import { FilterTag } from '@/components/filters/filter-tag';
 import { CountHeader } from '@/components/discovery/count-header';
 import { ShopCardCompact } from '@/components/shops/shop-card-compact';
 import { FilterSheet } from '@/components/filters/filter-sheet';
-import { BottomNavNew } from '@/components/navigation/bottom-nav-new';
+import { BottomNav } from '@/components/navigation/bottom-nav';
 
 const QUICK_FILTERS = [
   { id: 'open_now', label: 'Open Now', dot: '#3D8A5A' },
@@ -87,7 +87,7 @@ export function ListMobileLayout({
         ))}
       </div>
 
-      <BottomNavNew />
+      <BottomNav />
 
       <FilterSheet
         open={filterSheetOpen}

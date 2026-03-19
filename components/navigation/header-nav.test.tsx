@@ -1,62 +1,39 @@
 import { render, screen } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { createMockSupabaseAuth } from '@/lib/test-utils/mocks';
-
-vi.mock('next/link', () => ({
-  default: ({
-    children,
-    href,
-    ...rest
-  }: {
-    children: React.ReactNode;
-    href: string;
-    [key: string]: unknown;
-  }) => (
-    <a href={href} {...rest}>
-      {children}
-    </a>
-  ),
-}));
-
-vi.mock('@/components/discovery/search-bar', () => ({
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  SearchBar: ({ onSubmit: _onSubmit }: { onSubmit: (q: string) => void }) => (
-    <div data-testid="search-bar" />
-  ),
-}));
-
-const mockAuth = createMockSupabaseAuth();
-vi.mock('@/lib/supabase/client', () => ({
-  createClient: () => ({ auth: mockAuth }),
-}));
-
+import { describe, it, expect, vi } from 'vitest';
 import { HeaderNav } from './header-nav';
 
+vi.mock('next/navigation', () => ({
+  usePathname: vi.fn(() => '/'),
+}));
+
+vi.mock('next/link', () => ({
+  default: ({ children, href, ...props }: { children: React.ReactNode; href: string; [key: string]: unknown }) => (
+    <a href={href} {...props}>{children}</a>
+  ),
+}));
+
 describe('HeaderNav', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mockAuth.getSession.mockResolvedValue({ data: { session: null } });
+  it('renders logo with 啡遊 CafeRoam', () => {
+    render(<HeaderNav activeTab="find" />);
+    expect(screen.getByText('啡遊 CafeRoam')).toBeInTheDocument();
   });
 
-  it('renders logo', () => {
-    render(<HeaderNav onSearch={vi.fn()} />);
-    expect(screen.getByText(/啡遊|CafeRoam/i)).toBeInTheDocument();
+  it('renders 4 nav items', () => {
+    render(<HeaderNav activeTab="find" />);
+    expect(screen.getByText('Find')).toBeInTheDocument();
+    expect(screen.getByText('Explore')).toBeInTheDocument();
+    expect(screen.getByText('Favorites')).toBeInTheDocument();
+    expect(screen.getByText('Profile')).toBeInTheDocument();
   });
 
-  it('renders navigation links', () => {
-    render(<HeaderNav onSearch={vi.fn()} />);
-    expect(screen.getByRole('link', { name: /地圖/i })).toHaveAttribute(
-      'href',
-      '/map'
-    );
-    expect(screen.getByRole('link', { name: /收藏/i })).toHaveAttribute(
-      'href',
-      '/lists'
-    );
+  it('shows Find as active when activeTab is find', () => {
+    render(<HeaderNav activeTab="find" />);
+    const findLink = screen.getByText('Find').closest('a');
+    expect(findLink).toHaveAttribute('data-active', 'true');
   });
 
-  it('renders search bar', () => {
-    render(<HeaderNav onSearch={vi.fn()} />);
-    expect(screen.getByTestId('search-bar')).toBeInTheDocument();
+  it('renders search button', () => {
+    render(<HeaderNav activeTab="find" />);
+    expect(screen.getByRole('button', { name: /search/i })).toBeInTheDocument();
   });
 });

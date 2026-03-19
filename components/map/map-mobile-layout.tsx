@@ -7,7 +7,7 @@ import { FilterTag } from '@/components/filters/filter-tag';
 import { CountHeader } from '@/components/discovery/count-header';
 import { ShopCarousel } from '@/components/map/shop-carousel';
 import { FilterSheet } from '@/components/filters/filter-sheet';
-import { BottomNavNew } from '@/components/navigation/bottom-nav-new';
+import { BottomNav } from '@/components/navigation/bottom-nav';
 
 const MapView = dynamic(
   () => import('@/components/map/map-view').then((m) => ({ default: m.MapView })),
@@ -123,7 +123,7 @@ export function MapMobileLayout({
           onShopClick={onShopClick}
           selectedShopId={selectedShopId}
         />
-        <BottomNavNew />
+        <BottomNav />
       </div>
 
       <FilterSheet

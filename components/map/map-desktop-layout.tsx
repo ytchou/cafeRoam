@@ -7,7 +7,7 @@ import { CountHeader } from '@/components/discovery/count-header';
 import { ShopCardCompact } from '@/components/shops/shop-card-compact';
 import { FilterSheet } from '@/components/filters/filter-sheet';
 import { CollapseToggle } from '@/components/map/collapse-toggle';
-import { HeaderNavNew } from '@/components/navigation/header-nav-new';
+import { HeaderNav } from '@/components/navigation/header-nav';
 
 const MapView = dynamic(
   () => import('@/components/map/map-view').then((m) => ({ default: m.MapView })),
@@ -72,7 +72,7 @@ export function MapDesktopLayout({
 
   return (
     <div className="flex h-screen w-full flex-col">
-      <HeaderNavNew activeTab="find" />
+      <HeaderNav activeTab="find" />
 
       <div className="flex flex-1 overflow-hidden pt-16">
         {!panelCollapsed && (

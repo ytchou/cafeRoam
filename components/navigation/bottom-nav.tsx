@@ -15,18 +15,23 @@ export function BottomNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="pb-safe fixed right-0 bottom-0 left-0 z-40 border-t border-gray-100 bg-white">
-      <div className="flex">
+    <nav className="fixed right-0 bottom-0 left-0 z-40 px-4 pb-4">
+      <div
+        data-testid="tab-bar-pill"
+        className="flex rounded-[36px] bg-white p-1 shadow-[0_4px_20px_#0000001A] h-[62px]"
+      >
         {TABS.map(({ href, label, icon: Icon }) => {
-          const isActive =
-            pathname === href || (href !== '/' && pathname.startsWith(href));
+          const isActive = pathname === href || (href !== '/' && pathname.startsWith(href));
           return (
             <Link
               key={href}
               href={href}
-              data-active={isActive}
-              className={`flex flex-1 flex-col items-center gap-0.5 py-2 text-xs transition-colors ${
-                isActive ? 'text-[#E06B3F]' : 'text-gray-400'
+              data-tab={label}
+              data-active={isActive || undefined}
+              className={`flex flex-1 flex-col items-center justify-center gap-0.5 rounded-[26px] font-[family-name:var(--font-body)] text-[11px] font-medium transition-colors ${
+                isActive
+                  ? 'bg-[var(--active-dark)] text-white'
+                  : 'text-[var(--text-tertiary)]'
               }`}
             >
               <Icon className="h-5 w-5" />
