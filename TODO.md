@@ -1092,7 +1092,7 @@ _Designed in Pencil. Replaces current 首頁 + 地圖 split into a unified Find 
 
 **Chunk 4 — Layout + Integration (Wave 4-5):**
 
-- [ ] Task 15: Layout components + page.tsx integration
+- [x] Task 15: Layout components + page.tsx integration
 - [ ] Task 16: Delete old components + rename nav files
 
 ### Shop View — Directions (implementation notes)

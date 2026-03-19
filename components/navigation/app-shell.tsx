@@ -1,22 +1,21 @@
 'use client';
-import { useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { useIsDesktop } from '@/lib/hooks/use-media-query';
-import { BottomNav } from './bottom-nav';
-import { HeaderNav } from './header-nav';
+import { BottomNavNew } from './bottom-nav-new';
+import { HeaderNavNew } from './header-nav-new';
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const isDesktop = useIsDesktop();
-  const router = useRouter();
-
-  const handleSearch = (query: string) => {
-    router.push(`/map?q=${encodeURIComponent(query)}`);
-  };
+  const pathname = usePathname();
+  const isFindPage = pathname === '/';
 
   return (
     <>
-      {isDesktop && <HeaderNav onSearch={handleSearch} />}
-      <main className={isDesktop ? 'pt-16' : 'pb-16'}>{children}</main>
-      {!isDesktop && <BottomNav />}
+      {isDesktop && !isFindPage && <HeaderNavNew />}
+      <main className={isDesktop && !isFindPage ? 'pt-16' : isFindPage ? '' : 'pb-16'}>
+        {children}
+      </main>
+      {!isDesktop && !isFindPage && <BottomNavNew />}
     </>
   );
 }

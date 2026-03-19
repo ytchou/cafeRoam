@@ -3,19 +3,19 @@ import { describe, expect, it, vi } from 'vitest';
 import { AppShell } from './app-shell';
 
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({ push: vi.fn() }),
+  usePathname: vi.fn(() => '/explore'),
 }));
 
 vi.mock('@/lib/hooks/use-media-query', () => ({
   useIsDesktop: vi.fn(),
 }));
 
-vi.mock('./bottom-nav', () => ({
-  BottomNav: () => <nav data-testid="bottom-nav" />,
+vi.mock('./bottom-nav-new', () => ({
+  BottomNavNew: () => <nav data-testid="bottom-nav" />,
 }));
 
-vi.mock('./header-nav', () => ({
-  HeaderNav: () => <header data-testid="header-nav" />,
+vi.mock('./header-nav-new', () => ({
+  HeaderNavNew: () => <header data-testid="header-nav" />,
 }));
 
 import { useIsDesktop } from '@/lib/hooks/use-media-query';

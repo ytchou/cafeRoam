@@ -29,7 +29,7 @@ export function SearchBar({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex items-center px-5 h-[52px]">
+    <form role="search" onSubmit={handleSubmit} className="flex items-center px-5 h-[52px]">
       <div className="flex items-center gap-3 w-full h-[52px] rounded-[26px] bg-white px-5 border border-[var(--border-medium)] shadow-[0_4px_16px_#0000000A]">
         <Search className="h-5 w-5 shrink-0 text-[var(--text-tertiary)]" />
         <input
