@@ -1073,7 +1073,7 @@ _Designed in Pencil. Replaces current 首頁 + 地圖 split into a unified Find 
 
 **Chunk 2 — Reusable Components (Wave 2, parallel):**
 
-- [ ] Task 2: FilterTag (active/inactive pill)
+- [x] Task 2: FilterTag (active/inactive pill)
 - [ ] Task 3: ViewToggle (map/list segmented toggle)
 - [ ] Task 5: SearchBar rebuild (filter button + design styling)
 - [ ] Task 6: ShopCardCarousel (mobile map bottom card)
