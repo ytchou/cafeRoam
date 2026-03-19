@@ -17,7 +17,9 @@ interface HeaderNavProps {
 
 export function HeaderNav({ activeTab }: HeaderNavProps) {
   const pathname = usePathname();
-  const currentTab = activeTab ?? (pathname === '/' ? 'find' : pathname.replace('/', ''));
+  const currentTab =
+    activeTab ??
+    (NAV_ITEMS.find((item) => item.href === pathname)?.tab ?? 'find');
 
   return (
     <header className="fixed top-0 right-0 left-0 z-40 flex items-center justify-between h-16 px-8 bg-white border-b border-[#D1D0CD]">

@@ -93,17 +93,22 @@ interface FilterSheetProps {
   initialFilters: string[];
 }
 
+// FilterContent owns its own selection state. It is mounted fresh each time the
+// sheet opens (desktop: parent returns null when closed; mobile: Drawer.Portal
+// unmounts on close), so the lazy useState initializer re-runs on every open —
+// no useEffect sync needed.
 function FilterContent({
-  selected,
-  setSelected,
+  initialFilters,
   onApply,
   onClose,
 }: {
-  selected: Set<string>;
-  setSelected: React.Dispatch<React.SetStateAction<Set<string>>>;
+  initialFilters: string[];
   onApply: (filters: string[]) => void;
   onClose: () => void;
 }) {
+  const [selected, setSelected] = useState<Set<string>>(
+    () => new Set(initialFilters),
+  );
   const [activeTab, setActiveTab] = useState('functionality');
 
   const activeTabData = useMemo(
@@ -207,9 +212,6 @@ export function FilterSheet({
   onApply,
   initialFilters,
 }: FilterSheetProps) {
-  const [selected, setSelected] = useState<Set<string>>(
-    () => new Set(initialFilters),
-  );
   const isDesktop = useIsDesktop();
 
   if (!open) return null;
@@ -227,8 +229,7 @@ export function FilterSheet({
         />
         <div className="relative z-10 flex max-h-[80vh] w-full max-w-lg flex-col rounded-2xl bg-white shadow-xl">
           <FilterContent
-            selected={selected}
-            setSelected={setSelected}
+            initialFilters={initialFilters}
             onApply={onApply}
             onClose={onClose}
           />
@@ -245,8 +246,7 @@ export function FilterSheet({
           <Drawer.Handle />
           <Drawer.Title className="sr-only">Filters</Drawer.Title>
           <FilterContent
-            selected={selected}
-            setSelected={setSelected}
+            initialFilters={initialFilters}
             onApply={onApply}
             onClose={onClose}
           />
