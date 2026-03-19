@@ -43,3 +43,32 @@ class TestGetStamps:
         finally:
             app.dependency_overrides.pop(get_current_user, None)
             app.dependency_overrides.pop(get_user_db, None)
+
+    def test_stamps_include_photo_url_and_district(self, client: TestClient, auth_headers: dict):
+        db = MagicMock()
+        db.table.return_value.select.return_value.eq.return_value.order.return_value.execute.return_value.data = [
+            {
+                "id": "stamp-1",
+                "user_id": "user-123",
+                "shop_id": "shop-a",
+                "check_in_id": "ci-1",
+                "design_url": "/stamps/shop-a.svg",
+                "earned_at": "2026-03-01T00:00:00Z",
+                "shops": {"name": "Fika Coffee", "district": "大安"},
+                "check_ins": {"photo_urls": ["https://storage.example.com/photo1.jpg"], "diary_note": None},
+            }
+        ]
+
+        app.dependency_overrides[get_current_user] = lambda: {"id": "user-123"}
+        app.dependency_overrides[get_user_db] = lambda: db
+
+        try:
+            resp = client.get("/stamps", headers=auth_headers)
+            assert resp.status_code == 200
+            data = resp.json()
+            assert data[0]["photo_url"] == "https://storage.example.com/photo1.jpg"
+            assert data[0]["district"] == "大安"
+            assert data[0]["diary_note"] is None
+        finally:
+            app.dependency_overrides.pop(get_current_user, None)
+            app.dependency_overrides.pop(get_user_db, None)

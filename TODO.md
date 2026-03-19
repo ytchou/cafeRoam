@@ -1108,7 +1108,7 @@ _Designed in Pencil. Stamps, check-in history, account settings._
 > **Plan:** [docs/plans/2026-03-19-profile-polaroid-redesign-plan.md](docs/plans/2026-03-19-profile-polaroid-redesign-plan.md)
 
 **Chunk 1 — Backend + Types (Wave 1):**
-- [ ] Task 1: Backend — Extend stamps API with photo_url, district, diary_note
+- [x] Task 1: Backend — Extend stamps API with photo_url, district, diary_note
 - [ ] Task 2: Frontend — Update StampData type and factory
 - [ ] Task 4: Frontend — Remove stamp count from ProfileHeader
 
