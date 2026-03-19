@@ -108,7 +108,7 @@ function ScatteredView({
     >
       {stamps.map((stamp, i) => {
         const h = hashCode(stamp.id);
-        const xPercent = (h % 60) + 5;
+        const xPercent = (h % 48) + 5; // max 52% — keeps card (w-[42%]) within container bounds
         const yBase = Math.floor(i / 2) * ROW_HEIGHT;
         const yJitter = (h % 40) - 20;
         const rotation = (h % 25) - 12;
