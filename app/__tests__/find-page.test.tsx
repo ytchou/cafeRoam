@@ -33,6 +33,10 @@ vi.mock('next/navigation', () => ({
   usePathname: () => '/',
 }));
 
+vi.mock('@/lib/hooks/use-user', () => ({
+  useUser: () => ({ user: null, isLoading: false }),
+}));
+
 vi.mock('@/lib/hooks/use-shops', () => ({
   useShops: () => ({
     shops: [

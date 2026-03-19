@@ -24,11 +24,11 @@ describe('a user interacting with the SearchBar', () => {
     expect(onSearch).toHaveBeenCalledWith('latte art');
   });
 
-  it('a user submitting an empty search sees no results triggered', async () => {
+  it('a user clearing the search bar and submitting clears active search results', async () => {
     const onSearch = vi.fn();
     render(<SearchBar onSearch={onSearch} onFilterClick={() => {}} />);
     fireEvent.submit(screen.getByPlaceholderText('Search coffee shops...').closest('form')!);
-    expect(onSearch).not.toHaveBeenCalled();
+    expect(onSearch).toHaveBeenCalledWith('');
   });
 
   it('a user tapping the filter button opens the filter panel', async () => {
