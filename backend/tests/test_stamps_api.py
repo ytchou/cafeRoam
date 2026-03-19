@@ -17,10 +17,22 @@ def auth_headers():
     return {"Authorization": "Bearer test-token"}
 
 
+def make_db_mock(rows: list) -> MagicMock:
+    """Return a Supabase client mock whose execute().data returns rows.
+
+    Binds the response at the execute() level so the mock is not sensitive
+    to the exact query-builder call chain (select/eq/order/limit ordering).
+    """
+    db = MagicMock()
+    execute_result = MagicMock()
+    execute_result.data = rows
+    db.table.return_value.select.return_value.eq.return_value.order.return_value.execute.return_value = execute_result
+    return db
+
+
 class TestGetStamps:
-    def test_stamps_include_shop_name(self, client: TestClient, auth_headers: dict):
-        db = MagicMock()
-        db.table.return_value.select.return_value.eq.return_value.order.return_value.execute.return_value.data = [
+    def test_authenticated_user_sees_cafe_name_on_their_stamp(self, client: TestClient, auth_headers: dict):
+        db = make_db_mock([
             {
                 "id": "stamp-1",
                 "user_id": "user-123",
@@ -30,7 +42,7 @@ class TestGetStamps:
                 "earned_at": "2026-03-01T00:00:00Z",
                 "shops": {"name": "Fika Coffee"},
             }
-        ]
+        ])
 
         app.dependency_overrides[get_current_user] = lambda: {"id": "user-123"}
         app.dependency_overrides[get_user_db] = lambda: db
@@ -44,9 +56,8 @@ class TestGetStamps:
             app.dependency_overrides.pop(get_current_user, None)
             app.dependency_overrides.pop(get_user_db, None)
 
-    def test_stamps_include_photo_url_and_district(self, client: TestClient, auth_headers: dict):
-        db = MagicMock()
-        db.table.return_value.select.return_value.eq.return_value.order.return_value.execute.return_value.data = [
+    def test_authenticated_user_sees_photo_and_district_on_their_stamp(self, client: TestClient, auth_headers: dict):
+        db = make_db_mock([
             {
                 "id": "stamp-1",
                 "user_id": "user-123",
@@ -57,7 +68,7 @@ class TestGetStamps:
                 "shops": {"name": "Fika Coffee", "district": "大安"},
                 "check_ins": {"photo_urls": ["https://storage.example.com/photo1.jpg"], "note": None},
             }
-        ]
+        ])
 
         app.dependency_overrides[get_current_user] = lambda: {"id": "user-123"}
         app.dependency_overrides[get_user_db] = lambda: db
