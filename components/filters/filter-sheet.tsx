@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Drawer } from 'vaul';
 import { useIsDesktop } from '@/lib/hooks/use-media-query';
 import { FilterTag } from './filter-tag';
@@ -39,6 +39,7 @@ const FILTER_TABS: TabCategory[] = [
     key: 'time',
     label: 'Time',
     tags: [
+      { id: 'open_now', label: 'Open Now' },
       { id: 'no_time_limit', label: 'No Time Limit' },
       { id: 'open_late', label: 'Open Late' },
       { id: 'early_bird', label: 'Early Bird' },
@@ -86,6 +87,8 @@ const FILTER_TABS: TabCategory[] = [
   },
 ];
 
+const FILTER_TABS_MAP = new Map(FILTER_TABS.map((tab) => [tab.key, tab]));
+
 interface FilterSheetProps {
   open: boolean;
   onClose: () => void;
@@ -111,10 +114,7 @@ function FilterContent({
   );
   const [activeTab, setActiveTab] = useState('functionality');
 
-  const activeTabData = useMemo(
-    () => FILTER_TABS.find((tab) => tab.key === activeTab),
-    [activeTab],
-  );
+  const activeTabData = FILTER_TABS_MAP.get(activeTab);
 
   const toggle = (id: string) => {
     setSelected((prev) => {
@@ -197,7 +197,7 @@ function FilterContent({
         <button
           type="button"
           onClick={handleApply}
-          className="w-full rounded-full bg-[var(--tag-active-bg)] py-2.5 font-[family-name:var(--font-body)] text-sm font-medium text-white"
+          className="w-full rounded-full bg-[var(--primary,#3D8A5A)] py-2.5 font-[family-name:var(--font-body)] text-sm font-medium text-white"
         >
           {selected.size > 0 ? `Show ${selected.size} places` : 'Show places'}
         </button>
