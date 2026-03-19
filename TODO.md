@@ -1086,7 +1086,7 @@ _Designed in Pencil. Replaces current 首頁 + 地圖 split into a unified Find 
 
 **Chunk 3 — Compound Components (Wave 3, parallel):**
 
-- [ ] Task 4: CountHeader (count + ViewToggle + sort)
+- [x] Task 4: CountHeader (count + ViewToggle + sort)
 - [ ] Task 13: FilterSheet rebuild (vaul drawer + dialog modal)
 - [ ] Task 14: ShopCarousel (horizontal scroll container)
 
