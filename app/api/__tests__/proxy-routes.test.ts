@@ -68,6 +68,7 @@ import {
   GET as communityLikeGET,
   POST as communityLikePOST,
 } from '../explore/community/[checkinId]/like/route';
+import { GET as mapsDirectionsGET } from '../maps/directions/route';
 
 const mockProxy = vi.mocked(proxyToBackend);
 const mockResponse = new Response('{}', { status: 200 });
@@ -544,6 +545,16 @@ describe('explore/community/[checkinId]/like route', () => {
     expect(mockProxy).toHaveBeenCalledWith(
       expect.any(NextRequest),
       '/explore/community/ci-1/like'
+    );
+  });
+});
+
+describe('maps/directions route', () => {
+  it('GET proxies to /maps/directions', async () => {
+    await mapsDirectionsGET(makeRequest());
+    expect(mockProxy).toHaveBeenCalledWith(
+      expect.any(NextRequest),
+      '/maps/directions'
     );
   });
 });
