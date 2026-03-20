@@ -1108,7 +1108,7 @@ _Designed in Pencil. Replaces current 首頁 + 地圖 split into a unified Find 
 
 **Chunk 2 — Frontend Integration (Wave 4-6):**
 
-- [ ] Next.js proxy route for maps/directions
+- [x] Next.js proxy route for maps/directions
 - [ ] Refactor DirectionsSheet to use backend proxy
 - [ ] Wire useGeolocation into Shop Detail page
 
