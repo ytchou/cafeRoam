@@ -1116,6 +1116,40 @@ _Designed in Pencil. Replaces current 首頁 + 地圖 split into a unified Find 
 
 - [x] Full verification (pytest, vitest, ruff, mypy, pnpm build)
 
+### UI Reconstruct — Shop View
+
+> **Design Doc:** [docs/designs/2026-03-20-shop-view-ui-reconstruct-design.md](docs/designs/2026-03-20-shop-view-ui-reconstruct-design.md)
+> **Plan:** [docs/plans/2026-03-20-shop-view-ui-reconstruct-plan.md](docs/plans/2026-03-20-shop-view-ui-reconstruct-plan.md)
+
+**Chunk 1 — Prereqs + Isolated new components (Wave 1a, parallel):**
+
+- [ ] Install shadcn Popover (`pnpm dlx shadcn@latest add popover`)
+- [ ] Task 1: `ClaimBanner` component (footer strip)
+- [ ] Task 2: `CheckInSheet` (Vaul drawer — frames `6Wn4A`)
+- [ ] Task 3: `CheckInPopover` (desktop 320px — frame `I2r82`)
+- [ ] Task 4: `SavePopover` (desktop 320px — frame `C0sGo`)
+- [ ] Task 5: `SharePopover` (desktop 320px — frame `iQfwr`)
+
+**Chunk 2 — In-place restyling (Wave 1b, parallel):**
+
+- [ ] Task 6: `ShopHero` — floating back/bookmark/share overlay (frame `3hOsp`)
+- [ ] Task 7: `ShopIdentity` — open-status badge, distance pill, address (frame `3hOsp`)
+- [ ] Task 8: `SaveToListSheet` — 3 visual states (frames `y52Ff`, `udpQf`, `rgu49`)
+- [ ] Task 9: `ShopDescription` + `AttributeChips` — section headers + restyle
+- [ ] Task 10: `ShopReviews` — "See all" link
+- [ ] Task 11: `DirectionsSheet` — visual polish (frame `ENKsc`)
+
+**Chunk 3 — Wiring (Wave 2–3):**
+
+- [ ] Task 12: `ShopActionsRow` — Check In + Save + Share (mobile sheets / desktop popovers)
+- [ ] Task 13: `ShopDetailClient` integration + SPEC §9 update
+
+**Chunk 4 — Cleanup + Verification (Wave 4):**
+
+- [ ] Task 14: Delete `StickyCheckinBar` + `BookmarkButton`, full test + build verification
+
+---
+
 ### UI Reconstruct — Explore
 
 _Designed in Pencil. Three-layer scroll: Tarot hero → Vibe strip → Community feed._
