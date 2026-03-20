@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 
 vi.mock('@/lib/hooks/use-media-query', () => ({
@@ -27,8 +27,11 @@ vi.mock('./check-in-popover', () => ({
 vi.mock('@/lib/supabase/client', () => ({
   createClient: () => ({
     auth: {
-      getSession: vi.fn().mockResolvedValue({
-        data: { session: { user: {} } },
+      getUser: vi.fn().mockResolvedValue({
+        data: { user: { id: 'test-user-123' } },
+      }),
+      onAuthStateChange: vi.fn().mockReturnValue({
+        data: { subscription: { unsubscribe: vi.fn() } },
       }),
     },
   }),
@@ -49,19 +52,22 @@ const defaultProps = {
 };
 
 describe('ShopActionsRow — mobile', () => {
-  it('renders the Check In primary button', () => {
+  it('renders the Check In primary button', async () => {
     render(<ShopActionsRow {...defaultProps} />);
+    await act(async () => {}); // flush useUser's getUser promise
     expect(screen.getByRole('button', { name: /Check In 打卡/i })).toBeInTheDocument();
   });
 
   it('opens CheckInSheet (not popover) on mobile when Check In is tapped', async () => {
     render(<ShopActionsRow {...defaultProps} />);
+    await act(async () => {}); // flush useUser's getUser promise
     fireEvent.click(screen.getByRole('button', { name: /Check In 打卡/i }));
     expect(await screen.findByTestId('check-in-sheet')).toBeInTheDocument();
   });
 
   it('opens SaveToListSheet on mobile when Save is tapped', async () => {
     render(<ShopActionsRow {...defaultProps} />);
+    await act(async () => {}); // flush useUser's getUser promise
     fireEvent.click(screen.getByRole('button', { name: /Save/i }));
     expect(await screen.findByTestId('save-sheet')).toBeInTheDocument();
   });
