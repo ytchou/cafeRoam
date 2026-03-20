@@ -122,7 +122,10 @@ describe('a user on the desktop list view', () => {
     // QUICK_FILTERS always renders at least one tag
     const filterButtons = screen
       .getAllByRole('button')
-      .filter((b) => b.classList.contains('rounded-full') || b.dataset.active !== undefined);
+      .filter(
+        (b) =>
+          b.classList.contains('rounded-full') || b.dataset.active !== undefined
+      );
     expect(filterButtons.length).toBeGreaterThan(0);
   });
 

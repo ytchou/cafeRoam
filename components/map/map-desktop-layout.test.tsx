@@ -9,7 +9,10 @@ vi.mock('next/navigation', () => ({
 vi.mock('next/dynamic', () => ({
   default: () => {
     const MockMap = (props: Record<string, unknown>) => (
-      <div data-testid="map-view" data-selected={props.selectedShopId as string}>
+      <div
+        data-testid="map-view"
+        data-selected={props.selectedShopId as string}
+      >
         {(props.shops as Array<{ id: string }>)?.map((s) => (
           <button
             key={s.id}
@@ -141,9 +144,7 @@ describe('a user on the desktop map view', () => {
     render(<MapDesktopLayout {...defaultProps} />);
     const collapseBtn = screen.getByRole('button', { name: /collapse/i });
     await userEvent.click(collapseBtn);
-    expect(
-      screen.queryByText('晨光咖啡 Morning Glow')
-    ).not.toBeInTheDocument();
+    expect(screen.queryByText('晨光咖啡 Morning Glow')).not.toBeInTheDocument();
   });
 
   it('a user expanding the panel after collapsing sees the shop list again', async () => {
