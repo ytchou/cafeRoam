@@ -1114,7 +1114,7 @@ _Designed in Pencil. Replaces current 首頁 + 地圖 split into a unified Find 
 
 **Chunk 3 — Verification (Wave 7):**
 
-- [ ] Full verification (pytest, vitest, ruff, mypy, pnpm build)
+- [x] Full verification (pytest, vitest, ruff, mypy, pnpm build)
 
 ### UI Reconstruct — Explore
 
