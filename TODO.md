@@ -1110,7 +1110,7 @@ _Designed in Pencil. Replaces current 首頁 + 地圖 split into a unified Find 
 
 - [x] Next.js proxy route for maps/directions
 - [x] Refactor DirectionsSheet to use backend proxy
-- [ ] Wire useGeolocation into Shop Detail page
+- [x] Wire useGeolocation into Shop Detail page
 
 **Chunk 3 — Verification (Wave 7):**
 
