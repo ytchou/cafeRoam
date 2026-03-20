@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { useAnalytics } from '@/lib/posthog/use-analytics';
 import {
   Popover,
@@ -32,10 +33,17 @@ export function SharePopover({
   trigger,
 }: SharePopoverProps) {
   const { capture } = useAnalytics();
+  const [copied, setCopied] = useState(false);
 
   async function handleCopy() {
-    await navigator.clipboard.writeText(shareUrl);
-    capture('shop_url_copied', { shop_id: shopId, copy_method: 'clipboard' });
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      capture('shop_url_copied', { shop_id: shopId, copy_method: 'clipboard' });
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Clipboard access denied — URL is visible in the input for manual copy
+    }
   }
 
   return (
@@ -65,7 +73,7 @@ export function SharePopover({
               onClick={handleCopy}
               className="flex-shrink-0 rounded-lg bg-[#2D5A27] px-3 py-1.5 text-xs font-semibold text-white"
             >
-              Copy
+              {copied ? 'Copied!' : 'Copy'}
             </button>
           </div>
 
