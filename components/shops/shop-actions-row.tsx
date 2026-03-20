@@ -48,7 +48,7 @@ export function ShopActionsRow({
       aria-label="Check In 打卡"
       className="flex flex-1 items-center justify-center gap-2 rounded-full bg-[#2D5A27] py-3 text-sm font-semibold text-white"
     >
-      📍 Check In 打卡
+      Check In 打卡
     </button>
   );
 

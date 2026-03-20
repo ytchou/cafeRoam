@@ -20,6 +20,7 @@ interface SavePopoverProps {
 export function SavePopover({ shopId, open, onOpenChange, trigger }: SavePopoverProps) {
   const { lists, isInList, saveShop, removeShop, createList } = useUserLists();
   const [newListName, setNewListName] = useState('');
+  const [showNewListInput, setShowNewListInput] = useState(false);
   const [creating, setCreating] = useState(false);
 
   async function handleToggle(listId: string) {
@@ -40,6 +41,7 @@ export function SavePopover({ shopId, open, onOpenChange, trigger }: SavePopover
     try {
       await createList(newListName.trim());
       setNewListName('');
+      setShowNewListInput(false);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to create list';
       toast.error(msg.includes('Maximum') ? "You've reached the 3-list limit" : msg);
@@ -53,7 +55,7 @@ export function SavePopover({ shopId, open, onOpenChange, trigger }: SavePopover
       <PopoverTrigger asChild>{trigger}</PopoverTrigger>
       <PopoverContent className="w-80 p-0 rounded-2xl overflow-hidden shadow-xl" align="start">
         <div className="flex items-center justify-between px-4 py-4 border-b border-[#E5E4E1]">
-          <h3 className="text-sm font-semibold text-[#3B2F2A]">Save to List 收藏</h3>
+          <h3 className="text-sm font-semibold text-[#3B2F2A]">Save to List</h3>
           <button
             onClick={() => onOpenChange(false)}
             className="text-[#9E9893] hover:text-[#3B2F2A] text-xs"
@@ -66,7 +68,6 @@ export function SavePopover({ shopId, open, onOpenChange, trigger }: SavePopover
         <div className="py-2">
           {lists.length === 0 && (
             <div className="flex flex-col items-center py-8 px-4 text-center">
-              <span className="text-3xl mb-2">🔖</span>
               <p className="text-sm font-medium text-[#3B2F2A]">No lists yet</p>
               <p className="text-xs text-[#9E9893] mt-1">Create a list to start saving</p>
             </div>
@@ -92,7 +93,7 @@ export function SavePopover({ shopId, open, onOpenChange, trigger }: SavePopover
           ))}
           {lists.length < 3 && (
             <button
-              onClick={() => setNewListName(' ')}
+              onClick={() => setShowNewListInput(true)}
               className="flex items-center gap-2 px-4 py-3 w-full text-sm text-[#6B6560] hover:bg-[#F5F4F2]"
             >
               <Plus className="h-4 w-4" />
@@ -106,11 +107,11 @@ export function SavePopover({ shopId, open, onOpenChange, trigger }: SavePopover
           )}
         </div>
 
-        {newListName.trim() !== '' && (
+        {showNewListInput && (
           <div className="px-4 py-3 border-t border-[#E5E4E1]">
             <input
               type="text"
-              value={newListName.trim() === ' ' ? '' : newListName}
+              value={newListName}
               onChange={(e) => setNewListName(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
               placeholder="List name..."

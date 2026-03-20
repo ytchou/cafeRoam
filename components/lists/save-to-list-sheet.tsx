@@ -76,7 +76,7 @@ export function SaveToListSheet({
         <div className="py-2">
           {lists.length === 0 && (
             <div className="flex flex-col items-center py-10 px-4 text-center">
-              <span className="text-4xl mb-3">🔖</span>
+              <div className="h-10 w-10 rounded-full bg-[#E8E6E2] mb-3" />
               <p className="text-sm font-semibold text-[#1A1918] mb-1">No lists yet</p>
               <p className="text-xs text-[#9E9893] mb-4">Create a list to start saving cafés</p>
               <button
