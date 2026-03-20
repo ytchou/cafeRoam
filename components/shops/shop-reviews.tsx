@@ -8,6 +8,7 @@ interface ShopReviewsProps {
   averageRating: number;
   isLoading: boolean;
   isAuthError: boolean;
+  shopId: string;
 }
 
 function StarRating({ stars }: { stars: number }) {
@@ -48,12 +49,13 @@ export function ShopReviews({
   averageRating,
   isLoading,
   isAuthError,
+  shopId,
 }: ShopReviewsProps) {
   if (isAuthError) {
     return (
-      <div className="px-4 py-4">
-        <h2 className="mb-2 text-sm font-semibold text-gray-900">打卡評價</h2>
-        <p className="text-sm text-gray-500">
+      <div className="px-5 py-4">
+        <h2 className="mb-2 text-sm font-semibold text-[#1A1918]">打卡評價</h2>
+        <p className="text-sm text-[#6B6560]">
           <Link
             href="/login"
             className="text-[#E06B3F] underline underline-offset-2"
@@ -68,7 +70,7 @@ export function ShopReviews({
 
   if (isLoading) {
     return (
-      <div className="px-4 py-4">
+      <div className="px-5 py-4">
         <div className="h-4 w-24 animate-pulse rounded bg-gray-100" />
       </div>
     );
@@ -77,33 +79,33 @@ export function ShopReviews({
   if (reviews.length === 0) return null;
 
   return (
-    <section className="px-4 py-4">
+    <section className="px-5 py-4">
       <div className="mb-3 flex items-baseline gap-2">
-        <h2 className="text-sm font-semibold text-gray-900">打卡評價</h2>
-        <span className="text-xs text-gray-400">{total} 則</span>
+        <h2 className="text-sm font-semibold text-[#1A1918]">打卡評價</h2>
+        <span className="text-xs text-[#9E9893]">{total} 則</span>
         {averageRating > 0 && (
           <span className="ml-auto text-sm font-semibold text-[#E06B3F]">
             ★ {averageRating.toFixed(1)}
           </span>
         )}
       </div>
-      <div className="divide-y divide-gray-50">
+      <div className="divide-y divide-[#F0EDE8]">
         {reviews.map((review) => (
           <div key={review.id} className="py-3">
             <div className="flex items-start gap-3">
               <Avatar name={review.displayName} />
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-gray-900">
+                  <span className="text-sm font-medium text-[#1A1918]">
                     {review.displayName ?? '匿名'}
                   </span>
-                  <span className="text-xs text-gray-400">
+                  <span className="text-xs text-[#9E9893]">
                     {formatDate(review.reviewedAt)}
                   </span>
                 </div>
                 <StarRating stars={review.stars} />
                 {review.reviewText && (
-                  <p className="mt-1.5 text-sm leading-relaxed text-gray-600">
+                  <p className="mt-1.5 text-sm leading-relaxed text-[#3B2F2A]">
                     {review.reviewText}
                   </p>
                 )}
@@ -112,6 +114,14 @@ export function ShopReviews({
           </div>
         ))}
       </div>
+      {total > reviews.length && (
+        <Link
+          href={`/shops/${shopId}/reviews`}
+          className="mt-3 block text-sm font-medium text-[#2D5A27]"
+        >
+          See all {total} reviews →
+        </Link>
+      )}
     </section>
   );
 }
