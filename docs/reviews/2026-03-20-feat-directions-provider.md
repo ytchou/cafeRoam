@@ -108,13 +108,24 @@
 
 ---
 
+## Fix Pass 2 (Post-review minor cleanup)
+
+**Pre-fix SHA:** c6ff12e85e75979ea1a480e007ec6b170b889d84 (prior pass SHA)
+**Issues fixed:**
+- [Minor] components/shops/directions-sheet.tsx — Guard error banner behind `!walkRoute && !driveRoute` to prevent co-rendering with partial results
+- [Minor] backend/providers/maps/mapbox_adapter.py:91 — Added comment to `routes[0]` documenting intentional CLAUDE.md deviation (guard present; `first()` is a DB utility)
+- [Important, plan-escape-hatch] app/shops/[shopId]/[slug]/shop-detail-client.test.tsx — Created geolocation wiring integration test (3 cases: location granted, no location, shop without coordinates)
+
+**Batch Test Run:**
+- `pnpm test` — 766 PASS
+- `cd backend && uv run pytest` — (deferred; no backend changes in this pass)
+
+---
+
 ## Final State
 
-**Iterations completed:** 1
+**Iterations completed:** 2
 **All Critical/Important resolved:** Yes
-**Remaining issues:**
-- [Minor] directions-sheet.tsx — Error banner + partial results coexistence (inherent to hasError field design, non-blocking)
-- [Minor] mapbox_adapter.py:91 — routes[0] indexing (intentional skip — guard is present, first() is DB utility)
-- [Important, intentional skip] Missing shop-detail-client.test.tsx (plan escape hatch authorized)
+**Remaining issues:** None
 
 **Review log:** docs/reviews/2026-03-20-feat-directions-provider.md
