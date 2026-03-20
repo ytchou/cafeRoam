@@ -17,6 +17,7 @@ from api.checkins import router as checkins_router
 from api.explore import router as explore_router
 from api.feed import router as feed_router
 from api.lists import router as lists_router
+from api.maps import router as maps_router
 from api.profile import router as profile_router
 from api.search import router as search_router
 from api.shops import router as shops_router
@@ -122,3 +123,4 @@ app.include_router(admin_router)
 app.include_router(admin_roles_router)
 app.include_router(admin_shops_router)
 app.include_router(admin_taxonomy_router)
+app.include_router(maps_router)

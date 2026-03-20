@@ -15,6 +15,7 @@ import { ShopReviews } from '@/components/shops/shop-reviews';
 import { DirectionsSheet } from '@/components/shops/directions-sheet';
 import { useShopReviews } from '@/lib/hooks/use-shop-reviews';
 import { useUser } from '@/lib/hooks/use-user';
+import { useGeolocation } from '@/lib/hooks/use-geolocation';
 import { useAnalytics } from '@/lib/posthog/use-analytics';
 
 interface ShopData {
@@ -51,6 +52,7 @@ interface ShopDetailClientProps {
 export function ShopDetailClient({ shop }: ShopDetailClientProps) {
   const { capture } = useAnalytics();
   const { user, isLoading: isUserLoading } = useUser();
+  const { latitude, longitude, requestLocation } = useGeolocation();
   const [directionsOpen, setDirectionsOpen] = useState(false);
   const photos = shop.photoUrls ?? [];
   const tags = shop.taxonomyTags ?? [];
@@ -120,7 +122,10 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
             {hasMap && (
               <button
                 type="button"
-                onClick={() => setDirectionsOpen(true)}
+                onClick={() => {
+                  requestLocation();
+                  setDirectionsOpen(true);
+                }}
                 className="flex items-center gap-1.5 rounded-full border border-gray-200 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
                 aria-label="Get There"
               >
@@ -167,6 +172,8 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
           open={directionsOpen}
           onClose={() => setDirectionsOpen(false)}
           shop={directionsShop}
+          userLat={latitude ?? undefined}
+          userLng={longitude ?? undefined}
         />
       )}
     </div>

@@ -1,5 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('vaul', () => ({
   Drawer: {
@@ -43,31 +43,42 @@ const shop = {
 
 describe('DirectionsSheet', () => {
   beforeEach(() => {
-    vi.stubEnv('NEXT_PUBLIC_MAPBOX_TOKEN', 'pk.test-token');
     mockFetch.mockReset();
-  });
-
-  afterEach(() => {
-    vi.unstubAllEnvs();
   });
 
   it('shows a static map thumbnail', () => {
     render(<DirectionsSheet open={true} onClose={vi.fn()} shop={shop} />);
-    // ShopMapThumbnail on mobile renders a Mapbox static image
     expect(
       screen.getByRole('img', { name: /map showing 日光珈琲/i })
     ).toBeInTheDocument();
   });
 
-  it('a user who has shared their location sees walk and drive times from Mapbox', async () => {
-    const durationResponse = (seconds: number) => ({
-      ok: true,
-      json: async () => ({ routes: [{ duration: seconds, distance: 500 }] }),
-    });
+  it('a user who has shared their location sees walk and drive times', async () => {
     mockFetch
-      .mockResolvedValueOnce(durationResponse(420)) // walk
-      .mockResolvedValueOnce(durationResponse(180)) // drive
-      .mockResolvedValueOnce(durationResponse(240)); // mrt walk
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          durationMin: 7,
+          distanceM: 580,
+          profile: 'walking',
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          durationMin: 3,
+          distanceM: 2100,
+          profile: 'driving-traffic',
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          durationMin: 4,
+          distanceM: 350,
+          profile: 'walking',
+        }),
+      });
 
     render(
       <DirectionsSheet
@@ -88,34 +99,36 @@ describe('DirectionsSheet', () => {
   it('a user without location only fetches the MRT leg, not walk/drive routes', async () => {
     mockFetch.mockResolvedValue({
       ok: true,
-      json: async () => ({ routes: [{ duration: 300, distance: 400 }] }),
+      json: async () => ({
+        durationMin: 5,
+        distanceM: 400,
+        profile: 'walking',
+      }),
     });
 
     render(<DirectionsSheet open={true} onClose={vi.fn()} shop={shop} />);
 
     await waitFor(() => {
-      // MRT row should still appear
       expect(screen.getByText(/[A-Za-z]+ \([^\)]+\) ·/)).toBeInTheDocument();
     });
-    // Only one fetch call — MRT walk; walk/drive skipped without user location
     expect(mockFetch).toHaveBeenCalledTimes(1);
-    expect(mockFetch.mock.calls[0][0]).toContain('walking');
-    expect(mockFetch.mock.calls[0][0]).not.toContain('driving-traffic');
+    expect(mockFetch.mock.calls[0][0]).toContain('/api/maps/directions');
+    expect(mockFetch.mock.calls[0][0]).toContain('profile=walking');
   });
 
   it('shows the nearest MRT station using real station data', async () => {
     mockFetch.mockResolvedValue({
       ok: true,
-      json: async () => ({ routes: [{ duration: 300, distance: 400 }] }),
+      json: async () => ({
+        durationMin: 5,
+        distanceM: 400,
+        profile: 'walking',
+      }),
     });
 
     render(<DirectionsSheet open={true} onClose={vi.fn()} shop={shop} />);
 
-    // nearestMrtStation runs against real taipei-mrt-stations.json — any station
-    // near 25.033, 121.565 (central Taipei) should appear with the format:
-    // "{name_en} ({name_zh}) · {line} · ~N min walk"
     await waitFor(() => {
-      // Match the station row pattern: English name followed by Chinese in parens
       expect(screen.getByText(/[A-Za-z]+ \([^\)]+\) ·/)).toBeInTheDocument();
     });
   });

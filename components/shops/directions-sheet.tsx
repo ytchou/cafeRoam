@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useReducer } from 'react';
+import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react';
 import { Drawer } from 'vaul';
 import { ShopMapThumbnail } from '@/components/shops/shop-map-thumbnail';
 import { nearestMrtStation } from '@/lib/utils/mrt';
@@ -25,8 +25,12 @@ interface RouteInfo {
   distanceM: number;
 }
 
+// 'error' sentinel: backend returned a non-2xx response (distinct from null = skipped/aborted)
+type FetchResult = RouteInfo | 'error' | null;
+
 interface RoutesState {
   loading: boolean;
+  hasError: boolean;
   walkRoute: RouteInfo | null;
   driveRoute: RouteInfo | null;
   mrtWalkRoute: RouteInfo | null;
@@ -34,15 +38,24 @@ interface RoutesState {
 
 type RoutesAction =
   | { type: 'fetch_start' }
+  | { type: 'fetch_user_routes_start' }
   | {
       type: 'fetch_done';
       walkRoute: RouteInfo | null;
       driveRoute: RouteInfo | null;
       mrtWalkRoute: RouteInfo | null;
+      hasError: boolean;
+    }
+  | {
+      type: 'fetch_user_routes_done';
+      walkRoute: RouteInfo | null;
+      driveRoute: RouteInfo | null;
+      hasError: boolean;
     };
 
 const initialState: RoutesState = {
   loading: false,
+  hasError: false,
   walkRoute: null,
   driveRoute: null,
   mrtWalkRoute: null,
@@ -53,16 +66,35 @@ function routesReducer(state: RoutesState, action: RoutesAction): RoutesState {
     case 'fetch_start':
       return {
         loading: true,
+        hasError: false,
         walkRoute: null,
         driveRoute: null,
         mrtWalkRoute: null,
       };
+    case 'fetch_user_routes_start':
+      // Preserve mrtWalkRoute so the MRT row doesn't flicker when location resolves
+      return {
+        ...state,
+        loading: true,
+        hasError: false,
+        walkRoute: null,
+        driveRoute: null,
+      };
     case 'fetch_done':
       return {
         loading: false,
+        hasError: action.hasError,
         walkRoute: action.walkRoute,
         driveRoute: action.driveRoute,
         mrtWalkRoute: action.mrtWalkRoute,
+      };
+    case 'fetch_user_routes_done':
+      return {
+        ...state,
+        loading: false,
+        hasError: action.hasError,
+        walkRoute: action.walkRoute,
+        driveRoute: action.driveRoute,
       };
     default:
       return state;
@@ -71,23 +103,26 @@ function routesReducer(state: RoutesState, action: RoutesAction): RoutesState {
 
 async function fetchRoute(
   profile: string,
-  fromLng: number,
   fromLat: number,
-  toLng: number,
+  fromLng: number,
   toLat: number,
-  token: string,
+  toLng: number,
   signal: AbortSignal
-): Promise<RouteInfo | null> {
+): Promise<FetchResult> {
   try {
-    const url = `https://api.mapbox.com/directions/v5/mapbox/${profile}/${fromLng},${fromLat};${toLng},${toLat}?access_token=${token}&overview=false`;
-    const res = await fetch(url, { signal });
-    if (!res.ok) return null;
+    const params = new URLSearchParams({
+      origin_lat: String(fromLat),
+      origin_lng: String(fromLng),
+      dest_lat: String(toLat),
+      dest_lng: String(toLng),
+      profile,
+    });
+    const res = await fetch(`/api/maps/directions?${params}`, { signal });
+    if (!res.ok) return 'error';
     const data = await res.json();
-    const route = data.routes?.[0];
-    if (!route) return null;
     return {
-      durationMin: Math.round(route.duration / 60),
-      distanceM: Math.round(route.distance),
+      durationMin: data.durationMin,
+      distanceM: data.distanceM,
     };
   } catch {
     return null;
@@ -102,67 +137,86 @@ export function DirectionsSheet({
   userLng,
 }: DirectionsSheetProps) {
   const [state, dispatch] = useReducer(routesReducer, initialState);
-  const { loading, walkRoute, driveRoute, mrtWalkRoute } = state;
+  const { loading, hasError, walkRoute, driveRoute, mrtWalkRoute } = state;
+
+  // Tracks whether the sheet has already been opened (location-update vs fresh-open)
+  const sheetOpenedRef = useRef(false);
 
   const mrtStation = useMemo(
     () => nearestMrtStation(shop.latitude, shop.longitude),
     [shop.latitude, shop.longitude]
   );
 
-  const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
-
   const fetchDirections = useCallback(
-    async (signal: AbortSignal) => {
-      if (!token) return;
-      dispatch({ type: 'fetch_start' });
+    async (signal: AbortSignal, isLocationUpdate: boolean) => {
+      dispatch({
+        type: isLocationUpdate ? 'fetch_user_routes_start' : 'fetch_start',
+      });
 
       const hasUserLocation = userLat !== undefined && userLng !== undefined;
 
-      const [walk, drive, mrtWalk] = await Promise.all([
+      const [walkResult, driveResult, mrtWalkResult] = await Promise.all([
         hasUserLocation
           ? fetchRoute(
               'walking',
-              userLng,
               userLat,
-              shop.longitude,
+              userLng,
               shop.latitude,
-              token,
+              shop.longitude,
               signal
             )
           : Promise.resolve(null),
         hasUserLocation
           ? fetchRoute(
               'driving-traffic',
-              userLng,
               userLat,
-              shop.longitude,
+              userLng,
               shop.latitude,
-              token,
+              shop.longitude,
               signal
             )
           : Promise.resolve(null),
-        fetchRoute(
-          'walking',
-          mrtStation.lng,
-          mrtStation.lat,
-          shop.longitude,
-          shop.latitude,
-          token,
-          signal
-        ),
+        // On location update the MRT route is already loaded — skip re-fetch
+        isLocationUpdate
+          ? Promise.resolve(null)
+          : fetchRoute(
+              'walking',
+              mrtStation.lat,
+              mrtStation.lng,
+              shop.latitude,
+              shop.longitude,
+              signal
+            ),
       ]);
 
       if (!signal.aborted) {
-        dispatch({
-          type: 'fetch_done',
-          walkRoute: walk,
-          driveRoute: drive,
-          mrtWalkRoute: mrtWalk,
-        });
+        const hasError =
+          walkResult === 'error' ||
+          driveResult === 'error' ||
+          mrtWalkResult === 'error';
+        const walk = walkResult === 'error' ? null : walkResult;
+        const drive = driveResult === 'error' ? null : driveResult;
+        const mrtWalk = mrtWalkResult === 'error' ? null : mrtWalkResult;
+
+        if (isLocationUpdate) {
+          dispatch({
+            type: 'fetch_user_routes_done',
+            walkRoute: walk,
+            driveRoute: drive,
+            hasError,
+          });
+        } else {
+          dispatch({
+            type: 'fetch_done',
+            walkRoute: walk,
+            driveRoute: drive,
+            mrtWalkRoute: mrtWalk,
+            hasError,
+          });
+        }
       }
     },
     [
-      token,
       userLat,
       userLng,
       shop.longitude,
@@ -173,15 +227,21 @@ export function DirectionsSheet({
   );
 
   useEffect(() => {
-    if (!open || !token) return;
+    if (!open) {
+      sheetOpenedRef.current = false;
+      return;
+    }
+
+    const isLocationUpdate = sheetOpenedRef.current;
+    sheetOpenedRef.current = true;
 
     const abortController = new AbortController();
-    fetchDirections(abortController.signal);
+    fetchDirections(abortController.signal, isLocationUpdate);
 
     return () => {
       abortController.abort();
     };
-  }, [open, token, fetchDirections]);
+  }, [open, fetchDirections]);
 
   const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${shop.latitude},${shop.longitude}`;
   const appleMapsUrl = `https://maps.apple.com/?daddr=${shop.latitude},${shop.longitude}`;
@@ -242,6 +302,12 @@ export function DirectionsSheet({
 
             {loading && !walkRoute && !driveRoute && (
               <p className="text-sm text-gray-400">Calculating routes...</p>
+            )}
+
+            {!loading && hasError && !walkRoute && !driveRoute && (
+              <p className="text-sm text-gray-400">
+                Route times unavailable. Try again later.
+              </p>
             )}
           </div>
 
