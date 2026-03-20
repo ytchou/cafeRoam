@@ -126,12 +126,12 @@ export function SaveToListSheet({
           )}
         </div>
 
-        {newListName.trim() !== '' && (
+        {newListName !== '' && (
           <div className="px-4 py-3 border-t border-[#E5E4E1]">
             <input
               type="text"
               placeholder="Create new list"
-              value={newListName.trim() === ' ' ? '' : newListName}
+              value={newListName === ' ' ? '' : newListName}
               onChange={(e) => setNewListName(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
               autoFocus

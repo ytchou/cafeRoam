@@ -21,13 +21,13 @@ describe('CheckInPopover', () => {
     render(
       <CheckInPopover shopId="s1" shopName="Cafe" open={true} onOpenChange={vi.fn()} trigger={<button>Check In</button>} />
     );
-    expect(screen.getByRole('button', { name: /Check In/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Check In 打卡/i })).toBeInTheDocument();
   });
 
   it('submit button is disabled when no photo is selected', () => {
     render(
       <CheckInPopover shopId="s1" shopName="Cafe" open={true} onOpenChange={vi.fn()} trigger={<button>Check In</button>} />
     );
-    expect(screen.getByRole('button', { name: /Check In/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /Check In 打卡/i })).toBeDisabled();
   });
 });
