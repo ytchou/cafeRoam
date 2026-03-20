@@ -1124,7 +1124,7 @@ _Designed in Pencil. Replaces current 首頁 + 地圖 split into a unified Find 
 **Chunk 1 — Prereqs + Isolated new components (Wave 1a, parallel):**
 
 - [x] Install shadcn Popover (`pnpm dlx shadcn@latest add popover`)
-- [ ] Task 1: `ClaimBanner` component (footer strip)
+- [x] Task 1: `ClaimBanner` component (footer strip)
 - [ ] Task 2: `CheckInSheet` (Vaul drawer — frames `6Wn4A`)
 - [ ] Task 3: `CheckInPopover` (desktop 320px — frame `I2r82`)
 - [ ] Task 4: `SavePopover` (desktop 320px — frame `C0sGo`)
