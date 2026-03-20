@@ -71,23 +71,26 @@ function routesReducer(state: RoutesState, action: RoutesAction): RoutesState {
 
 async function fetchRoute(
   profile: string,
-  fromLng: number,
   fromLat: number,
-  toLng: number,
+  fromLng: number,
   toLat: number,
-  token: string,
+  toLng: number,
   signal: AbortSignal
 ): Promise<RouteInfo | null> {
   try {
-    const url = `https://api.mapbox.com/directions/v5/mapbox/${profile}/${fromLng},${fromLat};${toLng},${toLat}?access_token=${token}&overview=false`;
-    const res = await fetch(url, { signal });
+    const params = new URLSearchParams({
+      origin_lat: String(fromLat),
+      origin_lng: String(fromLng),
+      dest_lat: String(toLat),
+      dest_lng: String(toLng),
+      profile,
+    });
+    const res = await fetch(`/api/maps/directions?${params}`, { signal });
     if (!res.ok) return null;
     const data = await res.json();
-    const route = data.routes?.[0];
-    if (!route) return null;
     return {
-      durationMin: Math.round(route.duration / 60),
-      distanceM: Math.round(route.distance),
+      durationMin: data.durationMin,
+      distanceM: data.distanceM,
     };
   } catch {
     return null;
@@ -109,11 +112,8 @@ export function DirectionsSheet({
     [shop.latitude, shop.longitude]
   );
 
-  const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
-
   const fetchDirections = useCallback(
     async (signal: AbortSignal) => {
-      if (!token) return;
       dispatch({ type: 'fetch_start' });
 
       const hasUserLocation = userLat !== undefined && userLng !== undefined;
@@ -122,32 +122,29 @@ export function DirectionsSheet({
         hasUserLocation
           ? fetchRoute(
               'walking',
-              userLng,
               userLat,
-              shop.longitude,
+              userLng,
               shop.latitude,
-              token,
+              shop.longitude,
               signal
             )
           : Promise.resolve(null),
         hasUserLocation
           ? fetchRoute(
               'driving-traffic',
-              userLng,
               userLat,
-              shop.longitude,
+              userLng,
               shop.latitude,
-              token,
+              shop.longitude,
               signal
             )
           : Promise.resolve(null),
         fetchRoute(
           'walking',
-          mrtStation.lng,
           mrtStation.lat,
-          shop.longitude,
+          mrtStation.lng,
           shop.latitude,
-          token,
+          shop.longitude,
           signal
         ),
       ]);
@@ -162,7 +159,6 @@ export function DirectionsSheet({
       }
     },
     [
-      token,
       userLat,
       userLng,
       shop.longitude,
@@ -173,7 +169,7 @@ export function DirectionsSheet({
   );
 
   useEffect(() => {
-    if (!open || !token) return;
+    if (!open) return;
 
     const abortController = new AbortController();
     fetchDirections(abortController.signal);
@@ -181,7 +177,7 @@ export function DirectionsSheet({
     return () => {
       abortController.abort();
     };
-  }, [open, token, fetchDirections]);
+  }, [open, fetchDirections]);
 
   const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${shop.latitude},${shop.longitude}`;
   const appleMapsUrl = `https://maps.apple.com/?daddr=${shop.latitude},${shop.longitude}`;
