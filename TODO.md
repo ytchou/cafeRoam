@@ -1146,7 +1146,7 @@ _Designed in Pencil. Replaces current 首頁 + 地圖 split into a unified Find 
 
 **Chunk 4 — Cleanup + Verification (Wave 4):**
 
-- [ ] Task 14: Delete `StickyCheckinBar` + `BookmarkButton`, full test + build verification
+- [x] Task 14: Delete `StickyCheckinBar` + `BookmarkButton`, full test + build verification
 
 ---
 
