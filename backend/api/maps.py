@@ -21,7 +21,8 @@ async def get_directions(
     if profile not in VALID_PROFILES:
         raise HTTPException(
             status_code=400,
-            detail=f"Invalid profile: {profile}. Must be one of: {', '.join(sorted(VALID_PROFILES))}",
+            detail=f"Invalid profile: {profile}. "
+            f"Must be one of: {', '.join(sorted(VALID_PROFILES))}",
         )
 
     provider = get_maps_provider()

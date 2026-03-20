@@ -12,7 +12,5 @@ class TestDirectionsResult:
         }
 
     def test_accepts_driving_traffic_profile(self):
-        result = DirectionsResult(
-            duration_min=3, distance_m=2100, profile="driving-traffic"
-        )
+        result = DirectionsResult(duration_min=3, distance_m=2100, profile="driving-traffic")
         assert result.profile == "driving-traffic"

@@ -36,9 +36,7 @@ class TestGetDirections:
         assert data["profile"] == "walking"
 
     def test_returns_driving_directions(self):
-        mock_result = DirectionsResult(
-            duration_min=3, distance_m=2100, profile="driving-traffic"
-        )
+        mock_result = DirectionsResult(duration_min=3, distance_m=2100, profile="driving-traffic")
         with patch("api.maps.get_maps_provider") as mock_factory:
             mock_provider = AsyncMock()
             mock_provider.get_directions = AsyncMock(return_value=mock_result)

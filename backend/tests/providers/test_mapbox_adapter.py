@@ -185,7 +185,10 @@ class TestMapboxGetDirections:
     async def test_returns_directions_result_for_driving(self, adapter):
         mock_response = MagicMock(spec=httpx.Response)
         mock_response.status_code = 200
-        mock_response.json.return_value = {"routes": [{"duration": 180, "distance": 2100}], "code": "Ok"}
+        mock_response.json.return_value = {
+            "routes": [{"duration": 180, "distance": 2100}],
+            "code": "Ok",
+        }
         mock_response.raise_for_status = MagicMock()
 
         adapter._client = AsyncMock(spec=httpx.AsyncClient)
