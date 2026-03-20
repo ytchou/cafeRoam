@@ -82,13 +82,13 @@ Add `get_directions` to `backend/providers/maps/mapbox_adapter.py`:
 
 Query parameters:
 
-| Param | Type | Required | Description |
-|-------|------|----------|-------------|
-| `origin_lat` | float | yes | User latitude |
-| `origin_lng` | float | yes | User longitude |
-| `dest_lat` | float | yes | Shop latitude |
-| `dest_lng` | float | yes | Shop longitude |
-| `profile` | string | yes | `walking` or `driving-traffic` |
+| Param        | Type   | Required | Description                    |
+| ------------ | ------ | -------- | ------------------------------ |
+| `origin_lat` | float  | yes      | User latitude                  |
+| `origin_lng` | float  | yes      | User longitude                 |
+| `dest_lat`   | float  | yes      | Shop latitude                  |
+| `dest_lng`   | float  | yes      | Shop longitude                 |
+| `profile`    | string | yes      | `walking` or `driving-traffic` |
 
 Response: `DirectionsResult` JSON (`{ durationMin, distanceM, profile }`)
 
@@ -146,7 +146,7 @@ const handleDirectionsOpen = () => {
   shop={directionsShop}
   userLat={latitude ?? undefined}
   userLng={longitude ?? undefined}
-/>
+/>;
 ```
 
 The sheet will initially show MRT info only (no user location yet), then re-fetch with walking/driving times once geolocation resolves. This is handled by the existing `useEffect` in DirectionsSheet that watches `userLat`/`userLng` changes.
@@ -155,10 +155,10 @@ The sheet will initially show MRT info only (no user location yet), then re-fetc
 
 ## Mapbox Token Strategy
 
-| Token | Location | Used by |
-|-------|----------|---------|
-| `NEXT_PUBLIC_MAPBOX_TOKEN` | Frontend `.env.local` | mapbox-gl (map rendering), ShopMapThumbnail (static images) |
-| `MAPBOX_ACCESS_TOKEN` | Backend `.env` | MapboxMapsAdapter (geocoding, reverse geocoding, **directions**) |
+| Token                      | Location              | Used by                                                          |
+| -------------------------- | --------------------- | ---------------------------------------------------------------- |
+| `NEXT_PUBLIC_MAPBOX_TOKEN` | Frontend `.env.local` | mapbox-gl (map rendering), ShopMapThumbnail (static images)      |
+| `MAPBOX_ACCESS_TOKEN`      | Backend `.env`        | MapboxMapsAdapter (geocoding, reverse geocoding, **directions**) |
 
 DirectionsSheet moves from using the frontend public token to using the backend server token via the proxy.
 
@@ -180,20 +180,20 @@ DirectionsSheet moves from using the frontend public token to using the backend 
 
 ## Files Changed
 
-| File | Change |
-|------|--------|
-| `TODO.md` | Mark Community Notes proxy routes as done |
-| `backend/models/types.py` | Add `DirectionsResult` |
-| `backend/providers/maps/interface.py` | Add `get_directions` to protocol |
-| `backend/providers/maps/mapbox_adapter.py` | Implement `get_directions` |
-| `backend/api/maps.py` | New router with `GET /maps/directions` |
-| `backend/main.py` | Register maps router |
-| `backend/tests/providers/test_mapbox_adapter.py` | Directions adapter tests |
-| `backend/tests/api/test_maps_api.py` | New API test file |
-| `app/api/maps/directions/route.ts` | New proxy route |
-| `components/shops/directions-sheet.tsx` | Replace Mapbox fetch with proxy calls |
-| `components/shops/directions-sheet.test.tsx` | Update mocks |
-| `app/shops/[shopId]/[slug]/shop-detail-client.tsx` | Wire useGeolocation + pass props |
+| File                                               | Change                                    |
+| -------------------------------------------------- | ----------------------------------------- |
+| `TODO.md`                                          | Mark Community Notes proxy routes as done |
+| `backend/models/types.py`                          | Add `DirectionsResult`                    |
+| `backend/providers/maps/interface.py`              | Add `get_directions` to protocol          |
+| `backend/providers/maps/mapbox_adapter.py`         | Implement `get_directions`                |
+| `backend/api/maps.py`                              | New router with `GET /maps/directions`    |
+| `backend/main.py`                                  | Register maps router                      |
+| `backend/tests/providers/test_mapbox_adapter.py`   | Directions adapter tests                  |
+| `backend/tests/api/test_maps_api.py`               | New API test file                         |
+| `app/api/maps/directions/route.ts`                 | New proxy route                           |
+| `components/shops/directions-sheet.tsx`            | Replace Mapbox fetch with proxy calls     |
+| `components/shops/directions-sheet.test.tsx`       | Update mocks                              |
+| `app/shops/[shopId]/[slug]/shop-detail-client.tsx` | Wire useGeolocation + pass props          |
 
 ---
 

@@ -15,6 +15,7 @@
 **Tech Stack:** FastAPI, Pydantic, httpx (backend); Next.js App Router proxy (frontend); Mapbox Directions API v5
 
 **Acceptance Criteria:**
+
 - [ ] A user tapping "Get There" on a shop page sees walking time, driving time, and nearest MRT station after granting location permission
 - [ ] A user who denies location still sees nearest MRT station and Google/Apple Maps deep-links
 - [ ] Mapbox Directions API calls go through the backend, not directly from the browser
@@ -26,6 +27,7 @@
 ### Task 1: Mark Community Notes Proxy Routes as Done in TODO.md
 
 **Files:**
+
 - Modify: `TODO.md:1030`
 
 No test needed — documentation update only.
@@ -33,6 +35,7 @@ No test needed — documentation update only.
 **Step 1: Update TODO.md**
 
 Change line 1030:
+
 ```diff
 - - [ ] Frontend: Proxy routes (preview, feed, like)
 + - [x] Frontend: Proxy routes (preview, feed, like)
@@ -50,6 +53,7 @@ git commit -m "docs: mark Community Notes proxy routes as complete in TODO"
 ### Task 2: Add DirectionsResult Pydantic Model
 
 **Files:**
+
 - Modify: `backend/models/types.py`
 - Test: `backend/tests/models/test_directions_result.py`
 
@@ -111,6 +115,7 @@ git commit -m "feat: add DirectionsResult Pydantic model"
 ### Task 3: Extend MapsProvider Protocol + Implement get_directions in MapboxMapsAdapter
 
 **Files:**
+
 - Modify: `backend/providers/maps/interface.py`
 - Modify: `backend/providers/maps/mapbox_adapter.py`
 - Modify: `backend/tests/providers/test_mapbox_adapter.py`
@@ -293,6 +298,7 @@ Add to `backend/providers/maps/mapbox_adapter.py` (after `reverse_geocode`, befo
 ```
 
 Also add the import at top of file:
+
 ```python
 from models.types import DirectionsResult, GeocodingResult
 ```
@@ -316,6 +322,7 @@ git commit -m "feat: add get_directions to MapsProvider protocol + Mapbox adapte
 ### Task 4: Create Maps API Router with GET /maps/directions Endpoint
 
 **Files:**
+
 - Create: `backend/api/maps.py`
 - Modify: `backend/main.py` (lines 11-24 imports, lines 111-124 router registration)
 - Create: `backend/tests/api/test_maps.py`
@@ -499,11 +506,13 @@ async def get_directions(
 **Step 4: Register router in main.py**
 
 Add import at `backend/main.py` line 20 (after other api imports):
+
 ```python
 from api.maps import router as maps_router
 ```
 
 Add router registration after line 124 (after `admin_taxonomy_router`):
+
 ```python
 app.include_router(maps_router)
 ```
@@ -530,6 +539,7 @@ git commit -m "feat: add GET /maps/directions endpoint with MapsProvider"
 ### Task 5: Create Next.js Proxy Route for Directions
 
 **Files:**
+
 - Create: `app/api/maps/directions/route.ts`
 
 No test needed — thin proxy using established `proxyToBackend` pattern (same as all other proxy routes in `app/api/`).
@@ -560,6 +570,7 @@ git commit -m "feat: add Next.js proxy route for maps/directions"
 ### Task 6: Refactor DirectionsSheet to Use Backend Proxy
 
 **Files:**
+
 - Modify: `components/shops/directions-sheet.tsx` (lines 72-95 — `fetchRoute` function)
 - Modify: `components/shops/directions-sheet.test.tsx`
 
@@ -687,16 +698,16 @@ Remove the line `const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;` (line 112)
 Update the `useEffect` guard (line 175) — remove `token` from the dependency array and the `!token` guard:
 
 ```typescript
-  useEffect(() => {
-    if (!open) return;
+useEffect(() => {
+  if (!open) return;
 
-    const abortController = new AbortController();
-    fetchDirections(abortController.signal);
+  const abortController = new AbortController();
+  fetchDirections(abortController.signal);
 
-    return () => {
-      abortController.abort();
-    };
-  }, [open, fetchDirections]);
+  return () => {
+    abortController.abort();
+  };
+}, [open, fetchDirections]);
 ```
 
 **Step 4: Run tests to verify they pass**
@@ -716,6 +727,7 @@ git commit -m "refactor: DirectionsSheet uses backend proxy instead of direct Ma
 ### Task 7: Wire useGeolocation into Shop Detail Page
 
 **Files:**
+
 - Modify: `app/shops/[shopId]/[slug]/shop-detail-client.tsx` (lines 1-2 imports, line 54, line 121, lines 166-170)
 
 **Step 1: Write the failing test**
@@ -743,16 +755,19 @@ it('passes geolocation coordinates to DirectionsSheet when user taps Get There',
 In `app/shops/[shopId]/[slug]/shop-detail-client.tsx`:
 
 Add import (after line 18):
+
 ```typescript
 import { useGeolocation } from '@/lib/hooks/use-geolocation';
 ```
 
 Add hook call inside `ShopDetailClient` (after line 54, the `directionsOpen` state):
+
 ```typescript
-  const { latitude, longitude, requestLocation } = useGeolocation();
+const { latitude, longitude, requestLocation } = useGeolocation();
 ```
 
 Update the "Get There" button click handler (line 121):
+
 ```typescript
                 onClick={() => {
                   requestLocation();
@@ -761,6 +776,7 @@ Update the "Get There" button click handler (line 121):
 ```
 
 Pass coordinates to DirectionsSheet (replace lines 166-170):
+
 ```typescript
         <DirectionsSheet
           open={directionsOpen}
@@ -840,6 +856,7 @@ Mark Shop View Directions items as complete in `TODO.md` (lines 1102-1109):
 ```
 
 And:
+
 ```diff
 - - [ ] "Open in Google Maps" deep-link — `https://www.google.com/maps/dir/?api=1&destination={lat},{lng}`
 - - [ ] "Open in Apple Maps" deep-link — `maps://maps.apple.com/?daddr={lat},{lng}`
@@ -893,23 +910,30 @@ graph TD
 ```
 
 **Wave 1** (parallel — no dependencies):
+
 - Task 1: Mark Community Notes proxy routes done in TODO
 - Task 2: Add DirectionsResult Pydantic model
 
 **Wave 2** (depends on Wave 1):
+
 - Task 3: Extend MapsProvider protocol + Mapbox adapter ← Task 2
 
 **Wave 3** (depends on Wave 2):
+
 - Task 4: Create maps API router ← Task 3
 
 **Wave 4** (depends on Wave 3):
+
 - Task 5: Next.js proxy route ← Task 4
 
 **Wave 5** (depends on Wave 4):
+
 - Task 6: Refactor DirectionsSheet to use proxy ← Task 5
 
 **Wave 6** (depends on Wave 5):
+
 - Task 7: Wire useGeolocation into Shop Detail ← Task 6
 
 **Wave 7** (depends on all):
+
 - Task 8: Full verification + TODO update ← Task 1, Task 7

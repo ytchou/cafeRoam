@@ -57,15 +57,27 @@ describe('DirectionsSheet', () => {
     mockFetch
       .mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ durationMin: 7, distanceM: 580, profile: 'walking' }),
+        json: async () => ({
+          durationMin: 7,
+          distanceM: 580,
+          profile: 'walking',
+        }),
       })
       .mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ durationMin: 3, distanceM: 2100, profile: 'driving-traffic' }),
+        json: async () => ({
+          durationMin: 3,
+          distanceM: 2100,
+          profile: 'driving-traffic',
+        }),
       })
       .mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ durationMin: 4, distanceM: 350, profile: 'walking' }),
+        json: async () => ({
+          durationMin: 4,
+          distanceM: 350,
+          profile: 'walking',
+        }),
       });
 
     render(
@@ -87,7 +99,11 @@ describe('DirectionsSheet', () => {
   it('a user without location only fetches the MRT leg, not walk/drive routes', async () => {
     mockFetch.mockResolvedValue({
       ok: true,
-      json: async () => ({ durationMin: 5, distanceM: 400, profile: 'walking' }),
+      json: async () => ({
+        durationMin: 5,
+        distanceM: 400,
+        profile: 'walking',
+      }),
     });
 
     render(<DirectionsSheet open={true} onClose={vi.fn()} shop={shop} />);
@@ -103,7 +119,11 @@ describe('DirectionsSheet', () => {
   it('shows the nearest MRT station using real station data', async () => {
     mockFetch.mockResolvedValue({
       ok: true,
-      json: async () => ({ durationMin: 5, distanceM: 400, profile: 'walking' }),
+      json: async () => ({
+        durationMin: 5,
+        distanceM: 400,
+        profile: 'walking',
+      }),
     });
 
     render(<DirectionsSheet open={true} onClose={vi.fn()} shop={shop} />);

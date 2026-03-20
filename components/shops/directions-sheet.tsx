@@ -73,7 +73,13 @@ function routesReducer(state: RoutesState, action: RoutesAction): RoutesState {
       };
     case 'fetch_user_routes_start':
       // Preserve mrtWalkRoute so the MRT row doesn't flicker when location resolves
-      return { ...state, loading: true, hasError: false, walkRoute: null, driveRoute: null };
+      return {
+        ...state,
+        loading: true,
+        hasError: false,
+        walkRoute: null,
+        driveRoute: null,
+      };
     case 'fetch_done':
       return {
         loading: false,
@@ -143,7 +149,9 @@ export function DirectionsSheet({
 
   const fetchDirections = useCallback(
     async (signal: AbortSignal, isLocationUpdate: boolean) => {
-      dispatch({ type: isLocationUpdate ? 'fetch_user_routes_start' : 'fetch_start' });
+      dispatch({
+        type: isLocationUpdate ? 'fetch_user_routes_start' : 'fetch_start',
+      });
 
       const hasUserLocation = userLat !== undefined && userLng !== undefined;
 
@@ -183,13 +191,20 @@ export function DirectionsSheet({
 
       if (!signal.aborted) {
         const hasError =
-          walkResult === 'error' || driveResult === 'error' || mrtWalkResult === 'error';
+          walkResult === 'error' ||
+          driveResult === 'error' ||
+          mrtWalkResult === 'error';
         const walk = walkResult === 'error' ? null : walkResult;
         const drive = driveResult === 'error' ? null : driveResult;
         const mrtWalk = mrtWalkResult === 'error' ? null : mrtWalkResult;
 
         if (isLocationUpdate) {
-          dispatch({ type: 'fetch_user_routes_done', walkRoute: walk, driveRoute: drive, hasError });
+          dispatch({
+            type: 'fetch_user_routes_done',
+            walkRoute: walk,
+            driveRoute: drive,
+            hasError,
+          });
         } else {
           dispatch({
             type: 'fetch_done',
@@ -290,7 +305,9 @@ export function DirectionsSheet({
             )}
 
             {!loading && hasError && !walkRoute && !driveRoute && (
-              <p className="text-sm text-gray-400">Route times unavailable. Try again later.</p>
+              <p className="text-sm text-gray-400">
+                Route times unavailable. Try again later.
+              </p>
             )}
           </div>
 

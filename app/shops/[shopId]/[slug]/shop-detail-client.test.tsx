@@ -28,14 +28,28 @@ vi.mock('@/lib/hooks/use-shop-reviews', () => ({
 
 // Render-only child components — not under test here
 vi.mock('@/components/shops/shop-hero', () => ({ ShopHero: () => null }));
-vi.mock('@/components/shops/shop-identity', () => ({ ShopIdentity: () => null }));
-vi.mock('@/components/shops/attribute-chips', () => ({ AttributeChips: () => null }));
+vi.mock('@/components/shops/shop-identity', () => ({
+  ShopIdentity: () => null,
+}));
+vi.mock('@/components/shops/attribute-chips', () => ({
+  AttributeChips: () => null,
+}));
 vi.mock('@/components/shops/share-button', () => ({ ShareButton: () => null }));
-vi.mock('@/components/shops/sticky-checkin-bar', () => ({ StickyCheckinBar: () => null }));
-vi.mock('@/components/shops/shop-description', () => ({ ShopDescription: () => null }));
-vi.mock('@/components/shops/menu-highlights', () => ({ MenuHighlights: () => null }));
-vi.mock('@/components/shops/recent-checkins-strip', () => ({ RecentCheckinsStrip: () => null }));
-vi.mock('@/components/shops/shop-map-thumbnail', () => ({ ShopMapThumbnail: () => null }));
+vi.mock('@/components/shops/sticky-checkin-bar', () => ({
+  StickyCheckinBar: () => null,
+}));
+vi.mock('@/components/shops/shop-description', () => ({
+  ShopDescription: () => null,
+}));
+vi.mock('@/components/shops/menu-highlights', () => ({
+  MenuHighlights: () => null,
+}));
+vi.mock('@/components/shops/recent-checkins-strip', () => ({
+  RecentCheckinsStrip: () => null,
+}));
+vi.mock('@/components/shops/shop-map-thumbnail', () => ({
+  ShopMapThumbnail: () => null,
+}));
 vi.mock('@/components/shops/shop-reviews', () => ({ ShopReviews: () => null }));
 
 import { ShopDetailClient } from './shop-detail-client';
@@ -108,6 +122,8 @@ describe('ShopDetailClient — Get There button', () => {
     const shopWithoutMap = { id: 'shop-xyz', name: '無地圖咖啡' };
     render(<ShopDetailClient shop={shopWithoutMap} />);
 
-    expect(screen.queryByRole('button', { name: /get there/i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /get there/i })
+    ).not.toBeInTheDocument();
   });
 });

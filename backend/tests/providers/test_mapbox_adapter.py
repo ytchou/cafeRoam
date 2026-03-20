@@ -27,7 +27,9 @@ class TestMapboxGeocode:
     def adapter(self):
         return MapboxMapsAdapter(access_token=MAPBOX_TOKEN)
 
-    async def test_geocoding_a_taipei_address_returns_coordinates_and_formatted_address(self, adapter):
+    async def test_geocoding_a_taipei_address_returns_coordinates_and_formatted_address(
+        self, adapter
+    ):
         mock_response = MagicMock(spec=httpx.Response)
         mock_response.status_code = 200
         mock_response.json.return_value = GEOCODE_RESPONSE
