@@ -38,12 +38,12 @@ export function ShopHero({
       )}
 
       {/* Overlay buttons — top row */}
-      <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-4 pt-12 pb-4">
+      <div className="absolute top-0 right-0 left-0 flex items-center justify-between px-4 pt-12 pb-4">
         {onBack && (
           <button
             onClick={onBack}
             aria-label="Back"
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-white/90 backdrop-blur-sm shadow-sm"
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-white/90 shadow-sm backdrop-blur-sm"
           >
             <ChevronLeft className="h-5 w-5 text-[#1A1918]" />
           </button>
@@ -53,7 +53,7 @@ export function ShopHero({
             <button
               onClick={onSave}
               aria-label="Save"
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-white/90 backdrop-blur-sm shadow-sm"
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-white/90 shadow-sm backdrop-blur-sm"
             >
               <Bookmark
                 className={`h-4 w-4 ${isSaved ? 'fill-amber-500 text-amber-500' : 'text-[#1A1918]'}`}
@@ -64,7 +64,7 @@ export function ShopHero({
             <button
               onClick={onShare}
               aria-label="Share"
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-white/90 backdrop-blur-sm shadow-sm"
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-white/90 shadow-sm backdrop-blur-sm"
             >
               <Share2 className="h-4 w-4 text-[#1A1918]" />
             </button>

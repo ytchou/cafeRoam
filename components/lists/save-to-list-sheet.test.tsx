@@ -170,9 +170,7 @@ describe('SaveToListSheet', () => {
     );
     const btn = await screen.findByRole('button', { name: /create new list/i });
     await user.click(btn);
-    expect(
-      screen.getByPlaceholderText(/create new list/i)
-    ).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/create new list/i)).toBeInTheDocument();
   });
 
   it('create new list input is hidden when the user has reached the 3-list cap', async () => {

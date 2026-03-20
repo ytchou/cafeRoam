@@ -32,7 +32,9 @@ export function useCheckIn(shopId: string) {
           shopId,
           photoUrls: uploadedUrls,
           ...(payload.rating > 0 && { stars: payload.rating }),
-          ...(payload.reviewText.trim() && { reviewText: payload.reviewText.trim() }),
+          ...(payload.reviewText.trim() && {
+            reviewText: payload.reviewText.trim(),
+          }),
           ...(payload.mood.trim() && { moodNote: payload.mood.trim() }),
         }),
       });

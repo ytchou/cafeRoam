@@ -15,6 +15,7 @@
 **Tech Stack:** Next.js 16, TypeScript strict, Tailwind CSS, shadcn/ui (Drawer + Popover), Vaul, Radix UI, Lucide icons, Vitest + Testing Library
 
 **Acceptance Criteria:**
+
 - [ ] A user on mobile can tap "Check In 打卡" on the Shop View and complete check-in without leaving the page
 - [ ] A user on desktop can open and close the Save, Share, and Check In popovers from the Shop View actions row
 - [ ] A user sees the open status, distance, and address in the shop info section
@@ -39,6 +40,7 @@ Verify `components/ui/popover.tsx` exists before starting Task 3/4/5.
 ## Task 1: ClaimBanner component
 
 **Files:**
+
 - Create: `components/shops/claim-banner.tsx`
 - Create: `components/shops/claim-banner.test.tsx`
 
@@ -53,7 +55,9 @@ describe('ClaimBanner', () => {
   it('shows claim prompt with a link for shop owners', () => {
     render(<ClaimBanner shopId="abc123" />);
     expect(screen.getByText(/Is this your café/i)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /Claim this page/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: /Claim this page/i })
+    ).toBeInTheDocument();
   });
 });
 ```
@@ -63,6 +67,7 @@ describe('ClaimBanner', () => {
 ```bash
 pnpm test components/shops/claim-banner.test.tsx
 ```
+
 Expected: FAIL — module not found
 
 **Step 3: Implement**
@@ -75,7 +80,7 @@ interface ClaimBannerProps {
 
 export function ClaimBanner({ shopId }: ClaimBannerProps) {
   return (
-    <div className="px-5 py-4 bg-[#FAF7F2] border-t border-[#E5E4E1]">
+    <div className="border-t border-[#E5E4E1] bg-[#FAF7F2] px-5 py-4">
       <p className="text-sm text-[#6B6560]">
         Is this your café?{' '}
         <a
@@ -108,6 +113,7 @@ git commit -m "feat: add ClaimBanner component"
 ## Task 2: CheckInSheet component (mobile bottom sheet)
 
 **Files:**
+
 - Create: `components/shops/check-in-sheet.tsx`
 - Create: `components/shops/check-in-sheet.test.tsx`
 
@@ -123,14 +129,20 @@ import { CheckInSheet } from './check-in-sheet';
 
 vi.mock('@/components/checkins/photo-uploader', () => ({
   PhotoUploader: ({ onChange }: { onChange: (files: File[]) => void }) => (
-    <button onClick={() => onChange([new File([''], 'photo.jpg', { type: 'image/jpeg' })])}>
+    <button
+      onClick={() =>
+        onChange([new File([''], 'photo.jpg', { type: 'image/jpeg' })])
+      }
+    >
       Add Photo
     </button>
   ),
 }));
 
 vi.mock('@/lib/supabase/storage', () => ({
-  uploadCheckInPhoto: vi.fn().mockResolvedValue('https://example.com/photo.jpg'),
+  uploadCheckInPhoto: vi
+    .fn()
+    .mockResolvedValue('https://example.com/photo.jpg'),
 }));
 
 global.fetch = vi.fn();
@@ -159,7 +171,9 @@ describe('CheckInSheet', () => {
     render(<CheckInSheet {...defaultProps} />);
     fireEvent.click(screen.getByText('Add Photo'));
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /Check In/i })).not.toBeDisabled();
+      expect(
+        screen.getByRole('button', { name: /Check In/i })
+      ).not.toBeDisabled();
     });
   });
 
@@ -170,9 +184,14 @@ describe('CheckInSheet', () => {
     });
     render(<CheckInSheet {...defaultProps} />);
     fireEvent.click(screen.getByText('Add Photo'));
-    await waitFor(() => fireEvent.click(screen.getByRole('button', { name: /Check In/i })));
+    await waitFor(() =>
+      fireEvent.click(screen.getByRole('button', { name: /Check In/i }))
+    );
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith('/api/checkins', expect.objectContaining({ method: 'POST' }));
+      expect(global.fetch).toHaveBeenCalledWith(
+        '/api/checkins',
+        expect.objectContaining({ method: 'POST' })
+      );
       expect(defaultProps.onSuccess).toHaveBeenCalled();
     });
   });
@@ -184,7 +203,9 @@ describe('CheckInSheet', () => {
     });
     render(<CheckInSheet {...defaultProps} />);
     fireEvent.click(screen.getByText('Add Photo'));
-    await waitFor(() => fireEvent.click(screen.getByRole('button', { name: /Check In/i })));
+    await waitFor(() =>
+      fireEvent.click(screen.getByRole('button', { name: /Check In/i }))
+    );
     await waitFor(() => {
       expect(screen.getByRole('alert')).toBeInTheDocument();
     });
@@ -276,10 +297,12 @@ export function CheckInSheet({
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent>
-        <DrawerHeader className="flex items-center justify-between px-4 py-3 border-b border-[#E5E4E1]">
+        <DrawerHeader className="flex items-center justify-between border-b border-[#E5E4E1] px-4 py-3">
           <div>
-            <DrawerTitle className="text-base font-semibold">Check In 打卡</DrawerTitle>
-            <p className="text-xs text-[#9E9893] mt-0.5">{shopName}</p>
+            <DrawerTitle className="text-base font-semibold">
+              Check In 打卡
+            </DrawerTitle>
+            <p className="mt-0.5 text-xs text-[#9E9893]">{shopName}</p>
           </div>
           <button
             onClick={() => onOpenChange(false)}
@@ -290,9 +313,12 @@ export function CheckInSheet({
           </button>
         </DrawerHeader>
 
-        <div className="px-4 py-4 space-y-4 overflow-y-auto max-h-[70vh]">
+        <div className="max-h-[70vh] space-y-4 overflow-y-auto px-4 py-4">
           {error && (
-            <div role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+            <div
+              role="alert"
+              className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700"
+            >
               {error}
             </div>
           )}
@@ -302,16 +328,16 @@ export function CheckInSheet({
               Photos <span className="text-red-500">*</span>
             </label>
             <div className="mt-2">
-              <PhotoUploader
-                onChange={setPhotos}
-                maxFiles={3}
-              />
+              <PhotoUploader onChange={setPhotos} maxFiles={3} />
             </div>
           </div>
 
           <div>
             <label className="text-sm font-medium text-[#3B2F2A]">
-              Rating <span className="text-xs text-[#9E9893] font-normal">optional</span>
+              Rating{' '}
+              <span className="text-xs font-normal text-[#9E9893]">
+                optional
+              </span>
             </label>
             <div className="mt-2">
               <StarRating value={rating} onChange={setRating} />
@@ -320,20 +346,26 @@ export function CheckInSheet({
 
           <div>
             <label className="text-sm font-medium text-[#3B2F2A]">
-              Review <span className="text-xs text-[#9E9893] font-normal">optional</span>
+              Review{' '}
+              <span className="text-xs font-normal text-[#9E9893]">
+                optional
+              </span>
             </label>
             <textarea
               value={reviewText}
               onChange={(e) => setReviewText(e.target.value)}
               placeholder="Share your experience here..."
               rows={3}
-              className="mt-2 w-full rounded-lg bg-[#F5F4F2] px-3 py-2 text-sm placeholder:text-[#C4C0BB] focus:outline-none resize-none"
+              className="mt-2 w-full resize-none rounded-lg bg-[#F5F4F2] px-3 py-2 text-sm placeholder:text-[#C4C0BB] focus:outline-none"
             />
           </div>
 
           <div>
             <label className="text-sm font-medium text-[#3B2F2A]">
-              How do you feel? <span className="text-xs text-[#9E9893] font-normal">optional</span>
+              How do you feel?{' '}
+              <span className="text-xs font-normal text-[#9E9893]">
+                optional
+              </span>
             </label>
             <input
               type="text"
@@ -345,11 +377,11 @@ export function CheckInSheet({
           </div>
         </div>
 
-        <div className="px-4 py-4 border-t border-[#E5E4E1]">
+        <div className="border-t border-[#E5E4E1] px-4 py-4">
           <button
             onClick={handleSubmit}
             disabled={!canSubmit}
-            className="w-full rounded-full bg-[#2D5A27] py-3.5 text-sm font-semibold text-white disabled:opacity-40 flex items-center justify-center gap-2"
+            className="flex w-full items-center justify-center gap-2 rounded-full bg-[#2D5A27] py-3.5 text-sm font-semibold text-white disabled:opacity-40"
           >
             {busy ? 'Checking in...' : '📍 打卡 Check In'}
           </button>
@@ -378,6 +410,7 @@ git commit -m "feat: add CheckInSheet mobile bottom sheet"
 ## Task 3: CheckInPopover component (desktop)
 
 **Files:**
+
 - Create: `components/shops/check-in-popover.tsx`
 - Create: `components/shops/check-in-popover.test.tsx`
 
@@ -401,21 +434,41 @@ vi.mock('@/components/reviews/star-rating', () => ({
 describe('CheckInPopover', () => {
   it('shows the photo upload zone when open', () => {
     render(
-      <CheckInPopover shopId="s1" shopName="Cafe" open={true} onOpenChange={vi.fn()} trigger={<button>Check In</button>} />
+      <CheckInPopover
+        shopId="s1"
+        shopName="Cafe"
+        open={true}
+        onOpenChange={vi.fn()}
+        trigger={<button>Check In</button>}
+      />
     );
     expect(screen.getByText('Photo uploader')).toBeInTheDocument();
   });
 
   it('shows the Check In submit button', () => {
     render(
-      <CheckInPopover shopId="s1" shopName="Cafe" open={true} onOpenChange={vi.fn()} trigger={<button>Check In</button>} />
+      <CheckInPopover
+        shopId="s1"
+        shopName="Cafe"
+        open={true}
+        onOpenChange={vi.fn()}
+        trigger={<button>Check In</button>}
+      />
     );
-    expect(screen.getByRole('button', { name: /Check In/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /Check In/i })
+    ).toBeInTheDocument();
   });
 
   it('submit button is disabled when no photo is selected', () => {
     render(
-      <CheckInPopover shopId="s1" shopName="Cafe" open={true} onOpenChange={vi.fn()} trigger={<button>Check In</button>} />
+      <CheckInPopover
+        shopId="s1"
+        shopName="Cafe"
+        open={true}
+        onOpenChange={vi.fn()}
+        trigger={<button>Check In</button>}
+      />
     );
     expect(screen.getByRole('button', { name: /Check In/i })).toBeDisabled();
   });
@@ -502,27 +555,35 @@ export function CheckInPopover({
   return (
     <Popover open={open} onOpenChange={onOpenChange}>
       <PopoverTrigger asChild>{trigger}</PopoverTrigger>
-      <PopoverContent className="w-80 p-0 rounded-2xl overflow-hidden shadow-xl" align="start">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-[#E5E4E1]">
-          <h3 className="text-sm font-semibold text-[#3B2F2A]">Check In 打卡</h3>
+      <PopoverContent
+        className="w-80 overflow-hidden rounded-2xl p-0 shadow-xl"
+        align="start"
+      >
+        <div className="flex items-center justify-between border-b border-[#E5E4E1] px-4 py-3">
+          <h3 className="text-sm font-semibold text-[#3B2F2A]">
+            Check In 打卡
+          </h3>
           <button
             onClick={() => onOpenChange(false)}
-            className="text-[#9E9893] hover:text-[#3B2F2A] text-xs"
+            className="text-xs text-[#9E9893] hover:text-[#3B2F2A]"
             aria-label="Close"
           >
             ✕
           </button>
         </div>
 
-        <div className="p-4 space-y-3">
+        <div className="space-y-3 p-4">
           {error && (
-            <div role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">
+            <div
+              role="alert"
+              className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700"
+            >
               {error}
             </div>
           )}
           <PhotoUploader onChange={setPhotos} maxFiles={3} />
           <div>
-            <p className="text-xs font-medium text-[#3B2F2A] mb-1">Rating</p>
+            <p className="mb-1 text-xs font-medium text-[#3B2F2A]">Rating</p>
             <StarRating value={rating} onChange={setRating} />
           </div>
           <textarea
@@ -530,7 +591,7 @@ export function CheckInPopover({
             onChange={(e) => setReviewText(e.target.value)}
             placeholder="Write your review (optional)..."
             rows={2}
-            className="w-full rounded-lg bg-[#F5F4F2] px-3 py-2 text-sm placeholder:text-[#C4C0BB] focus:outline-none resize-none"
+            className="w-full resize-none rounded-lg bg-[#F5F4F2] px-3 py-2 text-sm placeholder:text-[#C4C0BB] focus:outline-none"
           />
           <input
             type="text"
@@ -574,6 +635,7 @@ git commit -m "feat: add CheckInPopover desktop component"
 ## Task 4: SavePopover component (desktop)
 
 **Files:**
+
 - Create: `components/shops/save-popover.tsx`
 - Create: `components/shops/save-popover.test.tsx`
 
@@ -589,8 +651,11 @@ const mockLists = [
   { id: 'l1', name: 'Weekend Picks', items: [{ shopId: 'other' }] },
   { id: 'l2', name: 'Work Spots', items: [{ shopId: 'shop-1' }] },
 ];
-const mockIsInList = vi.fn((listId: string, shopId: string) =>
-  mockLists.find((l) => l.id === listId)?.items.some((i) => i.shopId === shopId) ?? false
+const mockIsInList = vi.fn(
+  (listId: string, shopId: string) =>
+    mockLists
+      .find((l) => l.id === listId)
+      ?.items.some((i) => i.shopId === shopId) ?? false
 );
 const mockSaveShop = vi.fn();
 const mockRemoveShop = vi.fn();
@@ -622,7 +687,9 @@ describe('SavePopover', () => {
 
   it('shows a checked state for lists containing this shop', () => {
     render(<SavePopover {...defaultProps} />);
-    const workSpotsCheckbox = screen.getByRole('checkbox', { name: /Work Spots/i });
+    const workSpotsCheckbox = screen.getByRole('checkbox', {
+      name: /Work Spots/i,
+    });
     expect(workSpotsCheckbox).toBeChecked();
   });
 
@@ -668,7 +735,12 @@ interface SavePopoverProps {
   trigger: React.ReactNode;
 }
 
-export function SavePopover({ shopId, open, onOpenChange, trigger }: SavePopoverProps) {
+export function SavePopover({
+  shopId,
+  open,
+  onOpenChange,
+  trigger,
+}: SavePopoverProps) {
   const { lists, isInList, saveShop, removeShop, createList } = useUserLists();
   const [newListName, setNewListName] = useState('');
   const [creating, setCreating] = useState(false);
@@ -693,7 +765,9 @@ export function SavePopover({ shopId, open, onOpenChange, trigger }: SavePopover
       setNewListName('');
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to create list';
-      toast.error(msg.includes('Maximum') ? "You've reached the 3-list limit" : msg);
+      toast.error(
+        msg.includes('Maximum') ? "You've reached the 3-list limit" : msg
+      );
     } finally {
       setCreating(false);
     }
@@ -702,12 +776,17 @@ export function SavePopover({ shopId, open, onOpenChange, trigger }: SavePopover
   return (
     <Popover open={open} onOpenChange={onOpenChange}>
       <PopoverTrigger asChild>{trigger}</PopoverTrigger>
-      <PopoverContent className="w-80 p-0 rounded-2xl overflow-hidden shadow-xl" align="start">
-        <div className="flex items-center justify-between px-4 py-4 border-b border-[#E5E4E1]">
-          <h3 className="text-sm font-semibold text-[#3B2F2A]">Save to List 收藏</h3>
+      <PopoverContent
+        className="w-80 overflow-hidden rounded-2xl p-0 shadow-xl"
+        align="start"
+      >
+        <div className="flex items-center justify-between border-b border-[#E5E4E1] px-4 py-4">
+          <h3 className="text-sm font-semibold text-[#3B2F2A]">
+            Save to List 收藏
+          </h3>
           <button
             onClick={() => onOpenChange(false)}
-            className="text-[#9E9893] hover:text-[#3B2F2A] text-xs"
+            className="text-xs text-[#9E9893] hover:text-[#3B2F2A]"
             aria-label="Close"
           >
             ✕
@@ -716,21 +795,27 @@ export function SavePopover({ shopId, open, onOpenChange, trigger }: SavePopover
 
         <div className="py-2">
           {lists.length === 0 && (
-            <div className="flex flex-col items-center py-8 px-4 text-center">
-              <span className="text-3xl mb-2">🔖</span>
+            <div className="flex flex-col items-center px-4 py-8 text-center">
+              <span className="mb-2 text-3xl">🔖</span>
               <p className="text-sm font-medium text-[#3B2F2A]">No lists yet</p>
-              <p className="text-xs text-[#9E9893] mt-1">Create a list to start saving</p>
+              <p className="mt-1 text-xs text-[#9E9893]">
+                Create a list to start saving
+              </p>
             </div>
           )}
           {lists.map((list) => (
             <label
               key={list.id}
-              className="flex items-center gap-3 px-4 py-3 hover:bg-[#F5F4F2] cursor-pointer"
+              className="flex cursor-pointer items-center gap-3 px-4 py-3 hover:bg-[#F5F4F2]"
             >
-              <div className="h-10 w-10 rounded-lg bg-[#E8E6E2] flex-shrink-0" />
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-[#3B2F2A] truncate">{list.name}</p>
-                <p className="text-xs text-[#9E9893]">{list.items.length} spots</p>
+              <div className="h-10 w-10 flex-shrink-0 rounded-lg bg-[#E8E6E2]" />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium text-[#3B2F2A]">
+                  {list.name}
+                </p>
+                <p className="text-xs text-[#9E9893]">
+                  {list.items.length} spots
+                </p>
               </div>
               <input
                 type="checkbox"
@@ -744,21 +829,21 @@ export function SavePopover({ shopId, open, onOpenChange, trigger }: SavePopover
           {lists.length < 3 && (
             <button
               onClick={() => setNewListName(' ')}
-              className="flex items-center gap-2 px-4 py-3 w-full text-sm text-[#6B6560] hover:bg-[#F5F4F2]"
+              className="flex w-full items-center gap-2 px-4 py-3 text-sm text-[#6B6560] hover:bg-[#F5F4F2]"
             >
               <Plus className="h-4 w-4" />
               Create new list
             </button>
           )}
           {lists.length === 3 && (
-            <p className="px-4 py-2 text-xs text-amber-700 bg-amber-50 mx-4 mb-2 rounded-lg">
+            <p className="mx-4 mb-2 rounded-lg bg-amber-50 px-4 py-2 text-xs text-amber-700">
               You've reached the 3-list limit
             </p>
           )}
         </div>
 
         {newListName.trim() !== '' && (
-          <div className="px-4 py-3 border-t border-[#E5E4E1]">
+          <div className="border-t border-[#E5E4E1] px-4 py-3">
             <input
               type="text"
               value={newListName.trim() === ' ' ? '' : newListName}
@@ -772,7 +857,7 @@ export function SavePopover({ shopId, open, onOpenChange, trigger }: SavePopover
           </div>
         )}
 
-        <div className="px-4 py-3 border-t border-[#E5E4E1]">
+        <div className="border-t border-[#E5E4E1] px-4 py-3">
           <button
             onClick={() => onOpenChange(false)}
             className="w-full rounded-full bg-[#2D5A27] py-2.5 text-sm font-semibold text-white"
@@ -804,6 +889,7 @@ git commit -m "feat: add SavePopover desktop component"
 ## Task 5: SharePopover component (desktop)
 
 **Files:**
+
 - Create: `components/shops/share-popover.tsx`
 - Create: `components/shops/share-popover.test.tsx`
 
@@ -869,10 +955,37 @@ import {
 } from '@/components/ui/popover';
 
 const PLATFORMS = [
-  { name: 'Threads', icon: '@', bg: '#1A1918', fg: '#FFFFFF', urlFn: (u: string) => `https://www.threads.net/intent/post?text=${encodeURIComponent(u)}` },
-  { name: 'LINE', icon: 'L', bg: '#06C755', fg: '#FFFFFF', urlFn: (u: string) => `https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(u)}` },
-  { name: 'WhatsApp', icon: 'W', bg: '#25D366', fg: '#FFFFFF', urlFn: (u: string) => `https://wa.me/?text=${encodeURIComponent(u)}` },
-  { name: 'Mail', icon: '✉', bg: '#F5F4F2', fg: '#3B2F2A', urlFn: (u: string, n: string) => `mailto:?subject=${encodeURIComponent(n)}&body=${encodeURIComponent(u)}` },
+  {
+    name: 'Threads',
+    icon: '@',
+    bg: '#1A1918',
+    fg: '#FFFFFF',
+    urlFn: (u: string) =>
+      `https://www.threads.net/intent/post?text=${encodeURIComponent(u)}`,
+  },
+  {
+    name: 'LINE',
+    icon: 'L',
+    bg: '#06C755',
+    fg: '#FFFFFF',
+    urlFn: (u: string) =>
+      `https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(u)}`,
+  },
+  {
+    name: 'WhatsApp',
+    icon: 'W',
+    bg: '#25D366',
+    fg: '#FFFFFF',
+    urlFn: (u: string) => `https://wa.me/?text=${encodeURIComponent(u)}`,
+  },
+  {
+    name: 'Mail',
+    icon: '✉',
+    bg: '#F5F4F2',
+    fg: '#3B2F2A',
+    urlFn: (u: string, n: string) =>
+      `mailto:?subject=${encodeURIComponent(n)}&body=${encodeURIComponent(u)}`,
+  },
 ];
 
 interface SharePopoverProps {
@@ -902,17 +1015,22 @@ export function SharePopover({
   return (
     <Popover open={open} onOpenChange={onOpenChange}>
       <PopoverTrigger asChild>{trigger}</PopoverTrigger>
-      <PopoverContent className="w-80 p-0 rounded-2xl overflow-hidden shadow-xl" align="start">
-        <div className="px-4 py-4 border-b border-[#E5E4E1]">
+      <PopoverContent
+        className="w-80 overflow-hidden rounded-2xl p-0 shadow-xl"
+        align="start"
+      >
+        <div className="border-b border-[#E5E4E1] px-4 py-4">
           <h3 className="text-sm font-semibold text-[#3B2F2A]">Share</h3>
         </div>
 
-        <div className="p-4 space-y-4">
+        <div className="space-y-4 p-4">
           {/* Shop preview card */}
           <div className="flex items-center gap-3 rounded-xl bg-[#F5F4F2] px-3 py-2.5">
-            <div className="h-10 w-10 rounded-lg bg-[#E8E6E2] flex-shrink-0" />
+            <div className="h-10 w-10 flex-shrink-0 rounded-lg bg-[#E8E6E2]" />
             <div className="min-w-0">
-              <p className="text-sm font-semibold text-[#3B2F2A] truncate">{shopName}</p>
+              <p className="truncate text-sm font-semibold text-[#3B2F2A]">
+                {shopName}
+              </p>
             </div>
           </div>
 
@@ -922,7 +1040,7 @@ export function SharePopover({
               type="text"
               readOnly
               value={shareUrl}
-              className="flex-1 text-xs text-[#6B6560] bg-transparent outline-none truncate"
+              className="flex-1 truncate bg-transparent text-xs text-[#6B6560] outline-none"
             />
             <button
               onClick={handleCopy}
@@ -944,7 +1062,7 @@ export function SharePopover({
                 className="flex flex-col items-center gap-1"
               >
                 <div
-                  className="h-11 w-11 rounded-full flex items-center justify-center text-base font-bold"
+                  className="flex h-11 w-11 items-center justify-center rounded-full text-base font-bold"
                   style={{ background: p.bg, color: p.fg }}
                 >
                   {p.icon}
@@ -953,7 +1071,7 @@ export function SharePopover({
               </a>
             ))}
             <div className="flex flex-col items-center gap-1">
-              <div className="h-11 w-11 rounded-full bg-[#F5F4F2] flex items-center justify-center text-base text-[#6B6560]">
+              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#F5F4F2] text-base text-[#6B6560]">
                 •••
               </div>
               <span className="text-[10px] text-[#9E9893]">More</span>
@@ -984,6 +1102,7 @@ git commit -m "feat: add SharePopover desktop component"
 ## Task 6: Restyle ShopHero — floating overlay buttons
 
 **Files:**
+
 - Modify: `components/shops/shop-hero.tsx`
 - Modify: `components/shops/shop-hero.test.tsx` (create if it doesn't exist)
 
@@ -1005,7 +1124,9 @@ describe('ShopHero', () => {
 
   it('renders the hero image', () => {
     render(<ShopHero {...baseProps} />);
-    expect(screen.getByRole('img', { name: /The Brew House/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('img', { name: /The Brew House/i })
+    ).toBeInTheDocument();
   });
 
   it('calls onBack when back button is tapped', () => {
@@ -1086,12 +1207,12 @@ export function ShopHero({
       )}
 
       {/* Overlay buttons — top row */}
-      <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-4 pt-12 pb-4">
+      <div className="absolute top-0 right-0 left-0 flex items-center justify-between px-4 pt-12 pb-4">
         {onBack && (
           <button
             onClick={onBack}
             aria-label="Back"
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-white/90 backdrop-blur-sm shadow-sm"
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-white/90 shadow-sm backdrop-blur-sm"
           >
             <ChevronLeft className="h-5 w-5 text-[#1A1918]" />
           </button>
@@ -1101,7 +1222,7 @@ export function ShopHero({
             <button
               onClick={onSave}
               aria-label="Save"
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-white/90 backdrop-blur-sm shadow-sm"
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-white/90 shadow-sm backdrop-blur-sm"
             >
               <Bookmark
                 className={`h-4 w-4 ${isSaved ? 'fill-amber-500 text-amber-500' : 'text-[#1A1918]'}`}
@@ -1112,7 +1233,7 @@ export function ShopHero({
             <button
               onClick={onShare}
               aria-label="Share"
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-white/90 backdrop-blur-sm shadow-sm"
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-white/90 shadow-sm backdrop-blur-sm"
             >
               <Share2 className="h-4 w-4 text-[#1A1918]" />
             </button>
@@ -1150,6 +1271,7 @@ git commit -m "feat: add floating overlay buttons to ShopHero"
 ## Task 7: Restyle ShopIdentity — open status, distance, address
 
 **Files:**
+
 - Modify: `components/shops/shop-identity.tsx`
 - Create/Modify: `components/shops/shop-identity.test.tsx`
 
@@ -1167,7 +1289,9 @@ describe('ShopIdentity', () => {
 
   it('shows the shop name', () => {
     render(<ShopIdentity {...base} />);
-    expect(screen.getByRole('heading', { name: /The Brew House/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: /The Brew House/i })
+    ).toBeInTheDocument();
   });
 
   it('shows rating and review count', () => {
@@ -1232,8 +1356,10 @@ export function ShopIdentity({
       <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
         {rating != null && (
           <div className="flex items-center gap-1">
-            <span className="text-[#E06B3F] text-sm">★</span>
-            <span className="text-sm font-medium text-[#1A1918]">{rating.toFixed(1)}</span>
+            <span className="text-sm text-[#E06B3F]">★</span>
+            <span className="text-sm font-medium text-[#1A1918]">
+              {rating.toFixed(1)}
+            </span>
             {reviewCount != null && (
               <span className="text-xs text-[#9E9893]">({reviewCount})</span>
             )}
@@ -1250,14 +1376,10 @@ export function ShopIdentity({
             {openNow ? 'Open' : 'Closed'}
           </span>
         )}
-        {distance && (
-          <span className="text-xs text-[#9E9893]">{distance}</span>
-        )}
+        {distance && <span className="text-xs text-[#9E9893]">{distance}</span>}
       </div>
 
-      {address && (
-        <p className="mt-1 text-xs text-[#9E9893]">{address}</p>
-      )}
+      {address && <p className="mt-1 text-xs text-[#9E9893]">{address}</p>}
     </div>
   );
 }
@@ -1281,6 +1403,7 @@ git commit -m "feat: add open status, distance, address to ShopIdentity"
 ## Task 8: Restyle SaveToListSheet — 3 visual states
 
 **Files:**
+
 - Modify: `components/lists/save-to-list-sheet.tsx`
 - Create/Modify: `components/lists/save-to-list-sheet.test.tsx`
 
@@ -1323,7 +1446,9 @@ describe('SaveToListSheet', () => {
       }),
     }));
     render(<SaveToListSheet {...base} />);
-    expect(screen.getByRole('button', { name: /Create a list/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /Create a list/i })
+    ).toBeInTheDocument();
   });
 });
 ```
@@ -1360,6 +1485,7 @@ git commit -m "feat: restyle SaveToListSheet to match Pencil designs (3 states)"
 ## Task 9: Restyle ShopDescription and AttributeChips — section headers
 
 **Files:**
+
 - Modify: `components/shops/shop-description.tsx`
 - Modify: `components/shops/attribute-chips.tsx`
 
@@ -1383,6 +1509,7 @@ git commit -m "feat: add section headers to ShopDescription and AttributeChips"
 ## Task 10: Restyle ShopReviews — section header + See All link
 
 **Files:**
+
 - Modify: `components/shops/shop-reviews.tsx`
 - Modify: `components/shops/shop-reviews.test.tsx` (add one test)
 
@@ -1392,12 +1519,21 @@ git commit -m "feat: add section headers to ShopDescription and AttributeChips"
 // Add to existing shop-reviews.test.tsx
 it('shows a "See all" link when there are more reviews than displayed', () => {
   const manyReviews = Array.from({ length: 4 }, (_, i) => ({
-    id: `r${i}`, stars: 4, reviewText: `Review ${i}`, reviewedAt: '2026-01-01',
+    id: `r${i}`,
+    stars: 4,
+    reviewText: `Review ${i}`,
+    reviewedAt: '2026-01-01',
     displayName: `User ${i}`,
   }));
   render(
-    <ShopReviews reviews={manyReviews} total={12} averageRating={4.2}
-      isLoading={false} isAuthError={false} shopId="shop-1" />
+    <ShopReviews
+      reviews={manyReviews}
+      total={12}
+      averageRating={4.2}
+      isLoading={false}
+      isAuthError={false}
+      shopId="shop-1"
+    />
   );
   expect(screen.getByRole('link', { name: /See all/i })).toBeInTheDocument();
 });
@@ -1412,15 +1548,18 @@ pnpm test components/shops/shop-reviews.test.tsx
 **Step 3: Add `shopId` prop + See All link**
 
 Add `shopId: string` to `ShopReviewsProps`. Add at the bottom of the reviews section:
+
 ```tsx
-{total > reviews.length && (
-  <Link
-    href={`/shops/${shopId}/reviews`}
-    className="mt-3 block text-sm font-medium text-[#2D5A27]"
-  >
-    See all {total} reviews →
-  </Link>
-)}
+{
+  total > reviews.length && (
+    <Link
+      href={`/shops/${shopId}/reviews`}
+      className="mt-3 block text-sm font-medium text-[#2D5A27]"
+    >
+      See all {total} reviews →
+    </Link>
+  );
+}
 ```
 
 Also update the section header from `打卡評價` to include star average inline per Pencil design.
@@ -1443,11 +1582,13 @@ git commit -m "feat: add See All link to ShopReviews"
 ## Task 11: Restyle DirectionsSheet — visual polish
 
 **Files:**
+
 - Modify: `components/shops/directions-sheet.tsx`
 
 **No test changes needed** — only CSS/layout changes. The logic (routing, abort controller, MRT utility) is unchanged. Existing tests will continue to pass.
 
 **Changes to match Pencil frame `ENKsc`:**
+
 - Sheet handle + header: "Directions" title + `×` close button
 - Walk/drive/MRT rows: icon left + label + estimate right, separated by `border-b border-[#E5E4E1]`
 - Map thumbnail: full-width at top inside sheet (`rounded-none` or integrated flush)
@@ -1467,6 +1608,7 @@ git commit -m "feat: restyle DirectionsSheet to match Pencil design"
 **Depends on:** Tasks 2, 3, 4, 5 (all overlay components must exist)
 
 **Files:**
+
 - Create: `components/shops/shop-actions-row.tsx`
 - Create: `components/shops/shop-actions-row.test.tsx`
 
@@ -1502,7 +1644,13 @@ vi.mock('./check-in-popover', () => ({
     open ? <div data-testid="check-in-popover">CheckInPopover</div> : null,
 }));
 vi.mock('@/lib/supabase/client', () => ({
-  createClient: () => ({ auth: { getSession: vi.fn().mockResolvedValue({ data: { session: { user: {} } } }) } }),
+  createClient: () => ({
+    auth: {
+      getSession: vi
+        .fn()
+        .mockResolvedValue({ data: { session: { user: {} } } }),
+    },
+  }),
 }));
 
 const defaultProps = {
@@ -1514,7 +1662,9 @@ const defaultProps = {
 describe('ShopActionsRow — mobile', () => {
   it('renders the Check In primary button', () => {
     render(<ShopActionsRow {...defaultProps} />);
-    expect(screen.getByRole('button', { name: /Check In/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /Check In/i })
+    ).toBeInTheDocument();
   });
 
   it('opens CheckInSheet (not popover) on mobile when Check In is tapped', async () => {
@@ -1696,6 +1846,7 @@ git commit -m "feat: add ShopActionsRow — wires Check In / Save / Share for mo
 **Depends on:** All Tasks 1–12
 
 **Files:**
+
 - Modify: `app/shops/[shopId]/[slug]/shop-detail-client.tsx`
 - Modify: `app/shops/[shopId]/[slug]/shop-detail-client.test.tsx`
 - Modify: `SPEC.md` (§9 check-in page rule)
@@ -1703,6 +1854,7 @@ git commit -m "feat: add ShopActionsRow — wires Check In / Save / Share for mo
 **Step 1: Update the test**
 
 In `shop-detail-client.test.tsx`, replace:
+
 - Any `StickyCheckinBar` assertions with `ShopActionsRow`
 - Add assertion: `ClaimBanner` is present
 - Add assertion: `ShopHero` back/save/share callbacks are wired
@@ -1723,6 +1875,7 @@ pnpm test app/shops/\\[shopId\\]/\\[slug\\]/shop-detail-client.test.tsx
 **Step 3: Rewrite ShopDetailClient layout**
 
 Key changes:
+
 1. Remove `StickyCheckinBar`, `BookmarkButton` imports
 2. Add imports: `ShopActionsRow`, `ClaimBanner`
 3. Add state: `const [directionsOpen, setDirectionsOpen] = useState(false)`
@@ -1795,9 +1948,10 @@ pnpm test app/shops/\\[shopId\\]/\\[slug\\]/shop-detail-client.test.tsx
 
 **Step 5: Update SPEC.md §9**
 
-Find the paragraph: *"Check-in page is standalone: The check-in flow lives at `/checkin/[shopId]`..."*
+Find the paragraph: _"Check-in page is standalone: The check-in flow lives at `/checkin/[shopId]`..."_
 
 Replace with:
+
 ```
 Check-in entry point: The check-in flow is triggered from the Shop View — a bottom sheet on mobile,
 a popover on desktop. The standalone `/checkin/[shopId]` page is kept as a deep-link fallback (e.g.
@@ -1821,6 +1975,7 @@ git commit -m "feat: integrate Shop View reconstruct in ShopDetailClient; update
 **Depends on:** Task 13
 
 **Files:**
+
 - Delete: `components/shops/sticky-checkin-bar.tsx`
 - Delete: `components/shops/sticky-checkin-bar.test.tsx` (if exists)
 - Delete: `components/shops/bookmark-button.tsx`
@@ -1832,6 +1987,7 @@ git commit -m "feat: integrate Shop View reconstruct in ShopDetailClient; update
 grep -r "StickyCheckinBar\|sticky-checkin-bar\|BookmarkButton\|bookmark-button" \
   --include="*.tsx" --include="*.ts" .
 ```
+
 Expected: zero results (only the files being deleted themselves).
 
 **Step 2: Delete the files**
@@ -1906,6 +2062,7 @@ graph TD
 ```
 
 **Wave 1** (all parallel — no dependencies):
+
 - Task 1: ClaimBanner
 - Task 2: CheckInSheet
 - Task 3: CheckInPopover
@@ -1919,10 +2076,13 @@ graph TD
 - Task 11: DirectionsSheet restyle
 
 **Wave 2** (depends on T2, T3, T4, T5, T8):
+
 - Task 12: ShopActionsRow
 
 **Wave 3** (depends on all Wave 1 + T12):
+
 - Task 13: ShopDetailClient integration + SPEC update
 
 **Wave 4** (depends on T13):
+
 - Task 14: Delete deprecated components + full verification

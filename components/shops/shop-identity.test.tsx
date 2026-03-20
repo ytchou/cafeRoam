@@ -6,7 +6,9 @@ describe('ShopIdentity', () => {
 
   it('shows the shop name', () => {
     render(<ShopIdentity {...base} />);
-    expect(screen.getByRole('heading', { name: /The Brew House/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: /The Brew House/i })
+    ).toBeInTheDocument();
   });
 
   it('shows rating and review count', () => {

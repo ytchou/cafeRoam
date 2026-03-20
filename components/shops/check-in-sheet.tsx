@@ -60,10 +60,12 @@ export function CheckInSheet({
   return (
     <Drawer open={open} onOpenChange={handleClose}>
       <DrawerContent>
-        <DrawerHeader className="flex items-center justify-between px-4 py-3 border-b border-[#E5E4E1]">
+        <DrawerHeader className="flex items-center justify-between border-b border-[#E5E4E1] px-4 py-3">
           <div>
-            <DrawerTitle className="text-base font-semibold">Check In 打卡</DrawerTitle>
-            <p className="text-xs text-[#9E9893] mt-0.5">{shopName}</p>
+            <DrawerTitle className="text-base font-semibold">
+              Check In 打卡
+            </DrawerTitle>
+            <p className="mt-0.5 text-xs text-[#9E9893]">{shopName}</p>
           </div>
           <button
             onClick={() => handleClose(false)}
@@ -74,9 +76,12 @@ export function CheckInSheet({
           </button>
         </DrawerHeader>
 
-        <div className="px-4 py-4 space-y-4 overflow-y-auto max-h-[70vh]">
+        <div className="max-h-[70vh] space-y-4 overflow-y-auto px-4 py-4">
           {error && (
-            <div role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+            <div
+              role="alert"
+              className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700"
+            >
               {error}
             </div>
           )}
@@ -96,7 +101,10 @@ export function CheckInSheet({
 
           <div>
             <label className="text-sm font-medium text-[#3B2F2A]">
-              Rating <span className="text-xs text-[#9E9893] font-normal">optional</span>
+              Rating{' '}
+              <span className="text-xs font-normal text-[#9E9893]">
+                optional
+              </span>
             </label>
             <div className="mt-2">
               <StarRating value={rating} onChange={setRating} />
@@ -105,20 +113,26 @@ export function CheckInSheet({
 
           <div>
             <label className="text-sm font-medium text-[#3B2F2A]">
-              Review <span className="text-xs text-[#9E9893] font-normal">optional</span>
+              Review{' '}
+              <span className="text-xs font-normal text-[#9E9893]">
+                optional
+              </span>
             </label>
             <textarea
               value={reviewText}
               onChange={(e) => setReviewText(e.target.value)}
               placeholder="Share your experience here..."
               rows={3}
-              className="mt-2 w-full rounded-lg bg-[#F5F4F2] px-3 py-2 text-sm placeholder:text-[#C4C0BB] focus:outline-none resize-none"
+              className="mt-2 w-full resize-none rounded-lg bg-[#F5F4F2] px-3 py-2 text-sm placeholder:text-[#C4C0BB] focus:outline-none"
             />
           </div>
 
           <div>
             <label className="text-sm font-medium text-[#3B2F2A]">
-              How do you feel? <span className="text-xs text-[#9E9893] font-normal">optional</span>
+              How do you feel?{' '}
+              <span className="text-xs font-normal text-[#9E9893]">
+                optional
+              </span>
             </label>
             <input
               type="text"
@@ -130,12 +144,12 @@ export function CheckInSheet({
           </div>
         </div>
 
-        <div className="px-4 py-4 border-t border-[#E5E4E1]">
+        <div className="border-t border-[#E5E4E1] px-4 py-4">
           <button
             onClick={handleSubmit}
             disabled={!canSubmit}
             aria-label="Check In 打卡"
-            className="w-full rounded-full bg-[#2D5A27] py-3.5 text-sm font-semibold text-white disabled:opacity-40 flex items-center justify-center gap-2"
+            className="flex w-full items-center justify-center gap-2 rounded-full bg-[#2D5A27] py-3.5 text-sm font-semibold text-white disabled:opacity-40"
           >
             {busy ? 'Checking in...' : 'Check In 打卡'}
           </button>

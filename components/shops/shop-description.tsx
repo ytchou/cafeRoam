@@ -12,7 +12,7 @@ export function ShopDescription({ text }: ShopDescriptionProps) {
 
   return (
     <div className="px-5 py-4">
-      <h2 className="text-sm font-semibold text-[#1A1918] mb-2">About</h2>
+      <h2 className="mb-2 text-sm font-semibold text-[#1A1918]">About</h2>
       <p className={`text-sm text-[#3B2F2A] ${expanded ? '' : 'line-clamp-2'}`}>
         {text}
       </p>

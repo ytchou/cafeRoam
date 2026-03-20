@@ -27,6 +27,7 @@ Keep all existing component files and restyle in-place. Add new files only where
 ### Layout
 
 **Mobile (< 1024px):**
+
 ```
 ShopHero (full-width, aspect-video)
   └── floating overlay: back button + bookmark icon + share icon
@@ -40,6 +41,7 @@ ClaimBanner
 ```
 
 **Desktop (≥ 1024px):**
+
 ```
 TopNav (existing HeaderNav)
 Breadcrumb strip (Find → Shop Name)
@@ -60,41 +62,42 @@ No sticky sidebar map on desktop — the Pencil design uses a single left-column
 
 ### Modified in-place
 
-| Component | File | Changes |
-|---|---|---|
-| `ShopHero` | `components/shops/shop-hero.tsx` | Add floating back / bookmark / share button overlay |
-| `ShopIdentity` | `components/shops/shop-identity.tsx` | Add open-status badge, distance pill, address line |
-| `ShopDescription` | `components/shops/shop-description.tsx` | Section header "About"; restyle |
-| `AttributeChips` | `components/shops/attribute-chips.tsx` | Section header "Tags"; restyle |
-| `DirectionsSheet` | `components/shops/directions-sheet.tsx` | Visual polish to match frame `ENKsc`; logic unchanged |
+| Component         | File                                      | Changes                                                                                         |
+| ----------------- | ----------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `ShopHero`        | `components/shops/shop-hero.tsx`          | Add floating back / bookmark / share button overlay                                             |
+| `ShopIdentity`    | `components/shops/shop-identity.tsx`      | Add open-status badge, distance pill, address line                                              |
+| `ShopDescription` | `components/shops/shop-description.tsx`   | Section header "About"; restyle                                                                 |
+| `AttributeChips`  | `components/shops/attribute-chips.tsx`    | Section header "Tags"; restyle                                                                  |
+| `DirectionsSheet` | `components/shops/directions-sheet.tsx`   | Visual polish to match frame `ENKsc`; logic unchanged                                           |
 | `SaveToListSheet` | `components/lists/save-to-list-sheet.tsx` | Restyle 3 states (has lists / no lists / cap reached) to match frames `y52Ff`, `udpQf`, `rgu49` |
-| `ShopReviews` | `components/shops/shop-reviews.tsx` | Minor restyle; add "See all" link |
+| `ShopReviews`     | `components/shops/shop-reviews.tsx`       | Minor restyle; add "See all" link                                                               |
 
 ### New components
 
-| Component | File | Description |
-|---|---|---|
-| `ShopActionsRow` | `components/shops/shop-actions-row.tsx` | Check In (primary button) + Save (icon) + Share (icon). On mobile triggers `CheckInSheet`; on desktop triggers `CheckInPopover`. Absorbs `BookmarkButton` and `StickyCheckinBar` responsibilities. |
-| `CheckInSheet` | `components/shops/check-in-sheet.tsx` | Vaul drawer (mobile) / Dialog (desktop). Simplified form: photo upload (required), star rating (optional), review text (optional), mood prompt (optional). No taxonomy tag confirmation — that remains on the full `/checkin/[shopId]` page. On successful submit, shows stamp toast. |
-| `ClaimBanner` | `components/shops/claim-banner.tsx` | Footer strip: "Is this your café? Claim this page →" |
-| `SavePopover` | `components/shops/save-popover.tsx` | Desktop-only 320px popover anchored to Save button. Same list logic as `SaveToListSheet`. |
-| `SharePopover` | `components/shops/share-popover.tsx` | Desktop-only 320px popover anchored to Share button. URL copy field + platform icon row (Threads, LINE, WhatsApp, Mail, More). Replaces `ShareButton` on desktop. |
-| `CheckInPopover` | `components/shops/check-in-popover.tsx` | Desktop-only 320px popover anchored to Check In button. Wraps `CheckInSheet` form content. |
+| Component        | File                                    | Description                                                                                                                                                                                                                                                                           |
+| ---------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ShopActionsRow` | `components/shops/shop-actions-row.tsx` | Check In (primary button) + Save (icon) + Share (icon). On mobile triggers `CheckInSheet`; on desktop triggers `CheckInPopover`. Absorbs `BookmarkButton` and `StickyCheckinBar` responsibilities.                                                                                    |
+| `CheckInSheet`   | `components/shops/check-in-sheet.tsx`   | Vaul drawer (mobile) / Dialog (desktop). Simplified form: photo upload (required), star rating (optional), review text (optional), mood prompt (optional). No taxonomy tag confirmation — that remains on the full `/checkin/[shopId]` page. On successful submit, shows stamp toast. |
+| `ClaimBanner`    | `components/shops/claim-banner.tsx`     | Footer strip: "Is this your café? Claim this page →"                                                                                                                                                                                                                                  |
+| `SavePopover`    | `components/shops/save-popover.tsx`     | Desktop-only 320px popover anchored to Save button. Same list logic as `SaveToListSheet`.                                                                                                                                                                                             |
+| `SharePopover`   | `components/shops/share-popover.tsx`    | Desktop-only 320px popover anchored to Share button. URL copy field + platform icon row (Threads, LINE, WhatsApp, Mail, More). Replaces `ShareButton` on desktop.                                                                                                                     |
+| `CheckInPopover` | `components/shops/check-in-popover.tsx` | Desktop-only 320px popover anchored to Check In button. Wraps `CheckInSheet` form content.                                                                                                                                                                                            |
 
 ### Deleted
 
-| Component | Reason |
-|---|---|
-| `StickyCheckinBar` | Replaced by `ShopActionsRow` |
-| `BookmarkButton` | Absorbed into `ShopActionsRow` and hero overlay |
+| Component          | Reason                                          |
+| ------------------ | ----------------------------------------------- |
+| `StickyCheckinBar` | Replaced by `ShopActionsRow`                    |
+| `BookmarkButton`   | Absorbed into `ShopActionsRow` and hero overlay |
 
 ### ShopDetailClient wiring
 
 `ShopDetailClient` gains local state:
+
 ```typescript
-const [checkInOpen, setCheckInOpen] = useState(false)
-const [saveOpen, setSaveOpen] = useState(false)
-const [shareOpen, setShareOpen] = useState(false)
+const [checkInOpen, setCheckInOpen] = useState(false);
+const [saveOpen, setSaveOpen] = useState(false);
+const [shareOpen, setShareOpen] = useState(false);
 ```
 
 `useIsDesktop()` hook controls which variant renders — sheets on mobile, popovers on desktop.
@@ -122,6 +125,7 @@ No new API routes. All new components reuse existing integrations:
 ## Testing Strategy
 
 **New unit tests:**
+
 - `CheckInSheet`: photo-required validation blocks submit; successful submit calls `/api/checkins`; error state renders inline error
 - `ShopActionsRow`: renders correct variant on mobile vs desktop; Check In opens correct sheet/popover
 - `SavePopover`: opens on click; list rows render; save action calls `saveShop()`
@@ -129,9 +133,11 @@ No new API routes. All new components reuse existing integrations:
 - `CheckInPopover`: renders photo upload zone; submit button disabled without photo
 
 **Updated tests:**
+
 - `ShopDetailClient`: replace `StickyCheckinBar` assertions with `ShopActionsRow`; add assertions for new sections (ClaimBanner)
 - `SaveToListSheet`: update to cover all 3 visual states (has lists / no lists / cap reached)
 
 **No change needed:**
+
 - `DirectionsSheet` tests (logic unchanged)
 - `ShopHero`, `ShopIdentity` etc. (render tests need minor selector updates only)

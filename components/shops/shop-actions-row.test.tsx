@@ -55,7 +55,9 @@ describe('ShopActionsRow — mobile', () => {
   it('renders the Check In primary button', async () => {
     render(<ShopActionsRow {...defaultProps} />);
     await act(async () => {}); // flush useUser's getUser promise
-    expect(screen.getByRole('button', { name: /Check In 打卡/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /Check In 打卡/i })
+    ).toBeInTheDocument();
   });
 
   it('opens CheckInSheet (not popover) on mobile when Check In is tapped', async () => {

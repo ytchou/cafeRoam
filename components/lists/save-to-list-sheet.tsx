@@ -60,7 +60,7 @@ export function SaveToListSheet({
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent>
-        <DrawerHeader className="flex items-center justify-between px-4 py-4 border-b border-[#E5E4E1]">
+        <DrawerHeader className="flex items-center justify-between border-b border-[#E5E4E1] px-4 py-4">
           <DrawerTitle className="text-base font-semibold text-[#1A1918]">
             Save to List 收藏
           </DrawerTitle>
@@ -75,10 +75,14 @@ export function SaveToListSheet({
 
         <div className="py-2">
           {lists.length === 0 && (
-            <div className="flex flex-col items-center py-10 px-4 text-center">
-              <div className="h-10 w-10 rounded-full bg-[#E8E6E2] mb-3" />
-              <p className="text-sm font-semibold text-[#1A1918] mb-1">No lists yet</p>
-              <p className="text-xs text-[#9E9893] mb-4">Create a list to start saving cafés</p>
+            <div className="flex flex-col items-center px-4 py-10 text-center">
+              <div className="mb-3 h-10 w-10 rounded-full bg-[#E8E6E2]" />
+              <p className="mb-1 text-sm font-semibold text-[#1A1918]">
+                No lists yet
+              </p>
+              <p className="mb-4 text-xs text-[#9E9893]">
+                Create a list to start saving cafés
+              </p>
               <button
                 onClick={() => setNewListName(' ')}
                 className="flex items-center gap-2 rounded-full bg-[#2D5A27] px-5 py-2.5 text-sm font-semibold text-white"
@@ -92,12 +96,16 @@ export function SaveToListSheet({
           {lists.map((list) => (
             <label
               key={list.id}
-              className="flex items-center gap-3 px-4 py-3 hover:bg-[#F5F4F2] cursor-pointer"
+              className="flex cursor-pointer items-center gap-3 px-4 py-3 hover:bg-[#F5F4F2]"
             >
-              <div className="h-10 w-10 rounded-lg bg-[#E8E6E2] flex-shrink-0" />
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-[#1A1918] truncate">{list.name}</p>
-                <p className="text-xs text-[#9E9893]">{list.items.length} spots</p>
+              <div className="h-10 w-10 flex-shrink-0 rounded-lg bg-[#E8E6E2]" />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium text-[#1A1918]">
+                  {list.name}
+                </p>
+                <p className="text-xs text-[#9E9893]">
+                  {list.items.length} spots
+                </p>
               </div>
               <input
                 type="checkbox"
@@ -112,7 +120,7 @@ export function SaveToListSheet({
           {lists.length > 0 && lists.length < 3 && (
             <button
               onClick={() => setNewListName(' ')}
-              className="flex items-center gap-2 px-4 py-3 w-full text-sm text-[#6B6560] hover:bg-[#F5F4F2]"
+              className="flex w-full items-center gap-2 px-4 py-3 text-sm text-[#6B6560] hover:bg-[#F5F4F2]"
             >
               <Plus className="h-4 w-4" />
               Create new list
@@ -127,7 +135,7 @@ export function SaveToListSheet({
         </div>
 
         {newListName !== '' && (
-          <div className="px-4 py-3 border-t border-[#E5E4E1]">
+          <div className="border-t border-[#E5E4E1] px-4 py-3">
             <input
               type="text"
               placeholder="Create new list"
@@ -150,7 +158,7 @@ export function SaveToListSheet({
           </div>
         )}
 
-        <div className="px-4 py-4 border-t border-[#E5E4E1]">
+        <div className="border-t border-[#E5E4E1] px-4 py-4">
           <button
             onClick={() => onOpenChange(false)}
             className="w-full rounded-full bg-[#2D5A27] py-3 text-sm font-semibold text-white"

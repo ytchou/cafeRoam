@@ -112,8 +112,10 @@ describe('DirectionsSheet', () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText((_, el) =>
-          el?.tagName === 'P' && /[A-Za-z]+ \([^\)]+\)/.test(el.textContent ?? '')
+        screen.getByText(
+          (_, el) =>
+            el?.tagName === 'P' &&
+            /[A-Za-z]+ \([^\)]+\)/.test(el.textContent ?? '')
         )
       ).toBeInTheDocument();
     });
@@ -136,8 +138,10 @@ describe('DirectionsSheet', () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText((_, el) =>
-          el?.tagName === 'P' && /[A-Za-z]+ \([^\)]+\)/.test(el.textContent ?? '')
+        screen.getByText(
+          (_, el) =>
+            el?.tagName === 'P' &&
+            /[A-Za-z]+ \([^\)]+\)/.test(el.textContent ?? '')
         )
       ).toBeInTheDocument();
     });

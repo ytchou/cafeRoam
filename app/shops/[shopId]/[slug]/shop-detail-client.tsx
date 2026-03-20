@@ -123,9 +123,7 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
 
       {shop.description && <ShopDescription text={shop.description} />}
       {tags.length > 0 && <AttributeChips tags={tags as TaxonomyTag[]} />}
-      {shop.menuHighlights && (
-        <MenuHighlights items={shop.menuHighlights} />
-      )}
+      {shop.menuHighlights && <MenuHighlights items={shop.menuHighlights} />}
 
       <div className="mx-5 border-t border-[#E5E4E1]" />
 

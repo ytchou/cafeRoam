@@ -121,7 +121,9 @@ describe('ShopReviews', () => {
         averageRating: 4.2,
         shopId: 'shop-123',
       });
-      expect(screen.getByRole('link', { name: /See all/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole('link', { name: /See all/i })
+      ).toBeInTheDocument();
     });
   });
 });

@@ -31,7 +31,11 @@ vi.mock('@/components/shops/claim-banner', () => ({
   ClaimBanner: () => null,
 }));
 vi.mock('@/lib/hooks/use-geolocation', () => ({
-  useGeolocation: () => ({ latitude: null, longitude: null, requestLocation: vi.fn() }),
+  useGeolocation: () => ({
+    latitude: null,
+    longitude: null,
+    requestLocation: vi.fn(),
+  }),
 }));
 vi.mock('@/lib/hooks/use-user-lists', () => ({
   useUserLists: () => ({ isSaved: () => false }),

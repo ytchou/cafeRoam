@@ -252,7 +252,7 @@ export function DirectionsSheet({
         <Drawer.Overlay className="fixed inset-0 bg-black/40" />
         <Drawer.Content className="fixed right-0 bottom-0 left-0 flex max-h-[85vh] flex-col rounded-t-[10px] bg-white">
           <Drawer.Handle />
-          <div className="flex items-center justify-between px-5 pt-2 pb-3 border-b border-[#E5E4E1]">
+          <div className="flex items-center justify-between border-b border-[#E5E4E1] px-5 pt-2 pb-3">
             <Drawer.Title className="text-base font-semibold text-[#1A1918]">
               Directions
             </Drawer.Title>
@@ -278,7 +278,9 @@ export function DirectionsSheet({
                   <WalkIcon />
                 </span>
                 <span className="flex-1 text-sm text-[#1A1918]">Walking</span>
-                <span className="text-sm font-medium text-[#1A1918]">~{walkRoute.durationMin} min</span>
+                <span className="text-sm font-medium text-[#1A1918]">
+                  ~{walkRoute.durationMin} min
+                </span>
               </div>
             )}
 
@@ -288,7 +290,9 @@ export function DirectionsSheet({
                   <CarIcon />
                 </span>
                 <span className="flex-1 text-sm text-[#1A1918]">Driving</span>
-                <span className="text-sm font-medium text-[#1A1918]">~{driveRoute.durationMin} min</span>
+                <span className="text-sm font-medium text-[#1A1918]">
+                  ~{driveRoute.durationMin} min
+                </span>
               </div>
             )}
 
@@ -297,10 +301,13 @@ export function DirectionsSheet({
                 <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#F5F4F1]">
                   <TrainIcon />
                 </span>
-                <div className="flex-1 min-w-0">
+                <div className="min-w-0 flex-1">
                   <p className="text-sm text-[#1A1918]">
                     {mrtStation.name_en}
-                    <span className="text-[#9E9893]"> ({mrtStation.name_zh})</span>
+                    <span className="text-[#9E9893]">
+                      {' '}
+                      ({mrtStation.name_zh})
+                    </span>
                   </p>
                   <p className="text-xs text-[#9E9893]">{mrtStation.line}</p>
                 </div>
@@ -355,7 +362,16 @@ export function DirectionsSheet({
 
 function WalkIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <circle cx="12" cy="5" r="2" />
       <path d="M10 22V18l-2-4 4-3 2 3v9" />
       <path d="M10 14l-2 2" />
@@ -366,7 +382,16 @@ function WalkIcon() {
 
 function CarIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9L18 10l-2.7-3.6A1.5 1.5 0 0 0 14.1 6H9.9a1.5 1.5 0 0 0-1.2.6L6 10l-2.5 1.1C2.7 11.3 2 12.7 2 13v3c0 .6.4 1 1 1h2" />
       <circle cx="7" cy="17" r="2" />
       <circle cx="17" cy="17" r="2" />
@@ -376,7 +401,16 @@ function CarIcon() {
 
 function TrainIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <rect x="4" y="3" width="16" height="16" rx="2" />
       <path d="M4 11h16" />
       <path d="M12 3v8" />

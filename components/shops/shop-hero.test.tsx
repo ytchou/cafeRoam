@@ -17,7 +17,9 @@ describe('ShopHero', () => {
 
   it('renders the hero image', () => {
     render(<ShopHero {...baseProps} />);
-    expect(screen.getByRole('img', { name: /The Brew House/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('img', { name: /The Brew House/i })
+    ).toBeInTheDocument();
   });
 
   it('calls onBack when back button is tapped', () => {

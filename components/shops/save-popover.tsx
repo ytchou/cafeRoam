@@ -17,7 +17,12 @@ interface SavePopoverProps {
   trigger: React.ReactNode;
 }
 
-export function SavePopover({ shopId, open, onOpenChange, trigger }: SavePopoverProps) {
+export function SavePopover({
+  shopId,
+  open,
+  onOpenChange,
+  trigger,
+}: SavePopoverProps) {
   const { lists, isInList, saveShop, removeShop, createList } = useUserLists();
   const [newListName, setNewListName] = useState('');
   const [showNewListInput, setShowNewListInput] = useState(false);
@@ -52,7 +57,9 @@ export function SavePopover({ shopId, open, onOpenChange, trigger }: SavePopover
       setShowNewListInput(false);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to create list';
-      toast.error(msg.includes('Maximum') ? "You've reached the 3-list limit" : msg);
+      toast.error(
+        msg.includes('Maximum') ? "You've reached the 3-list limit" : msg
+      );
     } finally {
       setCreating(false);
     }
@@ -61,12 +68,15 @@ export function SavePopover({ shopId, open, onOpenChange, trigger }: SavePopover
   return (
     <Popover open={open} onOpenChange={handleClose}>
       <PopoverTrigger asChild>{trigger}</PopoverTrigger>
-      <PopoverContent className="w-80 p-0 rounded-2xl overflow-hidden shadow-xl" align="start">
-        <div className="flex items-center justify-between px-4 py-4 border-b border-[#E5E4E1]">
+      <PopoverContent
+        className="w-80 overflow-hidden rounded-2xl p-0 shadow-xl"
+        align="start"
+      >
+        <div className="flex items-center justify-between border-b border-[#E5E4E1] px-4 py-4">
           <h3 className="text-sm font-semibold text-[#3B2F2A]">Save to List</h3>
           <button
             onClick={() => handleClose(false)}
-            className="text-[#9E9893] hover:text-[#3B2F2A] text-xs"
+            className="text-xs text-[#9E9893] hover:text-[#3B2F2A]"
             aria-label="Close"
           >
             ✕
@@ -75,20 +85,26 @@ export function SavePopover({ shopId, open, onOpenChange, trigger }: SavePopover
 
         <div className="py-2">
           {lists.length === 0 && (
-            <div className="flex flex-col items-center py-8 px-4 text-center">
+            <div className="flex flex-col items-center px-4 py-8 text-center">
               <p className="text-sm font-medium text-[#3B2F2A]">No lists yet</p>
-              <p className="text-xs text-[#9E9893] mt-1">Create a list to start saving</p>
+              <p className="mt-1 text-xs text-[#9E9893]">
+                Create a list to start saving
+              </p>
             </div>
           )}
           {lists.map((list) => (
             <label
               key={list.id}
-              className="flex items-center gap-3 px-4 py-3 hover:bg-[#F5F4F2] cursor-pointer"
+              className="flex cursor-pointer items-center gap-3 px-4 py-3 hover:bg-[#F5F4F2]"
             >
-              <div className="h-10 w-10 rounded-lg bg-[#E8E6E2] flex-shrink-0" />
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-[#3B2F2A] truncate">{list.name}</p>
-                <p className="text-xs text-[#9E9893]">{list.items.length} spots</p>
+              <div className="h-10 w-10 flex-shrink-0 rounded-lg bg-[#E8E6E2]" />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium text-[#3B2F2A]">
+                  {list.name}
+                </p>
+                <p className="text-xs text-[#9E9893]">
+                  {list.items.length} spots
+                </p>
               </div>
               <input
                 type="checkbox"
@@ -102,21 +118,21 @@ export function SavePopover({ shopId, open, onOpenChange, trigger }: SavePopover
           {lists.length < 3 && (
             <button
               onClick={() => setShowNewListInput(true)}
-              className="flex items-center gap-2 px-4 py-3 w-full text-sm text-[#6B6560] hover:bg-[#F5F4F2]"
+              className="flex w-full items-center gap-2 px-4 py-3 text-sm text-[#6B6560] hover:bg-[#F5F4F2]"
             >
               <Plus className="h-4 w-4" />
               Create new list
             </button>
           )}
           {lists.length === 3 && (
-            <p className="px-4 py-2 text-xs text-amber-700 bg-amber-50 mx-4 mb-2 rounded-lg">
+            <p className="mx-4 mb-2 rounded-lg bg-amber-50 px-4 py-2 text-xs text-amber-700">
               You&apos;ve reached the 3-list limit
             </p>
           )}
         </div>
 
         {showNewListInput && (
-          <div className="px-4 py-3 border-t border-[#E5E4E1]">
+          <div className="border-t border-[#E5E4E1] px-4 py-3">
             <input
               type="text"
               value={newListName}
@@ -130,7 +146,7 @@ export function SavePopover({ shopId, open, onOpenChange, trigger }: SavePopover
           </div>
         )}
 
-        <div className="px-4 py-3 border-t border-[#E5E4E1]">
+        <div className="border-t border-[#E5E4E1] px-4 py-3">
           <button
             onClick={() => handleClose(false)}
             className="w-full rounded-full bg-[#2D5A27] py-2.5 text-sm font-semibold text-white"

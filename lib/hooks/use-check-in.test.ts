@@ -24,7 +24,9 @@ describe('useCheckIn', () => {
   });
 
   it('given a photo, when submit succeeds, returns true and clears error', async () => {
-    vi.mocked(uploadCheckInPhoto).mockResolvedValue('https://cdn.caferoam.tw/photo1.jpg');
+    vi.mocked(uploadCheckInPhoto).mockResolvedValue(
+      'https://cdn.caferoam.tw/photo1.jpg'
+    );
     (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({ ok: true });
 
     const { result } = renderHook(() => useCheckIn(SHOP_ID));
@@ -47,7 +49,12 @@ describe('useCheckIn', () => {
     const { result } = renderHook(() => useCheckIn(SHOP_ID));
     let success!: boolean;
     await act(async () => {
-      success = await result.current.submit({ photos: [], rating: 0, reviewText: '', mood: '' });
+      success = await result.current.submit({
+        photos: [],
+        rating: 0,
+        reviewText: '',
+        mood: '',
+      });
     });
 
     expect(success).toBe(false);
@@ -55,13 +62,20 @@ describe('useCheckIn', () => {
   });
 
   it('when the API returns a non-ok response, sets error and returns false', async () => {
-    vi.mocked(uploadCheckInPhoto).mockResolvedValue('https://cdn.caferoam.tw/photo1.jpg');
+    vi.mocked(uploadCheckInPhoto).mockResolvedValue(
+      'https://cdn.caferoam.tw/photo1.jpg'
+    );
     (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({ ok: false });
 
     const { result } = renderHook(() => useCheckIn(SHOP_ID));
     let success!: boolean;
     await act(async () => {
-      success = await result.current.submit({ photos: [PHOTO], rating: 0, reviewText: '', mood: '' });
+      success = await result.current.submit({
+        photos: [PHOTO],
+        rating: 0,
+        reviewText: '',
+        mood: '',
+      });
     });
 
     expect(success).toBe(false);

@@ -4,14 +4,20 @@ import { CheckInSheet } from './check-in-sheet';
 
 vi.mock('@/components/checkins/photo-uploader', () => ({
   PhotoUploader: ({ onChange }: { onChange: (files: File[]) => void }) => (
-    <button onClick={() => onChange([new File([''], 'photo.jpg', { type: 'image/jpeg' })])}>
+    <button
+      onClick={() =>
+        onChange([new File([''], 'photo.jpg', { type: 'image/jpeg' })])
+      }
+    >
       Add Photo
     </button>
   ),
 }));
 
 vi.mock('@/lib/supabase/storage', () => ({
-  uploadCheckInPhoto: vi.fn().mockResolvedValue('https://example.com/photo.jpg'),
+  uploadCheckInPhoto: vi
+    .fn()
+    .mockResolvedValue('https://example.com/photo.jpg'),
 }));
 
 global.fetch = vi.fn();
@@ -40,7 +46,9 @@ describe('CheckInSheet', () => {
     render(<CheckInSheet {...defaultProps} />);
     fireEvent.click(screen.getByText('Add Photo'));
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /Check In/i })).not.toBeDisabled();
+      expect(
+        screen.getByRole('button', { name: /Check In/i })
+      ).not.toBeDisabled();
     });
   });
 
@@ -51,9 +59,14 @@ describe('CheckInSheet', () => {
     });
     render(<CheckInSheet {...defaultProps} />);
     fireEvent.click(screen.getByText('Add Photo'));
-    await waitFor(() => fireEvent.click(screen.getByRole('button', { name: /Check In/i })));
+    await waitFor(() =>
+      fireEvent.click(screen.getByRole('button', { name: /Check In/i }))
+    );
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith('/api/checkins', expect.objectContaining({ method: 'POST' }));
+      expect(global.fetch).toHaveBeenCalledWith(
+        '/api/checkins',
+        expect.objectContaining({ method: 'POST' })
+      );
       expect(defaultProps.onSuccess).toHaveBeenCalled();
     });
   });
@@ -65,7 +78,9 @@ describe('CheckInSheet', () => {
     });
     render(<CheckInSheet {...defaultProps} />);
     fireEvent.click(screen.getByText('Add Photo'));
-    await waitFor(() => fireEvent.click(screen.getByRole('button', { name: /Check In/i })));
+    await waitFor(() =>
+      fireEvent.click(screen.getByRole('button', { name: /Check In/i }))
+    );
     await waitFor(() => {
       expect(screen.getByRole('alert')).toBeInTheDocument();
     });

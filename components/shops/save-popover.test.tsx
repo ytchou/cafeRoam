@@ -6,8 +6,11 @@ const mockLists = [
   { id: 'l1', name: 'Weekend Picks', items: [{ shop_id: 'other-shop' }] },
   { id: 'l2', name: 'Work Spots', items: [{ shop_id: 'rufous-coffee-da-an' }] },
 ];
-const mockIsInList = vi.fn((listId: string, shopId: string) =>
-  mockLists.find((l) => l.id === listId)?.items.some((i) => i.shop_id === shopId) ?? false
+const mockIsInList = vi.fn(
+  (listId: string, shopId: string) =>
+    mockLists
+      .find((l) => l.id === listId)
+      ?.items.some((i) => i.shop_id === shopId) ?? false
 );
 const mockSaveShop = vi.fn();
 const mockRemoveShop = vi.fn();
@@ -40,7 +43,9 @@ describe('SavePopover', () => {
 
   it('shows a checked state for lists containing this shop', () => {
     render(<SavePopover {...defaultProps} />);
-    const workSpotsCheckbox = screen.getByRole('checkbox', { name: /Work Spots/i });
+    const workSpotsCheckbox = screen.getByRole('checkbox', {
+      name: /Work Spots/i,
+    });
     expect(workSpotsCheckbox).toBeChecked();
   });
 

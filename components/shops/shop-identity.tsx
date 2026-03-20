@@ -22,8 +22,10 @@ export function ShopIdentity({
       <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
         {rating != null && (
           <div className="flex items-center gap-1">
-            <span className="text-[#E06B3F] text-sm">★</span>
-            <span className="text-sm font-medium text-[#1A1918]">{rating.toFixed(1)}</span>
+            <span className="text-sm text-[#E06B3F]">★</span>
+            <span className="text-sm font-medium text-[#1A1918]">
+              {rating.toFixed(1)}
+            </span>
             {reviewCount != null && (
               <span className="text-xs text-[#9E9893]">({reviewCount})</span>
             )}
@@ -40,14 +42,10 @@ export function ShopIdentity({
             {openNow ? 'Open' : 'Closed'}
           </span>
         )}
-        {distance && (
-          <span className="text-xs text-[#9E9893]">{distance}</span>
-        )}
+        {distance && <span className="text-xs text-[#9E9893]">{distance}</span>}
       </div>
 
-      {address && (
-        <p className="mt-1 text-xs text-[#9E9893]">{address}</p>
-      )}
+      {address && <p className="mt-1 text-xs text-[#9E9893]">{address}</p>}
     </div>
   );
 }
