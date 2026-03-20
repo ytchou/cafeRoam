@@ -1102,8 +1102,8 @@ _Designed in Pencil. Replaces current 首頁 + 地圖 split into a unified Find 
 
 **Chunk 1 — Backend Provider (Wave 1-3):**
 
-- [ ] DirectionsResult Pydantic model
-- [ ] MapsProvider protocol + MapboxMapsAdapter get_directions (TDD)
+- [x] DirectionsResult Pydantic model
+- [x] MapsProvider protocol + MapboxMapsAdapter get_directions (TDD)
 - [ ] GET /maps/directions API endpoint (TDD)
 
 **Chunk 2 — Frontend Integration (Wave 4-6):**
