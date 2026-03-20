@@ -1,4 +1,5 @@
 import logging
+from typing import Literal
 
 import httpx
 
@@ -38,7 +39,7 @@ class MapboxMapsAdapter:
                 longitude=coords[0],
                 formatted_address=feature["properties"]["full_address"],
             )
-        except (httpx.HTTPStatusError, httpx.TimeoutException, httpx.ConnectError, KeyError) as e:
+        except (httpx.HTTPStatusError, httpx.RequestError, KeyError) as e:
             logger.warning("Mapbox geocode failed: %s", e)
             return None
 
@@ -60,7 +61,7 @@ class MapboxMapsAdapter:
             if not features:
                 return None
             return str(features[0]["properties"]["full_address"])
-        except (httpx.HTTPStatusError, httpx.TimeoutException, httpx.ConnectError, KeyError) as e:
+        except (httpx.HTTPStatusError, httpx.RequestError, KeyError) as e:
             logger.warning("Mapbox reverse geocode failed: %s", e)
             return None
 
@@ -72,7 +73,7 @@ class MapboxMapsAdapter:
         origin_lng: float,
         dest_lat: float,
         dest_lng: float,
-        profile: str,
+        profile: Literal["walking", "driving-traffic"],
     ) -> DirectionsResult | None:
         try:
             coords = f"{origin_lng},{origin_lat};{dest_lng},{dest_lat}"
@@ -90,11 +91,11 @@ class MapboxMapsAdapter:
                 return None
             route = routes[0]
             return DirectionsResult(
-                duration_min=round(route["duration"] / 60),
+                duration_min=max(1, round(route["duration"] / 60)),
                 distance_m=round(route["distance"]),
                 profile=profile,
             )
-        except (httpx.HTTPStatusError, httpx.TimeoutException, httpx.ConnectError, KeyError) as e:
+        except (httpx.HTTPStatusError, httpx.RequestError, KeyError) as e:
             logger.warning("Mapbox directions failed: %s", e)
             return None
 

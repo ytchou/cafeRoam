@@ -365,7 +365,7 @@ class GeocodingResult(BaseModel):
 class DirectionsResult(CamelModel):
     duration_min: int
     distance_m: int
-    profile: str
+    profile: Literal["walking", "driving-traffic"]
 
 
 class EmailMessage(BaseModel):

@@ -11,7 +11,7 @@ client = TestClient(app)
 class TestGetDirections:
     """GET /maps/directions returns walking or driving directions."""
 
-    def test_returns_walking_directions(self):
+    def test_visitor_requesting_walking_directions_sees_walk_time_and_distance(self):
         mock_result = DirectionsResult(duration_min=7, distance_m=580, profile="walking")
         with patch("api.maps.get_maps_provider") as mock_factory:
             mock_provider = AsyncMock()
@@ -35,7 +35,7 @@ class TestGetDirections:
         assert data["distanceM"] == 580
         assert data["profile"] == "walking"
 
-    def test_returns_driving_directions(self):
+    def test_visitor_requesting_driving_directions_sees_drive_time(self):
         mock_result = DirectionsResult(duration_min=3, distance_m=2100, profile="driving-traffic")
         with patch("api.maps.get_maps_provider") as mock_factory:
             mock_provider = AsyncMock()
@@ -56,7 +56,7 @@ class TestGetDirections:
         assert response.status_code == 200
         assert response.json()["profile"] == "driving-traffic"
 
-    def test_returns_400_for_invalid_profile(self):
+    def test_visitor_using_unsupported_profile_sees_400_error(self):
         response = client.get(
             "/maps/directions",
             params={
@@ -69,7 +69,7 @@ class TestGetDirections:
         )
         assert response.status_code == 400
 
-    def test_returns_502_when_upstream_fails(self):
+    def test_visitor_sees_502_when_mapbox_is_unavailable(self):
         with patch("api.maps.get_maps_provider") as mock_factory:
             mock_provider = AsyncMock()
             mock_provider.get_directions = AsyncMock(return_value=None)

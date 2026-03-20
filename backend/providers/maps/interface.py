@@ -1,4 +1,4 @@
-from typing import Protocol
+from typing import Literal, Protocol
 
 from models.types import DirectionsResult, GeocodingResult
 
@@ -14,7 +14,7 @@ class MapsProvider(Protocol):
         origin_lng: float,
         dest_lat: float,
         dest_lng: float,
-        profile: str,
+        profile: Literal["walking", "driving-traffic"],
     ) -> DirectionsResult | None: ...
 
     async def close(self) -> None: ...

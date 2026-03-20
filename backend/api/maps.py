@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Literal, cast
 
 from fastapi import APIRouter, HTTPException, Query
 
@@ -32,12 +32,10 @@ async def get_directions(
             origin_lng=origin_lng,
             dest_lat=dest_lat,
             dest_lng=dest_lng,
-            profile=profile,
+            profile=cast("Literal['walking', 'driving-traffic']", profile),
         )
+        if result is None:
+            raise HTTPException(status_code=502, detail="Upstream directions service unavailable")
+        return result.model_dump(by_alias=True)
     finally:
         await provider.close()
-
-    if result is None:
-        raise HTTPException(status_code=502, detail="Upstream directions service unavailable")
-
-    return result.model_dump(by_alias=True)
