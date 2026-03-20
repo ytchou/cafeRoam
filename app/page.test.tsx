@@ -11,6 +11,10 @@ vi.mock('@/lib/posthog/use-analytics', () => ({
   useAnalytics: () => ({ capture: vi.fn() }),
 }));
 
+vi.mock('@/lib/hooks/use-user', () => ({
+  useUser: () => ({ user: null, isLoading: false }),
+}));
+
 vi.mock('vaul', () => ({
   Drawer: {
     Root: ({ children, open }: { children: React.ReactNode; open: boolean }) =>

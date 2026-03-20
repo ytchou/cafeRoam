@@ -1,0 +1,5337 @@
+diff --git a/TODO.md b/TODO.md
+index cd662e9..49f79ff 100644
+--- a/TODO.md
++++ b/TODO.md
+@@ -1062,6 +1062,39 @@ _Designed in Pencil. Replaces current 首頁 + 地圖 split into a unified Find
+ 
+ - [x] `pnpm test` + `pnpm type-check` + `pnpm build` all pass (Task 9)
+ 
++### Map View UI Rebuild (from Pencil designs)
++
++> **Design Doc:** [docs/designs/2026-03-19-map-view-rebuild-design.md](docs/designs/2026-03-19-map-view-rebuild-design.md)
++> **Plan:** [docs/plans/2026-03-19-map-view-ui-rebuild-plan.md](docs/plans/2026-03-19-map-view-ui-rebuild-plan.md)
++
++**Chunk 1 — Foundation (Wave 1):**
++
++- [x] Task 1: Typography & CSS (DM Sans + design tokens)
++
++**Chunk 2 — Reusable Components (Wave 2, parallel):**
++
++- [x] Task 2: FilterTag (active/inactive pill)
++- [x] Task 3: ViewToggle (map/list segmented toggle)
++- [x] Task 5: SearchBar rebuild (filter button + design styling)
++- [x] Task 6: ShopCardCarousel (mobile map bottom card)
++- [x] Task 7: ShopCardCompact (list row + desktop panel with selected state)
++- [x] Task 8: ShopCardGrid (desktop 3-column photo card)
++- [x] Task 9: MapPin SVG (default/active states)
++- [x] Task 10: CollapseToggle (desktop panel strip)
++- [x] Task 11: BottomNav rebuild (pill-shaped tab bar)
++- [x] Task 12: HeaderNav rebuild (logo + pill nav + avatar)
++
++**Chunk 3 — Compound Components (Wave 3, parallel):**
++
++- [x] Task 4: CountHeader (count + ViewToggle + sort)
++- [x] Task 13: FilterSheet rebuild (vaul drawer + dialog modal)
++- [x] Task 14: ShopCarousel (horizontal scroll container)
++
++**Chunk 4 — Layout + Integration (Wave 4-5):**
++
++- [x] Task 15: Layout components + page.tsx integration
++- [x] Task 16: Delete old components + rename nav files
++
+ ### Shop View — Directions (implementation notes)
+ 
+ _Build when implementing Shop View. All transport estimates via Mapbox — no Google Maps API needed._
+diff --git a/app/globals.css b/app/globals.css
+index c0ff5cc..db57872 100644
+--- a/app/globals.css
++++ b/app/globals.css
+@@ -10,6 +10,8 @@
+   --font-sans:
+     var(--font-geist-sans), var(--font-noto-sans-tc), system-ui, sans-serif;
+   --font-mono: var(--font-geist-mono);
++  --font-heading: var(--font-bricolage), system-ui, sans-serif;
++  --font-body: var(--font-dm-sans), var(--font-noto-sans-tc), system-ui, sans-serif;
+   --color-sidebar-ring: var(--sidebar-ring);
+   --color-sidebar-border: var(--sidebar-border);
+   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+@@ -50,6 +52,20 @@
+ 
+ :root {
+   --radius: 0.625rem;
++  /* CafeRoam design tokens */
++  --map-pin: #8B5E3C;
++  --active-dark: #2C1810;
++  --tag-inactive-bg: #FFFFFF;
++  --tag-inactive-border: #E5E7EB;
++  --tag-inactive-text: #6B7280;
++  --tag-active-bg: #2C1810;
++  --tag-active-text: #FFFFFF;
++  --card-selected-bg: #FDF8F5;
++  --toggle-bg: #F0EFED;
++  --text-secondary: #6B7280;
++  --text-tertiary: #9CA3AF;
++  --rating-star: #FCD34D;
++  --border-medium: #E5E7EB;
+   --background: oklch(1 0 0);
+   --foreground: oklch(0.145 0 0);
+   --card: oklch(1 0 0);
+diff --git a/app/layout.tsx b/app/layout.tsx
+index 9755b60..9cd5c0a 100644
+--- a/app/layout.tsx
++++ b/app/layout.tsx
+@@ -1,16 +1,25 @@
+ import type { Metadata, Viewport } from 'next';
+ import {
+   Bricolage_Grotesque,
++  DM_Sans,
+   Geist,
+   Geist_Mono,
+   Noto_Sans_TC,
+ } from 'next/font/google';
++
+ import { PostHogProvider } from '@/lib/posthog/provider';
+ import { SessionTracker } from '@/components/session-tracker';
+ import { AppShell } from '@/components/navigation/app-shell';
+ import { Agentation } from 'agentation';
+ import './globals.css';
+ 
++const dmSans = DM_Sans({
++  variable: '--font-dm-sans',
++  subsets: ['latin'],
++  weight: ['400', '500', '600', '700'],
++  display: 'swap',
++});
++
+ const geistSans = Geist({
+   variable: '--font-geist-sans',
+   subsets: ['latin'],
+@@ -70,7 +79,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
+   return (
+     <html lang="zh-TW">
+       <body
+-        className={`${geistSans.variable} ${geistMono.variable} ${notoSansTC.variable} ${bricolageGrotesque.variable} antialiased`}
++        className={`${geistSans.variable} ${geistMono.variable} ${notoSansTC.variable} ${bricolageGrotesque.variable} ${dmSans.variable} antialiased`}
+       >
+         <PostHogProvider>
+           <SessionTracker />
+diff --git a/app/page.tsx b/app/page.tsx
+index 412f3ac..a0ae5fc 100644
+--- a/app/page.tsx
++++ b/app/page.tsx
+@@ -1,25 +1,15 @@
+ 'use client';
+-import dynamic from 'next/dynamic';
+ import { useMemo, useState, Suspense, useCallback } from 'react';
+-import { List, Map as MapIcon } from 'lucide-react';
+-import { SearchBar } from '@/components/discovery/search-bar';
+-import { FilterPills } from '@/components/discovery/filter-pills';
+-import { FilterSheet } from '@/components/discovery/filter-sheet';
+-import { MapMiniCard } from '@/components/map/map-mini-card';
+-import { MapDesktopCard } from '@/components/map/map-desktop-card';
+-import { MapListView } from '@/components/map/map-list-view';
+ import { useIsDesktop } from '@/lib/hooks/use-media-query';
+ import { useShops } from '@/lib/hooks/use-shops';
+ import { useSearch } from '@/lib/hooks/use-search';
+ import { useGeolocation } from '@/lib/hooks/use-geolocation';
+ import { useSearchState } from '@/lib/hooks/use-search-state';
+ import { useAnalytics } from '@/lib/posthog/use-analytics';
+-
+-const MapView = dynamic(
+-  () =>
+-    import('@/components/map/map-view').then((m) => ({ default: m.MapView })),
+-  { ssr: false }
+-);
++import { MapMobileLayout } from '@/components/map/map-mobile-layout';
++import { ListMobileLayout } from '@/components/map/list-mobile-layout';
++import { MapDesktopLayout } from '@/components/map/map-desktop-layout';
++import { ListDesktopLayout } from '@/components/map/list-desktop-layout';
+ 
+ function FindPageContent() {
+   const {
+@@ -59,31 +49,15 @@ function FindPageContent() {
+     return base;
+   }, [query, searchLoading, searchResults, featuredShops, filters]);
+ 
+-  const shopById = useMemo(() => new Map(shops.map((s) => [s.id, s])), [shops]);
+-  const selectedShop = selectedShopId
+-    ? (shopById.get(selectedShopId) ?? null)
+-    : null;
+-
+-  const listShops = useMemo(
+-    () =>
+-      shops.map((s) => ({
+-        id: s.id,
+-        slug: s.slug ?? s.id,
+-        name: s.name,
+-        rating: s.rating,
+-        distance_m: null,
+-        is_open: null,
+-        photo_url: s.photoUrls.length > 0 ? s.photoUrls[0] : null,
+-      })),
+-    [shops]
++  const handleSearch = useCallback(
++    (q: string) => {
++      setQuery(q);
++      setSelectedShopId(null);
++    },
++    [setQuery]
+   );
+ 
+-  function handleSearch(q: string) {
+-    setQuery(q);
+-    setSelectedShopId(null);
+-  }
+-
+-  const handleViewToggle = useCallback(
++  const handleViewChange = useCallback(
+     (newView: 'map' | 'list') => {
+       if (newView === view) return;
+       capture('view_toggled', { to_view: newView });
+@@ -99,138 +73,36 @@ function FindPageContent() {
+     [setFilters]
+   );
+ 
+-  function getSearchStatusText(): string {
+-    if (searchLoading) return '搜尋中...';
+-    if (searchResults.length > 0)
+-      return `找到 ${searchResults.length} 間咖啡廳`;
+-    return '找不到符合的咖啡廳，顯示精選';
+-  }
+-
+-  const viewToggleButtons = useMemo(
+-    () => (
+-      <div className="flex items-center gap-1 rounded-full bg-[#F5F4F1] p-0.5">
+-        <button
+-          type="button"
+-          aria-label="Map view"
+-          onClick={() => handleViewToggle('map')}
+-          className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
+-            view === 'map' ? 'bg-[#2C1810] text-white' : 'text-gray-500'
+-          }`}
+-        >
+-          <MapIcon size={14} />
+-          Map
+-        </button>
+-        <button
+-          type="button"
+-          aria-label="List view"
+-          onClick={() => handleViewToggle('list')}
+-          className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
+-            view === 'list' ? 'bg-[#2C1810] text-white' : 'text-gray-500'
+-          }`}
+-        >
+-          <List size={14} />
+-          List
+-        </button>
+-      </div>
+-    ),
+-    [view, handleViewToggle]
+-  );
+-
+-  if (view === 'list') {
+-    return (
+-      <div className="flex h-screen w-full flex-col bg-[#F5F4F1]">
+-        <div className="space-y-2 bg-white px-4 pt-4 pb-2 shadow-sm">
+-          <SearchBar onSubmit={handleSearch} defaultQuery={query} />
+-          {query && (
+-            <p className="text-xs text-gray-500">{getSearchStatusText()}</p>
+-          )}
+-          <FilterPills
+-            activeFilters={filters}
+-            onToggle={toggleFilter}
+-            onOpenSheet={() => setFilterSheetOpen(true)}
+-            onNearMe={requestLocation}
+-          />
+-        </div>
+-
+-        <div className="flex items-center justify-between px-4 py-3">
+-          <h2 className="text-sm font-semibold text-gray-700">
+-            Nearby Coffee Shops
+-          </h2>
+-          {viewToggleButtons}
+-        </div>
+-
+-        <div className="flex-1 overflow-y-auto bg-white">
+-          <MapListView shops={listShops} />
+-        </div>
+-
+-        <FilterSheet
+-          key={filterSheetOpen ? 'sheet-open' : 'sheet-closed'}
+-          open={filterSheetOpen}
+-          onClose={() => setFilterSheetOpen(false)}
+-          onApply={handleFilterApply}
+-          initialFilters={filters}
+-        />
+-      </div>
++  const layoutProps = {
++    shops,
++    count: shops.length,
++    selectedShopId,
++    onShopClick: setSelectedShopId,
++    query,
++    activeFilters: filters,
++    onFilterToggle: toggleFilter,
++    view,
++    onViewChange: handleViewChange,
++    onSearch: handleSearch,
++    filterSheetOpen,
++    onFilterOpen: () => setFilterSheetOpen(true),
++    onFilterClose: () => setFilterSheetOpen(false),
++    onFilterApply: handleFilterApply,
++    onLocationRequest: requestLocation,
++  };
++
++  if (isDesktop) {
++    return view === 'list' ? (
++      <ListDesktopLayout {...layoutProps} />
++    ) : (
++      <MapDesktopLayout {...layoutProps} />
+     );
+   }
+ 
+-  return (
+-    <div className="relative h-screen w-full overflow-hidden">
+-      <div className="absolute inset-0">
+-        <Suspense
+-          fallback={
+-            <div className="flex h-full w-full items-center justify-center bg-gray-100 text-gray-400">
+-              地圖載入中...
+-            </div>
+-          }
+-        >
+-          <MapView
+-            shops={shops}
+-            onPinClick={setSelectedShopId}
+-            selectedShopId={selectedShopId}
+-          />
+-        </Suspense>
+-      </div>
+-
+-      <div className="absolute top-4 right-4 left-4 z-20">
+-        <div className="space-y-2 rounded-2xl bg-white/90 p-3 shadow backdrop-blur-md supports-[not(backdrop-filter)]:bg-white">
+-          <div className="flex-1">
+-            <SearchBar onSubmit={handleSearch} defaultQuery={query} />
+-          </div>
+-          {query && (
+-            <p className="text-xs text-gray-500">{getSearchStatusText()}</p>
+-          )}
+-          <FilterPills
+-            activeFilters={filters}
+-            onToggle={toggleFilter}
+-            onOpenSheet={() => setFilterSheetOpen(true)}
+-            onNearMe={requestLocation}
+-          />
+-        </div>
+-      </div>
+-
+-      {/* TODO: design specifies a persistent bottom card with horizontal MapMiniCard scroll here.
+-           Deferred to follow-up — toggle pill is a simplified substitute. */}
+-      <div className="absolute right-4 bottom-36 z-20">{viewToggleButtons}</div>
+-
+-      {selectedShop &&
+-        (isDesktop ? (
+-          <MapDesktopCard shop={selectedShop} />
+-        ) : (
+-          <MapMiniCard
+-            shop={selectedShop}
+-            onDismiss={() => setSelectedShopId(null)}
+-          />
+-        ))}
+-
+-      <FilterSheet
+-        key={filterSheetOpen ? 'sheet-open' : 'sheet-closed'}
+-        open={filterSheetOpen}
+-        onClose={() => setFilterSheetOpen(false)}
+-        onApply={handleFilterApply}
+-        initialFilters={filters}
+-      />
+-    </div>
++  return view === 'list' ? (
++    <ListMobileLayout {...layoutProps} />
++  ) : (
++    <MapMobileLayout {...layoutProps} />
+   );
+ }
+ 
+diff --git a/components/discovery/count-header.test.tsx b/components/discovery/count-header.test.tsx
+new file mode 100644
+index 0000000..268b907
+--- /dev/null
++++ b/components/discovery/count-header.test.tsx
+@@ -0,0 +1,36 @@
++import { render, screen } from '@testing-library/react';
++import userEvent from '@testing-library/user-event';
++import { CountHeader } from './count-header';
++
++describe('CountHeader', () => {
++  it('renders count text with number of places', () => {
++    render(<CountHeader count={12} view="map" onViewChange={() => {}} />);
++    expect(screen.getByText('12 places nearby')).toBeInTheDocument();
++  });
++
++  it('renders view toggle', () => {
++    render(<CountHeader count={12} view="map" onViewChange={() => {}} />);
++    expect(screen.getByRole('button', { name: /map/i })).toBeInTheDocument();
++    expect(screen.getByRole('button', { name: /list/i })).toBeInTheDocument();
++  });
++
++  it('renders sort button when onSort is provided', () => {
++    render(
++      <CountHeader count={12} view="map" onViewChange={() => {}} onSort={() => {}} />
++    );
++    expect(screen.getByRole('button', { name: /sort/i })).toBeInTheDocument();
++  });
++
++  it('does not render sort button when onSort is not provided', () => {
++    render(<CountHeader count={12} view="map" onViewChange={() => {}} />);
++    expect(screen.queryByRole('button', { name: /sort/i })).not.toBeInTheDocument();
++  });
++
++  it('passes view change through to ViewToggle', async () => {
++    const user = userEvent.setup();
++    const onViewChange = vi.fn();
++    render(<CountHeader count={5} view="map" onViewChange={onViewChange} />);
++    await user.click(screen.getByRole('button', { name: /list/i }));
++    expect(onViewChange).toHaveBeenCalledWith('list');
++  });
++});
+diff --git a/components/discovery/count-header.tsx b/components/discovery/count-header.tsx
+new file mode 100644
+index 0000000..f8c8dd4
+--- /dev/null
++++ b/components/discovery/count-header.tsx
+@@ -0,0 +1,34 @@
++'use client';
++import { ArrowUpDown } from 'lucide-react';
++import { ViewToggle } from './view-toggle';
++
++interface CountHeaderProps {
++  count: number;
++  view: 'map' | 'list';
++  onViewChange: (view: 'map' | 'list') => void;
++  onSort?: () => void;
++}
++
++export function CountHeader({ count, view, onViewChange, onSort }: CountHeaderProps) {
++  return (
++    <div className="flex items-center justify-between px-5 py-1">
++      <span className="font-[family-name:var(--font-heading)] text-[15px] font-bold text-[var(--foreground)]">
++        {count} places nearby
++      </span>
++      <div className="flex items-center gap-2.5">
++        <ViewToggle view={view} onChange={onViewChange} />
++        {onSort && (
++          <button
++            type="button"
++            aria-label="Sort"
++            onClick={onSort}
++            className="flex items-center gap-1 rounded-lg bg-[var(--background)] px-2.5 py-[5px] text-xs font-medium text-[var(--foreground)] border border-[var(--border)]"
++          >
++            <ArrowUpDown className="h-3 w-3 text-[var(--muted-foreground)]" />
++            Sort
++          </button>
++        )}
++      </div>
++    </div>
++  );
++}
+diff --git a/components/discovery/filter-pills.test.tsx b/components/discovery/filter-pills.test.tsx
+deleted file mode 100644
+index 509100b..0000000
+--- a/components/discovery/filter-pills.test.tsx
++++ /dev/null
+@@ -1,64 +0,0 @@
+-import { render, screen } from '@testing-library/react';
+-import userEvent from '@testing-library/user-event';
+-import { describe, it, expect, vi } from 'vitest';
+-
+-vi.mock('@/lib/posthog/use-analytics', () => ({
+-  useAnalytics: () => ({ capture: vi.fn() }),
+-}));
+-
+-import { FilterPills } from './filter-pills';
+-
+-describe('FilterPills', () => {
+-  it('renders filter pills including 篩選 button', () => {
+-    render(
+-      <FilterPills
+-        activeFilters={[]}
+-        onToggle={vi.fn()}
+-        onOpenSheet={vi.fn()}
+-      />
+-    );
+-    expect(screen.getByText('距離')).toBeInTheDocument();
+-    expect(screen.getByText('現正營業')).toBeInTheDocument();
+-    expect(screen.getByText('有插座')).toBeInTheDocument();
+-    expect(screen.getByText('評分')).toBeInTheDocument();
+-    expect(screen.getByText('篩選')).toBeInTheDocument();
+-  });
+-
+-  it('tapping a pill fires onToggle with filter key', async () => {
+-    const onToggle = vi.fn();
+-    render(
+-      <FilterPills
+-        activeFilters={[]}
+-        onToggle={onToggle}
+-        onOpenSheet={vi.fn()}
+-      />
+-    );
+-    await userEvent.click(screen.getByText('有插座'));
+-    expect(onToggle).toHaveBeenCalledWith('outlet');
+-  });
+-
+-  it('tapping 篩選 fires onOpenSheet', async () => {
+-    const onOpenSheet = vi.fn();
+-    render(
+-      <FilterPills
+-        activeFilters={[]}
+-        onToggle={vi.fn()}
+-        onOpenSheet={onOpenSheet}
+-      />
+-    );
+-    await userEvent.click(screen.getByText('篩選'));
+-    expect(onOpenSheet).toHaveBeenCalled();
+-  });
+-
+-  it('active filters show filled style (aria-pressed=true)', () => {
+-    render(
+-      <FilterPills
+-        activeFilters={['outlet']}
+-        onToggle={vi.fn()}
+-        onOpenSheet={vi.fn()}
+-      />
+-    );
+-    const outletBtn = screen.getByText('有插座').closest('button');
+-    expect(outletBtn).toHaveAttribute('aria-pressed', 'true');
+-  });
+-});
+diff --git a/components/discovery/filter-pills.tsx b/components/discovery/filter-pills.tsx
+deleted file mode 100644
+index a56adbf..0000000
+--- a/components/discovery/filter-pills.tsx
++++ /dev/null
+@@ -1,99 +0,0 @@
+-'use client';
+-import { useAnalytics } from '@/lib/posthog/use-analytics';
+-
+-const QUICK_FILTERS = [
+-  { key: 'distance', label: '距離' },
+-  { key: 'open_now', label: '現正營業' },
+-  { key: 'outlet', label: '有插座' },
+-  { key: 'rating', label: '評分' },
+-] as const;
+-
+-interface FilterPillsProps {
+-  activeFilters: string[];
+-  onToggle: (filter: string) => void;
+-  onOpenSheet?: () => void;
+-  onNearMe?: () => void;
+-}
+-
+-export function FilterPills({
+-  activeFilters,
+-  onToggle,
+-  onOpenSheet,
+-  onNearMe,
+-}: FilterPillsProps) {
+-  const { capture } = useAnalytics();
+-
+-  function handleToggle(key: string) {
+-    capture('filter_applied', { filter_type: 'quick', filter_value: key });
+-    onToggle(key);
+-  }
+-
+-  function handleNearMe() {
+-    capture('filter_applied', {
+-      filter_type: 'quick',
+-      filter_value: 'distance',
+-    });
+-    onNearMe?.();
+-  }
+-
+-  return (
+-    <div className="flex items-center gap-2 py-1">
+-      {onOpenSheet && (
+-        <button
+-          type="button"
+-          onClick={onOpenSheet}
+-          className="flex flex-shrink-0 items-center gap-1.5 rounded-full border border-gray-300 bg-white px-3 py-1.5 text-sm whitespace-nowrap text-gray-700 shadow-sm hover:bg-gray-50"
+-        >
+-          <svg
+-            width="14"
+-            height="14"
+-            viewBox="0 0 16 16"
+-            fill="none"
+-            stroke="currentColor"
+-            strokeWidth="1.5"
+-          >
+-            <line x1="2" y1="4" x2="14" y2="4" />
+-            <line x1="2" y1="8" x2="14" y2="8" />
+-            <line x1="2" y1="12" x2="14" y2="12" />
+-            <circle cx="5" cy="4" r="1.5" fill="white" />
+-            <circle cx="10" cy="8" r="1.5" fill="white" />
+-            <circle cx="6" cy="12" r="1.5" fill="white" />
+-          </svg>
+-          篩選
+-        </button>
+-      )}
+-      <div className="scrollbar-hide flex flex-1 gap-2 overflow-x-auto">
+-        {QUICK_FILTERS.map(({ key, label }) => {
+-          if (key === 'distance' && onNearMe) {
+-            return (
+-              <button
+-                key={key}
+-                type="button"
+-                onClick={handleNearMe}
+-                className="flex-shrink-0 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-sm whitespace-nowrap text-gray-700 transition-colors hover:bg-gray-50"
+-              >
+-                {label}
+-              </button>
+-            );
+-          }
+-          const isActive = activeFilters.includes(key);
+-          return (
+-            <button
+-              key={key}
+-              type="button"
+-              aria-pressed={isActive}
+-              onClick={() => handleToggle(key)}
+-              className={`flex-shrink-0 rounded-full border px-3 py-1.5 text-sm whitespace-nowrap transition-colors ${
+-                isActive
+-                  ? 'border-[#E06B3F] bg-[#E06B3F] text-white'
+-                  : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+-              }`}
+-            >
+-              {label}
+-            </button>
+-          );
+-        })}
+-      </div>
+-    </div>
+-  );
+-}
+diff --git a/components/discovery/view-toggle.test.tsx b/components/discovery/view-toggle.test.tsx
+new file mode 100644
+index 0000000..369bbf5
+--- /dev/null
++++ b/components/discovery/view-toggle.test.tsx
+@@ -0,0 +1,34 @@
++import { render, screen } from '@testing-library/react';
++import userEvent from '@testing-library/user-event';
++import { describe, it, expect, vi } from 'vitest';
++import { ViewToggle } from './view-toggle';
++
++describe('ViewToggle', () => {
++  it('renders map and list buttons', () => {
++    render(<ViewToggle view="map" onChange={() => {}} />);
++    expect(screen.getByRole('button', { name: /map/i })).toBeInTheDocument();
++    expect(screen.getByRole('button', { name: /list/i })).toBeInTheDocument();
++  });
++
++  it('shows map button as active when view is map', () => {
++    render(<ViewToggle view="map" onChange={() => {}} />);
++    const mapBtn = screen.getByRole('button', { name: /map/i });
++    expect(mapBtn).toHaveAttribute('data-active', 'true');
++  });
++
++  it('calls onChange with list when list button clicked', async () => {
++    const user = userEvent.setup();
++    const onChange = vi.fn();
++    render(<ViewToggle view="map" onChange={onChange} />);
++    await user.click(screen.getByRole('button', { name: /list/i }));
++    expect(onChange).toHaveBeenCalledWith('list');
++  });
++
++  it('does not call onChange when clicking already active view', async () => {
++    const user = userEvent.setup();
++    const onChange = vi.fn();
++    render(<ViewToggle view="map" onChange={onChange} />);
++    await user.click(screen.getByRole('button', { name: /map/i }));
++    expect(onChange).not.toHaveBeenCalled();
++  });
++});
+diff --git a/components/discovery/view-toggle.tsx b/components/discovery/view-toggle.tsx
+new file mode 100644
+index 0000000..9bb5c43
+--- /dev/null
++++ b/components/discovery/view-toggle.tsx
+@@ -0,0 +1,36 @@
++'use client';
++import { Map, List } from 'lucide-react';
++
++interface ViewToggleProps {
++  view: 'map' | 'list';
++  onChange: (view: 'map' | 'list') => void;
++}
++
++export function ViewToggle({ view, onChange }: ViewToggleProps) {
++  return (
++    <div className="flex items-center gap-0.5 rounded-[14px] bg-[var(--toggle-bg)] p-[3px]">
++      <button
++        type="button"
++        aria-label="Map view"
++        data-active={view === 'map' || undefined}
++        onClick={() => view !== 'map' && onChange('map')}
++        className={`flex items-center justify-center rounded-[11px] h-6 w-7 transition-colors ${
++          view === 'map' ? 'bg-[var(--active-dark)] text-white' : 'text-[var(--text-secondary)]'
++        }`}
++      >
++        <Map className="h-3.5 w-3.5" />
++      </button>
++      <button
++        type="button"
++        aria-label="List view"
++        data-active={view === 'list' || undefined}
++        onClick={() => view !== 'list' && onChange('list')}
++        className={`flex items-center justify-center rounded-[11px] h-6 w-7 transition-colors ${
++          view === 'list' ? 'bg-[var(--active-dark)] text-white' : 'text-[var(--text-secondary)]'
++        }`}
++      >
++        <List className="h-3.5 w-3.5" />
++      </button>
++    </div>
++  );
++}
+diff --git a/components/filters/filter-sheet.test.tsx b/components/filters/filter-sheet.test.tsx
+new file mode 100644
+index 0000000..f9bbdd4
+--- /dev/null
++++ b/components/filters/filter-sheet.test.tsx
+@@ -0,0 +1,41 @@
++import { render, screen } from '@testing-library/react';
++import { FilterSheet } from './filter-sheet';
++
++vi.mock('vaul', () => ({
++  Drawer: {
++    Root: ({ children, open }: { children: React.ReactNode; open: boolean }) =>
++      open ? <div data-testid="drawer">{children}</div> : null,
++    Portal: ({ children }: { children: React.ReactNode }) => <>{children}</>,
++    Overlay: () => <div data-testid="drawer-overlay" />,
++    Content: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
++    Title: ({ children, className }: { children: React.ReactNode; className?: string }) => <h2 className={className}>{children}</h2>,
++    Handle: () => <div data-testid="drawer-handle" />,
++  },
++}));
++
++vi.mock('@/lib/hooks/use-media-query', () => ({
++  useIsDesktop: vi.fn(() => false),
++}));
++
++describe('FilterSheet', () => {
++  it('renders title when open', () => {
++    render(<FilterSheet open onClose={() => {}} onApply={() => {}} initialFilters={[]} />);
++    const headings = screen.getAllByText('Filters');
++    expect(headings.length).toBeGreaterThanOrEqual(1);
++  });
++
++  it('renders Clear All button', () => {
++    render(<FilterSheet open onClose={() => {}} onApply={() => {}} initialFilters={[]} />);
++    expect(screen.getByRole('button', { name: /clear all/i })).toBeInTheDocument();
++  });
++
++  it('renders category tabs', () => {
++    render(<FilterSheet open onClose={() => {}} onApply={() => {}} initialFilters={[]} />);
++    expect(screen.getByText('Functionality')).toBeInTheDocument();
++  });
++
++  it('renders apply button with count', () => {
++    render(<FilterSheet open onClose={() => {}} onApply={() => {}} initialFilters={['wifi']} />);
++    expect(screen.getByRole('button', { name: /show/i })).toBeInTheDocument();
++  });
++});
+diff --git a/components/filters/filter-sheet.tsx b/components/filters/filter-sheet.tsx
+new file mode 100644
+index 0000000..c23730b
+--- /dev/null
++++ b/components/filters/filter-sheet.tsx
+@@ -0,0 +1,257 @@
++'use client';
++
++import { useMemo, useState } from 'react';
++import { Drawer } from 'vaul';
++import { useIsDesktop } from '@/lib/hooks/use-media-query';
++import { FilterTag } from './filter-tag';
++
++interface Tag {
++  id: string;
++  label: string;
++}
++
++interface TabCategory {
++  key: string;
++  label: string;
++  tags: Tag[];
++}
++
++const FILTER_TABS: TabCategory[] = [
++  {
++    key: 'functionality',
++    label: 'Functionality',
++    tags: [
++      { id: 'wifi', label: 'WiFi' },
++      { id: 'outlet', label: 'Outlet' },
++      { id: 'seating', label: 'Seating' },
++      { id: 'work_friendly', label: 'Work Friendly' },
++      { id: 'pet_friendly', label: 'Pet Friendly' },
++      { id: 'accessible', label: 'Accessible' },
++      { id: 'parking', label: 'Parking' },
++      { id: 'takeaway', label: 'Takeaway' },
++      { id: 'reservable', label: 'Reservable' },
++      { id: 'no_laptop', label: 'No Laptop' },
++      { id: 'cash_only', label: 'Cash Only' },
++      { id: 'brings_own_cup', label: 'Brings Own Cup' },
++    ],
++  },
++  {
++    key: 'time',
++    label: 'Time',
++    tags: [
++      { id: 'no_time_limit', label: 'No Time Limit' },
++      { id: 'open_late', label: 'Open Late' },
++      { id: 'early_bird', label: 'Early Bird' },
++      { id: 'open_weekend', label: 'Open Weekend' },
++      { id: 'open_24hr', label: 'Open 24hr' },
++    ],
++  },
++  {
++    key: 'ambience',
++    label: 'Ambience',
++    tags: [
++      { id: 'quiet', label: 'Quiet' },
++      { id: 'cozy', label: 'Cozy' },
++      { id: 'lively', label: 'Lively' },
++      { id: 'chit_chat', label: 'Chit Chat' },
++      { id: 'romantic', label: 'Romantic' },
++      { id: 'minimalist', label: 'Minimalist' },
++      { id: 'industrial', label: 'Industrial' },
++      { id: 'vintage', label: 'Vintage' },
++    ],
++  },
++  {
++    key: 'mode',
++    label: 'Mode',
++    tags: [
++      { id: 'work', label: 'Work' },
++      { id: 'rest', label: 'Rest' },
++      { id: 'social', label: 'Social' },
++      { id: 'specialty', label: 'Specialty' },
++    ],
++  },
++  {
++    key: 'food',
++    label: 'Food',
++    tags: [
++      { id: 'espresso', label: 'Espresso' },
++      { id: 'pour_over', label: 'Pour Over' },
++      { id: 'matcha', label: 'Matcha' },
++      { id: 'pastries', label: 'Pastries' },
++      { id: 'brunch', label: 'Brunch' },
++      { id: 'vegan', label: 'Vegan' },
++      { id: 'dessert', label: 'Dessert' },
++      { id: 'sandwich', label: 'Sandwich' },
++    ],
++  },
++];
++
++interface FilterSheetProps {
++  open: boolean;
++  onClose: () => void;
++  onApply: (filters: string[]) => void;
++  initialFilters: string[];
++}
++
++function FilterContent({
++  selected,
++  setSelected,
++  onApply,
++  onClose,
++}: {
++  selected: Set<string>;
++  setSelected: React.Dispatch<React.SetStateAction<Set<string>>>;
++  onApply: (filters: string[]) => void;
++  onClose: () => void;
++}) {
++  const [activeTab, setActiveTab] = useState('functionality');
++
++  const activeTabData = useMemo(
++    () => FILTER_TABS.find((tab) => tab.key === activeTab),
++    [activeTab],
++  );
++
++  const toggle = (id: string) => {
++    setSelected((prev) => {
++      const next = new Set(prev);
++      if (next.has(id)) {
++        next.delete(id);
++      } else {
++        next.add(id);
++      }
++      return next;
++    });
++  };
++
++  const handleClear = () => {
++    setSelected(new Set());
++  };
++
++  const handleApply = () => {
++    onApply(Array.from(selected));
++    onClose();
++  };
++
++  const tagsToShow = activeTabData?.tags ?? [];
++
++  return (
++    <>
++      <div className="flex items-center justify-between px-4 pt-3 pb-2">
++        <div className="flex items-center gap-2">
++          <h2 className="font-[family-name:var(--font-heading)] text-lg font-semibold">
++            Filters
++          </h2>
++          {selected.size > 0 && (
++            <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--tag-active-bg)] px-1.5 text-xs font-medium text-white">
++              {selected.size}
++            </span>
++          )}
++        </div>
++        <button
++          type="button"
++          onClick={handleClear}
++          aria-label="Clear all"
++          className="font-[family-name:var(--font-body)] text-sm text-gray-500 hover:text-gray-700"
++        >
++          Clear All
++        </button>
++      </div>
++
++      <div className="flex gap-2 overflow-x-auto px-4 pb-3" role="tablist">
++        {FILTER_TABS.map((tab) => (
++          <button
++            key={tab.key}
++            role="tab"
++            aria-selected={activeTab === tab.key}
++            onClick={() => setActiveTab(tab.key)}
++            className={`shrink-0 rounded-full px-3 py-1.5 font-[family-name:var(--font-body)] text-sm font-medium transition-colors ${
++              activeTab === tab.key
++                ? 'bg-[var(--tag-active-bg)] text-white'
++                : 'bg-[#F5F4F1] text-gray-500'
++            }`}
++          >
++            {tab.label}
++          </button>
++        ))}
++      </div>
++
++      <div className="flex-1 overflow-y-auto px-4 pb-4">
++        <div className="flex flex-wrap gap-2">
++          {tagsToShow.map((tag) => (
++            <FilterTag
++              key={tag.id}
++              label={tag.label}
++              active={selected.has(tag.id)}
++              onClick={() => toggle(tag.id)}
++            />
++          ))}
++        </div>
++      </div>
++
++      <div className="border-t px-4 py-3">
++        <button
++          type="button"
++          onClick={handleApply}
++          className="w-full rounded-full bg-[var(--tag-active-bg)] py-2.5 font-[family-name:var(--font-body)] text-sm font-medium text-white"
++        >
++          {selected.size > 0 ? `Show ${selected.size} places` : 'Show places'}
++        </button>
++      </div>
++    </>
++  );
++}
++
++export function FilterSheet({
++  open,
++  onClose,
++  onApply,
++  initialFilters,
++}: FilterSheetProps) {
++  const [selected, setSelected] = useState<Set<string>>(
++    () => new Set(initialFilters),
++  );
++  const isDesktop = useIsDesktop();
++
++  if (!open) return null;
++
++  if (isDesktop) {
++    return (
++      <div className="fixed inset-0 z-50 flex items-center justify-center">
++        <div
++          className="fixed inset-0 bg-black/40"
++          onClick={onClose}
++          onKeyDown={(e) => e.key === 'Escape' && onClose()}
++          role="button"
++          tabIndex={0}
++          aria-label="Close filters"
++        />
++        <div className="relative z-10 flex max-h-[80vh] w-full max-w-lg flex-col rounded-2xl bg-white shadow-xl">
++          <FilterContent
++            selected={selected}
++            setSelected={setSelected}
++            onApply={onApply}
++            onClose={onClose}
++          />
++        </div>
++      </div>
++    );
++  }
++
++  return (
++    <Drawer.Root open={open} onOpenChange={(o: boolean) => !o && onClose()}>
++      <Drawer.Portal>
++        <Drawer.Overlay className="fixed inset-0 bg-black/40" />
++        <Drawer.Content className="fixed right-0 bottom-0 left-0 flex max-h-[85vh] flex-col rounded-t-[10px] bg-white">
++          <Drawer.Handle />
++          <Drawer.Title className="sr-only">Filters</Drawer.Title>
++          <FilterContent
++            selected={selected}
++            setSelected={setSelected}
++            onApply={onApply}
++            onClose={onClose}
++          />
++        </Drawer.Content>
++      </Drawer.Portal>
++    </Drawer.Root>
++  );
++}
+diff --git a/components/filters/filter-tag.test.tsx b/components/filters/filter-tag.test.tsx
+new file mode 100644
+index 0000000..0a2fd77
+--- /dev/null
++++ b/components/filters/filter-tag.test.tsx
+@@ -0,0 +1,42 @@
++import { render, screen } from '@testing-library/react';
++import userEvent from '@testing-library/user-event';
++import { describe, it, expect, vi } from 'vitest';
++import { FilterTag } from './filter-tag';
++
++describe('FilterTag', () => {
++  it('renders label text', () => {
++    render(<FilterTag label="WiFi" onClick={() => {}} />);
++    expect(screen.getByText('WiFi')).toBeInTheDocument();
++  });
++
++  it('renders with inactive styles by default', () => {
++    render(<FilterTag label="WiFi" onClick={() => {}} />);
++    const button = screen.getByRole('button', { name: /wifi/i });
++    expect(button).toHaveClass('bg-white');
++  });
++
++  it('renders with active styles when active prop is true', () => {
++    render(<FilterTag label="WiFi" active onClick={() => {}} />);
++    const button = screen.getByRole('button', { name: /wifi/i });
++    expect(button).toHaveClass('bg-[var(--tag-active-bg)]');
++  });
++
++  it('calls onClick when clicked', async () => {
++    const user = userEvent.setup();
++    const onClick = vi.fn();
++    render(<FilterTag label="WiFi" onClick={onClick} />);
++    await user.click(screen.getByRole('button', { name: /wifi/i }));
++    expect(onClick).toHaveBeenCalledOnce();
++  });
++
++  it('renders icon when icon prop provided', () => {
++    const TestIcon = () => <svg data-testid="test-icon" />;
++    render(<FilterTag label="WiFi" icon={TestIcon as unknown as import('lucide-react').LucideIcon} onClick={() => {}} />);
++    expect(screen.getByTestId('test-icon')).toBeInTheDocument();
++  });
++
++  it('renders green dot when dot prop is provided', () => {
++    render(<FilterTag label="Open Now" dot="#3D8A5A" onClick={() => {}} />);
++    expect(screen.getByTestId('filter-tag-dot')).toBeInTheDocument();
++  });
++});
+diff --git a/components/filters/filter-tag.tsx b/components/filters/filter-tag.tsx
+new file mode 100644
+index 0000000..3308b99
+--- /dev/null
++++ b/components/filters/filter-tag.tsx
+@@ -0,0 +1,35 @@
++'use client';
++import type { LucideIcon } from 'lucide-react';
++
++interface FilterTagProps {
++  label: string;
++  icon?: LucideIcon;
++  dot?: string;
++  active?: boolean;
++  onClick: () => void;
++}
++
++export function FilterTag({ label, icon: Icon, dot, active = false, onClick }: FilterTagProps) {
++  return (
++    <button
++      type="button"
++      aria-label={label}
++      onClick={onClick}
++      className={`flex items-center gap-1.5 rounded-full px-4 h-9 font-[family-name:var(--font-body)] text-[13px] font-medium transition-colors whitespace-nowrap ${
++        active
++          ? 'bg-[var(--tag-active-bg)] text-[var(--tag-active-text)]'
++          : 'bg-white text-[var(--tag-inactive-text)] border border-[var(--tag-inactive-border)]'
++      }`}
++    >
++      {dot && (
++        <span
++          data-testid="filter-tag-dot"
++          className="h-2 w-2 rounded-full"
++          style={{ backgroundColor: dot }}
++        />
++      )}
++      {Icon && <Icon className="h-3.5 w-3.5" />}
++      {label}
++    </button>
++  );
++}
+diff --git a/components/filters/search-bar.test.tsx b/components/filters/search-bar.test.tsx
+new file mode 100644
+index 0000000..2bf00f5
+--- /dev/null
++++ b/components/filters/search-bar.test.tsx
+@@ -0,0 +1,46 @@
++import { render, screen, fireEvent } from '@testing-library/react';
++import userEvent from '@testing-library/user-event';
++import { describe, it, expect, vi } from 'vitest';
++import { SearchBar } from './search-bar';
++
++describe('SearchBar', () => {
++  it('renders placeholder text', () => {
++    render(<SearchBar onSearch={() => {}} onFilterClick={() => {}} />);
++    expect(screen.getByPlaceholderText('Search coffee shops...')).toBeInTheDocument();
++  });
++
++  it('renders filter button', () => {
++    render(<SearchBar onSearch={() => {}} onFilterClick={() => {}} />);
++    expect(screen.getByRole('button', { name: /filter/i })).toBeInTheDocument();
++  });
++
++  it('calls onSearch when form submitted', async () => {
++    const user = userEvent.setup();
++    const onSearch = vi.fn();
++    render(<SearchBar onSearch={onSearch} onFilterClick={() => {}} />);
++    const input = screen.getByPlaceholderText('Search coffee shops...');
++    await user.type(input, 'latte art');
++    fireEvent.submit(input.closest('form')!);
++    expect(onSearch).toHaveBeenCalledWith('latte art');
++  });
++
++  it('does not submit empty search', async () => {
++    const onSearch = vi.fn();
++    render(<SearchBar onSearch={onSearch} onFilterClick={() => {}} />);
++    fireEvent.submit(screen.getByPlaceholderText('Search coffee shops...').closest('form')!);
++    expect(onSearch).not.toHaveBeenCalled();
++  });
++
++  it('calls onFilterClick when filter button clicked', async () => {
++    const user = userEvent.setup();
++    const onFilterClick = vi.fn();
++    render(<SearchBar onSearch={() => {}} onFilterClick={onFilterClick} />);
++    await user.click(screen.getByRole('button', { name: /filter/i }));
++    expect(onFilterClick).toHaveBeenCalledOnce();
++  });
++
++  it('pre-fills with defaultQuery', () => {
++    render(<SearchBar onSearch={() => {}} onFilterClick={() => {}} defaultQuery="mocha" />);
++    expect(screen.getByDisplayValue('mocha')).toBeInTheDocument();
++  });
++});
+diff --git a/components/filters/search-bar.tsx b/components/filters/search-bar.tsx
+new file mode 100644
+index 0000000..e45789f
+--- /dev/null
++++ b/components/filters/search-bar.tsx
+@@ -0,0 +1,53 @@
++'use client';
++import { useState, useEffect } from 'react';
++import { Search, SlidersHorizontal } from 'lucide-react';
++
++interface SearchBarProps {
++  onSearch: (query: string) => void;
++  onFilterClick: () => void;
++  defaultQuery?: string;
++  placeholder?: string;
++}
++
++export function SearchBar({
++  onSearch,
++  onFilterClick,
++  defaultQuery = '',
++  placeholder = 'Search coffee shops...',
++}: SearchBarProps) {
++  const [value, setValue] = useState(defaultQuery);
++
++  useEffect(() => {
++    setValue(defaultQuery);
++  }, [defaultQuery]);
++
++  function handleSubmit(e: React.FormEvent) {
++    e.preventDefault();
++    const trimmed = value.trim();
++    if (!trimmed) return;
++    onSearch(trimmed);
++  }
++
++  return (
++    <form role="search" onSubmit={handleSubmit} className="flex items-center px-5 h-[52px]">
++      <div className="flex items-center gap-3 w-full h-[52px] rounded-[26px] bg-white px-5 border border-[var(--border-medium)] shadow-[0_4px_16px_#0000000A]">
++        <Search className="h-5 w-5 shrink-0 text-[var(--text-tertiary)]" />
++        <input
++          type="text"
++          value={value}
++          onChange={(e) => setValue(e.target.value)}
++          placeholder={placeholder}
++          className="flex-1 bg-transparent font-[family-name:var(--font-body)] text-[15px] text-[var(--foreground)] placeholder:text-[var(--text-tertiary)] outline-none"
++        />
++        <button
++          type="button"
++          aria-label="Open filters"
++          onClick={onFilterClick}
++          className="flex items-center justify-center h-9 w-9 rounded-xl bg-[var(--active-dark)] text-white shrink-0"
++        >
++          <SlidersHorizontal className="h-[18px] w-[18px]" />
++        </button>
++      </div>
++    </form>
++  );
++}
+diff --git a/components/map/collapse-toggle.test.tsx b/components/map/collapse-toggle.test.tsx
+new file mode 100644
+index 0000000..bc3f6f4
+--- /dev/null
++++ b/components/map/collapse-toggle.test.tsx
+@@ -0,0 +1,24 @@
++import { render, screen } from '@testing-library/react';
++import userEvent from '@testing-library/user-event';
++import { describe, it, expect, vi } from 'vitest';
++import { CollapseToggle } from './collapse-toggle';
++
++describe('CollapseToggle', () => {
++  it('renders a button', () => {
++    render(<CollapseToggle collapsed={false} onClick={() => {}} />);
++    expect(screen.getByRole('button', { name: /collapse/i })).toBeInTheDocument();
++  });
++
++  it('calls onClick when clicked', async () => {
++    const user = userEvent.setup();
++    const onClick = vi.fn();
++    render(<CollapseToggle collapsed={false} onClick={onClick} />);
++    await user.click(screen.getByRole('button', { name: /collapse/i }));
++    expect(onClick).toHaveBeenCalledOnce();
++  });
++
++  it('shows expand label when collapsed', () => {
++    render(<CollapseToggle collapsed={true} onClick={() => {}} />);
++    expect(screen.getByRole('button', { name: /expand/i })).toBeInTheDocument();
++  });
++});
+diff --git a/components/map/collapse-toggle.tsx b/components/map/collapse-toggle.tsx
+new file mode 100644
+index 0000000..ec7845f
+--- /dev/null
++++ b/components/map/collapse-toggle.tsx
+@@ -0,0 +1,20 @@
++'use client';
++import { ChevronLeft, ChevronRight } from 'lucide-react';
++
++interface CollapseToggleProps {
++  collapsed: boolean;
++  onClick: () => void;
++}
++
++export function CollapseToggle({ collapsed, onClick }: CollapseToggleProps) {
++  return (
++    <button
++      type="button"
++      aria-label={collapsed ? 'Expand panel' : 'Collapse panel'}
++      onClick={onClick}
++      className="flex items-center justify-center w-5 h-12 rounded-r-lg bg-[#F0EDE8] border border-[var(--border)] text-[var(--muted-foreground)] hover:bg-[var(--muted)] transition-colors"
++    >
++      {collapsed ? <ChevronRight className="h-3 w-3" /> : <ChevronLeft className="h-3 w-3" />}
++    </button>
++  );
++}
+diff --git a/components/map/list-desktop-layout.tsx b/components/map/list-desktop-layout.tsx
+new file mode 100644
+index 0000000..f15c2cc
+--- /dev/null
++++ b/components/map/list-desktop-layout.tsx
+@@ -0,0 +1,101 @@
++'use client';
++import { SearchBar } from '@/components/filters/search-bar';
++import { FilterTag } from '@/components/filters/filter-tag';
++import { CountHeader } from '@/components/discovery/count-header';
++import { ShopCardGrid } from '@/components/shops/shop-card-grid';
++import { FilterSheet } from '@/components/filters/filter-sheet';
++import { HeaderNav } from '@/components/navigation/header-nav';
++
++const QUICK_FILTERS = [
++  { id: 'open_now', label: 'Open Now', dot: '#3D8A5A' },
++  { id: 'wifi', label: 'WiFi' },
++  { id: 'outlet', label: 'Outlet' },
++  { id: 'quiet', label: 'Quiet' },
++  { id: 'rating', label: 'Top Rated' },
++];
++
++interface LayoutShop {
++  id: string;
++  name: string;
++  rating: number | null;
++  photo_urls?: string[];
++  photoUrls?: string[];
++  distance_m?: number | null;
++  is_open?: boolean | null;
++  taxonomyTags?: Array<{ id: string; label: string; labelZh: string }>;
++}
++
++interface ListDesktopLayoutProps {
++  shops: LayoutShop[];
++  count: number;
++  onShopClick: (id: string) => void;
++  query: string;
++  activeFilters: string[];
++  onFilterToggle: (id: string) => void;
++  view: 'map' | 'list';
++  onViewChange: (view: 'map' | 'list') => void;
++  onSearch: (q: string) => void;
++  filterSheetOpen: boolean;
++  onFilterOpen: () => void;
++  onFilterClose: () => void;
++  onFilterApply: (filters: string[]) => void;
++  onSort?: () => void;
++}
++
++export function ListDesktopLayout({
++  shops,
++  count,
++  onShopClick,
++  query,
++  activeFilters,
++  onFilterToggle,
++  view,
++  onViewChange,
++  onSearch,
++  filterSheetOpen,
++  onFilterOpen,
++  onFilterClose,
++  onFilterApply,
++  onSort,
++}: ListDesktopLayoutProps) {
++  return (
++    <div className="flex h-screen w-full flex-col bg-[var(--background)]">
++      <HeaderNav activeTab="find" />
++
++      <div className="flex flex-col gap-2 bg-white px-8 pt-20 pb-3 shadow-sm">
++        <SearchBar onSearch={onSearch} onFilterClick={onFilterOpen} defaultQuery={query} />
++        <div className="flex gap-2 overflow-x-auto scrollbar-none pl-1">
++          {QUICK_FILTERS.map((f) => (
++            <FilterTag
++              key={f.id}
++              label={f.label}
++              dot={f.dot}
++              active={activeFilters.includes(f.id)}
++              onClick={() => onFilterToggle(f.id)}
++            />
++          ))}
++        </div>
++        <CountHeader count={count} view={view} onViewChange={onViewChange} onSort={onSort} />
++      </div>
++
++      <div className="flex-1 overflow-y-auto px-8 py-6">
++        <div className="grid grid-cols-3 gap-5">
++          {shops.map((shop) => (
++            <ShopCardGrid
++              key={shop.id}
++              shop={shop}
++              onClick={() => onShopClick(shop.id)}
++            />
++          ))}
++        </div>
++      </div>
++
++      <FilterSheet
++        open={filterSheetOpen}
++        onClose={onFilterClose}
++        onApply={onFilterApply}
++        initialFilters={activeFilters}
++      />
++    </div>
++  );
++}
+diff --git a/components/map/list-mobile-layout.tsx b/components/map/list-mobile-layout.tsx
+new file mode 100644
+index 0000000..d9ded24
+--- /dev/null
++++ b/components/map/list-mobile-layout.tsx
+@@ -0,0 +1,100 @@
++'use client';
++import { SearchBar } from '@/components/filters/search-bar';
++import { FilterTag } from '@/components/filters/filter-tag';
++import { CountHeader } from '@/components/discovery/count-header';
++import { ShopCardCompact } from '@/components/shops/shop-card-compact';
++import { FilterSheet } from '@/components/filters/filter-sheet';
++import { BottomNav } from '@/components/navigation/bottom-nav';
++
++const QUICK_FILTERS = [
++  { id: 'open_now', label: 'Open Now', dot: '#3D8A5A' },
++  { id: 'wifi', label: 'WiFi' },
++  { id: 'outlet', label: 'Outlet' },
++  { id: 'quiet', label: 'Quiet' },
++  { id: 'rating', label: 'Top Rated' },
++];
++
++interface LayoutShop {
++  id: string;
++  name: string;
++  rating: number | null;
++  photo_urls?: string[];
++  photoUrls?: string[];
++  distance_m?: number | null;
++  is_open?: boolean | null;
++  taxonomyTags?: Array<{ id: string; label: string; labelZh: string }>;
++}
++
++interface ListMobileLayoutProps {
++  shops: LayoutShop[];
++  count: number;
++  selectedShopId: string | null;
++  onShopClick: (id: string) => void;
++  query: string;
++  activeFilters: string[];
++  onFilterToggle: (id: string) => void;
++  view: 'map' | 'list';
++  onViewChange: (view: 'map' | 'list') => void;
++  onSearch: (q: string) => void;
++  filterSheetOpen: boolean;
++  onFilterOpen: () => void;
++  onFilterClose: () => void;
++  onFilterApply: (filters: string[]) => void;
++}
++
++export function ListMobileLayout({
++  shops,
++  count,
++  selectedShopId,
++  onShopClick,
++  query,
++  activeFilters,
++  onFilterToggle,
++  view,
++  onViewChange,
++  onSearch,
++  filterSheetOpen,
++  onFilterOpen,
++  onFilterClose,
++  onFilterApply,
++}: ListMobileLayoutProps) {
++  return (
++    <div className="flex h-screen w-full flex-col bg-[var(--background)]">
++      <div className="flex flex-col gap-2 bg-white px-4 pt-4 pb-2 shadow-sm">
++        <SearchBar onSearch={onSearch} onFilterClick={onFilterOpen} defaultQuery={query} />
++        <div className="flex gap-2 overflow-x-auto scrollbar-none pl-1">
++          {QUICK_FILTERS.map((f) => (
++            <FilterTag
++              key={f.id}
++              label={f.label}
++              dot={f.dot}
++              active={activeFilters.includes(f.id)}
++              onClick={() => onFilterToggle(f.id)}
++            />
++          ))}
++        </div>
++        <CountHeader count={count} view={view} onViewChange={onViewChange} />
++      </div>
++
++      <div className="flex-1 overflow-y-auto divide-y divide-[var(--border)]">
++        {shops.map((shop) => (
++          <ShopCardCompact
++            key={shop.id}
++            shop={shop}
++            onClick={() => onShopClick(shop.id)}
++            selected={shop.id === selectedShopId}
++          />
++        ))}
++      </div>
++
++      <BottomNav />
++
++      <FilterSheet
++        open={filterSheetOpen}
++        onClose={onFilterClose}
++        onApply={onFilterApply}
++        initialFilters={activeFilters}
++      />
++    </div>
++  );
++}
+diff --git a/components/map/map-desktop-card.test.tsx b/components/map/map-desktop-card.test.tsx
+deleted file mode 100644
+index 1b83220..0000000
+--- a/components/map/map-desktop-card.test.tsx
++++ /dev/null
+@@ -1,70 +0,0 @@
+-import { render, screen } from '@testing-library/react';
+-import userEvent from '@testing-library/user-event';
+-import { describe, it, expect, vi } from 'vitest';
+-
+-const mockPush = vi.fn();
+-vi.mock('next/navigation', () => ({
+-  useRouter: () => ({ push: mockPush }),
+-}));
+-
+-import { MapDesktopCard } from './map-desktop-card';
+-
+-const SHOP = {
+-  id: 'shop-001',
+-  name: '山小孩咖啡',
+-  slug: 'shan-xiao-hai-ka-fei',
+-  rating: 4.6,
+-  mrt: '大安站',
+-  photoUrls: ['https://example.com/p1.jpg', 'https://example.com/p2.jpg'],
+-  taxonomyTags: [
+-    {
+-      id: 'quiet',
+-      dimension: 'ambience' as const,
+-      label: 'Quiet',
+-      labelZh: '安靜',
+-    },
+-    {
+-      id: 'wifi',
+-      dimension: 'functionality' as const,
+-      label: 'Wi-Fi',
+-      labelZh: '有 Wi-Fi',
+-    },
+-  ],
+-};
+-
+-describe('MapDesktopCard', () => {
+-  it('a user sees the shop name and neighborhood when a pin is selected', () => {
+-    render(<MapDesktopCard shop={SHOP} />);
+-    expect(screen.getByText('山小孩咖啡')).toBeInTheDocument();
+-    expect(screen.getByText('大安站')).toBeInTheDocument();
+-  });
+-
+-  it('a user sees the star rating of the selected shop', () => {
+-    render(<MapDesktopCard shop={SHOP} />);
+-    expect(screen.getByText(/4\.6/)).toBeInTheDocument();
+-  });
+-
+-  it('a user sees attribute chips for the selected shop', () => {
+-    render(<MapDesktopCard shop={SHOP} />);
+-    expect(screen.getByText('安靜')).toBeInTheDocument();
+-    expect(screen.getByText('有 Wi-Fi')).toBeInTheDocument();
+-  });
+-
+-  it('a user can click View Details to navigate to the shop page', async () => {
+-    render(<MapDesktopCard shop={SHOP} />);
+-    await userEvent.click(
+-      screen.getByRole('button', { name: /查看詳情|View Details/i })
+-    );
+-    expect(mockPush).toHaveBeenCalledWith(
+-      '/shops/shop-001/shan-xiao-hai-ka-fei'
+-    );
+-  });
+-
+-  it('a user can click Check In to navigate to the check-in page', async () => {
+-    render(<MapDesktopCard shop={SHOP} />);
+-    await userEvent.click(
+-      screen.getByRole('button', { name: /打卡|Check In/i })
+-    );
+-    expect(mockPush).toHaveBeenCalledWith('/checkin/shop-001');
+-  });
+-});
+diff --git a/components/map/map-desktop-card.tsx b/components/map/map-desktop-card.tsx
+deleted file mode 100644
+index 2313482..0000000
+--- a/components/map/map-desktop-card.tsx
++++ /dev/null
+@@ -1,83 +0,0 @@
+-'use client';
+-import Image from 'next/image';
+-import { useRouter } from 'next/navigation';
+-
+-interface MapDesktopShop {
+-  id: string;
+-  name: string;
+-  slug?: string;
+-  rating?: number | null;
+-  mrt?: string | null;
+-  photoUrls?: string[];
+-  taxonomyTags?: Array<{
+-    id: string;
+-    labelZh: string;
+-  }>;
+-}
+-
+-interface MapDesktopCardProps {
+-  shop: MapDesktopShop;
+-}
+-
+-export function MapDesktopCard({ shop }: MapDesktopCardProps) {
+-  const router = useRouter();
+-  const photos = shop.photoUrls ?? [];
+-  const tags = shop.taxonomyTags ?? [];
+-
+-  return (
+-    <div className="absolute bottom-4 left-4 z-10 w-[340px] rounded-xl bg-white p-4 shadow-lg transition-transform">
+-      {photos.length > 0 && (
+-        <div className="mb-3 flex gap-2 overflow-x-auto">
+-          {photos.slice(0, 3).map((url, i) => (
+-            <Image
+-              key={i}
+-              src={url}
+-              alt={`${shop.name} photo ${i + 1}`}
+-              width={64}
+-              height={64}
+-              className="flex-shrink-0 rounded-lg object-cover"
+-            />
+-          ))}
+-        </div>
+-      )}
+-
+-      <h3 className="text-sm font-semibold">{shop.name}</h3>
+-      {shop.mrt && <p className="mt-0.5 text-xs text-gray-500">{shop.mrt}</p>}
+-      {shop.rating != null && (
+-        <p className="mt-0.5 text-xs text-gray-500">
+-          ★ {shop.rating.toFixed(1)}
+-        </p>
+-      )}
+-
+-      {tags.length > 0 && (
+-        <div className="mt-2 flex flex-wrap gap-1">
+-          {tags.slice(0, 5).map((tag) => (
+-            <span
+-              key={tag.id}
+-              className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600"
+-            >
+-              {tag.labelZh}
+-            </span>
+-          ))}
+-        </div>
+-      )}
+-
+-      <div className="mt-3 flex gap-2">
+-        <button
+-          onClick={() =>
+-            router.push(`/shops/${shop.id}/${shop.slug ?? shop.id}`)
+-          }
+-          className="flex-1 rounded-full bg-[#E06B3F] py-2 text-center text-sm font-medium text-white"
+-        >
+-          查看詳情
+-        </button>
+-        <button
+-          onClick={() => router.push(`/checkin/${shop.id}`)}
+-          className="flex-1 rounded-full border border-gray-200 py-2 text-center text-sm text-gray-700"
+-        >
+-          打卡記錄
+-        </button>
+-      </div>
+-    </div>
+-  );
+-}
+diff --git a/components/map/map-desktop-layout.tsx b/components/map/map-desktop-layout.tsx
+new file mode 100644
+index 0000000..1308513
+--- /dev/null
++++ b/components/map/map-desktop-layout.tsx
+@@ -0,0 +1,139 @@
++'use client';
++import { useState, Suspense } from 'react';
++import dynamic from 'next/dynamic';
++import { SearchBar } from '@/components/filters/search-bar';
++import { FilterTag } from '@/components/filters/filter-tag';
++import { CountHeader } from '@/components/discovery/count-header';
++import { ShopCardCompact } from '@/components/shops/shop-card-compact';
++import { FilterSheet } from '@/components/filters/filter-sheet';
++import { CollapseToggle } from '@/components/map/collapse-toggle';
++import { HeaderNav } from '@/components/navigation/header-nav';
++
++const MapView = dynamic(
++  () => import('@/components/map/map-view').then((m) => ({ default: m.MapView })),
++  { ssr: false }
++);
++
++const QUICK_FILTERS = [
++  { id: 'open_now', label: 'Open Now', dot: '#3D8A5A' },
++  { id: 'wifi', label: 'WiFi' },
++  { id: 'outlet', label: 'Outlet' },
++  { id: 'quiet', label: 'Quiet' },
++  { id: 'rating', label: 'Top Rated' },
++];
++
++interface LayoutShop {
++  id: string;
++  name: string;
++  rating: number | null;
++  photo_urls?: string[];
++  photoUrls?: string[];
++  distance_m?: number | null;
++  is_open?: boolean | null;
++  taxonomyTags?: Array<{ id: string; label: string; labelZh: string }>;
++  latitude: number | null;
++  longitude: number | null;
++}
++
++interface MapDesktopLayoutProps {
++  shops: LayoutShop[];
++  count: number;
++  selectedShopId: string | null;
++  onShopClick: (id: string) => void;
++  query: string;
++  activeFilters: string[];
++  onFilterToggle: (id: string) => void;
++  view: 'map' | 'list';
++  onViewChange: (view: 'map' | 'list') => void;
++  onSearch: (q: string) => void;
++  filterSheetOpen: boolean;
++  onFilterOpen: () => void;
++  onFilterClose: () => void;
++  onFilterApply: (filters: string[]) => void;
++}
++
++export function MapDesktopLayout({
++  shops,
++  count,
++  selectedShopId,
++  onShopClick,
++  query,
++  activeFilters,
++  onFilterToggle,
++  view,
++  onViewChange,
++  onSearch,
++  filterSheetOpen,
++  onFilterOpen,
++  onFilterClose,
++  onFilterApply,
++}: MapDesktopLayoutProps) {
++  const [panelCollapsed, setPanelCollapsed] = useState(false);
++
++  return (
++    <div className="flex h-screen w-full flex-col">
++      <HeaderNav activeTab="find" />
++
++      <div className="flex flex-1 overflow-hidden pt-16">
++        {!panelCollapsed && (
++          <div className="flex w-[420px] shrink-0 flex-col overflow-hidden border-r border-[var(--border)] bg-white">
++            <div className="flex flex-col gap-2 px-4 pt-4 pb-2">
++              <SearchBar onSearch={onSearch} onFilterClick={onFilterOpen} defaultQuery={query} />
++              <div className="flex gap-2 overflow-x-auto scrollbar-none pl-1">
++                {QUICK_FILTERS.map((f) => (
++                  <FilterTag
++                    key={f.id}
++                    label={f.label}
++                    dot={f.dot}
++                    active={activeFilters.includes(f.id)}
++                    onClick={() => onFilterToggle(f.id)}
++                  />
++                ))}
++              </div>
++              <CountHeader count={count} view={view} onViewChange={onViewChange} />
++            </div>
++
++            <div className="flex-1 overflow-y-auto divide-y divide-[var(--border)]">
++              {shops.map((shop) => (
++                <ShopCardCompact
++                  key={shop.id}
++                  shop={shop}
++                  onClick={() => onShopClick(shop.id)}
++                  selected={shop.id === selectedShopId}
++                />
++              ))}
++            </div>
++          </div>
++        )}
++
++        <CollapseToggle
++          collapsed={panelCollapsed}
++          onClick={() => setPanelCollapsed((c) => !c)}
++        />
++
++        <div className="relative flex-1">
++          <Suspense
++            fallback={
++              <div className="flex h-full w-full items-center justify-center bg-gray-100 text-gray-400">
++                地圖載入中...
++              </div>
++            }
++          >
++            <MapView
++              shops={shops}
++              onPinClick={onShopClick}
++              selectedShopId={selectedShopId}
++            />
++          </Suspense>
++        </div>
++      </div>
++
++      <FilterSheet
++        open={filterSheetOpen}
++        onClose={onFilterClose}
++        onApply={onFilterApply}
++        initialFilters={activeFilters}
++      />
++    </div>
++  );
++}
+diff --git a/components/map/map-list-view.test.tsx b/components/map/map-list-view.test.tsx
+deleted file mode 100644
+index aa88eb6..0000000
+--- a/components/map/map-list-view.test.tsx
++++ /dev/null
+@@ -1,57 +0,0 @@
+-import { render, screen } from '@testing-library/react';
+-import userEvent from '@testing-library/user-event';
+-import { describe, it, expect, vi } from 'vitest';
+-
+-const mockPush = vi.fn();
+-vi.mock('next/navigation', () => ({
+-  useRouter: () => ({ push: mockPush }),
+-}));
+-
+-import { MapListView } from './map-list-view';
+-
+-const shops = [
+-  {
+-    id: 'shop-abc',
+-    slug: 'sunlight-coffee',
+-    name: '日光珈琲 Sunlight Coffee',
+-    rating: 4.7,
+-    distance_m: 450,
+-    is_open: true,
+-    photo_url: null,
+-  },
+-  {
+-    id: 'shop-def',
+-    slug: 'spring-roasters',
+-    name: '春日烘焙 Spring Roasters',
+-    rating: 4.2,
+-    distance_m: 820,
+-    is_open: false,
+-    photo_url: null,
+-  },
+-];
+-
+-describe('MapListView', () => {
+-  it('a user browsing list view sees all nearby shops', () => {
+-    render(<MapListView shops={shops} />);
+-    expect(screen.getByText('日光珈琲 Sunlight Coffee')).toBeInTheDocument();
+-    expect(screen.getByText('春日烘焙 Spring Roasters')).toBeInTheDocument();
+-  });
+-
+-  it('shows rating and open status for each shop', () => {
+-    render(<MapListView shops={shops} />);
+-    expect(screen.getByText('★ 4.7')).toBeInTheDocument();
+-    expect(screen.getByText(/open/i)).toBeInTheDocument();
+-    expect(screen.getByText(/closed/i)).toBeInTheDocument();
+-  });
+-
+-  it('navigates to shop detail when a row is tapped', async () => {
+-    render(<MapListView shops={shops} />);
+-    await userEvent.click(screen.getByText('日光珈琲 Sunlight Coffee'));
+-    expect(mockPush).toHaveBeenCalledWith('/shops/shop-abc/sunlight-coffee');
+-  });
+-
+-  it('a user with no matching shops sees an empty state message', () => {
+-    render(<MapListView shops={[]} />);
+-    expect(screen.getByText(/no shops/i)).toBeInTheDocument();
+-  });
+-});
+diff --git a/components/map/map-list-view.tsx b/components/map/map-list-view.tsx
+deleted file mode 100644
+index 11b7449..0000000
+--- a/components/map/map-list-view.tsx
++++ /dev/null
+@@ -1,86 +0,0 @@
+-'use client';
+-import { useRouter } from 'next/navigation';
+-import Image from 'next/image';
+-import { ChevronRight } from 'lucide-react';
+-
+-const ROW_STYLE = { minHeight: 80 };
+-
+-interface ShopListItem {
+-  id: string;
+-  slug: string;
+-  name: string;
+-  rating: number | null;
+-  distance_m: number | null;
+-  is_open: boolean | null;
+-  photo_url: string | null;
+-}
+-
+-interface MapListViewProps {
+-  shops: ShopListItem[];
+-}
+-
+-function formatDistance(meters: number | null): string {
+-  if (meters == null) return '';
+-  return meters < 1000
+-    ? `${Math.round(meters)}m`
+-    : `${(meters / 1000).toFixed(1)}km`;
+-}
+-
+-export function MapListView({ shops }: MapListViewProps) {
+-  const router = useRouter();
+-
+-  if (shops.length === 0) {
+-    return (
+-      <div className="flex h-40 items-center justify-center text-sm text-gray-400">
+-        No shops found nearby
+-      </div>
+-    );
+-  }
+-
+-  return (
+-    <div className="divide-y divide-[#E5E4E1]">
+-      {shops.map((shop) => (
+-        <button
+-          key={shop.id}
+-          type="button"
+-          className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-gray-50"
+-          style={ROW_STYLE}
+-          onClick={() => router.push(`/shops/${shop.id}/${shop.slug}`)}
+-        >
+-          <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-xl bg-gray-100">
+-            {shop.photo_url ? (
+-              <Image
+-                src={shop.photo_url}
+-                alt={shop.name}
+-                width={64}
+-                height={64}
+-                className="h-full w-full object-cover"
+-              />
+-            ) : (
+-              <div className="h-full w-full bg-[#E5E4E1]" />
+-            )}
+-          </div>
+-          <div className="min-w-0 flex-1">
+-            <p className="truncate text-[15px] font-semibold text-gray-900">
+-              {shop.name}
+-            </p>
+-            <div className="mt-0.5 flex items-center gap-2 text-xs text-gray-500">
+-              {shop.rating != null && <span>★ {shop.rating.toFixed(1)}</span>}
+-              {shop.distance_m != null && (
+-                <span>{formatDistance(shop.distance_m)}</span>
+-              )}
+-              {shop.is_open != null && (
+-                <span
+-                  className={shop.is_open ? 'text-green-600' : 'text-gray-400'}
+-                >
+-                  {shop.is_open ? 'Open' : 'Closed'}
+-                </span>
+-              )}
+-            </div>
+-          </div>
+-          <ChevronRight size={16} className="flex-shrink-0 text-gray-300" />
+-        </button>
+-      ))}
+-    </div>
+-  );
+-}
+diff --git a/components/map/map-mini-card.test.tsx b/components/map/map-mini-card.test.tsx
+deleted file mode 100644
+index bc4aebf..0000000
+--- a/components/map/map-mini-card.test.tsx
++++ /dev/null
+@@ -1,43 +0,0 @@
+-import { render, screen } from '@testing-library/react';
+-import userEvent from '@testing-library/user-event';
+-import { describe, expect, it, vi } from 'vitest';
+-import { MapMiniCard } from './map-mini-card';
+-
+-const mockPush = vi.fn();
+-
+-vi.mock('next/navigation', () => ({
+-  useRouter: () => ({ push: mockPush }),
+-}));
+-
+-describe('MapMiniCard', () => {
+-  const shop = {
+-    id: 'shop-abc123',
+-    name: '日光珈琲 Sunlight Coffee',
+-    slug: 'sunlight-coffee',
+-    rating: 4.7,
+-  };
+-
+-  it('a visitor can see the shop name and rating on the map card', () => {
+-    render(<MapMiniCard shop={shop} onDismiss={vi.fn()} />);
+-
+-    expect(screen.getByText('日光珈琲 Sunlight Coffee')).toBeInTheDocument();
+-    expect(screen.getByText('★ 4.7')).toBeInTheDocument();
+-  });
+-
+-  it('a visitor clicking the dismiss button closes the card', async () => {
+-    const onDismiss = vi.fn();
+-    render(<MapMiniCard shop={shop} onDismiss={onDismiss} />);
+-
+-    await userEvent.click(screen.getByRole('button', { name: 'dismiss' }));
+-
+-    expect(onDismiss).toHaveBeenCalledOnce();
+-  });
+-
+-  it('a visitor clicking "查看詳情" navigates to the shop detail page', async () => {
+-    render(<MapMiniCard shop={shop} onDismiss={vi.fn()} />);
+-
+-    await userEvent.click(screen.getByRole('button', { name: '查看詳情' }));
+-
+-    expect(mockPush).toHaveBeenCalledWith('/shops/shop-abc123/sunlight-coffee');
+-  });
+-});
+diff --git a/components/map/map-mini-card.tsx b/components/map/map-mini-card.tsx
+deleted file mode 100644
+index 319b5a8..0000000
+--- a/components/map/map-mini-card.tsx
++++ /dev/null
+@@ -1,45 +0,0 @@
+-'use client';
+-import { useRouter } from 'next/navigation';
+-
+-interface Shop {
+-  id: string;
+-  name: string;
+-  slug?: string;
+-  rating?: number | null;
+-}
+-
+-interface MapMiniCardProps {
+-  shop: Shop;
+-  onDismiss: () => void;
+-}
+-
+-export function MapMiniCard({ shop, onDismiss }: MapMiniCardProps) {
+-  const router = useRouter();
+-  return (
+-    <div className="absolute right-4 bottom-4 left-4 z-10 max-h-[30vh] rounded-xl bg-white p-4 shadow-lg">
+-      <div className="flex items-start justify-between">
+-        <div>
+-          <h3 className="text-sm font-semibold">{shop.name}</h3>
+-          {shop.rating != null && (
+-            <p className="mt-0.5 text-xs text-gray-500">
+-              ★ {shop.rating.toFixed(1)}
+-            </p>
+-          )}
+-        </div>
+-        <button
+-          onClick={onDismiss}
+-          aria-label="dismiss"
+-          className="text-lg leading-none text-gray-400"
+-        >
+-          ×
+-        </button>
+-      </div>
+-      <button
+-        onClick={() => router.push(`/shops/${shop.id}/${shop.slug ?? shop.id}`)}
+-        className="mt-3 w-full rounded-full bg-[#E06B3F] py-2 text-center text-sm text-white"
+-      >
+-        查看詳情
+-      </button>
+-    </div>
+-  );
+-}
+diff --git a/components/map/map-mobile-layout.tsx b/components/map/map-mobile-layout.tsx
+new file mode 100644
+index 0000000..b4b9aae
+--- /dev/null
++++ b/components/map/map-mobile-layout.tsx
+@@ -0,0 +1,137 @@
++'use client';
++import dynamic from 'next/dynamic';
++import { Suspense } from 'react';
++import { Locate } from 'lucide-react';
++import { SearchBar } from '@/components/filters/search-bar';
++import { FilterTag } from '@/components/filters/filter-tag';
++import { CountHeader } from '@/components/discovery/count-header';
++import { ShopCarousel } from '@/components/map/shop-carousel';
++import { FilterSheet } from '@/components/filters/filter-sheet';
++import { BottomNav } from '@/components/navigation/bottom-nav';
++
++const MapView = dynamic(
++  () => import('@/components/map/map-view').then((m) => ({ default: m.MapView })),
++  { ssr: false }
++);
++
++const QUICK_FILTERS = [
++  { id: 'open_now', label: 'Open Now', dot: '#3D8A5A' },
++  { id: 'wifi', label: 'WiFi' },
++  { id: 'outlet', label: 'Outlet' },
++  { id: 'quiet', label: 'Quiet' },
++  { id: 'rating', label: 'Top Rated' },
++];
++
++interface LayoutShop {
++  id: string;
++  name: string;
++  rating: number | null;
++  review_count?: number;
++  reviewCount?: number;
++  photo_urls?: string[];
++  photoUrls?: string[];
++  taxonomyTags?: Array<{ id: string; label: string; labelZh: string }>;
++  distance_m?: number | null;
++  is_open?: boolean | null;
++  latitude: number | null;
++  longitude: number | null;
++}
++
++interface MapMobileLayoutProps {
++  shops: LayoutShop[];
++  count: number;
++  selectedShopId: string | null;
++  onShopClick: (id: string) => void;
++  query: string;
++  activeFilters: string[];
++  onFilterToggle: (id: string) => void;
++  view: 'map' | 'list';
++  onViewChange: (view: 'map' | 'list') => void;
++  onSearch: (q: string) => void;
++  filterSheetOpen: boolean;
++  onFilterOpen: () => void;
++  onFilterClose: () => void;
++  onFilterApply: (filters: string[]) => void;
++  onLocationRequest?: () => void;
++}
++
++export function MapMobileLayout({
++  shops,
++  count,
++  selectedShopId,
++  onShopClick,
++  query,
++  activeFilters,
++  onFilterToggle,
++  view,
++  onViewChange,
++  onSearch,
++  filterSheetOpen,
++  onFilterOpen,
++  onFilterClose,
++  onFilterApply,
++  onLocationRequest,
++}: MapMobileLayoutProps) {
++  return (
++    <div className="relative h-screen w-full overflow-hidden">
++      <div className="absolute inset-0">
++        <Suspense
++          fallback={
++            <div className="flex h-full w-full items-center justify-center bg-gray-100 text-gray-400">
++              地圖載入中...
++            </div>
++          }
++        >
++          <MapView
++            shops={shops}
++            onPinClick={onShopClick}
++            selectedShopId={selectedShopId}
++          />
++        </Suspense>
++      </div>
++
++      <div className="absolute top-4 right-4 left-4 z-20 flex flex-col gap-2">
++        <SearchBar onSearch={onSearch} onFilterClick={onFilterOpen} defaultQuery={query} />
++        <div className="flex gap-2 overflow-x-auto scrollbar-none pl-1">
++          {QUICK_FILTERS.map((f) => (
++            <FilterTag
++              key={f.id}
++              label={f.label}
++              dot={f.dot}
++              active={activeFilters.includes(f.id)}
++              onClick={() => onFilterToggle(f.id)}
++            />
++          ))}
++        </div>
++        <CountHeader count={count} view={view} onViewChange={onViewChange} />
++      </div>
++
++      {onLocationRequest && (
++        <button
++          type="button"
++          aria-label="My location"
++          onClick={onLocationRequest}
++          className="absolute right-4 bottom-[200px] z-20 flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-lg text-[var(--map-pin)]"
++        >
++          <Locate className="h-5 w-5" />
++        </button>
++      )}
++
++      <div className="absolute right-0 bottom-0 left-0 z-20 flex flex-col gap-3 bg-gradient-to-t from-black/20 to-transparent pt-8 pb-2">
++        <ShopCarousel
++          shops={shops}
++          onShopClick={onShopClick}
++          selectedShopId={selectedShopId}
++        />
++        <BottomNav />
++      </div>
++
++      <FilterSheet
++        open={filterSheetOpen}
++        onClose={onFilterClose}
++        onApply={onFilterApply}
++        initialFilters={activeFilters}
++      />
++    </div>
++  );
++}
+diff --git a/components/map/map-pin.test.tsx b/components/map/map-pin.test.tsx
+new file mode 100644
+index 0000000..5a182b4
+--- /dev/null
++++ b/components/map/map-pin.test.tsx
+@@ -0,0 +1,27 @@
++import { render } from '@testing-library/react';
++import { describe, it, expect } from 'vitest';
++import { MapPin } from './map-pin';
++
++describe('MapPin', () => {
++  it('renders an SVG pin', () => {
++    const { container } = render(<MapPin />);
++    expect(container.querySelector('svg')).toBeInTheDocument();
++  });
++
++  it('uses default brown color when not active', () => {
++    const { container } = render(<MapPin />);
++    const circle = container.querySelector('circle');
++    expect(circle).toHaveAttribute('fill', '#8B5E3C');
++  });
++
++  it('uses coral color when active', () => {
++    const { container } = render(<MapPin active />);
++    const circle = container.querySelector('circle');
++    expect(circle).toHaveAttribute('fill', '#FF6B6B');
++  });
++
++  it('renders triangle tip', () => {
++    const { container } = render(<MapPin />);
++    expect(container.querySelector('polygon')).toBeInTheDocument();
++  });
++});
+diff --git a/components/map/map-pin.tsx b/components/map/map-pin.tsx
+new file mode 100644
+index 0000000..ce4e6e0
+--- /dev/null
++++ b/components/map/map-pin.tsx
+@@ -0,0 +1,45 @@
++interface MapPinProps {
++  active?: boolean;
++}
++
++const SIZE_DEFAULT = 40;
++const SIZE_ACTIVE = 44;
++const COLOR_DEFAULT = '#8B5E3C';
++const COLOR_ACTIVE = '#FF6B6B';
++const TIP_HEIGHT = 8;
++
++export function MapPin({ active = false }: MapPinProps) {
++  const size = active ? SIZE_ACTIVE : SIZE_DEFAULT;
++  const color = active ? COLOR_ACTIVE : COLOR_DEFAULT;
++  const radius = size / 2;
++  const iconSize = Math.round(size * 0.5);
++
++  return (
++    <svg
++      width={size}
++      height={size + TIP_HEIGHT}
++      viewBox={`0 0 ${size} ${size + TIP_HEIGHT}`}
++      fill="none"
++      xmlns="http://www.w3.org/2000/svg"
++      aria-hidden="true"
++    >
++      <circle cx={radius} cy={radius} r={radius} fill={color} />
++      <polygon
++        points={`${radius - 6},${size - 2} ${radius},${size + TIP_HEIGHT} ${radius + 6},${size - 2}`}
++        fill={color}
++      />
++      <g
++        transform={`translate(${(size - iconSize) / 2}, ${(size - iconSize) / 2})`}
++        stroke="white"
++        strokeWidth={2}
++        strokeLinecap="round"
++        strokeLinejoin="round"
++        fill="none"
++      >
++        <path d={`M${iconSize * 0.146} ${iconSize * 0.333}h${iconSize * 0.542}a${iconSize * 0.167} ${iconSize * 0.167} 0 0 1 0 ${iconSize * 0.333}h-${iconSize * 0.542}z`} />
++        <path d={`M${iconSize * 0.688} ${iconSize * 0.5}a${iconSize * 0.208} ${iconSize * 0.208} 0 0 0 0-${iconSize * 0.333}`} />
++        <path d={`M${iconSize * 0.083} ${iconSize * 0.667}l${iconSize * 0.125} ${iconSize * 0.25}h${iconSize * 0.583}l${iconSize * 0.125}-${iconSize * 0.25}`} />
++      </g>
++    </svg>
++  );
++}
+diff --git a/components/map/shop-carousel.test.tsx b/components/map/shop-carousel.test.tsx
+new file mode 100644
+index 0000000..7f2b3af
+--- /dev/null
++++ b/components/map/shop-carousel.test.tsx
+@@ -0,0 +1,31 @@
++import { render, screen } from '@testing-library/react';
++import { ShopCarousel } from './shop-carousel';
++import { makeShop } from '@/lib/test-utils/factories';
++
++const shops = [
++  { ...makeShop(), id: 'shop-1', name: 'Brew House', photo_urls: ['https://example.com/1.jpg'] },
++  { ...makeShop(), id: 'shop-2', name: 'Velvet Bean', photo_urls: ['https://example.com/2.jpg'] },
++];
++
++describe('ShopCarousel', () => {
++  it('renders all shop cards', () => {
++    render(<ShopCarousel shops={shops} onShopClick={() => {}} />);
++    expect(screen.getByText('Brew House')).toBeInTheDocument();
++    expect(screen.getByText('Velvet Bean')).toBeInTheDocument();
++  });
++
++  it('renders section header', () => {
++    render(<ShopCarousel shops={shops} onShopClick={() => {}} />);
++    expect(screen.getByText('Nearby Coffee Shops')).toBeInTheDocument();
++  });
++
++  it('renders shop count', () => {
++    render(<ShopCarousel shops={shops} onShopClick={() => {}} />);
++    expect(screen.getByText('2 places')).toBeInTheDocument();
++  });
++
++  it('has horizontal scroll container', () => {
++    const { container } = render(<ShopCarousel shops={shops} onShopClick={() => {}} />);
++    expect(container.querySelector('[data-testid="carousel-scroll"]')).toBeInTheDocument();
++  });
++});
+diff --git a/components/map/shop-carousel.tsx b/components/map/shop-carousel.tsx
+new file mode 100644
+index 0000000..73cece7
+--- /dev/null
++++ b/components/map/shop-carousel.tsx
+@@ -0,0 +1,58 @@
++'use client';
++import { useRef, useEffect } from 'react';
++import { ShopCardCarousel } from '@/components/shops/shop-card-carousel';
++
++interface CarouselShop {
++  id: string;
++  name: string;
++  rating: number | null;
++  photo_urls?: string[];
++  photoUrls?: string[];
++  taxonomyTags?: Array<{ id: string; label: string; labelZh: string }>;
++  review_count?: number;
++  reviewCount?: number;
++}
++
++interface ShopCarouselProps {
++  shops: CarouselShop[];
++  onShopClick: (shopId: string) => void;
++  selectedShopId?: string | null;
++}
++
++export function ShopCarousel({ shops, onShopClick, selectedShopId }: ShopCarouselProps) {
++  const scrollRef = useRef<HTMLDivElement>(null);
++
++  useEffect(() => {
++    if (!selectedShopId || !scrollRef.current) return;
++    const idx = shops.findIndex((s) => s.id === selectedShopId);
++    if (idx < 0) return;
++    const card = scrollRef.current.children[idx] as HTMLElement | undefined;
++    card?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
++  }, [selectedShopId, shops]);
++
++  return (
++    <div className="flex flex-col gap-3">
++      <div className="flex items-center justify-between px-5">
++        <span className="font-[family-name:var(--font-heading)] text-[17px] font-bold text-[var(--foreground)]">
++          Nearby Coffee Shops
++        </span>
++        <span className="font-[family-name:var(--font-body)] text-[13px] font-medium text-[var(--text-tertiary)]">
++          {shops.length} places
++        </span>
++      </div>
++      <div
++        ref={scrollRef}
++        data-testid="carousel-scroll"
++        className="flex gap-3 overflow-x-auto px-5 pb-2 scrollbar-none"
++      >
++        {shops.map((shop) => (
++          <ShopCardCarousel
++            key={shop.id}
++            shop={shop}
++            onClick={() => onShopClick(shop.id)}
++          />
++        ))}
++      </div>
++    </div>
++  );
++}
+diff --git a/components/navigation/app-shell.test.tsx b/components/navigation/app-shell.test.tsx
+index a1cec32..1e319ed 100644
+--- a/components/navigation/app-shell.test.tsx
++++ b/components/navigation/app-shell.test.tsx
+@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
+ import { AppShell } from './app-shell';
+ 
+ vi.mock('next/navigation', () => ({
+-  useRouter: () => ({ push: vi.fn() }),
++  usePathname: vi.fn(() => '/explore'),
+ }));
+ 
+ vi.mock('@/lib/hooks/use-media-query', () => ({
+diff --git a/components/navigation/app-shell.tsx b/components/navigation/app-shell.tsx
+index d6c3fbd..b184258 100644
+--- a/components/navigation/app-shell.tsx
++++ b/components/navigation/app-shell.tsx
+@@ -1,22 +1,21 @@
+ 'use client';
+-import { useRouter } from 'next/navigation';
++import { usePathname } from 'next/navigation';
+ import { useIsDesktop } from '@/lib/hooks/use-media-query';
+ import { BottomNav } from './bottom-nav';
+ import { HeaderNav } from './header-nav';
+ 
+ export function AppShell({ children }: { children: React.ReactNode }) {
+   const isDesktop = useIsDesktop();
+-  const router = useRouter();
+-
+-  const handleSearch = (query: string) => {
+-    router.push(`/map?q=${encodeURIComponent(query)}`);
+-  };
++  const pathname = usePathname();
++  const isFindPage = pathname === '/';
+ 
+   return (
+     <>
+-      {isDesktop && <HeaderNav onSearch={handleSearch} />}
+-      <main className={isDesktop ? 'pt-16' : 'pb-16'}>{children}</main>
+-      {!isDesktop && <BottomNav />}
++      {isDesktop && !isFindPage && <HeaderNav />}
++      <main className={isDesktop && !isFindPage ? 'pt-16' : isFindPage ? '' : 'pb-16'}>
++        {children}
++      </main>
++      {!isDesktop && !isFindPage && <BottomNav />}
+     </>
+   );
+ }
+diff --git a/components/navigation/bottom-nav.test.tsx b/components/navigation/bottom-nav.test.tsx
+index b3a1c7c..a3807b4 100644
+--- a/components/navigation/bottom-nav.test.tsx
++++ b/components/navigation/bottom-nav.test.tsx
+@@ -1,32 +1,20 @@
+ import { render, screen } from '@testing-library/react';
+-import { describe, it, expect, vi } from 'vitest';
++import { describe, it, expect } from 'vitest';
++import { vi } from 'vitest';
+ import { BottomNav } from './bottom-nav';
+ 
+ vi.mock('next/navigation', () => ({
+-  usePathname: () => '/',
+-  Link: ({ children, href }: { children: React.ReactNode; href: string }) => (
+-    <a href={href}>{children}</a>
+-  ),
++  usePathname: vi.fn(() => '/'),
+ }));
+ 
+ vi.mock('next/link', () => ({
+-  default: ({
+-    children,
+-    href,
+-    ...rest
+-  }: {
+-    children: React.ReactNode;
+-    href: string;
+-    [key: string]: unknown;
+-  }) => (
+-    <a href={href} {...rest}>
+-      {children}
+-    </a>
++  default: ({ children, href, ...props }: { children: React.ReactNode; href: string; [key: string]: unknown }) => (
++    <a href={href} {...props}>{children}</a>
+   ),
+ }));
+ 
+ describe('BottomNav', () => {
+-  it('When a user opens the app, they see four navigation tabs: 地圖, 探索, 收藏, 我的', () => {
++  it('renders 4 tabs with Chinese labels', () => {
+     render(<BottomNav />);
+     expect(screen.getByText('地圖')).toBeInTheDocument();
+     expect(screen.getByText('探索')).toBeInTheDocument();
+@@ -34,26 +22,22 @@ describe('BottomNav', () => {
+     expect(screen.getByText('我的')).toBeInTheDocument();
+   });
+ 
+-  it('When a user is on the home page, the 地圖 tab appears active', () => {
++  it('has pill-shaped container', () => {
++    const { container } = render(<BottomNav />);
++    const pill = container.querySelector('[data-testid="tab-bar-pill"]');
++    expect(pill).toBeInTheDocument();
++  });
++
++  it('shows active state for current route', () => {
+     render(<BottomNav />);
+-    const mapLink = screen.getByText('地圖').closest('a');
+-    expect(mapLink).toHaveAttribute('data-active', 'true');
++    const findTab = screen.getByText('地圖').closest('[data-tab]');
++    expect(findTab).toHaveAttribute('data-active', 'true');
+   });
+ 
+-  it('When a user taps each tab, they are directed to the correct section of the app', () => {
++  it('links to correct routes', () => {
+     render(<BottomNav />);
+-    expect(screen.getByText('地圖').closest('a')).toHaveAttribute('href', '/');
+-    expect(screen.getByText('探索').closest('a')).toHaveAttribute(
+-      'href',
+-      '/explore'
+-    );
+-    expect(screen.getByText('收藏').closest('a')).toHaveAttribute(
+-      'href',
+-      '/lists'
+-    );
+-    expect(screen.getByText('我的').closest('a')).toHaveAttribute(
+-      'href',
+-      '/profile'
+-    );
++    expect(screen.getByText('探索').closest('a')).toHaveAttribute('href', '/explore');
++    expect(screen.getByText('收藏').closest('a')).toHaveAttribute('href', '/lists');
++    expect(screen.getByText('我的').closest('a')).toHaveAttribute('href', '/profile');
+   });
+ });
+diff --git a/components/navigation/bottom-nav.tsx b/components/navigation/bottom-nav.tsx
+index ff4613a..b7243e0 100644
+--- a/components/navigation/bottom-nav.tsx
++++ b/components/navigation/bottom-nav.tsx
+@@ -15,18 +15,23 @@ export function BottomNav() {
+   const pathname = usePathname();
+ 
+   return (
+-    <nav className="pb-safe fixed right-0 bottom-0 left-0 z-40 border-t border-gray-100 bg-white">
+-      <div className="flex">
++    <nav className="fixed right-0 bottom-0 left-0 z-40 px-4 pb-4">
++      <div
++        data-testid="tab-bar-pill"
++        className="flex rounded-[36px] bg-white p-1 shadow-[0_4px_20px_#0000001A] h-[62px]"
++      >
+         {TABS.map(({ href, label, icon: Icon }) => {
+-          const isActive =
+-            pathname === href || (href !== '/' && pathname.startsWith(href));
++          const isActive = pathname === href || (href !== '/' && pathname.startsWith(href));
+           return (
+             <Link
+               key={href}
+               href={href}
+-              data-active={isActive}
+-              className={`flex flex-1 flex-col items-center gap-0.5 py-2 text-xs transition-colors ${
+-                isActive ? 'text-[#E06B3F]' : 'text-gray-400'
++              data-tab={label}
++              data-active={isActive || undefined}
++              className={`flex flex-1 flex-col items-center justify-center gap-0.5 rounded-[26px] font-[family-name:var(--font-body)] text-[11px] font-medium transition-colors ${
++                isActive
++                  ? 'bg-[var(--active-dark)] text-white'
++                  : 'text-[var(--text-tertiary)]'
+               }`}
+             >
+               <Icon className="h-5 w-5" />
+diff --git a/components/navigation/header-nav.test.tsx b/components/navigation/header-nav.test.tsx
+index aa97034..cf4ce8c 100644
+--- a/components/navigation/header-nav.test.tsx
++++ b/components/navigation/header-nav.test.tsx
+@@ -1,62 +1,39 @@
+ import { render, screen } from '@testing-library/react';
+-import { describe, it, expect, vi, beforeEach } from 'vitest';
+-import { createMockSupabaseAuth } from '@/lib/test-utils/mocks';
++import { describe, it, expect, vi } from 'vitest';
++import { HeaderNav } from './header-nav';
+ 
+-vi.mock('next/link', () => ({
+-  default: ({
+-    children,
+-    href,
+-    ...rest
+-  }: {
+-    children: React.ReactNode;
+-    href: string;
+-    [key: string]: unknown;
+-  }) => (
+-    <a href={href} {...rest}>
+-      {children}
+-    </a>
+-  ),
++vi.mock('next/navigation', () => ({
++  usePathname: vi.fn(() => '/'),
+ }));
+ 
+-vi.mock('@/components/discovery/search-bar', () => ({
+-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+-  SearchBar: ({ onSubmit: _onSubmit }: { onSubmit: (q: string) => void }) => (
+-    <div data-testid="search-bar" />
++vi.mock('next/link', () => ({
++  default: ({ children, href, ...props }: { children: React.ReactNode; href: string; [key: string]: unknown }) => (
++    <a href={href} {...props}>{children}</a>
+   ),
+ }));
+ 
+-const mockAuth = createMockSupabaseAuth();
+-vi.mock('@/lib/supabase/client', () => ({
+-  createClient: () => ({ auth: mockAuth }),
+-}));
+-
+-import { HeaderNav } from './header-nav';
+-
+ describe('HeaderNav', () => {
+-  beforeEach(() => {
+-    vi.clearAllMocks();
+-    mockAuth.getSession.mockResolvedValue({ data: { session: null } });
++  it('renders logo with 啡遊 CafeRoam', () => {
++    render(<HeaderNav activeTab="find" />);
++    expect(screen.getByText('啡遊 CafeRoam')).toBeInTheDocument();
+   });
+ 
+-  it('renders logo', () => {
+-    render(<HeaderNav onSearch={vi.fn()} />);
+-    expect(screen.getByText(/啡遊|CafeRoam/i)).toBeInTheDocument();
++  it('renders 4 nav items', () => {
++    render(<HeaderNav activeTab="find" />);
++    expect(screen.getByText('Find')).toBeInTheDocument();
++    expect(screen.getByText('Explore')).toBeInTheDocument();
++    expect(screen.getByText('Favorites')).toBeInTheDocument();
++    expect(screen.getByText('Profile')).toBeInTheDocument();
+   });
+ 
+-  it('renders navigation links', () => {
+-    render(<HeaderNav onSearch={vi.fn()} />);
+-    expect(screen.getByRole('link', { name: /地圖/i })).toHaveAttribute(
+-      'href',
+-      '/map'
+-    );
+-    expect(screen.getByRole('link', { name: /收藏/i })).toHaveAttribute(
+-      'href',
+-      '/lists'
+-    );
++  it('shows Find as active when activeTab is find', () => {
++    render(<HeaderNav activeTab="find" />);
++    const findLink = screen.getByText('Find').closest('a');
++    expect(findLink).toHaveAttribute('data-active', 'true');
+   });
+ 
+-  it('renders search bar', () => {
+-    render(<HeaderNav onSearch={vi.fn()} />);
+-    expect(screen.getByTestId('search-bar')).toBeInTheDocument();
++  it('renders search button', () => {
++    render(<HeaderNav activeTab="find" />);
++    expect(screen.getByRole('button', { name: /search/i })).toBeInTheDocument();
+   });
+ });
+diff --git a/components/navigation/header-nav.tsx b/components/navigation/header-nav.tsx
+index 108d29e..1852d09 100644
+--- a/components/navigation/header-nav.tsx
++++ b/components/navigation/header-nav.tsx
+@@ -1,67 +1,67 @@
+ 'use client';
+ import Link from 'next/link';
+-import { useEffect, useState } from 'react';
+-import { createClient } from '@/lib/supabase/client';
+-import { SearchBar } from '@/components/discovery/search-bar';
++import { usePathname } from 'next/navigation';
++import { MapPin, Compass, Bookmark, User, Search } from 'lucide-react';
++import type { LucideIcon } from 'lucide-react';
++
++const NAV_ITEMS: { href: string; label: string; icon: LucideIcon; tab: string }[] = [
++  { href: '/', label: 'Find', icon: MapPin, tab: 'find' },
++  { href: '/explore', label: 'Explore', icon: Compass, tab: 'explore' },
++  { href: '/lists', label: 'Favorites', icon: Bookmark, tab: 'favorites' },
++  { href: '/profile', label: 'Profile', icon: User, tab: 'profile' },
++];
+ 
+ interface HeaderNavProps {
+-  onSearch: (query: string) => void;
+-  variant?: 'solid' | 'glass';
++  activeTab?: string;
+ }
+ 
+-export function HeaderNav({ onSearch, variant = 'solid' }: HeaderNavProps) {
+-  const [isLoggedIn, setIsLoggedIn] = useState(false);
++export function HeaderNav({ activeTab }: HeaderNavProps) {
++  const pathname = usePathname();
++  const currentTab = activeTab ?? (pathname === '/' ? 'find' : pathname.replace('/', ''));
+ 
+-  useEffect(() => {
+-    const supabase = createClient();
+-    supabase.auth.getSession().then(({ data: { session } }) => {
+-      setIsLoggedIn(!!session);
+-    });
+-    const {
+-      data: { subscription },
+-    } = supabase.auth.onAuthStateChange((_event, session) => {
+-      setIsLoggedIn(!!session);
+-    });
+-    return () => subscription.unsubscribe();
+-  }, []);
++  return (
++    <header className="fixed top-0 right-0 left-0 z-40 flex items-center justify-between h-16 px-8 bg-white border-b border-[#D1D0CD]">
++      <Link href="/" className="flex items-center gap-2.5">
++        <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-[var(--map-pin)]">
++          <span className="font-[family-name:var(--font-heading)] text-base font-bold text-white">啡</span>
++        </div>
++        <span className="font-[family-name:var(--font-heading)] text-base font-bold text-[var(--foreground)]">
++          啡遊 CafeRoam
++        </span>
++      </Link>
+ 
+-  const bgClass =
+-    variant === 'glass'
+-      ? 'bg-white/80 backdrop-blur-md supports-[not(backdrop-filter)]:bg-white/90'
+-      : 'bg-white border-b border-gray-100';
++      <nav className="flex items-center gap-0.5">
++        {NAV_ITEMS.map(({ href, label, icon: Icon, tab }) => {
++          const isActive = currentTab === tab;
++          return (
++            <Link
++              key={tab}
++              href={href}
++              data-active={isActive || undefined}
++              className={`flex items-center gap-[5px] rounded-[20px] px-4 h-9 font-[family-name:var(--font-body)] text-sm transition-colors ${
++                isActive
++                  ? 'bg-[var(--active-dark)] text-white font-semibold'
++                  : 'text-[var(--muted-foreground)] font-medium'
++              }`}
++            >
++              <Icon className="h-3.5 w-3.5" />
++              {label}
++            </Link>
++          );
++        })}
++      </nav>
+ 
+-  return (
+-    <header className={`fixed top-0 right-0 left-0 z-40 ${bgClass}`}>
+-      <div className="mx-auto flex h-16 max-w-6xl items-center gap-4 px-4">
+-        <Link
+-          href="/"
+-          className="flex-shrink-0 text-xl font-bold text-[#E06B3F]"
++      <div className="flex items-center gap-2">
++        <button
++          type="button"
++          aria-label="Search"
++          className="flex items-center justify-center h-9 w-9 rounded-[18px] bg-[var(--background)] text-[var(--muted-foreground)]"
+         >
+-          啡遊
+-        </Link>
+-        <div className="max-w-xl flex-1">
+-          <SearchBar onSubmit={onSearch} />
++          <Search className="h-[18px] w-[18px]" />
++        </button>
++        <div className="flex items-center justify-center h-8 w-8 rounded-full bg-[var(--map-pin)]">
++          <span className="font-[family-name:var(--font-body)] text-sm font-semibold text-white">Y</span>
+         </div>
+-        <nav className="flex flex-shrink-0 items-center gap-4">
+-          <Link
+-            href="/map"
+-            className="text-sm text-gray-600 transition-colors hover:text-[#E06B3F]"
+-          >
+-            地圖
+-          </Link>
+-          <Link
+-            href="/lists"
+-            className="text-sm text-gray-600 transition-colors hover:text-[#E06B3F]"
+-          >
+-            收藏
+-          </Link>
+-          <Link
+-            href={isLoggedIn ? '/profile' : '/login'}
+-            className="rounded-full bg-[#E06B3F] px-4 py-2 text-sm text-white transition-colors hover:bg-[#d05a2e]"
+-          >
+-            {isLoggedIn ? '個人' : '登入'}
+-          </Link>
+-        </nav>
+       </div>
+     </header>
+   );
+diff --git a/components/shops/shop-card-carousel.test.tsx b/components/shops/shop-card-carousel.test.tsx
+new file mode 100644
+index 0000000..ab9bba5
+--- /dev/null
++++ b/components/shops/shop-card-carousel.test.tsx
+@@ -0,0 +1,55 @@
++import { render, screen } from '@testing-library/react';
++import userEvent from '@testing-library/user-event';
++import { describe, it, expect, vi } from 'vitest';
++import { ShopCardCarousel } from './shop-card-carousel';
++import { makeShop } from '@/lib/test-utils/factories';
++
++const shop = {
++  ...makeShop(),
++  id: 'shop-brew',
++  name: 'The Brew House',
++  rating: 4.8,
++  review_count: 324,
++  photo_urls: ['https://example.com/brew.jpg'],
++  taxonomyTags: [
++    { id: 't1', dimension: 'functionality' as const, label: 'Latte Art', labelZh: '拉花' },
++    { id: 't2', dimension: 'functionality' as const, label: 'WiFi', labelZh: 'WiFi' },
++  ],
++};
++
++describe('ShopCardCarousel', () => {
++  it('renders shop name', () => {
++    render(<ShopCardCarousel shop={shop} onClick={() => {}} />);
++    expect(screen.getByText('The Brew House')).toBeInTheDocument();
++  });
++
++  it('renders rating with star', () => {
++    render(<ShopCardCarousel shop={shop} onClick={() => {}} />);
++    expect(screen.getByText('4.8')).toBeInTheDocument();
++  });
++
++  it('renders review count', () => {
++    render(<ShopCardCarousel shop={shop} onClick={() => {}} />);
++    expect(screen.getByText('(324)')).toBeInTheDocument();
++  });
++
++  it('renders taxonomy tags', () => {
++    render(<ShopCardCarousel shop={shop} onClick={() => {}} />);
++    expect(screen.getByText('Latte Art')).toBeInTheDocument();
++    expect(screen.getByText('WiFi')).toBeInTheDocument();
++  });
++
++  it('renders shop photo', () => {
++    render(<ShopCardCarousel shop={shop} onClick={() => {}} />);
++    const img = screen.getByRole('img', { name: 'The Brew House' });
++    expect(img).toHaveAttribute('src', expect.stringContaining('brew.jpg'));
++  });
++
++  it('calls onClick when card is clicked', async () => {
++    const user = userEvent.setup();
++    const onClick = vi.fn();
++    render(<ShopCardCarousel shop={shop} onClick={onClick} />);
++    await user.click(screen.getByRole('article'));
++    expect(onClick).toHaveBeenCalledOnce();
++  });
++});
+diff --git a/components/shops/shop-card-carousel.tsx b/components/shops/shop-card-carousel.tsx
+new file mode 100644
+index 0000000..bd1f25d
+--- /dev/null
++++ b/components/shops/shop-card-carousel.tsx
+@@ -0,0 +1,82 @@
++'use client';
++import Image from 'next/image';
++import { Star } from 'lucide-react';
++
++interface CarouselShop {
++  id: string;
++  name: string;
++  rating: number | null;
++  review_count?: number;
++  reviewCount?: number;
++  photo_urls?: string[];
++  photoUrls?: string[];
++  taxonomyTags?: Array<{ id: string; label: string; labelZh: string }>;
++  distance_km?: number | null;
++}
++
++interface ShopCardCarouselProps {
++  shop: CarouselShop;
++  onClick: () => void;
++  distanceText?: string;
++}
++
++export function ShopCardCarousel({ shop, onClick, distanceText }: ShopCardCarouselProps) {
++  const photos = shop.photo_urls ?? shop.photoUrls ?? [];
++  const reviewCount = shop.review_count ?? shop.reviewCount ?? 0;
++  const photoUrl = photos.length > 0 ? photos[0] : null;
++
++  return (
++    <article
++      role="article"
++      onClick={onClick}
++      className="flex flex-col w-[260px] shrink-0 rounded-2xl bg-white shadow-[0_4px_16px_#0000000F] overflow-hidden cursor-pointer"
++    >
++      {photoUrl ? (
++        <div className="relative h-20 w-full">
++          <Image
++            src={photoUrl}
++            alt={shop.name}
++            fill
++            className="object-cover"
++            sizes="260px"
++          />
++        </div>
++      ) : (
++        <div className="flex h-20 w-full items-center justify-center bg-[var(--background)] text-[var(--text-tertiary)]">
++          No photo
++        </div>
++      )}
++      <div className="flex flex-col gap-1.5 p-[12px_14px]">
++        <div className="flex items-center justify-between">
++          <span className="font-[family-name:var(--font-heading)] text-[15px] font-bold text-[var(--foreground)] truncate">
++            {shop.name}
++          </span>
++          {distanceText && (
++            <span className="text-xs font-medium text-[var(--text-tertiary)] shrink-0 ml-2">
++              {distanceText}
++            </span>
++          )}
++        </div>
++        <div className="flex items-center gap-1">
++          <Star className="h-[13px] w-[13px] fill-[var(--rating-star)] text-[var(--rating-star)]" />
++          <span className="text-xs font-semibold text-[var(--foreground)]">
++            {shop.rating?.toFixed(1) ?? '—'}
++          </span>
++          <span className="text-xs text-[var(--text-tertiary)]">({reviewCount})</span>
++        </div>
++        {shop.taxonomyTags && shop.taxonomyTags.length > 0 && (
++          <div className="flex gap-1.5 flex-wrap">
++            {shop.taxonomyTags.slice(0, 3).map((tag) => (
++              <span
++                key={tag.id}
++                className="rounded-lg bg-[var(--background)] px-2 py-[3px] text-[11px] font-medium text-[var(--muted-foreground)]"
++              >
++                {tag.label}
++              </span>
++            ))}
++          </div>
++        )}
++      </div>
++    </article>
++  );
++}
+diff --git a/components/shops/shop-card-compact.test.tsx b/components/shops/shop-card-compact.test.tsx
+new file mode 100644
+index 0000000..28b1aa1
+--- /dev/null
++++ b/components/shops/shop-card-compact.test.tsx
+@@ -0,0 +1,49 @@
++import { render, screen } from '@testing-library/react';
++import userEvent from '@testing-library/user-event';
++import { describe, it, expect, vi } from 'vitest';
++import { ShopCardCompact } from './shop-card-compact';
++import { makeShop } from '@/lib/test-utils/factories';
++
++const shop = {
++  ...makeShop(),
++  id: 'shop-brew',
++  name: 'The Brew House',
++  rating: 4.8,
++  photo_urls: ['https://example.com/brew.jpg'],
++};
++
++describe('ShopCardCompact', () => {
++  it('renders shop name', () => {
++    render(<ShopCardCompact shop={shop} onClick={() => {}} />);
++    expect(screen.getByText('The Brew House')).toBeInTheDocument();
++  });
++
++  it('renders rating and meta text', () => {
++    render(<ShopCardCompact shop={shop} onClick={() => {}} />);
++    expect(screen.getByText(/4\.8/)).toBeInTheDocument();
++  });
++
++  it('renders shop photo', () => {
++    render(<ShopCardCompact shop={shop} onClick={() => {}} />);
++    expect(screen.getByRole('img', { name: 'The Brew House' })).toBeInTheDocument();
++  });
++
++  it('renders chevron arrow', () => {
++    render(<ShopCardCompact shop={shop} onClick={() => {}} />);
++    expect(screen.getByTestId('compact-card-arrow')).toBeInTheDocument();
++  });
++
++  it('shows selected state with accent border and highlight bg', () => {
++    const { container } = render(<ShopCardCompact shop={shop} onClick={() => {}} selected />);
++    const article = container.querySelector('article');
++    expect(article).toHaveAttribute('data-selected', 'true');
++  });
++
++  it('calls onClick when clicked', async () => {
++    const user = userEvent.setup();
++    const onClick = vi.fn();
++    render(<ShopCardCompact shop={shop} onClick={onClick} />);
++    await user.click(screen.getByRole('article'));
++    expect(onClick).toHaveBeenCalledOnce();
++  });
++});
+diff --git a/components/shops/shop-card-compact.tsx b/components/shops/shop-card-compact.tsx
+new file mode 100644
+index 0000000..5f63707
+--- /dev/null
++++ b/components/shops/shop-card-compact.tsx
+@@ -0,0 +1,67 @@
++'use client';
++import Image from 'next/image';
++import { ChevronRight } from 'lucide-react';
++
++interface CompactShop {
++  id: string;
++  name: string;
++  rating: number | null;
++  photo_urls?: string[];
++  photoUrls?: string[];
++  distance_m?: number | null;
++  is_open?: boolean | null;
++  taxonomyTags?: Array<{ id: string; label: string; labelZh: string }>;
++}
++
++interface ShopCardCompactProps {
++  shop: CompactShop;
++  onClick: () => void;
++  selected?: boolean;
++}
++
++function formatMeta(shop: CompactShop): string {
++  const parts: string[] = [];
++  if (shop.rating != null) parts.push(`★ ${shop.rating.toFixed(1)}`);
++  if (shop.distance_m != null) {
++    parts.push(shop.distance_m < 1000 ? `${shop.distance_m}m` : `${(shop.distance_m / 1000).toFixed(1)} km`);
++  }
++  if (shop.is_open != null) parts.push(shop.is_open ? 'Open' : 'Closed');
++  return parts.join('  ·  ');
++}
++
++export function ShopCardCompact({ shop, onClick, selected = false }: ShopCardCompactProps) {
++  const photos = shop.photo_urls ?? shop.photoUrls ?? [];
++  const photoUrl = photos.length > 0 ? photos[0] : null;
++
++  return (
++    <article
++      role="article"
++      data-selected={selected || undefined}
++      onClick={onClick}
++      className={`flex items-center gap-3 px-5 py-0 h-20 cursor-pointer transition-colors ${
++        selected
++          ? 'bg-[var(--card-selected-bg)] border-l-[3px] border-l-[var(--map-pin)]'
++          : 'bg-[var(--background)]'
++      }`}
++    >
++      {photoUrl ? (
++        <div className="relative h-16 w-16 shrink-0 rounded-[10px] overflow-hidden">
++          <Image src={photoUrl} alt={shop.name} fill className="object-cover" sizes="64px" />
++        </div>
++      ) : (
++        <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[10px] bg-[var(--muted)] text-[var(--text-tertiary)] text-xs">
++          ☕
++        </div>
++      )}
++      <div className="flex flex-col gap-1 flex-1 min-w-0">
++        <span className="font-[family-name:var(--font-body)] text-[15px] font-semibold text-[var(--foreground)] truncate">
++          {shop.name}
++        </span>
++        <span className="font-[family-name:var(--font-body)] text-[13px] text-[var(--text-secondary)]">
++          {formatMeta(shop)}
++        </span>
++      </div>
++      <ChevronRight data-testid="compact-card-arrow" className="h-[18px] w-[18px] shrink-0 text-[var(--border-strong,#D1D0CD)]" />
++    </article>
++  );
++}
+diff --git a/components/shops/shop-card-grid.test.tsx b/components/shops/shop-card-grid.test.tsx
+new file mode 100644
+index 0000000..ac6b7ec
+--- /dev/null
++++ b/components/shops/shop-card-grid.test.tsx
+@@ -0,0 +1,47 @@
++import { render, screen } from '@testing-library/react';
++import userEvent from '@testing-library/user-event';
++import { describe, it, expect, vi } from 'vitest';
++import { ShopCardGrid } from './shop-card-grid';
++import { makeShop } from '@/lib/test-utils/factories';
++
++const shop = {
++  ...makeShop(),
++  id: 'shop-brew',
++  name: 'The Brew House',
++  rating: 4.8,
++  review_count: 324,
++  photo_urls: ['https://example.com/brew.jpg'],
++  taxonomyTags: [
++    { id: 't1', dimension: 'functionality' as const, label: 'Quiet', labelZh: '安靜' },
++  ],
++};
++
++describe('ShopCardGrid', () => {
++  it('renders shop name', () => {
++    render(<ShopCardGrid shop={shop} onClick={() => {}} />);
++    expect(screen.getByText('The Brew House')).toBeInTheDocument();
++  });
++
++  it('renders photo', () => {
++    render(<ShopCardGrid shop={shop} onClick={() => {}} />);
++    expect(screen.getByRole('img', { name: 'The Brew House' })).toBeInTheDocument();
++  });
++
++  it('renders rating', () => {
++    render(<ShopCardGrid shop={shop} onClick={() => {}} />);
++    expect(screen.getByText(/4\.8/)).toBeInTheDocument();
++  });
++
++  it('renders open status when provided', () => {
++    render(<ShopCardGrid shop={{ ...shop, is_open: true }} onClick={() => {}} />);
++    expect(screen.getByText('Open')).toBeInTheDocument();
++  });
++
++  it('calls onClick when card is clicked', async () => {
++    const user = userEvent.setup();
++    const onClick = vi.fn();
++    render(<ShopCardGrid shop={shop} onClick={onClick} />);
++    await user.click(screen.getByRole('article'));
++    expect(onClick).toHaveBeenCalledOnce();
++  });
++});
+diff --git a/components/shops/shop-card-grid.tsx b/components/shops/shop-card-grid.tsx
+new file mode 100644
+index 0000000..a241a38
+--- /dev/null
++++ b/components/shops/shop-card-grid.tsx
+@@ -0,0 +1,70 @@
++'use client';
++import Image from 'next/image';
++import { Star, ChevronRight } from 'lucide-react';
++
++interface GridShop {
++  id: string;
++  name: string;
++  rating: number | null;
++  review_count?: number;
++  reviewCount?: number;
++  photo_urls?: string[];
++  photoUrls?: string[];
++  distance_m?: number | null;
++  is_open?: boolean | null;
++  taxonomyTags?: Array<{ id: string; label: string; labelZh: string }>;
++}
++
++interface ShopCardGridProps {
++  shop: GridShop;
++  onClick: () => void;
++}
++
++export function ShopCardGrid({ shop, onClick }: ShopCardGridProps) {
++  const photos = shop.photo_urls ?? shop.photoUrls ?? [];
++  const photoUrl = photos.length > 0 ? photos[0] : null;
++
++  return (
++    <article
++      role="article"
++      onClick={onClick}
++      className="flex flex-col rounded-2xl bg-white overflow-hidden cursor-pointer shadow-[0_2px_8px_#0000000A] hover:shadow-[0_4px_16px_#0000000F] transition-shadow"
++    >
++      {photoUrl ? (
++        <div className="relative aspect-[4/3] w-full">
++          <Image src={photoUrl} alt={shop.name} fill className="object-cover" sizes="(min-width: 1024px) 33vw, 100vw" />
++        </div>
++      ) : (
++        <div className="flex aspect-[4/3] w-full items-center justify-center bg-[var(--background)] text-[var(--text-tertiary)]">
++          No photo
++        </div>
++      )}
++      <div className="flex flex-col gap-1 p-3">
++        <div className="flex items-center justify-between">
++          <span className="font-[family-name:var(--font-body)] text-sm font-semibold text-[var(--foreground)] truncate">
++            {shop.name}
++          </span>
++          <ChevronRight className="h-4 w-4 shrink-0 text-[var(--text-tertiary)]" />
++        </div>
++        <div className="flex items-center gap-1 text-xs text-[var(--muted-foreground)]">
++          <Star className="h-3 w-3 fill-[var(--rating-star)] text-[var(--rating-star)]" />
++          <span className="font-semibold text-[var(--foreground)]">{shop.rating?.toFixed(1) ?? '—'}</span>
++          {shop.distance_m != null && (
++            <>
++              <span>·</span>
++              <span>{shop.distance_m < 1000 ? `${shop.distance_m}m` : `${(shop.distance_m / 1000).toFixed(1)} km`}</span>
++            </>
++          )}
++          {shop.is_open != null && (
++            <>
++              <span>·</span>
++              <span className={shop.is_open ? 'text-[var(--primary)]' : 'text-[var(--destructive)]'}>
++                {shop.is_open ? 'Open' : 'Closed'}
++              </span>
++            </>
++          )}
++        </div>
++      </div>
++    </article>
++  );
++}
+diff --git a/docs/decisions/2026-03-19-separate-shop-card-components.md b/docs/decisions/2026-03-19-separate-shop-card-components.md
+new file mode 100644
+index 0000000..07cdc3e
+--- /dev/null
++++ b/docs/decisions/2026-03-19-separate-shop-card-components.md
+@@ -0,0 +1,21 @@
++# ADR: Use separate ShopCard components instead of polymorphic variant
++
++Date: 2026-03-19
++
++## Decision
++Create three distinct shop card components — ShopCardCarousel, ShopCardCompact, and ShopCardGrid — instead of a single polymorphic ShopCard with variant prop.
++
++## Context
++The Map View feature has three card layouts for displaying coffee shops: a vertical carousel card (mobile map), a horizontal row card (mobile list + desktop panel), and a large photo grid card (desktop list). All share the same shop data but differ significantly in DOM structure, sizing, and visual treatment.
++
++## Alternatives Considered
++- **Single polymorphic ShopCard with `variant` prop**: One component with `variant='carousel' | 'compact' | 'grid'`. Rejected: The three layouts share almost no DOM structure — carousel is vertical (image top, content below), compact is horizontal (thumbnail left, info center, arrow right), grid is vertical with larger proportions. A polymorphic component would be a large if/else tree with no actual code reuse. Harder to maintain and reason about.
++
++## Rationale
++The three card types share a data interface (Shop type) but not a UI structure. Code reuse happens at the data layer (shared props type, shared hooks) not the component layer. Separate components are each ~30-50 lines, focused, easy to style independently, and won't break each other during changes. The shared `Shop` TypeScript type provides the data contract; the rendering is intentionally different per context.
++
++## Consequences
++- Advantage: Each card component is small, focused, easy to understand
++- Advantage: Changes to one card layout can't accidentally break another
++- Advantage: Easier to add context-specific features (e.g., selected state only on ShopCardCompact)
++- Disadvantage: Some visual details (star rating, tag chips) may be duplicated — can extract tiny sub-components if this becomes painful
+diff --git a/docs/decisions/2026-03-19-typography-two-fonts.md b/docs/decisions/2026-03-19-typography-two-fonts.md
+new file mode 100644
+index 0000000..b748ffd
+--- /dev/null
++++ b/docs/decisions/2026-03-19-typography-two-fonts.md
+@@ -0,0 +1,21 @@
++# ADR: Consolidate typography to two font families
++
++Date: 2026-03-19
++
++## Decision
++Use Bricolage Grotesque (headings/titles) and DM Sans (body/meta/nav) as the two font families across the entire app.
++
++## Context
++The design.pen screens used three fonts: Bricolage Grotesque for headings, DM Sans for body text, and Inter for desktop navigation. The existing codebase used Geist Sans + Noto Sans TC. We needed to align the implementation with the design while keeping font count minimal for performance and visual cohesion.
++
++## Alternatives Considered
++- **Three fonts (Bricolage Grotesque + DM Sans + Inter)**: Matches design.pen exactly. Rejected: Inter adds a third HTTP request and is visually indistinguishable from DM Sans at nav sizes. No meaningful benefit.
++- **Map to existing Geist stack**: Keep Geist Sans for everything. Rejected: Geist lacks the personality that Bricolage Grotesque brings to headings. The designs intentionally chose distinctive typography.
++
++## Rationale
++Two fonts balances design personality with performance. Bricolage Grotesque provides the warm, distinctive heading style that defines CafeRoam's visual identity. DM Sans is a versatile body font that works well at small sizes for meta text, tags, and navigation labels. Dropping Inter reduces load time without any visible quality loss — DM Sans at 14px is equally readable for nav items.
++
++## Consequences
++- Advantage: Fewer font files to load, more cohesive typography
++- Advantage: Clear role separation — heading vs body — makes font usage predictable
++- Disadvantage: Desktop nav won't pixel-match the design.pen Inter usage (negligible visual difference)
+diff --git a/docs/designs/2026-03-19-map-view-rebuild-design.md b/docs/designs/2026-03-19-map-view-rebuild-design.md
+new file mode 100644
+index 0000000..cb2af21
+--- /dev/null
++++ b/docs/designs/2026-03-19-map-view-rebuild-design.md
+@@ -0,0 +1,207 @@
++# Map View Rebuild — Technical Design
++
++Date: 2026-03-19
++
++## Overview
++
++Rebuild the Map View feature (Find page) from the approved design.pen screens. 6 screens total: 3 mobile (Map, Filter Panel, List) + 3 desktop (Map with left panel, Filter modal, List grid). All screens live at `/` with URL params controlling view state.
++
++## Decisions
++
++- **Rebuild from designs** — existing components diverge too far from new designs; fresh components in same directories, then delete old ones
++- **Domain-split component organization** — `components/map/`, `components/shops/`, `components/filters/`, `components/discovery/`
++- **Filter responsive wrapper** — vaul Drawer (mobile) + Radix Dialog (desktop)
++- **Mobile carousel** — always visible, pin click auto-scrolls to card
++- **Desktop left panel** — 420px collapsible with 20px minimal strip toggle
++- **Desktop list grid** — CSS Grid, 3 columns
++- **Two font families** — Bricolage Grotesque (headings/titles/counts) + DM Sans (body/meta/nav/tags). See [ADR](../decisions/2026-03-19-typography-two-fonts.md)
++- **Separate card components** — ShopCardCarousel (vertical) and ShopCardCompact (row) are distinct components, not a polymorphic variant. See [ADR](../decisions/2026-03-19-separate-shop-card-components.md)
++- **ShopCardCompact reused** — Desktop left panel and mobile list share ShopCardCompact with `selected` prop for accent border + highlight state
++
++## Component Tree
++
++```
++app/page.tsx (FindPage)
++├── [Mobile Map] MapMobileLayout
++│   ├── MapView (Mapbox, full-bleed)
++│   ├── MapOverlay (search + filters + count, glassmorphism gradient)
++│   ├── ShopCarousel (bottom horizontal scroll of ShopCardCarousel)
++│   ├── BottomNav
++│   └── FilterSheet (vaul Drawer)
++│
++├── [Mobile List] ListMobileLayout
++│   ├── SearchBar + FilterTags + CountHeader
++│   ├── ShopCardCompact[] (scrollable rows)
++│   ├── BottomNav
++│   └── FilterSheet (vaul Drawer)
++│
++├── [Desktop Map] MapDesktopLayout
++│   ├── HeaderNav
++│   ├── LeftPanel (420px, collapsible)
++│   │   ├── SearchBar + FilterTags
++│   │   ├── CountHeader (with sort + view toggle)
++│   │   └── ShopCardCompact[] (scrollable, selected = accent border)
++│   ├── CollapseToggle (20px strip)
++│   ├── MapView (fills remaining width)
++│   └── FilterSheet (Radix Dialog modal)
++│
++├── [Desktop List] ListDesktopLayout
++│   ├── HeaderNav
++│   ├── TopBar (search + filters)
++│   ├── CountHeader (with grid/list + distance toggle)
++│   ├── ShopCardGrid[] (CSS Grid, 3 columns)
++│   └── FilterSheet (Radix Dialog modal)
++```
++
++## Reusable Components (12)
++
++| # | Component | Directory | Purpose | Key Props |
++|---|-----------|-----------|---------|-----------|
++| 1 | `SearchBar` | `filters/` | Search input with filter button | `onSearch`, `onFilterClick`, `placeholder` |
++| 2 | `FilterTag` | `filters/` | Pill button with icon/dot + text | `label`, `icon?`, `dot?`, `active`, `onClick` |
++| 3 | `FilterSheet` | `filters/` | Filter content + responsive wrapper | `open`, `onClose`, `filters`, `onApply` |
++| 4 | `ViewToggle` | `discovery/` | Map/List segmented toggle | `view`, `onChange` |
++| 5 | `CountHeader` | `discovery/` | "N places nearby" + toggle + sort | `count`, `view`, `onViewChange`, `onSort?` |
++| 6 | `ShopCardCarousel` | `shops/` | Vertical card for mobile carousel | `shop`, `onClick` |
++| 7 | `ShopCardCompact` | `shops/` | Row card for list + panel | `shop`, `selected?`, `onClick` |
++| 8 | `ShopCardGrid` | `shops/` | Large photo card for desktop grid | `shop`, `onClick` |
++| 9 | `MapPin` | `map/` | Coffee pin with triangle tip | `active?`, `onClick` |
++| 10 | `BottomNav` | `navigation/` | Mobile pill tab bar (4 tabs) | `activeTab`, `onTabChange` |
++| 11 | `HeaderNav` | `navigation/` | Desktop top nav bar | `activeTab` |
++| 12 | `CollapseToggle` | `map/` | 20px strip to collapse sidebar | `collapsed`, `onClick` |
++
++## Layout Components (4)
++
++| Component | Screen | Description |
++|-----------|--------|-------------|
++| `MapMobileLayout` | Mobile map | Full-bleed map + gradient overlay + carousel + BottomNav |
++| `ListMobileLayout` | Mobile list | SearchBar + tags + compact cards + BottomNav |
++| `MapDesktopLayout` | Desktop map | HeaderNav + LeftPanel(420px) + MapView + CollapseToggle |
++| `ListDesktopLayout` | Desktop list | HeaderNav + TopBar + 3-column grid |
++
++## Data Flow
++
++- URL params (`?q`, `?mode`, `?filters`, `?view`) are the single source of truth
++- `useSearchState()` hook reads/writes URL state
++- `useShops()` / `useSearch()` SWR hooks fetch data
++- Computed shops list is memoized, filtered, sorted
++- Pin click → `selectedShopId` → highlight card + auto-scroll
++
++## Design Token Mapping
++
++### Typography
++
++| Role | Font | Weight | Size (Mobile) | Size (Desktop) |
++|------|------|--------|---------------|----------------|
++| Page title | Bricolage Grotesque | 700 | 17px | 15px |
++| Count label | Bricolage Grotesque | 700 | 15px | 15px |
++| Card name (carousel) | Bricolage Grotesque | 700 | 15px | — |
++| Card name (compact) | DM Sans | 600–700 | 15px | 13px |
++| Body / meta | DM Sans | 400–500 | 12–13px | 11–12px |
++| Nav label (mobile) | DM Sans | 500–600 | 10–11px | — |
++| Nav label (desktop) | DM Sans | 500–600 | — | 14px |
++| Tag text | DM Sans | 500 | 13px | 12px |
++| Search placeholder | DM Sans | 400 | 15px | 14px |
++
++### Colors
++
++| Token | CSS Variable | Value | Usage |
++|-------|-------------|-------|-------|
++| Map pin | `--map-pin` | `#8B5E3C` | Default pin color |
++| Active dark | `--active-dark` | `#2C1810` | Active tab, filter btn, active tag bg |
++| Primary green | `--primary` | `#3D8A5A` | "Open" status, Open Now dot |
++| Foreground | `--foreground` | `#1A1918` | Primary text |
++| Muted fg | `--muted-foreground` | `#6D6C6A` | Secondary text (desktop) |
++| Text secondary | `--text-secondary` | `#6B7280` | Tag text, meta text (mobile) |
++| Text tertiary | `--text-tertiary` | `#9CA3AF` | Placeholder, count text |
++| Background | `--background` | `#F5F4F1` | Page bg, panel bg |
++| Card bg | `--card` | `#FFFFFF` | Card backgrounds |
++| Card selected | — | `#FDF8F5` | Desktop panel selected card |
++| Border | `--border` | `#E5E4E1` | Dividers, card borders |
++| Border medium | `--border-medium` | `#E5E7EB` | Search bar border, tag borders |
++| Rating star | `--rating-star` | `#FCD34D` | Star icons |
++| Toggle bg | — | `#F0EFED` | ViewToggle pill background |
++
++### Shadows
++
++| Element | Shadow |
++|---------|--------|
++| Search bar | `0 4px 16px #0000000A` |
++| Shop cards | `0 4px 16px #0000000F` |
++| Tab bar pill | `0 4px 20px #0000001A` |
++| Map pin | `0 2px 8px #00000020` |
++| My Location btn | `0 2px 12px #00000015` |
++
++### Sizing
++
++| Element | Mobile | Desktop |
++|---------|--------|---------|
++| Search bar height | 52px, radius 26px | 44px, radius 12px |
++| Filter tag height | 36px, radius 20px | 36px, radius 20px |
++| Carousel card width | 260px, img 80px | — |
++| Compact card photo | 64×64px, radius 10px | 72×72px, radius 12px |
++| Grid card image | — | flexible, ~280px wide |
++| Tab bar pill height | 62px, radius 36px | — |
++| Header nav height | — | 64px |
++| Left panel width | — | 420px |
++| Collapse toggle | — | 20×48px, radius [0,8,8,0] |
++| Map pin | 40×48px (40 circle + 8 triangle) | same |
++| My Location btn | 44×44px, radius 22px | same |
++
++## Key Behaviors
++
++1. **Mobile map carousel**: Always visible at bottom with gradient fade. Pin click auto-scrolls to card. Card tap → shop detail.
++2. **Desktop left panel**: 420px, collapsible to 20px strip. Selected shop gets 3px left accent border + `#FDF8F5` bg + chevron-right.
++3. **Filter responsive**: vaul Drawer on mobile, Radix Dialog on desktop. Same FilterContent component inside.
++4. **View toggle**: URL-driven `?view=map|list`. Different layouts per device. Toggle pill with map/list icons.
++5. **Search**: Auth-gated for semantic search. Login prompt if unauthenticated.
++6. **Bottom nav**: Pill-shaped floating bar with 4 tabs: 地圖 (map-pin), 探索 (compass), 收藏 (heart), 我的 (user). Active = dark bg `#2C1810`.
++7. **Desktop nav**: Horizontal bar with logo + nav items + search btn + avatar. Active = dark pill `#2C1810`.
++
++## File Structure
++
++```
++components/
++├── navigation/
++│   ├── bottom-nav.tsx        ← rebuild
++│   └── header-nav.tsx        ← rebuild
++├── map/
++│   ├── map-pin.tsx           ← new
++│   ├── shop-carousel.tsx     ← new (horizontal scroll container)
++│   └── collapse-toggle.tsx   ← new
++├── shops/
++│   ├── shop-card-carousel.tsx  ← new (vertical card for carousel)
++│   ├── shop-card-compact.tsx   ← new (row card for list + panel)
++│   └── shop-card-grid.tsx      ← new (photo card for desktop grid)
++├── filters/
++│   ├── search-bar.tsx        ← rebuild
++│   ├── filter-tag.tsx        ← new
++│   └── filter-sheet.tsx      ← rebuild
++└── discovery/
++    ├── view-toggle.tsx       ← new
++    └── count-header.tsx      ← new
++```
++
++## Migration
++
++1. Build reusable components (ShopCardCarousel, ShopCardCompact, ShopCardGrid, MapPin, FilterTag, ViewToggle, CountHeader)
++2. Rebuild navigation (BottomNav, HeaderNav)
++3. Rebuild filter components (SearchBar, FilterSheet)
++4. Build layout containers (MapMobileLayout, ListMobileLayout, MapDesktopLayout, ListDesktopLayout)
++5. Wire into app/page.tsx, replace existing imports
++6. Delete old components (map-mini-card, map-desktop-card, map-list-view, filter-pills, etc.)
++
++## Testing
++
++- Integration: SearchBar → URL → re-render, Filter apply → URL → results, View toggle → layout switch
++- Unit: ShopCardCompact data states + selected state, FilterTag active/inactive, CountHeader with counts, ViewToggle state
++- E2E (deferred): Pin click → card highlight → shop detail flow
++
++## Design Reference
++
++- Mobile Map: `design.pen` node `c62Ni`
++- Mobile Filter: `design.pen` node `vEqbC`
++- Mobile List: `design.pen` node `MygeB`
++- Desktop Map: `design.pen` node `5NK8A`
++- Desktop List: `design.pen` node `g3tvu`
++- Desktop Filter: `design.pen` node `e9U9r`
+diff --git a/docs/plans/2026-03-19-map-view-ui-rebuild-plan.md b/docs/plans/2026-03-19-map-view-ui-rebuild-plan.md
+new file mode 100644
+index 0000000..64efe2c
+--- /dev/null
++++ b/docs/plans/2026-03-19-map-view-ui-rebuild-plan.md
+@@ -0,0 +1,1910 @@
++# Map View UI Rebuild — Implementation Plan
++
++> **For Claude:** REQUIRED SUB-SKILL: Use executing-plans to implement this plan task-by-task.
++
++**Design Doc:** [docs/designs/2026-03-19-map-view-rebuild-design.md](../designs/2026-03-19-map-view-rebuild-design.md)
++
++**Spec References:** [SPEC.md#3-find-page](../../SPEC.md)
++
++**PRD References:** [PRD.md#map-discovery](../../PRD.md)
++
++**Goal:** Rebuild all 6 Map View screens (3 mobile + 3 desktop) from design.pen with 12 reusable components + 4 layout components.
++
++**Architecture:** Fresh React components built from pixel-accurate design.pen specs. Two font families (Bricolage Grotesque + DM Sans). Components organized by domain (navigation/, map/, shops/, filters/, discovery/). Mobile-first responsive design using `useIsDesktop()` hook. URL-driven state via existing `useSearchState()`.
++
++**Tech Stack:** Next.js 16, TypeScript, Tailwind CSS 4, Lucide React, React Map GL, Vaul (mobile drawer), Radix Dialog (desktop modal), Vitest + Testing Library
++
++**Acceptance Criteria:**
++- [ ] A user sees a full-bleed map with coffee pins and a bottom carousel of shop cards on mobile
++- [ ] A user can toggle between map and list views using the ViewToggle pill
++- [ ] A user can open the filter panel (drawer on mobile, modal on desktop) and apply tag filters
++- [ ] A user on desktop sees a collapsible left panel with shop list and a selected-shop highlight
++- [ ] A user on desktop list view sees a 3-column grid of photo shop cards
++
++---
++
++### Task 1: Typography & CSS Foundation
++
++**Files:**
++- Modify: `app/layout.tsx:1-37` (add DM_Sans import)
++- Modify: `app/globals.css:7-13` (add font variables + design tokens)
++
++**Step 1: No test needed — CSS/config only**
++
++**Step 2: Add DM Sans to layout.tsx**
++
++In `app/layout.tsx`, add the DM_Sans import and font instance:
++
++```typescript
++import {
++  Bricolage_Grotesque,
++  DM_Sans,
++  Geist,
++  Geist_Mono,
++  Noto_Sans_TC,
++} from 'next/font/google';
++
++const dmSans = DM_Sans({
++  variable: '--font-dm-sans',
++  subsets: ['latin'],
++  weight: ['400', '500', '600', '700'],
++  display: 'swap',
++});
++```
++
++Add `${dmSans.variable}` to the `<body>` className.
++
++**Step 3: Update globals.css with design tokens**
++
++Add to the `@theme inline` block:
++
++```css
++--font-heading: var(--font-bricolage), system-ui, sans-serif;
++--font-body: var(--font-dm-sans), var(--font-noto-sans-tc), system-ui, sans-serif;
++```
++
++Add CafeRoam-specific CSS custom properties to `:root`:
++
++```css
++/* CafeRoam design tokens */
++--map-pin: #8B5E3C;
++--active-dark: #2C1810;
++--tag-inactive-bg: #FFFFFF;
++--tag-inactive-border: #E5E7EB;
++--tag-inactive-text: #6B7280;
++--tag-active-bg: #2C1810;
++--tag-active-text: #FFFFFF;
++--card-selected-bg: #FDF8F5;
++--toggle-bg: #F0EFED;
++--text-secondary: #6B7280;
++--text-tertiary: #9CA3AF;
++--rating-star: #FCD34D;
++--border-medium: #E5E7EB;
++```
++
++**Step 4: Verify build**
++
++Run: `pnpm build`
++Expected: Build succeeds with no errors.
++
++**Step 5: Commit**
++
++```bash
++git add app/layout.tsx app/globals.css
++git commit -m "feat: add DM Sans font + CafeRoam design tokens"
++```
++
++---
++
++### Task 2: FilterTag Component
++
++**Files:**
++- Create: `components/filters/filter-tag.tsx`
++- Create: `components/filters/filter-tag.test.tsx`
++
++**Step 1: Write the failing test**
++
++```typescript
++import { render, screen } from '@testing-library/react';
++import userEvent from '@testing-library/user-event';
++import { FilterTag } from './filter-tag';
++
++describe('FilterTag', () => {
++  it('renders label text', () => {
++    render(<FilterTag label="WiFi" onClick={() => {}} />);
++    expect(screen.getByText('WiFi')).toBeInTheDocument();
++  });
++
++  it('renders with inactive styles by default', () => {
++    render(<FilterTag label="WiFi" onClick={() => {}} />);
++    const button = screen.getByRole('button', { name: /wifi/i });
++    expect(button).toHaveClass('bg-white');
++  });
++
++  it('renders with active styles when active prop is true', () => {
++    render(<FilterTag label="WiFi" active onClick={() => {}} />);
++    const button = screen.getByRole('button', { name: /wifi/i });
++    expect(button).toHaveClass('bg-[var(--tag-active-bg)]');
++  });
++
++  it('calls onClick when clicked', async () => {
++    const user = userEvent.setup();
++    const onClick = vi.fn();
++    render(<FilterTag label="WiFi" onClick={onClick} />);
++    await user.click(screen.getByRole('button', { name: /wifi/i }));
++    expect(onClick).toHaveBeenCalledOnce();
++  });
++
++  it('renders icon when icon prop provided', () => {
++    const TestIcon = () => <svg data-testid="test-icon" />;
++    render(<FilterTag label="WiFi" icon={TestIcon} onClick={() => {}} />);
++    expect(screen.getByTestId('test-icon')).toBeInTheDocument();
++  });
++
++  it('renders green dot when dot prop is provided', () => {
++    render(<FilterTag label="Open Now" dot="#3D8A5A" onClick={() => {}} />);
++    expect(screen.getByTestId('filter-tag-dot')).toBeInTheDocument();
++  });
++});
++```
++
++**Step 2: Run test to verify it fails**
++
++Run: `pnpm test -- components/filters/filter-tag.test.tsx`
++Expected: FAIL — module not found.
++
++**Step 3: Write minimal implementation**
++
++```typescript
++'use client';
++import type { LucideIcon } from 'lucide-react';
++
++interface FilterTagProps {
++  label: string;
++  icon?: LucideIcon;
++  dot?: string;
++  active?: boolean;
++  onClick: () => void;
++}
++
++export function FilterTag({ label, icon: Icon, dot, active = false, onClick }: FilterTagProps) {
++  return (
++    <button
++      type="button"
++      aria-label={label}
++      onClick={onClick}
++      className={`flex items-center gap-1.5 rounded-full px-4 h-9 font-[family-name:var(--font-body)] text-[13px] font-medium transition-colors whitespace-nowrap ${
++        active
++          ? 'bg-[var(--tag-active-bg)] text-[var(--tag-active-text)]'
++          : 'bg-white text-[var(--tag-inactive-text)] border border-[var(--tag-inactive-border)]'
++      }`}
++    >
++      {dot && (
++        <span
++          data-testid="filter-tag-dot"
++          className="h-2 w-2 rounded-full"
++          style={{ backgroundColor: dot }}
++        />
++      )}
++      {Icon && <Icon className="h-3.5 w-3.5" />}
++      {label}
++    </button>
++  );
++}
++```
++
++**Step 4: Run test to verify it passes**
++
++Run: `pnpm test -- components/filters/filter-tag.test.tsx`
++Expected: All 6 tests PASS.
++
++**Step 5: Commit**
++
++```bash
++git add components/filters/filter-tag.tsx components/filters/filter-tag.test.tsx
++git commit -m "feat: add FilterTag component with active/inactive states"
++```
++
++---
++
++### Task 3: ViewToggle Component
++
++**Files:**
++- Create: `components/discovery/view-toggle.tsx`
++- Create: `components/discovery/view-toggle.test.tsx`
++
++**Step 1: Write the failing test**
++
++```typescript
++import { render, screen } from '@testing-library/react';
++import userEvent from '@testing-library/user-event';
++import { ViewToggle } from './view-toggle';
++
++describe('ViewToggle', () => {
++  it('renders map and list buttons', () => {
++    render(<ViewToggle view="map" onChange={() => {}} />);
++    expect(screen.getByRole('button', { name: /map/i })).toBeInTheDocument();
++    expect(screen.getByRole('button', { name: /list/i })).toBeInTheDocument();
++  });
++
++  it('shows map button as active when view is map', () => {
++    render(<ViewToggle view="map" onChange={() => {}} />);
++    const mapBtn = screen.getByRole('button', { name: /map/i });
++    expect(mapBtn).toHaveAttribute('data-active', 'true');
++  });
++
++  it('calls onChange with list when list button clicked', async () => {
++    const user = userEvent.setup();
++    const onChange = vi.fn();
++    render(<ViewToggle view="map" onChange={onChange} />);
++    await user.click(screen.getByRole('button', { name: /list/i }));
++    expect(onChange).toHaveBeenCalledWith('list');
++  });
++
++  it('does not call onChange when clicking already active view', async () => {
++    const user = userEvent.setup();
++    const onChange = vi.fn();
++    render(<ViewToggle view="map" onChange={onChange} />);
++    await user.click(screen.getByRole('button', { name: /map/i }));
++    expect(onChange).not.toHaveBeenCalled();
++  });
++});
++```
++
++**Step 2: Run test to verify it fails**
++
++Run: `pnpm test -- components/discovery/view-toggle.test.tsx`
++Expected: FAIL.
++
++**Step 3: Write minimal implementation**
++
++```typescript
++'use client';
++import { Map, List } from 'lucide-react';
++
++interface ViewToggleProps {
++  view: 'map' | 'list';
++  onChange: (view: 'map' | 'list') => void;
++}
++
++export function ViewToggle({ view, onChange }: ViewToggleProps) {
++  return (
++    <div className="flex items-center gap-0.5 rounded-[14px] bg-[var(--toggle-bg)] p-[3px]">
++      <button
++        type="button"
++        aria-label="Map view"
++        data-active={view === 'map' || undefined}
++        onClick={() => view !== 'map' && onChange('map')}
++        className={`flex items-center justify-center rounded-[11px] h-6 w-7 transition-colors ${
++          view === 'map' ? 'bg-[var(--active-dark)] text-white' : 'text-[var(--text-secondary)]'
++        }`}
++      >
++        <Map className="h-3.5 w-3.5" />
++      </button>
++      <button
++        type="button"
++        aria-label="List view"
++        data-active={view === 'list' || undefined}
++        onClick={() => view !== 'list' && onChange('list')}
++        className={`flex items-center justify-center rounded-[11px] h-6 w-7 transition-colors ${
++          view === 'list' ? 'bg-[var(--active-dark)] text-white' : 'text-[var(--text-secondary)]'
++        }`}
++      >
++        <List className="h-3.5 w-3.5" />
++      </button>
++    </div>
++  );
++}
++```
++
++**Step 4: Run test to verify it passes**
++
++Run: `pnpm test -- components/discovery/view-toggle.test.tsx`
++Expected: All 4 tests PASS.
++
++**Step 5: Commit**
++
++```bash
++git add components/discovery/view-toggle.tsx components/discovery/view-toggle.test.tsx
++git commit -m "feat: add ViewToggle map/list segmented toggle"
++```
++
++---
++
++### Task 4: CountHeader Component
++
++**Files:**
++- Create: `components/discovery/count-header.tsx`
++- Create: `components/discovery/count-header.test.tsx`
++
++**Step 1: Write the failing test**
++
++```typescript
++import { render, screen } from '@testing-library/react';
++import userEvent from '@testing-library/user-event';
++import { CountHeader } from './count-header';
++
++describe('CountHeader', () => {
++  it('renders count text with number of places', () => {
++    render(<CountHeader count={12} view="map" onViewChange={() => {}} />);
++    expect(screen.getByText('12 places nearby')).toBeInTheDocument();
++  });
++
++  it('renders view toggle', () => {
++    render(<CountHeader count={12} view="map" onViewChange={() => {}} />);
++    expect(screen.getByRole('button', { name: /map/i })).toBeInTheDocument();
++    expect(screen.getByRole('button', { name: /list/i })).toBeInTheDocument();
++  });
++
++  it('renders sort button when onSort is provided', () => {
++    render(
++      <CountHeader count={12} view="map" onViewChange={() => {}} onSort={() => {}} />
++    );
++    expect(screen.getByRole('button', { name: /sort/i })).toBeInTheDocument();
++  });
++
++  it('does not render sort button when onSort is not provided', () => {
++    render(<CountHeader count={12} view="map" onViewChange={() => {}} />);
++    expect(screen.queryByRole('button', { name: /sort/i })).not.toBeInTheDocument();
++  });
++
++  it('passes view change through to ViewToggle', async () => {
++    const user = userEvent.setup();
++    const onViewChange = vi.fn();
++    render(<CountHeader count={5} view="map" onViewChange={onViewChange} />);
++    await user.click(screen.getByRole('button', { name: /list/i }));
++    expect(onViewChange).toHaveBeenCalledWith('list');
++  });
++});
++```
++
++**Step 2: Run test to verify it fails**
++
++Run: `pnpm test -- components/discovery/count-header.test.tsx`
++Expected: FAIL.
++
++**Step 3: Write minimal implementation**
++
++```typescript
++'use client';
++import { ArrowUpDown } from 'lucide-react';
++import { ViewToggle } from './view-toggle';
++
++interface CountHeaderProps {
++  count: number;
++  view: 'map' | 'list';
++  onViewChange: (view: 'map' | 'list') => void;
++  onSort?: () => void;
++}
++
++export function CountHeader({ count, view, onViewChange, onSort }: CountHeaderProps) {
++  return (
++    <div className="flex items-center justify-between px-5 py-1">
++      <span className="font-[family-name:var(--font-heading)] text-[15px] font-bold text-[var(--foreground)]">
++        {count} places nearby
++      </span>
++      <div className="flex items-center gap-2.5">
++        <ViewToggle view={view} onChange={onViewChange} />
++        {onSort && (
++          <button
++            type="button"
++            aria-label="Sort"
++            onClick={onSort}
++            className="flex items-center gap-1 rounded-lg bg-[var(--background)] px-2.5 py-[5px] text-xs font-medium text-[var(--foreground)] border border-[var(--border)]"
++          >
++            <ArrowUpDown className="h-3 w-3 text-[var(--muted-foreground)]" />
++            Sort
++          </button>
++        )}
++      </div>
++    </div>
++  );
++}
++```
++
++**Step 4: Run test to verify it passes**
++
++Run: `pnpm test -- components/discovery/count-header.test.tsx`
++Expected: All 5 tests PASS.
++
++**Step 5: Commit**
++
++```bash
++git add components/discovery/count-header.tsx components/discovery/count-header.test.tsx
++git commit -m "feat: add CountHeader with place count + view toggle + sort"
++```
++
++---
++
++### Task 5: SearchBar Rebuild
++
++**Files:**
++- Create: `components/filters/search-bar.tsx`
++- Create: `components/filters/search-bar.test.tsx`
++
++**Step 1: Write the failing test**
++
++```typescript
++import { render, screen, fireEvent } from '@testing-library/react';
++import userEvent from '@testing-library/user-event';
++import { SearchBar } from './search-bar';
++
++describe('SearchBar', () => {
++  it('renders placeholder text', () => {
++    render(<SearchBar onSearch={() => {}} onFilterClick={() => {}} />);
++    expect(screen.getByPlaceholderText('Search coffee shops...')).toBeInTheDocument();
++  });
++
++  it('renders filter button', () => {
++    render(<SearchBar onSearch={() => {}} onFilterClick={() => {}} />);
++    expect(screen.getByRole('button', { name: /filter/i })).toBeInTheDocument();
++  });
++
++  it('calls onSearch when form submitted', async () => {
++    const user = userEvent.setup();
++    const onSearch = vi.fn();
++    render(<SearchBar onSearch={onSearch} onFilterClick={() => {}} />);
++    const input = screen.getByPlaceholderText('Search coffee shops...');
++    await user.type(input, 'latte art');
++    fireEvent.submit(input.closest('form')!);
++    expect(onSearch).toHaveBeenCalledWith('latte art');
++  });
++
++  it('does not submit empty search', async () => {
++    const onSearch = vi.fn();
++    render(<SearchBar onSearch={onSearch} onFilterClick={() => {}} />);
++    fireEvent.submit(screen.getByPlaceholderText('Search coffee shops...').closest('form')!);
++    expect(onSearch).not.toHaveBeenCalled();
++  });
++
++  it('calls onFilterClick when filter button clicked', async () => {
++    const user = userEvent.setup();
++    const onFilterClick = vi.fn();
++    render(<SearchBar onSearch={() => {}} onFilterClick={onFilterClick} />);
++    await user.click(screen.getByRole('button', { name: /filter/i }));
++    expect(onFilterClick).toHaveBeenCalledOnce();
++  });
++
++  it('pre-fills with defaultQuery', () => {
++    render(<SearchBar onSearch={() => {}} onFilterClick={() => {}} defaultQuery="mocha" />);
++    expect(screen.getByDisplayValue('mocha')).toBeInTheDocument();
++  });
++});
++```
++
++**Step 2: Run test to verify it fails**
++
++Run: `pnpm test -- components/filters/search-bar.test.tsx`
++Expected: FAIL.
++
++**Step 3: Write minimal implementation**
++
++```typescript
++'use client';
++import { useState, useEffect } from 'react';
++import { Search, SlidersHorizontal } from 'lucide-react';
++
++interface SearchBarProps {
++  onSearch: (query: string) => void;
++  onFilterClick: () => void;
++  defaultQuery?: string;
++  placeholder?: string;
++}
++
++export function SearchBar({
++  onSearch,
++  onFilterClick,
++  defaultQuery = '',
++  placeholder = 'Search coffee shops...',
++}: SearchBarProps) {
++  const [value, setValue] = useState(defaultQuery);
++
++  useEffect(() => {
++    setValue(defaultQuery);
++  }, [defaultQuery]);
++
++  function handleSubmit(e: React.FormEvent) {
++    e.preventDefault();
++    const trimmed = value.trim();
++    if (!trimmed) return;
++    onSearch(trimmed);
++  }
++
++  return (
++    <form onSubmit={handleSubmit} className="flex items-center px-5 h-[52px]">
++      <div className="flex items-center gap-3 w-full h-[52px] rounded-[26px] bg-white px-5 border border-[var(--border-medium)] shadow-[0_4px_16px_#0000000A]">
++        <Search className="h-5 w-5 shrink-0 text-[var(--text-tertiary)]" />
++        <input
++          type="text"
++          value={value}
++          onChange={(e) => setValue(e.target.value)}
++          placeholder={placeholder}
++          className="flex-1 bg-transparent font-[family-name:var(--font-body)] text-[15px] text-[var(--foreground)] placeholder:text-[var(--text-tertiary)] outline-none"
++        />
++        <button
++          type="button"
++          aria-label="Open filters"
++          onClick={onFilterClick}
++          className="flex items-center justify-center h-9 w-9 rounded-xl bg-[var(--active-dark)] text-white shrink-0"
++        >
++          <SlidersHorizontal className="h-[18px] w-[18px]" />
++        </button>
++      </div>
++    </form>
++  );
++}
++```
++
++**Step 4: Run test to verify it passes**
++
++Run: `pnpm test -- components/filters/search-bar.test.tsx`
++Expected: All 6 tests PASS.
++
++**Step 5: Commit**
++
++```bash
++git add components/filters/search-bar.tsx components/filters/search-bar.test.tsx
++git commit -m "feat: rebuild SearchBar with filter button + design.pen styling"
++```
++
++---
++
++### Task 6: ShopCardCarousel Component
++
++**Files:**
++- Create: `components/shops/shop-card-carousel.tsx`
++- Create: `components/shops/shop-card-carousel.test.tsx`
++
++**Step 1: Write the failing test**
++
++```typescript
++import { render, screen } from '@testing-library/react';
++import userEvent from '@testing-library/user-event';
++import { ShopCardCarousel } from './shop-card-carousel';
++import { makeShop } from '@/lib/test-utils/factories';
++
++const shop = {
++  ...makeShop(),
++  id: 'shop-brew',
++  name: 'The Brew House',
++  rating: 4.8,
++  review_count: 324,
++  photo_urls: ['https://example.com/brew.jpg'],
++  taxonomyTags: [
++    { id: 't1', dimension: 'functionality' as const, label: 'Latte Art', labelZh: '拉花' },
++    { id: 't2', dimension: 'functionality' as const, label: 'WiFi', labelZh: 'WiFi' },
++  ],
++};
++
++describe('ShopCardCarousel', () => {
++  it('renders shop name', () => {
++    render(<ShopCardCarousel shop={shop} onClick={() => {}} />);
++    expect(screen.getByText('The Brew House')).toBeInTheDocument();
++  });
++
++  it('renders rating with star', () => {
++    render(<ShopCardCarousel shop={shop} onClick={() => {}} />);
++    expect(screen.getByText('4.8')).toBeInTheDocument();
++  });
++
++  it('renders review count', () => {
++    render(<ShopCardCarousel shop={shop} onClick={() => {}} />);
++    expect(screen.getByText('(324)')).toBeInTheDocument();
++  });
++
++  it('renders taxonomy tags', () => {
++    render(<ShopCardCarousel shop={shop} onClick={() => {}} />);
++    expect(screen.getByText('Latte Art')).toBeInTheDocument();
++    expect(screen.getByText('WiFi')).toBeInTheDocument();
++  });
++
++  it('renders shop photo', () => {
++    render(<ShopCardCarousel shop={shop} onClick={() => {}} />);
++    const img = screen.getByRole('img', { name: 'The Brew House' });
++    expect(img).toHaveAttribute('src', expect.stringContaining('brew.jpg'));
++  });
++
++  it('calls onClick when card is clicked', async () => {
++    const user = userEvent.setup();
++    const onClick = vi.fn();
++    render(<ShopCardCarousel shop={shop} onClick={onClick} />);
++    await user.click(screen.getByRole('article'));
++    expect(onClick).toHaveBeenCalledOnce();
++  });
++});
++```
++
++**Step 2: Run test to verify it fails**
++
++Run: `pnpm test -- components/shops/shop-card-carousel.test.tsx`
++Expected: FAIL.
++
++**Step 3: Write minimal implementation**
++
++```typescript
++'use client';
++import Image from 'next/image';
++import { Star } from 'lucide-react';
++
++interface CarouselShop {
++  id: string;
++  name: string;
++  rating: number | null;
++  review_count?: number;
++  reviewCount?: number;
++  photo_urls?: string[];
++  photoUrls?: string[];
++  taxonomyTags?: Array<{ id: string; label: string; labelZh: string }>;
++  distance_km?: number | null;
++}
++
++interface ShopCardCarouselProps {
++  shop: CarouselShop;
++  onClick: () => void;
++  distanceText?: string;
++}
++
++export function ShopCardCarousel({ shop, onClick, distanceText }: ShopCardCarouselProps) {
++  const photos = shop.photo_urls ?? shop.photoUrls ?? [];
++  const reviewCount = shop.review_count ?? shop.reviewCount ?? 0;
++  const photoUrl = photos.length > 0 ? photos[0] : null;
++
++  return (
++    <article
++      role="article"
++      onClick={onClick}
++      className="flex flex-col w-[260px] shrink-0 rounded-2xl bg-white shadow-[0_4px_16px_#0000000F] overflow-hidden cursor-pointer"
++    >
++      {photoUrl ? (
++        <div className="relative h-20 w-full">
++          <Image
++            src={photoUrl}
++            alt={shop.name}
++            fill
++            className="object-cover"
++            sizes="260px"
++          />
++        </div>
++      ) : (
++        <div className="flex h-20 w-full items-center justify-center bg-[var(--background)] text-[var(--text-tertiary)]">
++          No photo
++        </div>
++      )}
++      <div className="flex flex-col gap-1.5 p-[12px_14px]">
++        <div className="flex items-center justify-between">
++          <span className="font-[family-name:var(--font-heading)] text-[15px] font-bold text-[var(--foreground)] truncate">
++            {shop.name}
++          </span>
++          {distanceText && (
++            <span className="text-xs font-medium text-[var(--text-tertiary)] shrink-0 ml-2">
++              {distanceText}
++            </span>
++          )}
++        </div>
++        <div className="flex items-center gap-1">
++          <Star className="h-[13px] w-[13px] fill-[var(--rating-star)] text-[var(--rating-star)]" />
++          <span className="text-xs font-semibold text-[var(--foreground)]">
++            {shop.rating?.toFixed(1) ?? '—'}
++          </span>
++          <span className="text-xs text-[var(--text-tertiary)]">({reviewCount})</span>
++        </div>
++        {shop.taxonomyTags && shop.taxonomyTags.length > 0 && (
++          <div className="flex gap-1.5 flex-wrap">
++            {shop.taxonomyTags.slice(0, 3).map((tag) => (
++              <span
++                key={tag.id}
++                className="rounded-lg bg-[var(--background)] px-2 py-[3px] text-[11px] font-medium text-[var(--muted-foreground)]"
++              >
++                {tag.label}
++              </span>
++            ))}
++          </div>
++        )}
++      </div>
++    </article>
++  );
++}
++```
++
++**Step 4: Run test to verify it passes**
++
++Run: `pnpm test -- components/shops/shop-card-carousel.test.tsx`
++Expected: All 6 tests PASS.
++
++**Step 5: Commit**
++
++```bash
++git add components/shops/shop-card-carousel.tsx components/shops/shop-card-carousel.test.tsx
++git commit -m "feat: add ShopCardCarousel for mobile map bottom carousel"
++```
++
++---
++
++### Task 7: ShopCardCompact Component
++
++**Files:**
++- Create: `components/shops/shop-card-compact.tsx`
++- Create: `components/shops/shop-card-compact.test.tsx`
++
++**Step 1: Write the failing test**
++
++```typescript
++import { render, screen } from '@testing-library/react';
++import userEvent from '@testing-library/user-event';
++import { ShopCardCompact } from './shop-card-compact';
++import { makeShop } from '@/lib/test-utils/factories';
++
++const shop = {
++  ...makeShop(),
++  id: 'shop-brew',
++  name: 'The Brew House',
++  rating: 4.8,
++  photo_urls: ['https://example.com/brew.jpg'],
++};
++
++describe('ShopCardCompact', () => {
++  it('renders shop name', () => {
++    render(<ShopCardCompact shop={shop} onClick={() => {}} />);
++    expect(screen.getByText('The Brew House')).toBeInTheDocument();
++  });
++
++  it('renders rating and meta text', () => {
++    render(<ShopCardCompact shop={shop} onClick={() => {}} />);
++    expect(screen.getByText(/4\.8/)).toBeInTheDocument();
++  });
++
++  it('renders shop photo', () => {
++    render(<ShopCardCompact shop={shop} onClick={() => {}} />);
++    expect(screen.getByRole('img', { name: 'The Brew House' })).toBeInTheDocument();
++  });
++
++  it('renders chevron arrow', () => {
++    render(<ShopCardCompact shop={shop} onClick={() => {}} />);
++    expect(screen.getByTestId('compact-card-arrow')).toBeInTheDocument();
++  });
++
++  it('shows selected state with accent border and highlight bg', () => {
++    const { container } = render(<ShopCardCompact shop={shop} onClick={() => {}} selected />);
++    const article = container.querySelector('article');
++    expect(article).toHaveAttribute('data-selected', 'true');
++  });
++
++  it('calls onClick when clicked', async () => {
++    const user = userEvent.setup();
++    const onClick = vi.fn();
++    render(<ShopCardCompact shop={shop} onClick={onClick} />);
++    await user.click(screen.getByRole('article'));
++    expect(onClick).toHaveBeenCalledOnce();
++  });
++});
++```
++
++**Step 2: Run test to verify it fails**
++
++Run: `pnpm test -- components/shops/shop-card-compact.test.tsx`
++Expected: FAIL.
++
++**Step 3: Write minimal implementation**
++
++```typescript
++'use client';
++import Image from 'next/image';
++import { ChevronRight } from 'lucide-react';
++
++interface CompactShop {
++  id: string;
++  name: string;
++  rating: number | null;
++  photo_urls?: string[];
++  photoUrls?: string[];
++  distance_m?: number | null;
++  is_open?: boolean | null;
++  taxonomyTags?: Array<{ id: string; label: string; labelZh: string }>;
++}
++
++interface ShopCardCompactProps {
++  shop: CompactShop;
++  onClick: () => void;
++  selected?: boolean;
++}
++
++function formatMeta(shop: CompactShop): string {
++  const parts: string[] = [];
++  if (shop.rating != null) parts.push(`★ ${shop.rating.toFixed(1)}`);
++  if (shop.distance_m != null) {
++    parts.push(shop.distance_m < 1000 ? `${shop.distance_m}m` : `${(shop.distance_m / 1000).toFixed(1)} km`);
++  }
++  if (shop.is_open != null) parts.push(shop.is_open ? 'Open' : 'Closed');
++  return parts.join('  ·  ');
++}
++
++export function ShopCardCompact({ shop, onClick, selected = false }: ShopCardCompactProps) {
++  const photos = shop.photo_urls ?? shop.photoUrls ?? [];
++  const photoUrl = photos.length > 0 ? photos[0] : null;
++
++  return (
++    <article
++      role="article"
++      data-selected={selected || undefined}
++      onClick={onClick}
++      className={`flex items-center gap-3 px-5 py-0 h-20 cursor-pointer transition-colors ${
++        selected
++          ? 'bg-[var(--card-selected-bg)] border-l-[3px] border-l-[var(--map-pin)]'
++          : 'bg-[var(--background)]'
++      }`}
++    >
++      {photoUrl ? (
++        <div className="relative h-16 w-16 shrink-0 rounded-[10px] overflow-hidden">
++          <Image src={photoUrl} alt={shop.name} fill className="object-cover" sizes="64px" />
++        </div>
++      ) : (
++        <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[10px] bg-[var(--muted)] text-[var(--text-tertiary)] text-xs">
++          ☕
++        </div>
++      )}
++      <div className="flex flex-col gap-1 flex-1 min-w-0">
++        <span className="font-[family-name:var(--font-body)] text-[15px] font-semibold text-[var(--foreground)] truncate">
++          {shop.name}
++        </span>
++        <span className="font-[family-name:var(--font-body)] text-[13px] text-[var(--text-secondary)]">
++          {formatMeta(shop)}
++        </span>
++      </div>
++      <ChevronRight data-testid="compact-card-arrow" className="h-[18px] w-[18px] shrink-0 text-[var(--border-strong,#D1D0CD)]" />
++    </article>
++  );
++}
++```
++
++**Step 4: Run test to verify it passes**
++
++Run: `pnpm test -- components/shops/shop-card-compact.test.tsx`
++Expected: All 6 tests PASS.
++
++**Step 5: Commit**
++
++```bash
++git add components/shops/shop-card-compact.tsx components/shops/shop-card-compact.test.tsx
++git commit -m "feat: add ShopCardCompact for list view + desktop panel with selected state"
++```
++
++---
++
++### Task 8: ShopCardGrid Component
++
++**Files:**
++- Create: `components/shops/shop-card-grid.tsx`
++- Create: `components/shops/shop-card-grid.test.tsx`
++
++**Step 1: Write the failing test**
++
++```typescript
++import { render, screen } from '@testing-library/react';
++import userEvent from '@testing-library/user-event';
++import { ShopCardGrid } from './shop-card-grid';
++import { makeShop } from '@/lib/test-utils/factories';
++
++const shop = {
++  ...makeShop(),
++  id: 'shop-brew',
++  name: 'The Brew House',
++  rating: 4.8,
++  review_count: 324,
++  photo_urls: ['https://example.com/brew.jpg'],
++  taxonomyTags: [
++    { id: 't1', dimension: 'functionality' as const, label: 'Quiet', labelZh: '安靜' },
++  ],
++};
++
++describe('ShopCardGrid', () => {
++  it('renders shop name', () => {
++    render(<ShopCardGrid shop={shop} onClick={() => {}} />);
++    expect(screen.getByText('The Brew House')).toBeInTheDocument();
++  });
++
++  it('renders photo', () => {
++    render(<ShopCardGrid shop={shop} onClick={() => {}} />);
++    expect(screen.getByRole('img', { name: 'The Brew House' })).toBeInTheDocument();
++  });
++
++  it('renders rating', () => {
++    render(<ShopCardGrid shop={shop} onClick={() => {}} />);
++    expect(screen.getByText(/4\.8/)).toBeInTheDocument();
++  });
++
++  it('renders open status when provided', () => {
++    render(<ShopCardGrid shop={{ ...shop, is_open: true }} onClick={() => {}} />);
++    expect(screen.getByText('Open')).toBeInTheDocument();
++  });
++
++  it('calls onClick when card is clicked', async () => {
++    const user = userEvent.setup();
++    const onClick = vi.fn();
++    render(<ShopCardGrid shop={shop} onClick={onClick} />);
++    await user.click(screen.getByRole('article'));
++    expect(onClick).toHaveBeenCalledOnce();
++  });
++});
++```
++
++**Step 2: Run test to verify it fails**
++
++Run: `pnpm test -- components/shops/shop-card-grid.test.tsx`
++Expected: FAIL.
++
++**Step 3: Write minimal implementation**
++
++```typescript
++'use client';
++import Image from 'next/image';
++import { Star, ChevronRight } from 'lucide-react';
++
++interface GridShop {
++  id: string;
++  name: string;
++  rating: number | null;
++  review_count?: number;
++  reviewCount?: number;
++  photo_urls?: string[];
++  photoUrls?: string[];
++  distance_m?: number | null;
++  is_open?: boolean | null;
++  taxonomyTags?: Array<{ id: string; label: string; labelZh: string }>;
++}
++
++interface ShopCardGridProps {
++  shop: GridShop;
++  onClick: () => void;
++}
++
++export function ShopCardGrid({ shop, onClick }: ShopCardGridProps) {
++  const photos = shop.photo_urls ?? shop.photoUrls ?? [];
++  const reviewCount = shop.review_count ?? shop.reviewCount ?? 0;
++  const photoUrl = photos.length > 0 ? photos[0] : null;
++
++  return (
++    <article
++      role="article"
++      onClick={onClick}
++      className="flex flex-col rounded-2xl bg-white overflow-hidden cursor-pointer shadow-[0_2px_8px_#0000000A] hover:shadow-[0_4px_16px_#0000000F] transition-shadow"
++    >
++      {photoUrl ? (
++        <div className="relative aspect-[4/3] w-full">
++          <Image src={photoUrl} alt={shop.name} fill className="object-cover" sizes="(min-width: 1024px) 33vw, 100vw" />
++        </div>
++      ) : (
++        <div className="flex aspect-[4/3] w-full items-center justify-center bg-[var(--background)] text-[var(--text-tertiary)]">
++          No photo
++        </div>
++      )}
++      <div className="flex flex-col gap-1 p-3">
++        <div className="flex items-center justify-between">
++          <span className="font-[family-name:var(--font-body)] text-sm font-semibold text-[var(--foreground)] truncate">
++            {shop.name}
++          </span>
++          <ChevronRight className="h-4 w-4 shrink-0 text-[var(--text-tertiary)]" />
++        </div>
++        <div className="flex items-center gap-1 text-xs text-[var(--muted-foreground)]">
++          <Star className="h-3 w-3 fill-[var(--rating-star)] text-[var(--rating-star)]" />
++          <span className="font-semibold text-[var(--foreground)]">{shop.rating?.toFixed(1) ?? '—'}</span>
++          {shop.distance_m != null && (
++            <>
++              <span>·</span>
++              <span>{shop.distance_m < 1000 ? `${shop.distance_m}m` : `${(shop.distance_m / 1000).toFixed(1)} km`}</span>
++            </>
++          )}
++          {shop.is_open != null && (
++            <>
++              <span>·</span>
++              <span className={shop.is_open ? 'text-[var(--primary)]' : 'text-[var(--destructive)]'}>
++                {shop.is_open ? 'Open' : 'Closed'}
++              </span>
++            </>
++          )}
++        </div>
++      </div>
++    </article>
++  );
++}
++```
++
++**Step 4: Run test to verify it passes**
++
++Run: `pnpm test -- components/shops/shop-card-grid.test.tsx`
++Expected: All 5 tests PASS.
++
++**Step 5: Commit**
++
++```bash
++git add components/shops/shop-card-grid.tsx components/shops/shop-card-grid.test.tsx
++git commit -m "feat: add ShopCardGrid for desktop list 3-column grid"
++```
++
++---
++
++### Task 9: MapPin Component
++
++**Files:**
++- Create: `components/map/map-pin.tsx`
++- Create: `components/map/map-pin.test.tsx`
++
++**Step 1: Write the failing test**
++
++```typescript
++import { render, screen } from '@testing-library/react';
++import { MapPin } from './map-pin';
++
++describe('MapPin', () => {
++  it('renders an SVG pin', () => {
++    const { container } = render(<MapPin />);
++    expect(container.querySelector('svg')).toBeInTheDocument();
++  });
++
++  it('uses default brown color when not active', () => {
++    const { container } = render(<MapPin />);
++    const circle = container.querySelector('circle');
++    expect(circle).toHaveAttribute('fill', '#8B5E3C');
++  });
++
++  it('uses coral color when active', () => {
++    const { container } = render(<MapPin active />);
++    const circle = container.querySelector('circle');
++    expect(circle).toHaveAttribute('fill', '#FF6B6B');
++  });
++
++  it('renders triangle tip', () => {
++    const { container } = render(<MapPin />);
++    expect(container.querySelector('polygon')).toBeInTheDocument();
++  });
++});
++```
++
++**Step 2: Run test to verify it fails**
++
++Run: `pnpm test -- components/map/map-pin.test.tsx`
++Expected: FAIL.
++
++**Step 3: Write minimal implementation**
++
++Extract the existing `CoffeePinIcon` from `components/map/map-view.tsx` into its own file:
++
++```typescript
++interface MapPinProps {
++  active?: boolean;
++}
++
++const SIZE_DEFAULT = 40;
++const SIZE_ACTIVE = 44;
++const COLOR_DEFAULT = '#8B5E3C';
++const COLOR_ACTIVE = '#FF6B6B';
++const TIP_HEIGHT = 8;
++
++export function MapPin({ active = false }: MapPinProps) {
++  const size = active ? SIZE_ACTIVE : SIZE_DEFAULT;
++  const color = active ? COLOR_ACTIVE : COLOR_DEFAULT;
++  const radius = size / 2;
++  const iconSize = Math.round(size * 0.5);
++
++  return (
++    <svg
++      width={size}
++      height={size + TIP_HEIGHT}
++      viewBox={`0 0 ${size} ${size + TIP_HEIGHT}`}
++      fill="none"
++      xmlns="http://www.w3.org/2000/svg"
++      aria-hidden="true"
++    >
++      <circle cx={radius} cy={radius} r={radius} fill={color} />
++      <polygon
++        points={`${radius - 6},${size - 2} ${radius},${size + TIP_HEIGHT} ${radius + 6},${size - 2}`}
++        fill={color}
++      />
++      <g
++        transform={`translate(${(size - iconSize) / 2}, ${(size - iconSize) / 2})`}
++        stroke="white"
++        strokeWidth={2}
++        strokeLinecap="round"
++        strokeLinejoin="round"
++        fill="none"
++      >
++        <path d={`M${iconSize * 0.146} ${iconSize * 0.333}h${iconSize * 0.542}a${iconSize * 0.167} ${iconSize * 0.167} 0 0 1 0 ${iconSize * 0.333}h-${iconSize * 0.542}z`} />
++        <path d={`M${iconSize * 0.688} ${iconSize * 0.5}a${iconSize * 0.208} ${iconSize * 0.208} 0 0 0 0-${iconSize * 0.333}`} />
++        <path d={`M${iconSize * 0.083} ${iconSize * 0.667}l${iconSize * 0.125} ${iconSize * 0.25}h${iconSize * 0.583}l${iconSize * 0.125}-${iconSize * 0.25}`} />
++      </g>
++    </svg>
++  );
++}
++```
++
++**Step 4: Run test to verify it passes**
++
++Run: `pnpm test -- components/map/map-pin.test.tsx`
++Expected: All 4 tests PASS.
++
++**Step 5: Commit**
++
++```bash
++git add components/map/map-pin.tsx components/map/map-pin.test.tsx
++git commit -m "feat: extract MapPin SVG component with default/active states"
++```
++
++---
++
++### Task 10: CollapseToggle Component
++
++**Files:**
++- Create: `components/map/collapse-toggle.tsx`
++- Create: `components/map/collapse-toggle.test.tsx`
++
++**Step 1: Write the failing test**
++
++```typescript
++import { render, screen } from '@testing-library/react';
++import userEvent from '@testing-library/user-event';
++import { CollapseToggle } from './collapse-toggle';
++
++describe('CollapseToggle', () => {
++  it('renders a button', () => {
++    render(<CollapseToggle collapsed={false} onClick={() => {}} />);
++    expect(screen.getByRole('button', { name: /collapse/i })).toBeInTheDocument();
++  });
++
++  it('calls onClick when clicked', async () => {
++    const user = userEvent.setup();
++    const onClick = vi.fn();
++    render(<CollapseToggle collapsed={false} onClick={onClick} />);
++    await user.click(screen.getByRole('button', { name: /collapse/i }));
++    expect(onClick).toHaveBeenCalledOnce();
++  });
++
++  it('shows expand label when collapsed', () => {
++    render(<CollapseToggle collapsed={true} onClick={() => {}} />);
++    expect(screen.getByRole('button', { name: /expand/i })).toBeInTheDocument();
++  });
++});
++```
++
++**Step 2: Run test to verify it fails**
++
++Run: `pnpm test -- components/map/collapse-toggle.test.tsx`
++Expected: FAIL.
++
++**Step 3: Write minimal implementation**
++
++```typescript
++'use client';
++import { ChevronLeft, ChevronRight } from 'lucide-react';
++
++interface CollapseToggleProps {
++  collapsed: boolean;
++  onClick: () => void;
++}
++
++export function CollapseToggle({ collapsed, onClick }: CollapseToggleProps) {
++  return (
++    <button
++      type="button"
++      aria-label={collapsed ? 'Expand panel' : 'Collapse panel'}
++      onClick={onClick}
++      className="flex items-center justify-center w-5 h-12 rounded-r-lg bg-[#F0EDE8] border border-[var(--border)] text-[var(--muted-foreground)] hover:bg-[var(--muted)] transition-colors"
++    >
++      {collapsed ? <ChevronRight className="h-3 w-3" /> : <ChevronLeft className="h-3 w-3" />}
++    </button>
++  );
++}
++```
++
++**Step 4: Run test to verify it passes**
++
++Run: `pnpm test -- components/map/collapse-toggle.test.tsx`
++Expected: All 3 tests PASS.
++
++**Step 5: Commit**
++
++```bash
++git add components/map/collapse-toggle.tsx components/map/collapse-toggle.test.tsx
++git commit -m "feat: add CollapseToggle for desktop left panel"
++```
++
++---
++
++### Task 11: BottomNav Rebuild
++
++**Files:**
++- Create: `components/navigation/bottom-nav-new.tsx` (rename to `bottom-nav.tsx` in Task 18)
++- Create: `components/navigation/bottom-nav-new.test.tsx`
++
++**Step 1: Write the failing test**
++
++```typescript
++import { render, screen } from '@testing-library/react';
++import { BottomNavNew } from './bottom-nav-new';
++
++vi.mock('next/navigation', () => ({
++  usePathname: vi.fn(() => '/'),
++}));
++
++vi.mock('next/link', () => ({
++  default: ({ children, href, ...props }: { children: React.ReactNode; href: string; [key: string]: unknown }) => (
++    <a href={href} {...props}>{children}</a>
++  ),
++}));
++
++describe('BottomNavNew', () => {
++  it('renders 4 tabs with Chinese labels', () => {
++    render(<BottomNavNew />);
++    expect(screen.getByText('地圖')).toBeInTheDocument();
++    expect(screen.getByText('探索')).toBeInTheDocument();
++    expect(screen.getByText('收藏')).toBeInTheDocument();
++    expect(screen.getByText('我的')).toBeInTheDocument();
++  });
++
++  it('has pill-shaped container', () => {
++    const { container } = render(<BottomNavNew />);
++    const pill = container.querySelector('[data-testid="tab-bar-pill"]');
++    expect(pill).toBeInTheDocument();
++  });
++
++  it('shows active state for current route', () => {
++    render(<BottomNavNew />);
++    const findTab = screen.getByText('地圖').closest('[data-tab]');
++    expect(findTab).toHaveAttribute('data-active', 'true');
++  });
++
++  it('links to correct routes', () => {
++    render(<BottomNavNew />);
++    expect(screen.getByText('探索').closest('a')).toHaveAttribute('href', '/explore');
++    expect(screen.getByText('收藏').closest('a')).toHaveAttribute('href', '/lists');
++    expect(screen.getByText('我的').closest('a')).toHaveAttribute('href', '/profile');
++  });
++});
++```
++
++**Step 2: Run test to verify it fails**
++
++Run: `pnpm test -- components/navigation/bottom-nav-new.test.tsx`
++Expected: FAIL.
++
++**Step 3: Write minimal implementation**
++
++```typescript
++'use client';
++import Link from 'next/link';
++import { usePathname } from 'next/navigation';
++import { Map, Compass, Heart, User } from 'lucide-react';
++import type { LucideIcon } from 'lucide-react';
++
++const TABS: { href: string; label: string; icon: LucideIcon }[] = [
++  { href: '/', label: '地圖', icon: Map },
++  { href: '/explore', label: '探索', icon: Compass },
++  { href: '/lists', label: '收藏', icon: Heart },
++  { href: '/profile', label: '我的', icon: User },
++];
++
++export function BottomNavNew() {
++  const pathname = usePathname();
++
++  return (
++    <nav className="fixed right-0 bottom-0 left-0 z-40 px-4 pb-4">
++      <div
++        data-testid="tab-bar-pill"
++        className="flex rounded-[36px] bg-white p-1 shadow-[0_4px_20px_#0000001A] h-[62px]"
++      >
++        {TABS.map(({ href, label, icon: Icon }) => {
++          const isActive = pathname === href || (href !== '/' && pathname.startsWith(href));
++          return (
++            <Link
++              key={href}
++              href={href}
++              data-tab={label}
++              data-active={isActive || undefined}
++              className={`flex flex-1 flex-col items-center justify-center gap-0.5 rounded-[26px] font-[family-name:var(--font-body)] text-[11px] font-medium transition-colors ${
++                isActive
++                  ? 'bg-[var(--active-dark)] text-white'
++                  : 'text-[var(--text-tertiary)]'
++              }`}
++            >
++              <Icon className="h-5 w-5" />
++              <span>{label}</span>
++            </Link>
++          );
++        })}
++      </div>
++    </nav>
++  );
++}
++```
++
++**Step 4: Run test to verify it passes**
++
++Run: `pnpm test -- components/navigation/bottom-nav-new.test.tsx`
++Expected: All 4 tests PASS.
++
++**Step 5: Commit**
++
++```bash
++git add components/navigation/bottom-nav-new.tsx components/navigation/bottom-nav-new.test.tsx
++git commit -m "feat: rebuild BottomNav as pill-shaped tab bar with design.pen styling"
++```
++
++---
++
++### Task 12: HeaderNav Rebuild
++
++**Files:**
++- Create: `components/navigation/header-nav-new.tsx`
++- Create: `components/navigation/header-nav-new.test.tsx`
++
++**Step 1: Write the failing test**
++
++```typescript
++import { render, screen } from '@testing-library/react';
++import { HeaderNavNew } from './header-nav-new';
++
++vi.mock('next/navigation', () => ({
++  usePathname: vi.fn(() => '/'),
++}));
++
++vi.mock('next/link', () => ({
++  default: ({ children, href, ...props }: { children: React.ReactNode; href: string; [key: string]: unknown }) => (
++    <a href={href} {...props}>{children}</a>
++  ),
++}));
++
++describe('HeaderNavNew', () => {
++  it('renders logo with 啡遊 CafeRoam', () => {
++    render(<HeaderNavNew activeTab="find" />);
++    expect(screen.getByText('啡遊 CafeRoam')).toBeInTheDocument();
++  });
++
++  it('renders 4 nav items', () => {
++    render(<HeaderNavNew activeTab="find" />);
++    expect(screen.getByText('Find')).toBeInTheDocument();
++    expect(screen.getByText('Explore')).toBeInTheDocument();
++    expect(screen.getByText('Favorites')).toBeInTheDocument();
++    expect(screen.getByText('Profile')).toBeInTheDocument();
++  });
++
++  it('shows Find as active when activeTab is find', () => {
++    render(<HeaderNavNew activeTab="find" />);
++    const findLink = screen.getByText('Find').closest('a');
++    expect(findLink).toHaveAttribute('data-active', 'true');
++  });
++
++  it('renders search button', () => {
++    render(<HeaderNavNew activeTab="find" />);
++    expect(screen.getByRole('button', { name: /search/i })).toBeInTheDocument();
++  });
++});
++```
++
++**Step 2: Run test to verify it fails**
++
++Run: `pnpm test -- components/navigation/header-nav-new.test.tsx`
++Expected: FAIL.
++
++**Step 3: Write minimal implementation**
++
++```typescript
++'use client';
++import Link from 'next/link';
++import { usePathname } from 'next/navigation';
++import { MapPin, Compass, Bookmark, User, Search } from 'lucide-react';
++import type { LucideIcon } from 'lucide-react';
++
++const NAV_ITEMS: { href: string; label: string; icon: LucideIcon; tab: string }[] = [
++  { href: '/', label: 'Find', icon: MapPin, tab: 'find' },
++  { href: '/explore', label: 'Explore', icon: Compass, tab: 'explore' },
++  { href: '/lists', label: 'Favorites', icon: Bookmark, tab: 'favorites' },
++  { href: '/profile', label: 'Profile', icon: User, tab: 'profile' },
++];
++
++interface HeaderNavNewProps {
++  activeTab?: string;
++}
++
++export function HeaderNavNew({ activeTab }: HeaderNavNewProps) {
++  const pathname = usePathname();
++  const currentTab = activeTab ?? (pathname === '/' ? 'find' : pathname.replace('/', ''));
++
++  return (
++    <header className="fixed top-0 right-0 left-0 z-40 flex items-center justify-between h-16 px-8 bg-white border-b border-[#D1D0CD]">
++      <Link href="/" className="flex items-center gap-2.5">
++        <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-[var(--map-pin)]">
++          <span className="font-[family-name:var(--font-heading)] text-base font-bold text-white">啡</span>
++        </div>
++        <span className="font-[family-name:var(--font-heading)] text-base font-bold text-[var(--foreground)]">
++          啡遊 CafeRoam
++        </span>
++      </Link>
++
++      <nav className="flex items-center gap-0.5">
++        {NAV_ITEMS.map(({ href, label, icon: Icon, tab }) => {
++          const isActive = currentTab === tab;
++          return (
++            <Link
++              key={tab}
++              href={href}
++              data-active={isActive || undefined}
++              className={`flex items-center gap-[5px] rounded-[20px] px-4 h-9 font-[family-name:var(--font-body)] text-sm transition-colors ${
++                isActive
++                  ? 'bg-[var(--active-dark)] text-white font-semibold'
++                  : 'text-[var(--muted-foreground)] font-medium'
++              }`}
++            >
++              <Icon className="h-3.5 w-3.5" />
++              {label}
++            </Link>
++          );
++        })}
++      </nav>
++
++      <div className="flex items-center gap-2">
++        <button
++          type="button"
++          aria-label="Search"
++          className="flex items-center justify-center h-9 w-9 rounded-[18px] bg-[var(--background)] text-[var(--muted-foreground)]"
++        >
++          <Search className="h-[18px] w-[18px]" />
++        </button>
++        <div className="flex items-center justify-center h-8 w-8 rounded-full bg-[var(--map-pin)]">
++          <span className="font-[family-name:var(--font-body)] text-sm font-semibold text-white">Y</span>
++        </div>
++      </div>
++    </header>
++  );
++}
++```
++
++**Step 4: Run test to verify it passes**
++
++Run: `pnpm test -- components/navigation/header-nav-new.test.tsx`
++Expected: All 4 tests PASS.
++
++**Step 5: Commit**
++
++```bash
++git add components/navigation/header-nav-new.tsx components/navigation/header-nav-new.test.tsx
++git commit -m "feat: rebuild HeaderNav with logo, pill nav items, avatar"
++```
++
++---
++
++### Task 13: FilterSheet Rebuild
++
++**Files:**
++- Create: `components/filters/filter-sheet.tsx`
++- Create: `components/filters/filter-sheet.test.tsx`
++
++**Note:** This task reuses the existing filter sheet's tag data and logic from `components/discovery/filter-sheet.tsx`, but wraps it with the new design styling (bottom sheet on mobile via vaul, Radix Dialog on desktop). The inner FilterContent is the shared component.
++
++**Step 1: Write the failing test**
++
++```typescript
++import { render, screen } from '@testing-library/react';
++import userEvent from '@testing-library/user-event';
++import { FilterSheet } from './filter-sheet';
++
++// Mock vaul Drawer
++vi.mock('vaul', () => ({
++  Drawer: {
++    Root: ({ children, open }: { children: React.ReactNode; open: boolean }) =>
++      open ? <div data-testid="drawer">{children}</div> : null,
++    Portal: ({ children }: { children: React.ReactNode }) => <>{children}</>,
++    Overlay: () => <div data-testid="drawer-overlay" />,
++    Content: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
++    Title: ({ children }: { children: React.ReactNode }) => <h2>{children}</h2>,
++  },
++}));
++
++vi.mock('@/lib/hooks/use-media-query', () => ({
++  useIsDesktop: vi.fn(() => false),
++}));
++
++describe('FilterSheet', () => {
++  it('renders title when open', () => {
++    render(<FilterSheet open onClose={() => {}} onApply={() => {}} initialFilters={[]} />);
++    expect(screen.getByText('Filters')).toBeInTheDocument();
++  });
++
++  it('renders Clear All button', () => {
++    render(<FilterSheet open onClose={() => {}} onApply={() => {}} initialFilters={[]} />);
++    expect(screen.getByRole('button', { name: /clear all/i })).toBeInTheDocument();
++  });
++
++  it('renders category tabs', () => {
++    render(<FilterSheet open onClose={() => {}} onApply={() => {}} initialFilters={[]} />);
++    expect(screen.getByText('Functionality')).toBeInTheDocument();
++  });
++
++  it('renders apply button with count', () => {
++    render(<FilterSheet open onClose={() => {}} onApply={() => {}} initialFilters={['wifi']} />);
++    expect(screen.getByRole('button', { name: /show/i })).toBeInTheDocument();
++  });
++});
++```
++
++**Step 2: Run test to verify it fails**
++
++Run: `pnpm test -- components/filters/filter-sheet.test.tsx`
++Expected: FAIL.
++
++**Step 3: Write implementation**
++
++This is a larger component. The FilterContent inner component renders:
++- Header: "Filters" + selected count badge + "Clear All" button
++- Search bar for filtering tags
++- Category tabs (Functionality, Time, Ambience, Mode, Food)
++- Tag grid (FilterTag instances)
++- Distance slider
++- Apply button ("Show N places")
++
++Import the tag data from the existing `components/discovery/filter-sheet.tsx` — copy the `LAUNCH_TAGS` array into the new file or extract to a shared `lib/data/filter-tags.ts`.
++
++The wrapper component detects `useIsDesktop()` and renders vaul Drawer (mobile) or a modal overlay (desktop).
++
++Full code in the component file — follow the pattern from the existing filter-sheet but with:
++- Rounded corners `[24px, 24px, 0, 0]` on mobile sheet
++- `#FFFFFF` background
++- Handle bar at top
++- Green primary button for "Show N places"
++
++**Step 4: Run test to verify it passes**
++
++Run: `pnpm test -- components/filters/filter-sheet.test.tsx`
++Expected: All 4 tests PASS.
++
++**Step 5: Commit**
++
++```bash
++git add components/filters/filter-sheet.tsx components/filters/filter-sheet.test.tsx
++git commit -m "feat: rebuild FilterSheet with vaul drawer (mobile) + modal (desktop)"
++```
++
++---
++
++### Task 14: ShopCarousel Container
++
++**Files:**
++- Create: `components/map/shop-carousel.tsx`
++- Create: `components/map/shop-carousel.test.tsx`
++
++**Step 1: Write the failing test**
++
++```typescript
++import { render, screen } from '@testing-library/react';
++import { ShopCarousel } from './shop-carousel';
++import { makeShop } from '@/lib/test-utils/factories';
++
++const shops = [
++  { ...makeShop(), id: 'shop-1', name: 'Brew House', photo_urls: ['https://example.com/1.jpg'] },
++  { ...makeShop(), id: 'shop-2', name: 'Velvet Bean', photo_urls: ['https://example.com/2.jpg'] },
++];
++
++describe('ShopCarousel', () => {
++  it('renders all shop cards', () => {
++    render(<ShopCarousel shops={shops} onShopClick={() => {}} />);
++    expect(screen.getByText('Brew House')).toBeInTheDocument();
++    expect(screen.getByText('Velvet Bean')).toBeInTheDocument();
++  });
++
++  it('renders section header', () => {
++    render(<ShopCarousel shops={shops} onShopClick={() => {}} />);
++    expect(screen.getByText('Nearby Coffee Shops')).toBeInTheDocument();
++  });
++
++  it('renders shop count', () => {
++    render(<ShopCarousel shops={shops} onShopClick={() => {}} />);
++    expect(screen.getByText('2 places')).toBeInTheDocument();
++  });
++
++  it('has horizontal scroll container', () => {
++    const { container } = render(<ShopCarousel shops={shops} onShopClick={() => {}} />);
++    expect(container.querySelector('[data-testid="carousel-scroll"]')).toBeInTheDocument();
++  });
++});
++```
++
++**Step 2: Run test to verify it fails**
++
++Run: `pnpm test -- components/map/shop-carousel.test.tsx`
++Expected: FAIL.
++
++**Step 3: Write minimal implementation**
++
++```typescript
++'use client';
++import { useRef, useEffect } from 'react';
++import { ShopCardCarousel } from '@/components/shops/shop-card-carousel';
++
++interface CarouselShop {
++  id: string;
++  name: string;
++  rating: number | null;
++  photo_urls?: string[];
++  photoUrls?: string[];
++  taxonomyTags?: Array<{ id: string; label: string; labelZh: string }>;
++  review_count?: number;
++  reviewCount?: number;
++}
++
++interface ShopCarouselProps {
++  shops: CarouselShop[];
++  onShopClick: (shopId: string) => void;
++  selectedShopId?: string | null;
++}
++
++export function ShopCarousel({ shops, onShopClick, selectedShopId }: ShopCarouselProps) {
++  const scrollRef = useRef<HTMLDivElement>(null);
++
++  useEffect(() => {
++    if (!selectedShopId || !scrollRef.current) return;
++    const idx = shops.findIndex((s) => s.id === selectedShopId);
++    if (idx < 0) return;
++    const card = scrollRef.current.children[idx] as HTMLElement | undefined;
++    card?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
++  }, [selectedShopId, shops]);
++
++  return (
++    <div className="flex flex-col gap-3">
++      <div className="flex items-center justify-between px-5">
++        <span className="font-[family-name:var(--font-heading)] text-[17px] font-bold text-[var(--foreground)]">
++          Nearby Coffee Shops
++        </span>
++        <span className="font-[family-name:var(--font-body)] text-[13px] font-medium text-[var(--text-tertiary)]">
++          {shops.length} places
++        </span>
++      </div>
++      <div
++        ref={scrollRef}
++        data-testid="carousel-scroll"
++        className="flex gap-3 overflow-x-auto px-5 pb-2 scrollbar-none"
++      >
++        {shops.map((shop) => (
++          <ShopCardCarousel
++            key={shop.id}
++            shop={shop}
++            onClick={() => onShopClick(shop.id)}
++          />
++        ))}
++      </div>
++    </div>
++  );
++}
++```
++
++**Step 4: Run test to verify it passes**
++
++Run: `pnpm test -- components/map/shop-carousel.test.tsx`
++Expected: All 4 tests PASS.
++
++**Step 5: Commit**
++
++```bash
++git add components/map/shop-carousel.tsx components/map/shop-carousel.test.tsx
++git commit -m "feat: add ShopCarousel horizontal scroll container with auto-scroll"
++```
++
++---
++
++### Task 15: Layout Components + Page Integration
++
++**Files:**
++- Create: `components/map/map-mobile-layout.tsx`
++- Create: `components/map/list-mobile-layout.tsx`
++- Create: `components/map/map-desktop-layout.tsx`
++- Create: `components/map/list-desktop-layout.tsx`
++- Modify: `app/page.tsx` (swap imports to new components)
++- Modify: `components/navigation/app-shell.tsx` (swap to new nav components)
++
++**Step 1: No standalone test — integration test covers these layouts**
++
++Layout components are thin wrappers composing reusable components. They're tested through the page integration test.
++
++**Step 2: Create MapMobileLayout**
++
++Full-bleed map with:
++- Absolute-positioned gradient overlay at top (search + filters + count)
++- Bottom gradient card area with ShopCarousel + BottomNav
++- My Location button (absolute bottom-right)
++
++Uses the existing `MapView` (dynamic import, ssr: false) for the map canvas.
++
++**Step 3: Create ListMobileLayout**
++
++Vertical stack:
++- SearchBar (top)
++- FilterTag horizontal scroll
++- CountHeader
++- Scrollable ShopCardCompact list with dividers
++- BottomNav
++
++**Step 4: Create MapDesktopLayout**
++
++Side-by-side:
++- HeaderNav (fixed top)
++- LeftPanel (420px, contains SearchBar + FilterTags + CountHeader + scrollable ShopCardCompact list)
++- CollapseToggle (20px strip between panel and map)
++- MapView (fills remaining width)
++
++**Step 5: Create ListDesktopLayout**
++
++Vertical:
++- HeaderNav (fixed top)
++- TopBar (SearchBar + FilterTags)
++- CountHeader (with sort button)
++- CSS Grid 3-column of ShopCardGrid
++
++**Step 6: Update app/page.tsx**
++
++Replace all old component imports with new ones. Use `useIsDesktop()` + `view` state to select the correct layout:
++
++```typescript
++if (isDesktop) {
++  return view === 'list' ? <ListDesktopLayout ... /> : <MapDesktopLayout ... />;
++}
++return view === 'list' ? <ListMobileLayout ... /> : <MapMobileLayout ... />;
++```
++
++**Step 7: Update app-shell.tsx**
++
++Replace old BottomNav/HeaderNav imports with new versions. The Find page (/) no longer uses AppShell's nav since each layout includes its own — so AppShell should skip nav rendering for the Find page route.
++
++**Step 8: Run full test suite**
++
++Run: `pnpm test`
++Expected: All existing tests pass (some old tests may break due to import changes — fix them).
++
++**Step 9: Run build**
++
++Run: `pnpm build`
++Expected: Build succeeds.
++
++**Step 10: Commit**
++
++```bash
++git add components/map/ app/page.tsx components/navigation/app-shell.tsx
++git commit -m "feat: add 4 layout components + wire into page.tsx"
++```
++
++---
++
++### Task 16: Cleanup — Delete Old Components
++
++**Files:**
++- Delete: `components/map/map-mini-card.tsx` + test
++- Delete: `components/map/map-desktop-card.tsx` + test
++- Delete: `components/map/map-list-view.tsx` + test
++- Delete: `components/discovery/filter-pills.tsx` + test
++- Rename: `bottom-nav-new.tsx` → `bottom-nav.tsx` (update imports)
++- Rename: `header-nav-new.tsx` → `header-nav.tsx` (update imports)
++
++**Step 1: No test needed — deletion only**
++
++**Step 2: Delete old components**
++
++```bash
++rm components/map/map-mini-card.tsx components/map/map-mini-card.test.tsx
++rm components/map/map-desktop-card.tsx components/map/map-desktop-card.test.tsx
++rm components/map/map-list-view.tsx components/map/map-list-view.test.tsx
++rm components/discovery/filter-pills.tsx components/discovery/filter-pills.test.tsx
++```
++
++**Step 3: Rename new nav components and update imports**
++
++```bash
++mv components/navigation/bottom-nav-new.tsx components/navigation/bottom-nav.tsx
++mv components/navigation/bottom-nav-new.test.tsx components/navigation/bottom-nav.test.tsx
++mv components/navigation/header-nav-new.tsx components/navigation/header-nav.tsx
++mv components/navigation/header-nav-new.test.tsx components/navigation/header-nav.test.tsx
++```
++
++Update all imports: `BottomNavNew` → `BottomNav`, `HeaderNavNew` → `HeaderNav`.
++
++**Step 4: Run full test suite**
++
++Run: `pnpm test`
++Expected: All tests pass. No broken imports.
++
++**Step 5: Run lint**
++
++Run: `pnpm lint`
++Expected: No errors.
++
++**Step 6: Commit**
++
++```bash
++git add -A
++git commit -m "chore: delete old map/nav components, rename new nav components"
++```
++
++---
++
++## Execution Waves
++
++```mermaid
++graph TD
++    T1[Task 1: Typography + CSS] --> T5[Task 5: SearchBar]
++    T1 --> T2[Task 2: FilterTag]
++    T1 --> T3[Task 3: ViewToggle]
++    T1 --> T6[Task 6: ShopCardCarousel]
++    T1 --> T7[Task 7: ShopCardCompact]
++    T1 --> T8[Task 8: ShopCardGrid]
++    T1 --> T9[Task 9: MapPin]
++    T1 --> T10[Task 10: CollapseToggle]
++    T1 --> T11[Task 11: BottomNav]
++    T1 --> T12[Task 12: HeaderNav]
++    T3 --> T4[Task 4: CountHeader]
++    T2 --> T13[Task 13: FilterSheet]
++    T6 --> T14[Task 14: ShopCarousel]
++    T4 --> T15[Task 15: Layouts + Page]
++    T5 --> T15
++    T7 --> T15
++    T8 --> T15
++    T9 --> T15
++    T10 --> T15
++    T11 --> T15
++    T12 --> T15
++    T13 --> T15
++    T14 --> T15
++    T15 --> T16[Task 16: Cleanup]
++
++    subgraph "Wave 1"
++        T1
++    end
++    subgraph "Wave 2"
++        T2
++        T3
++        T5
++        T6
++        T7
++        T8
++        T9
++        T10
++        T11
++        T12
++    end
++    subgraph "Wave 3"
++        T4
++        T13
++        T14
++    end
++    subgraph "Wave 4"
++        T15
++    end
++    subgraph "Wave 5"
++        T16
++    end
++```
++
++**Wave 1** (sequential — foundation):
++- Task 1: Typography & CSS Foundation
++
++**Wave 2** (parallel — all depend only on Wave 1):
++- Task 2: FilterTag
++- Task 3: ViewToggle
++- Task 5: SearchBar
++- Task 6: ShopCardCarousel
++- Task 7: ShopCardCompact
++- Task 8: ShopCardGrid
++- Task 9: MapPin
++- Task 10: CollapseToggle
++- Task 11: BottomNav
++- Task 12: HeaderNav
++
++**Wave 3** (parallel — depend on Wave 2):
++- Task 4: CountHeader ← Task 3 (ViewToggle)
++- Task 13: FilterSheet ← Task 2 (FilterTag)
++- Task 14: ShopCarousel ← Task 6 (ShopCardCarousel)
++
++**Wave 4** (sequential — depends on all above):
++- Task 15: Layout Components + Page Integration
++
++**Wave 5** (sequential — depends on Wave 4):
++- Task 16: Cleanup — Delete Old Components
++
++---
++
++## TODO
++
++See `TODO.md` root file for task checkboxes.

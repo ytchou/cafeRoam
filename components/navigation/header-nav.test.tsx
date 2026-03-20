@@ -1,62 +1,49 @@
 import { render, screen } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { createMockSupabaseAuth } from '@/lib/test-utils/mocks';
+import { describe, it, expect, vi } from 'vitest';
+import { HeaderNav } from './header-nav';
+
+vi.mock('next/navigation', () => ({
+  usePathname: vi.fn(() => '/'),
+}));
 
 vi.mock('next/link', () => ({
   default: ({
     children,
     href,
-    ...rest
+    ...props
   }: {
     children: React.ReactNode;
     href: string;
     [key: string]: unknown;
   }) => (
-    <a href={href} {...rest}>
+    <a href={href} {...props}>
       {children}
     </a>
   ),
 }));
 
-vi.mock('@/components/discovery/search-bar', () => ({
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  SearchBar: ({ onSubmit: _onSubmit }: { onSubmit: (q: string) => void }) => (
-    <div data-testid="search-bar" />
-  ),
-}));
-
-const mockAuth = createMockSupabaseAuth();
-vi.mock('@/lib/supabase/client', () => ({
-  createClient: () => ({ auth: mockAuth }),
-}));
-
-import { HeaderNav } from './header-nav';
-
-describe('HeaderNav', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mockAuth.getSession.mockResolvedValue({ data: { session: null } });
+describe('a user interacting with the HeaderNav', () => {
+  it('a user sees the 啡遊 CafeRoam brand logo in the header', () => {
+    render(<HeaderNav activeTab="find" />);
+    expect(screen.getByText('啡遊 CafeRoam')).toBeInTheDocument();
   });
 
-  it('renders logo', () => {
-    render(<HeaderNav onSearch={vi.fn()} />);
-    expect(screen.getByText(/啡遊|CafeRoam/i)).toBeInTheDocument();
+  it('a user sees all four main navigation destinations in the header', () => {
+    render(<HeaderNav activeTab="find" />);
+    expect(screen.getByText('Find')).toBeInTheDocument();
+    expect(screen.getByText('Explore')).toBeInTheDocument();
+    expect(screen.getByText('Favorites')).toBeInTheDocument();
+    expect(screen.getByText('Profile')).toBeInTheDocument();
   });
 
-  it('renders navigation links', () => {
-    render(<HeaderNav onSearch={vi.fn()} />);
-    expect(screen.getByRole('link', { name: /地圖/i })).toHaveAttribute(
-      'href',
-      '/map'
-    );
-    expect(screen.getByRole('link', { name: /收藏/i })).toHaveAttribute(
-      'href',
-      '/lists'
-    );
+  it('a user on the Find page sees the Find tab highlighted as active', () => {
+    render(<HeaderNav activeTab="find" />);
+    const findLink = screen.getByText('Find').closest('a');
+    expect(findLink).toHaveAttribute('data-active', 'true');
   });
 
-  it('renders search bar', () => {
-    render(<HeaderNav onSearch={vi.fn()} />);
-    expect(screen.getByTestId('search-bar')).toBeInTheDocument();
+  it('a user sees a search button in the header to open search', () => {
+    render(<HeaderNav activeTab="find" />);
+    expect(screen.getByRole('button', { name: /search/i })).toBeInTheDocument();
   });
 });

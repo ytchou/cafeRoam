@@ -1,67 +1,78 @@
 'use client';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
-import { SearchBar } from '@/components/discovery/search-bar';
+import { usePathname } from 'next/navigation';
+import { MapPin, Compass, Bookmark, User, Search } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
+
+const NAV_ITEMS: {
+  href: string;
+  label: string;
+  icon: LucideIcon;
+  tab: string;
+}[] = [
+  { href: '/', label: 'Find', icon: MapPin, tab: 'find' },
+  { href: '/explore', label: 'Explore', icon: Compass, tab: 'explore' },
+  { href: '/lists', label: 'Favorites', icon: Bookmark, tab: 'favorites' },
+  { href: '/profile', label: 'Profile', icon: User, tab: 'profile' },
+];
+const NAV_ITEMS_BY_HREF = new Map(NAV_ITEMS.map((item) => [item.href, item]));
 
 interface HeaderNavProps {
-  onSearch: (query: string) => void;
-  variant?: 'solid' | 'glass';
+  activeTab?: string;
 }
 
-export function HeaderNav({ onSearch, variant = 'solid' }: HeaderNavProps) {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-
-  useEffect(() => {
-    const supabase = createClient();
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setIsLoggedIn(!!session);
-    });
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setIsLoggedIn(!!session);
-    });
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const bgClass =
-    variant === 'glass'
-      ? 'bg-white/80 backdrop-blur-md supports-[not(backdrop-filter)]:bg-white/90'
-      : 'bg-white border-b border-gray-100';
+export function HeaderNav({ activeTab }: HeaderNavProps) {
+  const pathname = usePathname();
+  const currentTab =
+    activeTab ?? NAV_ITEMS_BY_HREF.get(pathname)?.tab ?? 'find';
 
   return (
-    <header className={`fixed top-0 right-0 left-0 z-40 ${bgClass}`}>
-      <div className="mx-auto flex h-16 max-w-6xl items-center gap-4 px-4">
-        <Link
-          href="/"
-          className="flex-shrink-0 text-xl font-bold text-[#E06B3F]"
-        >
-          啡遊
-        </Link>
-        <div className="max-w-xl flex-1">
-          <SearchBar onSubmit={onSearch} />
+    <header className="fixed top-0 right-0 left-0 z-40 flex h-16 items-center justify-between border-b border-[#D1D0CD] bg-white px-8">
+      <Link href="/" className="flex items-center gap-2.5">
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--map-pin)]">
+          <span className="font-[family-name:var(--font-heading)] text-base font-bold text-white">
+            啡
+          </span>
         </div>
-        <nav className="flex flex-shrink-0 items-center gap-4">
-          <Link
-            href="/map"
-            className="text-sm text-gray-600 transition-colors hover:text-[#E06B3F]"
-          >
-            地圖
-          </Link>
-          <Link
-            href="/lists"
-            className="text-sm text-gray-600 transition-colors hover:text-[#E06B3F]"
-          >
-            收藏
-          </Link>
-          <Link
-            href={isLoggedIn ? '/profile' : '/login'}
-            className="rounded-full bg-[#E06B3F] px-4 py-2 text-sm text-white transition-colors hover:bg-[#d05a2e]"
-          >
-            {isLoggedIn ? '個人' : '登入'}
-          </Link>
-        </nav>
+        <span className="font-[family-name:var(--font-heading)] text-base font-bold text-[var(--foreground)]">
+          啡遊 CafeRoam
+        </span>
+      </Link>
+
+      <nav className="flex items-center gap-0.5">
+        {NAV_ITEMS.map(({ href, label, icon: Icon, tab }) => {
+          const isActive = currentTab === tab;
+          return (
+            <Link
+              key={tab}
+              href={href}
+              data-active={isActive || undefined}
+              className={`flex h-9 items-center gap-[5px] rounded-[20px] px-4 font-[family-name:var(--font-body)] text-sm transition-colors ${
+                isActive
+                  ? 'bg-[var(--active-dark)] font-semibold text-white'
+                  : 'font-medium text-[var(--muted-foreground)]'
+              }`}
+            >
+              <Icon className="h-3.5 w-3.5" />
+              {label}
+            </Link>
+          );
+        })}
+      </nav>
+
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          aria-label="Search"
+          className="flex h-9 w-9 items-center justify-center rounded-[18px] bg-[var(--background)] text-[var(--muted-foreground)]"
+        >
+          <Search className="h-[18px] w-[18px]" />
+        </button>
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--map-pin)]">
+          <span className="font-[family-name:var(--font-body)] text-sm font-semibold text-white">
+            Y
+          </span>
+        </div>
       </div>
     </header>
   );
