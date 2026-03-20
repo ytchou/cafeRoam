@@ -11,8 +11,9 @@ export function ShopDescription({ text }: ShopDescriptionProps) {
   if (!text) return null;
 
   return (
-    <div className="px-4 py-2">
-      <p className={`text-sm text-gray-600 ${expanded ? '' : 'line-clamp-2'}`}>
+    <div className="px-5 py-4">
+      <h2 className="text-sm font-semibold text-[#1A1918] mb-2">About</h2>
+      <p className={`text-sm text-[#3B2F2A] ${expanded ? '' : 'line-clamp-2'}`}>
         {text}
       </p>
       {!expanded && text.length > 60 && (

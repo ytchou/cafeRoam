@@ -1135,9 +1135,9 @@ _Designed in Pencil. Replaces current 首頁 + 地圖 split into a unified Find 
 - [x] Task 6: `ShopHero` — floating back/bookmark/share overlay (frame `3hOsp`)
 - [x] Task 7: `ShopIdentity` — open-status badge, distance pill, address (frame `3hOsp`)
 - [x] Task 8: `SaveToListSheet` — 3 visual states (frames `y52Ff`, `udpQf`, `rgu49`)
-- [ ] Task 9: `ShopDescription` + `AttributeChips` — section headers + restyle
-- [ ] Task 10: `ShopReviews` — "See all" link
-- [ ] Task 11: `DirectionsSheet` — visual polish (frame `ENKsc`)
+- [x] Task 9: `ShopDescription` + `AttributeChips` — section headers + restyle
+- [x] Task 10: `ShopReviews` — "See all" link
+- [x] Task 11: `DirectionsSheet` — visual polish (frame `ENKsc`)
 
 **Chunk 3 — Wiring (Wave 2–3):**
 
