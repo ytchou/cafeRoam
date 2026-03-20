@@ -55,29 +55,29 @@ app/page.tsx (FindPage)
 
 ## Reusable Components (12)
 
-| # | Component | Directory | Purpose | Key Props |
-|---|-----------|-----------|---------|-----------|
-| 1 | `SearchBar` | `filters/` | Search input with filter button | `onSearch`, `onFilterClick`, `placeholder` |
-| 2 | `FilterTag` | `filters/` | Pill button with icon/dot + text | `label`, `icon?`, `dot?`, `active`, `onClick` |
-| 3 | `FilterSheet` | `filters/` | Filter content + responsive wrapper | `open`, `onClose`, `filters`, `onApply` |
-| 4 | `ViewToggle` | `discovery/` | Map/List segmented toggle | `view`, `onChange` |
-| 5 | `CountHeader` | `discovery/` | "N places nearby" + toggle + sort | `count`, `view`, `onViewChange`, `onSort?` |
-| 6 | `ShopCardCarousel` | `shops/` | Vertical card for mobile carousel | `shop`, `onClick` |
-| 7 | `ShopCardCompact` | `shops/` | Row card for list + panel | `shop`, `selected?`, `onClick` |
-| 8 | `ShopCardGrid` | `shops/` | Large photo card for desktop grid | `shop`, `onClick` |
-| 9 | `MapPin` | `map/` | Coffee pin with triangle tip | `active?`, `onClick` |
-| 10 | `BottomNav` | `navigation/` | Mobile pill tab bar (4 tabs) | `activeTab`, `onTabChange` |
-| 11 | `HeaderNav` | `navigation/` | Desktop top nav bar | `activeTab` |
-| 12 | `CollapseToggle` | `map/` | 20px strip to collapse sidebar | `collapsed`, `onClick` |
+| #   | Component          | Directory     | Purpose                             | Key Props                                     |
+| --- | ------------------ | ------------- | ----------------------------------- | --------------------------------------------- |
+| 1   | `SearchBar`        | `filters/`    | Search input with filter button     | `onSearch`, `onFilterClick`, `placeholder`    |
+| 2   | `FilterTag`        | `filters/`    | Pill button with icon/dot + text    | `label`, `icon?`, `dot?`, `active`, `onClick` |
+| 3   | `FilterSheet`      | `filters/`    | Filter content + responsive wrapper | `open`, `onClose`, `filters`, `onApply`       |
+| 4   | `ViewToggle`       | `discovery/`  | Map/List segmented toggle           | `view`, `onChange`                            |
+| 5   | `CountHeader`      | `discovery/`  | "N places nearby" + toggle + sort   | `count`, `view`, `onViewChange`, `onSort?`    |
+| 6   | `ShopCardCarousel` | `shops/`      | Vertical card for mobile carousel   | `shop`, `onClick`                             |
+| 7   | `ShopCardCompact`  | `shops/`      | Row card for list + panel           | `shop`, `selected?`, `onClick`                |
+| 8   | `ShopCardGrid`     | `shops/`      | Large photo card for desktop grid   | `shop`, `onClick`                             |
+| 9   | `MapPin`           | `map/`        | Coffee pin with triangle tip        | `active?`, `onClick`                          |
+| 10  | `BottomNav`        | `navigation/` | Mobile pill tab bar (4 tabs)        | `activeTab`, `onTabChange`                    |
+| 11  | `HeaderNav`        | `navigation/` | Desktop top nav bar                 | `activeTab`                                   |
+| 12  | `CollapseToggle`   | `map/`        | 20px strip to collapse sidebar      | `collapsed`, `onClick`                        |
 
 ## Layout Components (4)
 
-| Component | Screen | Description |
-|-----------|--------|-------------|
-| `MapMobileLayout` | Mobile map | Full-bleed map + gradient overlay + carousel + BottomNav |
-| `ListMobileLayout` | Mobile list | SearchBar + tags + compact cards + BottomNav |
-| `MapDesktopLayout` | Desktop map | HeaderNav + LeftPanel(420px) + MapView + CollapseToggle |
-| `ListDesktopLayout` | Desktop list | HeaderNav + TopBar + 3-column grid |
+| Component           | Screen       | Description                                              |
+| ------------------- | ------------ | -------------------------------------------------------- |
+| `MapMobileLayout`   | Mobile map   | Full-bleed map + gradient overlay + carousel + BottomNav |
+| `ListMobileLayout`  | Mobile list  | SearchBar + tags + compact cards + BottomNav             |
+| `MapDesktopLayout`  | Desktop map  | HeaderNav + LeftPanel(420px) + MapView + CollapseToggle  |
+| `ListDesktopLayout` | Desktop list | HeaderNav + TopBar + 3-column grid                       |
 
 ## Data Flow
 
@@ -91,62 +91,62 @@ app/page.tsx (FindPage)
 
 ### Typography
 
-| Role | Font | Weight | Size (Mobile) | Size (Desktop) |
-|------|------|--------|---------------|----------------|
-| Page title | Bricolage Grotesque | 700 | 17px | 15px |
-| Count label | Bricolage Grotesque | 700 | 15px | 15px |
-| Card name (carousel) | Bricolage Grotesque | 700 | 15px | — |
-| Card name (compact) | DM Sans | 600–700 | 15px | 13px |
-| Body / meta | DM Sans | 400–500 | 12–13px | 11–12px |
-| Nav label (mobile) | DM Sans | 500–600 | 10–11px | — |
-| Nav label (desktop) | DM Sans | 500–600 | — | 14px |
-| Tag text | DM Sans | 500 | 13px | 12px |
-| Search placeholder | DM Sans | 400 | 15px | 14px |
+| Role                 | Font                | Weight  | Size (Mobile) | Size (Desktop) |
+| -------------------- | ------------------- | ------- | ------------- | -------------- |
+| Page title           | Bricolage Grotesque | 700     | 17px          | 15px           |
+| Count label          | Bricolage Grotesque | 700     | 15px          | 15px           |
+| Card name (carousel) | Bricolage Grotesque | 700     | 15px          | —              |
+| Card name (compact)  | DM Sans             | 600–700 | 15px          | 13px           |
+| Body / meta          | DM Sans             | 400–500 | 12–13px       | 11–12px        |
+| Nav label (mobile)   | DM Sans             | 500–600 | 10–11px       | —              |
+| Nav label (desktop)  | DM Sans             | 500–600 | —             | 14px           |
+| Tag text             | DM Sans             | 500     | 13px          | 12px           |
+| Search placeholder   | DM Sans             | 400     | 15px          | 14px           |
 
 ### Colors
 
-| Token | CSS Variable | Value | Usage |
-|-------|-------------|-------|-------|
-| Map pin | `--map-pin` | `#8B5E3C` | Default pin color |
-| Active dark | `--active-dark` | `#2C1810` | Active tab, filter btn, active tag bg |
-| Primary green | `--primary` | `#3D8A5A` | "Open" status, Open Now dot |
-| Foreground | `--foreground` | `#1A1918` | Primary text |
-| Muted fg | `--muted-foreground` | `#6D6C6A` | Secondary text (desktop) |
-| Text secondary | `--text-secondary` | `#6B7280` | Tag text, meta text (mobile) |
-| Text tertiary | `--text-tertiary` | `#9CA3AF` | Placeholder, count text |
-| Background | `--background` | `#F5F4F1` | Page bg, panel bg |
-| Card bg | `--card` | `#FFFFFF` | Card backgrounds |
-| Card selected | — | `#FDF8F5` | Desktop panel selected card |
-| Border | `--border` | `#E5E4E1` | Dividers, card borders |
-| Border medium | `--border-medium` | `#E5E7EB` | Search bar border, tag borders |
-| Rating star | `--rating-star` | `#FCD34D` | Star icons |
-| Toggle bg | — | `#F0EFED` | ViewToggle pill background |
+| Token          | CSS Variable         | Value     | Usage                                 |
+| -------------- | -------------------- | --------- | ------------------------------------- |
+| Map pin        | `--map-pin`          | `#8B5E3C` | Default pin color                     |
+| Active dark    | `--active-dark`      | `#2C1810` | Active tab, filter btn, active tag bg |
+| Primary green  | `--primary`          | `#3D8A5A` | "Open" status, Open Now dot           |
+| Foreground     | `--foreground`       | `#1A1918` | Primary text                          |
+| Muted fg       | `--muted-foreground` | `#6D6C6A` | Secondary text (desktop)              |
+| Text secondary | `--text-secondary`   | `#6B7280` | Tag text, meta text (mobile)          |
+| Text tertiary  | `--text-tertiary`    | `#9CA3AF` | Placeholder, count text               |
+| Background     | `--background`       | `#F5F4F1` | Page bg, panel bg                     |
+| Card bg        | `--card`             | `#FFFFFF` | Card backgrounds                      |
+| Card selected  | —                    | `#FDF8F5` | Desktop panel selected card           |
+| Border         | `--border`           | `#E5E4E1` | Dividers, card borders                |
+| Border medium  | `--border-medium`    | `#E5E7EB` | Search bar border, tag borders        |
+| Rating star    | `--rating-star`      | `#FCD34D` | Star icons                            |
+| Toggle bg      | —                    | `#F0EFED` | ViewToggle pill background            |
 
 ### Shadows
 
-| Element | Shadow |
-|---------|--------|
-| Search bar | `0 4px 16px #0000000A` |
-| Shop cards | `0 4px 16px #0000000F` |
-| Tab bar pill | `0 4px 20px #0000001A` |
-| Map pin | `0 2px 8px #00000020` |
+| Element         | Shadow                 |
+| --------------- | ---------------------- |
+| Search bar      | `0 4px 16px #0000000A` |
+| Shop cards      | `0 4px 16px #0000000F` |
+| Tab bar pill    | `0 4px 20px #0000001A` |
+| Map pin         | `0 2px 8px #00000020`  |
 | My Location btn | `0 2px 12px #00000015` |
 
 ### Sizing
 
-| Element | Mobile | Desktop |
-|---------|--------|---------|
-| Search bar height | 52px, radius 26px | 44px, radius 12px |
-| Filter tag height | 36px, radius 20px | 36px, radius 20px |
-| Carousel card width | 260px, img 80px | — |
-| Compact card photo | 64×64px, radius 10px | 72×72px, radius 12px |
-| Grid card image | — | flexible, ~280px wide |
-| Tab bar pill height | 62px, radius 36px | — |
-| Header nav height | — | 64px |
-| Left panel width | — | 420px |
-| Collapse toggle | — | 20×48px, radius [0,8,8,0] |
-| Map pin | 40×48px (40 circle + 8 triangle) | same |
-| My Location btn | 44×44px, radius 22px | same |
+| Element             | Mobile                           | Desktop                   |
+| ------------------- | -------------------------------- | ------------------------- |
+| Search bar height   | 52px, radius 26px                | 44px, radius 12px         |
+| Filter tag height   | 36px, radius 20px                | 36px, radius 20px         |
+| Carousel card width | 260px, img 80px                  | —                         |
+| Compact card photo  | 64×64px, radius 10px             | 72×72px, radius 12px      |
+| Grid card image     | —                                | flexible, ~280px wide     |
+| Tab bar pill height | 62px, radius 36px                | —                         |
+| Header nav height   | —                                | 64px                      |
+| Left panel width    | —                                | 420px                     |
+| Collapse toggle     | —                                | 20×48px, radius [0,8,8,0] |
+| Map pin             | 40×48px (40 circle + 8 triangle) | same                      |
+| My Location btn     | 44×44px, radius 22px             | same                      |
 
 ## Key Behaviors
 

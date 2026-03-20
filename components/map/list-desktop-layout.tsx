@@ -44,15 +44,22 @@ export function ListDesktopLayout({
   onFilterApply,
   onSort,
 }: ListDesktopLayoutProps) {
-  const activeFilterSet = useMemo(() => new Set(activeFilters), [activeFilters]);
+  const activeFilterSet = useMemo(
+    () => new Set(activeFilters),
+    [activeFilters]
+  );
 
   return (
     <div className="flex h-screen w-full flex-col bg-[var(--background)]">
       <HeaderNav activeTab="find" />
 
       <div className="flex flex-col gap-2 bg-white px-8 pt-20 pb-3 shadow-sm">
-        <SearchBar onSearch={onSearch} onFilterClick={onFilterOpen} defaultQuery={query} />
-        <div className="flex gap-2 overflow-x-auto scrollbar-none pl-1">
+        <SearchBar
+          onSearch={onSearch}
+          onFilterClick={onFilterOpen}
+          defaultQuery={query}
+        />
+        <div className="scrollbar-none flex gap-2 overflow-x-auto pl-1">
           {QUICK_FILTERS.map((f) => (
             <FilterTag
               key={f.id}
@@ -63,7 +70,12 @@ export function ListDesktopLayout({
             />
           ))}
         </div>
-        <CountHeader count={count} view={view} onViewChange={onViewChange} onSort={onSort} />
+        <CountHeader
+          count={count}
+          view={view}
+          onViewChange={onViewChange}
+          onSort={onSort}
+        />
       </div>
 
       <div className="flex-1 overflow-y-auto px-8 py-6">

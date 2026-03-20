@@ -12,7 +12,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <>
       {isDesktop && !isFindPage && <HeaderNav />}
-      <main className={isDesktop && !isFindPage ? 'pt-16' : isFindPage ? '' : 'pb-16'}>
+      <main
+        className={
+          isDesktop && !isFindPage ? 'pt-16' : isFindPage ? '' : 'pb-16'
+        }
+      >
         {children}
       </main>
       {!isDesktop && !isFindPage && <BottomNav />}

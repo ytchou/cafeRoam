@@ -3,8 +3,18 @@ import { ShopCarousel } from './shop-carousel';
 import { makeShop } from '@/lib/test-utils/factories';
 
 const shops = [
-  { ...makeShop(), id: 'shop-1', name: 'Brew House', photo_urls: ['https://example.com/1.jpg'] },
-  { ...makeShop(), id: 'shop-2', name: 'Velvet Bean', photo_urls: ['https://example.com/2.jpg'] },
+  {
+    ...makeShop(),
+    id: 'shop-1',
+    name: 'Brew House',
+    photo_urls: ['https://example.com/1.jpg'],
+  },
+  {
+    ...makeShop(),
+    id: 'shop-2',
+    name: 'Velvet Bean',
+    photo_urls: ['https://example.com/2.jpg'],
+  },
 ];
 
 describe('a user interacting with the ShopCarousel', () => {
@@ -25,7 +35,11 @@ describe('a user interacting with the ShopCarousel', () => {
   });
 
   it('a user can scroll horizontally through the shop cards', () => {
-    const { container } = render(<ShopCarousel shops={shops} onShopClick={() => {}} />);
-    expect(container.querySelector('[data-testid="carousel-scroll"]')).toBeInTheDocument();
+    const { container } = render(
+      <ShopCarousel shops={shops} onShopClick={() => {}} />
+    );
+    expect(
+      container.querySelector('[data-testid="carousel-scroll"]')
+    ).toBeInTheDocument();
   });
 });

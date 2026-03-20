@@ -43,13 +43,20 @@ export function ListMobileLayout({
   onFilterClose,
   onFilterApply,
 }: ListMobileLayoutProps) {
-  const activeFilterSet = useMemo(() => new Set(activeFilters), [activeFilters]);
+  const activeFilterSet = useMemo(
+    () => new Set(activeFilters),
+    [activeFilters]
+  );
 
   return (
     <div className="flex h-screen w-full flex-col bg-[var(--background)]">
       <div className="flex flex-col gap-2 bg-white px-4 pt-4 pb-2 shadow-sm">
-        <SearchBar onSearch={onSearch} onFilterClick={onFilterOpen} defaultQuery={query} />
-        <div className="flex gap-2 overflow-x-auto scrollbar-none pl-1">
+        <SearchBar
+          onSearch={onSearch}
+          onFilterClick={onFilterOpen}
+          defaultQuery={query}
+        />
+        <div className="scrollbar-none flex gap-2 overflow-x-auto pl-1">
           {QUICK_FILTERS.map((f) => (
             <FilterTag
               key={f.id}
@@ -63,7 +70,7 @@ export function ListMobileLayout({
         <CountHeader count={count} view={view} onViewChange={onViewChange} />
       </div>
 
-      <div className="flex-1 overflow-y-auto divide-y divide-[var(--border)]">
+      <div className="flex-1 divide-y divide-[var(--border)] overflow-y-auto">
         {shops.map((shop) => (
           <ShopCardCompact
             key={shop.id}

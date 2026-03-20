@@ -15,6 +15,7 @@
 **Tech Stack:** Next.js 16, TypeScript, Tailwind CSS 4, Lucide React, React Map GL, Vaul (mobile drawer), Radix Dialog (desktop modal), Vitest + Testing Library
 
 **Acceptance Criteria:**
+
 - [ ] A user sees a full-bleed map with coffee pins and a bottom carousel of shop cards on mobile
 - [ ] A user can toggle between map and list views using the ViewToggle pill
 - [ ] A user can open the filter panel (drawer on mobile, modal on desktop) and apply tag filters
@@ -26,6 +27,7 @@
 ### Task 1: Typography & CSS Foundation
 
 **Files:**
+
 - Modify: `app/layout.tsx:1-37` (add DM_Sans import)
 - Modify: `app/globals.css:7-13` (add font variables + design tokens)
 
@@ -60,26 +62,27 @@ Add to the `@theme inline` block:
 
 ```css
 --font-heading: var(--font-bricolage), system-ui, sans-serif;
---font-body: var(--font-dm-sans), var(--font-noto-sans-tc), system-ui, sans-serif;
+--font-body:
+  var(--font-dm-sans), var(--font-noto-sans-tc), system-ui, sans-serif;
 ```
 
 Add CafeRoam-specific CSS custom properties to `:root`:
 
 ```css
 /* CafeRoam design tokens */
---map-pin: #8B5E3C;
---active-dark: #2C1810;
---tag-inactive-bg: #FFFFFF;
---tag-inactive-border: #E5E7EB;
---tag-inactive-text: #6B7280;
---tag-active-bg: #2C1810;
---tag-active-text: #FFFFFF;
---card-selected-bg: #FDF8F5;
---toggle-bg: #F0EFED;
---text-secondary: #6B7280;
---text-tertiary: #9CA3AF;
---rating-star: #FCD34D;
---border-medium: #E5E7EB;
+--map-pin: #8b5e3c;
+--active-dark: #2c1810;
+--tag-inactive-bg: #ffffff;
+--tag-inactive-border: #e5e7eb;
+--tag-inactive-text: #6b7280;
+--tag-active-bg: #2c1810;
+--tag-active-text: #ffffff;
+--card-selected-bg: #fdf8f5;
+--toggle-bg: #f0efed;
+--text-secondary: #6b7280;
+--text-tertiary: #9ca3af;
+--rating-star: #fcd34d;
+--border-medium: #e5e7eb;
 ```
 
 **Step 4: Verify build**
@@ -99,6 +102,7 @@ git commit -m "feat: add DM Sans font + CafeRoam design tokens"
 ### Task 2: FilterTag Component
 
 **Files:**
+
 - Create: `components/filters/filter-tag.tsx`
 - Create: `components/filters/filter-tag.test.tsx`
 
@@ -210,6 +214,7 @@ git commit -m "feat: add FilterTag component with active/inactive states"
 ### Task 3: ViewToggle Component
 
 **Files:**
+
 - Create: `components/discovery/view-toggle.tsx`
 - Create: `components/discovery/view-toggle.test.tsx`
 
@@ -314,6 +319,7 @@ git commit -m "feat: add ViewToggle map/list segmented toggle"
 ### Task 4: CountHeader Component
 
 **Files:**
+
 - Create: `components/discovery/count-header.tsx`
 - Create: `components/discovery/count-header.test.tsx`
 
@@ -419,6 +425,7 @@ git commit -m "feat: add CountHeader with place count + view toggle + sort"
 ### Task 5: SearchBar Rebuild
 
 **Files:**
+
 - Create: `components/filters/search-bar.tsx`
 - Create: `components/filters/search-bar.test.tsx`
 
@@ -552,6 +559,7 @@ git commit -m "feat: rebuild SearchBar with filter button + design.pen styling"
 ### Task 6: ShopCardCarousel Component
 
 **Files:**
+
 - Create: `components/shops/shop-card-carousel.tsx`
 - Create: `components/shops/shop-card-carousel.test.tsx`
 
@@ -723,6 +731,7 @@ git commit -m "feat: add ShopCardCarousel for mobile map bottom carousel"
 ### Task 7: ShopCardCompact Component
 
 **Files:**
+
 - Create: `components/shops/shop-card-compact.tsx`
 - Create: `components/shops/shop-card-compact.test.tsx`
 
@@ -873,6 +882,7 @@ git commit -m "feat: add ShopCardCompact for list view + desktop panel with sele
 ### Task 8: ShopCardGrid Component
 
 **Files:**
+
 - Create: `components/shops/shop-card-grid.tsx`
 - Create: `components/shops/shop-card-grid.test.tsx`
 
@@ -1025,6 +1035,7 @@ git commit -m "feat: add ShopCardGrid for desktop list 3-column grid"
 ### Task 9: MapPin Component
 
 **Files:**
+
 - Create: `components/map/map-pin.tsx`
 - Create: `components/map/map-pin.test.tsx`
 
@@ -1133,6 +1144,7 @@ git commit -m "feat: extract MapPin SVG component with default/active states"
 ### Task 10: CollapseToggle Component
 
 **Files:**
+
 - Create: `components/map/collapse-toggle.tsx`
 - Create: `components/map/collapse-toggle.test.tsx`
 
@@ -1211,6 +1223,7 @@ git commit -m "feat: add CollapseToggle for desktop left panel"
 ### Task 11: BottomNav Rebuild
 
 **Files:**
+
 - Create: `components/navigation/bottom-nav-new.tsx` (rename to `bottom-nav.tsx` in Task 18)
 - Create: `components/navigation/bottom-nav-new.test.tsx`
 
@@ -1332,6 +1345,7 @@ git commit -m "feat: rebuild BottomNav as pill-shaped tab bar with design.pen st
 ### Task 12: HeaderNav Rebuild
 
 **Files:**
+
 - Create: `components/navigation/header-nav-new.tsx`
 - Create: `components/navigation/header-nav-new.test.tsx`
 
@@ -1473,6 +1487,7 @@ git commit -m "feat: rebuild HeaderNav with logo, pill nav items, avatar"
 ### Task 13: FilterSheet Rebuild
 
 **Files:**
+
 - Create: `components/filters/filter-sheet.tsx`
 - Create: `components/filters/filter-sheet.test.tsx`
 
@@ -1532,6 +1547,7 @@ Expected: FAIL.
 **Step 3: Write implementation**
 
 This is a larger component. The FilterContent inner component renders:
+
 - Header: "Filters" + selected count badge + "Clear All" button
 - Search bar for filtering tags
 - Category tabs (Functionality, Time, Ambience, Mode, Food)
@@ -1544,6 +1560,7 @@ Import the tag data from the existing `components/discovery/filter-sheet.tsx` �
 The wrapper component detects `useIsDesktop()` and renders vaul Drawer (mobile) or a modal overlay (desktop).
 
 Full code in the component file — follow the pattern from the existing filter-sheet but with:
+
 - Rounded corners `[24px, 24px, 0, 0]` on mobile sheet
 - `#FFFFFF` background
 - Handle bar at top
@@ -1566,6 +1583,7 @@ git commit -m "feat: rebuild FilterSheet with vaul drawer (mobile) + modal (desk
 ### Task 14: ShopCarousel Container
 
 **Files:**
+
 - Create: `components/map/shop-carousel.tsx`
 - Create: `components/map/shop-carousel.test.tsx`
 
@@ -1690,6 +1708,7 @@ git commit -m "feat: add ShopCarousel horizontal scroll container with auto-scro
 ### Task 15: Layout Components + Page Integration
 
 **Files:**
+
 - Create: `components/map/map-mobile-layout.tsx`
 - Create: `components/map/list-mobile-layout.tsx`
 - Create: `components/map/map-desktop-layout.tsx`
@@ -1704,6 +1723,7 @@ Layout components are thin wrappers composing reusable components. They're teste
 **Step 2: Create MapMobileLayout**
 
 Full-bleed map with:
+
 - Absolute-positioned gradient overlay at top (search + filters + count)
 - Bottom gradient card area with ShopCarousel + BottomNav
 - My Location button (absolute bottom-right)
@@ -1713,6 +1733,7 @@ Uses the existing `MapView` (dynamic import, ssr: false) for the map canvas.
 **Step 3: Create ListMobileLayout**
 
 Vertical stack:
+
 - SearchBar (top)
 - FilterTag horizontal scroll
 - CountHeader
@@ -1722,6 +1743,7 @@ Vertical stack:
 **Step 4: Create MapDesktopLayout**
 
 Side-by-side:
+
 - HeaderNav (fixed top)
 - LeftPanel (420px, contains SearchBar + FilterTags + CountHeader + scrollable ShopCardCompact list)
 - CollapseToggle (20px strip between panel and map)
@@ -1730,6 +1752,7 @@ Side-by-side:
 **Step 5: Create ListDesktopLayout**
 
 Vertical:
+
 - HeaderNav (fixed top)
 - TopBar (SearchBar + FilterTags)
 - CountHeader (with sort button)
@@ -1772,6 +1795,7 @@ git commit -m "feat: add 4 layout components + wire into page.tsx"
 ### Task 16: Cleanup — Delete Old Components
 
 **Files:**
+
 - Delete: `components/map/map-mini-card.tsx` + test
 - Delete: `components/map/map-desktop-card.tsx` + test
 - Delete: `components/map/map-list-view.tsx` + test
@@ -1878,9 +1902,11 @@ graph TD
 ```
 
 **Wave 1** (sequential — foundation):
+
 - Task 1: Typography & CSS Foundation
 
 **Wave 2** (parallel — all depend only on Wave 1):
+
 - Task 2: FilterTag
 - Task 3: ViewToggle
 - Task 5: SearchBar
@@ -1893,14 +1919,17 @@ graph TD
 - Task 12: HeaderNav
 
 **Wave 3** (parallel — depend on Wave 2):
+
 - Task 4: CountHeader ← Task 3 (ViewToggle)
 - Task 13: FilterSheet ← Task 2 (FilterTag)
 - Task 14: ShopCarousel ← Task 6 (ShopCardCarousel)
 
 **Wave 4** (sequential — depends on all above):
+
 - Task 15: Layout Components + Page Integration
 
 **Wave 5** (sequential — depends on Wave 4):
+
 - Task 16: Cleanup — Delete Old Components
 
 ---

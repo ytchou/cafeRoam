@@ -16,14 +16,21 @@ describe('a user interacting with the CountHeader', () => {
 
   it('a user sees a sort button when sorting is available', () => {
     render(
-      <CountHeader count={12} view="map" onViewChange={() => {}} onSort={() => {}} />
+      <CountHeader
+        count={12}
+        view="map"
+        onViewChange={() => {}}
+        onSort={() => {}}
+      />
     );
     expect(screen.getByRole('button', { name: /sort/i })).toBeInTheDocument();
   });
 
   it('a user does not see a sort button when sorting is unavailable', () => {
     render(<CountHeader count={12} view="map" onViewChange={() => {}} />);
-    expect(screen.queryByRole('button', { name: /sort/i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /sort/i })
+    ).not.toBeInTheDocument();
   });
 
   it('a user tapping the list toggle switches to list view', async () => {

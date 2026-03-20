@@ -9,7 +9,11 @@ interface ShopCarouselProps {
   selectedShopId?: string | null;
 }
 
-export function ShopCarousel({ shops, onShopClick, selectedShopId }: ShopCarouselProps) {
+export function ShopCarousel({
+  shops,
+  onShopClick,
+  selectedShopId,
+}: ShopCarouselProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -17,7 +21,11 @@ export function ShopCarousel({ shops, onShopClick, selectedShopId }: ShopCarouse
     const card = scrollRef.current.querySelector<HTMLElement>(
       `[data-shop-id="${selectedShopId}"]`
     );
-    card?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    card?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'nearest',
+      inline: 'center',
+    });
   }, [selectedShopId]);
 
   return (
@@ -33,7 +41,7 @@ export function ShopCarousel({ shops, onShopClick, selectedShopId }: ShopCarouse
       <div
         ref={scrollRef}
         data-testid="carousel-scroll"
-        className="flex gap-3 overflow-x-auto px-5 pb-2 scrollbar-none"
+        className="scrollbar-none flex gap-3 overflow-x-auto px-5 pb-2"
       >
         {shops.map((shop) => (
           <div key={shop.id} data-shop-id={shop.id}>

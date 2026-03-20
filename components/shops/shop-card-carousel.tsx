@@ -9,7 +9,11 @@ interface ShopCardCarouselProps {
   distanceText?: string;
 }
 
-export function ShopCardCarousel({ shop, onClick, distanceText }: ShopCardCarouselProps) {
+export function ShopCardCarousel({
+  shop,
+  onClick,
+  distanceText,
+}: ShopCardCarouselProps) {
   const photos = shop.photo_urls ?? shop.photoUrls ?? [];
   const reviewCount = shop.review_count ?? shop.reviewCount ?? 0;
   const photoUrl = photos.at(0) ?? null;
@@ -18,7 +22,7 @@ export function ShopCardCarousel({ shop, onClick, distanceText }: ShopCardCarous
     <article
       role="article"
       onClick={onClick}
-      className="flex flex-col w-[260px] shrink-0 rounded-2xl bg-white shadow-[0_4px_16px_#0000000F] overflow-hidden cursor-pointer"
+      className="flex w-[260px] shrink-0 cursor-pointer flex-col overflow-hidden rounded-2xl bg-white shadow-[0_4px_16px_#0000000F]"
     >
       {photoUrl ? (
         <div className="relative h-20 w-full">
@@ -37,11 +41,11 @@ export function ShopCardCarousel({ shop, onClick, distanceText }: ShopCardCarous
       )}
       <div className="flex flex-col gap-1.5 p-[12px_14px]">
         <div className="flex items-center justify-between">
-          <span className="font-[family-name:var(--font-heading)] text-[15px] font-bold text-[var(--foreground)] truncate">
+          <span className="truncate font-[family-name:var(--font-heading)] text-[15px] font-bold text-[var(--foreground)]">
             {shop.name}
           </span>
           {distanceText && (
-            <span className="text-xs font-medium text-[var(--text-tertiary)] shrink-0 ml-2">
+            <span className="ml-2 shrink-0 text-xs font-medium text-[var(--text-tertiary)]">
               {distanceText}
             </span>
           )}
@@ -51,10 +55,12 @@ export function ShopCardCarousel({ shop, onClick, distanceText }: ShopCardCarous
           <span className="text-xs font-semibold text-[var(--foreground)]">
             {shop.rating?.toFixed(1) ?? '—'}
           </span>
-          <span className="text-xs text-[var(--text-tertiary)]">({reviewCount})</span>
+          <span className="text-xs text-[var(--text-tertiary)]">
+            ({reviewCount})
+          </span>
         </div>
         {shop.taxonomyTags && shop.taxonomyTags.length > 0 && (
-          <div className="flex gap-1.5 flex-wrap">
+          <div className="flex flex-wrap gap-1.5">
             {shop.taxonomyTags.slice(0, 3).map((tag) => (
               <span
                 key={tag.id}

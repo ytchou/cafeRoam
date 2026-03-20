@@ -8,8 +8,18 @@ vi.mock('next/navigation', () => ({
 }));
 
 vi.mock('next/link', () => ({
-  default: ({ children, href, ...props }: { children: React.ReactNode; href: string; [key: string]: unknown }) => (
-    <a href={href} {...props}>{children}</a>
+  default: ({
+    children,
+    href,
+    ...props
+  }: {
+    children: React.ReactNode;
+    href: string;
+    [key: string]: unknown;
+  }) => (
+    <a href={href} {...props}>
+      {children}
+    </a>
   ),
 }));
 
@@ -36,8 +46,17 @@ describe('a user interacting with the BottomNav', () => {
 
   it('a user tapping a tab navigates to the correct section of the app', () => {
     render(<BottomNav />);
-    expect(screen.getByText('探索').closest('a')).toHaveAttribute('href', '/explore');
-    expect(screen.getByText('收藏').closest('a')).toHaveAttribute('href', '/lists');
-    expect(screen.getByText('我的').closest('a')).toHaveAttribute('href', '/profile');
+    expect(screen.getByText('探索').closest('a')).toHaveAttribute(
+      'href',
+      '/explore'
+    );
+    expect(screen.getByText('收藏').closest('a')).toHaveAttribute(
+      'href',
+      '/lists'
+    );
+    expect(screen.getByText('我的').closest('a')).toHaveAttribute(
+      'href',
+      '/profile'
+    );
   });
 });

@@ -12,7 +12,12 @@ const shop = {
   review_count: 324,
   photo_urls: ['https://example.com/brew.jpg'],
   taxonomyTags: [
-    { id: 't1', dimension: 'functionality' as const, label: 'Quiet', labelZh: '安靜' },
+    {
+      id: 't1',
+      dimension: 'functionality' as const,
+      label: 'Quiet',
+      labelZh: '安靜',
+    },
   ],
 };
 
@@ -24,7 +29,9 @@ describe('a user interacting with the ShopCardGrid', () => {
 
   it('a user sees a photo of the shop in the grid card', () => {
     render(<ShopCardGrid shop={shop} onClick={() => {}} />);
-    expect(screen.getByRole('img', { name: 'The Brew House' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('img', { name: 'The Brew House' })
+    ).toBeInTheDocument();
   });
 
   it('a user sees the shop rating in the grid card', () => {
@@ -33,7 +40,9 @@ describe('a user interacting with the ShopCardGrid', () => {
   });
 
   it('a user sees an open status badge when the shop is currently open', () => {
-    render(<ShopCardGrid shop={{ ...shop, is_open: true }} onClick={() => {}} />);
+    render(
+      <ShopCardGrid shop={{ ...shop, is_open: true }} onClick={() => {}} />
+    );
     expect(screen.getByText('Open')).toBeInTheDocument();
   });
 

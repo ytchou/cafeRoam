@@ -110,7 +110,7 @@ function FilterContent({
   onClose: () => void;
 }) {
   const [selected, setSelected] = useState<Set<string>>(
-    () => new Set(initialFilters),
+    () => new Set(initialFilters)
   );
   const [activeTab, setActiveTab] = useState('functionality');
 

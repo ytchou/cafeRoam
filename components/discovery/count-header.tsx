@@ -9,7 +9,12 @@ interface CountHeaderProps {
   onSort?: () => void;
 }
 
-export function CountHeader({ count, view, onViewChange, onSort }: CountHeaderProps) {
+export function CountHeader({
+  count,
+  view,
+  onViewChange,
+  onSort,
+}: CountHeaderProps) {
   return (
     <div className="flex items-center justify-between px-5 py-1">
       <span className="font-[family-name:var(--font-heading)] text-[15px] font-bold text-[var(--foreground)]">
@@ -22,7 +27,7 @@ export function CountHeader({ count, view, onViewChange, onSort }: CountHeaderPr
             type="button"
             aria-label="Sort"
             onClick={onSort}
-            className="flex items-center gap-1 rounded-lg bg-[var(--background)] px-2.5 py-[5px] text-xs font-medium text-[var(--foreground)] border border-[var(--border)]"
+            className="flex items-center gap-1 rounded-lg border border-[var(--border)] bg-[var(--background)] px-2.5 py-[5px] text-xs font-medium text-[var(--foreground)]"
           >
             <ArrowUpDown className="h-3 w-3 text-[var(--muted-foreground)]" />
             Sort

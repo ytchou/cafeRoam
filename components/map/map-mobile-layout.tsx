@@ -46,7 +46,10 @@ export function MapMobileLayout({
   onFilterApply,
   onLocationRequest,
 }: MapMobileLayoutProps) {
-  const activeFilterSet = useMemo(() => new Set(activeFilters), [activeFilters]);
+  const activeFilterSet = useMemo(
+    () => new Set(activeFilters),
+    [activeFilters]
+  );
 
   return (
     <div className="relative h-screen w-full overflow-hidden">
@@ -67,8 +70,12 @@ export function MapMobileLayout({
       </div>
 
       <div className="absolute top-4 right-4 left-4 z-20 flex flex-col gap-2">
-        <SearchBar onSearch={onSearch} onFilterClick={onFilterOpen} defaultQuery={query} />
-        <div className="flex gap-2 overflow-x-auto scrollbar-none pl-1">
+        <SearchBar
+          onSearch={onSearch}
+          onFilterClick={onFilterOpen}
+          defaultQuery={query}
+        />
+        <div className="scrollbar-none flex gap-2 overflow-x-auto pl-1">
           {QUICK_FILTERS.map((f) => (
             <FilterTag
               key={f.id}
@@ -87,7 +94,7 @@ export function MapMobileLayout({
           type="button"
           aria-label="My location"
           onClick={onLocationRequest}
-          className="absolute right-4 bottom-[200px] z-20 flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-lg text-[var(--map-pin)]"
+          className="absolute right-4 bottom-[200px] z-20 flex h-10 w-10 items-center justify-center rounded-full bg-white text-[var(--map-pin)] shadow-lg"
         >
           <Locate className="h-5 w-5" />
         </button>

@@ -12,8 +12,18 @@ const shop = {
   review_count: 324,
   photo_urls: ['https://example.com/brew.jpg'],
   taxonomyTags: [
-    { id: 't1', dimension: 'functionality' as const, label: 'Latte Art', labelZh: '拉花' },
-    { id: 't2', dimension: 'functionality' as const, label: 'WiFi', labelZh: 'WiFi' },
+    {
+      id: 't1',
+      dimension: 'functionality' as const,
+      label: 'Latte Art',
+      labelZh: '拉花',
+    },
+    {
+      id: 't2',
+      dimension: 'functionality' as const,
+      label: 'WiFi',
+      labelZh: 'WiFi',
+    },
   ],
 };
 

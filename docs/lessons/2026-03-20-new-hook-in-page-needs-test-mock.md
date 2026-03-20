@@ -11,7 +11,9 @@ Page-level integration tests mock all data hooks (useShops, useSearch, etc.) but
 
 **Prevention:**
 When adding any hook to a component that reaches outside the component's own state, search for test files that render that component and add the mock before committing:
+
 ```bash
 grep -r "import.*page\|render.*FindPage\|render.*Page" --include="*.test.*" -l
 ```
+
 Then add `vi.mock('@/lib/hooks/use-user', () => ({ useUser: () => ({ user: null, isLoading: false }) }))` to each.

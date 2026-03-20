@@ -25,7 +25,9 @@ describe('a user interacting with the ShopCardCompact', () => {
 
   it('a user sees a photo of the shop in the compact card', () => {
     render(<ShopCardCompact shop={shop} onClick={() => {}} />);
-    expect(screen.getByRole('img', { name: 'The Brew House' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('img', { name: 'The Brew House' })
+    ).toBeInTheDocument();
   });
 
   it('a user sees a chevron arrow indicating the card is tappable for more details', () => {
@@ -34,7 +36,9 @@ describe('a user interacting with the ShopCardCompact', () => {
   });
 
   it('a user sees the card highlighted when it corresponds to the selected map pin', () => {
-    const { container } = render(<ShopCardCompact shop={shop} onClick={() => {}} selected />);
+    const { container } = render(
+      <ShopCardCompact shop={shop} onClick={() => {}} selected />
+    );
     const article = container.querySelector('article');
     expect(article).toHaveAttribute('data-selected', 'true');
   });

@@ -14,8 +14,10 @@ export function ViewToggle({ view, onChange }: ViewToggleProps) {
         aria-label="Map view"
         data-active={view === 'map' || undefined}
         onClick={() => view !== 'map' && onChange('map')}
-        className={`flex items-center justify-center rounded-[11px] h-6 w-7 transition-colors ${
-          view === 'map' ? 'bg-[var(--active-dark)] text-white' : 'text-[var(--text-secondary)]'
+        className={`flex h-6 w-7 items-center justify-center rounded-[11px] transition-colors ${
+          view === 'map'
+            ? 'bg-[var(--active-dark)] text-white'
+            : 'text-[var(--text-secondary)]'
         }`}
       >
         <Map className="h-3.5 w-3.5" />
@@ -25,8 +27,10 @@ export function ViewToggle({ view, onChange }: ViewToggleProps) {
         aria-label="List view"
         data-active={view === 'list' || undefined}
         onClick={() => view !== 'list' && onChange('list')}
-        className={`flex items-center justify-center rounded-[11px] h-6 w-7 transition-colors ${
-          view === 'list' ? 'bg-[var(--active-dark)] text-white' : 'text-[var(--text-secondary)]'
+        className={`flex h-6 w-7 items-center justify-center rounded-[11px] transition-colors ${
+          view === 'list'
+            ? 'bg-[var(--active-dark)] text-white'
+            : 'text-[var(--text-secondary)]'
         }`}
       >
         <List className="h-3.5 w-3.5" />

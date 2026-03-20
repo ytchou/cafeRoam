@@ -31,7 +31,13 @@ describe('a user interacting with the FilterTag', () => {
 
   it('a user sees an icon alongside the filter label when one is provided', () => {
     const TestIcon = () => <svg data-testid="test-icon" />;
-    render(<FilterTag label="WiFi" icon={TestIcon as unknown as import('lucide-react').LucideIcon} onClick={() => {}} />);
+    render(
+      <FilterTag
+        label="WiFi"
+        icon={TestIcon as unknown as import('lucide-react').LucideIcon}
+        onClick={() => {}}
+      />
+    );
     expect(screen.getByTestId('test-icon')).toBeInTheDocument();
   });
 

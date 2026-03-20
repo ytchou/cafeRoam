@@ -6,7 +6,9 @@ import { SearchBar } from './search-bar';
 describe('a user interacting with the SearchBar', () => {
   it('a user sees a search input with placeholder text guiding them to search coffee shops', () => {
     render(<SearchBar onSearch={() => {}} onFilterClick={() => {}} />);
-    expect(screen.getByPlaceholderText('Search coffee shops...')).toBeInTheDocument();
+    expect(
+      screen.getByPlaceholderText('Search coffee shops...')
+    ).toBeInTheDocument();
   });
 
   it('a user sees a filter button to open advanced filtering options', () => {
@@ -27,7 +29,9 @@ describe('a user interacting with the SearchBar', () => {
   it('a user clearing the search bar and submitting clears active search results', async () => {
     const onSearch = vi.fn();
     render(<SearchBar onSearch={onSearch} onFilterClick={() => {}} />);
-    fireEvent.submit(screen.getByPlaceholderText('Search coffee shops...').closest('form')!);
+    fireEvent.submit(
+      screen.getByPlaceholderText('Search coffee shops...').closest('form')!
+    );
     expect(onSearch).toHaveBeenCalledWith('');
   });
 
@@ -40,7 +44,13 @@ describe('a user interacting with the SearchBar', () => {
   });
 
   it('a user returning to a previous search sees their prior query pre-filled', () => {
-    render(<SearchBar onSearch={() => {}} onFilterClick={() => {}} defaultQuery="mocha" />);
+    render(
+      <SearchBar
+        onSearch={() => {}}
+        onFilterClick={() => {}}
+        defaultQuery="mocha"
+      />
+    );
     expect(screen.getByDisplayValue('mocha')).toBeInTheDocument();
   });
 });

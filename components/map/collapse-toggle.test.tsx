@@ -6,7 +6,9 @@ import { CollapseToggle } from './collapse-toggle';
 describe('a user interacting with the CollapseToggle', () => {
   it('a user sees a collapse button when the panel is expanded', () => {
     render(<CollapseToggle collapsed={false} onClick={() => {}} />);
-    expect(screen.getByRole('button', { name: /collapse/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /collapse/i })
+    ).toBeInTheDocument();
   });
 
   it('a user tapping the toggle triggers the panel to collapse or expand', async () => {

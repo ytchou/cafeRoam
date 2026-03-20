@@ -36,9 +36,15 @@ export function MapPin({ active = false }: MapPinProps) {
         strokeLinejoin="round"
         fill="none"
       >
-        <path d={`M${iconSize * 0.146} ${iconSize * 0.333}h${iconSize * 0.542}a${iconSize * 0.167} ${iconSize * 0.167} 0 0 1 0 ${iconSize * 0.333}h-${iconSize * 0.542}z`} />
-        <path d={`M${iconSize * 0.688} ${iconSize * 0.5}a${iconSize * 0.208} ${iconSize * 0.208} 0 0 0 0-${iconSize * 0.333}`} />
-        <path d={`M${iconSize * 0.083} ${iconSize * 0.667}l${iconSize * 0.125} ${iconSize * 0.25}h${iconSize * 0.583}l${iconSize * 0.125}-${iconSize * 0.25}`} />
+        <path
+          d={`M${iconSize * 0.146} ${iconSize * 0.333}h${iconSize * 0.542}a${iconSize * 0.167} ${iconSize * 0.167} 0 0 1 0 ${iconSize * 0.333}h-${iconSize * 0.542}z`}
+        />
+        <path
+          d={`M${iconSize * 0.688} ${iconSize * 0.5}a${iconSize * 0.208} ${iconSize * 0.208} 0 0 0 0-${iconSize * 0.333}`}
+        />
+        <path
+          d={`M${iconSize * 0.083} ${iconSize * 0.667}l${iconSize * 0.125} ${iconSize * 0.25}h${iconSize * 0.583}l${iconSize * 0.125}-${iconSize * 0.25}`}
+        />
       </g>
     </svg>
   );
