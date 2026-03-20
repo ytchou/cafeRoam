@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { PhotoUploader } from '@/components/checkins/photo-uploader';
 import { StarRating } from '@/components/reviews/star-rating';
-import { uploadCheckInPhoto } from '@/lib/supabase/storage';
+import { useCheckIn } from '@/lib/hooks/use-check-in';
 import {
   Drawer,
   DrawerContent,
@@ -19,8 +19,6 @@ interface CheckInSheetProps {
   onSuccess?: () => void;
 }
 
-type SubmitState = 'idle' | 'uploading' | 'submitting';
-
 export function CheckInSheet({
   shopId,
   shopName,
@@ -32,45 +30,35 @@ export function CheckInSheet({
   const [rating, setRating] = useState(0);
   const [reviewText, setReviewText] = useState('');
   const [mood, setMood] = useState('');
-  const [submitState, setSubmitState] = useState<SubmitState>('idle');
-  const [error, setError] = useState<string | null>(null);
+  const { submitStatus, error, submit } = useCheckIn(shopId);
 
-  const canSubmit = photos.length > 0 && submitState === 'idle';
+  const busy = submitStatus !== 'idle';
+  const canSubmit = photos.length > 0 && !busy;
+
+  function resetForm() {
+    setPhotos([]);
+    setRating(0);
+    setReviewText('');
+    setMood('');
+  }
+
+  function handleClose(nextOpen: boolean) {
+    if (!nextOpen) resetForm();
+    onOpenChange(nextOpen);
+  }
 
   async function handleSubmit() {
     if (!canSubmit) return;
-    setError(null);
-    try {
-      setSubmitState('uploading');
-      const uploadedUrls = await Promise.all(
-        photos.map((f) => uploadCheckInPhoto(f))
-      );
-      setSubmitState('submitting');
-      const res = await fetch('/api/checkins', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          shopId,
-          photoUrls: uploadedUrls,
-          ...(rating > 0 && { stars: rating }),
-          ...(reviewText.trim() && { reviewText: reviewText.trim() }),
-          ...(mood.trim() && { moodNote: mood.trim() }),
-        }),
-      });
-      if (!res.ok) throw new Error('Check-in failed');
+    const success = await submit({ photos, rating, reviewText, mood });
+    if (success) {
+      resetForm();
       onOpenChange(false);
       onSuccess?.();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong');
-    } finally {
-      setSubmitState('idle');
     }
   }
 
-  const busy = submitState !== 'idle';
-
   return (
-    <Drawer open={open} onOpenChange={onOpenChange}>
+    <Drawer open={open} onOpenChange={handleClose}>
       <DrawerContent>
         <DrawerHeader className="flex items-center justify-between px-4 py-3 border-b border-[#E5E4E1]">
           <div>
@@ -78,7 +66,7 @@ export function CheckInSheet({
             <p className="text-xs text-[#9E9893] mt-0.5">{shopName}</p>
           </div>
           <button
-            onClick={() => onOpenChange(false)}
+            onClick={() => handleClose(false)}
             className="text-[#9E9893] hover:text-[#3B2F2A]"
             aria-label="Close"
           >
@@ -149,7 +137,7 @@ export function CheckInSheet({
             aria-label="Check In 打卡"
             className="w-full rounded-full bg-[#2D5A27] py-3.5 text-sm font-semibold text-white disabled:opacity-40 flex items-center justify-center gap-2"
           >
-            {busy ? 'Checking in...' : '📍 打卡 Check In'}
+            {busy ? 'Checking in...' : 'Check In 打卡'}
           </button>
         </div>
       </DrawerContent>

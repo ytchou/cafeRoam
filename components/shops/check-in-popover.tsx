@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { PhotoUploader } from '@/components/checkins/photo-uploader';
 import { StarRating } from '@/components/reviews/star-rating';
-import { uploadCheckInPhoto } from '@/lib/supabase/storage';
+import { useCheckIn } from '@/lib/hooks/use-check-in';
 import {
   Popover,
   PopoverContent,
@@ -31,48 +31,41 @@ export function CheckInPopover({
   const [rating, setRating] = useState(0);
   const [reviewText, setReviewText] = useState('');
   const [mood, setMood] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { submitStatus, error, submit } = useCheckIn(shopId);
 
+  const busy = submitStatus !== 'idle';
   const canSubmit = photos.length > 0 && !busy;
+
+  function resetForm() {
+    setPhotos([]);
+    setRating(0);
+    setReviewText('');
+    setMood('');
+  }
+
+  function handleClose(nextOpen: boolean) {
+    if (!nextOpen) resetForm();
+    onOpenChange(nextOpen);
+  }
 
   async function handleSubmit() {
     if (!canSubmit) return;
-    setError(null);
-    setBusy(true);
-    try {
-      const uploadedUrls = await Promise.all(
-        photos.map((f) => uploadCheckInPhoto(f))
-      );
-      const res = await fetch('/api/checkins', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          shopId,
-          photoUrls: uploadedUrls,
-          ...(rating > 0 && { stars: rating }),
-          ...(reviewText.trim() && { reviewText: reviewText.trim() }),
-          ...(mood.trim() && { moodNote: mood.trim() }),
-        }),
-      });
-      if (!res.ok) throw new Error('Check-in failed');
+    const success = await submit({ photos, rating, reviewText, mood });
+    if (success) {
+      resetForm();
       onOpenChange(false);
       onSuccess?.();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong');
-    } finally {
-      setBusy(false);
     }
   }
 
   return (
-    <Popover open={open} onOpenChange={onOpenChange}>
+    <Popover open={open} onOpenChange={handleClose}>
       <PopoverTrigger asChild>{trigger}</PopoverTrigger>
       <PopoverContent className="w-80 p-0 rounded-2xl overflow-hidden shadow-xl" align="start">
         <div className="flex items-center justify-between px-4 py-3 border-b border-[#E5E4E1]">
           <h3 className="text-sm font-semibold text-[#3B2F2A]">Check In 打卡</h3>
           <button
-            onClick={() => onOpenChange(false)}
+            onClick={() => handleClose(false)}
             className="text-[#9E9893] hover:text-[#3B2F2A] text-xs"
             aria-label="Close"
           >
