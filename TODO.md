@@ -1141,7 +1141,7 @@ _Designed in Pencil. Replaces current 首頁 + 地圖 split into a unified Find 
 
 **Chunk 3 — Wiring (Wave 2–3):**
 
-- [ ] Task 12: `ShopActionsRow` — Check In + Save + Share (mobile sheets / desktop popovers)
+- [x] Task 12: `ShopActionsRow` — Check In + Save + Share (mobile sheets / desktop popovers)
 - [ ] Task 13: `ShopDetailClient` integration + SPEC §9 update
 
 **Chunk 4 — Cleanup + Verification (Wave 4):**
