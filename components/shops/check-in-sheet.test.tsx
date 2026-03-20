@@ -18,8 +18,8 @@ global.fetch = vi.fn();
 
 describe('CheckInSheet', () => {
   const defaultProps = {
-    shopId: 'shop-1',
-    shopName: 'Test Cafe',
+    shopId: 'simple-kaffa-da-an',
+    shopName: 'Simple Kaffa',
     open: true,
     onOpenChange: vi.fn(),
     onSuccess: vi.fn(),
@@ -27,7 +27,7 @@ describe('CheckInSheet', () => {
 
   it('shows the shop name in the sheet header', () => {
     render(<CheckInSheet {...defaultProps} />);
-    expect(screen.getByText('Test Cafe')).toBeInTheDocument();
+    expect(screen.getByText('Simple Kaffa')).toBeInTheDocument();
   });
 
   it('disables submit when no photo is selected', () => {

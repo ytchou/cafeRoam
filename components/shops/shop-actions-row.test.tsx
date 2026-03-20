@@ -43,9 +43,9 @@ vi.mock('next/navigation', () => ({
 import { ShopActionsRow } from './shop-actions-row';
 
 const defaultProps = {
-  shopId: 'shop-1',
-  shopName: 'Test Cafe',
-  shareUrl: 'https://caferoam.app/shops/shop-1/test-cafe',
+  shopId: 'fika-fika-da-an',
+  shopName: 'Fika Fika Café',
+  shareUrl: 'https://caferoam.app/shops/fika-fika-da-an/fika-fika-cafe',
 };
 
 describe('ShopActionsRow — mobile', () => {

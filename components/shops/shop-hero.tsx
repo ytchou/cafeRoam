@@ -18,7 +18,7 @@ export function ShopHero({
   onSave,
   onShare,
 }: ShopHeroProps) {
-  const primary = photoUrls[0];
+  const primary = photoUrls.at(0);
 
   return (
     <div className="relative h-[260px] w-full bg-gray-100">
@@ -33,7 +33,7 @@ export function ShopHero({
         />
       ) : (
         <div className="flex h-full items-center justify-center text-4xl font-bold text-gray-300">
-          {shopName[0]}
+          {shopName.at(0) ?? ''}
         </div>
       )}
 

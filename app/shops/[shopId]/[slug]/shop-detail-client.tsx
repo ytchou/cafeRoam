@@ -168,7 +168,7 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
         />
       )}
 
-      <ClaimBanner shopId={shop.id} />
+      <ClaimBanner shopId={shop.id} shopName={shop.name} />
 
       {hasMap && directionsShop && (
         <DirectionsSheet
