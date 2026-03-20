@@ -89,7 +89,7 @@ class MapboxMapsAdapter:
             routes = data.get("routes", [])
             if not routes:
                 return None
-            route = routes[0]
+            route = routes[0]  # safe: empty case handled above
             return DirectionsResult(
                 duration_min=max(1, round(route["duration"] / 60)),
                 distance_m=round(route["distance"]),

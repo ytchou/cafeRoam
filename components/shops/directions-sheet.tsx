@@ -289,7 +289,7 @@ export function DirectionsSheet({
               <p className="text-sm text-gray-400">Calculating routes...</p>
             )}
 
-            {!loading && hasError && (
+            {!loading && hasError && !walkRoute && !driveRoute && (
               <p className="text-sm text-gray-400">Route times unavailable. Try again later.</p>
             )}
           </div>
