@@ -1127,7 +1127,7 @@ _Designed in Pencil. Replaces current 首頁 + 地圖 split into a unified Find 
 - [x] Task 1: `ClaimBanner` component (footer strip)
 - [x] Task 2: `CheckInSheet` (Vaul drawer — frames `6Wn4A`)
 - [x] Task 3: `CheckInPopover` (desktop 320px — frame `I2r82`)
-- [ ] Task 4: `SavePopover` (desktop 320px — frame `C0sGo`)
+- [x] Task 4: `SavePopover` (desktop 320px — frame `C0sGo`)
 - [ ] Task 5: `SharePopover` (desktop 320px — frame `iQfwr`)
 
 **Chunk 2 — In-place restyling (Wave 1b, parallel):**
