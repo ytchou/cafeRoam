@@ -9,8 +9,6 @@ import {
   DrawerContent,
   DrawerHeader,
   DrawerTitle,
-  DrawerFooter,
-  DrawerClose,
 } from '@/components/ui/drawer';
 
 interface SaveToListSheetProps {
@@ -62,57 +60,104 @@ export function SaveToListSheet({
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent>
-        <DrawerHeader>
-          <DrawerTitle>Save to list</DrawerTitle>
+        <DrawerHeader className="flex items-center justify-between px-4 py-4 border-b border-[#E5E4E1]">
+          <DrawerTitle className="text-base font-semibold text-[#1A1918]">
+            Save to List 收藏
+          </DrawerTitle>
+          <button
+            onClick={() => onOpenChange(false)}
+            className="text-[#9E9893] hover:text-[#3B2F2A]"
+            aria-label="Close"
+          >
+            ✕
+          </button>
         </DrawerHeader>
-        <div className="px-4 pb-2">
+
+        <div className="py-2">
+          {lists.length === 0 && (
+            <div className="flex flex-col items-center py-10 px-4 text-center">
+              <span className="text-4xl mb-3">🔖</span>
+              <p className="text-sm font-semibold text-[#1A1918] mb-1">No lists yet</p>
+              <p className="text-xs text-[#9E9893] mb-4">Create a list to start saving cafés</p>
+              <button
+                onClick={() => setNewListName(' ')}
+                className="flex items-center gap-2 rounded-full bg-[#2D5A27] px-5 py-2.5 text-sm font-semibold text-white"
+              >
+                <Plus className="h-4 w-4" />
+                Create a list
+              </button>
+            </div>
+          )}
+
           {lists.map((list) => (
             <label
               key={list.id}
-              className="flex items-center gap-3 rounded-lg px-2 py-3 hover:bg-gray-50"
+              className="flex items-center gap-3 px-4 py-3 hover:bg-[#F5F4F2] cursor-pointer"
             >
+              <div className="h-10 w-10 rounded-lg bg-[#E8E6E2] flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-[#1A1918] truncate">{list.name}</p>
+                <p className="text-xs text-[#9E9893]">{list.items.length} spots</p>
+              </div>
               <input
                 type="checkbox"
                 aria-label={list.name}
                 checked={isInList(list.id, shopId)}
                 onChange={() => handleToggle(list.id)}
-                className="h-5 w-5 rounded border-gray-300"
+                className="h-5 w-5 rounded border-gray-300 accent-[#2D5A27]"
               />
-              <span className="flex-1 text-sm font-medium">{list.name}</span>
-              <span className="text-xs text-gray-400">{list.items.length}</span>
             </label>
           ))}
-          {lists.length < 3 && (
-            <div className="mt-2 flex items-center gap-2">
-              <Plus className="h-4 w-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Create new list"
-                value={newListName}
-                onChange={(e) => setNewListName(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
-                className="flex-1 border-b border-gray-200 bg-transparent py-1 text-sm outline-none focus:border-gray-400"
-                disabled={creating}
-              />
-              {newListName.trim() && (
-                <button
-                  onClick={handleCreate}
-                  disabled={creating}
-                  className="text-sm font-medium text-blue-600"
-                >
-                  Add
-                </button>
-              )}
-            </div>
+
+          {lists.length > 0 && lists.length < 3 && (
+            <button
+              onClick={() => setNewListName(' ')}
+              className="flex items-center gap-2 px-4 py-3 w-full text-sm text-[#6B6560] hover:bg-[#F5F4F2]"
+            >
+              <Plus className="h-4 w-4" />
+              Create new list
+            </button>
+          )}
+
+          {lists.length === 3 && (
+            <p className="mx-4 mb-2 rounded-lg bg-amber-50 px-4 py-2 text-xs text-amber-700">
+              You&apos;ve reached the 3-list limit
+            </p>
           )}
         </div>
-        <DrawerFooter>
-          <DrawerClose>
-            <button className="w-full rounded-lg bg-gray-900 py-2.5 text-sm font-medium text-white">
-              Done
-            </button>
-          </DrawerClose>
-        </DrawerFooter>
+
+        {newListName.trim() !== '' && (
+          <div className="px-4 py-3 border-t border-[#E5E4E1]">
+            <input
+              type="text"
+              placeholder="Create new list"
+              value={newListName.trim() === ' ' ? '' : newListName}
+              onChange={(e) => setNewListName(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
+              autoFocus
+              className="w-full rounded-lg bg-[#F5F4F2] px-3 py-2 text-sm focus:outline-none"
+              disabled={creating}
+            />
+            {newListName.trim() && (
+              <button
+                onClick={handleCreate}
+                disabled={creating}
+                className="mt-2 w-full rounded-full bg-[#2D5A27] py-2.5 text-sm font-semibold text-white disabled:opacity-40"
+              >
+                {creating ? 'Creating...' : 'Add'}
+              </button>
+            )}
+          </div>
+        )}
+
+        <div className="px-4 py-4 border-t border-[#E5E4E1]">
+          <button
+            onClick={() => onOpenChange(false)}
+            className="w-full rounded-full bg-[#2D5A27] py-3 text-sm font-semibold text-white"
+          >
+            Done
+          </button>
+        </div>
       </DrawerContent>
     </Drawer>
   );
