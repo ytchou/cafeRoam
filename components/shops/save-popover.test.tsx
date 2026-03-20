@@ -3,8 +3,8 @@ import { vi } from 'vitest';
 import { SavePopover } from './save-popover';
 
 const mockLists = [
-  { id: 'l1', name: 'Weekend Picks', items: [{ shop_id: 'other' }] },
-  { id: 'l2', name: 'Work Spots', items: [{ shop_id: 'shop-1' }] },
+  { id: 'l1', name: 'Weekend Picks', items: [{ shop_id: 'other-shop' }] },
+  { id: 'l2', name: 'Work Spots', items: [{ shop_id: 'rufous-coffee-da-an' }] },
 ];
 const mockIsInList = vi.fn((listId: string, shopId: string) =>
   mockLists.find((l) => l.id === listId)?.items.some((i) => i.shop_id === shopId) ?? false
@@ -26,7 +26,7 @@ vi.mock('@/lib/hooks/use-user-lists', () => ({
 
 describe('SavePopover', () => {
   const defaultProps = {
-    shopId: 'shop-1',
+    shopId: 'rufous-coffee-da-an',
     open: true,
     onOpenChange: vi.fn(),
     trigger: <button>Save</button>,
@@ -52,6 +52,6 @@ describe('SavePopover', () => {
   it('calls saveShop when unchecked list is toggled', () => {
     render(<SavePopover {...defaultProps} />);
     fireEvent.click(screen.getByRole('checkbox', { name: /Weekend Picks/i }));
-    expect(mockSaveShop).toHaveBeenCalledWith('l1', 'shop-1');
+    expect(mockSaveShop).toHaveBeenCalledWith('l1', 'rufous-coffee-da-an');
   });
 });

@@ -23,6 +23,14 @@ export function SavePopover({ shopId, open, onOpenChange, trigger }: SavePopover
   const [showNewListInput, setShowNewListInput] = useState(false);
   const [creating, setCreating] = useState(false);
 
+  function handleClose(nextOpen: boolean) {
+    if (!nextOpen) {
+      setShowNewListInput(false);
+      setNewListName('');
+    }
+    onOpenChange(nextOpen);
+  }
+
   async function handleToggle(listId: string) {
     try {
       if (isInList(listId, shopId)) {
@@ -51,13 +59,13 @@ export function SavePopover({ shopId, open, onOpenChange, trigger }: SavePopover
   }
 
   return (
-    <Popover open={open} onOpenChange={onOpenChange}>
+    <Popover open={open} onOpenChange={handleClose}>
       <PopoverTrigger asChild>{trigger}</PopoverTrigger>
       <PopoverContent className="w-80 p-0 rounded-2xl overflow-hidden shadow-xl" align="start">
         <div className="flex items-center justify-between px-4 py-4 border-b border-[#E5E4E1]">
           <h3 className="text-sm font-semibold text-[#3B2F2A]">Save to List</h3>
           <button
-            onClick={() => onOpenChange(false)}
+            onClick={() => handleClose(false)}
             className="text-[#9E9893] hover:text-[#3B2F2A] text-xs"
             aria-label="Close"
           >
@@ -124,7 +132,7 @@ export function SavePopover({ shopId, open, onOpenChange, trigger }: SavePopover
 
         <div className="px-4 py-3 border-t border-[#E5E4E1]">
           <button
-            onClick={() => onOpenChange(false)}
+            onClick={() => handleClose(false)}
             className="w-full rounded-full bg-[#2D5A27] py-2.5 text-sm font-semibold text-white"
           >
             Save
