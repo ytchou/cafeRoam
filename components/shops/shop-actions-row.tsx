@@ -3,8 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Bookmark, Share2 } from 'lucide-react';
-import { createClient } from '@/lib/supabase/client';
 import { useIsDesktop } from '@/lib/hooks/use-media-query';
+import { useUser } from '@/lib/hooks/use-user';
 import { useUserLists } from '@/lib/hooks/use-user-lists';
 import { CheckInSheet } from './check-in-sheet';
 import { CheckInPopover } from './check-in-popover';
@@ -16,7 +16,6 @@ interface ShopActionsRowProps {
   shopId: string;
   shopName: string;
   shareUrl: string;
-  onDirections?: () => void;
 }
 
 export function ShopActionsRow({
@@ -26,6 +25,7 @@ export function ShopActionsRow({
 }: ShopActionsRowProps) {
   const isDesktop = useIsDesktop();
   const router = useRouter();
+  const { user, isLoading: isUserLoading } = useUser();
   const { isSaved } = useUserLists();
   const saved = isSaved(shopId);
 
@@ -33,10 +33,9 @@ export function ShopActionsRow({
   const [saveOpen, setSaveOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
 
-  async function requireAuth(then: () => void) {
-    const supabase = createClient();
-    const { data } = await supabase.auth.getSession();
-    if (!data.session) {
+  function requireAuth(then: () => void) {
+    if (isUserLoading) return;
+    if (!user) {
       router.push(`/login?next=${encodeURIComponent(`/shops/${shopId}`)}`);
       return;
     }
@@ -67,7 +66,6 @@ export function ShopActionsRow({
 
   const shareBtn = (
     <button
-      onClick={() => setShareOpen(true)}
       aria-label="Share"
       className="flex h-11 w-11 items-center justify-center rounded-full border border-[#E5E4E1] bg-white"
     >
@@ -105,7 +103,14 @@ export function ShopActionsRow({
         <>
           {checkInBtn}
           {saveBtn}
-          {shareBtn}
+          <SharePopover
+            shopId={shopId}
+            shopName={shopName}
+            shareUrl={shareUrl}
+            open={shareOpen}
+            onOpenChange={setShareOpen}
+            trigger={shareBtn}
+          />
           <CheckInSheet
             shopId={shopId}
             shopName={shopName}
@@ -116,14 +121,6 @@ export function ShopActionsRow({
             shopId={shopId}
             open={saveOpen}
             onOpenChange={setSaveOpen}
-          />
-          <SharePopover
-            shopId={shopId}
-            shopName={shopName}
-            shareUrl={shareUrl}
-            open={shareOpen}
-            onOpenChange={setShareOpen}
-            trigger={<span />}
           />
         </>
       )}

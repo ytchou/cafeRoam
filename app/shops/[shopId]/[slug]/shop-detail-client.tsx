@@ -17,7 +17,6 @@ import { DirectionsSheet } from '@/components/shops/directions-sheet';
 import { useShopReviews } from '@/lib/hooks/use-shop-reviews';
 import { useUser } from '@/lib/hooks/use-user';
 import { useGeolocation } from '@/lib/hooks/use-geolocation';
-import { useUserLists } from '@/lib/hooks/use-user-lists';
 import { useAnalytics } from '@/lib/posthog/use-analytics';
 
 interface ShopData {
@@ -58,7 +57,6 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
   const { user, isLoading: isUserLoading } = useUser();
   const { latitude, longitude, requestLocation } = useGeolocation();
   const router = useRouter();
-  const { isSaved } = useUserLists();
   const [directionsOpen, setDirectionsOpen] = useState(false);
   const photos = shop.photoUrls ?? [];
   const tags = shop.taxonomyTags ?? [];
@@ -105,10 +103,7 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
       <ShopHero
         photoUrls={photos}
         shopName={shop.name}
-        isSaved={isSaved(shop.id)}
         onBack={() => router.back()}
-        onSave={() => {}}
-        onShare={() => {}}
       />
       <ShopIdentity
         name={shop.name}
@@ -122,7 +117,6 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
         shopId={shop.id}
         shopName={shop.name}
         shareUrl={shareUrl}
-        onDirections={openDirections}
       />
 
       <div className="mx-5 border-t border-[#E5E4E1]" />
