@@ -25,6 +25,12 @@ vi.mock('@/lib/hooks/use-shop-reviews', () => ({
     isAuthError: false,
   }),
 }));
+vi.mock('@/lib/hooks/use-user-lists', () => ({
+  useUserLists: () => ({ isSaved: () => false }),
+}));
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ back: vi.fn(), push: vi.fn() }),
+}));
 
 // Render-only child components — not under test here
 vi.mock('@/components/shops/shop-hero', () => ({ ShopHero: () => null }));
@@ -33,10 +39,6 @@ vi.mock('@/components/shops/shop-identity', () => ({
 }));
 vi.mock('@/components/shops/attribute-chips', () => ({
   AttributeChips: () => null,
-}));
-vi.mock('@/components/shops/share-button', () => ({ ShareButton: () => null }));
-vi.mock('@/components/shops/sticky-checkin-bar', () => ({
-  StickyCheckinBar: () => null,
 }));
 vi.mock('@/components/shops/shop-description', () => ({
   ShopDescription: () => null,
@@ -51,6 +53,14 @@ vi.mock('@/components/shops/shop-map-thumbnail', () => ({
   ShopMapThumbnail: () => null,
 }));
 vi.mock('@/components/shops/shop-reviews', () => ({ ShopReviews: () => null }));
+vi.mock('@/components/shops/shop-actions-row', () => ({
+  ShopActionsRow: () => (
+    <button aria-label="Check In 打卡">Check In 打卡</button>
+  ),
+}));
+vi.mock('@/components/shops/claim-banner', () => ({
+  ClaimBanner: () => <p>Is this your café? Claim this page →</p>,
+}));
 
 import { ShopDetailClient } from './shop-detail-client';
 import { DirectionsSheet } from '@/components/shops/directions-sheet';
@@ -125,5 +135,29 @@ describe('ShopDetailClient — Get There button', () => {
     expect(
       screen.queryByRole('button', { name: /get there/i })
     ).not.toBeInTheDocument();
+  });
+});
+
+describe('ShopDetailClient — new layout components', () => {
+  beforeEach(() => {
+    vi.mocked(useGeolocation).mockReturnValue({
+      latitude: null,
+      longitude: null,
+      error: null,
+      loading: false,
+      requestLocation: vi.fn(),
+    });
+  });
+
+  it('renders the Check In 打卡 button from ShopActionsRow', () => {
+    render(<ShopDetailClient shop={shopWithMap} />);
+    expect(
+      screen.getByRole('button', { name: /Check In 打卡/i })
+    ).toBeInTheDocument();
+  });
+
+  it('renders the claim banner at the bottom of the shop view', () => {
+    render(<ShopDetailClient shop={shopWithMap} />);
+    expect(screen.getByText(/Is this your café/i)).toBeInTheDocument();
   });
 });
