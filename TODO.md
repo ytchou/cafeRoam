@@ -1027,7 +1027,7 @@ _Highlighted check-in reviews from partner/blogger users. Reuses existing check-
 - [x] Frontend: `useCommunityPreview`, `useCommunityFeed`, `useLikeStatus` SWR hooks with TDD
 - [x] Frontend: Explore page "From the Community" section (Layer 3) with TDD
 - [x] Frontend: `/explore/community` feed page with TDD
-- [ ] Frontend: Proxy routes (preview, feed, like)
+- [x] Frontend: Proxy routes (preview, feed, like)
 - [x] Analytics: `community_note_viewed`, `community_note_liked`, `community_feed_opened`
 - [ ] Ops: Grant `blogger` role to beta invitees (SQL or admin UI)
 
@@ -1095,18 +1095,26 @@ _Designed in Pencil. Replaces current 首頁 + 地圖 split into a unified Find 
 - [x] Task 15: Layout components + page.tsx integration
 - [x] Task 16: Delete old components + rename nav files
 
-### Shop View — Directions (implementation notes)
+### Shop View — Directions
 
-_Build when implementing Shop View. All transport estimates via Mapbox — no Google Maps API needed._
+> **Design Doc:** [docs/designs/2026-03-20-directions-provider-and-community-cleanup-design.md](docs/designs/2026-03-20-directions-provider-and-community-cleanup-design.md)
+> **Plan:** [docs/plans/2026-03-20-directions-provider-and-community-cleanup-plan.md](docs/plans/2026-03-20-directions-provider-and-community-cleanup-plan.md)
 
-- [ ] Walking time — Mapbox Directions API, `walking` profile (lat/lng → shop)
-- [ ] Drive time — Mapbox Directions API, `driving-traffic` profile (same call, different profile)
-- [ ] Nearest MRT station — two-step:
-  - Hardcode Taipei MRT station dataset as a JSON file (~130 stations, lat/lng + name + exit info). Source from TDX API or OSM — never changes.
-  - Find nearest station with simple Haversine distance (no API call needed)
-  - Walking time to that station — Mapbox Directions API, `walking` profile
-- [ ] "Open in Google Maps" deep-link — `https://www.google.com/maps/dir/?api=1&destination={lat},{lng}`
-- [ ] "Open in Apple Maps" deep-link — `maps://maps.apple.com/?daddr={lat},{lng}`
+**Chunk 1 — Backend Provider (Wave 1-3):**
+
+- [ ] DirectionsResult Pydantic model
+- [ ] MapsProvider protocol + MapboxMapsAdapter get_directions (TDD)
+- [ ] GET /maps/directions API endpoint (TDD)
+
+**Chunk 2 — Frontend Integration (Wave 4-6):**
+
+- [ ] Next.js proxy route for maps/directions
+- [ ] Refactor DirectionsSheet to use backend proxy
+- [ ] Wire useGeolocation into Shop Detail page
+
+**Chunk 3 — Verification (Wave 7):**
+
+- [ ] Full verification (pytest, vitest, ruff, mypy, pnpm build)
 
 ### UI Reconstruct — Explore
 
