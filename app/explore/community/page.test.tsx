@@ -22,7 +22,13 @@ vi.mock('@/lib/api/fetch', () => ({
   fetchPublic: vi.fn(),
 }));
 
+vi.mock('@/lib/hooks/use-media-query', () => ({
+  useIsDesktop: vi.fn(() => false),
+  useMediaQuery: vi.fn(() => false),
+}));
+
 import swr from 'swr';
+import { useIsDesktop } from '@/lib/hooks/use-media-query';
 
 const swrMock = vi.mocked(swr);
 
@@ -77,5 +83,12 @@ describe('Community Feed Page', () => {
   it('shows Load more notes button when next cursor exists', () => {
     render(<CommunityFeedPage />);
     expect(screen.getByText(/Load more notes/)).toBeInTheDocument();
+  });
+
+  it('renders 啡遊筆記 title on desktop', () => {
+    (useIsDesktop as ReturnType<typeof vi.fn>).mockReturnValue(true);
+    render(<CommunityFeedPage />);
+    expect(screen.getByText('啡遊筆記')).toBeInTheDocument();
+    (useIsDesktop as ReturnType<typeof vi.fn>).mockReturnValue(false);
   });
 });

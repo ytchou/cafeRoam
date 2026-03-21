@@ -125,7 +125,7 @@ describe('VibePage — /explore/vibes/[slug]', () => {
   it('renders shop count badge with shops nearby text', () => {
     mockVibeShopsLoaded();
     render(<VibePage />);
-    expect(screen.getByText(/shops nearby/)).toBeInTheDocument();
+    expect(screen.getByText(/shop nearby/)).toBeInTheDocument();
   });
 
   it('renders a shop row with name and star rating', () => {
