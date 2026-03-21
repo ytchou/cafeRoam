@@ -1171,7 +1171,7 @@ _Pencil designs approved: 5 mobile + 4 desktop frames._
 
 **Chunk 2 — Page Restyling (parallel):**
 
-- [ ] Explore main page — 探索 header, daily draw label, vibe See all, desktop two-column
+- [x] Explore main page — 探索 header, daily draw label, vibe See all, desktop two-column
 - [ ] Vibe Results page — circle back, subtitle chips, shop count badge, star ratings, desktop 3-col grid
 - [ ] Community page — desktop 2-col grid, 啡遊筆記 title
 

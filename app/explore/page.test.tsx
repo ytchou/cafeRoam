@@ -9,6 +9,9 @@ vi.mock('swr', () => ({ default: vi.fn() }));
 vi.mock('@/lib/posthog/use-analytics', () => ({
   useAnalytics: () => ({ capture: vi.fn() }),
 }));
+vi.mock('@/lib/hooks/use-media-query', () => ({
+  useIsDesktop: vi.fn(() => false),
+}));
 
 beforeEach(() => {
   vi.stubGlobal(
@@ -64,10 +67,23 @@ function setupSwrMock() {
 }
 
 describe('Explore page', () => {
-  it('When a user opens the Explore tab, they see the explore section', () => {
+  it('When a user opens the Explore tab, they see the page title and notification bell', () => {
     setupSwrMock();
     render(<ExplorePage />);
     expect(screen.getByRole('main')).toBeInTheDocument();
+    expect(screen.getByText('探索')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Notifications' })
+    ).toBeInTheDocument();
+  });
+
+  it('renders "Your Daily Draw" label with a Refresh button', () => {
+    setupSwrMock();
+    render(<ExplorePage />);
+    expect(screen.getByText(/Your Daily Draw/)).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /Refresh/ })
+    ).toBeInTheDocument();
   });
 });
 
@@ -85,6 +101,15 @@ describe('ExplorePage — vibe strip', () => {
     expect(screen.getByText('Quiet · WiFi')).toBeInTheDocument();
     expect(screen.getByText('First Date')).toBeInTheDocument();
   });
+
+  it('renders See all link in vibe section pointing to /explore/vibes', () => {
+    setupSwrMock();
+    render(<ExplorePage />);
+    const vibeSection = screen.getByText('Browse by Vibe').closest('section');
+    const seeAllLink = vibeSection?.querySelector('a[href="/explore/vibes"]');
+    expect(seeAllLink).toBeInTheDocument();
+    expect(seeAllLink).toHaveTextContent(/See all/);
+  });
 });
 
 describe('Community Notes section', () => {
@@ -97,7 +122,13 @@ describe('Community Notes section', () => {
   it('shows See all link that navigates to /explore/community', () => {
     setupSwrMock();
     render(<ExplorePage />);
-    const link = screen.getByText(/See all/);
-    expect(link.closest('a')).toHaveAttribute('href', '/explore/community');
+    const communitySection = screen
+      .getByText('From the Community')
+      .closest('section');
+    const link = communitySection?.querySelector(
+      'a[href="/explore/community"]'
+    );
+    expect(link).toBeInTheDocument();
+    expect(link).toHaveTextContent(/See all/);
   });
 });
