@@ -252,10 +252,17 @@ export function DirectionsSheet({
         <Drawer.Overlay className="fixed inset-0 bg-black/40" />
         <Drawer.Content className="fixed right-0 bottom-0 left-0 flex max-h-[85vh] flex-col rounded-t-[10px] bg-white">
           <Drawer.Handle />
-          <div className="px-4 pt-3 pb-2">
-            <Drawer.Title className="text-lg font-semibold">
-              Directions to {shop.name}
+          <div className="flex items-center justify-between border-b border-[#E5E4E1] px-5 pt-2 pb-3">
+            <Drawer.Title className="text-base font-semibold text-[#1A1918]">
+              Directions
             </Drawer.Title>
+            <button
+              onClick={onClose}
+              className="text-[#9E9893] hover:text-[#3B2F2A]"
+              aria-label="Close"
+            >
+              ✕
+            </button>
           </div>
 
           <ShopMapThumbnail
@@ -264,59 +271,77 @@ export function DirectionsSheet({
             shopName={shop.name}
           />
 
-          <div className="space-y-3 px-4 py-4">
+          <div className="divide-y divide-[#E5E4E1] px-5">
             {walkRoute && (
-              <div className="flex items-center gap-3 text-sm">
-                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#F5F4F1]">
+              <div className="flex items-center gap-3 py-4">
+                <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#F5F4F1]">
                   <WalkIcon />
                 </span>
-                <span>~{walkRoute.durationMin} min walk</span>
+                <span className="flex-1 text-sm text-[#1A1918]">Walking</span>
+                <span className="text-sm font-medium text-[#1A1918]">
+                  ~{walkRoute.durationMin} min
+                </span>
               </div>
             )}
 
             {driveRoute && (
-              <div className="flex items-center gap-3 text-sm">
-                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#F5F4F1]">
+              <div className="flex items-center gap-3 py-4">
+                <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#F5F4F1]">
                   <CarIcon />
                 </span>
-                <span>~{driveRoute.durationMin} min drive</span>
+                <span className="flex-1 text-sm text-[#1A1918]">Driving</span>
+                <span className="text-sm font-medium text-[#1A1918]">
+                  ~{driveRoute.durationMin} min
+                </span>
               </div>
             )}
 
             {mrtStation && (
-              <div className="flex items-center gap-3 text-sm">
-                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#F5F4F1]">
+              <div className="flex items-center gap-3 py-4">
+                <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#F5F4F1]">
                   <TrainIcon />
                 </span>
-                <span>
-                  {mrtStation.name_en} ({mrtStation.name_zh}) &middot;{' '}
-                  {mrtStation.line}
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm text-[#1A1918]">
+                    {mrtStation.name_en}
+                    <span className="text-[#9E9893]">
+                      {' '}
+                      ({mrtStation.name_zh})
+                    </span>
+                  </p>
+                  <p className="text-xs text-[#9E9893]">{mrtStation.line}</p>
+                </div>
+                <span className="text-sm font-medium text-[#1A1918]">
                   {mrtWalkRoute
-                    ? ` · ~${mrtWalkRoute.durationMin} min walk`
+                    ? `~${mrtWalkRoute.durationMin} min`
                     : mrtStation.dist < 1
-                      ? ` · ${Math.round(mrtStation.dist * 1000)}m`
-                      : ` · ${mrtStation.dist.toFixed(1)}km`}
+                      ? `${Math.round(mrtStation.dist * 1000)}m`
+                      : `${mrtStation.dist.toFixed(1)}km`}
                 </span>
               </div>
             )}
 
             {loading && !walkRoute && !driveRoute && (
-              <p className="text-sm text-gray-400">Calculating routes...</p>
+              <div className="py-4">
+                <p className="text-sm text-[#9E9893]">Calculating routes...</p>
+              </div>
             )}
 
             {!loading && hasError && !walkRoute && !driveRoute && (
-              <p className="text-sm text-gray-400">
-                Route times unavailable. Try again later.
-              </p>
+              <div className="py-4">
+                <p className="text-sm text-[#9E9893]">
+                  Route times unavailable. Try again later.
+                </p>
+              </div>
             )}
           </div>
 
-          <div className="flex gap-3 border-t px-4 py-3">
+          <div className="flex gap-3 border-t border-[#E5E4E1] px-5 py-4">
             <a
               href={googleMapsUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex flex-1 items-center justify-center gap-2 rounded-full border border-[#E5E4E1] py-2.5 text-sm font-medium text-[#2C1810]"
+              className="flex flex-1 items-center justify-center gap-2 rounded-full border border-[#E5E4E1] py-2.5 text-sm font-medium text-[#1A1918]"
             >
               Google Maps
             </a>
@@ -324,7 +349,7 @@ export function DirectionsSheet({
               href={appleMapsUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex flex-1 items-center justify-center gap-2 rounded-full border border-[#E5E4E1] py-2.5 text-sm font-medium text-[#2C1810]"
+              className="flex flex-1 items-center justify-center gap-2 rounded-full border border-[#E5E4E1] py-2.5 text-sm font-medium text-[#1A1918]"
             >
               Apple Maps
             </a>
@@ -367,7 +392,7 @@ function CarIcon() {
       strokeLinecap="round"
       strokeLinejoin="round"
     >
-      <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9L18 10l-2.7-3.6A1.5 1.5 0 0 0 14.1 6H9.9a1.5 1.5 0 0 0-1.2.6L6 10l-2.5 1.1C2.7 11.3 2 12.1 2 13v3c0 .6.4 1 1 1h2" />
+      <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9L18 10l-2.7-3.6A1.5 1.5 0 0 0 14.1 6H9.9a1.5 1.5 0 0 0-1.2.6L6 10l-2.5 1.1C2.7 11.3 2 12.7 2 13v3c0 .6.4 1 1 1h2" />
       <circle cx="7" cy="17" r="2" />
       <circle cx="17" cy="17" r="2" />
     </svg>

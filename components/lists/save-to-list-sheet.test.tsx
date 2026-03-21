@@ -157,7 +157,8 @@ describe('SaveToListSheet', () => {
     });
   });
 
-  it('create new list input is shown when the user has fewer than 3 lists', async () => {
+  it('create new list input is shown when the user taps "Create new list"', async () => {
+    const user = userEvent.setup();
     render(
       <SWRConfig value={{ provider: () => new Map() }}>
         <SaveToListSheet
@@ -167,9 +168,9 @@ describe('SaveToListSheet', () => {
         />
       </SWRConfig>
     );
-    expect(
-      await screen.findByPlaceholderText(/create new list/i)
-    ).toBeInTheDocument();
+    const btn = await screen.findByRole('button', { name: /create new list/i });
+    await user.click(btn);
+    expect(screen.getByPlaceholderText(/create new list/i)).toBeInTheDocument();
   });
 
   it('create new list input is hidden when the user has reached the 3-list cap', async () => {

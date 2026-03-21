@@ -21,6 +21,7 @@ function renderReviews(
       averageRating={0}
       isLoading={false}
       isAuthError={false}
+      shopId="shop-123"
       {...overrides}
     />
   );
@@ -104,6 +105,25 @@ describe('ShopReviews', () => {
       expect(
         screen.queryByText('環境很安靜，很適合讀書')
       ).not.toBeInTheDocument();
+    });
+
+    it('shows a "See all" link when there are more reviews than displayed', () => {
+      const manyReviews = Array.from({ length: 4 }, (_, i) => ({
+        id: `r${i}`,
+        stars: 4,
+        reviewText: `Review ${i}`,
+        reviewedAt: '2026-01-01T00:00:00Z',
+        displayName: `User ${i}`,
+      }));
+      renderReviews({
+        reviews: manyReviews,
+        total: 12,
+        averageRating: 4.2,
+        shopId: 'shop-123',
+      });
+      expect(
+        screen.getByRole('link', { name: /See all/i })
+      ).toBeInTheDocument();
     });
   });
 });

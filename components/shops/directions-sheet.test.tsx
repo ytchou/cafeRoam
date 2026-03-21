@@ -91,8 +91,10 @@ describe('DirectionsSheet', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText(/7 min walk/i)).toBeInTheDocument();
-      expect(screen.getByText(/3 min drive/i)).toBeInTheDocument();
+      expect(screen.getByText(/Walking/i)).toBeInTheDocument();
+      expect(screen.getByText(/~7 min/)).toBeInTheDocument();
+      expect(screen.getByText(/Driving/i)).toBeInTheDocument();
+      expect(screen.getByText(/~3 min/)).toBeInTheDocument();
     });
   });
 
@@ -109,7 +111,13 @@ describe('DirectionsSheet', () => {
     render(<DirectionsSheet open={true} onClose={vi.fn()} shop={shop} />);
 
     await waitFor(() => {
-      expect(screen.getByText(/[A-Za-z]+ \([^\)]+\) ·/)).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          (_, el) =>
+            el?.tagName === 'P' &&
+            /[A-Za-z]+ \([^\)]+\)/.test(el.textContent ?? '')
+        )
+      ).toBeInTheDocument();
     });
     expect(mockFetch).toHaveBeenCalledTimes(1);
     expect(mockFetch.mock.calls[0][0]).toContain('/api/maps/directions');
@@ -129,7 +137,13 @@ describe('DirectionsSheet', () => {
     render(<DirectionsSheet open={true} onClose={vi.fn()} shop={shop} />);
 
     await waitFor(() => {
-      expect(screen.getByText(/[A-Za-z]+ \([^\)]+\) ·/)).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          (_, el) =>
+            el?.tagName === 'P' &&
+            /[A-Za-z]+ \([^\)]+\)/.test(el.textContent ?? '')
+        )
+      ).toBeInTheDocument();
     });
   });
 

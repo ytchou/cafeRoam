@@ -24,8 +24,21 @@ vi.mock('next/link', () => ({
     href: string;
   }) => <a href={href}>{children}</a>,
 }));
-vi.mock('@/components/shops/share-button', () => ({
-  ShareButton: () => <button>Share</button>,
+vi.mock('@/components/shops/shop-actions-row', () => ({
+  ShopActionsRow: () => null,
+}));
+vi.mock('@/components/shops/claim-banner', () => ({
+  ClaimBanner: () => null,
+}));
+vi.mock('@/lib/hooks/use-geolocation', () => ({
+  useGeolocation: () => ({
+    latitude: null,
+    longitude: null,
+    requestLocation: vi.fn(),
+  }),
+}));
+vi.mock('@/lib/hooks/use-user-lists', () => ({
+  useUserLists: () => ({ isSaved: () => false }),
 }));
 vi.mock('@/components/shops/shop-map-thumbnail', () => ({
   ShopMapThumbnail: () => <div data-testid="shop-map-thumbnail" />,
