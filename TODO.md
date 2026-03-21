@@ -1177,7 +1177,7 @@ _Pencil designs approved: 5 mobile + 4 desktop frames._
 
 **Chunk 3 — Component Restyling:**
 
-- [ ] TarotRevealDrawer — dark espresso theme, gold accents, desktop Dialog modal
+- [x] TarotRevealDrawer — dark espresso theme, gold accents, desktop Dialog modal
 
 **Chunk 4 — Verification:**
 
