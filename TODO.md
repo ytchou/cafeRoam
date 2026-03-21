@@ -1167,7 +1167,7 @@ _Pencil designs approved: 5 mobile + 4 desktop frames._
 
 **Chunk 1 — Infrastructure:**
 
-- [ ] Install shadcn Dialog component
+- [x] Install shadcn Dialog component
 
 **Chunk 2 — Page Restyling (parallel):**
 
