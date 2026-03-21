@@ -17,6 +17,10 @@ vi.mock('@/lib/hooks/use-geolocation', () => ({
     requestLocation: vi.fn(),
   }),
 }));
+vi.mock('@/lib/hooks/use-media-query', () => ({
+  useIsDesktop: vi.fn(() => false),
+  useMediaQuery: vi.fn(() => false),
+}));
 
 const MOCK_VIBE = {
   slug: 'study-cave',
@@ -105,17 +109,36 @@ describe('VibePage — /explore/vibes/[slug]', () => {
     expect(screen.getByText('Study Cave')).toBeInTheDocument();
   });
 
-  it('shows the shop count', () => {
+  it('renders circle back button', () => {
     mockVibeShopsLoaded();
     render(<VibePage />);
-    expect(screen.getByText(/1 shop/)).toBeInTheDocument();
+    expect(screen.getByLabelText('Go back')).toBeInTheDocument();
   });
 
-  it('renders a shop row with name and rating', () => {
+  it('renders subtitle as tag chips', () => {
+    mockVibeShopsLoaded();
+    render(<VibePage />);
+    expect(screen.getByText('Quiet')).toBeInTheDocument();
+    expect(screen.getByText('WiFi')).toBeInTheDocument();
+  });
+
+  it('renders shop count badge with shops nearby text', () => {
+    mockVibeShopsLoaded();
+    render(<VibePage />);
+    expect(screen.getByText(/shops nearby/)).toBeInTheDocument();
+  });
+
+  it('renders a shop row with name and star rating', () => {
     mockVibeShopsLoaded();
     render(<VibePage />);
     expect(screen.getByText('森日咖啡')).toBeInTheDocument();
     expect(screen.getByText('4.5')).toBeInTheDocument();
+  });
+
+  it('renders bookmark icon on shop rows', () => {
+    mockVibeShopsLoaded();
+    render(<VibePage />);
+    expect(screen.getAllByLabelText('Save shop').length).toBeGreaterThan(0);
   });
 
   it('shows loading skeletons while data is being fetched', () => {
