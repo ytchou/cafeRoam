@@ -1181,7 +1181,7 @@ _Pencil designs approved: 5 mobile + 4 desktop frames._
 
 **Chunk 4 — Verification:**
 
-- [ ] Full verification (vitest, type-check, lint, build)
+- [x] Full verification (vitest, type-check, lint, build)
 
 ### UI Reconstruct — Favorites
 

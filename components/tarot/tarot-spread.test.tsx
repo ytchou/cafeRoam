@@ -3,6 +3,11 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { TarotSpread } from './tarot-spread';
 import type { TarotCardData } from '@/types/tarot';
 
+vi.mock('@/lib/hooks/use-media-query', () => ({
+  useIsDesktop: vi.fn(() => false),
+  useMediaQuery: vi.fn(() => false),
+}));
+
 // Mock analytics
 vi.mock('@/lib/posthog/use-analytics', () => ({
   useAnalytics: () => ({ capture: vi.fn() }),
