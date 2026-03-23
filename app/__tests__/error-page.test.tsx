@@ -24,7 +24,9 @@ describe('ErrorPage', () => {
 
   it('shows a retry button so the user can recover without a full reload', () => {
     render(<ErrorPage error={testError} reset={mockReset} />);
-    expect(screen.getByRole('button', { name: /try again/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /try again/i })
+    ).toBeInTheDocument();
   });
 
   it('calls reset when the user clicks "Try again"', async () => {
