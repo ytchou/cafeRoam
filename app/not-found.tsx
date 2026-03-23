@@ -12,7 +12,7 @@ export default function NotFoundPage() {
         <Button
           size="lg"
           asChild
-          className="rounded-full bg-brand text-white hover:bg-brand/90"
+          className="bg-brand hover:bg-brand/90 rounded-full text-white"
           style={BODY_STYLE}
         >
           <Link href="/">Back to home</Link>
