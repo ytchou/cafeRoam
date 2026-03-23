@@ -108,6 +108,7 @@ class CheckInWithShop(CamelModel):
     shop_id: str
     shop_name: str | None = None
     shop_mrt: str | None = None
+    shop_photo_url: str | None = None
     photo_urls: list[str]
     menu_photo_url: str | None = None
     note: str | None = None

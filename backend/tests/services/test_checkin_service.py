@@ -147,7 +147,7 @@ class TestCheckInService:
                     "confirmed_tags": [],
                     "reviewed_at": None,
                     "created_at": "2026-03-01T10:00:00+00:00",
-                    "shops": {"name": "Fuji Coffee", "mrt": "Zhongshan"},
+                    "shops": {"name": "Fuji Coffee", "mrt": "Zhongshan", "photo_urls": []},
                 }
             ]
         )
@@ -156,6 +156,69 @@ class TestCheckInService:
         assert results[0].shop_name == "Fuji Coffee"
         assert results[0].shop_mrt == "Zhongshan"
         assert results[0].photo_urls == ["https://cdn.caferoam.tw/checkins/latte-art.jpg"]
+
+    async def test_user_checkin_history_includes_shop_photo_url(
+        self, checkin_service, mock_supabase
+    ):
+        """When a user fetches their check-ins, each record includes the shop's first photo URL."""
+        mock_supabase.table.return_value.select.return_value.eq.return_value.order.return_value.execute.return_value = MagicMock(
+            data=[
+                {
+                    "id": "ci-photo-001",
+                    "user_id": "user-mei-ling-001",
+                    "shop_id": "shop-hinoki",
+                    "photo_urls": ["https://cdn.caferoam.tw/checkins/latte.jpg"],
+                    "menu_photo_url": None,
+                    "note": None,
+                    "stars": None,
+                    "review_text": None,
+                    "confirmed_tags": None,
+                    "reviewed_at": None,
+                    "created_at": "2026-03-20T10:00:00+00:00",
+                    "shops": {
+                        "name": "Hinoki Coffee",
+                        "mrt": "Daan",
+                        "photo_urls": [
+                            "https://cdn.caferoam.tw/shops/hinoki/exterior.jpg",
+                            "https://cdn.caferoam.tw/shops/hinoki/interior.jpg",
+                        ],
+                    },
+                }
+            ]
+        )
+        results = await checkin_service.get_by_user("user-mei-ling-001")
+        assert len(results) == 1
+        assert results[0].shop_photo_url == "https://cdn.caferoam.tw/shops/hinoki/exterior.jpg"
+
+    async def test_user_checkin_history_shop_photo_url_null_when_no_photos(
+        self, checkin_service, mock_supabase
+    ):
+        """When a shop has no photos, shop_photo_url is None."""
+        mock_supabase.table.return_value.select.return_value.eq.return_value.order.return_value.execute.return_value = MagicMock(
+            data=[
+                {
+                    "id": "ci-nophoto-001",
+                    "user_id": "user-mei-ling-001",
+                    "shop_id": "shop-nophoto",
+                    "photo_urls": ["https://cdn.caferoam.tw/checkins/visit.jpg"],
+                    "menu_photo_url": None,
+                    "note": None,
+                    "stars": None,
+                    "review_text": None,
+                    "confirmed_tags": None,
+                    "reviewed_at": None,
+                    "created_at": "2026-03-20T10:00:00+00:00",
+                    "shops": {
+                        "name": "Mystery Cafe",
+                        "mrt": "Xinyi",
+                        "photo_urls": [],
+                    },
+                }
+            ]
+        )
+        results = await checkin_service.get_by_user("user-mei-ling-001")
+        assert len(results) == 1
+        assert results[0].shop_photo_url is None
 
     async def test_shop_checkin_list_is_returned_for_shop_page(
         self, checkin_service, mock_supabase
