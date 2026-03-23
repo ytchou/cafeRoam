@@ -172,7 +172,7 @@ function FilterContent({
             className={`shrink-0 rounded-full px-3 py-1.5 font-[family-name:var(--font-body)] text-sm font-medium transition-colors ${
               activeTab === tab.key
                 ? 'bg-[var(--tag-active-bg)] text-white'
-                : 'bg-[#F5F4F1] text-gray-500'
+                : 'bg-surface-section text-gray-500'
             }`}
           >
             {tab.label}
@@ -197,7 +197,7 @@ function FilterContent({
         <button
           type="button"
           onClick={handleApply}
-          className="w-full rounded-full bg-[var(--primary,#3D8A5A)] py-2.5 font-[family-name:var(--font-body)] text-sm font-medium text-white"
+          className="w-full rounded-full bg-brand py-2.5 font-[family-name:var(--font-body)] text-sm font-medium text-white"
         >
           {selected.size > 0 ? `Show ${selected.size} places` : 'Show places'}
         </button>

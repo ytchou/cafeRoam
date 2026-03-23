@@ -17,7 +17,7 @@ function StarRating({ stars }: { stars: number }) {
       {[1, 2, 3, 4, 5].map((n) => (
         <span
           key={n}
-          className={n <= stars ? 'text-[#E06B3F]' : 'text-gray-200'}
+          className={n <= stars ? 'text-brand' : 'text-gray-200'}
         >
           ★
         </span>
@@ -29,7 +29,7 @@ function StarRating({ stars }: { stars: number }) {
 function Avatar({ name }: { name: string | null }) {
   const initial = name ? name[0].toUpperCase() : '?';
   return (
-    <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#FAF0E8] text-sm font-semibold text-[#E06B3F]">
+    <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-surface-avatar text-sm font-semibold text-brand">
       {initial}
     </div>
   );
@@ -54,11 +54,11 @@ export function ShopReviews({
   if (isAuthError) {
     return (
       <div className="px-5 py-4">
-        <h2 className="mb-2 text-sm font-semibold text-[#1A1918]">打卡評價</h2>
-        <p className="text-sm text-[#6B6560]">
+        <h2 className="mb-2 text-sm font-semibold text-text-primary">打卡評價</h2>
+        <p className="text-sm text-text-secondary">
           <Link
             href="/login"
-            className="text-[#E06B3F] underline underline-offset-2"
+            className="text-brand underline underline-offset-2"
           >
             登入
           </Link>{' '}
@@ -81,31 +81,31 @@ export function ShopReviews({
   return (
     <section className="px-5 py-4">
       <div className="mb-3 flex items-baseline gap-2">
-        <h2 className="text-sm font-semibold text-[#1A1918]">打卡評價</h2>
-        <span className="text-xs text-[#9E9893]">{total} 則</span>
+        <h2 className="text-sm font-semibold text-text-primary">打卡評價</h2>
+        <span className="text-xs text-text-meta">{total} 則</span>
         {averageRating > 0 && (
-          <span className="ml-auto text-sm font-semibold text-[#E06B3F]">
+          <span className="ml-auto text-sm font-semibold text-brand">
             ★ {averageRating.toFixed(1)}
           </span>
         )}
       </div>
-      <div className="divide-y divide-[#F0EDE8]">
+      <div className="divide-y divide-surface-card">
         {reviews.map((review) => (
           <div key={review.id} className="py-3">
             <div className="flex items-start gap-3">
               <Avatar name={review.displayName} />
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-[#1A1918]">
+                  <span className="text-sm font-medium text-text-primary">
                     {review.displayName ?? '匿名'}
                   </span>
-                  <span className="text-xs text-[#9E9893]">
+                  <span className="text-xs text-text-meta">
                     {formatDate(review.reviewedAt)}
                   </span>
                 </div>
                 <StarRating stars={review.stars} />
                 {review.reviewText && (
-                  <p className="mt-1.5 text-sm leading-relaxed text-[#3B2F2A]">
+                  <p className="mt-1.5 text-sm leading-relaxed text-text-body">
                     {review.reviewText}
                   </p>
                 )}
@@ -117,7 +117,7 @@ export function ShopReviews({
       {total > reviews.length && (
         <Link
           href={`/shops/${shopId}/reviews`}
-          className="mt-3 block text-sm font-medium text-[#2D5A27]"
+          className="mt-3 block text-sm font-medium text-status-open-text"
         >
           See all {total} reviews →
         </Link>

@@ -169,7 +169,7 @@ export function FilterSheet({
             </Drawer.Title>
             <div className="flex items-center gap-2">
               {selected.size > 0 && (
-                <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[#2C1810] px-1.5 text-xs font-medium text-white">
+                <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-espresso px-1.5 text-xs font-medium text-white">
                   {selected.size}
                 </span>
               )}
@@ -190,7 +190,7 @@ export function FilterSheet({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search filters..."
-              className="w-full rounded-lg border border-[#E5E4E1] bg-[#F5F4F1] px-3 py-2 text-sm outline-none placeholder:text-gray-400 focus:border-[#2C1810]"
+              className="w-full rounded-lg border border-border-warm bg-surface-section px-3 py-2 text-sm outline-none placeholder:text-gray-400 focus:border-espresso"
             />
           </div>
 
@@ -207,8 +207,8 @@ export function FilterSheet({
                   onClick={() => setActiveTab(tab.key)}
                   className={`shrink-0 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
                     activeTab === tab.key
-                      ? 'bg-[#2C1810] text-white'
-                      : 'bg-[#F5F4F1] text-gray-500'
+                      ? 'bg-espresso text-white'
+                      : 'bg-surface-section text-gray-500'
                   }`}
                 >
                   {tab.label}
@@ -229,8 +229,8 @@ export function FilterSheet({
                     onClick={() => toggle(tag.id)}
                     className={`rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
                       isSelected
-                        ? 'border-[#2C1810] bg-[#2C1810] text-white'
-                        : 'border-[#E5E4E1] bg-white text-gray-700'
+                        ? 'border-espresso bg-espresso text-white'
+                        : 'border-border-warm bg-white text-gray-700'
                     }`}
                   >
                     {tag.label}
@@ -244,7 +244,7 @@ export function FilterSheet({
             <button
               type="button"
               onClick={handleApply}
-              className="w-full rounded-full bg-[#2C1810] py-2.5 text-sm font-medium text-white"
+              className="w-full rounded-full bg-espresso py-2.5 text-sm font-medium text-white"
             >
               Show places
             </button>

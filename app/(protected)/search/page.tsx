@@ -26,7 +26,7 @@ function SearchPageContent() {
   }, [query, isLoading, results.length, mode, capture]);
 
   return (
-    <div className="min-h-screen bg-[#FAF7F4]">
+    <div className="min-h-screen bg-surface-warm">
       <div className="sticky top-0 z-10 border-b border-gray-100 bg-white px-4 py-3">
         <SearchBar onSubmit={setQuery} defaultQuery={query} />
       </div>

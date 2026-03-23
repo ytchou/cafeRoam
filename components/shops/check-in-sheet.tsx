@@ -60,16 +60,16 @@ export function CheckInSheet({
   return (
     <Drawer open={open} onOpenChange={handleClose}>
       <DrawerContent>
-        <DrawerHeader className="flex items-center justify-between border-b border-[#E5E4E1] px-4 py-3">
+        <DrawerHeader className="flex items-center justify-between border-b border-border-warm px-4 py-3">
           <div>
             <DrawerTitle className="text-base font-semibold">
               Check In 打卡
             </DrawerTitle>
-            <p className="mt-0.5 text-xs text-[#9E9893]">{shopName}</p>
+            <p className="mt-0.5 text-xs text-text-meta">{shopName}</p>
           </div>
           <button
             onClick={() => handleClose(false)}
-            className="text-[#9E9893] hover:text-[#3B2F2A]"
+            className="text-text-meta hover:text-text-body"
             aria-label="Close"
           >
             ✕
@@ -87,7 +87,7 @@ export function CheckInSheet({
           )}
 
           <div>
-            <label className="text-sm font-medium text-[#3B2F2A]">
+            <label className="text-sm font-medium text-text-body">
               Photos <span className="text-red-500">*</span>
             </label>
             <div className="mt-2">
@@ -100,9 +100,9 @@ export function CheckInSheet({
           </div>
 
           <div>
-            <label className="text-sm font-medium text-[#3B2F2A]">
+            <label className="text-sm font-medium text-text-body">
               Rating{' '}
-              <span className="text-xs font-normal text-[#9E9893]">
+              <span className="text-xs font-normal text-text-meta">
                 optional
               </span>
             </label>
@@ -112,9 +112,9 @@ export function CheckInSheet({
           </div>
 
           <div>
-            <label className="text-sm font-medium text-[#3B2F2A]">
+            <label className="text-sm font-medium text-text-body">
               Review{' '}
-              <span className="text-xs font-normal text-[#9E9893]">
+              <span className="text-xs font-normal text-text-meta">
                 optional
               </span>
             </label>
@@ -123,14 +123,14 @@ export function CheckInSheet({
               onChange={(e) => setReviewText(e.target.value)}
               placeholder="Share your experience here..."
               rows={3}
-              className="mt-2 w-full resize-none rounded-lg bg-[#F5F4F2] px-3 py-2 text-sm placeholder:text-[#C4C0BB] focus:outline-none"
+              className="mt-2 w-full resize-none rounded-lg bg-surface-section px-3 py-2 text-sm placeholder:text-text-placeholder focus:outline-none"
             />
           </div>
 
           <div>
-            <label className="text-sm font-medium text-[#3B2F2A]">
+            <label className="text-sm font-medium text-text-body">
               How do you feel?{' '}
-              <span className="text-xs font-normal text-[#9E9893]">
+              <span className="text-xs font-normal text-text-meta">
                 optional
               </span>
             </label>
@@ -139,17 +139,17 @@ export function CheckInSheet({
               value={mood}
               onChange={(e) => setMood(e.target.value)}
               placeholder="How are you feeling today? (optional)"
-              className="mt-2 w-full rounded-lg bg-[#F5F4F2] px-3 py-2 text-sm placeholder:text-[#C4C0BB] focus:outline-none"
+              className="mt-2 w-full rounded-lg bg-surface-section px-3 py-2 text-sm placeholder:text-text-placeholder focus:outline-none"
             />
           </div>
         </div>
 
-        <div className="border-t border-[#E5E4E1] px-4 py-4">
+        <div className="border-t border-border-warm px-4 py-4">
           <button
             onClick={handleSubmit}
             disabled={!canSubmit}
             aria-label="Check In 打卡"
-            className="flex w-full items-center justify-center gap-2 rounded-full bg-[#2D5A27] py-3.5 text-sm font-semibold text-white disabled:opacity-40"
+            className="flex w-full items-center justify-center gap-2 rounded-full bg-brand py-3.5 text-sm font-semibold text-white disabled:opacity-40"
           >
             {busy ? 'Checking in...' : 'Check In 打卡'}
           </button>

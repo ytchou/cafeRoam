@@ -42,7 +42,7 @@ export default function VibePage() {
 
   if (isLoading) {
     return (
-      <main className="min-h-screen bg-[#FAF7F4] px-5 pt-6 pb-24">
+      <main className="min-h-screen bg-surface-warm px-5 pt-6 pb-24">
         <div className="mb-4 h-8 w-40 animate-pulse rounded-lg bg-gray-200" />
         {[0, 1, 2, 3, 4].map((i) => (
           <div
@@ -56,7 +56,7 @@ export default function VibePage() {
 
   if (error || !response) {
     return (
-      <main className="min-h-screen bg-[#FAF7F4] px-5 pt-6 pb-24">
+      <main className="min-h-screen bg-surface-warm px-5 pt-6 pb-24">
         <button
           type="button"
           onClick={() => router.back()}
@@ -78,7 +78,7 @@ export default function VibePage() {
     : [];
 
   return (
-    <main className="min-h-screen bg-[#FAF7F4] px-5 pt-6 pb-24">
+    <main className="min-h-screen bg-surface-warm px-5 pt-6 pb-24">
       {/* Header row: back button + emoji + vibe name */}
       <div className="mb-5">
         <div className="flex items-center gap-3">
@@ -93,7 +93,7 @@ export default function VibePage() {
           {vibe.emoji && <span className="text-2xl">{vibe.emoji}</span>}
           <div className="min-w-0">
             <h1
-              className="text-xl font-bold text-[#1A1918]"
+              className="text-xl font-bold text-text-primary"
               style={BRICOLAGE_STYLE}
             >
               {vibe.name}
@@ -118,7 +118,7 @@ export default function VibePage() {
 
         {/* Shop count badge */}
         <div className="mt-3 pl-12">
-          <span className="inline-flex items-center rounded-full bg-[#3D8A5A] px-3 py-1 text-xs font-medium text-white">
+          <span className="inline-flex items-center rounded-full bg-link-green px-3 py-1 text-xs font-medium text-white">
             {totalCount} {totalCount === 1 ? 'shop' : 'shops'} nearby
           </span>
         </div>
@@ -153,13 +153,13 @@ export default function VibePage() {
                     <div className="h-14 w-14 shrink-0 rounded-lg bg-gray-100" />
                   )}
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold text-[#1A1918]">
+                    <p className="truncate text-sm font-semibold text-text-primary">
                       {shop.name}
                     </p>
                     <div className="mt-0.5 flex items-center gap-2 text-xs text-gray-400">
                       {shop.rating != null && (
                         <span className="flex items-center gap-0.5">
-                          <Star className="h-3 w-3 fill-[#fcd34d] text-[#fcd34d]" />
+                          <Star className="h-3 w-3 fill-rating-star text-rating-star" />
                           {shop.rating}
                         </span>
                       )}
@@ -187,7 +187,7 @@ export default function VibePage() {
                 </Link>
                 <span
                   aria-hidden="true"
-                  className="shrink-0 p-1 text-[#6B7280]"
+                  className="shrink-0 p-1 text-text-secondary"
                 >
                   <Bookmark className="h-5 w-5" />
                 </span>
@@ -199,7 +199,7 @@ export default function VibePage() {
 
       {isDesktop && otherVibes.length > 0 && (
         <section className="mt-10">
-          <p className="mb-3 text-sm font-semibold text-[#1A1918]">
+          <p className="mb-3 text-sm font-semibold text-text-primary">
             Want to explore other vibes?
           </p>
           <div className="flex flex-wrap gap-2">
@@ -207,7 +207,7 @@ export default function VibePage() {
               <Link
                 key={v.slug}
                 href={`/explore/vibes/${v.slug}`}
-                className="rounded-full border border-gray-200 bg-white px-4 py-1.5 text-sm text-[#1A1918] hover:bg-gray-50"
+                className="rounded-full border border-gray-200 bg-white px-4 py-1.5 text-sm text-text-primary hover:bg-gray-50"
               >
                 {v.emoji} {v.name}
               </Link>

@@ -37,8 +37,8 @@ export function CommunityCard({ note }: CommunityCardProps) {
   return (
     <div ref={ref} className="rounded-2xl border border-gray-100 bg-white p-4">
       <div className="flex items-center gap-2.5">
-        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#F5EDE4]">
-          <span className="text-sm font-bold text-[#8B5E3C]">
+        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-surface-avatar">
+          <span className="text-sm font-bold text-map-pin">
             {getInitial(note.author.displayName)}
           </span>
         </div>
@@ -58,7 +58,7 @@ export function CommunityCard({ note }: CommunityCardProps) {
 
       <Link
         href={`/shops/${note.shopSlug}`}
-        className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-[#3D8A5A]"
+        className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-link-green"
       >
         <Coffee className="h-3.5 w-3.5" />
         {note.shopName}

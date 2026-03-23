@@ -56,9 +56,9 @@ export default function CommunityFeedPage() {
   );
 
   return (
-    <div className="min-h-screen bg-[#F5F4F1]">
+    <div className="min-h-screen bg-surface-section">
       <header
-        className={`${isDesktop ? '' : 'sticky top-0 z-10'} bg-[#F5F4F1] px-5 pt-4 pb-3 lg:px-8`}
+        className={`${isDesktop ? '' : 'sticky top-0 z-10'} bg-surface-section px-5 pt-4 pb-3 lg:px-8`}
       >
         <div className="flex items-center gap-3">
           {!isDesktop && (
@@ -122,7 +122,7 @@ export default function CommunityFeedPage() {
           <button
             type="button"
             onClick={() => setCursor(nextCursor)}
-            className={`${isDesktop ? 'col-span-2' : ''} flex items-center justify-center gap-1 py-2 text-sm font-medium text-[#8B5E3C]`}
+            className={`${isDesktop ? 'col-span-2' : ''} flex items-center justify-center gap-1 py-2 text-sm font-medium text-map-pin`}
           >
             Load more notes
             <ChevronDown className="h-3.5 w-3.5" />

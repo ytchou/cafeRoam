@@ -49,11 +49,57 @@
   --radius-2xl: calc(var(--radius) + 8px);
   --radius-3xl: calc(var(--radius) + 12px);
   --radius-4xl: calc(var(--radius) + 16px);
+
+  /* CafeRoam brand tokens — Tailwind classes: text-brand, bg-brand, border-brand, etc. */
+  --color-brand: var(--brand);
+  --color-espresso: var(--espresso);
+  --color-map-pin: var(--map-pin);
+  --color-rating-star: var(--rating-star);
+  --color-card-selected: var(--card-selected-bg);
+  --color-toggle: var(--toggle-bg);
+
+  /* Text hierarchy */
+  --color-text-primary: var(--text-primary);
+  --color-text-body: var(--text-body);
+  --color-text-meta: var(--text-meta);
+  --color-text-placeholder: var(--text-placeholder);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-tertiary: var(--text-tertiary);
+
+  /* Surfaces */
+  --color-surface-warm: var(--surface-warm);
+  --color-surface-section: var(--surface-section);
+  --color-surface-card: var(--surface-card);
+  --color-surface-avatar: var(--surface-avatar);
+
+  /* Borders */
+  --color-border-warm: var(--border-warm);
+  --color-border-light: var(--border-light);
+  --color-border-medium: var(--border-medium);
+
+  /* Status */
+  --color-status-open-bg: var(--status-open-bg);
+  --color-status-open-text: var(--status-open-text);
+  --color-status-closed-bg: var(--status-closed-bg);
+  --color-status-closed-text: var(--status-closed-text);
+
+  /* Links */
+  --color-link-green: var(--link-green);
+
+  /* Tarot subsystem */
+  --color-tarot-gold: var(--tarot-gold);
+  --color-tarot-gold-hover: var(--tarot-gold-hover);
+  --color-tarot-bg: var(--tarot-bg);
+  --color-tarot-surface: var(--tarot-surface);
+  --color-tarot-border: var(--tarot-border);
+  --color-tarot-text-dim: var(--tarot-text-dim);
+  --color-tarot-btn: var(--tarot-btn);
 }
 
 :root {
   --radius: 0.625rem;
-  /* CafeRoam design tokens */
+
+  /* CafeRoam core design tokens (original) */
   --map-pin: #8b5e3c;
   --active-dark: #2c1810;
   --tag-inactive-bg: #ffffff;
@@ -67,6 +113,46 @@
   --text-tertiary: #9ca3af;
   --rating-star: #fcd34d;
   --border-medium: #e5e7eb;
+
+  /* Extended CafeRoam design tokens */
+  --brand: #e06b3f;
+  --espresso: #2c1810; /* alias for --active-dark */
+
+  /* Text hierarchy */
+  --text-primary: #1a1918;
+  --text-body: #3b2f2a;
+  --text-meta: #9e9893;
+  --text-placeholder: #c4c0bb;
+
+  /* Surfaces */
+  --surface-warm: #faf7f4;
+  --surface-section: #f5f4f1;
+  --surface-card: #f0ede8;
+  --surface-avatar: #f5ede4;
+
+  /* Borders */
+  --border-warm: #e5e4e1;
+  --border-light: #d1d0cd;
+
+  /* Status */
+  --status-open-bg: #eaf3e8;
+  --status-open-text: #2d5a27;
+  --status-closed-bg: #f5e8e8;
+  --status-closed-text: #8b2222;
+
+  /* Links */
+  --link-green: #3d8a5a;
+
+  /* Tarot subsystem */
+  --tarot-gold: #c4922a;
+  --tarot-gold-hover: #d4a23a;
+  --tarot-bg: #1a1210;
+  --tarot-surface: #2c1e16;
+  --tarot-border: #5c3d2b;
+  --tarot-text-dim: #d4b896;
+  --tarot-btn: #9a7b5a;
+
+  /* shadcn/ui tokens */
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);

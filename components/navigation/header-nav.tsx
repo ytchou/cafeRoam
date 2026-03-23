@@ -27,7 +27,7 @@ export function HeaderNav({ activeTab }: HeaderNavProps) {
     activeTab ?? NAV_ITEMS_BY_HREF.get(pathname)?.tab ?? 'find';
 
   return (
-    <header className="fixed top-0 right-0 left-0 z-40 flex h-16 items-center justify-between border-b border-[#D1D0CD] bg-white px-8">
+    <header className="fixed top-0 right-0 left-0 z-40 flex h-16 items-center justify-between border-b border-border-light bg-white px-8">
       <Link href="/" className="flex items-center gap-2.5">
         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--map-pin)]">
           <span className="font-[family-name:var(--font-heading)] text-base font-bold text-white">

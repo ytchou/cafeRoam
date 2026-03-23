@@ -71,13 +71,13 @@ export function ShopCardCompact({
         <span className="truncate font-[family-name:var(--font-body)] text-[15px] font-semibold text-[var(--foreground)]">
           {shop.name}
         </span>
-        <span className="font-[family-name:var(--font-body)] text-[13px] text-[var(--text-secondary)]">
+        <span className="font-[family-name:var(--font-body)] text-[13px] text-text-secondary">
           {formatMeta(shop)}
         </span>
       </div>
       <ChevronRight
         data-testid="compact-card-arrow"
-        className="h-[18px] w-[18px] shrink-0 text-[var(--border-strong,#D1D0CD)]"
+        className="h-[18px] w-[18px] shrink-0 text-[var(--border-light)]"
       />
     </article>
   );

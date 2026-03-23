@@ -37,7 +37,7 @@ function TarotRevealContent({
     <div className="flex flex-col items-center px-4 pb-6">
       {/* Header row: label + close */}
       <div className="flex w-full items-center justify-between pt-3 pb-1">
-        <div className="flex items-center gap-1.5 text-xs font-semibold tracking-[1px] text-[#C4922A]">
+        <div className="flex items-center gap-1.5 text-xs font-semibold tracking-[1px] text-tarot-gold">
           <span>✦</span>
           <span>Tarot Card</span>
         </div>
@@ -60,7 +60,7 @@ function TarotRevealContent({
       </h2>
 
       {/* Photo */}
-      <div className="relative mt-5 aspect-[3/4] w-56 overflow-hidden rounded-lg border-2 border-[#C4922A]/40">
+      <div className="relative mt-5 aspect-[3/4] w-56 overflow-hidden rounded-lg border-2 border-tarot-gold/40">
         {card.coverPhotoUrl ? (
           <Image
             src={card.coverPhotoUrl}
@@ -71,7 +71,7 @@ function TarotRevealContent({
             priority
           />
         ) : (
-          <div className="flex h-full items-center justify-center bg-[#2C1E16] text-4xl font-bold text-[#C4922A]/30">
+          <div className="flex h-full items-center justify-center bg-tarot-surface text-4xl font-bold text-tarot-gold/30">
             {card.name[0]}
           </div>
         )}
@@ -79,14 +79,14 @@ function TarotRevealContent({
 
       {/* Shop info */}
       <p className="mt-4 text-lg font-semibold text-white">{card.name}</p>
-      <p className="mt-1 text-sm text-[#C4922A]">
+      <p className="mt-1 text-sm text-tarot-gold">
         {card.neighborhood}
         {card.isOpenNow && ' · Open Now'}
         {card.rating != null && ` · ★${card.rating}`}
       </p>
 
       {/* Flavor text */}
-      <p className="mt-3 text-center text-sm text-[#D4B896] italic">
+      <p className="mt-3 text-center text-sm text-tarot-text-dim italic">
         &ldquo;{card.flavorText}&rdquo;
       </p>
 
@@ -96,7 +96,7 @@ function TarotRevealContent({
           <button
             type="button"
             onClick={onShareTap}
-            className="flex-1 rounded-full border border-[#C4922A] py-3 text-sm font-medium text-[#C4922A] transition-colors hover:bg-[#C4922A]/10"
+            className="flex-1 rounded-full border border-tarot-gold py-3 text-sm font-medium text-tarot-gold transition-colors hover:bg-tarot-gold/10"
           >
             Share My Draw
           </button>
@@ -104,7 +104,7 @@ function TarotRevealContent({
         <Link
           href={shopPath}
           onClick={() => capture('tarot_lets_go', { shop_id: card.shopId })}
-          className="flex flex-1 items-center justify-center rounded-full bg-[#C4922A] py-3 text-sm font-medium text-[#1A1210] transition-colors hover:bg-[#C4922A]/90"
+          className="flex flex-1 items-center justify-center rounded-full bg-tarot-gold py-3 text-sm font-medium text-tarot-bg transition-colors hover:bg-tarot-gold/90"
         >
           Let&apos;s Go →
         </Link>
@@ -115,7 +115,7 @@ function TarotRevealContent({
         <button
           type="button"
           onClick={onClose}
-          className="text-sm text-[#9A7B5A] hover:text-[#C4922A]"
+          className="text-sm text-tarot-btn hover:text-tarot-gold"
         >
           ← Back to cards
         </button>
@@ -125,7 +125,7 @@ function TarotRevealContent({
             capture('tarot_draw_again', {});
             onDrawAgain();
           }}
-          className="text-sm text-[#9A7B5A] hover:text-[#C4922A]"
+          className="text-sm text-tarot-btn hover:text-tarot-gold"
         >
           Draw Again ↺
         </button>
@@ -149,7 +149,7 @@ export function TarotRevealDrawer({
     return (
       <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
         <DialogContent
-          className="max-w-[480px] border-[#5C3D2B] bg-[#2C1E16] p-0"
+          className="max-w-[480px] border-tarot-border bg-tarot-surface p-0"
           style={DIALOG_STYLE}
           showCloseButton={false}
         >
@@ -167,7 +167,7 @@ export function TarotRevealDrawer({
 
   return (
     <Drawer open={open} onOpenChange={(o) => !o && onClose()}>
-      <DrawerContent className="h-[95vh] max-h-[95vh] overflow-y-auto rounded-t-[10px] border-0 bg-[#1A1210]">
+      <DrawerContent className="h-[95vh] max-h-[95vh] overflow-y-auto rounded-t-[10px] border-0 bg-tarot-bg">
         <DrawerTitle className="sr-only">Tarot Card Reveal</DrawerTitle>
         <TarotRevealContent
           card={card}

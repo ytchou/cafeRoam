@@ -119,13 +119,13 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
         shareUrl={shareUrl}
       />
 
-      <div className="mx-5 border-t border-[#E5E4E1]" />
+      <div className="mx-5 border-t border-border-warm" />
 
       {shop.description && <ShopDescription text={shop.description} />}
       {tags.length > 0 && <AttributeChips tags={tags as TaxonomyTag[]} />}
       {shop.menuHighlights && <MenuHighlights items={shop.menuHighlights} />}
 
-      <div className="mx-5 border-t border-[#E5E4E1]" />
+      <div className="mx-5 border-t border-border-warm" />
 
       {hasMap && (
         <div>
@@ -138,7 +138,7 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
             <button
               type="button"
               onClick={openDirections}
-              className="flex items-center gap-1.5 rounded-full border border-[#E5E4E1] px-4 py-2 text-sm text-[#3B2F2A] hover:bg-[#F5F4F2]"
+              className="flex items-center gap-1.5 rounded-full border border-border-warm px-4 py-2 text-sm text-text-body hover:bg-surface-section"
               aria-label="Get There"
             >
               <Navigation size={14} />
@@ -148,7 +148,7 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
         </div>
       )}
 
-      <div className="mx-5 border-t border-[#E5E4E1]" />
+      <div className="mx-5 border-t border-border-warm" />
 
       <ShopReviews
         reviews={reviews}
