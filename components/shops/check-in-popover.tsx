@@ -21,7 +21,7 @@ interface CheckInPopoverProps {
 
 export function CheckInPopover({
   shopId,
-  shopName: _shopName,
+  shopName: _shopName, // eslint-disable-line @typescript-eslint/no-unused-vars
   open,
   onOpenChange,
   trigger,

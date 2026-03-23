@@ -1,5 +1,5 @@
 /** @type {import('@stryker-mutator/api/core').PartialStrykerOptions} */
-export default {
+const strykerConfig = {
   mutate: [
     'lib/**/*.ts',
     'app/api/**/*.ts',
@@ -19,3 +19,5 @@ export default {
   concurrency: 4,
   timeoutMS: 30000,
 };
+
+export default strykerConfig;

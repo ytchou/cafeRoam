@@ -43,7 +43,7 @@ vi.mock('vaul', () => ({
 }));
 
 vi.mock('next/image', () => ({
-  default: ({ fill, priority, ...rest }: Record<string, unknown>) => {
+  default: ({ ...rest }: Record<string, unknown>) => {
     // eslint-disable-next-line jsx-a11y/alt-text, @next/next/no-img-element
     return <img {...rest} />;
   },
