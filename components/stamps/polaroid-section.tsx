@@ -15,7 +15,6 @@ export function PolaroidSection({
   onStampClick,
 }: PolaroidSectionProps) {
   const previewStamps = stamps.slice(0, MAX_PREVIEW);
-  const visibleCount = Math.min(stamps.length, MAX_PREVIEW);
 
   return (
     <div>
@@ -27,7 +26,7 @@ export function PolaroidSection({
           </h2>
           {stamps.length > 0 && (
             <p className="text-[13px] text-[#9CA3AF]">
-              {visibleCount} recent visits
+              {stamps.length} recent visits
             </p>
           )}
         </div>
@@ -51,7 +50,7 @@ export function PolaroidSection({
       ) : (
         <div
           data-testid="memory-scroll"
-          className="flex gap-4 overflow-x-auto pb-2 md:grid md:grid-cols-3 md:overflow-x-visible"
+          className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 md:grid md:grid-cols-3 md:overflow-x-visible md:snap-none"
         >
           {previewStamps.map((stamp) => (
             <div
@@ -59,7 +58,8 @@ export function PolaroidSection({
               data-testid="memory-card"
               role={onStampClick ? 'button' : undefined}
               tabIndex={onStampClick ? 0 : undefined}
-              className="min-w-[200px] flex-shrink-0 cursor-pointer rounded-lg bg-white p-2.5 shadow-[0_3px_12px_rgba(0,0,0,0.08)] transition-transform hover:scale-[1.02] md:min-w-0"
+              aria-label={onStampClick ? (stamp.shop_name ?? 'Memory') : undefined}
+              className="min-w-[200px] flex-shrink-0 snap-start cursor-pointer rounded-lg bg-white p-2.5 shadow-[0_3px_12px_rgba(0,0,0,0.08)] transition-transform hover:scale-[1.02] md:min-w-0 md:snap-align-none"
               onClick={() => onStampClick?.(stamp)}
               onKeyDown={
                 onStampClick
@@ -92,7 +92,7 @@ export function PolaroidSection({
               </p>
               {stamp.diary_note && (
                 <p className="truncate text-[11px] italic text-[#9CA3AF]">
-                  &quot;{stamp.diary_note}&quot;
+                  &ldquo;{stamp.diary_note}&rdquo;
                 </p>
               )}
             </div>

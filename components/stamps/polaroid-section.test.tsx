@@ -34,15 +34,25 @@ describe('PolaroidSection', () => {
   it('renders diary note in italic when present', () => {
     const stamps = [makeStamp({ diary_note: 'Perfect focus mode' })];
     render(<PolaroidSection stamps={stamps} />);
-    expect(screen.getByText('"Perfect focus mode"')).toBeInTheDocument();
+    expect(screen.getByText('\u201cPerfect focus mode\u201d')).toBeInTheDocument();
   });
 
-  it('shows recent visits count in subtitle', () => {
-    const stamps = Array.from({ length: 3 }, (_, i) =>
-      makeStamp({ id: `stamp-${i}`, shop_name: `Shop ${i}` })
+  it('shows total visits count in subtitle', () => {
+    const shopNames = ['山小孩咖啡', 'Fika Coffee', 'Hinoki Coffee'];
+    const stamps = shopNames.map((shop_name, i) =>
+      makeStamp({ id: `stamp-${i}`, shop_name })
     );
     render(<PolaroidSection stamps={stamps} />);
     expect(screen.getByText('3 recent visits')).toBeInTheDocument();
+  });
+
+  it('shows total visit count even when more than 3 stamps exist', () => {
+    const shopNames = ['山小孩咖啡', 'Fika Coffee', 'Hinoki Coffee', 'Rufous Coffee', '珈琲時光'];
+    const stamps = shopNames.map((shop_name, i) =>
+      makeStamp({ id: `stamp-${i}`, shop_name })
+    );
+    render(<PolaroidSection stamps={stamps} />);
+    expect(screen.getByText('5 recent visits')).toBeInTheDocument();
   });
 
   it('renders "View All" link pointing to /profile/memories', () => {
