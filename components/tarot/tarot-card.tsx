@@ -11,8 +11,10 @@ export function TarotCard({ title, isRevealed, onTap }: TarotCardProps) {
     <button
       type="button"
       onClick={onTap}
-      className={`relative flex w-full items-center justify-center rounded-lg border-2 border-tarot-gold bg-espresso px-6 py-0 transition-all duration-300 ${
-        isRevealed ? 'opacity-60' : 'hover:border-tarot-gold-hover hover:shadow-lg'
+      className={`border-tarot-gold bg-espresso relative flex w-full items-center justify-center rounded-lg border-2 px-6 py-0 transition-all duration-300 ${
+        isRevealed
+          ? 'opacity-60'
+          : 'hover:border-tarot-gold-hover hover:shadow-lg'
       }`}
       style={{
         height: 140,
@@ -20,7 +22,7 @@ export function TarotCard({ title, isRevealed, onTap }: TarotCardProps) {
       }}
     >
       <span
-        className="font-bricolage flex items-center gap-3 text-lg font-bold tracking-[0.15em] text-tarot-gold"
+        className="font-bricolage text-tarot-gold flex items-center gap-3 text-lg font-bold tracking-[0.15em]"
         style={{
           fontFamily:
             'var(--font-bricolage), var(--font-geist-sans), sans-serif',
@@ -32,7 +34,7 @@ export function TarotCard({ title, isRevealed, onTap }: TarotCardProps) {
       </span>
 
       {isRevealed && (
-        <span className="absolute right-3 bottom-2 rounded-full bg-tarot-gold/20 px-2 py-0.5 text-xs text-tarot-gold">
+        <span className="bg-tarot-gold/20 text-tarot-gold absolute right-3 bottom-2 rounded-full px-2 py-0.5 text-xs">
           ✓ Revealed
         </span>
       )}

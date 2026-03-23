@@ -169,7 +169,7 @@ export function FilterSheet({
             </Drawer.Title>
             <div className="flex items-center gap-2">
               {selected.size > 0 && (
-                <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-espresso px-1.5 text-xs font-medium text-white">
+                <span className="bg-espresso flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-xs font-medium text-white">
                   {selected.size}
                 </span>
               )}
@@ -190,7 +190,7 @@ export function FilterSheet({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search filters..."
-              className="w-full rounded-lg border border-border-warm bg-surface-section px-3 py-2 text-sm outline-none placeholder:text-gray-400 focus:border-espresso"
+              className="border-border-warm bg-surface-section focus:border-espresso w-full rounded-lg border px-3 py-2 text-sm outline-none placeholder:text-gray-400"
             />
           </div>
 
@@ -244,7 +244,7 @@ export function FilterSheet({
             <button
               type="button"
               onClick={handleApply}
-              className="w-full rounded-full bg-espresso py-2.5 text-sm font-medium text-white"
+              className="bg-espresso w-full rounded-full py-2.5 text-sm font-medium text-white"
             >
               Show places
             </button>

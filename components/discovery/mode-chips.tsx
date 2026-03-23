@@ -27,7 +27,7 @@ export function ModeChips({ activeMode, onModeChange }: ModeChipsProps) {
             onClick={() => onModeChange(isActive ? null : key)}
             className={`flex-shrink-0 rounded-full px-4 py-2 text-sm whitespace-nowrap transition-colors ${
               isActive
-                ? 'border border-brand bg-brand text-white'
+                ? 'border-brand bg-brand border text-white'
                 : 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
             }`}
           >

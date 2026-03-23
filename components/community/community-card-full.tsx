@@ -33,8 +33,8 @@ export function CommunityCardFull({
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
           <div className="absolute bottom-3 left-3 flex items-center gap-2 rounded-full bg-white px-3 py-1.5 shadow-sm">
-            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-surface-avatar">
-              <span className="text-xs font-bold text-map-pin">
+            <div className="bg-surface-avatar flex h-7 w-7 items-center justify-center rounded-full">
+              <span className="text-map-pin text-xs font-bold">
                 {getInitial(note.author.displayName)}
               </span>
             </div>
@@ -53,7 +53,7 @@ export function CommunityCardFull({
         <div className="flex items-center justify-between">
           <Link
             href={`/shops/${note.shopSlug}`}
-            className="inline-flex items-center gap-1 rounded-full bg-surface-avatar px-2.5 py-1 text-[11px] font-semibold text-map-pin"
+            className="bg-surface-avatar text-map-pin inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold"
           >
             <Coffee className="h-3 w-3" />
             {note.shopName}

@@ -17,17 +17,17 @@ export function ShopIdentity({
 }: ShopIdentityProps) {
   return (
     <div className="px-5 py-3">
-      <h1 className="text-xl font-bold text-text-primary">{name}</h1>
+      <h1 className="text-text-primary text-xl font-bold">{name}</h1>
 
       <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
         {rating != null && (
           <div className="flex items-center gap-1">
-            <span className="text-sm text-brand">★</span>
-            <span className="text-sm font-medium text-text-primary">
+            <span className="text-brand text-sm">★</span>
+            <span className="text-text-primary text-sm font-medium">
               {rating.toFixed(1)}
             </span>
             {reviewCount != null && (
-              <span className="text-xs text-text-meta">({reviewCount})</span>
+              <span className="text-text-meta text-xs">({reviewCount})</span>
             )}
           </div>
         )}
@@ -42,10 +42,10 @@ export function ShopIdentity({
             {openNow ? 'Open' : 'Closed'}
           </span>
         )}
-        {distance && <span className="text-xs text-text-meta">{distance}</span>}
+        {distance && <span className="text-text-meta text-xs">{distance}</span>}
       </div>
 
-      {address && <p className="mt-1 text-xs text-text-meta">{address}</p>}
+      {address && <p className="text-text-meta mt-1 text-xs">{address}</p>}
     </div>
   );
 }

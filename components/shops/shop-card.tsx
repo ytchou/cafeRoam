@@ -49,7 +49,7 @@ export function ShopCard({ shop }: ShopCardProps) {
           {shop.name}
         </h3>
         <div className="mt-1 flex items-center gap-1">
-          <span className="text-xs text-brand">★</span>
+          <span className="text-brand text-xs">★</span>
           <span className="text-xs text-gray-600">
             {shop.rating?.toFixed(1)}
           </span>

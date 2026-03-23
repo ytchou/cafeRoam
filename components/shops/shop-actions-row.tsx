@@ -46,7 +46,7 @@ export function ShopActionsRow({
     <button
       onClick={() => requireAuth(() => setCheckInOpen(true))}
       aria-label="Check In 打卡"
-      className="flex flex-1 items-center justify-center gap-2 rounded-full bg-brand py-3 text-sm font-semibold text-white"
+      className="bg-brand flex flex-1 items-center justify-center gap-2 rounded-full py-3 text-sm font-semibold text-white"
     >
       Check In 打卡
     </button>
@@ -56,7 +56,7 @@ export function ShopActionsRow({
     <button
       onClick={() => requireAuth(() => setSaveOpen(true))}
       aria-label="Save"
-      className="flex h-11 w-11 items-center justify-center rounded-full border border-border-warm bg-white"
+      className="border-border-warm flex h-11 w-11 items-center justify-center rounded-full border bg-white"
     >
       <Bookmark
         className={`h-4 w-4 ${saved ? 'fill-amber-500 text-amber-500' : 'text-text-primary'}`}
@@ -67,9 +67,9 @@ export function ShopActionsRow({
   const shareBtn = (
     <button
       aria-label="Share"
-      className="flex h-11 w-11 items-center justify-center rounded-full border border-border-warm bg-white"
+      className="border-border-warm flex h-11 w-11 items-center justify-center rounded-full border bg-white"
     >
-      <Share2 className="h-4 w-4 text-text-primary" />
+      <Share2 className="text-text-primary h-4 w-4" />
     </button>
   );
 

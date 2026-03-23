@@ -252,8 +252,8 @@ export function DirectionsSheet({
         <Drawer.Overlay className="fixed inset-0 bg-black/40" />
         <Drawer.Content className="fixed right-0 bottom-0 left-0 flex max-h-[85vh] flex-col rounded-t-[10px] bg-white">
           <Drawer.Handle />
-          <div className="flex items-center justify-between border-b border-border-warm px-5 pt-2 pb-3">
-            <Drawer.Title className="text-base font-semibold text-text-primary">
+          <div className="border-border-warm flex items-center justify-between border-b px-5 pt-2 pb-3">
+            <Drawer.Title className="text-text-primary text-base font-semibold">
               Directions
             </Drawer.Title>
             <button
@@ -271,14 +271,16 @@ export function DirectionsSheet({
             shopName={shop.name}
           />
 
-          <div className="divide-y divide-border-warm px-5">
+          <div className="divide-border-warm divide-y px-5">
             {walkRoute && (
               <div className="flex items-center gap-3 py-4">
-                <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-surface-section">
+                <span className="bg-surface-section flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full">
                   <WalkIcon />
                 </span>
-                <span className="flex-1 text-sm text-text-primary">Walking</span>
-                <span className="text-sm font-medium text-text-primary">
+                <span className="text-text-primary flex-1 text-sm">
+                  Walking
+                </span>
+                <span className="text-text-primary text-sm font-medium">
                   ~{walkRoute.durationMin} min
                 </span>
               </div>
@@ -286,11 +288,13 @@ export function DirectionsSheet({
 
             {driveRoute && (
               <div className="flex items-center gap-3 py-4">
-                <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-surface-section">
+                <span className="bg-surface-section flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full">
                   <CarIcon />
                 </span>
-                <span className="flex-1 text-sm text-text-primary">Driving</span>
-                <span className="text-sm font-medium text-text-primary">
+                <span className="text-text-primary flex-1 text-sm">
+                  Driving
+                </span>
+                <span className="text-text-primary text-sm font-medium">
                   ~{driveRoute.durationMin} min
                 </span>
               </div>
@@ -298,20 +302,20 @@ export function DirectionsSheet({
 
             {mrtStation && (
               <div className="flex items-center gap-3 py-4">
-                <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-surface-section">
+                <span className="bg-surface-section flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full">
                   <TrainIcon />
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm text-text-primary">
+                  <p className="text-text-primary text-sm">
                     {mrtStation.name_en}
                     <span className="text-text-meta">
                       {' '}
                       ({mrtStation.name_zh})
                     </span>
                   </p>
-                  <p className="text-xs text-text-meta">{mrtStation.line}</p>
+                  <p className="text-text-meta text-xs">{mrtStation.line}</p>
                 </div>
-                <span className="text-sm font-medium text-text-primary">
+                <span className="text-text-primary text-sm font-medium">
                   {mrtWalkRoute
                     ? `~${mrtWalkRoute.durationMin} min`
                     : mrtStation.dist < 1
@@ -323,25 +327,25 @@ export function DirectionsSheet({
 
             {loading && !walkRoute && !driveRoute && (
               <div className="py-4">
-                <p className="text-sm text-text-meta">Calculating routes...</p>
+                <p className="text-text-meta text-sm">Calculating routes...</p>
               </div>
             )}
 
             {!loading && hasError && !walkRoute && !driveRoute && (
               <div className="py-4">
-                <p className="text-sm text-text-meta">
+                <p className="text-text-meta text-sm">
                   Route times unavailable. Try again later.
                 </p>
               </div>
             )}
           </div>
 
-          <div className="flex gap-3 border-t border-border-warm px-5 py-4">
+          <div className="border-border-warm flex gap-3 border-t px-5 py-4">
             <a
               href={googleMapsUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex flex-1 items-center justify-center gap-2 rounded-full border border-border-warm py-2.5 text-sm font-medium text-text-primary"
+              className="border-border-warm text-text-primary flex flex-1 items-center justify-center gap-2 rounded-full border py-2.5 text-sm font-medium"
             >
               Google Maps
             </a>
@@ -349,7 +353,7 @@ export function DirectionsSheet({
               href={appleMapsUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex flex-1 items-center justify-center gap-2 rounded-full border border-border-warm py-2.5 text-sm font-medium text-text-primary"
+              className="border-border-warm text-text-primary flex flex-1 items-center justify-center gap-2 rounded-full border py-2.5 text-sm font-medium"
             >
               Apple Maps
             </a>

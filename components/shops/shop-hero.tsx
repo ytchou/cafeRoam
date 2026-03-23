@@ -45,7 +45,7 @@ export function ShopHero({
             aria-label="Back"
             className="flex h-9 w-9 items-center justify-center rounded-full bg-white/90 shadow-sm backdrop-blur-sm"
           >
-            <ChevronLeft className="h-5 w-5 text-text-primary" />
+            <ChevronLeft className="text-text-primary h-5 w-5" />
           </button>
         )}
         <div className="ml-auto flex items-center gap-2">
@@ -66,7 +66,7 @@ export function ShopHero({
               aria-label="Share"
               className="flex h-9 w-9 items-center justify-center rounded-full bg-white/90 shadow-sm backdrop-blur-sm"
             >
-              <Share2 className="h-4 w-4 text-text-primary" />
+              <Share2 className="text-text-primary h-4 w-4" />
             </button>
           )}
         </div>

@@ -147,7 +147,7 @@ function FilterContent({
             Filters
           </h2>
           {selected.size > 0 && (
-            <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-tag-active-bg px-1.5 text-xs font-medium text-white">
+            <span className="bg-tag-active-bg flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-xs font-medium text-white">
               {selected.size}
             </span>
           )}
@@ -197,7 +197,7 @@ function FilterContent({
         <button
           type="button"
           onClick={handleApply}
-          className="w-full rounded-full bg-espresso py-2.5 font-[family-name:var(--font-body)] text-sm font-medium text-white"
+          className="bg-espresso w-full rounded-full py-2.5 font-[family-name:var(--font-body)] text-sm font-medium text-white"
         >
           {selected.size > 0 ? `Show ${selected.size} places` : 'Show places'}
         </button>
