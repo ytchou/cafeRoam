@@ -23,9 +23,9 @@ interface FavoritesDesktopLayoutProps {
   pins: ListPin[];
   selectedShopId: string | null;
   onShopClick: (id: string) => void;
-  onCreateList: () => void;
-  onDeleteList: (listId: string) => void;
-  onRenameList: (listId: string, name: string) => void;
+  onCreateList: (name: string) => void;
+  onDeleteList: (listId: string, listName: string) => void;
+  onRenameList: (listId: string) => void;
 }
 
 export function FavoritesDesktopLayout({
@@ -62,7 +62,10 @@ export function FavoritesDesktopLayout({
               </h1>
               <button
                 type="button"
-                onClick={onCreateList}
+                onClick={() => {
+                  const name = prompt('List name:');
+                  if (name?.trim()) onCreateList(name.trim());
+                }}
                 className="flex items-center gap-1.5 rounded-lg bg-[var(--map-pin)] px-3 py-1.5 font-[family-name:var(--font-body)] text-sm font-semibold text-white transition-colors hover:opacity-90"
               >
                 <Plus className="h-3.5 w-3.5" />

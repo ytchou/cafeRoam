@@ -111,14 +111,25 @@ export function ListDetailMobileLayout({
 
         {/* Scrollable shop list */}
         <div className="overflow-y-auto" style={{ height: 'calc(100% - 5rem - 78px)' }}>
-          {shops.map((shop) => (
-            <FavoritesShopRow
-              key={shop.id}
-              shop={shop}
-              onClick={() => onShopClick(shop.id)}
-              selected={selectedShopId === shop.id}
-            />
-          ))}
+          {shops.length === 0 ? (
+            <div className="flex h-full flex-col items-center justify-center gap-1 px-6 py-8 text-center">
+              <p className="font-[family-name:var(--font-body)] text-sm font-medium text-[var(--foreground)]">
+                No shops in this list
+              </p>
+              <p className="font-[family-name:var(--font-body)] text-xs text-[var(--text-secondary)]">
+                Go explore and save some shops!
+              </p>
+            </div>
+          ) : (
+            shops.map((shop) => (
+              <FavoritesShopRow
+                key={shop.id}
+                shop={shop}
+                onClick={() => onShopClick(shop.id)}
+                selected={selectedShopId === shop.id}
+              />
+            ))
+          )}
         </div>
       </div>
 
