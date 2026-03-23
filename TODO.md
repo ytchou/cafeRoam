@@ -1152,15 +1152,36 @@ _Designed in Pencil. Replaces current 首頁 + 地圖 split into a unified Find 
 
 ### UI Reconstruct — Explore
 
-_Designed in Pencil. Three-layer scroll: Tarot hero → Vibe strip → Community feed._
+> **Design Doc:** [docs/designs/2026-03-21-explore-ui-reconstruct-design.md](docs/designs/2026-03-21-explore-ui-reconstruct-design.md)
+> **Plan:** [docs/plans/2026-03-21-explore-ui-reconstruct-plan.md](docs/plans/2026-03-21-explore-ui-reconstruct-plan.md)
+> **Original Design:** [docs/designs/2026-03-17-explore-tarot-redesign.md](docs/designs/2026-03-17-explore-tarot-redesign.md)
 
-> **Design:** [docs/designs/2026-03-17-explore-tarot-redesign.md](docs/designs/2026-03-17-explore-tarot-redesign.md) — 3-card spread mechanic, horizontal cards, full-screen reveal modal.
+_Pencil designs approved: 5 mobile + 4 desktop frames._
 
-- [ ] Pencil: Design Explore page — 3-card spread state (horizontal face-down cards with tarot titles, vibe strip, community feed) — frame UOZmR needs redesign
-- [ ] Pencil: Design Explore / Tarot Revealed — full-screen modal (shop photo, tarot title, flavor text, share + navigate CTAs)
-- [ ] Pencil: Design vibe mood cards (horizontal scroll strip) — vibe strip already in UOZmR, needs polish
-- [ ] Pencil: Design vibe results page
-- [ ] Frontend: Implement Explore UI from Pencil designs
+- [x] Pencil: Design Explore page — 3-card spread state — frame `UOZmR`
+- [x] Pencil: Design Explore / Tarot Revealed — full-screen modal — frame `RaBMi`
+- [x] Pencil: Design Explore / Cards Returned — frame `eEd4y`
+- [x] Pencil: Design vibe results page — frame `IbXPH`
+- [x] Pencil: Design community feed page — frame `G7Qb0`
+- [x] Pencil: Design desktop variants — frames `MedPD`, `E4DGS`, `NMuwP`, `YgUn0`
+
+**Chunk 1 — Infrastructure:**
+
+- [x] Install shadcn Dialog component
+
+**Chunk 2 — Page Restyling (parallel):**
+
+- [x] Explore main page — 探索 header, daily draw label, vibe See all, desktop two-column
+- [x] Vibe Results page — circle back, subtitle chips, shop count badge, star ratings, desktop 3-col grid
+- [x] Community page — desktop 2-col grid, 啡遊筆記 title
+
+**Chunk 3 — Component Restyling:**
+
+- [x] TarotRevealDrawer — dark espresso theme, gold accents, desktop Dialog modal
+
+**Chunk 4 — Verification:**
+
+- [x] Full verification (vitest, type-check, lint, build)
 
 ### UI Reconstruct — Favorites
 

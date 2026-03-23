@@ -2,9 +2,17 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
+import { X } from 'lucide-react';
 import { Drawer, DrawerContent, DrawerTitle } from '@/components/ui/drawer';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { useAnalytics } from '@/lib/posthog/use-analytics';
+import { useIsDesktop } from '@/lib/hooks/use-media-query';
 import type { TarotCardData } from '@/types/tarot';
+
+const BRICOLAGE_STYLE = {
+  fontFamily: 'var(--font-bricolage), var(--font-geist-sans), sans-serif',
+} as const;
+const DIALOG_STYLE = { borderRadius: 24 } as const;
 
 interface TarotRevealDrawerProps {
   card: TarotCardData | null;
@@ -14,6 +22,118 @@ interface TarotRevealDrawerProps {
   onShareTap?: () => void;
 }
 
+function TarotRevealContent({
+  card,
+  onClose,
+  onDrawAgain,
+  onShareTap,
+}: Omit<TarotRevealDrawerProps, 'open'>) {
+  const { capture } = useAnalytics();
+  if (!card) return null;
+
+  const shopPath = `/shops/${card.slug ?? card.shopId}`;
+
+  return (
+    <div className="flex flex-col items-center px-4 pb-6">
+      {/* Header row: label + close */}
+      <div className="flex w-full items-center justify-between pt-3 pb-1">
+        <div className="flex items-center gap-1.5 text-xs font-semibold tracking-[1px] text-[#C4922A]">
+          <span>✦</span>
+          <span>Tarot Card</span>
+        </div>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close"
+          className="rounded-full p-1 text-white/50 hover:text-white"
+        >
+          <X className="h-5 w-5" />
+        </button>
+      </div>
+
+      {/* Tarot title */}
+      <h2
+        className="mt-3 text-center text-2xl font-bold tracking-wide text-white"
+        style={BRICOLAGE_STYLE}
+      >
+        {card.tarotTitle}
+      </h2>
+
+      {/* Photo */}
+      <div className="relative mt-5 aspect-[3/4] w-56 overflow-hidden rounded-lg border-2 border-[#C4922A]/40">
+        {card.coverPhotoUrl ? (
+          <Image
+            src={card.coverPhotoUrl}
+            alt={card.name}
+            fill
+            className="object-cover"
+            sizes="224px"
+            priority
+          />
+        ) : (
+          <div className="flex h-full items-center justify-center bg-[#2C1E16] text-4xl font-bold text-[#C4922A]/30">
+            {card.name[0]}
+          </div>
+        )}
+      </div>
+
+      {/* Shop info */}
+      <p className="mt-4 text-lg font-semibold text-white">{card.name}</p>
+      <p className="mt-1 text-sm text-[#C4922A]">
+        {card.neighborhood}
+        {card.isOpenNow && ' · Open Now'}
+        {card.rating != null && ` · ★${card.rating}`}
+      </p>
+
+      {/* Flavor text */}
+      <p className="mt-3 text-center text-sm text-[#D4B896] italic">
+        &ldquo;{card.flavorText}&rdquo;
+      </p>
+
+      {/* CTAs */}
+      <div className="mt-6 flex w-full gap-3">
+        {onShareTap && (
+          <button
+            type="button"
+            onClick={onShareTap}
+            className="flex-1 rounded-full border border-[#C4922A] py-3 text-sm font-medium text-[#C4922A] transition-colors hover:bg-[#C4922A]/10"
+          >
+            Share My Draw
+          </button>
+        )}
+        <Link
+          href={shopPath}
+          onClick={() => capture('tarot_lets_go', { shop_id: card.shopId })}
+          className="flex flex-1 items-center justify-center rounded-full bg-[#C4922A] py-3 text-sm font-medium text-[#1A1210] transition-colors hover:bg-[#C4922A]/90"
+        >
+          Let&apos;s Go →
+        </Link>
+      </div>
+
+      {/* Footer */}
+      <div className="mt-4 flex w-full items-center justify-between">
+        <button
+          type="button"
+          onClick={onClose}
+          className="text-sm text-[#9A7B5A] hover:text-[#C4922A]"
+        >
+          ← Back to cards
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            capture('tarot_draw_again', {});
+            onDrawAgain();
+          }}
+          className="text-sm text-[#9A7B5A] hover:text-[#C4922A]"
+        >
+          Draw Again ↺
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function TarotRevealDrawer({
   card,
   open,
@@ -21,94 +141,40 @@ export function TarotRevealDrawer({
   onDrawAgain,
   onShareTap,
 }: TarotRevealDrawerProps) {
-  const { capture } = useAnalytics();
+  const isDesktop = useIsDesktop();
 
   if (!card) return null;
 
-  const shopPath = `/shops/${card.shopId}/${card.slug ?? card.shopId}`;
-  const today = new Date().toISOString().slice(0, 10).replace(/-/g, '.');
+  if (isDesktop) {
+    return (
+      <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+        <DialogContent
+          className="max-w-[480px] border-[#5C3D2B] bg-[#2C1E16] p-0"
+          style={DIALOG_STYLE}
+          showCloseButton={false}
+        >
+          <DialogTitle className="sr-only">Tarot Card Reveal</DialogTitle>
+          <TarotRevealContent
+            card={card}
+            onClose={onClose}
+            onDrawAgain={onDrawAgain}
+            onShareTap={onShareTap}
+          />
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <Drawer open={open} onOpenChange={(o) => !o && onClose()}>
-      <DrawerContent className="h-[95vh] max-h-[95vh] overflow-y-auto rounded-t-[10px] border-0 bg-[#FAF7F4]">
-        <DrawerTitle className="sr-only">Your Tarot Draw</DrawerTitle>
-
-        <div className="flex items-center justify-center gap-2 py-3 text-sm text-[#C4922A]">
-          <span>✦</span>
-          <span>Your Draw · {today}</span>
-          <span>✦</span>
-        </div>
-
-        <div className="relative aspect-[4/3] w-full bg-gray-100">
-          {card.coverPhotoUrl ? (
-            <Image
-              src={card.coverPhotoUrl}
-              alt={card.name}
-              fill
-              className="object-cover"
-              sizes="100vw"
-              priority
-            />
-          ) : (
-            <div className="flex h-full items-center justify-center text-4xl font-bold text-gray-300">
-              {card.name[0]}
-            </div>
-          )}
-        </div>
-
-        <div className="flex flex-col items-center gap-3 px-6 py-5">
-          <h2
-            className="text-center text-xl font-bold tracking-[0.15em] text-[#2C1810] uppercase"
-            style={{
-              fontFamily:
-                'var(--font-bricolage), var(--font-geist-sans), sans-serif',
-            }}
-          >
-            {card.tarotTitle}
-          </h2>
-
-          <p className="text-lg font-semibold text-gray-800">{card.name}</p>
-          <p className="text-sm text-gray-500">
-            {card.neighborhood}
-            {card.isOpenNow && ' · Open Now'}
-            {card.rating != null && ` · ★${card.rating}`}
-          </p>
-
-          <p className="mt-1 text-center text-sm text-gray-600 italic">
-            &ldquo;{card.flavorText}&rdquo;
-          </p>
-        </div>
-
-        <div className="mt-auto flex flex-col gap-2 px-6 pt-2 pb-8">
-          <div className="flex gap-3">
-            {onShareTap && (
-              <button
-                type="button"
-                onClick={onShareTap}
-                className="flex-1 rounded-full border border-[#C4922A] py-3 text-sm font-medium text-[#C4922A] transition-colors hover:bg-[#C4922A]/10"
-              >
-                Share My Draw
-              </button>
-            )}
-            <Link
-              href={shopPath}
-              onClick={() => capture('tarot_lets_go', { shop_id: card.shopId })}
-              className="flex flex-1 items-center justify-center rounded-full bg-[#2C1810] py-3 text-sm font-medium text-white transition-colors hover:bg-[#3D2920]"
-            >
-              Let&apos;s Go
-            </Link>
-          </div>
-          <button
-            type="button"
-            onClick={() => {
-              capture('tarot_draw_again', {});
-              onDrawAgain();
-            }}
-            className="rounded-full py-2 text-sm text-gray-500 transition-colors hover:text-gray-700"
-          >
-            Draw Again
-          </button>
-        </div>
+      <DrawerContent className="h-[95vh] max-h-[95vh] overflow-y-auto rounded-t-[10px] border-0 bg-[#1A1210]">
+        <DrawerTitle className="sr-only">Tarot Card Reveal</DrawerTitle>
+        <TarotRevealContent
+          card={card}
+          onClose={onClose}
+          onDrawAgain={onDrawAgain}
+          onShareTap={onShareTap}
+        />
       </DrawerContent>
     </Drawer>
   );

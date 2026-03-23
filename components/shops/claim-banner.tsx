@@ -3,6 +3,7 @@ interface ClaimBannerProps {
   shopName: string;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function ClaimBanner({ shopId: _shopId, shopName }: ClaimBannerProps) {
   return (
     <div className="border-t border-[#E5E4E1] bg-[#FAF7F2] px-5 py-4">

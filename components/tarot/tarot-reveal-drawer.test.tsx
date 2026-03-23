@@ -13,12 +13,22 @@ vi.mock('@/lib/posthog/use-analytics', () => ({
   useAnalytics: () => ({ capture: vi.fn() }),
 }));
 
+// Mock useIsDesktop
+vi.mock('@/lib/hooks/use-media-query', () => ({
+  useIsDesktop: vi.fn(() => false),
+  useMediaQuery: vi.fn(() => false),
+}));
+
 vi.mock('@/components/ui/drawer', () => ({
   Drawer: ({ children, open }: { children: React.ReactNode; open: boolean }) =>
     open ? <div>{children}</div> : null,
-  DrawerContent: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
+  DrawerContent: ({
+    children,
+    ...props
+  }: {
+    children: React.ReactNode;
+    [key: string]: unknown;
+  }) => <div {...props}>{children}</div>,
   DrawerTitle: ({
     children,
     className,
@@ -27,6 +37,27 @@ vi.mock('@/components/ui/drawer', () => ({
     className?: string;
   }) => <div className={className}>{children}</div>,
 }));
+
+vi.mock('@/components/ui/dialog', () => ({
+  Dialog: ({ children, open }: { children: React.ReactNode; open: boolean }) =>
+    open ? <div data-testid="dialog">{children}</div> : null,
+  DialogContent: ({
+    children,
+    ...props
+  }: {
+    children: React.ReactNode;
+    [key: string]: unknown;
+  }) => (
+    <div data-testid="dialog-content" {...props}>
+      {children}
+    </div>
+  ),
+  DialogTitle: ({ children }: { children: React.ReactNode }) => (
+    <h2>{children}</h2>
+  ),
+}));
+
+import { useIsDesktop } from '@/lib/hooks/use-media-query';
 
 const mockCard: TarotCardData = {
   shopId: 's1',
@@ -79,7 +110,7 @@ describe('TarotRevealDrawer', () => {
     expect(screen.getByText(/For those who seek quiet/)).toBeInTheDocument();
   });
 
-  it("shows Let's Go button that navigates to shop", () => {
+  it("shows Let's Go link that navigates to shop", () => {
     render(
       <TarotRevealDrawer
         card={mockCard}
@@ -90,7 +121,7 @@ describe('TarotRevealDrawer', () => {
     );
     expect(screen.getByRole('link', { name: /Let's Go/i })).toHaveAttribute(
       'href',
-      '/shops/s1/sen-ri'
+      '/shops/sen-ri'
     );
   });
 
@@ -106,5 +137,59 @@ describe('TarotRevealDrawer', () => {
     );
     fireEvent.click(screen.getByText(/Draw Again/i));
     expect(onDrawAgain).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders Tarot Card label', () => {
+    render(
+      <TarotRevealDrawer
+        card={mockCard}
+        open={true}
+        onClose={vi.fn()}
+        onDrawAgain={vi.fn()}
+      />
+    );
+    expect(screen.getByText('Tarot Card')).toBeInTheDocument();
+  });
+
+  it('renders close button that calls onClose', () => {
+    const onClose = vi.fn();
+    render(
+      <TarotRevealDrawer
+        card={mockCard}
+        open={true}
+        onClose={onClose}
+        onDrawAgain={vi.fn()}
+      />
+    );
+    const closeButton = screen.getByLabelText('Close');
+    fireEvent.click(closeButton);
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders Back to cards and Draw Again footer', () => {
+    render(
+      <TarotRevealDrawer
+        card={mockCard}
+        open={true}
+        onClose={vi.fn()}
+        onDrawAgain={vi.fn()}
+      />
+    );
+    expect(screen.getByText(/Back to cards/)).toBeInTheDocument();
+    expect(screen.getByText(/Draw Again/)).toBeInTheDocument();
+  });
+
+  it('renders as Dialog on desktop', () => {
+    vi.mocked(useIsDesktop).mockReturnValue(true);
+    render(
+      <TarotRevealDrawer
+        card={mockCard}
+        open={true}
+        onClose={vi.fn()}
+        onDrawAgain={vi.fn()}
+      />
+    );
+    expect(screen.getByTestId('dialog')).toBeInTheDocument();
+    vi.mocked(useIsDesktop).mockReturnValue(false);
   });
 });

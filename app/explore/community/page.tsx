@@ -7,10 +7,12 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { CommunityCardFull } from '@/components/community/community-card-full';
 import { useCommunityFeed } from '@/lib/hooks/use-community-feed';
 import { useLikeStatus } from '@/lib/hooks/use-like-status';
+import { useIsDesktop } from '@/lib/hooks/use-media-query';
 import { useAnalytics } from '@/lib/posthog/use-analytics';
 
 export default function CommunityFeedPage() {
   const router = useRouter();
+  const isDesktop = useIsDesktop();
   const [cursor, setCursor] = useState<string | null>(null);
   const { notes, nextCursor, isLoading, mutate } = useCommunityFeed(cursor);
   const { likedIds: serverLikedIds } = useLikeStatus(
@@ -55,16 +57,20 @@ export default function CommunityFeedPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F4F1]">
-      <header className="sticky top-0 z-10 bg-[#F5F4F1] px-5 pt-4 pb-3">
+      <header
+        className={`${isDesktop ? '' : 'sticky top-0 z-10'} bg-[#F5F4F1] px-5 pt-4 pb-3 lg:px-8`}
+      >
         <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => router.back()}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-200"
-            aria-label="Go back"
-          >
-            <ArrowLeft className="h-[18px] w-[18px]" />
-          </button>
+          {!isDesktop && (
+            <button
+              type="button"
+              onClick={() => router.back()}
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-200"
+              aria-label="Go back"
+            >
+              <ArrowLeft className="h-[18px] w-[18px]" />
+            </button>
+          )}
           <div className="flex flex-col gap-0.5">
             <h1
               className="text-xl font-bold text-gray-900"
@@ -73,16 +79,20 @@ export default function CommunityFeedPage() {
                   'var(--font-bricolage), var(--font-geist-sans), sans-serif',
               }}
             >
-              From the Community
+              {isDesktop ? '啡遊筆記' : 'From the Community'}
             </h1>
             <p className="text-[11px] text-gray-400">
-              Notes from coffee explorers in Taipei
+              {isDesktop
+                ? 'Partner reviews from our café explorers'
+                : 'Notes from coffee explorers in Taipei'}
             </p>
           </div>
         </div>
       </header>
 
-      <div className="flex flex-col gap-4 px-5 pt-2 pb-24">
+      <div
+        className={`${isDesktop ? 'grid grid-cols-2' : 'flex flex-col'} gap-4 px-5 pt-2 pb-24 lg:px-8`}
+      >
         {notes.map((note) => (
           <CommunityCardFull
             key={note.checkinId}
@@ -93,13 +103,17 @@ export default function CommunityFeedPage() {
         ))}
 
         {isLoading && (
-          <div className="py-8 text-center text-sm text-gray-400">
+          <div
+            className={`${isDesktop ? 'col-span-2' : ''} py-8 text-center text-sm text-gray-400`}
+          >
             Loading...
           </div>
         )}
 
         {!isLoading && notes.length === 0 && (
-          <div className="py-12 text-center text-sm text-gray-400">
+          <div
+            className={`${isDesktop ? 'col-span-2' : ''} py-12 text-center text-sm text-gray-400`}
+          >
             Community notes coming soon
           </div>
         )}
@@ -108,7 +122,7 @@ export default function CommunityFeedPage() {
           <button
             type="button"
             onClick={() => setCursor(nextCursor)}
-            className="flex items-center justify-center gap-1 py-2 text-sm font-medium text-[#8B5E3C]"
+            className={`${isDesktop ? 'col-span-2' : ''} flex items-center justify-center gap-1 py-2 text-sm font-medium text-[#8B5E3C]`}
           >
             Load more notes
             <ChevronDown className="h-3.5 w-3.5" />

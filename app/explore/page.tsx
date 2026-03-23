@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { Bell } from 'lucide-react';
 import { useCallback, useEffect, useMemo } from 'react';
 
 import { CommunityCard } from '@/components/community/community-card';
@@ -9,6 +10,7 @@ import { TarotSpread } from '@/components/tarot/tarot-spread';
 import { useAnalytics } from '@/lib/posthog/use-analytics';
 import { useCommunityPreview } from '@/lib/hooks/use-community-preview';
 import { useGeolocation } from '@/lib/hooks/use-geolocation';
+import { useIsDesktop } from '@/lib/hooks/use-media-query';
 import { useTarotDraw } from '@/lib/hooks/use-tarot-draw';
 import { useVibes } from '@/lib/hooks/use-vibes';
 
@@ -18,9 +20,13 @@ const BRICOLAGE_STYLE = {
 const BRICOLAGE_STYLE_SM = {
   fontFamily: 'var(--font-bricolage), sans-serif',
 } as const;
+const DM_SANS_STYLE = {
+  fontFamily: 'var(--font-dm-sans), sans-serif',
+} as const;
 
 export default function ExplorePage() {
   const { capture } = useAnalytics();
+  const isDesktop = useIsDesktop();
   const {
     latitude,
     longitude,
@@ -55,18 +61,23 @@ export default function ExplorePage() {
     setRadiusKm(10);
   }, [capture, setRadiusKm]);
 
-  return (
-    <main className="min-h-screen bg-[#FAF7F4] px-5 pt-6 pb-24">
-      <div className="mb-4">
-        <h1
-          className="text-xl font-bold text-[#2C1810]"
-          style={BRICOLAGE_STYLE}
+  const tarotAndVibes = (
+    <>
+      <div className="mb-3 flex items-center justify-between">
+        <span
+          className="text-[11px] font-semibold tracking-[1px] text-[#C4922A]"
+          style={DM_SANS_STYLE}
         >
-          ✦ Your Tarot Draw
-        </h1>
-        <p className="mt-1 text-sm text-gray-500">
-          Discover a cafe chosen by fate
-        </p>
+          ✦ Your Daily Draw
+        </span>
+        <button
+          type="button"
+          onClick={() => redraw()}
+          className="text-sm font-medium text-[#8B5E3C]"
+          aria-label="Refresh daily draw"
+        >
+          Refresh ↺
+        </button>
       </div>
 
       {geoError && (
@@ -119,17 +130,29 @@ export default function ExplorePage() {
           <TarotEmptyState onExpandRadius={handleExpandRadius} />
         )}
 
-      {cards.length > 0 && <TarotSpread cards={cards} onDrawAgain={redraw} />}
+      {cards.length > 0 && (
+        <div
+          className={isDesktop ? 'lg:[&>div]:flex-row lg:[&>div]:gap-4' : ''}
+        >
+          <TarotSpread cards={cards} onDrawAgain={redraw} />
+        </div>
+      )}
 
       {previewVibes.length > 0 && (
         <section className="mt-8">
-          <div className="mb-3">
+          <div className="mb-3 flex items-center justify-between">
             <h2
               className="text-lg font-bold text-[#1A1918]"
               style={BRICOLAGE_STYLE_SM}
             >
               Browse by Vibe
             </h2>
+            <Link
+              href="/explore/vibes"
+              className="text-xs font-medium text-[#3D8A5A]"
+            >
+              See all →
+            </Link>
           </div>
           <div className="grid grid-cols-3 gap-2">
             {previewVibes.map((vibe) => (
@@ -150,27 +173,67 @@ export default function ExplorePage() {
           </div>
         </section>
       )}
+    </>
+  );
 
-      {communityNotes.length > 0 && (
-        <section className="mt-8 flex flex-col gap-3">
-          <div className="flex items-center justify-between">
-            <h2
-              className="text-lg font-bold text-gray-900"
-              style={BRICOLAGE_STYLE_SM}
-            >
-              From the Community
-            </h2>
-            <Link
-              href="/explore/community"
-              className="text-xs font-medium text-[#8B5E3C]"
-            >
-              See all →
-            </Link>
-          </div>
-          {communityNotes.map((note) => (
-            <CommunityCard key={note.checkinId} note={note} />
-          ))}
-        </section>
+  const communitySection = communityNotes.length > 0 && (
+    <section
+      className={
+        isDesktop
+          ? 'w-[400px] shrink-0 rounded-2xl bg-[#F5F4F1] p-6'
+          : 'mt-8 flex flex-col gap-3'
+      }
+    >
+      <div className="flex items-center justify-between">
+        <h2
+          className="text-lg font-bold text-gray-900"
+          style={BRICOLAGE_STYLE_SM}
+        >
+          From the Community
+        </h2>
+        <Link
+          href="/explore/community"
+          className="text-xs font-medium text-[#3D8A5A]"
+        >
+          See all →
+        </Link>
+      </div>
+      <div
+        className={
+          isDesktop ? 'mt-4 flex flex-col gap-3' : 'flex flex-col gap-3'
+        }
+      >
+        {communityNotes.map((note) => (
+          <CommunityCard key={note.checkinId} note={note} />
+        ))}
+      </div>
+    </section>
+  );
+
+  return (
+    <main className="min-h-screen bg-[#FAF7F4] px-5 pt-6 pb-24">
+      <div className="mb-6 flex items-center justify-between">
+        <h1
+          className="text-[28px] font-bold text-[#1A1918]"
+          style={BRICOLAGE_STYLE}
+        >
+          探索
+        </h1>
+        <span aria-hidden="true" className="rounded-full p-2 text-[#6B7280]">
+          <Bell className="h-[22px] w-[22px]" />
+        </span>
+      </div>
+
+      {isDesktop ? (
+        <div className="flex gap-8">
+          <div className="min-w-0 flex-1">{tarotAndVibes}</div>
+          {communitySection}
+        </div>
+      ) : (
+        <>
+          {tarotAndVibes}
+          {communitySection}
+        </>
       )}
     </main>
   );
