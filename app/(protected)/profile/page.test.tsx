@@ -60,6 +60,7 @@ describe('ProfilePage', () => {
               display_name: 'Mei-Ling',
               avatar_url: null,
               checkin_count: 1,
+              stamp_count: 3,
             },
         });
       }
@@ -83,6 +84,7 @@ describe('ProfilePage', () => {
                 shop_id: 'shop-a',
                 shop_name: 'Fika Coffee',
                 shop_mrt: 'Daan',
+                shop_photo_url: 'https://example.com/shops/fika/exterior.jpg',
                 photo_urls: ['https://example.com/p.jpg'],
                 stars: 4,
                 review_text: null,
