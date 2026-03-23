@@ -35,8 +35,8 @@ interface MapViewProps {
 const PIN_DEFAULT_SIZE = 40;
 const PIN_BUTTON_STYLE = { minWidth: 44, minHeight: 44 };
 const PIN_SELECTED_SIZE = 44;
-const PIN_DEFAULT_COLOR = '#8B5E3C';
-const PIN_SELECTED_COLOR = '#FF6B6B';
+const PIN_DEFAULT_COLOR = 'var(--map-pin)';
+const PIN_SELECTED_COLOR = 'var(--pin-selected)';
 const TIP_HEIGHT = 10;
 
 function CoffeePinIcon({ selected }: { selected: boolean }) {

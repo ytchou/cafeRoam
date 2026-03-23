@@ -17,17 +17,17 @@ export function ShopIdentity({
 }: ShopIdentityProps) {
   return (
     <div className="px-5 py-3">
-      <h1 className="text-xl font-bold text-[#1A1918]">{name}</h1>
+      <h1 className="text-text-primary text-xl font-bold">{name}</h1>
 
       <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
         {rating != null && (
           <div className="flex items-center gap-1">
-            <span className="text-sm text-[#E06B3F]">★</span>
-            <span className="text-sm font-medium text-[#1A1918]">
+            <span className="text-brand text-sm">★</span>
+            <span className="text-text-primary text-sm font-medium">
               {rating.toFixed(1)}
             </span>
             {reviewCount != null && (
-              <span className="text-xs text-[#9E9893]">({reviewCount})</span>
+              <span className="text-text-meta text-xs">({reviewCount})</span>
             )}
           </div>
         )}
@@ -35,17 +35,17 @@ export function ShopIdentity({
           <span
             className={`rounded-full px-2 py-0.5 text-xs font-medium ${
               openNow
-                ? 'bg-[#EAF3E8] text-[#2D5A27]'
-                : 'bg-[#F5E8E8] text-[#8B2222]'
+                ? 'bg-status-open-bg text-status-open-text'
+                : 'bg-status-closed-bg text-status-closed-text'
             }`}
           >
             {openNow ? 'Open' : 'Closed'}
           </span>
         )}
-        {distance && <span className="text-xs text-[#9E9893]">{distance}</span>}
+        {distance && <span className="text-text-meta text-xs">{distance}</span>}
       </div>
 
-      {address && <p className="mt-1 text-xs text-[#9E9893]">{address}</p>}
+      {address && <p className="text-text-meta mt-1 text-xs">{address}</p>}
     </div>
   );
 }

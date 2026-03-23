@@ -12,7 +12,7 @@ const PLATFORMS = [
   {
     name: 'Threads',
     icon: '@',
-    bg: '#1A1918',
+    bg: 'var(--espresso)',
     fg: '#FFFFFF',
     urlFn: (u: string) =>
       `https://www.threads.net/intent/post?text=${encodeURIComponent(u)}`,
@@ -35,8 +35,8 @@ const PLATFORMS = [
   {
     name: 'Mail',
     icon: '✉',
-    bg: '#F5F4F2',
-    fg: '#3B2F2A',
+    bg: 'var(--surface-section)',
+    fg: 'var(--text-body)',
     urlFn: (u: string, n: string) =>
       `mailto:?subject=${encodeURIComponent(n)}&body=${encodeURIComponent(u)}`,
   },
@@ -80,30 +80,30 @@ export function SharePopover({
         className="w-80 overflow-hidden rounded-2xl p-0 shadow-xl"
         align="start"
       >
-        <div className="border-b border-[#E5E4E1] px-4 py-4">
-          <h3 className="text-sm font-semibold text-[#3B2F2A]">Share</h3>
+        <div className="border-border-warm border-b px-4 py-4">
+          <h3 className="text-text-body text-sm font-semibold">Share</h3>
         </div>
 
         <div className="space-y-4 p-4">
-          <div className="flex items-center gap-3 rounded-xl bg-[#F5F4F2] px-3 py-2.5">
-            <div className="h-10 w-10 flex-shrink-0 rounded-lg bg-[#E8E6E2]" />
+          <div className="bg-surface-section flex items-center gap-3 rounded-xl px-3 py-2.5">
+            <div className="bg-surface-card h-10 w-10 flex-shrink-0 rounded-lg" />
             <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-[#3B2F2A]">
+              <p className="text-text-body truncate text-sm font-semibold">
                 {shopName}
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 rounded-lg border border-[#E5E4E1] px-3 py-2">
+          <div className="border-border-warm flex items-center gap-2 rounded-lg border px-3 py-2">
             <input
               type="text"
               readOnly
               value={shareUrl}
-              className="flex-1 truncate bg-transparent text-xs text-[#6B6560] outline-none"
+              className="text-text-secondary flex-1 truncate bg-transparent text-xs outline-none"
             />
             <button
               onClick={handleCopy}
-              className="flex-shrink-0 rounded-lg bg-[#2D5A27] px-3 py-1.5 text-xs font-semibold text-white"
+              className="bg-brand flex-shrink-0 rounded-lg px-3 py-1.5 text-xs font-semibold text-white"
             >
               {copied ? 'Copied!' : 'Copy'}
             </button>
@@ -125,14 +125,14 @@ export function SharePopover({
                 >
                   {p.icon}
                 </div>
-                <span className="text-[10px] text-[#9E9893]">{p.name}</span>
+                <span className="text-text-meta text-[10px]">{p.name}</span>
               </a>
             ))}
             <div className="flex flex-col items-center gap-1">
-              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#F5F4F2] text-base text-[#6B6560]">
+              <div className="bg-surface-section text-text-secondary flex h-11 w-11 items-center justify-center rounded-full text-base">
                 &bull;&bull;&bull;
               </div>
-              <span className="text-[10px] text-[#9E9893]">More</span>
+              <span className="text-text-meta text-[10px]">More</span>
             </div>
           </div>
         </div>

@@ -4,8 +4,8 @@ interface MapPinProps {
 
 const SIZE_DEFAULT = 40;
 const SIZE_ACTIVE = 44;
-const COLOR_DEFAULT = '#8B5E3C';
-const COLOR_ACTIVE = '#FF6B6B';
+const COLOR_DEFAULT = 'var(--map-pin)';
+const COLOR_ACTIVE = 'var(--pin-selected)';
 const TIP_HEIGHT = 8;
 
 export function MapPin({ active = false }: MapPinProps) {

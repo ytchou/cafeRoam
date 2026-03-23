@@ -72,11 +72,11 @@ export function SavePopover({
         className="w-80 overflow-hidden rounded-2xl p-0 shadow-xl"
         align="start"
       >
-        <div className="flex items-center justify-between border-b border-[#E5E4E1] px-4 py-4">
-          <h3 className="text-sm font-semibold text-[#3B2F2A]">Save to List</h3>
+        <div className="border-border-warm flex items-center justify-between border-b px-4 py-4">
+          <h3 className="text-text-body text-sm font-semibold">Save to List</h3>
           <button
             onClick={() => handleClose(false)}
-            className="text-xs text-[#9E9893] hover:text-[#3B2F2A]"
+            className="text-text-meta hover:text-text-body text-xs"
             aria-label="Close"
           >
             ✕
@@ -86,8 +86,8 @@ export function SavePopover({
         <div className="py-2">
           {lists.length === 0 && (
             <div className="flex flex-col items-center px-4 py-8 text-center">
-              <p className="text-sm font-medium text-[#3B2F2A]">No lists yet</p>
-              <p className="mt-1 text-xs text-[#9E9893]">
+              <p className="text-text-body text-sm font-medium">No lists yet</p>
+              <p className="text-text-meta mt-1 text-xs">
                 Create a list to start saving
               </p>
             </div>
@@ -95,14 +95,14 @@ export function SavePopover({
           {lists.map((list) => (
             <label
               key={list.id}
-              className="flex cursor-pointer items-center gap-3 px-4 py-3 hover:bg-[#F5F4F2]"
+              className="hover:bg-surface-section flex cursor-pointer items-center gap-3 px-4 py-3"
             >
-              <div className="h-10 w-10 flex-shrink-0 rounded-lg bg-[#E8E6E2]" />
+              <div className="bg-surface-card h-10 w-10 flex-shrink-0 rounded-lg" />
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-[#3B2F2A]">
+                <p className="text-text-body truncate text-sm font-medium">
                   {list.name}
                 </p>
-                <p className="text-xs text-[#9E9893]">
+                <p className="text-text-meta text-xs">
                   {list.items.length} spots
                 </p>
               </div>
@@ -111,14 +111,14 @@ export function SavePopover({
                 aria-label={list.name}
                 checked={isInList(list.id, shopId)}
                 onChange={() => handleToggle(list.id)}
-                className="h-5 w-5 rounded border-gray-300 accent-[#2D5A27]"
+                className="accent-brand h-5 w-5 rounded border-gray-300"
               />
             </label>
           ))}
           {lists.length < 3 && (
             <button
               onClick={() => setShowNewListInput(true)}
-              className="flex w-full items-center gap-2 px-4 py-3 text-sm text-[#6B6560] hover:bg-[#F5F4F2]"
+              className="text-text-secondary hover:bg-surface-section flex w-full items-center gap-2 px-4 py-3 text-sm"
             >
               <Plus className="h-4 w-4" />
               Create new list
@@ -132,7 +132,7 @@ export function SavePopover({
         </div>
 
         {showNewListInput && (
-          <div className="border-t border-[#E5E4E1] px-4 py-3">
+          <div className="border-border-warm border-t px-4 py-3">
             <input
               type="text"
               value={newListName}
@@ -140,16 +140,16 @@ export function SavePopover({
               onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
               placeholder="List name..."
               autoFocus
-              className="w-full rounded-lg bg-[#F5F4F2] px-3 py-2 text-sm focus:outline-none"
+              className="bg-surface-section w-full rounded-lg px-3 py-2 text-sm focus:outline-none"
               disabled={creating}
             />
           </div>
         )}
 
-        <div className="border-t border-[#E5E4E1] px-4 py-3">
+        <div className="border-border-warm border-t px-4 py-3">
           <button
             onClick={() => handleClose(false)}
-            className="w-full rounded-full bg-[#2D5A27] py-2.5 text-sm font-semibold text-white"
+            className="bg-brand w-full rounded-full py-2.5 text-sm font-semibold text-white"
           >
             Save
           </button>

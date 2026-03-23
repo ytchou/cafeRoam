@@ -27,14 +27,14 @@ export function HeaderNav({ activeTab }: HeaderNavProps) {
     activeTab ?? NAV_ITEMS_BY_HREF.get(pathname)?.tab ?? 'find';
 
   return (
-    <header className="fixed top-0 right-0 left-0 z-40 flex h-16 items-center justify-between border-b border-[#D1D0CD] bg-white px-8">
+    <header className="border-border-light fixed top-0 right-0 left-0 z-40 flex h-16 items-center justify-between border-b bg-white px-8">
       <Link href="/" className="flex items-center gap-2.5">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--map-pin)]">
+        <div className="bg-map-pin flex h-8 w-8 items-center justify-center rounded-lg">
           <span className="font-[family-name:var(--font-heading)] text-base font-bold text-white">
             啡
           </span>
         </div>
-        <span className="font-[family-name:var(--font-heading)] text-base font-bold text-[var(--foreground)]">
+        <span className="text-foreground font-[family-name:var(--font-heading)] text-base font-bold">
           啡遊 CafeRoam
         </span>
       </Link>
@@ -49,8 +49,8 @@ export function HeaderNav({ activeTab }: HeaderNavProps) {
               data-active={isActive || undefined}
               className={`flex h-9 items-center gap-[5px] rounded-[20px] px-4 font-[family-name:var(--font-body)] text-sm transition-colors ${
                 isActive
-                  ? 'bg-[var(--active-dark)] font-semibold text-white'
-                  : 'font-medium text-[var(--muted-foreground)]'
+                  ? 'bg-espresso font-semibold text-white'
+                  : 'text-muted-foreground font-medium'
               }`}
             >
               <Icon className="h-3.5 w-3.5" />
@@ -64,11 +64,11 @@ export function HeaderNav({ activeTab }: HeaderNavProps) {
         <button
           type="button"
           aria-label="Search"
-          className="flex h-9 w-9 items-center justify-center rounded-[18px] bg-[var(--background)] text-[var(--muted-foreground)]"
+          className="bg-background text-muted-foreground flex h-9 w-9 items-center justify-center rounded-[18px]"
         >
           <Search className="h-[18px] w-[18px]" />
         </button>
-        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--map-pin)]">
+        <div className="bg-map-pin flex h-8 w-8 items-center justify-center rounded-full">
           <span className="font-[family-name:var(--font-body)] text-sm font-semibold text-white">
             Y
           </span>

@@ -65,7 +65,7 @@ export default function ExplorePage() {
     <>
       <div className="mb-3 flex items-center justify-between">
         <span
-          className="text-[11px] font-semibold tracking-[1px] text-[#C4922A]"
+          className="text-tarot-gold text-[11px] font-semibold tracking-[1px]"
           style={DM_SANS_STYLE}
         >
           ✦ Your Daily Draw
@@ -73,7 +73,7 @@ export default function ExplorePage() {
         <button
           type="button"
           onClick={() => redraw()}
-          className="text-sm font-medium text-[#8B5E3C]"
+          className="text-map-pin text-sm font-medium"
           aria-label="Refresh daily draw"
         >
           Refresh ↺
@@ -100,7 +100,7 @@ export default function ExplorePage() {
           {[0, 1, 2].map((i) => (
             <div
               key={i}
-              className="h-[140px] animate-pulse rounded-lg bg-[#2C1810]/20"
+              className="bg-espresso/20 h-[140px] animate-pulse rounded-lg"
               style={{ animationDelay: `${i * 150}ms` }}
             />
           ))}
@@ -142,14 +142,14 @@ export default function ExplorePage() {
         <section className="mt-8">
           <div className="mb-3 flex items-center justify-between">
             <h2
-              className="text-lg font-bold text-[#1A1918]"
+              className="text-text-primary text-lg font-bold"
               style={BRICOLAGE_STYLE_SM}
             >
               Browse by Vibe
             </h2>
             <Link
               href="/explore/vibes"
-              className="text-xs font-medium text-[#3D8A5A]"
+              className="text-link-green text-xs font-medium"
             >
               See all →
             </Link>
@@ -162,7 +162,7 @@ export default function ExplorePage() {
                 className="flex flex-col gap-1.5 rounded-2xl border border-gray-100 bg-white px-4 py-3"
               >
                 <span className="text-xl">{vibe.emoji}</span>
-                <span className="text-[13px] leading-tight font-semibold text-[#1A1918]">
+                <span className="text-text-primary text-[13px] leading-tight font-semibold">
                   {vibe.name}
                 </span>
                 <span className="text-[11px] text-gray-400">
@@ -180,7 +180,7 @@ export default function ExplorePage() {
     <section
       className={
         isDesktop
-          ? 'w-[400px] shrink-0 rounded-2xl bg-[#F5F4F1] p-6'
+          ? 'bg-surface-section w-[400px] shrink-0 rounded-2xl p-6'
           : 'mt-8 flex flex-col gap-3'
       }
     >
@@ -193,7 +193,7 @@ export default function ExplorePage() {
         </h2>
         <Link
           href="/explore/community"
-          className="text-xs font-medium text-[#3D8A5A]"
+          className="text-link-green text-xs font-medium"
         >
           See all →
         </Link>
@@ -211,15 +211,18 @@ export default function ExplorePage() {
   );
 
   return (
-    <main className="min-h-screen bg-[#FAF7F4] px-5 pt-6 pb-24">
+    <main className="bg-surface-warm min-h-screen px-5 pt-6 pb-24">
       <div className="mb-6 flex items-center justify-between">
         <h1
-          className="text-[28px] font-bold text-[#1A1918]"
+          className="text-text-primary text-[28px] font-bold"
           style={BRICOLAGE_STYLE}
         >
           探索
         </h1>
-        <span aria-hidden="true" className="rounded-full p-2 text-[#6B7280]">
+        <span
+          aria-hidden="true"
+          className="text-text-secondary rounded-full p-2"
+        >
           <Bell className="h-[22px] w-[22px]" />
         </span>
       </div>

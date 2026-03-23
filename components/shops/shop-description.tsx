@@ -12,14 +12,14 @@ export function ShopDescription({ text }: ShopDescriptionProps) {
 
   return (
     <div className="px-5 py-4">
-      <h2 className="mb-2 text-sm font-semibold text-[#1A1918]">About</h2>
-      <p className={`text-sm text-[#3B2F2A] ${expanded ? '' : 'line-clamp-2'}`}>
+      <h2 className="text-text-primary mb-2 text-sm font-semibold">About</h2>
+      <p className={`text-text-body text-sm ${expanded ? '' : 'line-clamp-2'}`}>
         {text}
       </p>
       {!expanded && text.length > 60 && (
         <button
           onClick={() => setExpanded(true)}
-          className="mt-1 text-sm font-medium text-[#E06B3F]"
+          className="text-brand mt-1 text-sm font-medium"
         >
           更多
         </button>

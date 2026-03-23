@@ -34,14 +34,14 @@ export function SearchBar({
       onSubmit={handleSubmit}
       className="relative flex items-center"
     >
-      <span className="pointer-events-none absolute left-3 text-[#E06B3F]">
+      <span className="text-brand pointer-events-none absolute left-3">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           width={20}
           height={20}
           viewBox="0 0 24 24"
           fill="none"
-          stroke="#E06B3F"
+          stroke="var(--brand)"
           strokeWidth={2}
           role="img"
           aria-label="search"
@@ -55,7 +55,7 @@ export function SearchBar({
         onChange={(e) => setValue(e.target.value)}
         placeholder="找間有巴斯克蛋糕的咖啡廳…"
         autoFocus={autoFocus}
-        className="min-h-[48px] w-full rounded-full border border-gray-200 bg-white pr-4 pl-10 text-sm focus:ring-2 focus:ring-[#E06B3F] focus:outline-none"
+        className="focus:ring-brand min-h-[48px] w-full rounded-full border border-gray-200 bg-white pr-4 pl-10 text-sm focus:ring-2 focus:outline-none"
       />
     </form>
   );

@@ -11,13 +11,13 @@ describe('a user interacting with the MapPin', () => {
   it('a user sees the default map pin in brown when no shop is selected', () => {
     const { container } = render(<MapPin />);
     const circle = container.querySelector('circle');
-    expect(circle).toHaveAttribute('fill', '#8B5E3C');
+    expect(circle).toHaveAttribute('fill', 'var(--map-pin)');
   });
 
   it('a user sees the active map pin highlighted in coral when a shop is selected', () => {
     const { container } = render(<MapPin active />);
     const circle = container.querySelector('circle');
-    expect(circle).toHaveAttribute('fill', '#FF6B6B');
+    expect(circle).toHaveAttribute('fill', 'var(--pin-selected)');
   });
 
   it('a user sees the pin with a pointed tip indicating the shop location', () => {

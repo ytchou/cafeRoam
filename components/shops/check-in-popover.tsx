@@ -65,13 +65,13 @@ export function CheckInPopover({
         className="w-80 overflow-hidden rounded-2xl p-0 shadow-xl"
         align="start"
       >
-        <div className="flex items-center justify-between border-b border-[#E5E4E1] px-4 py-3">
-          <h3 className="text-sm font-semibold text-[#3B2F2A]">
+        <div className="border-border-warm flex items-center justify-between border-b px-4 py-3">
+          <h3 className="text-text-body text-sm font-semibold">
             Check In 打卡
           </h3>
           <button
             onClick={() => handleClose(false)}
-            className="text-xs text-[#9E9893] hover:text-[#3B2F2A]"
+            className="text-text-meta hover:text-text-body text-xs"
             aria-label="Close"
           >
             ✕
@@ -89,7 +89,7 @@ export function CheckInPopover({
           )}
           <PhotoUploader files={photos} onChange={setPhotos} maxPhotos={3} />
           <div>
-            <p className="mb-1 text-xs font-medium text-[#3B2F2A]">Rating</p>
+            <p className="text-text-body mb-1 text-xs font-medium">Rating</p>
             <StarRating value={rating} onChange={setRating} />
           </div>
           <textarea
@@ -97,14 +97,14 @@ export function CheckInPopover({
             onChange={(e) => setReviewText(e.target.value)}
             placeholder="Write your review (optional)..."
             rows={2}
-            className="w-full resize-none rounded-lg bg-[#F5F4F2] px-3 py-2 text-sm placeholder:text-[#C4C0BB] focus:outline-none"
+            className="bg-surface-section placeholder:text-text-placeholder w-full resize-none rounded-lg px-3 py-2 text-sm focus:outline-none"
           />
           <input
             type="text"
             value={mood}
             onChange={(e) => setMood(e.target.value)}
             placeholder="How are you feeling today? (optional)"
-            className="w-full rounded-lg bg-[#F5F4F2] px-3 py-2 text-sm placeholder:text-[#C4C0BB] focus:outline-none"
+            className="bg-surface-section placeholder:text-text-placeholder w-full rounded-lg px-3 py-2 text-sm focus:outline-none"
           />
         </div>
 
@@ -113,7 +113,7 @@ export function CheckInPopover({
             onClick={handleSubmit}
             disabled={!canSubmit}
             aria-label="Check In 打卡"
-            className="w-full rounded-lg bg-[#1A1918] py-2.5 text-sm font-semibold text-white disabled:opacity-40"
+            className="bg-espresso w-full rounded-lg py-2.5 text-sm font-semibold text-white disabled:opacity-40"
           >
             {busy ? 'Checking in...' : 'Check In 打卡'}
           </button>
