@@ -80,3 +80,97 @@
 | M12 | Valid (Debatable) | useRouter in layout, navigation should be at page layer |
 
 **Skipped (false positives):** M10, M11 — reviewer misread partial test names; both are fully CLAUDE.md-compliant.
+
+## Fix Pass 1
+
+**Pre-fix SHA:** 3176e32a8f45cef5b7ebc560f7643acff1891c34
+**Post-fix SHA:** 09812458a291a178ee6370b2ad5b963c67a8a045
+**Commit:** `fix(review): Critical+Important+Minor fixes across Favorites UI` (16 files, +431/-228)
+
+**Issues fixed:**
+- [Critical] C1 — `lists/[listId]/page.tsx` — Guard now checks `!isListsLoading && !isShopsLoading` with correctly paired loading states
+- [Critical] C2+C4 — `favorites-desktop-layout.tsx` — Removed `shopsByList` prop entirely; desktop sidebar rebuilt with `FavoritesListCard`, `onDelete`/`onRename` properly wired
+- [Critical] C3+I8 — `list-detail-mobile-layout.tsx` — Replaced raw `react-map-gl` Map with `MapViewDynamic`; `shops[0]` access eliminated
+- [Important] I1 — `lists/page.tsx` — `handleRename` wrapped in try/catch with `toast.error`
+- [Important] I2 — `favorites-desktop-layout.tsx` — `remainingSlots = MAX_LISTS - lists.length` gates "New List" button and `EmptySlotCard`
+- [Important] I3 — `list-detail-mobile-layout.tsx` — `BottomNav` removed; bottom sheet migrated to `Drawer` (vaul) at z-30
+- [Important] I4 — `list-detail-desktop-layout.tsx` — `mapPins` wrapped in `useMemo(..., [shops])`
+- [Important] I5/I9 — `favorites-mini-map.tsx` — `shopsByList={{}}` inline literal removed; `☕` span replaced with `<Coffee />` icon
+- [Important] I6 — `favorites-mini-map.tsx` — per-list `listColorMap` via useMemo using 3-color palette
+- [Important] I7 — `lists/page.tsx` + both layouts — `window.prompt()` replaced with `CreateListDialog` component; `onCreateList: () => void` (signal only)
+- [Important] I10 — `favorites-mini-map.tsx` — `onPinClick?: (listId: string) => void` prop added and wired to each `Marker`
+- [Important] I11 — `favorites-desktop-layout.tsx` — Truncation logic removed along with `shopsByList`; `FavoritesListCard` uses `itemCount` directly
+- [Important] I12 — `use-list-pins.test.tsx` — Replaced `vi.mock('@/lib/api/fetch')` with `global.fetch` + supabase client mock
+- [Important] I13 — `use-list-shops.test.tsx` — Same boundary fix as I12
+- [Important] I14 — `list-detail-mobile-layout.tsx` — `shops[0]` center access eliminated (MapViewDynamic handles bounds)
+- [Minor] M2 — `favorites-shop-row.tsx` — regex fixed to `/([^市縣]{2,3})[區里鄉鎮]/`
+- [Minor] M3 — Both detail layouts — Local `ListDetailShop` interface removed; `import type { ListShop }` from `use-list-shops`
+- [Minor] M4 — `favorites-mobile-layout.tsx` — Count badge: `bg-[#F5EDE4] text-[var(--map-pin)]`
+- [Minor] M5 — `favorites-mobile-layout.tsx` — h2 uses `font-[family-name:var(--font-heading)]`
+- [Minor] M6 — `favorites-mobile-layout.tsx` — "+ New List" button: `rounded-full bg-[#C8F0D8] text-[#3D8A5A]`
+- [Minor] M7 — `list-detail-mobile-layout.tsx` — Bottom sheet migrated to vaul `Drawer.Root/Portal/Content/Handle`
+- [Minor] M8 — `favorites-desktop-layout.tsx` — "New List" button: `bg-[#C8F0D8] text-[#3D8A5A]`
+- [Minor] M9 — `page.test.tsx` — Dialog-driven test flow; UUID test data
+- [Minor] M12 — `favorites-mobile-layout.tsx` — `onCreateList: () => void` (no unused `name` arg); `useRouter` removed from layout
+
+**Batch Test Run:**
+- `pnpm test` — PASS (155 files, 843 tests)
+- `cd backend && uv run pytest` — PASS (470 tests, 5 warnings)
+
+## Pass 2 — Re-Verify (Smart Routing)
+
+*All 5 agents re-run (all had ≥1 finding in Pass 1)*
+*No agents skipped (all had Critical/Important findings)*
+
+### Previously Flagged Issues — Resolution Status
+
+| ID | Severity | Status |
+|----|----------|--------|
+| C1 | Critical | ✓ Resolved |
+| C2 | Critical | ✓ Resolved |
+| C3 | Critical | ✓ Resolved |
+| C4 | Critical | ✓ Resolved |
+| I1 | Important | ✓ Resolved |
+| I2 | Important | ✓ Resolved |
+| I3 | Important | ✓ Resolved |
+| I4 | Important | ✓ Resolved |
+| I5 | Important (reclassified Minor) | ✓ Resolved |
+| I6 | Important | ✓ Resolved |
+| I7 | Important | ✓ Resolved |
+| I8 | Important | ✓ Resolved |
+| I9 | Important | ✓ Resolved |
+| I10 | Important | ✓ Resolved |
+| I11 | Important | ✓ Resolved |
+| I12 | Important | ✓ Resolved |
+| I13 | Important | ✓ Resolved |
+| I14 | Important | ✓ Resolved |
+| M2 | Minor | ✓ Resolved |
+| M3 | Minor | ✓ Resolved |
+| M4 | Minor | ✓ Resolved |
+| M5 | Minor | ✓ Resolved |
+| M6 | Minor | ✓ Resolved |
+| M7 | Minor | ✓ Resolved |
+| M8 | Minor | ✓ Resolved |
+| M9 | Minor | ✓ Resolved |
+| M12 | Minor | ✓ Resolved |
+
+### New Issues Found (3 Minor)
+
+| Severity | File:Line | Description | Flagged By |
+|----------|-----------|-------------|------------|
+| Minor | `components/lists/create-list-dialog.tsx` + `app/(protected)/lists/page.tsx` | Double-toast on create error — dialog's internal catch fires `toast.error` then re-throws; page-level `handleCreate` catch fires a second `toast.error`. Minor UX redundancy. | Plan Alignment |
+| Minor | `components/lists/list-detail-mobile-layout.test.tsx:27` | `Drawer.Content` mock renders children but doesn't model open/close state — `sheetOpen` toggle not covered in tests | Test Philosophy |
+| Minor | `lib/hooks/use-list-pins.test.tsx:8`, `use-list-shops.test.tsx:8` | `'test-token'` placeholder string in supabase auth mock — technically violates realistic test data rule (low risk, JWT boundary mock) | Test Philosophy |
+
+**Loop termination: No Critical or Important issues remain — early exit.**
+
+## Final State
+
+**Iterations completed:** 1
+**All Critical/Important resolved:** Yes
+**Remaining issues:**
+- [Minor] `create-list-dialog.tsx` + `lists/page.tsx` — Double-toast on create error (not blocking)
+- [Minor] `list-detail-mobile-layout.test.tsx:27` — Drawer open/close state not covered (not blocking)
+- [Minor] `use-list-pins.test.tsx:8`, `use-list-shops.test.tsx:8` — Placeholder `'test-token'` in JWT mock (not blocking)
+
+**Review log:** docs/reviews/2026-03-23-feat-favorites-ui-reconstruct.md
