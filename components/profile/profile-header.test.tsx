@@ -6,23 +6,41 @@ describe('ProfileHeader', () => {
   const defaultProps = {
     displayName: 'Mei-Ling',
     avatarUrl: null as string | null,
-    checkinCount: 8,
+    email: 'mei.ling@gmail.com' as string | null,
+    checkinCount: 23,
+    stampCount: 8,
   };
 
-  it('renders display name and check-in count', () => {
+  it('renders display name in the brown banner', () => {
     render(<ProfileHeader {...defaultProps} />);
     expect(screen.getByText('Mei-Ling')).toBeInTheDocument();
-    expect(screen.getByText('8 check-ins')).toBeInTheDocument();
   });
 
-  it('does not display stamp count', () => {
+  it('renders email when provided', () => {
     render(<ProfileHeader {...defaultProps} />);
-    expect(screen.queryByText(/stamp/i)).not.toBeInTheDocument();
+    expect(screen.getByText('mei.ling@gmail.com')).toBeInTheDocument();
+  });
+
+  it('hides email when null', () => {
+    render(<ProfileHeader {...defaultProps} email={null} />);
+    expect(screen.queryByText('mei.ling@gmail.com')).not.toBeInTheDocument();
+  });
+
+  it('shows check-in count stat', () => {
+    render(<ProfileHeader {...defaultProps} />);
+    expect(screen.getByText('23')).toBeInTheDocument();
+    expect(screen.getByText('Check-ins')).toBeInTheDocument();
+  });
+
+  it('shows memories count stat', () => {
+    render(<ProfileHeader {...defaultProps} />);
+    expect(screen.getByText('8')).toBeInTheDocument();
+    expect(screen.getByText('Memories')).toBeInTheDocument();
   });
 
   it('shows initials when no avatar URL', () => {
     render(<ProfileHeader {...defaultProps} />);
-    expect(screen.getByText('M')).toBeInTheDocument(); // First char of display name
+    expect(screen.getByText('M')).toBeInTheDocument();
   });
 
   it('shows avatar image when URL provided', () => {
@@ -38,7 +56,7 @@ describe('ProfileHeader', () => {
 
   it('falls back to "User" when no display name', () => {
     render(<ProfileHeader {...defaultProps} displayName={null} />);
-    expect(screen.getByText('U')).toBeInTheDocument(); // First char of "User"
+    expect(screen.getByText('U')).toBeInTheDocument();
   });
 
   it('renders an Edit Profile link to /settings', () => {

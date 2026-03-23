@@ -104,7 +104,7 @@ describe('ProfilePage', () => {
     await waitFor(() => {
       expect(screen.getByText('Mei-Ling')).toBeInTheDocument();
     });
-    expect(screen.getByText(/1 check-in/)).toBeInTheDocument();
+    expect(screen.getByText('Check-ins')).toBeInTheDocument();
   });
 
   it('renders the polaroid memories section', async () => {
@@ -168,12 +168,12 @@ describe('ProfilePage', () => {
     render(<ProfilePage />, { wrapper });
 
     await waitFor(() => {
-      expect(screen.getByTestId('polaroid-preview-card')).toBeInTheDocument();
+      expect(screen.getByTestId('memory-card')).toBeInTheDocument();
     });
-    await user.click(screen.getByTestId('polaroid-preview-card'));
+    await user.click(screen.getByTestId('memory-card'));
 
     await waitFor(() => {
-      expect(screen.getByText('山小孩咖啡')).toBeInTheDocument();
+      expect(screen.getAllByText('山小孩咖啡').length).toBeGreaterThan(1);
     });
   });
 });

@@ -16,13 +16,33 @@ describe('PolaroidSection', () => {
     ).toBeInTheDocument();
   });
 
-  it('renders at most 4 polaroid cards', () => {
+  it('renders at most 3 memory cards', () => {
     const stamps = Array.from({ length: 6 }, (_, i) =>
       makeStamp({ id: `stamp-${i}`, shop_name: `Shop ${i}` })
     );
     render(<PolaroidSection stamps={stamps} />);
-    const cards = screen.getAllByTestId('polaroid-preview-card');
-    expect(cards).toHaveLength(4);
+    const cards = screen.getAllByTestId('memory-card');
+    expect(cards).toHaveLength(3);
+  });
+
+  it('renders shop name on each card', () => {
+    const stamps = [makeStamp({ shop_name: 'Hinoki Coffee' })];
+    render(<PolaroidSection stamps={stamps} />);
+    expect(screen.getByText('Hinoki Coffee')).toBeInTheDocument();
+  });
+
+  it('renders diary note in italic when present', () => {
+    const stamps = [makeStamp({ diary_note: 'Perfect focus mode' })];
+    render(<PolaroidSection stamps={stamps} />);
+    expect(screen.getByText('"Perfect focus mode"')).toBeInTheDocument();
+  });
+
+  it('shows recent visits count in subtitle', () => {
+    const stamps = Array.from({ length: 3 }, (_, i) =>
+      makeStamp({ id: `stamp-${i}`, shop_name: `Shop ${i}` })
+    );
+    render(<PolaroidSection stamps={stamps} />);
+    expect(screen.getByText('3 recent visits')).toBeInTheDocument();
   });
 
   it('renders "View All" link pointing to /profile/memories', () => {
@@ -37,5 +57,12 @@ describe('PolaroidSection', () => {
     expect(
       screen.queryByRole('link', { name: /View All/i })
     ).not.toBeInTheDocument();
+  });
+
+  it('renders a horizontal scroll container', () => {
+    const stamps = [makeStamp()];
+    render(<PolaroidSection stamps={stamps} />);
+    const scrollContainer = screen.getByTestId('memory-scroll');
+    expect(scrollContainer).toBeInTheDocument();
   });
 });

@@ -1231,9 +1231,9 @@ _Designed in Pencil. Stamps, check-in history, account settings._
 
 - [x] Task 1: Backend — add `shop_photo_url` to CheckInWithShop
 - [x] Task 2: Frontend — update CheckInData type and factory
-- [ ] Task 3: Frontend — rebuild ProfileHeader
-- [ ] Task 4: Frontend — rebuild PolaroidSection
-- [ ] Task 5: Frontend — rebuild CheckinHistoryTab
+- [x] Task 3: Frontend — rebuild ProfileHeader
+- [x] Task 4: Frontend — rebuild PolaroidSection
+- [x] Task 5: Frontend — rebuild CheckinHistoryTab
 - [ ] Task 6: Frontend — update Profile page layout and wiring
 
 ### Profile Polaroid Redesign

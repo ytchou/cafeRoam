@@ -14,7 +14,7 @@ describe('CheckinHistoryTab', () => {
       shop_photo_url: 'https://example.com/shops/fika/exterior.jpg',
       photo_urls: ['https://example.com/photo1.jpg'],
       stars: 4,
-      review_text: null,
+      review_text: 'Great pour-over, stayed 3 hours working.',
       created_at: '2026-02-15T10:00:00Z',
     },
     {
@@ -37,16 +37,31 @@ describe('CheckinHistoryTab', () => {
     expect(screen.getByText('Rufous Coffee')).toBeInTheDocument();
   });
 
-  it('shows star rating when present', () => {
+  it('does not render star ratings', () => {
     render(<CheckinHistoryTab checkins={checkins} isLoading={false} />);
-    // Fika has 4 stars
-    const stars = screen.getAllByTestId('star-filled');
-    expect(stars.length).toBeGreaterThanOrEqual(4);
+    expect(screen.queryByTestId('star-filled')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('star-empty')).not.toBeInTheDocument();
   });
 
-  it('shows MRT station as neighborhood', () => {
+  it('shows review text when present', () => {
     render(<CheckinHistoryTab checkins={checkins} isLoading={false} />);
-    expect(screen.getByText('Daan')).toBeInTheDocument();
+    expect(
+      screen.getByText('Great pour-over, stayed 3 hours working.')
+    ).toBeInTheDocument();
+  });
+
+  it('renders shop photo thumbnail when shop_photo_url is present', () => {
+    render(<CheckinHistoryTab checkins={checkins} isLoading={false} />);
+    const imgs = screen.getAllByRole('img');
+    expect(imgs[0]).toHaveAttribute(
+      'src',
+      expect.stringContaining('exterior.jpg')
+    );
+  });
+
+  it('renders coffee icon fallback when no shop_photo_url', () => {
+    render(<CheckinHistoryTab checkins={checkins} isLoading={false} />);
+    expect(screen.getByTestId('coffee-icon-fallback')).toBeInTheDocument();
   });
 
   it('renders empty state when no check-ins', () => {
