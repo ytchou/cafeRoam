@@ -5,6 +5,7 @@ import { FavoritesListCard } from './favorites-list-card';
 
 vi.mock('next/image', () => ({
   default: (props: Record<string, unknown>) => (
+    // eslint-disable-next-line @next/next/no-img-element
     <img src={props.src as string} alt={props.alt as string} />
   ),
 }));

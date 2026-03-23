@@ -1203,10 +1203,10 @@ _Designed in Pencil. Current lists UI gets a visual pass._
 
 **Chunk 2 — Layout Components (Wave 2, parallel):**
 
-- [ ] FavoritesMobileLayout (header + mini-map + cards + bottom nav) with TDD
-- [ ] FavoritesDesktopLayout (420px sidebar + map) with TDD
-- [ ] ListDetailMobileLayout (map + fixed bottom sheet) with TDD
-- [ ] ListDetailDesktopLayout (collapsible panel + map) with TDD
+- [x] FavoritesMobileLayout (header + mini-map + cards + bottom nav) with TDD
+- [x] FavoritesDesktopLayout (420px sidebar + map) with TDD
+- [x] ListDetailMobileLayout (map + fixed bottom sheet) with TDD
+- [x] ListDetailDesktopLayout (collapsible panel + map) with TDD
 
 **Chunk 3 — Page Rewrites (Wave 3):**
 
