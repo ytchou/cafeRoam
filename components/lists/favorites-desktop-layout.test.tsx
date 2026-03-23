@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi, beforeAll } from 'vitest';
 import { FavoritesDesktopLayout } from './favorites-desktop-layout';
-import { makeList, makeListItem, makeShop } from '@/lib/test-utils/factories';
+import { makeList, makeListItem } from '@/lib/test-utils/factories';
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn() }),
@@ -32,42 +32,59 @@ beforeAll(() => {
 const lists = [
   makeList({ id: 'list-1', name: 'Work Spots', items: [makeListItem()] }),
 ];
-const shopsByList = {
-  'list-1': [makeShop({ id: 'shop-1', name: '晨光咖啡' })],
-};
 
 describe('FavoritesDesktopLayout', () => {
-  it('a user sees the sidebar with list title and shop rows', () => {
+  it('a user sees the sidebar with list cards', () => {
     render(
       <FavoritesDesktopLayout
         lists={lists}
-        shopsByList={shopsByList}
         pins={[]}
         selectedShopId={null}
         onShopClick={() => {}}
         onCreateList={() => {}}
         onDeleteList={() => {}}
         onRenameList={() => {}}
+        onViewList={() => {}}
       />
     );
     expect(screen.getAllByText(/Favorites/).length).toBeGreaterThan(0);
     expect(screen.getByText('Work Spots')).toBeInTheDocument();
-    expect(screen.getByText('晨光咖啡')).toBeInTheDocument();
   });
 
-  it('a user sees the New List button in the sidebar header', () => {
+  it('a user under the list cap sees the New List button in the sidebar header', () => {
     render(
       <FavoritesDesktopLayout
         lists={lists}
-        shopsByList={shopsByList}
         pins={[]}
         selectedShopId={null}
         onShopClick={() => {}}
         onCreateList={() => {}}
         onDeleteList={() => {}}
         onRenameList={() => {}}
+        onViewList={() => {}}
       />
     );
     expect(screen.getByText('New List')).toBeInTheDocument();
+  });
+
+  it('a user at the 3-list cap does not see the New List button', () => {
+    const threeLists = [
+      ...lists,
+      makeList({ id: 'list-2', name: 'Weekend' }),
+      makeList({ id: 'list-3', name: 'Date Night' }),
+    ];
+    render(
+      <FavoritesDesktopLayout
+        lists={threeLists}
+        pins={[]}
+        selectedShopId={null}
+        onShopClick={() => {}}
+        onCreateList={() => {}}
+        onDeleteList={() => {}}
+        onRenameList={() => {}}
+        onViewList={() => {}}
+      />
+    );
+    expect(screen.queryByText('New List')).not.toBeInTheDocument();
   });
 });

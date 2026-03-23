@@ -13,8 +13,8 @@ export default function ListDetailPage() {
   const { listId } = useParams<{ listId: string }>();
   const router = useRouter();
   const isDesktop = useIsDesktop();
-  const { lists, renameList } = useUserLists();
-  const { shops, isLoading } = useListShops(listId);
+  const { lists, renameList, isLoading: isListsLoading } = useUserLists();
+  const { shops, isLoading: isShopsLoading } = useListShops(listId);
   const [selectedShopId, setSelectedShopId] = useState<string | null>(null);
   const [renaming, setRenaming] = useState(false);
 
@@ -24,7 +24,7 @@ export default function ListDetailPage() {
     router.push('/lists');
   }
 
-  if (!list && !isLoading) {
+  if (!list && !isListsLoading && !isShopsLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <p className="text-[var(--text-tertiary)]">List not found</p>

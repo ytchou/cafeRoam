@@ -136,6 +136,7 @@ describe('/lists page', () => {
 
   it('user can create a new list when under the cap', async () => {
     const oneList = [THREE_LISTS[0]];
+    const NEW_LIST_ID = 'b2c3d4e5-6789-01ab-cdef-234567890abc';
     mockFetch.mockReset();
     mockFetch.mockImplementation((url: string) => {
       if (typeof url === 'string' && url.includes('/pins')) {
@@ -143,8 +144,6 @@ describe('/lists page', () => {
       }
       return Promise.resolve({ ok: true, json: async () => oneList });
     });
-
-    vi.spyOn(window, 'prompt').mockReturnValue('我的最愛');
 
     render(
       <SWRConfig value={{ provider: () => new Map() }}>
@@ -155,6 +154,14 @@ describe('/lists page', () => {
     expect(await screen.findByText('Work spots')).toBeInTheDocument();
     expect(screen.getByText('1 / 3')).toBeInTheDocument();
 
+    // Open create dialog
+    const createButton = screen.getByText('Create a new list');
+    await userEvent.click(createButton);
+
+    // Type name and confirm
+    const nameInput = screen.getByPlaceholderText('List name');
+    await userEvent.type(nameInput, '我的最愛');
+
     mockFetch.mockImplementationOnce(() =>
       Promise.resolve({ ok: true, json: async () => ({}) })
     );
@@ -164,7 +171,7 @@ describe('/lists page', () => {
         json: async () => [
           ...oneList,
           {
-            id: 'list-new',
+            id: NEW_LIST_ID,
             user_id: USER_ID,
             name: '我的最愛',
             items: [],
@@ -175,8 +182,7 @@ describe('/lists page', () => {
       })
     );
 
-    const createButton = screen.getByText('Create a new list');
-    await userEvent.click(createButton);
+    await userEvent.click(screen.getByRole('button', { name: /^create$/i }));
 
     await waitFor(() => {
       expect(screen.getByText('我的最愛')).toBeInTheDocument();
@@ -193,8 +199,6 @@ describe('/lists page', () => {
       return Promise.resolve({ ok: true, json: async () => twoLists });
     });
 
-    vi.spyOn(window, 'prompt').mockReturnValue('Fourth list');
-
     render(
       <SWRConfig value={{ provider: () => new Map() }}>
         <ListsPage />
@@ -203,6 +207,13 @@ describe('/lists page', () => {
 
     expect(await screen.findByText('Work spots')).toBeInTheDocument();
 
+    // Open create dialog and submit
+    const createButton = screen.getByText('Create a new list');
+    await userEvent.click(createButton);
+
+    const nameInput = screen.getByPlaceholderText('List name');
+    await userEvent.type(nameInput, 'Fourth list');
+
     mockFetch.mockImplementationOnce(() =>
       Promise.resolve({
         ok: false,
@@ -210,8 +221,7 @@ describe('/lists page', () => {
       })
     );
 
-    const createButton = screen.getByText('Create a new list');
-    await userEvent.click(createButton);
+    await userEvent.click(screen.getByRole('button', { name: /^create$/i }));
 
     const { toast } = await import('sonner');
     await waitFor(() => {

@@ -51,6 +51,7 @@ describe('FavoritesMobileLayout', () => {
         onCreateList={() => {}}
         onDeleteList={() => {}}
         onRenameList={() => {}}
+        onViewList={() => {}}
       />
     );
     expect(screen.getByRole('heading', { name: '收藏' })).toBeInTheDocument();
@@ -65,6 +66,7 @@ describe('FavoritesMobileLayout', () => {
         onCreateList={() => {}}
         onDeleteList={() => {}}
         onRenameList={() => {}}
+        onViewList={() => {}}
       />
     );
     expect(screen.getByText('Work Spots')).toBeInTheDocument();
@@ -79,6 +81,7 @@ describe('FavoritesMobileLayout', () => {
         onCreateList={() => {}}
         onDeleteList={() => {}}
         onRenameList={() => {}}
+        onViewList={() => {}}
       />
     );
     expect(screen.getByText('Create a new list')).toBeInTheDocument();
@@ -94,6 +97,7 @@ describe('FavoritesMobileLayout', () => {
         onCreateList={() => {}}
         onDeleteList={() => {}}
         onRenameList={() => {}}
+        onViewList={() => {}}
       />
     );
     expect(screen.queryByText('Create a new list')).not.toBeInTheDocument();

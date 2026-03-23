@@ -4,12 +4,18 @@ import { SWRConfig } from 'swr';
 import { useListPins } from './use-list-pins';
 import type { ReactNode } from 'react';
 
-vi.mock('@/lib/api/fetch', () => ({
-  fetchWithAuth: vi.fn(),
+vi.mock('@/lib/supabase/client', () => ({
+  createClient: () => ({
+    auth: {
+      getSession: vi.fn().mockResolvedValue({
+        data: { session: { access_token: 'test-token' } },
+      }),
+    },
+  }),
 }));
 
-import { fetchWithAuth } from '@/lib/api/fetch';
-const mockFetch = fetchWithAuth as ReturnType<typeof vi.fn>;
+const mockFetch = vi.fn();
+global.fetch = mockFetch;
 
 function wrapper({ children }: { children: ReactNode }) {
   return (
@@ -27,7 +33,7 @@ describe('useListPins', () => {
       { listId: 'list-1', shopId: 'shop-1', lat: 25.033, lng: 121.565 },
       { listId: 'list-2', shopId: 'shop-2', lat: 25.040, lng: 121.570 },
     ];
-    mockFetch.mockResolvedValueOnce(pins);
+    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => pins });
     const { result } = renderHook(() => useListPins(), { wrapper });
     await waitFor(() => expect(result.current.pins).toHaveLength(2));
     expect(result.current.pins[0].shopId).toBe('shop-1');

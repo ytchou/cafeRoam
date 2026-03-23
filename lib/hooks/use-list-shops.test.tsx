@@ -4,12 +4,18 @@ import { SWRConfig } from 'swr';
 import { useListShops } from './use-list-shops';
 import type { ReactNode } from 'react';
 
-vi.mock('@/lib/api/fetch', () => ({
-  fetchWithAuth: vi.fn(),
+vi.mock('@/lib/supabase/client', () => ({
+  createClient: () => ({
+    auth: {
+      getSession: vi.fn().mockResolvedValue({
+        data: { session: { access_token: 'test-token' } },
+      }),
+    },
+  }),
 }));
 
-import { fetchWithAuth } from '@/lib/api/fetch';
-const mockFetch = fetchWithAuth as ReturnType<typeof vi.fn>;
+const mockFetch = vi.fn();
+global.fetch = mockFetch;
 
 function wrapper({ children }: { children: ReactNode }) {
   return (
@@ -26,7 +32,7 @@ describe('useListShops', () => {
     const shops = [
       { id: 'shop-1', name: '山小孩咖啡', address: '台北市大安區', latitude: 25.02, longitude: 121.53, rating: 4.6, review_count: 100, photo_urls: [], taxonomy_tags: [] },
     ];
-    mockFetch.mockResolvedValueOnce(shops);
+    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => shops });
     const { result } = renderHook(() => useListShops('list-1'), { wrapper });
     await waitFor(() => expect(result.current.shops).toHaveLength(1));
     expect(result.current.shops[0].name).toBe('山小孩咖啡');

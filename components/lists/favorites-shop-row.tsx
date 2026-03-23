@@ -23,7 +23,7 @@ interface FavoritesShopRowProps {
 
 function extractDistrict(address: string): string {
   // Extract district from Taiwan address (e.g., "台北市大安區..." → "大安")
-  const match = address.match(/[^\u5e02](.{1,3})[區里鄉鎮]/);
+  const match = address.match(/([^市縣]{2,3})[區里鄉鎮]/);
   return match ? match[1] : '';
 }
 

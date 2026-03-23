@@ -4,9 +4,11 @@ import { Plus } from 'lucide-react';
 import { HeaderNav } from '@/components/navigation/header-nav';
 import { CollapseToggle } from '@/components/map/collapse-toggle';
 import { MapViewDynamic as MapView } from '@/components/map/map-view-dynamic';
-import { FavoritesShopRow } from './favorites-shop-row';
-import type { FavoritesShop } from './favorites-shop-row';
+import { FavoritesListCard } from './favorites-list-card';
+import { EmptySlotCard } from './empty-slot-card';
 import type { ListPin } from '@/lib/hooks/use-list-pins';
+
+const MAX_LISTS = 3;
 
 interface FavoritesList {
   id: string;
@@ -19,24 +21,27 @@ interface FavoritesList {
 
 interface FavoritesDesktopLayoutProps {
   lists: FavoritesList[];
-  shopsByList: Record<string, FavoritesShop[]>;
   pins: ListPin[];
   selectedShopId: string | null;
   onShopClick: (id: string) => void;
-  onCreateList: (name: string) => void;
+  onCreateList: () => void;
   onDeleteList: (listId: string, listName: string) => void;
   onRenameList: (listId: string) => void;
+  onViewList: (listId: string) => void;
 }
 
 export function FavoritesDesktopLayout({
   lists,
-  shopsByList,
   pins,
   selectedShopId,
   onShopClick,
   onCreateList,
+  onDeleteList,
+  onRenameList,
+  onViewList,
 }: FavoritesDesktopLayoutProps) {
   const [panelCollapsed, setPanelCollapsed] = useState(false);
+  const remainingSlots = MAX_LISTS - lists.length;
 
   const mapShops = useMemo(
     () =>
@@ -60,45 +65,37 @@ export function FavoritesDesktopLayout({
               <h1 className="font-[family-name:var(--font-heading)] text-lg font-bold text-[var(--foreground)]">
                 收藏 Favorites
               </h1>
-              <button
-                type="button"
-                onClick={() => {
-                  const name = prompt('List name:');
-                  if (name?.trim()) onCreateList(name.trim());
-                }}
-                className="flex items-center gap-1.5 rounded-lg bg-[var(--map-pin)] px-3 py-1.5 font-[family-name:var(--font-body)] text-sm font-semibold text-white transition-colors hover:opacity-90"
-              >
-                <Plus className="h-3.5 w-3.5" />
-                New List
-              </button>
+              {remainingSlots > 0 && (
+                <button
+                  type="button"
+                  onClick={onCreateList}
+                  className="flex items-center gap-1.5 rounded-full bg-[#C8F0D8] px-3 py-1.5 font-[family-name:var(--font-body)] text-sm font-semibold text-[#3D8A5A] transition-colors hover:opacity-90"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  New List
+                </button>
+              )}
             </div>
 
-            <div className="flex-1 overflow-y-auto">
-              {lists.map((list) => {
-                const shops = shopsByList[list.id] ?? [];
-                return (
-                  <section key={list.id}>
-                    <div className="flex items-center gap-2 border-t border-[var(--border)] bg-[var(--muted)] px-5 py-2">
-                      <span className="font-[family-name:var(--font-body)] text-sm font-semibold text-[var(--foreground)]">
-                        {list.name}
-                      </span>
-                      <span className="font-[family-name:var(--font-body)] text-xs text-[var(--text-tertiary)]">
-                        {shops.length}
-                      </span>
-                    </div>
-                    <div className="divide-y divide-[var(--border)]">
-                      {shops.map((shop) => (
-                        <FavoritesShopRow
-                          key={shop.id}
-                          shop={shop}
-                          onClick={() => onShopClick(shop.id)}
-                          selected={shop.id === selectedShopId}
-                        />
-                      ))}
-                    </div>
-                  </section>
-                );
-              })}
+            <div className="flex-1 overflow-y-auto px-4 pb-4 pt-2">
+              <div className="flex flex-col gap-3">
+                {lists.map((list) => (
+                  <FavoritesListCard
+                    key={list.id}
+                    id={list.id}
+                    name={list.name}
+                    itemCount={list.items.length}
+                    photoUrls={[]}
+                    onRename={() => onRenameList(list.id)}
+                    onDelete={() => onDeleteList(list.id, list.name)}
+                    onViewOnMap={() => onViewList(list.id)}
+                  />
+                ))}
+
+                {remainingSlots > 0 && (
+                  <EmptySlotCard remainingSlots={remainingSlots} onClick={onCreateList} />
+                )}
+              </div>
             </div>
           </div>
         )}

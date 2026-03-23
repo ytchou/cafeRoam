@@ -1,18 +1,22 @@
 'use client';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { useUserLists } from '@/lib/hooks/use-user-lists';
 import { useListPins } from '@/lib/hooks/use-list-pins';
 import { useIsDesktop } from '@/lib/hooks/use-media-query';
 import { RenameListDialog } from '@/components/lists/rename-list-dialog';
+import { CreateListDialog } from '@/components/lists/create-list-dialog';
 import { FavoritesMobileLayout } from '@/components/lists/favorites-mobile-layout';
 import { FavoritesDesktopLayout } from '@/components/lists/favorites-desktop-layout';
 
 export default function ListsPage() {
+  const router = useRouter();
   const isDesktop = useIsDesktop();
   const { lists, isLoading, createList, deleteList, renameList } = useUserLists();
   const { pins } = useListPins();
   const [renaming, setRenaming] = useState<{ id: string; name: string } | null>(null);
+  const [creating, setCreating] = useState(false);
   const [selectedShopId, setSelectedShopId] = useState<string | null>(null);
 
   async function handleCreate(name: string) {
@@ -36,8 +40,16 @@ export default function ListsPage() {
   }
 
   async function handleRename(listId: string, name: string) {
-    await renameList(listId, name);
-    setRenaming(null);
+    try {
+      await renameList(listId, name);
+      setRenaming(null);
+    } catch {
+      toast.error('Failed to rename list');
+    }
+  }
+
+  function handleViewList(listId: string) {
+    router.push(`/lists/${listId}`);
   }
 
   if (isLoading) {
@@ -53,29 +65,36 @@ export default function ListsPage() {
       {isDesktop ? (
         <FavoritesDesktopLayout
           lists={lists}
-          shopsByList={{}}
           pins={pins}
           selectedShopId={selectedShopId}
           onShopClick={setSelectedShopId}
-          onCreateList={handleCreate}
+          onCreateList={() => setCreating(true)}
           onDeleteList={handleDelete}
           onRenameList={(id) => {
             const list = lists.find((l) => l.id === id);
             if (list) setRenaming({ id, name: list.name });
           }}
+          onViewList={handleViewList}
         />
       ) : (
         <FavoritesMobileLayout
           lists={lists}
           pins={pins}
-          onCreateList={handleCreate}
+          onCreateList={() => setCreating(true)}
           onDeleteList={handleDelete}
           onRenameList={(id) => {
             const list = lists.find((l) => l.id === id);
             if (list) setRenaming({ id, name: list.name });
           }}
+          onViewList={handleViewList}
         />
       )}
+
+      <CreateListDialog
+        open={creating}
+        onOpenChange={setCreating}
+        onCreate={handleCreate}
+      />
 
       {renaming && (
         <RenameListDialog

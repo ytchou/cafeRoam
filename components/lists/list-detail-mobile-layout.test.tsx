@@ -12,15 +12,27 @@ vi.mock('next/link', () => ({
     <a {...props}>{children as React.ReactNode}</a>
   ),
 }));
-vi.mock('react-map-gl/mapbox', () => {
-  const MockMap = ({ children }: { children?: React.ReactNode }) => (
-    <div data-testid="map">{children}</div>
-  );
-  const MockMarker = ({ children }: { children?: React.ReactNode }) => (
-    <div data-testid="pin">{children}</div>
-  );
-  return { default: MockMap, Marker: MockMarker };
-});
+vi.mock('next/dynamic', () => ({
+  default: () => {
+    const MockMapView = ({ shops }: { shops: { id: string }[] }) => (
+      <div data-testid="map">{shops.map((s) => <div key={s.id} data-testid="pin" />)}</div>
+    );
+    return MockMapView;
+  },
+}));
+vi.mock('vaul', () => ({
+  Drawer: {
+    Root: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+    Portal: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+    Content: ({ children, className }: { children: React.ReactNode; className?: string }) => (
+      <div className={className}>{children}</div>
+    ),
+    Handle: () => <div data-testid="drawer-handle" />,
+    Title: ({ children, className }: { children: React.ReactNode; className?: string }) => (
+      <h2 className={className}>{children}</h2>
+    ),
+  },
+}));
 
 const shops = [
   { ...makeShop({ id: 'shop-1', name: '湛盧咖啡', address: '台北市信義區' }), is_open: true, taxonomy_tags: [] },

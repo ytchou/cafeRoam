@@ -1,28 +1,16 @@
 'use client';
-import { useState, Suspense } from 'react';
+import { useState, useMemo, Suspense } from 'react';
 import { ChevronLeft } from 'lucide-react';
 import { HeaderNav } from '@/components/navigation/header-nav';
 import { CollapseToggle } from '@/components/map/collapse-toggle';
 import { MapViewDynamic as MapView } from '@/components/map/map-view-dynamic';
 import { FavoritesShopRow } from './favorites-shop-row';
 import type { MappableLayoutShop } from '@/lib/types';
-
-interface ListDetailShop {
-  id: string;
-  name: string;
-  address: string;
-  latitude: number;
-  longitude: number;
-  rating: number | null;
-  review_count: number;
-  photo_urls: string[];
-  taxonomy_tags: { label_zh?: string; labelZh?: string }[];
-  is_open?: boolean | null;
-}
+import type { ListShop } from '@/lib/hooks/use-list-shops';
 
 interface ListDetailDesktopLayoutProps {
   listName: string;
-  shops: ListDetailShop[];
+  shops: ListShop[];
   selectedShopId: string | null;
   onShopClick: (id: string) => void;
   onBack: () => void;
@@ -40,12 +28,16 @@ export function ListDetailDesktopLayout({
   const shopCount = shops.length;
   const countLabel = shopCount === 1 ? '1 shop' : `${shopCount} shops`;
 
-  const mapPins = shops.map((shop) => ({
-    id: shop.id,
-    name: shop.name,
-    latitude: shop.latitude,
-    longitude: shop.longitude,
-  }));
+  const mapPins = useMemo(
+    () =>
+      shops.map((shop) => ({
+        id: shop.id,
+        name: shop.name,
+        latitude: shop.latitude,
+        longitude: shop.longitude,
+      })),
+    [shops]
+  );
 
   return (
     <div className="flex h-screen w-full flex-col">
