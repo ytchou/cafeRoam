@@ -9,7 +9,7 @@
     "start": "next start",
     "lint": "eslint .",
     "format:check": "prettier --check .",
-    "type-check": "tsc --noEmit",
+    "type-check": "tsc --noEmit && tsc -p tsconfig.test.json --noEmit",
     "test": "vitest run",
     "posttest": "pgrep -f 'vitest' | while read pid; do ppid=$(ps -o ppid= -p \"$pid\" 2>/dev/null | tr -d ' '); [ \"$ppid\" = \"1\" ] && kill \"$pid\" 2>/dev/null || true; done",
     "test:watch": "vitest",
