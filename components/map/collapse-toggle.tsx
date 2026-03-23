@@ -12,7 +12,7 @@ export function CollapseToggle({ collapsed, onClick }: CollapseToggleProps) {
       type="button"
       aria-label={collapsed ? 'Expand panel' : 'Collapse panel'}
       onClick={onClick}
-      className="flex h-12 w-5 items-center justify-center rounded-r-lg border border-[var(--border)] bg-surface-card text-[var(--muted-foreground)] transition-colors hover:bg-[var(--muted)]"
+      className="flex h-12 w-5 items-center justify-center rounded-r-lg border border-border bg-surface-card text-muted-foreground transition-colors hover:bg-muted"
     >
       {collapsed ? (
         <ChevronRight className="h-3 w-3" />
