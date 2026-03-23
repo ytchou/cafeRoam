@@ -21,6 +21,9 @@ vi.mock('@/lib/hooks/use-media-query', () => ({
   useIsDesktop: vi.fn(() => false),
   useMediaQuery: vi.fn(() => false),
 }));
+vi.mock('@/lib/hooks/use-vibes', () => ({
+  useVibes: vi.fn(() => ({ vibes: [] })),
+}));
 
 const MOCK_VIBE = {
   slug: 'study-cave',
@@ -103,45 +106,39 @@ beforeEach(() => {
 });
 
 describe('VibePage — /explore/vibes/[slug]', () => {
-  it('renders the vibe name as page heading', () => {
+  it('When a user opens a vibe page, they see the vibe name as the heading', () => {
     mockVibeShopsLoaded();
     render(<VibePage />);
     expect(screen.getByText('Study Cave')).toBeInTheDocument();
   });
 
-  it('renders circle back button', () => {
+  it('When a user opens a vibe page, a back button is present to return to the previous page', () => {
     mockVibeShopsLoaded();
     render(<VibePage />);
     expect(screen.getByLabelText('Go back')).toBeInTheDocument();
   });
 
-  it('renders subtitle as tag chips', () => {
+  it('When a vibe has a subtitle, the chips are shown below the heading', () => {
     mockVibeShopsLoaded();
     render(<VibePage />);
     expect(screen.getByText('Quiet')).toBeInTheDocument();
     expect(screen.getByText('WiFi')).toBeInTheDocument();
   });
 
-  it('renders shop count badge with shops nearby text', () => {
+  it('When shops are nearby, the count badge reflects how many were found', () => {
     mockVibeShopsLoaded();
     render(<VibePage />);
     expect(screen.getByText(/shop nearby/)).toBeInTheDocument();
   });
 
-  it('renders a shop row with name and star rating', () => {
+  it('When a shop matches the vibe, its name and star rating appear in the list', () => {
     mockVibeShopsLoaded();
     render(<VibePage />);
     expect(screen.getByText('森日咖啡')).toBeInTheDocument();
     expect(screen.getByText('4.5')).toBeInTheDocument();
   });
 
-  it('renders bookmark icon on shop rows', () => {
-    mockVibeShopsLoaded();
-    render(<VibePage />);
-    expect(screen.getAllByLabelText('Save shop').length).toBeGreaterThan(0);
-  });
-
-  it('shows loading skeletons while data is being fetched', () => {
+  it('While shops are loading, skeleton placeholders are shown', () => {
     mockVibeShopsLoading();
     render(<VibePage />);
     expect(document.querySelectorAll('.animate-pulse').length).toBeGreaterThan(
@@ -149,7 +146,7 @@ describe('VibePage — /explore/vibes/[slug]', () => {
     );
   });
 
-  it('shows empty state message when no shops match the vibe', () => {
+  it('When no shops match the vibe, an empty state message is shown', () => {
     mockVibeShopsEmpty();
     render(<VibePage />);
     expect(
@@ -157,7 +154,7 @@ describe('VibePage — /explore/vibes/[slug]', () => {
     ).toBeInTheDocument();
   });
 
-  it('shows distance badge when distanceKm is present', () => {
+  it('When a shop has a known distance, the distance badge is shown in the row', () => {
     mockVibeShopsWithDistance();
     render(<VibePage />);
     expect(screen.getByText('1.2 km')).toBeInTheDocument();

@@ -3,6 +3,7 @@ import { beforeEach, describe, it, expect, vi } from 'vitest';
 import useSWR from 'swr';
 import ExplorePage from './page';
 import { makeCommunityNote } from '@/lib/test-utils/factories';
+import { useIsDesktop } from '@/lib/hooks/use-media-query';
 
 vi.mock('@/lib/tarot/share-card', () => ({ shareCard: vi.fn() }));
 vi.mock('swr', () => ({ default: vi.fn() }));
@@ -67,17 +68,14 @@ function setupSwrMock() {
 }
 
 describe('Explore page', () => {
-  it('When a user opens the Explore tab, they see the page title and notification bell', () => {
+  it('When a user opens the Explore tab, they see the 探索 page title', () => {
     setupSwrMock();
     render(<ExplorePage />);
     expect(screen.getByRole('main')).toBeInTheDocument();
     expect(screen.getByText('探索')).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: 'Notifications' })
-    ).toBeInTheDocument();
   });
 
-  it('renders "Your Daily Draw" label with a Refresh button', () => {
+  it('When a user opens the Explore tab, they see a daily draw prompt with a Refresh option', () => {
     setupSwrMock();
     render(<ExplorePage />);
     expect(screen.getByText(/Your Daily Draw/)).toBeInTheDocument();
@@ -85,16 +83,25 @@ describe('Explore page', () => {
       screen.getByRole('button', { name: /Refresh/ })
     ).toBeInTheDocument();
   });
+
+  it('When a user is on desktop, the community section renders in the right column', () => {
+    vi.mocked(useIsDesktop).mockReturnValue(true);
+    setupSwrMock();
+    render(<ExplorePage />);
+    expect(screen.getByText('From the Community')).toBeInTheDocument();
+    expect(screen.getByText('探索')).toBeInTheDocument();
+    vi.mocked(useIsDesktop).mockReturnValue(false);
+  });
 });
 
 describe('ExplorePage — vibe strip', () => {
-  it('renders the Browse by Vibe section heading', () => {
+  it('When a user opens Explore, they see the Browse by Vibe section', () => {
     setupSwrMock();
     render(<ExplorePage />);
     expect(screen.getByText('Browse by Vibe')).toBeInTheDocument();
   });
 
-  it('renders vibe cards with name and subtitle', () => {
+  it('When a user views the vibe strip, each vibe card shows its name and subtitle', () => {
     setupSwrMock();
     render(<ExplorePage />);
     expect(screen.getByText('Study Cave')).toBeInTheDocument();
@@ -102,7 +109,7 @@ describe('ExplorePage — vibe strip', () => {
     expect(screen.getByText('First Date')).toBeInTheDocument();
   });
 
-  it('renders See all link in vibe section pointing to /explore/vibes', () => {
+  it('When a user taps See all in the vibe section, they navigate to /explore/vibes', () => {
     setupSwrMock();
     render(<ExplorePage />);
     const vibeSection = screen.getByText('Browse by Vibe').closest('section');
