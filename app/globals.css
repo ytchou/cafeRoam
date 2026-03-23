@@ -54,9 +54,10 @@
   --color-brand: var(--brand);
   --color-espresso: var(--espresso);
   --color-map-pin: var(--map-pin);
+  --color-pin-selected: var(--pin-selected);
   --color-rating-star: var(--rating-star);
   --color-card-selected: var(--card-selected-bg);
-  --color-toggle: var(--toggle-bg);
+  --color-tag-active-bg: var(--tag-active-bg);
 
   /* Text hierarchy */
   --color-text-primary: var(--text-primary);
@@ -104,7 +105,7 @@
   --active-dark: #2c1810;
   --tag-inactive-bg: #ffffff;
   --tag-inactive-border: #e5e7eb;
-  --tag-inactive-text: #6b7280;
+  --tag-inactive-text: var(--text-secondary);
   --tag-active-bg: #2c1810;
   --tag-active-text: #ffffff;
   --card-selected-bg: #fdf8f5;
@@ -116,6 +117,7 @@
 
   /* Extended CafeRoam design tokens */
   --brand: #e06b3f;
+  --pin-selected: #ff6b6b;
   --espresso: var(--active-dark);
 
   /* Text hierarchy */
