@@ -1185,11 +1185,38 @@ _Pencil designs approved: 5 mobile + 4 desktop frames._
 
 ### UI Reconstruct — Favorites
 
+> **Design Doc:** [docs/designs/2026-03-23-favorites-ui-reconstruct-design.md](docs/designs/2026-03-23-favorites-ui-reconstruct-design.md)
+> **Plan:** [docs/plans/2026-03-23-favorites-ui-reconstruct-plan.md](docs/plans/2026-03-23-favorites-ui-reconstruct-plan.md)
+
 _Designed in Pencil. Current lists UI gets a visual pass._
 
 - [x] Pencil: Design Favorites page (list cards, mini map, 2/3 cap indicator, empty slot) — frame P7hXw
-- [ ] Pencil: Design list detail page (shop items within a list)
-- [ ] Frontend: Implement Favorites UI from Pencil designs
+- [x] Pencil: Design list detail page — "Favorites / List on Map" frames `zG9ZS` (mobile) + `Ik2pj` (desktop)
+
+**Chunk 1 — Leaf Components (Wave 1, parallel):**
+
+- [x] FavoritesShopRow component (thumbnail + info + distance) with TDD
+- [x] FavoritesListCard component (photos, options menu, "View on map") with TDD
+- [x] EmptySlotCard component (dashed placeholder) with TDD
+- [x] useListPins + useListShops SWR hooks with TDD
+- [x] FavoritesMiniMap component (interactive Mapbox, 160px) with TDD
+
+**Chunk 2 — Layout Components (Wave 2, parallel):**
+
+- [ ] FavoritesMobileLayout (header + mini-map + cards + bottom nav) with TDD
+- [ ] FavoritesDesktopLayout (420px sidebar + map) with TDD
+- [ ] ListDetailMobileLayout (map + fixed bottom sheet) with TDD
+- [ ] ListDetailDesktopLayout (collapsible panel + map) with TDD
+
+**Chunk 3 — Page Rewrites (Wave 3):**
+
+- [ ] Rewrite `/lists` overview page with new layouts
+- [ ] Rewrite `/lists/[listId]` detail page with map + layouts
+
+**Chunk 4 — Cleanup + Verification (Wave 4):**
+
+- [ ] Delete old ListCard component + cleanup dead imports
+- [ ] Full verification (vitest, type-check, lint, build)
 
 ### UI Reconstruct — Profile
 
