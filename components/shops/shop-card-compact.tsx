@@ -49,7 +49,7 @@ export function ShopCardCompact({
       className={`flex h-20 cursor-pointer items-center gap-3 px-5 py-0 transition-colors ${
         selected
           ? 'border-l-[3px] border-l-map-pin bg-card-selected'
-          : 'bg-[var(--background)]'
+          : 'bg-background'
       }`}
     >
       {photoUrl ? (
@@ -63,12 +63,12 @@ export function ShopCardCompact({
           />
         </div>
       ) : (
-        <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[10px] bg-[var(--muted)] text-xs text-[var(--text-tertiary)]">
+        <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[10px] bg-muted text-xs text-text-tertiary">
           No photo
         </div>
       )}
       <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <span className="truncate font-[family-name:var(--font-body)] text-[15px] font-semibold text-[var(--foreground)]">
+        <span className="truncate font-[family-name:var(--font-body)] text-[15px] font-semibold text-foreground">
           {shop.name}
         </span>
         <span className="font-[family-name:var(--font-body)] text-[13px] text-text-secondary">
