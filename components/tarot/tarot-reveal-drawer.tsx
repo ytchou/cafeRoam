@@ -86,7 +86,7 @@ function TarotRevealContent({
       </p>
 
       {/* Flavor text */}
-      <p className="mt-3 text-center text-sm italic text-[#D4B896]">
+      <p className="mt-3 text-center text-sm text-[#D4B896] italic">
         &ldquo;{card.flavorText}&rdquo;
       </p>
 

@@ -39,13 +39,8 @@ vi.mock('@/components/ui/drawer', () => ({
 }));
 
 vi.mock('@/components/ui/dialog', () => ({
-  Dialog: ({
-    children,
-    open,
-  }: {
-    children: React.ReactNode;
-    open: boolean;
-  }) => (open ? <div data-testid="dialog">{children}</div> : null),
+  Dialog: ({ children, open }: { children: React.ReactNode; open: boolean }) =>
+    open ? <div data-testid="dialog">{children}</div> : null,
   DialogContent: ({
     children,
     ...props

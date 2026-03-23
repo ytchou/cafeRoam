@@ -79,9 +79,7 @@ describe('Explore page', () => {
     setupSwrMock();
     render(<ExplorePage />);
     expect(screen.getByText(/Your Daily Draw/)).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: /Refresh/ })
-    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Refresh/ })).toBeInTheDocument();
   });
 
   it('When a user is on desktop, the community section renders in the right column', () => {

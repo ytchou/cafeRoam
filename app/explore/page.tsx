@@ -132,9 +132,7 @@ export default function ExplorePage() {
 
       {cards.length > 0 && (
         <div
-          className={
-            isDesktop ? 'lg:[&>div]:flex-row lg:[&>div]:gap-4' : ''
-          }
+          className={isDesktop ? 'lg:[&>div]:flex-row lg:[&>div]:gap-4' : ''}
         >
           <TarotSpread cards={cards} onDrawAgain={redraw} />
         </div>
@@ -200,7 +198,11 @@ export default function ExplorePage() {
           See all →
         </Link>
       </div>
-      <div className={isDesktop ? 'mt-4 flex flex-col gap-3' : 'flex flex-col gap-3'}>
+      <div
+        className={
+          isDesktop ? 'mt-4 flex flex-col gap-3' : 'flex flex-col gap-3'
+        }
+      >
         {communityNotes.map((note) => (
           <CommunityCard key={note.checkinId} note={note} />
         ))}

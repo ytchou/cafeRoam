@@ -131,9 +131,7 @@ export default function VibePage() {
       ) : (
         <ul
           className={
-            isDesktop
-              ? 'grid grid-cols-3 gap-3'
-              : 'flex flex-col gap-3'
+            isDesktop ? 'grid grid-cols-3 gap-3' : 'flex flex-col gap-3'
           }
         >
           {shops.map((shop) => (
@@ -172,21 +170,25 @@ export default function VibePage() {
                         </span>
                       )}
                     </div>
-                    {shop.matchedTagLabels && shop.matchedTagLabels.length > 0 && (
-                      <div className="mt-1 flex flex-wrap gap-1">
-                        {shop.matchedTagLabels.map((label: string) => (
-                          <span
-                            key={label}
-                            className="rounded-full bg-gray-50 px-2 py-0.5 text-[10px] text-gray-400"
-                          >
-                            {label}
-                          </span>
-                        ))}
-                      </div>
-                    )}
+                    {shop.matchedTagLabels &&
+                      shop.matchedTagLabels.length > 0 && (
+                        <div className="mt-1 flex flex-wrap gap-1">
+                          {shop.matchedTagLabels.map((label: string) => (
+                            <span
+                              key={label}
+                              className="rounded-full bg-gray-50 px-2 py-0.5 text-[10px] text-gray-400"
+                            >
+                              {label}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                   </div>
                 </Link>
-                <span aria-hidden="true" className="shrink-0 p-1 text-[#6B7280]">
+                <span
+                  aria-hidden="true"
+                  className="shrink-0 p-1 text-[#6B7280]"
+                >
                   <Bookmark className="h-5 w-5" />
                 </span>
               </div>

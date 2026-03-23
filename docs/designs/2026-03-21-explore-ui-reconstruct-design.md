@@ -8,17 +8,17 @@ Restyle the three Explore-section pages and the TarotRevealDrawer component to m
 
 **Pencil frames (approved):**
 
-| Frame ID | Name | Platform |
-|----------|------|----------|
-| `UOZmR` | Explore View | Mobile |
-| `RaBMi` | Explore View / Tarot Revealed | Mobile |
-| `eEd4y` | Explore View / Cards Returned | Mobile |
-| `IbXPH` | Explore / Vibe Results | Mobile |
-| `G7Qb0` | Explore / Community | Mobile |
-| `MedPD` | Explore View Desktop | Desktop |
-| `E4DGS` | Explore / Tarot Revealed Desktop | Desktop |
-| `NMuwP` | Explore / Vibe Results Desktop | Desktop |
-| `YgUn0` | Explore / Community Desktop | Desktop |
+| Frame ID | Name                             | Platform |
+| -------- | -------------------------------- | -------- |
+| `UOZmR`  | Explore View                     | Mobile   |
+| `RaBMi`  | Explore View / Tarot Revealed    | Mobile   |
+| `eEd4y`  | Explore View / Cards Returned    | Mobile   |
+| `IbXPH`  | Explore / Vibe Results           | Mobile   |
+| `G7Qb0`  | Explore / Community              | Mobile   |
+| `MedPD`  | Explore View Desktop             | Desktop  |
+| `E4DGS`  | Explore / Tarot Revealed Desktop | Desktop  |
+| `NMuwP`  | Explore / Vibe Results Desktop   | Desktop  |
+| `YgUn0`  | Explore / Community Desktop      | Desktop  |
 
 ---
 
@@ -27,12 +27,14 @@ Restyle the three Explore-section pages and the TarotRevealDrawer component to m
 ### 1. `app/explore/page.tsx`
 
 **Mobile:**
+
 - Page header: "探索" (Bricolage Grotesque, 28px, bold, `#1A1918`) + `bell` Lucide icon (22×22, `#6B7280`) — replaces current "Your Tarot Draw" section title
 - Tarot section label row: "✦ Your Daily Draw" (DM Sans, 11px, 600, `#C4922A`, 1px letter-spacing) left + "Refresh ↺" (DM Sans, 11px, gray) right — separate from page header
 - Vibe section: add "See all →" (`#3D8A5A`) link to `/explore/vibes`
 - Cards: height 130px, dark bg `#1C0F08`, gold border `#C4922A` 1.5px, inner border rect, `cornerRadius` 14
 
 **Desktop (`lg:`):**
+
 - Two-column layout: left col (tarot draw section + vibe grid) + right col (community preview)
 - Tarot cards: 3-up horizontal row instead of stacked vertical
 - Vibe grid: 3 columns per row (same as mobile grid width but more horizontal space)
@@ -41,6 +43,7 @@ Restyle the three Explore-section pages and the TarotRevealDrawer component to m
 ### 2. `components/tarot/tarot-reveal-drawer.tsx`
 
 **Mobile restyling:**
+
 - Background: `#1A1210` (dark espresso) — was `#FAF7F4`
 - All body text: white or cream
 - Header: "✦ Tarot Card" label in `#C4922A` (gold) + close `X` button top-right — replaces date string
@@ -53,6 +56,7 @@ Restyle the three Explore-section pages and the TarotRevealDrawer component to m
 - Footer: "← Back to cards" + "Draw Again ↺" in `#9A7B5A`
 
 **Desktop split:**
+
 - Use `useIsDesktop()` to conditionally render shadcn `Dialog` instead of Vaul `Drawer`
 - Dialog: dark scrim overlay, centered card 480px wide, `#2C1E16` bg, `#5C3D2B` border, `cornerRadius` 24
 - Same content structure as mobile card
@@ -61,6 +65,7 @@ Restyle the three Explore-section pages and the TarotRevealDrawer component to m
 ### 3. `app/explore/vibes/[slug]/page.tsx`
 
 **Mobile:**
+
 - Back button: circle bg (`bg-gray-100`), `ArrowLeft` 18×18 — was bare text "← Back"
 - Header block:
   - Emoji + vibe name (Bricolage, 22px bold, `#1A1918`)
@@ -75,6 +80,7 @@ Restyle the three Explore-section pages and the TarotRevealDrawer component to m
   - Bookmark icon: right-aligned, `#6B7280`
 
 **Desktop (`lg:`):**
+
 - 3-column grid using `ShopCardGrid` component
 - "Want to explore other vibes?" cross-sell section at bottom: subtitle + horizontal chip row of other vibe names
 
@@ -83,6 +89,7 @@ Restyle the three Explore-section pages and the TarotRevealDrawer component to m
 **Mobile:** minor polish only — sticky header styling matches design (currently close)
 
 **Desktop (`lg:`):**
+
 - Title: "啡遊筆記" (Bricolage, large, `#1A1918`) + subtitle "Partner reviews from our café explorers"
 - 2-column grid layout for `CommunityCardFull` cards
 - Remove sticky header on desktop, use `HeaderNav` (already provided by app shell)
@@ -91,14 +98,14 @@ Restyle the three Explore-section pages and the TarotRevealDrawer component to m
 
 ## Components Reused (unchanged)
 
-| Component | Used where |
-|-----------|-----------|
-| `useIsDesktop()` | TarotRevealDrawer, all pages |
-| `ShopCardGrid` | Vibe Results desktop 3-col |
-| `CommunityCardFull` | Community feed (no changes) |
-| `CommunityCard` | Explore main community preview |
-| `TarotCard`, `TarotSpread` | Explore main (no changes) |
-| `useIsDesktop` | All pages for responsive split |
+| Component                  | Used where                     |
+| -------------------------- | ------------------------------ |
+| `useIsDesktop()`           | TarotRevealDrawer, all pages   |
+| `ShopCardGrid`             | Vibe Results desktop 3-col     |
+| `CommunityCardFull`        | Community feed (no changes)    |
+| `CommunityCard`            | Explore main community preview |
+| `TarotCard`, `TarotSpread` | Explore main (no changes)      |
+| `useIsDesktop`             | All pages for responsive split |
 
 ---
 
@@ -115,13 +122,13 @@ No new hooks, no new API routes, no backend changes required.
 
 ## Design Tokens Used
 
-| Token | Value | Usage |
-|-------|-------|-------|
-| `#1A1210` | Dark espresso | Tarot reveal background |
-| `#2C1E16` | Dark brown | Desktop modal card bg |
-| `#C4922A` | Gold | Tarot accents, CTAs |
-| `#1C0F08` | Near-black | Tarot card face bg |
-| `#3D8A5A` | Forest green | "See all", shop count badge |
-| `#F5F4F1` | Off-white | Community right col bg |
+| Token               | Value                   | Usage                        |
+| ------------------- | ----------------------- | ---------------------------- |
+| `#1A1210`           | Dark espresso           | Tarot reveal background      |
+| `#2C1E16`           | Dark brown              | Desktop modal card bg        |
+| `#C4922A`           | Gold                    | Tarot accents, CTAs          |
+| `#1C0F08`           | Near-black              | Tarot card face bg           |
+| `#3D8A5A`           | Forest green            | "See all", shop count badge  |
+| `#F5F4F1`           | Off-white               | Community right col bg       |
 | Bricolage Grotesque | `var(--font-bricolage)` | Page titles, section headers |
-| DM Sans | `var(--font-dm-sans)` | Body, labels |
+| DM Sans             | `var(--font-dm-sans)`   | Body, labels                 |
