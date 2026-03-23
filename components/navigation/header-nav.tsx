@@ -34,7 +34,7 @@ export function HeaderNav({ activeTab }: HeaderNavProps) {
             啡
           </span>
         </div>
-        <span className="font-[family-name:var(--font-heading)] text-base font-bold text-[var(--foreground)]">
+        <span className="font-[family-name:var(--font-heading)] text-base font-bold text-foreground">
           啡遊 CafeRoam
         </span>
       </Link>
@@ -50,7 +50,7 @@ export function HeaderNav({ activeTab }: HeaderNavProps) {
               className={`flex h-9 items-center gap-[5px] rounded-[20px] px-4 font-[family-name:var(--font-body)] text-sm transition-colors ${
                 isActive
                   ? 'bg-espresso font-semibold text-white'
-                  : 'font-medium text-[var(--muted-foreground)]'
+                  : 'font-medium text-muted-foreground'
               }`}
             >
               <Icon className="h-3.5 w-3.5" />
@@ -64,7 +64,7 @@ export function HeaderNav({ activeTab }: HeaderNavProps) {
         <button
           type="button"
           aria-label="Search"
-          className="flex h-9 w-9 items-center justify-center rounded-[18px] bg-[var(--background)] text-[var(--muted-foreground)]"
+          className="flex h-9 w-9 items-center justify-center rounded-[18px] bg-background text-muted-foreground"
         >
           <Search className="h-[18px] w-[18px]" />
         </button>
