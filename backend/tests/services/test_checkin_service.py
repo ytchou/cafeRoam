@@ -147,7 +147,7 @@ class TestCheckInService:
                     "confirmed_tags": [],
                     "reviewed_at": None,
                     "created_at": "2026-03-01T10:00:00+00:00",
-                    "shops": {"name": "Fuji Coffee", "mrt": "Zhongshan", "photo_urls": []},
+                    "shops": {"name": "Fuji Coffee", "mrt": "Zhongshan", "shop_photos": []},
                 }
             ]
         )
@@ -178,9 +178,9 @@ class TestCheckInService:
                     "shops": {
                         "name": "Hinoki Coffee",
                         "mrt": "Daan",
-                        "photo_urls": [
-                            "https://cdn.caferoam.tw/shops/hinoki/exterior.jpg",
-                            "https://cdn.caferoam.tw/shops/hinoki/interior.jpg",
+                        "shop_photos": [
+                            {"url": "https://cdn.caferoam.tw/shops/hinoki/exterior.jpg"},
+                            {"url": "https://cdn.caferoam.tw/shops/hinoki/interior.jpg"},
                         ],
                     },
                 }
@@ -211,7 +211,7 @@ class TestCheckInService:
                     "shops": {
                         "name": "Mystery Cafe",
                         "mrt": "Xinyi",
-                        "photo_urls": [],
+                        "shop_photos": [],
                     },
                 }
             ]

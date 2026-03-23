@@ -126,7 +126,7 @@ class CheckInService:
         response = await asyncio.to_thread(
             lambda: (
                 self._db.table("check_ins")
-                .select("*, shops(name, mrt, photo_urls)")
+                .select("*, shops(name, mrt, shop_photos(url))")
                 .eq("user_id", user_id)
                 .order("created_at", desc=True)
                 .execute()
@@ -138,8 +138,8 @@ class CheckInService:
             shop_data = row.pop("shops", {}) or {}
             row["shop_name"] = shop_data.get("name")
             row["shop_mrt"] = shop_data.get("mrt")
-            shop_photos = shop_data.get("photo_urls") or []
-            row["shop_photo_url"] = shop_photos[0] if shop_photos else None
+            shop_photos = shop_data.get("shop_photos") or []
+            row["shop_photo_url"] = first(shop_photos)["url"] if shop_photos else None
             results.append(CheckInWithShop(**row))
         return results
 
