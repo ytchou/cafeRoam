@@ -1,7 +1,7 @@
 'use client';
 import Image from 'next/image';
 
-interface FavoritesShop {
+export interface FavoritesShop {
   id: string;
   name: string;
   address: string;
@@ -10,7 +10,7 @@ interface FavoritesShop {
   rating: number | null;
   review_count: number;
   photo_urls: string[];
-  taxonomy_tags: { label_zh?: string; labelZh?: string }[];
+  taxonomy_tags?: { label_zh?: string; labelZh?: string }[];
   is_open?: boolean | null;
 }
 
