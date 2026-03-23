@@ -9,6 +9,11 @@ import { useAnalytics } from '@/lib/posthog/use-analytics';
 import { useIsDesktop } from '@/lib/hooks/use-media-query';
 import type { TarotCardData } from '@/types/tarot';
 
+const BRICOLAGE_STYLE = {
+  fontFamily: 'var(--font-bricolage), var(--font-geist-sans), sans-serif',
+} as const;
+const DIALOG_STYLE = { borderRadius: 24 } as const;
+
 interface TarotRevealDrawerProps {
   card: TarotCardData | null;
   open: boolean;
@@ -49,9 +54,7 @@ function TarotRevealContent({
       {/* Tarot title */}
       <h2
         className="mt-3 text-center text-2xl font-bold tracking-wide text-white"
-        style={{
-          fontFamily: 'var(--font-bricolage), var(--font-geist-sans), sans-serif',
-        }}
+        style={BRICOLAGE_STYLE}
       >
         {card.tarotTitle}
       </h2>
@@ -147,7 +150,8 @@ export function TarotRevealDrawer({
       <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
         <DialogContent
           className="max-w-[480px] border-[#5C3D2B] bg-[#2C1E16] p-0"
-          style={{ borderRadius: 24 }}
+          style={DIALOG_STYLE}
+          showCloseButton={false}
         >
           <DialogTitle className="sr-only">Tarot Card Reveal</DialogTitle>
           <TarotRevealContent

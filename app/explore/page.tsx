@@ -62,8 +62,8 @@ export default function ExplorePage() {
     <>
       <div className="mb-3 flex items-center justify-between">
         <span
-          className="text-base font-semibold text-[#2C1810]"
-          style={BRICOLAGE_STYLE_SM}
+          className="text-[11px] font-semibold tracking-[1px] text-[#C4922A]"
+          style={{ fontFamily: 'var(--font-dm-sans), sans-serif' }}
         >
           ✦ Your Daily Draw
         </span>
@@ -148,7 +148,7 @@ export default function ExplorePage() {
             </h2>
             <Link
               href="/explore/vibes"
-              className="text-xs font-medium text-[#8B5E3C]"
+              className="text-xs font-medium text-[#3D8A5A]"
             >
               See all →
             </Link>
@@ -192,12 +192,12 @@ export default function ExplorePage() {
         </h2>
         <Link
           href="/explore/community"
-          className="text-xs font-medium text-[#8B5E3C]"
+          className="text-xs font-medium text-[#3D8A5A]"
         >
           See all →
         </Link>
       </div>
-      <div className={isDesktop ? 'mt-4 flex flex-col gap-3' : 'mt-0 flex flex-col gap-3'}>
+      <div className={isDesktop ? 'mt-4 flex flex-col gap-3' : 'flex flex-col gap-3'}>
         {communityNotes.map((note) => (
           <CommunityCard key={note.checkinId} note={note} />
         ))}
@@ -209,18 +209,14 @@ export default function ExplorePage() {
     <main className="min-h-screen bg-[#FAF7F4] px-5 pt-6 pb-24">
       <div className="mb-6 flex items-center justify-between">
         <h1
-          className="text-[28px] font-bold text-[#2C1810]"
+          className="text-[28px] font-bold text-[#1A1918]"
           style={BRICOLAGE_STYLE}
         >
           探索
         </h1>
-        <button
-          type="button"
-          aria-label="Notifications"
-          className="rounded-full p-2 text-[#2C1810] hover:bg-black/5"
-        >
-          <Bell className="h-5 w-5" />
-        </button>
+        <span aria-hidden="true" className="rounded-full p-2 text-[#6B7280]">
+          <Bell className="h-[22px] w-[22px]" />
+        </span>
       </div>
 
       {isDesktop ? (

@@ -11,12 +11,15 @@ import { useRouter, useParams } from 'next/navigation';
 import { ArrowLeft, Star, MapPin, Bookmark } from 'lucide-react';
 import { useGeolocation } from '@/lib/hooks/use-geolocation';
 import { useVibeShops } from '@/lib/hooks/use-vibe-shops';
+import { useVibes } from '@/lib/hooks/use-vibes';
 import { useIsDesktop } from '@/lib/hooks/use-media-query';
 
 export default function VibePage() {
   const router = useRouter();
   const { slug } = useParams<{ slug: string }>();
   const isDesktop = useIsDesktop();
+  const { vibes } = useVibes();
+  const otherVibes = vibes.filter((v) => v.slug !== slug).slice(0, 6);
 
   const {
     latitude,
@@ -129,7 +132,7 @@ export default function VibePage() {
         <ul
           className={
             isDesktop
-              ? 'grid grid-cols-2 gap-3'
+              ? 'grid grid-cols-3 gap-3'
               : 'flex flex-col gap-3'
           }
         >
@@ -183,17 +186,32 @@ export default function VibePage() {
                     )}
                   </div>
                 </Link>
-                <button
-                  type="button"
-                  aria-label="Save shop"
-                  className="shrink-0 p-1 text-gray-300 hover:text-gray-500"
-                >
+                <span aria-hidden="true" className="shrink-0 p-1 text-[#6B7280]">
                   <Bookmark className="h-5 w-5" />
-                </button>
+                </span>
               </div>
             </li>
           ))}
         </ul>
+      )}
+
+      {isDesktop && otherVibes.length > 0 && (
+        <section className="mt-10">
+          <p className="mb-3 text-sm font-semibold text-[#1A1918]">
+            Want to explore other vibes?
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {otherVibes.map((v) => (
+              <Link
+                key={v.slug}
+                href={`/explore/vibes/${v.slug}`}
+                className="rounded-full border border-gray-200 bg-white px-4 py-1.5 text-sm text-[#1A1918] hover:bg-gray-50"
+              >
+                {v.emoji} {v.name}
+              </Link>
+            ))}
+          </div>
+        </section>
       )}
     </main>
   );
