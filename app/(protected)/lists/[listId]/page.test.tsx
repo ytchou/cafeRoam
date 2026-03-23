@@ -1,5 +1,4 @@
 import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { SWRConfig } from 'swr';
 
@@ -54,6 +53,35 @@ const LISTS_DATA = [
 vi.mock('next/navigation', () => ({
   useParams: () => ({ listId: LIST_ID_1 }),
   useRouter: () => ({ push: vi.fn(), back: vi.fn() }),
+  usePathname: () => `/lists/${LIST_ID_1}`,
+}));
+
+vi.mock('next/link', () => ({
+  default: ({
+    children,
+    href,
+  }: {
+    children: React.ReactNode;
+    href: string;
+  }) => <a href={href}>{children}</a>,
+}));
+
+vi.mock('@/lib/hooks/use-media-query', () => ({
+  useIsDesktop: () => false,
+  useMediaQuery: () => false,
+}));
+
+vi.mock('react-map-gl/mapbox', () => ({
+  default: ({ children }: { children?: React.ReactNode }) => (
+    <div data-testid="map">{children}</div>
+  ),
+  Marker: ({
+    children,
+    onClick,
+  }: {
+    children?: React.ReactNode;
+    onClick?: () => void;
+  }) => <div onClick={onClick}>{children}</div>,
 }));
 
 vi.mock('@/lib/supabase/client', () => ({
@@ -73,6 +101,7 @@ import ListDetailPage from './page';
 
 describe('/lists/[listId] page', () => {
   beforeEach(() => {
+    vi.stubEnv('NEXT_PUBLIC_MAPBOX_TOKEN', 'pk.test');
     mockFetch.mockReset();
     mockFetch.mockImplementation((url: string) => {
       if (url === '/api/lists') {
@@ -89,7 +118,9 @@ describe('/lists/[listId] page', () => {
         <ListDetailPage />
       </SWRConfig>
     );
-    expect(await screen.findByText('Work spots')).toBeInTheDocument();
+    expect((await screen.findAllByText('Work spots')).length).toBeGreaterThan(
+      0
+    );
   });
 
   it("the user's saved shops appear as cards on the list detail page", async () => {
@@ -114,20 +145,8 @@ describe('/lists/[listId] page', () => {
         <ListDetailPage />
       </SWRConfig>
     );
-    expect(await screen.findByText(/no shops saved yet/i)).toBeInTheDocument();
-  });
-
-  it('hovering a shop card highlights it with an amber background', async () => {
-    render(
-      <SWRConfig value={{ provider: () => new Map() }}>
-        <ListDetailPage />
-      </SWRConfig>
-    );
-    const shopName = await screen.findByText('山小孩咖啡');
-    const card = shopName.closest('div[class*="rounded"]');
-    await userEvent.hover(shopName);
-    expect(card).toHaveClass('bg-amber-50');
-    await userEvent.unhover(shopName);
-    expect(card).not.toHaveClass('bg-amber-50');
+    expect(
+      await screen.findByText(/no shops in this list/i)
+    ).toBeInTheDocument();
   });
 });

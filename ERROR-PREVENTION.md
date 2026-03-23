@@ -332,4 +332,43 @@ row["diary_note"] = checkin_data.get("note")  # maps DB column "note" to API fie
 - Run `grep -r "column_name" supabase/migrations/` to confirm the column exists before writing tests
 - Mock data keys in backend tests must match the DB schema (what the real query returns), not the API response shape
 
+---
+
+### Mocking Internal HTTP Wrapper Instead of System Boundary (Frontend Hooks)
+
+**Symptom:** Hook tests pass locally but would silently fail if the internal wrapper is ever refactored. Code review flags the test as violating the mock-at-boundaries rule.
+
+**Root cause:** `fetchWithAuth` (or any internal fetch wrapper) calls `supabase.auth.getSession()` then `global.fetch`. When a test does `vi.mock('@/lib/api/fetch', ...)`, it mocks the wrapper as a black box — bypassing both the auth token path and the real HTTP boundary. Tests never verify that the hook correctly sends auth headers or handles auth errors.
+
+**Fix:** Mock at the two real boundaries:
+
+```ts
+vi.mock('@/lib/supabase/client', () => ({
+  createClient: () => ({
+    auth: {
+      getSession: vi
+        .fn()
+        .mockResolvedValue({ data: { session: { access_token: 'tok' } } }),
+    },
+  }),
+}));
+const mockFetch = vi.fn();
+global.fetch = mockFetch;
+mockFetch.mockResolvedValueOnce({ ok: true, json: async () => payload });
+```
+
+**Prevention:** Never `vi.mock` a file in `lib/api/` or `lib/hooks/`. Only mock at `global.fetch`, `@/lib/supabase/client`, or external SDK boundaries. _(Recurred in profile-polaroid and favorites-ui-reconstruct.)_
+
+---
+
+### prettier --check Gives False Negative Locally
+
+**Symptom:** `pnpm format:check` exits 0 locally, but CI fails with "Code style issues found in N files. Run Prettier with --write to fix."
+
+**Root cause:** `prettier --check` only reports; it does not write. Intermittent local success occurs when prettier's line-wrapping behavior differs slightly between the locally-resolved version and the pinned CI version.
+
+**Fix:** Run `npx prettier --write .` (or target changed files) before committing. Do not rely on `format:check` as a pre-commit gate.
+
+**Prevention:** Pre-commit flow: `npx prettier --write` (mutate) then `git add`. Never use `format:check` as the sole pre-commit formatter.
+
 _Add entries here as you discover them._

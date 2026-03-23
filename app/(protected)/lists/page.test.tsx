@@ -48,6 +48,7 @@ vi.mock('@/lib/supabase/client', () => ({
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn() }),
+  usePathname: () => '/lists',
 }));
 
 vi.mock('next/link', () => ({
@@ -66,6 +67,19 @@ vi.mock('next/link', () => ({
   ),
 }));
 
+vi.mock('@/lib/hooks/use-media-query', () => ({
+  useIsDesktop: () => false,
+}));
+
+vi.mock('react-map-gl/mapbox', () => ({
+  default: ({ children }: { children?: React.ReactNode }) => (
+    <div data-testid="mock-map">{children}</div>
+  ),
+  Marker: ({ children }: { children?: React.ReactNode }) => (
+    <div data-testid="mock-marker">{children}</div>
+  ),
+}));
+
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
@@ -81,9 +95,11 @@ import ListsPage from './page';
 describe('/lists page', () => {
   beforeEach(() => {
     mockFetch.mockReset();
-    mockFetch.mockResolvedValue({
-      ok: true,
-      json: async () => THREE_LISTS,
+    mockFetch.mockImplementation((url: string) => {
+      if (typeof url === 'string' && url.includes('/pins')) {
+        return Promise.resolve({ ok: true, json: async () => [] });
+      }
+      return Promise.resolve({ ok: true, json: async () => THREE_LISTS });
     });
   });
 
@@ -107,41 +123,26 @@ describe('/lists page', () => {
     expect(await screen.findByText(/3.*\/.*3|3\s*\/\s*3/)).toBeInTheDocument();
   });
 
-  it('create list input is not shown when the user is at the 3-list cap', async () => {
+  it('create list option is not shown when the user is at the 3-list cap', async () => {
     render(
       <SWRConfig value={{ provider: () => new Map() }}>
         <ListsPage />
       </SWRConfig>
     );
-    // Wait for lists to load, then verify no create input
+    // Wait for lists to load, then verify no create slot is shown
     await screen.findByText('Work spots');
-    expect(
-      screen.queryByPlaceholderText(/create new list/i)
-    ).not.toBeInTheDocument();
-  });
-
-  it('map pins are not fetched when the lists page first loads', async () => {
-    render(
-      <SWRConfig value={{ provider: () => new Map() }}>
-        <ListsPage />
-      </SWRConfig>
-    );
-    await screen.findByText('Work spots');
-    await waitFor(() => {
-      const pinsFetch = mockFetch.mock.calls.find(
-        (c) => typeof c[0] === 'string' && (c[0] as string).includes('/pins')
-      );
-      expect(pinsFetch).toBeUndefined();
-    });
+    expect(screen.queryByText('Create a new list')).not.toBeInTheDocument();
   });
 
   it('user can create a new list when under the cap', async () => {
-    const user = userEvent.setup();
     const oneList = [THREE_LISTS[0]];
+    const NEW_LIST_ID = 'b2c3d4e5-6789-01ab-cdef-234567890abc';
     mockFetch.mockReset();
-    mockFetch.mockResolvedValue({
-      ok: true,
-      json: async () => oneList,
+    mockFetch.mockImplementation((url: string) => {
+      if (typeof url === 'string' && url.includes('/pins')) {
+        return Promise.resolve({ ok: true, json: async () => [] });
+      }
+      return Promise.resolve({ ok: true, json: async () => oneList });
     });
 
     render(
@@ -153,26 +154,35 @@ describe('/lists page', () => {
     expect(await screen.findByText('Work spots')).toBeInTheDocument();
     expect(screen.getByText('1 / 3')).toBeInTheDocument();
 
-    const input = screen.getByPlaceholderText(/create new list/i);
-    await user.type(input, '我的最愛');
+    // Open create dialog
+    const createButton = screen.getByText('Create a new list');
+    await userEvent.click(createButton);
 
-    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => ({}) });
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => [
-        ...oneList,
-        {
-          id: 'list-new',
-          user_id: USER_ID,
-          name: '我的最愛',
-          items: [],
-          created_at: '2026-03-05T10:00:00Z',
-          updated_at: '2026-03-05T10:00:00Z',
-        },
-      ],
-    });
+    // Type name and confirm
+    const nameInput = screen.getByPlaceholderText('List name');
+    await userEvent.type(nameInput, '我的最愛');
 
-    await user.click(screen.getByText('Add'));
+    mockFetch.mockImplementationOnce(() =>
+      Promise.resolve({ ok: true, json: async () => ({}) })
+    );
+    mockFetch.mockImplementationOnce(() =>
+      Promise.resolve({
+        ok: true,
+        json: async () => [
+          ...oneList,
+          {
+            id: NEW_LIST_ID,
+            user_id: USER_ID,
+            name: '我的最愛',
+            items: [],
+            created_at: '2026-03-05T10:00:00Z',
+            updated_at: '2026-03-05T10:00:00Z',
+          },
+        ],
+      })
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: /^create$/i }));
 
     await waitFor(() => {
       expect(screen.getByText('我的最愛')).toBeInTheDocument();
@@ -180,12 +190,13 @@ describe('/lists page', () => {
   });
 
   it('user sees an error toast when the backend rejects list creation', async () => {
-    const user = userEvent.setup();
     const twoLists = THREE_LISTS.slice(0, 2);
     mockFetch.mockReset();
-    mockFetch.mockResolvedValue({
-      ok: true,
-      json: async () => twoLists,
+    mockFetch.mockImplementation((url: string) => {
+      if (typeof url === 'string' && url.includes('/pins')) {
+        return Promise.resolve({ ok: true, json: async () => [] });
+      }
+      return Promise.resolve({ ok: true, json: async () => twoLists });
     });
 
     render(
@@ -196,15 +207,21 @@ describe('/lists page', () => {
 
     expect(await screen.findByText('Work spots')).toBeInTheDocument();
 
-    const input = screen.getByPlaceholderText(/create new list/i);
-    await user.type(input, 'Fourth list');
+    // Open create dialog and submit
+    const createButton = screen.getByText('Create a new list');
+    await userEvent.click(createButton);
 
-    mockFetch.mockResolvedValueOnce({
-      ok: false,
-      json: async () => ({ detail: 'Maximum 3 lists per user' }),
-    });
+    const nameInput = screen.getByPlaceholderText('List name');
+    await userEvent.type(nameInput, 'Fourth list');
 
-    await user.click(screen.getByText('Add'));
+    mockFetch.mockImplementationOnce(() =>
+      Promise.resolve({
+        ok: false,
+        json: async () => ({ detail: 'Maximum 3 lists per user' }),
+      })
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: /^create$/i }));
 
     const { toast } = await import('sonner');
     await waitFor(() => {
@@ -214,7 +231,7 @@ describe('/lists page', () => {
     });
   });
 
-  it('user can delete a list via the delete button', async () => {
+  it('user can delete a list via the options menu', async () => {
     const user = userEvent.setup();
     vi.spyOn(window, 'confirm').mockReturnValue(true);
 
@@ -226,17 +243,25 @@ describe('/lists page', () => {
 
     expect(await screen.findByText('Work spots')).toBeInTheDocument();
 
-    const deleteButtons = screen.getAllByRole('button', {
-      name: /delete list/i,
+    const optionsButtons = screen.getAllByRole('button', {
+      name: /list options/i,
     });
 
-    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => ({}) });
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => THREE_LISTS.slice(1),
-    });
+    await user.click(optionsButtons[0]);
 
-    await user.click(deleteButtons[0]);
+    const deleteButton = await screen.findByRole('button', { name: /delete/i });
+
+    mockFetch.mockImplementationOnce(() =>
+      Promise.resolve({ ok: true, json: async () => ({}) })
+    );
+    mockFetch.mockImplementationOnce(() =>
+      Promise.resolve({
+        ok: true,
+        json: async () => THREE_LISTS.slice(1),
+      })
+    );
+
+    await user.click(deleteButton);
 
     await waitFor(() => {
       expect(screen.queryByText('Work spots')).not.toBeInTheDocument();
