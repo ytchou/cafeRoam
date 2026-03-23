@@ -29,7 +29,7 @@ export function HeaderNav({ activeTab }: HeaderNavProps) {
   return (
     <header className="fixed top-0 right-0 left-0 z-40 flex h-16 items-center justify-between border-b border-border-light bg-white px-8">
       <Link href="/" className="flex items-center gap-2.5">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--map-pin)]">
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-map-pin">
           <span className="font-[family-name:var(--font-heading)] text-base font-bold text-white">
             啡
           </span>
@@ -49,7 +49,7 @@ export function HeaderNav({ activeTab }: HeaderNavProps) {
               data-active={isActive || undefined}
               className={`flex h-9 items-center gap-[5px] rounded-[20px] px-4 font-[family-name:var(--font-body)] text-sm transition-colors ${
                 isActive
-                  ? 'bg-[var(--active-dark)] font-semibold text-white'
+                  ? 'bg-espresso font-semibold text-white'
                   : 'font-medium text-[var(--muted-foreground)]'
               }`}
             >
@@ -68,7 +68,7 @@ export function HeaderNav({ activeTab }: HeaderNavProps) {
         >
           <Search className="h-[18px] w-[18px]" />
         </button>
-        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--map-pin)]">
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-map-pin">
           <span className="font-[family-name:var(--font-body)] text-sm font-semibold text-white">
             Y
           </span>
