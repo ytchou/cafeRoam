@@ -341,10 +341,15 @@ row["diary_note"] = checkin_data.get("note")  # maps DB column "note" to API fie
 **Root cause:** `fetchWithAuth` (or any internal fetch wrapper) calls `supabase.auth.getSession()` then `global.fetch`. When a test does `vi.mock('@/lib/api/fetch', ...)`, it mocks the wrapper as a black box — bypassing both the auth token path and the real HTTP boundary. Tests never verify that the hook correctly sends auth headers or handles auth errors.
 
 **Fix:** Mock at the two real boundaries:
+
 ```ts
 vi.mock('@/lib/supabase/client', () => ({
   createClient: () => ({
-    auth: { getSession: vi.fn().mockResolvedValue({ data: { session: { access_token: 'tok' } } }) },
+    auth: {
+      getSession: vi
+        .fn()
+        .mockResolvedValue({ data: { session: { access_token: 'tok' } } }),
+    },
   }),
 }));
 const mockFetch = vi.fn();

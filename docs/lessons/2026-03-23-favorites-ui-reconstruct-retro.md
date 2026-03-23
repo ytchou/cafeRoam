@@ -28,52 +28,52 @@ Rebuilt the Favorites (`/lists`) feature from scratch — 9 new components, 2 SW
 
 ## What Code Review Caught
 
-| Issue | Severity | Could the Plan Have Prevented It? |
-|---|---|---|
-| SWR race condition — `isLoading` from wrong hook, "List not found" flashes on direct nav | Critical | **Partially** — an integration test covering direct navigation to `/lists/[id]` would have caught this |
-| Desktop delete/rename completely broken — handlers declared in props but never destructured | Critical | **Yes** — a test for desktop delete/rename would have failed immediately |
-| Empty-string Mapbox token passed to raw `Map`, no SSR guard | Critical | **Yes** — the plan should have specified "use `MapViewDynamic`, not raw `react-map-gl`" |
-| `shopsByList` hardcoded to `{}` at callsite — desktop shows 0 shops | Critical | **Yes** — plan should have specified the data flow for `shopsByList` explicitly |
-| `handleRename` missing try/catch | Important | No — implementation omission, appropriate for review |
-| Desktop 3-list cap not enforced — "+ New List" always visible | Important | **Yes** — cap enforcement was in scope; the plan task should have included it explicitly |
-| BottomNav z-40 overlaps bottom sheet z-30 — dead tap zone | Important | **Yes** — a plan note that detail views should omit BottomNav would have prevented this |
-| `mapPins` array reconstructed every render without `useMemo` | Important | **Yes** — CLAUDE.md perf rule; could be a checklist item in list-rendering tasks |
-| Inline `shopsByList={{}}` object literal in render | Important | **Yes** — CLAUDE.md rule; same as above |
-| Emoji `☕` in JSX — violates CLAUDE.md | Important | **Yes** — CLAUDE.md rule ("no emojis unless requested") appeared in profile-polaroid too |
-| `window.prompt()` for list creation — untestable, violates presentational contract | Important | **Yes** — plan said dialog; implement the component named in the plan |
-| Raw `react-map-gl` `Map` in detail layout — wrong style, no SSR guard | Important | **Yes** — plan should specify `MapViewDynamic` as the canonical map component |
-| Uniform pin color — design requires per-list colored pins | Important | **Partially** — design doc specified colors; referencing DESIGN.md per-task would help |
-| Mini-map pin tap does nothing — `onPinClick` not wired | Important | **Yes** — missing interactivity, a test that clicks a pin would have caught it |
-| `fetchWithAuth` mocked instead of `global.fetch` boundary (×2 hooks) | Important | **Yes** — CLAUDE.md mock-at-boundaries rule; appeared in profile-polaroid too (**2nd occurrence**) |
-| Unsafe `shops[0]` array access for map center | Important | **Yes** — CLAUDE.md rule (use `first()`); repeated from profile-polaroid |
-| `extractDistrict` regex fails on non-city-prefixed addresses | Minor | No — edge case, appropriate for review |
-| `ListDetailShop` type duplicated in two layouts | Minor | No — architectural housekeeping, appropriate for review |
-| Count badge colors inverted from design spec | Minor | **Yes** — check DESIGN.md during implementation |
-| h2 wrong font family and size | Minor | **Yes** — same as above |
-| "+ New List" missing pill style | Minor | **Yes** — same as above |
-| Bottom sheet static div vs vaul Drawer (plan specified vaul) | Minor | **Yes** — plan should name the specific library |
-| Desktop "New List" button wrong color palette | Minor | **Yes** — check DESIGN.md |
-| Placeholder `'list-new'` ID instead of UUID | Minor | **Yes** — CLAUDE.md realistic test data rule |
-| `useRouter` inside layout component — navigation at wrong layer | Minor | No — architectural judgment, appropriate for review |
+| Issue                                                                                       | Severity  | Could the Plan Have Prevented It?                                                                      |
+| ------------------------------------------------------------------------------------------- | --------- | ------------------------------------------------------------------------------------------------------ |
+| SWR race condition — `isLoading` from wrong hook, "List not found" flashes on direct nav    | Critical  | **Partially** — an integration test covering direct navigation to `/lists/[id]` would have caught this |
+| Desktop delete/rename completely broken — handlers declared in props but never destructured | Critical  | **Yes** — a test for desktop delete/rename would have failed immediately                               |
+| Empty-string Mapbox token passed to raw `Map`, no SSR guard                                 | Critical  | **Yes** — the plan should have specified "use `MapViewDynamic`, not raw `react-map-gl`"                |
+| `shopsByList` hardcoded to `{}` at callsite — desktop shows 0 shops                         | Critical  | **Yes** — plan should have specified the data flow for `shopsByList` explicitly                        |
+| `handleRename` missing try/catch                                                            | Important | No — implementation omission, appropriate for review                                                   |
+| Desktop 3-list cap not enforced — "+ New List" always visible                               | Important | **Yes** — cap enforcement was in scope; the plan task should have included it explicitly               |
+| BottomNav z-40 overlaps bottom sheet z-30 — dead tap zone                                   | Important | **Yes** — a plan note that detail views should omit BottomNav would have prevented this                |
+| `mapPins` array reconstructed every render without `useMemo`                                | Important | **Yes** — CLAUDE.md perf rule; could be a checklist item in list-rendering tasks                       |
+| Inline `shopsByList={{}}` object literal in render                                          | Important | **Yes** — CLAUDE.md rule; same as above                                                                |
+| Emoji `☕` in JSX — violates CLAUDE.md                                                      | Important | **Yes** — CLAUDE.md rule ("no emojis unless requested") appeared in profile-polaroid too               |
+| `window.prompt()` for list creation — untestable, violates presentational contract          | Important | **Yes** — plan said dialog; implement the component named in the plan                                  |
+| Raw `react-map-gl` `Map` in detail layout — wrong style, no SSR guard                       | Important | **Yes** — plan should specify `MapViewDynamic` as the canonical map component                          |
+| Uniform pin color — design requires per-list colored pins                                   | Important | **Partially** — design doc specified colors; referencing DESIGN.md per-task would help                 |
+| Mini-map pin tap does nothing — `onPinClick` not wired                                      | Important | **Yes** — missing interactivity, a test that clicks a pin would have caught it                         |
+| `fetchWithAuth` mocked instead of `global.fetch` boundary (×2 hooks)                        | Important | **Yes** — CLAUDE.md mock-at-boundaries rule; appeared in profile-polaroid too (**2nd occurrence**)     |
+| Unsafe `shops[0]` array access for map center                                               | Important | **Yes** — CLAUDE.md rule (use `first()`); repeated from profile-polaroid                               |
+| `extractDistrict` regex fails on non-city-prefixed addresses                                | Minor     | No — edge case, appropriate for review                                                                 |
+| `ListDetailShop` type duplicated in two layouts                                             | Minor     | No — architectural housekeeping, appropriate for review                                                |
+| Count badge colors inverted from design spec                                                | Minor     | **Yes** — check DESIGN.md during implementation                                                        |
+| h2 wrong font family and size                                                               | Minor     | **Yes** — same as above                                                                                |
+| "+ New List" missing pill style                                                             | Minor     | **Yes** — same as above                                                                                |
+| Bottom sheet static div vs vaul Drawer (plan specified vaul)                                | Minor     | **Yes** — plan should name the specific library                                                        |
+| Desktop "New List" button wrong color palette                                               | Minor     | **Yes** — check DESIGN.md                                                                              |
+| Placeholder `'list-new'` ID instead of UUID                                                 | Minor     | **Yes** — CLAUDE.md realistic test data rule                                                           |
+| `useRouter` inside layout component — navigation at wrong layer                             | Minor     | No — architectural judgment, appropriate for review                                                    |
 
 **False positives (2):** M10, M11 — reviewer misread partial test names; both were correctly user-framed.
 
 ## Scope Changes
 
-| Change | Direction | Reason |
-|---|---|---|
-| `CreateListDialog` as a named component | Added | Plan said "dialog"; `window.prompt()` was initially implemented; review forced the named component |
-| `shopsByList` prop concept | Removed | Code review redesign — desktop sidebar driven by `list.items.length` directly (simpler, correct) |
-| `onViewList` prop on both layouts | Added | Required when `useRouter` was moved out of layout components to the page layer |
+| Change                                  | Direction | Reason                                                                                             |
+| --------------------------------------- | --------- | -------------------------------------------------------------------------------------------------- |
+| `CreateListDialog` as a named component | Added     | Plan said "dialog"; `window.prompt()` was initially implemented; review forced the named component |
+| `shopsByList` prop concept              | Removed   | Code review redesign — desktop sidebar driven by `list.items.length` directly (simpler, correct)   |
+| `onViewList` prop on both layouts       | Added     | Required when `useRouter` was moved out of layout components to the page layer                     |
 
 ## Pipeline Effectiveness
 
-| Stage | Effort | Issues Found | Value |
-|---|---|---|---|
-| /writing-plans | Low (plan was pre-built via Pencil) | 0 | High — wave structure held for all 14 tasks |
-| /executing-plans | High (14 feature commits, 4,232 lines) | 0 (TDD caught no bugs) | High — all tasks delivered |
-| /code-review-and-fix | Medium (1 fix pass, 1 re-verify) | 26 unique valid issues | Very high — 4 Critical + 14 Important caught |
-| /create-pr + CI | Low | 1 CI fix (prettier) | Medium — one unnecessary round-trip |
+| Stage                | Effort                                 | Issues Found           | Value                                        |
+| -------------------- | -------------------------------------- | ---------------------- | -------------------------------------------- |
+| /writing-plans       | Low (plan was pre-built via Pencil)    | 0                      | High — wave structure held for all 14 tasks  |
+| /executing-plans     | High (14 feature commits, 4,232 lines) | 0 (TDD caught no bugs) | High — all tasks delivered                   |
+| /code-review-and-fix | Medium (1 fix pass, 1 re-verify)       | 26 unique valid issues | Very high — 4 Critical + 14 Important caught |
+| /create-pr + CI      | Low                                    | 1 CI fix (prettier)    | Medium — one unnecessary round-trip          |
 
 **TDD verdict:** Caught 0 bugs before code review (2nd feature in a row). Tests were structurally correct and mocked at boundaries, but they didn't expose wiring bugs (broken handler props, dead callsite data) because each component test was isolated. Integration-level bugs require integration tests.
 
@@ -81,24 +81,25 @@ Rebuilt the Favorites (`/lists`) feature from scratch — 9 new components, 2 SW
 
 These appeared in both `profile-polaroid` and `favorites-ui-reconstruct`:
 
-| Pattern | Evidence | Action |
-|---|---|---|
-| Mock-at-wrong-boundary (internal module instead of `global.fetch`) | I12, I13 here; brittle mock chain in profile-polaroid | Add to ERROR_PREVENTION.md |
-| Emoji in production JSX | I6 here; same in profile-polaroid | Already in CLAUDE.md, but not surfacing during implementation |
-| TDD catches 0 bugs (0/2 features) | Both features | TDD is covering behavior correctly but missing wiring integration |
-| Design token drift (implementation diverges from DESIGN.md) | M4–M8 here; localStorage key mismatch in profile-polaroid | Add "check DESIGN.md" as a per-component task step |
+| Pattern                                                            | Evidence                                                  | Action                                                            |
+| ------------------------------------------------------------------ | --------------------------------------------------------- | ----------------------------------------------------------------- |
+| Mock-at-wrong-boundary (internal module instead of `global.fetch`) | I12, I13 here; brittle mock chain in profile-polaroid     | Add to ERROR_PREVENTION.md                                        |
+| Emoji in production JSX                                            | I6 here; same in profile-polaroid                         | Already in CLAUDE.md, but not surfacing during implementation     |
+| TDD catches 0 bugs (0/2 features)                                  | Both features                                             | TDD is covering behavior correctly but missing wiring integration |
+| Design token drift (implementation diverges from DESIGN.md)        | M4–M8 here; localStorage key mismatch in profile-polaroid | Add "check DESIGN.md" as a per-component task step                |
 
 ## Deprecation Candidates
 
 | Stage | Flag | Recommendation | Cross-feature evidence |
-|---|---|---|---|
-| None | — | — | — |
+| ----- | ---- | -------------- | ---------------------- |
+| None  | —    | —              | —                      |
 
 All pipeline stages demonstrated value on this feature. No deprecation candidates.
 
 ## Recommendations
 
 **For next feature:**
+
 - When a plan task involves a layout or page receiving data from a hook, name the hook and specify the prop type in the task description. "Desktop layout receives `pins: Pin[]` from `useListPins()`" prevents dead-prop bugs.
 - Name the specific component for dialog/modal tasks in the plan (e.g., "Add `CreateListDialog` component"). "Add dialog" is too vague and invites `window.prompt()` shortcuts.
 - Add a step to each component task: "Cross-check rendered values against DESIGN.md token table before committing." Five Minor design-token violations were all preventable.
@@ -106,7 +107,9 @@ All pipeline stages demonstrated value on this feature. No deprecation candidate
 - Add an integration test for any page that uses multiple SWR hooks — specifically, test the state when one hook is loading and the other has returned data.
 
 **For ERROR_PREVENTION.md:**
+
 - Mock boundary violation is now 2/2 features. Add entry: symptom = "mock of `@/lib/api/fetch` or internal wrapper instead of `global.fetch`", cause = "wrapper hides HTTP boundary", prevention = "always mock at `global.fetch` + `supabase.auth.getSession`".
 
 **For CLAUDE.md:**
+
 - Add to the pre-commit checklist: "Run `npx prettier --write .` (not `format:check`) to fix formatting before pushing."
