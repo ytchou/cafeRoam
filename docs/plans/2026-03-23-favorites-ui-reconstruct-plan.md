@@ -15,6 +15,7 @@
 **Tech Stack:** Next.js 16 (App Router), React, Tailwind CSS, Mapbox GL JS (react-map-gl), SWR, Vaul (bottom sheet), Vitest + Testing Library
 
 **Acceptance Criteria:**
+
 - [ ] A user on mobile sees their saved lists as rich cards with photo thumbnails and a mini-map showing all saved pins
 - [ ] A user tapping a list card navigates to a full-map view with the list's shops in a fixed bottom sheet
 - [ ] A user on desktop sees all lists' shops in a 420px sidebar with an interactive map highlighting selected shops
@@ -28,6 +29,7 @@
 The reusable shop row used in both overview sidebar and detail page. Simpler than ShopCardCompact — shows thumbnail, name, district/status meta, and distance.
 
 **Files:**
+
 - Create: `components/lists/favorites-shop-row.tsx`
 - Test: `components/lists/favorites-shop-row.test.tsx`
 
@@ -55,9 +57,7 @@ const shop = {
 
 describe('FavoritesShopRow', () => {
   it('a user sees the shop name and district in the row', () => {
-    render(
-      <FavoritesShopRow shop={shop} onClick={() => {}} />
-    );
+    render(<FavoritesShopRow shop={shop} onClick={() => {}} />);
     expect(screen.getByText('山小孩咖啡')).toBeInTheDocument();
     expect(screen.getByText(/大安/)).toBeInTheDocument();
   });
@@ -70,9 +70,7 @@ describe('FavoritesShopRow', () => {
   });
 
   it('a user sees the open status indicator', () => {
-    render(
-      <FavoritesShopRow shop={shop} onClick={() => {}} />
-    );
+    render(<FavoritesShopRow shop={shop} onClick={() => {}} />);
     expect(screen.getByText(/Open/)).toBeInTheDocument();
   });
 
@@ -84,19 +82,14 @@ describe('FavoritesShopRow', () => {
   });
 
   it('a selected row shows the highlighted state', () => {
-    render(
-      <FavoritesShopRow shop={shop} onClick={() => {}} selected />
-    );
+    render(<FavoritesShopRow shop={shop} onClick={() => {}} selected />);
     const row = screen.getByRole('article');
     expect(row.dataset.selected).toBeDefined();
   });
 
   it('a shop without a photo shows a placeholder', () => {
     render(
-      <FavoritesShopRow
-        shop={{ ...shop, photo_urls: [] }}
-        onClick={() => {}}
-      />
+      <FavoritesShopRow shop={{ ...shop, photo_urls: [] }} onClick={() => {}} />
     );
     expect(screen.getByText('No photo')).toBeInTheDocument();
   });
@@ -220,6 +213,7 @@ git commit -m "feat(favorites): add FavoritesShopRow component with TDD"
 The rich list card for the mobile overview with photo thumbnails, options menu, and "View on map" link.
 
 **Files:**
+
 - Create: `components/lists/favorites-list-card.tsx`
 - Test: `components/lists/favorites-list-card.test.tsx`
 
@@ -359,15 +353,21 @@ export function FavoritesListCard({
             <MoreHorizontal className="h-4 w-4 text-[var(--text-secondary)]" />
           </button>
           {menuOpen && (
-            <div className="absolute right-0 top-10 z-10 rounded-xl bg-white py-1 shadow-lg ring-1 ring-black/5">
+            <div className="absolute top-10 right-0 z-10 rounded-xl bg-white py-1 shadow-lg ring-1 ring-black/5">
               <button
-                onClick={() => { onRename(); setMenuOpen(false); }}
+                onClick={() => {
+                  onRename();
+                  setMenuOpen(false);
+                }}
                 className="w-full px-4 py-2 text-left text-sm hover:bg-[var(--muted)]"
               >
                 Rename
               </button>
               <button
-                onClick={() => { onDelete(); setMenuOpen(false); }}
+                onClick={() => {
+                  onDelete();
+                  setMenuOpen(false);
+                }}
                 className="w-full px-4 py-2 text-left text-sm text-red-500 hover:bg-[var(--muted)]"
               >
                 Delete
@@ -448,6 +448,7 @@ git commit -m "feat(favorites): add FavoritesListCard component with TDD"
 Dashed-border placeholder for remaining list creation slots.
 
 **Files:**
+
 - Create: `components/lists/empty-slot-card.tsx`
 - Test: `components/lists/empty-slot-card.test.tsx`
 
@@ -534,6 +535,7 @@ git commit -m "feat(favorites): add EmptySlotCard component with TDD"
 SWR hooks for fetching pin coordinates and shop data. Used by both overview and detail pages.
 
 **Files:**
+
 - Create: `lib/hooks/use-list-pins.ts`
 - Create: `lib/hooks/use-list-shops.ts`
 - Test: `lib/hooks/use-list-pins.test.ts`
@@ -570,7 +572,7 @@ describe('useListPins', () => {
   it('a user loading their favorites sees pin data from all lists', async () => {
     const pins = [
       { listId: 'list-1', shopId: 'shop-1', lat: 25.033, lng: 121.565 },
-      { listId: 'list-2', shopId: 'shop-2', lat: 25.040, lng: 121.570 },
+      { listId: 'list-2', shopId: 'shop-2', lat: 25.04, lng: 121.57 },
     ];
     mockFetch.mockResolvedValueOnce(pins);
     const { result } = renderHook(() => useListPins(), { wrapper });
@@ -615,7 +617,17 @@ describe('useListShops', () => {
 
   it('a user viewing a list sees shop data for that list', async () => {
     const shops = [
-      { id: 'shop-1', name: '山小孩咖啡', address: '台北市大安區', latitude: 25.02, longitude: 121.53, rating: 4.6, review_count: 100, photo_urls: [], taxonomy_tags: [] },
+      {
+        id: 'shop-1',
+        name: '山小孩咖啡',
+        address: '台北市大安區',
+        latitude: 25.02,
+        longitude: 121.53,
+        rating: 4.6,
+        review_count: 100,
+        photo_urls: [],
+        taxonomy_tags: [],
+      },
     ];
     mockFetch.mockResolvedValueOnce(shops);
     const { result } = renderHook(() => useListShops('list-1'), { wrapper });
@@ -707,6 +719,7 @@ git commit -m "feat(favorites): add useListPins and useListShops hooks with TDD"
 Interactive Mapbox mini-map for the mobile overview, showing all saved pins at 160px height.
 
 **Files:**
+
 - Create: `components/lists/favorites-mini-map.tsx`
 - Test: `components/lists/favorites-mini-map.test.tsx`
 
@@ -731,8 +744,8 @@ vi.mock('react-map-gl/mapbox', () => {
 
 const pins = [
   { listId: 'list-1', shopId: 'shop-1', lat: 25.033, lng: 121.565 },
-  { listId: 'list-1', shopId: 'shop-2', lat: 25.040, lng: 121.570 },
-  { listId: 'list-2', shopId: 'shop-3', lat: 25.020, lng: 121.550 },
+  { listId: 'list-1', shopId: 'shop-2', lat: 25.04, lng: 121.57 },
+  { listId: 'list-2', shopId: 'shop-3', lat: 25.02, lng: 121.55 },
 ];
 
 describe('FavoritesMiniMap', () => {
@@ -815,7 +828,7 @@ export function FavoritesMiniMap({ pins, totalShops }: FavoritesMiniMapProps) {
         ))}
       </Map>
       {/* Badge overlay */}
-      <div className="absolute bottom-3 right-3 flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-[11px] font-medium text-[var(--text-secondary)] shadow-sm">
+      <div className="absolute right-3 bottom-3 flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-[11px] font-medium text-[var(--text-secondary)] shadow-sm">
         <MapPinIcon className="h-3 w-3" />
         {totalShops} shops saved
       </div>
@@ -843,6 +856,7 @@ git commit -m "feat(favorites): add FavoritesMiniMap component with TDD"
 Mobile overview layout: header + mini-map + list cards + empty slots + bottom nav.
 
 **Files:**
+
 - Create: `components/lists/favorites-mobile-layout.tsx`
 - Test: `components/lists/favorites-mobile-layout.test.tsx`
 
@@ -876,12 +890,23 @@ vi.mock('react-map-gl/mapbox', () => {
 });
 
 const lists = [
-  makeList({ id: 'list-1', name: 'Work Spots', items: [makeListItem({ shop_id: 'shop-1' }), makeListItem({ shop_id: 'shop-2' })] }),
-  makeList({ id: 'list-2', name: 'Weekend Cafes', items: [makeListItem({ shop_id: 'shop-3' })] }),
+  makeList({
+    id: 'list-1',
+    name: 'Work Spots',
+    items: [
+      makeListItem({ shop_id: 'shop-1' }),
+      makeListItem({ shop_id: 'shop-2' }),
+    ],
+  }),
+  makeList({
+    id: 'list-2',
+    name: 'Weekend Cafes',
+    items: [makeListItem({ shop_id: 'shop-3' })],
+  }),
 ];
 const pins = [
   { listId: 'list-1', shopId: 'shop-1', lat: 25.033, lng: 121.565 },
-  { listId: 'list-1', shopId: 'shop-2', lat: 25.040, lng: 121.570 },
+  { listId: 'list-1', shopId: 'shop-2', lat: 25.04, lng: 121.57 },
 ];
 
 describe('FavoritesMobileLayout', () => {
@@ -931,7 +956,10 @@ describe('FavoritesMobileLayout', () => {
   });
 
   it('a user at the 3-list cap does not see an empty slot card', () => {
-    const threeLists = [...lists, makeList({ id: 'list-3', name: 'Third List' })];
+    const threeLists = [
+      ...lists,
+      makeList({ id: 'list-3', name: 'Third List' }),
+    ];
     render(
       <FavoritesMobileLayout
         lists={threeLists}
@@ -954,6 +982,7 @@ Expected: FAIL — module not found
 **Step 3: Write minimal implementation**
 
 Build the mobile layout component composing `FavoritesMiniMap`, `FavoritesListCard`, `EmptySlotCard`, and `BottomNav`. Follow the design from Pencil frame `P7hXw`:
+
 - Flex column with content padding `[20,20,100,20]` and gap-20
 - "收藏" Bricolage 28px + "My Saved Lists" subtitle + count badge
 - Mini-map (160px)
@@ -981,6 +1010,7 @@ git commit -m "feat(favorites): add FavoritesMobileLayout with TDD"
 Desktop overview layout: 420px sidebar with all lists' shops + full-screen map. Follows the MapDesktopLayout pattern.
 
 **Files:**
+
 - Create: `components/lists/favorites-desktop-layout.tsx`
 - Test: `components/lists/favorites-desktop-layout.test.tsx`
 
@@ -1072,6 +1102,7 @@ Expected: FAIL — module not found
 **Step 3: Write minimal implementation**
 
 Build the desktop layout following the MapDesktopLayout pattern:
+
 - HeaderNav (activeTab="favorites")
 - Flex row: 420px sidebar + flex-1 map area
 - Sidebar: title row ("收藏 Favorites" + "New List" green button), divider, then list groups with FavoritesShopRow items
@@ -1099,6 +1130,7 @@ git commit -m "feat(favorites): add FavoritesDesktopLayout with TDD"
 Mobile list detail: full-screen map + fixed bottom sheet at ~45% with shop list.
 
 **Files:**
+
 - Create: `components/lists/list-detail-mobile-layout.tsx`
 - Test: `components/lists/list-detail-mobile-layout.test.tsx`
 
@@ -1131,8 +1163,16 @@ vi.mock('react-map-gl/mapbox', () => {
 });
 
 const shops = [
-  { ...makeShop({ id: 'shop-1', name: '湛盧咖啡', address: '台北市信義區' }), is_open: true, taxonomy_tags: [] },
-  { ...makeShop({ id: 'shop-2', name: '慢城咖啡', address: '台北市大安區' }), is_open: false, taxonomy_tags: [] },
+  {
+    ...makeShop({ id: 'shop-1', name: '湛盧咖啡', address: '台北市信義區' }),
+    is_open: true,
+    taxonomy_tags: [],
+  },
+  {
+    ...makeShop({ id: 'shop-2', name: '慢城咖啡', address: '台北市大安區' }),
+    is_open: false,
+    taxonomy_tags: [],
+  },
 ];
 
 describe('ListDetailMobileLayout', () => {
@@ -1202,6 +1242,7 @@ Expected: FAIL — module not found
 **Step 3: Write minimal implementation**
 
 Build the mobile detail layout following Pencil frame `zG9ZS`:
+
 - Full-screen container with `layout: none` (absolute positioning)
 - Map layer: full viewport Mapbox with coffee cup pins
 - Top overlay: gradient (white→transparent) with back chevron + list name + count badge
@@ -1228,6 +1269,7 @@ git commit -m "feat(favorites): add ListDetailMobileLayout with TDD"
 Desktop list detail: collapsible 420px left panel + full map. Follows the MapDesktopLayout pattern.
 
 **Files:**
+
 - Create: `components/lists/list-detail-desktop-layout.tsx`
 - Test: `components/lists/list-detail-desktop-layout.test.tsx`
 
@@ -1268,7 +1310,11 @@ beforeAll(() => {
 });
 
 const shops = [
-  { ...makeShop({ id: 'shop-1', name: '晨光咖啡', address: '台北市大安區' }), is_open: true, taxonomy_tags: [] },
+  {
+    ...makeShop({ id: 'shop-1', name: '晨光咖啡', address: '台北市大安區' }),
+    is_open: true,
+    taxonomy_tags: [],
+  },
 ];
 
 describe('ListDetailDesktopLayout', () => {
@@ -1337,6 +1383,7 @@ Expected: FAIL — module not found
 **Step 3: Write minimal implementation**
 
 Build the desktop detail layout following Pencil frame `Ik2pj`:
+
 - HeaderNav (activeTab="favorites")
 - Flex row: 420px left panel (collapsible) + CollapseToggle + flex-1 map area
 - Left panel: back breadcrumb ("< My Favorites"), list title (22px bold) + count, divider, scrollable FavoritesShopRow list
@@ -1363,12 +1410,14 @@ git commit -m "feat(favorites): add ListDetailDesktopLayout with TDD"
 Wire the new layout components into the lists overview page. Selects mobile vs desktop layout based on `useIsDesktop()`.
 
 **Files:**
+
 - Modify: `app/(protected)/lists/page.tsx` (full rewrite)
 - Modify: `app/(protected)/lists/page.test.tsx` (update for new layout structure)
 
 **Step 1: Update the tests**
 
 Update `app/(protected)/lists/page.test.tsx` to test user journeys through the new layout. Key tests to preserve:
+
 - "a user's lists are shown on the page" — verify list names appear
 - "the count badge shows the correct ratio" — verify "2 / 3" badge
 - "user can create a new list when under the cap" — verify creation flow
@@ -1376,6 +1425,7 @@ Update `app/(protected)/lists/page.test.tsx` to test user journeys through the n
 - "user can delete a list" — verify delete flow
 
 Add mocks for:
+
 - `react-map-gl/mapbox` (minimap)
 - `useIsDesktop` hook
 - New layout components if needed
@@ -1404,9 +1454,12 @@ import { FavoritesDesktopLayout } from '@/components/lists/favorites-desktop-lay
 export default function ListsPage() {
   const router = useRouter();
   const isDesktop = useIsDesktop();
-  const { lists, isLoading, createList, deleteList, renameList } = useUserLists();
+  const { lists, isLoading, createList, deleteList, renameList } =
+    useUserLists();
   const { pins } = useListPins();
-  const [renaming, setRenaming] = useState<{ id: string; name: string } | null>(null);
+  const [renaming, setRenaming] = useState<{ id: string; name: string } | null>(
+    null
+  );
   const [selectedShopId, setSelectedShopId] = useState<string | null>(null);
 
   // Desktop: fetch shops for each list to display in sidebar
@@ -1418,8 +1471,13 @@ export default function ListsPage() {
       await createList(name);
       toast.success('List created');
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to create list';
-      toast.error(message.includes('Maximum') ? "You've reached the 3-list limit" : message);
+      const message =
+        err instanceof Error ? err.message : 'Failed to create list';
+      toast.error(
+        message.includes('Maximum')
+          ? "You've reached the 3-list limit"
+          : message
+      );
     }
   }
 
@@ -1447,8 +1505,14 @@ export default function ListsPage() {
   }
 
   // Map pins to a MapView-compatible format for desktop
-  const mapShops = useMemo(() =>
-    pins.map((p) => ({ id: p.shopId, name: '', latitude: p.lat, longitude: p.lng })),
+  const mapShops = useMemo(
+    () =>
+      pins.map((p) => ({
+        id: p.shopId,
+        name: '',
+        latitude: p.lat,
+        longitude: p.lng,
+      })),
     [pins]
   );
 
@@ -1514,12 +1578,14 @@ git commit -m "feat(favorites): rewrite lists overview page with new layouts"
 Wire the new detail layout components. Selects mobile vs desktop based on `useIsDesktop()`.
 
 **Files:**
+
 - Modify: `app/(protected)/lists/[listId]/page.tsx` (full rewrite)
 - Modify: `app/(protected)/lists/[listId]/page.test.tsx` (update tests)
 
 **Step 1: Update the tests**
 
 Update tests to verify the new layout. Key tests:
+
 - "a user sees the list name and shop count" — verify header
 - "a user sees shop rows for each shop in the list" — verify shop rendering
 - "a user sees map pins for each shop" — verify map integration
@@ -1625,6 +1691,7 @@ git commit -m "feat(favorites): rewrite list detail page with map + layouts"
 Remove the old `ListCard` component that's been replaced by `FavoritesListCard`. Clean up any dead imports.
 
 **Files:**
+
 - Delete: `components/lists/list-card.tsx`
 - Delete: `components/lists/list-card.test.tsx` (if exists)
 - Verify no remaining imports of `ListCard`
@@ -1671,6 +1738,7 @@ No test needed — this is a verification step.
 ```bash
 pnpm test
 ```
+
 Expected: PASS — all tests
 
 **Step 2: Run type-check**
@@ -1678,6 +1746,7 @@ Expected: PASS — all tests
 ```bash
 pnpm type-check
 ```
+
 Expected: PASS — no errors
 
 **Step 3: Run lint**
@@ -1685,6 +1754,7 @@ Expected: PASS — no errors
 ```bash
 pnpm lint
 ```
+
 Expected: PASS — no errors
 
 **Step 4: Run production build**
@@ -1692,11 +1762,13 @@ Expected: PASS — no errors
 ```bash
 pnpm build
 ```
+
 Expected: PASS — builds successfully
 
 **Step 5: Fix any failures, then final commit**
 
 If any issues found, fix them and commit:
+
 ```bash
 git commit -m "fix(favorites): address verification issues"
 ```
@@ -1750,6 +1822,7 @@ graph TD
 ```
 
 **Wave 1** (parallel — no dependencies):
+
 - Task 1: FavoritesShopRow
 - Task 2: FavoritesListCard
 - Task 3: EmptySlotCard
@@ -1757,15 +1830,18 @@ graph TD
 - Task 5: FavoritesMiniMap
 
 **Wave 2** (parallel — depends on Wave 1):
+
 - Task 6: FavoritesMobileLayout ← Tasks 1, 2, 3, 4, 5
 - Task 7: FavoritesDesktopLayout ← Tasks 1, 4
 - Task 8: ListDetailMobileLayout ← Task 1
 - Task 9: ListDetailDesktopLayout ← Task 1
 
 **Wave 3** (parallel — depends on Wave 2):
+
 - Task 10: Lists overview page rewrite ← Tasks 4, 6, 7
 - Task 11: List detail page rewrite ← Tasks 4, 8, 9
 
 **Wave 4** (sequential — depends on Wave 3):
+
 - Task 12: Delete old ListCard + cleanup ← Tasks 10, 11
 - Task 13: Full verification ← Task 12

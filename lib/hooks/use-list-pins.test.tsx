@@ -31,7 +31,7 @@ describe('useListPins', () => {
   it('a user loading their favorites sees pin data from all lists', async () => {
     const pins = [
       { listId: 'list-1', shopId: 'shop-1', lat: 25.033, lng: 121.565 },
-      { listId: 'list-2', shopId: 'shop-2', lat: 25.040, lng: 121.570 },
+      { listId: 'list-2', shopId: 'shop-2', lat: 25.04, lng: 121.57 },
     ];
     mockFetch.mockResolvedValueOnce({ ok: true, json: async () => pins });
     const { result } = renderHook(() => useListPins(), { wrapper });

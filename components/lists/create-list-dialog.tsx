@@ -9,7 +9,11 @@ interface CreateListDialogProps {
   onCreate: (name: string) => Promise<void>;
 }
 
-export function CreateListDialog({ open, onOpenChange, onCreate }: CreateListDialogProps) {
+export function CreateListDialog({
+  open,
+  onOpenChange,
+  onCreate,
+}: CreateListDialogProps) {
   const [name, setName] = useState('');
   const [saving, setSaving] = useState(false);
 

@@ -44,7 +44,7 @@ export function ListDetailMobileLayout({
       </div>
 
       {/* Top overlay: back button + list name + count badge */}
-      <div className="absolute top-0 right-0 left-0 z-20 bg-gradient-to-b from-white/90 to-transparent px-4 pb-6 pt-4">
+      <div className="absolute top-0 right-0 left-0 z-20 bg-gradient-to-b from-white/90 to-transparent px-4 pt-4 pb-6">
         <div className="flex items-center gap-2">
           <button
             type="button"
@@ -71,7 +71,7 @@ export function ListDetailMobileLayout({
             <Drawer.Title className="sr-only">{listName} shops</Drawer.Title>
 
             {/* Sheet header */}
-            <div className="flex items-center gap-2 px-5 pb-2 pt-1">
+            <div className="flex items-center gap-2 px-5 pt-1 pb-2">
               <span className="font-[family-name:var(--font-body)] text-sm font-semibold text-[var(--foreground)]">
                 {listName}
               </span>

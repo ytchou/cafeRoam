@@ -14,7 +14,11 @@ interface FavoritesMiniMapProps {
 const TAIPEI_CENTER = { latitude: 25.033, longitude: 121.565 };
 const LIST_COLORS = ['#E06B3F', '#5B7FA6', '#5B9B6A'] as const;
 
-export function FavoritesMiniMap({ pins, totalShops, onPinClick }: FavoritesMiniMapProps) {
+export function FavoritesMiniMap({
+  pins,
+  totalShops,
+  onPinClick,
+}: FavoritesMiniMapProps) {
   const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 
   const listColorMap = useMemo(() => {
@@ -68,7 +72,7 @@ export function FavoritesMiniMap({ pins, totalShops, onPinClick }: FavoritesMini
         })}
       </MapGL>
       {/* Badge overlay */}
-      <div className="absolute bottom-3 right-3 flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-[11px] font-medium text-[var(--text-secondary)] shadow-sm">
+      <div className="absolute right-3 bottom-3 flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-[11px] font-medium text-[var(--text-secondary)] shadow-sm">
         <MapPinIcon className="h-3 w-3" />
         {totalShops} shops saved
       </div>

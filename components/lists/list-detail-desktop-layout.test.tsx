@@ -31,7 +31,11 @@ beforeAll(() => {
 });
 
 const shops = [
-  { ...makeShop({ id: 'shop-1', name: '晨光咖啡', address: '台北市大安區' }), is_open: true, taxonomy_tags: [] },
+  {
+    ...makeShop({ id: 'shop-1', name: '晨光咖啡', address: '台北市大安區' }),
+    is_open: true,
+    taxonomy_tags: [],
+  },
 ];
 
 describe('ListDetailDesktopLayout', () => {

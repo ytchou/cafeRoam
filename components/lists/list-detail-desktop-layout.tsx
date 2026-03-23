@@ -50,7 +50,7 @@ export function ListDetailDesktopLayout({
               <button
                 type="button"
                 onClick={onBack}
-                className="flex items-center gap-1 text-sm text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors"
+                className="flex items-center gap-1 text-sm text-[var(--muted-foreground)] transition-colors hover:text-[var(--foreground)]"
               >
                 <ChevronLeft className="h-4 w-4" />
                 <span>My Favorites</span>

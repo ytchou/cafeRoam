@@ -15,8 +15,8 @@ vi.mock('react-map-gl/mapbox', () => {
 
 const pins = [
   { listId: 'list-1', shopId: 'shop-1', lat: 25.033, lng: 121.565 },
-  { listId: 'list-1', shopId: 'shop-2', lat: 25.040, lng: 121.570 },
-  { listId: 'list-2', shopId: 'shop-3', lat: 25.020, lng: 121.550 },
+  { listId: 'list-1', shopId: 'shop-2', lat: 25.04, lng: 121.57 },
+  { listId: 'list-2', shopId: 'shop-3', lat: 25.02, lng: 121.55 },
 ];
 
 describe('FavoritesMiniMap', () => {

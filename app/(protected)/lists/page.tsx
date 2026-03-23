@@ -13,9 +13,12 @@ import { FavoritesDesktopLayout } from '@/components/lists/favorites-desktop-lay
 export default function ListsPage() {
   const router = useRouter();
   const isDesktop = useIsDesktop();
-  const { lists, isLoading, createList, deleteList, renameList } = useUserLists();
+  const { lists, isLoading, createList, deleteList, renameList } =
+    useUserLists();
   const { pins } = useListPins();
-  const [renaming, setRenaming] = useState<{ id: string; name: string } | null>(null);
+  const [renaming, setRenaming] = useState<{ id: string; name: string } | null>(
+    null
+  );
   const [creating, setCreating] = useState(false);
   const [selectedShopId, setSelectedShopId] = useState<string | null>(null);
 
@@ -24,8 +27,13 @@ export default function ListsPage() {
       await createList(name);
       toast.success('List created');
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to create list';
-      toast.error(message.includes('Maximum') ? "You've reached the 3-list limit" : message);
+      const message =
+        err instanceof Error ? err.message : 'Failed to create list';
+      toast.error(
+        message.includes('Maximum')
+          ? "You've reached the 3-list limit"
+          : message
+      );
     }
   }
 

@@ -18,9 +18,7 @@ const shop = {
 
 describe('FavoritesShopRow', () => {
   it('a user sees the shop name and district in the row', () => {
-    render(
-      <FavoritesShopRow shop={shop} onClick={() => {}} />
-    );
+    render(<FavoritesShopRow shop={shop} onClick={() => {}} />);
     expect(screen.getByText('山小孩咖啡')).toBeInTheDocument();
     expect(screen.getByText(/大安/)).toBeInTheDocument();
   });
@@ -33,9 +31,7 @@ describe('FavoritesShopRow', () => {
   });
 
   it('a user sees the open status indicator', () => {
-    render(
-      <FavoritesShopRow shop={shop} onClick={() => {}} />
-    );
+    render(<FavoritesShopRow shop={shop} onClick={() => {}} />);
     expect(screen.getByText(/Open/)).toBeInTheDocument();
   });
 
@@ -47,19 +43,14 @@ describe('FavoritesShopRow', () => {
   });
 
   it('a selected row shows the highlighted state', () => {
-    render(
-      <FavoritesShopRow shop={shop} onClick={() => {}} selected />
-    );
+    render(<FavoritesShopRow shop={shop} onClick={() => {}} selected />);
     const row = screen.getByRole('article');
     expect(row.dataset.selected).toBeDefined();
   });
 
   it('a shop without a photo shows a placeholder', () => {
     render(
-      <FavoritesShopRow
-        shop={{ ...shop, photo_urls: [] }}
-        onClick={() => {}}
-      />
+      <FavoritesShopRow shop={{ ...shop, photo_urls: [] }} onClick={() => {}} />
     );
     expect(screen.getByText('No photo')).toBeInTheDocument();
   });

@@ -77,7 +77,7 @@ export function FavoritesDesktopLayout({
               )}
             </div>
 
-            <div className="flex-1 overflow-y-auto px-4 pb-4 pt-2">
+            <div className="flex-1 overflow-y-auto px-4 pt-2 pb-4">
               <div className="flex flex-col gap-3">
                 {lists.map((list) => (
                   <FavoritesListCard
@@ -93,7 +93,10 @@ export function FavoritesDesktopLayout({
                 ))}
 
                 {remainingSlots > 0 && (
-                  <EmptySlotCard remainingSlots={remainingSlots} onClick={onCreateList} />
+                  <EmptySlotCard
+                    remainingSlots={remainingSlots}
+                    onClick={onCreateList}
+                  />
                 )}
               </div>
             </div>

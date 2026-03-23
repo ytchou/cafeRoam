@@ -30,7 +30,17 @@ describe('useListShops', () => {
 
   it('a user viewing a list sees shop data for that list', async () => {
     const shops = [
-      { id: 'shop-1', name: '山小孩咖啡', address: '台北市大安區', latitude: 25.02, longitude: 121.53, rating: 4.6, review_count: 100, photo_urls: [], taxonomy_tags: [] },
+      {
+        id: 'shop-1',
+        name: '山小孩咖啡',
+        address: '台北市大安區',
+        latitude: 25.02,
+        longitude: 121.53,
+        rating: 4.6,
+        review_count: 100,
+        photo_urls: [],
+        taxonomy_tags: [],
+      },
     ];
     mockFetch.mockResolvedValueOnce({ ok: true, json: async () => shops });
     const { result } = renderHook(() => useListShops('list-1'), { wrapper });

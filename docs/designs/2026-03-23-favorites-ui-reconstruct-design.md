@@ -10,10 +10,10 @@ Restyle `/lists` (overview) and `/lists/[listId]` (detail) to match approved Pen
 
 ## Architecture: Two Pages, Four Layouts
 
-| Page | Mobile | Desktop |
-|------|--------|---------|
-| `/lists` overview | Vertical scroll: mini-map + list cards | Sidebar (420px) all lists' shops + full map |
-| `/lists/[listId]` detail | Full map + fixed bottom sheet (~45%) | Collapsible left panel (420px) + full map |
+| Page                     | Mobile                                 | Desktop                                     |
+| ------------------------ | -------------------------------------- | ------------------------------------------- |
+| `/lists` overview        | Vertical scroll: mini-map + list cards | Sidebar (420px) all lists' shops + full map |
+| `/lists/[listId]` detail | Full map + fixed bottom sheet (~45%)   | Collapsible left panel (420px) + full map   |
 
 ## Page 1: Favorites Overview (`/lists`)
 
@@ -63,18 +63,18 @@ Restyle `/lists` (overview) and `/lists/[listId]` (detail) to match approved Pen
 
 ## Components
 
-| Component | Status | Description |
-|-----------|--------|-------------|
-| `FavoritesListCard` | New | List card with photo thumbnails, options menu, "View on map" link |
-| `EmptySlotCard` | New | Dashed-border placeholder for remaining list slots |
-| `FavoritesMiniMap` | New | Interactive Mapbox mini-map (160px) showing all saved pins |
-| `FavoritesShopRow` | New | Shop row (thumbnail + info + distance) for sidebar/bottom sheet |
-| `FavoritesMobileLayout` | New | Mobile overview layout |
-| `FavoritesDesktopLayout` | New | Desktop overview layout (sidebar + map) |
-| `ListDetailMobileLayout` | New | Mobile detail (map + fixed bottom sheet) |
-| `ListDetailDesktopLayout` | New | Desktop detail (collapsible panel + map) |
-| `/lists/page.tsx` | Rewrite | Wire new layouts with `useIsDesktop` |
-| `/lists/[listId]/page.tsx` | Rewrite | Wire new layouts, add Mapbox |
+| Component                  | Status  | Description                                                       |
+| -------------------------- | ------- | ----------------------------------------------------------------- |
+| `FavoritesListCard`        | New     | List card with photo thumbnails, options menu, "View on map" link |
+| `EmptySlotCard`            | New     | Dashed-border placeholder for remaining list slots                |
+| `FavoritesMiniMap`         | New     | Interactive Mapbox mini-map (160px) showing all saved pins        |
+| `FavoritesShopRow`         | New     | Shop row (thumbnail + info + distance) for sidebar/bottom sheet   |
+| `FavoritesMobileLayout`    | New     | Mobile overview layout                                            |
+| `FavoritesDesktopLayout`   | New     | Desktop overview layout (sidebar + map)                           |
+| `ListDetailMobileLayout`   | New     | Mobile detail (map + fixed bottom sheet)                          |
+| `ListDetailDesktopLayout`  | New     | Desktop detail (collapsible panel + map)                          |
+| `/lists/page.tsx`          | Rewrite | Wire new layouts with `useIsDesktop`                              |
+| `/lists/[listId]/page.tsx` | Rewrite | Wire new layouts, add Mapbox                                      |
 
 ## Data Flow
 

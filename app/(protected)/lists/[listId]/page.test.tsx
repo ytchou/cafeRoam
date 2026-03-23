@@ -57,9 +57,13 @@ vi.mock('next/navigation', () => ({
 }));
 
 vi.mock('next/link', () => ({
-  default: ({ children, href }: { children: React.ReactNode; href: string }) => (
-    <a href={href}>{children}</a>
-  ),
+  default: ({
+    children,
+    href,
+  }: {
+    children: React.ReactNode;
+    href: string;
+  }) => <a href={href}>{children}</a>,
 }));
 
 vi.mock('@/lib/hooks/use-media-query', () => ({
@@ -71,9 +75,13 @@ vi.mock('react-map-gl/mapbox', () => ({
   default: ({ children }: { children?: React.ReactNode }) => (
     <div data-testid="map">{children}</div>
   ),
-  Marker: ({ children, onClick }: { children?: React.ReactNode; onClick?: () => void }) => (
-    <div onClick={onClick}>{children}</div>
-  ),
+  Marker: ({
+    children,
+    onClick,
+  }: {
+    children?: React.ReactNode;
+    onClick?: () => void;
+  }) => <div onClick={onClick}>{children}</div>,
 }));
 
 vi.mock('@/lib/supabase/client', () => ({
@@ -110,7 +118,9 @@ describe('/lists/[listId] page', () => {
         <ListDetailPage />
       </SWRConfig>
     );
-    expect((await screen.findAllByText('Work spots')).length).toBeGreaterThan(0);
+    expect((await screen.findAllByText('Work spots')).length).toBeGreaterThan(
+      0
+    );
   });
 
   it("the user's saved shops appear as cards on the list detail page", async () => {
@@ -135,6 +145,8 @@ describe('/lists/[listId] page', () => {
         <ListDetailPage />
       </SWRConfig>
     );
-    expect(await screen.findByText(/no shops in this list/i)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/no shops in this list/i)
+    ).toBeInTheDocument();
   });
 });

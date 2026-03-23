@@ -15,7 +15,11 @@ vi.mock('next/link', () => ({
 vi.mock('next/dynamic', () => ({
   default: () => {
     const MockMapView = ({ shops }: { shops: { id: string }[] }) => (
-      <div data-testid="map">{shops.map((s) => <div key={s.id} data-testid="pin" />)}</div>
+      <div data-testid="map">
+        {shops.map((s) => (
+          <div key={s.id} data-testid="pin" />
+        ))}
+      </div>
     );
     return MockMapView;
   },
@@ -24,19 +28,35 @@ vi.mock('vaul', () => ({
   Drawer: {
     Root: ({ children }: { children: React.ReactNode }) => <>{children}</>,
     Portal: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-    Content: ({ children, className }: { children: React.ReactNode; className?: string }) => (
-      <div className={className}>{children}</div>
-    ),
+    Content: ({
+      children,
+      className,
+    }: {
+      children: React.ReactNode;
+      className?: string;
+    }) => <div className={className}>{children}</div>,
     Handle: () => <div data-testid="drawer-handle" />,
-    Title: ({ children, className }: { children: React.ReactNode; className?: string }) => (
-      <h2 className={className}>{children}</h2>
-    ),
+    Title: ({
+      children,
+      className,
+    }: {
+      children: React.ReactNode;
+      className?: string;
+    }) => <h2 className={className}>{children}</h2>,
   },
 }));
 
 const shops = [
-  { ...makeShop({ id: 'shop-1', name: '湛盧咖啡', address: '台北市信義區' }), is_open: true, taxonomy_tags: [] },
-  { ...makeShop({ id: 'shop-2', name: '慢城咖啡', address: '台北市大安區' }), is_open: false, taxonomy_tags: [] },
+  {
+    ...makeShop({ id: 'shop-1', name: '湛盧咖啡', address: '台北市信義區' }),
+    is_open: true,
+    taxonomy_tags: [],
+  },
+  {
+    ...makeShop({ id: 'shop-2', name: '慢城咖啡', address: '台北市大安區' }),
+    is_open: false,
+    taxonomy_tags: [],
+  },
 ];
 
 describe('ListDetailMobileLayout', () => {

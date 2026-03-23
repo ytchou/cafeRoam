@@ -42,7 +42,9 @@ export function FavoritesMobileLayout({
             <h1 className="font-[family-name:var(--font-heading)] text-[28px] font-bold text-[var(--foreground)]">
               收藏
             </h1>
-            <p className="text-[13px] text-[var(--text-secondary)]">My Saved Lists</p>
+            <p className="text-[13px] text-[var(--text-secondary)]">
+              My Saved Lists
+            </p>
           </div>
           <span className="rounded-full bg-[#F5EDE4] px-3 py-1 text-sm font-semibold text-[var(--map-pin)]">
             {lists.length} / {MAX_LISTS}
@@ -90,7 +92,10 @@ export function FavoritesMobileLayout({
           ))}
 
           {remainingSlots > 0 && (
-            <EmptySlotCard remainingSlots={remainingSlots} onClick={onCreateList} />
+            <EmptySlotCard
+              remainingSlots={remainingSlots}
+              onClick={onCreateList}
+            />
           )}
         </div>
       </div>

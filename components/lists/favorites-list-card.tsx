@@ -61,7 +61,7 @@ export function FavoritesListCard({
             <MoreHorizontal className="h-4 w-4 text-[var(--text-secondary)]" />
           </button>
           {menuOpen && (
-            <div className="absolute right-0 top-10 z-10 rounded-xl bg-white py-1 shadow-lg ring-1 ring-black/5">
+            <div className="absolute top-10 right-0 z-10 rounded-xl bg-white py-1 shadow-lg ring-1 ring-black/5">
               <button
                 onClick={() => {
                   onRename();

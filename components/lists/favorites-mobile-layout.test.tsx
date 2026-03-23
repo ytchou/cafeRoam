@@ -26,7 +26,10 @@ const lists = [
   makeList({
     id: 'list-1',
     name: 'Work Spots',
-    items: [makeListItem({ shop_id: 'shop-1' }), makeListItem({ shop_id: 'shop-2' })],
+    items: [
+      makeListItem({ shop_id: 'shop-1' }),
+      makeListItem({ shop_id: 'shop-2' }),
+    ],
   }),
   makeList({
     id: 'list-2',
@@ -36,7 +39,7 @@ const lists = [
 ];
 const pins = [
   { listId: 'list-1', shopId: 'shop-1', lat: 25.033, lng: 121.565 },
-  { listId: 'list-1', shopId: 'shop-2', lat: 25.040, lng: 121.570 },
+  { listId: 'list-1', shopId: 'shop-2', lat: 25.04, lng: 121.57 },
 ];
 
 describe('FavoritesMobileLayout', () => {
@@ -89,7 +92,10 @@ describe('FavoritesMobileLayout', () => {
   });
 
   it('a user at the 3-list cap does not see an empty slot card', () => {
-    const threeLists = [...lists, makeList({ id: 'list-3', name: 'Third List' })];
+    const threeLists = [
+      ...lists,
+      makeList({ id: 'list-3', name: 'Third List' }),
+    ];
     render(
       <FavoritesMobileLayout
         lists={threeLists}
