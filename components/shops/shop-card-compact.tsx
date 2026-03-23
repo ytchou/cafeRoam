@@ -48,7 +48,7 @@ export function ShopCardCompact({
       onClick={onClick}
       className={`flex h-20 cursor-pointer items-center gap-3 px-5 py-0 transition-colors ${
         selected
-          ? 'border-l-[3px] border-l-[var(--map-pin)] bg-[var(--card-selected-bg)]'
+          ? 'border-l-[3px] border-l-map-pin bg-card-selected'
           : 'bg-[var(--background)]'
       }`}
     >
@@ -77,7 +77,7 @@ export function ShopCardCompact({
       </div>
       <ChevronRight
         data-testid="compact-card-arrow"
-        className="h-[18px] w-[18px] shrink-0 text-[var(--border-light)]"
+        className="h-[18px] w-[18px] shrink-0 text-text-tertiary"
       />
     </article>
   );
