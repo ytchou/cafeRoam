@@ -20,6 +20,9 @@ const BRICOLAGE_STYLE = {
 const BRICOLAGE_STYLE_SM = {
   fontFamily: 'var(--font-bricolage), sans-serif',
 } as const;
+const DM_SANS_STYLE = {
+  fontFamily: 'var(--font-dm-sans), sans-serif',
+} as const;
 
 export default function ExplorePage() {
   const { capture } = useAnalytics();
@@ -63,7 +66,7 @@ export default function ExplorePage() {
       <div className="mb-3 flex items-center justify-between">
         <span
           className="text-[11px] font-semibold tracking-[1px] text-[#C4922A]"
-          style={{ fontFamily: 'var(--font-dm-sans), sans-serif' }}
+          style={DM_SANS_STYLE}
         >
           ✦ Your Daily Draw
         </span>
