@@ -37,7 +37,7 @@ describe('CheckinHistoryTab', () => {
     expect(screen.getByText('Rufous Coffee')).toBeInTheDocument();
   });
 
-  it('does not render star ratings', () => {
+  it('hides star rating UI on check-in cards', () => {
     render(<CheckinHistoryTab checkins={checkins} isLoading={false} />);
     expect(screen.queryByTestId('star-filled')).not.toBeInTheDocument();
     expect(screen.queryByTestId('star-empty')).not.toBeInTheDocument();

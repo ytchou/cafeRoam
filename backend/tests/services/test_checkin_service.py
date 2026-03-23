@@ -65,10 +65,10 @@ class TestCheckInService:
         insert_table.insert.return_value.execute.return_value = MagicMock(
             data=[
                 {
-                    "id": "ci-1",
-                    "user_id": "user-1",
-                    "shop_id": "shop-1",
-                    "photo_urls": ["https://example.com/photo.jpg"],
+                    "id": "ci-hinoki-001",
+                    "user_id": "user-mei-ling-001",
+                    "shop_id": "shop-hinoki",
+                    "photo_urls": ["https://cdn.caferoam.tw/checkins/latte-art.jpg"],
                     "menu_photo_url": None,
                     "note": None,
                     "created_at": datetime.now().isoformat(),
@@ -79,11 +79,11 @@ class TestCheckInService:
         mock_supabase.table.side_effect = [count_table, insert_table]
 
         result = await checkin_service.create(
-            user_id="user-1",
-            shop_id="shop-1",
-            photo_urls=["https://example.com/photo.jpg"],
+            user_id="user-mei-ling-001",
+            shop_id="shop-hinoki",
+            photo_urls=["https://cdn.caferoam.tw/checkins/latte-art.jpg"],
         )
-        assert result.id == "ci-1"
+        assert result.id == "ci-hinoki-001"
         assert result.is_first_checkin_at_shop is True
         # Service should only call table("check_ins") — NOT stamps or job_queue
         # (Two calls expected: one count query + one insert)
@@ -104,11 +104,11 @@ class TestCheckInService:
         insert_table.insert.return_value.execute.return_value = MagicMock(
             data=[
                 {
-                    "id": "ci-1",
-                    "user_id": "user-1",
-                    "shop_id": "shop-1",
-                    "photo_urls": ["https://example.com/photo.jpg"],
-                    "menu_photo_url": "https://example.com/menu.jpg",
+                    "id": "ci-fuji-002",
+                    "user_id": "user-mei-ling-001",
+                    "shop_id": "shop-fuji-zhongshan",
+                    "photo_urls": ["https://cdn.caferoam.tw/checkins/espresso.jpg"],
+                    "menu_photo_url": "https://cdn.caferoam.tw/menu/fuji-menu.jpg",
                     "note": None,
                     "created_at": datetime.now().isoformat(),
                 }
@@ -118,10 +118,10 @@ class TestCheckInService:
         mock_supabase.table.side_effect = [count_table, insert_table]
 
         result = await checkin_service.create(
-            user_id="user-1",
-            shop_id="shop-1",
-            photo_urls=["https://example.com/photo.jpg"],
-            menu_photo_url="https://example.com/menu.jpg",
+            user_id="user-mei-ling-001",
+            shop_id="shop-fuji-zhongshan",
+            photo_urls=["https://cdn.caferoam.tw/checkins/espresso.jpg"],
+            menu_photo_url="https://cdn.caferoam.tw/menu/fuji-menu.jpg",
         )
         assert result.is_first_checkin_at_shop is True
         # Service should only call table("check_ins") — NOT stamps or job_queue
