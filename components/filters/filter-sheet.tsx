@@ -147,7 +147,7 @@ function FilterContent({
             Filters
           </h2>
           {selected.size > 0 && (
-            <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--tag-active-bg)] px-1.5 text-xs font-medium text-white">
+            <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-tag-active-bg px-1.5 text-xs font-medium text-white">
               {selected.size}
             </span>
           )}
@@ -171,7 +171,7 @@ function FilterContent({
             onClick={() => setActiveTab(tab.key)}
             className={`shrink-0 rounded-full px-3 py-1.5 font-[family-name:var(--font-body)] text-sm font-medium transition-colors ${
               activeTab === tab.key
-                ? 'bg-[var(--tag-active-bg)] text-white'
+                ? 'bg-tag-active-bg text-white'
                 : 'bg-surface-section text-gray-500'
             }`}
           >
