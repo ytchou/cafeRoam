@@ -1,6 +1,5 @@
 'use client';
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { useUserLists } from '@/lib/hooks/use-user-lists';
 import { useListPins } from '@/lib/hooks/use-list-pins';
@@ -10,7 +9,6 @@ import { FavoritesMobileLayout } from '@/components/lists/favorites-mobile-layou
 import { FavoritesDesktopLayout } from '@/components/lists/favorites-desktop-layout';
 
 export default function ListsPage() {
-  const router = useRouter();
   const isDesktop = useIsDesktop();
   const { lists, isLoading, createList, deleteList, renameList } = useUserLists();
   const { pins } = useListPins();

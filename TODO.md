@@ -1216,7 +1216,7 @@ _Designed in Pencil. Current lists UI gets a visual pass._
 **Chunk 4 — Cleanup + Verification (Wave 4):**
 
 - [x] Delete old ListCard component + cleanup dead imports
-- [ ] Full verification (vitest, type-check, lint, build)
+- [x] Full verification (vitest, type-check, lint, build)
 
 ### UI Reconstruct — Profile
 
