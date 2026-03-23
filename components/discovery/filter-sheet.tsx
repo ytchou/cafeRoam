@@ -69,6 +69,8 @@ const FILTER_TABS: TabCategory[] = [
       { id: 'rest', label: 'Rest' },
       { id: 'social', label: 'Social' },
       { id: 'specialty', label: 'Specialty' },
+      { id: 'social_mixer', label: 'Social Mixer' },
+      { id: 'silent_work', label: 'Silent Work' },
     ],
   },
   {
