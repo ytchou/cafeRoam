@@ -19,6 +19,9 @@ export default defineConfig({
     ],
     environment: 'jsdom',
     setupFiles: ['./vitest.setup.ts'],
+    typecheck: {
+      tsconfig: './tsconfig.test.json',
+    },
     coverage: {
       provider: 'v8',
       reporter: ['json', 'text'],

@@ -1,21 +1,18 @@
+import { type ReactNode } from 'react';
 import { Coffee } from 'lucide-react';
 
-const HEADING_STYLE = {
-  fontFamily: 'var(--font-bricolage), system-ui, sans-serif',
-} as const;
-
-const BODY_STYLE = {
-  fontFamily: 'var(--font-dm-sans), var(--font-noto-sans-tc), system-ui, sans-serif',
-} as const;
+import { BODY_STYLE, HEADING_STYLE } from '@/lib/typography';
 
 interface ComingSoonProps {
   title?: string;
   description?: string;
+  action?: ReactNode;
 }
 
 export function ComingSoon({
   title = '即將推出',
   description = 'This feature is on its way. Check back soon.',
+  action,
 }: ComingSoonProps) {
   return (
     <div
@@ -29,7 +26,7 @@ export function ComingSoon({
 
         <div className="flex flex-col gap-2">
           <h2
-            className="text-2xl font-bold tracking-tight text-text-primary"
+            className="text-2xl font-bold text-text-primary"
             style={HEADING_STYLE}
           >
             {title}
@@ -38,6 +35,8 @@ export function ComingSoon({
             {description}
           </p>
         </div>
+
+        {action}
       </div>
     </div>
   );

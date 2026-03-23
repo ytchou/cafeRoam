@@ -1,12 +1,7 @@
 import { AlertCircle } from 'lucide-react';
 
-const HEADING_STYLE = {
-  fontFamily: 'var(--font-bricolage), system-ui, sans-serif',
-} as const;
-
-const BODY_STYLE = {
-  fontFamily: 'var(--font-dm-sans), var(--font-noto-sans-tc), system-ui, sans-serif',
-} as const;
+import { BODY_STYLE, HEADING_STYLE } from '@/lib/typography';
+import { Button } from '@/components/ui/button';
 
 interface ErrorStateProps {
   title?: string;
@@ -31,7 +26,7 @@ export function ErrorState({
 
         <div className="flex flex-col gap-2">
           <h2
-            className="text-2xl font-bold tracking-tight text-text-primary"
+            className="text-2xl font-bold text-text-primary"
             style={HEADING_STYLE}
           >
             {title}
@@ -42,14 +37,14 @@ export function ErrorState({
         </div>
 
         {onRetry && (
-          <button
-            type="button"
+          <Button
+            size="lg"
             onClick={onRetry}
-            className="h-10 rounded-full bg-brand px-6 text-sm font-medium text-white transition-colors hover:bg-brand/90"
+            className="rounded-full bg-brand text-white hover:bg-brand/90"
             style={BODY_STYLE}
           >
             Try again
-          </button>
+          </Button>
         )}
       </div>
     </div>
