@@ -1234,7 +1234,7 @@ _Designed in Pencil. Stamps, check-in history, account settings._
 - [x] Task 3: Frontend — rebuild ProfileHeader
 - [x] Task 4: Frontend — rebuild PolaroidSection
 - [x] Task 5: Frontend — rebuild CheckinHistoryTab
-- [ ] Task 6: Frontend — update Profile page layout and wiring
+- [x] Task 6: Frontend — update Profile page layout and wiring
 
 ### Profile Polaroid Redesign
 

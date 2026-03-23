@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useUser } from '@/lib/hooks/use-user';
 import { useUserStamps } from '@/lib/hooks/use-user-stamps';
 import { useUserProfile } from '@/lib/hooks/use-user-profile';
 import { useUserCheckins } from '@/lib/hooks/use-user-checkins';
@@ -12,6 +13,7 @@ import { CheckinHistoryTab } from '@/components/profile/checkin-history-tab';
 import type { StampData } from '@/lib/hooks/use-user-stamps';
 
 export default function ProfilePage() {
+  const { user } = useUser();
   const { profile, isLoading: profileLoading } = useUserProfile();
   const { stamps, isLoading: stampsLoading } = useUserStamps();
   const { checkins, isLoading: checkinsLoading } = useUserCheckins();
@@ -27,36 +29,42 @@ export default function ProfilePage() {
   }, [stampsLoading, stamps.length, capture]);
 
   return (
-    <main className="mx-auto max-w-lg px-4 py-6">
+    <main className="min-h-screen bg-[#F5F4F1]">
       {profileLoading ? (
-        <div className="flex justify-center py-6">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600" />
+        <div className="flex justify-center bg-[#8B5E3C] py-12">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/30 border-t-white" />
         </div>
       ) : (
         <ProfileHeader
           displayName={profile?.display_name ?? null}
           avatarUrl={profile?.avatar_url ?? null}
+          email={user?.email ?? null}
           checkinCount={profile?.checkin_count ?? 0}
+          stampCount={profile?.stamp_count ?? 0}
         />
       )}
 
-      <section className="mb-6">
-        {stampsLoading ? (
-          <div className="flex justify-center py-12">
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600" />
-          </div>
-        ) : (
-          <PolaroidSection
-            stamps={stamps}
-            onStampClick={(stamp) => setSelectedStamp(stamp)}
-          />
-        )}
-      </section>
+      <div className="mx-auto max-w-4xl px-4 pb-8">
+        <section>
+          {stampsLoading ? (
+            <div className="flex justify-center py-12">
+              <div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600" />
+            </div>
+          ) : (
+            <PolaroidSection
+              stamps={stamps}
+              onStampClick={(stamp) => setSelectedStamp(stamp)}
+            />
+          )}
+        </section>
 
-      <section>
-        <h2 className="mb-4 text-lg font-semibold">Check-in History</h2>
-        <CheckinHistoryTab checkins={checkins} isLoading={checkinsLoading} />
-      </section>
+        <section>
+          <h2 className="pb-4 pt-7 font-heading text-xl font-bold text-[#1A1918]">
+            Check-in History
+          </h2>
+          <CheckinHistoryTab checkins={checkins} isLoading={checkinsLoading} />
+        </section>
+      </div>
 
       {selectedStamp && (
         <StampDetailSheet

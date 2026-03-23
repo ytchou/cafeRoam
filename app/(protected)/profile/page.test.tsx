@@ -20,6 +20,13 @@ vi.mock('posthog-js', () => ({
   default: { capture: mockCapture },
 }));
 
+vi.mock('@/lib/hooks/use-user', () => ({
+  useUser: () => ({
+    user: { email: 'mei.ling@gmail.com' },
+    isLoading: false,
+  }),
+}));
+
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
@@ -175,5 +182,24 @@ describe('ProfilePage', () => {
     await waitFor(() => {
       expect(screen.getAllByText('山小孩咖啡').length).toBeGreaterThan(1);
     });
+  });
+
+  it('renders email from auth session in profile header', async () => {
+    mockAllEndpoints();
+    render(<ProfilePage />, { wrapper });
+
+    await waitFor(() => {
+      expect(screen.getByText('mei.ling@gmail.com')).toBeInTheDocument();
+    });
+  });
+
+  it('renders memories count stat from stamp_count', async () => {
+    mockAllEndpoints({ profile: { display_name: 'Mei', avatar_url: null, checkin_count: 5, stamp_count: 12 } });
+    render(<ProfilePage />, { wrapper });
+
+    await waitFor(() => {
+      expect(screen.getByText('12')).toBeInTheDocument();
+    });
+    expect(screen.getByText('Memories')).toBeInTheDocument();
   });
 });
