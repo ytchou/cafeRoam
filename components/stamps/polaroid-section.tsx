@@ -59,7 +59,7 @@ export function PolaroidSection({
               role={onStampClick ? 'button' : undefined}
               tabIndex={onStampClick ? 0 : undefined}
               aria-label={onStampClick ? (stamp.shop_name ?? 'Memory') : undefined}
-              className="min-w-[200px] flex-shrink-0 snap-start cursor-pointer rounded-lg bg-white p-2.5 shadow-[0_3px_12px_rgba(0,0,0,0.08)] transition-transform hover:scale-[1.02] md:min-w-0 md:snap-align-none"
+              className="min-w-[200px] flex-shrink-0 snap-start cursor-pointer rounded-lg bg-white p-2.5 shadow-[0_3px_12px_rgba(0,0,0,0.08)] transition-transform hover:scale-[1.02] md:min-w-0"
               onClick={() => onStampClick?.(stamp)}
               onKeyDown={
                 onStampClick
