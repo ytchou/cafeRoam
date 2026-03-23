@@ -1210,8 +1210,8 @@ _Designed in Pencil. Current lists UI gets a visual pass._
 
 **Chunk 3 — Page Rewrites (Wave 3):**
 
-- [ ] Rewrite `/lists` overview page with new layouts
-- [ ] Rewrite `/lists/[listId]` detail page with map + layouts
+- [x] Rewrite `/lists` overview page with new layouts
+- [x] Rewrite `/lists/[listId]` detail page with map + layouts
 
 **Chunk 4 — Cleanup + Verification (Wave 4):**
 

@@ -1,19 +1,31 @@
 'use client';
-
 import { useState } from 'react';
-import { Plus } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { useUserLists } from '@/lib/hooks/use-user-lists';
-import { ListCard } from '@/components/lists/list-card';
+import { useListPins } from '@/lib/hooks/use-list-pins';
+import { useIsDesktop } from '@/lib/hooks/use-media-query';
 import { RenameListDialog } from '@/components/lists/rename-list-dialog';
+import { FavoritesMobileLayout } from '@/components/lists/favorites-mobile-layout';
+import { FavoritesDesktopLayout } from '@/components/lists/favorites-desktop-layout';
 
 export default function ListsPage() {
-  const { lists, isLoading, createList, deleteList, renameList } =
-    useUserLists();
-  const [renaming, setRenaming] = useState<{ id: string; name: string } | null>(
-    null
-  );
-  const [newListName, setNewListName] = useState('');
+  const router = useRouter();
+  const isDesktop = useIsDesktop();
+  const { lists, isLoading, createList, deleteList, renameList } = useUserLists();
+  const { pins } = useListPins();
+  const [renaming, setRenaming] = useState<{ id: string; name: string } | null>(null);
+  const [selectedShopId, setSelectedShopId] = useState<string | null>(null);
+
+  async function handleCreate(name: string) {
+    try {
+      await createList(name);
+      toast.success('List created');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to create list';
+      toast.error(message.includes('Maximum') ? "You've reached the 3-list limit" : message);
+    }
+  }
 
   async function handleDelete(listId: string, listName: string) {
     if (!confirm(`Delete "${listName}"? This won't remove the shops.`)) return;
@@ -25,83 +37,47 @@ export default function ListsPage() {
     }
   }
 
-  async function handleCreate() {
-    if (!newListName.trim()) return;
-    try {
-      await createList(newListName.trim());
-      setNewListName('');
-      toast.success('List created');
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : 'Failed to create list';
-      toast.error(
-        message.includes('Maximum')
-          ? "You've reached the 3-list limit"
-          : message
-      );
-    }
+  async function handleRename(listId: string, name: string) {
+    await renameList(listId, name);
+    setRenaming(null);
   }
 
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <p className="text-gray-500">Loading lists...</p>
+        <p className="text-[var(--text-tertiary)]">Loading...</p>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-lg px-4 py-6">
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-xl font-bold">My Lists</h1>
-        <span className="text-sm text-gray-500">{lists.length} / 3</span>
-      </div>
-
-      {lists.length === 0 ? (
-        <div className="py-16 text-center">
-          <p className="text-gray-500">No lists yet</p>
-          <p className="mt-1 text-sm text-gray-400">
-            Save shops from the directory to start building your collections.
-          </p>
-        </div>
+    <>
+      {isDesktop ? (
+        <FavoritesDesktopLayout
+          lists={lists}
+          shopsByList={{}}
+          pins={pins}
+          selectedShopId={selectedShopId}
+          onShopClick={setSelectedShopId}
+          onCreateList={handleCreate}
+          onDeleteList={handleDelete}
+          onRenameList={(id) => {
+            const list = lists.find((l) => l.id === id);
+            if (list) setRenaming({ id, name: list.name });
+          }}
+        />
       ) : (
-        <div className="space-y-3">
-          {lists.map((list) => (
-            <ListCard
-              key={list.id}
-              id={list.id}
-              name={list.name}
-              itemCount={list.items.length}
-              onRename={() => setRenaming({ id: list.id, name: list.name })}
-              onDelete={() => handleDelete(list.id, list.name)}
-            />
-          ))}
-        </div>
+        <FavoritesMobileLayout
+          lists={lists}
+          pins={pins}
+          onCreateList={handleCreate}
+          onDeleteList={handleDelete}
+          onRenameList={(id) => {
+            const list = lists.find((l) => l.id === id);
+            if (list) setRenaming({ id, name: list.name });
+          }}
+        />
       )}
-
-      {lists.length < 3 && (
-        <div className="mt-4 flex items-center gap-2">
-          <Plus className="h-4 w-4 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Create new list"
-            value={newListName}
-            onChange={(e) => setNewListName(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
-            className="flex-1 border-b border-gray-200 bg-transparent py-2 text-sm outline-none focus:border-gray-400"
-          />
-          {newListName.trim() && (
-            <button
-              onClick={handleCreate}
-              className="text-sm font-medium text-blue-600"
-            >
-              Add
-            </button>
-          )}
-        </div>
-      )}
-
-      {/* TODO: add mini map here once Mapbox pin integration is ready */}
 
       {renaming && (
         <RenameListDialog
@@ -109,9 +85,9 @@ export default function ListsPage() {
           currentName={renaming.name}
           open={!!renaming}
           onOpenChange={(open) => !open && setRenaming(null)}
-          onRename={renameList}
+          onRename={handleRename}
         />
       )}
-    </div>
+    </>
   );
 }
