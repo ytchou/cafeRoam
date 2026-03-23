@@ -11,6 +11,12 @@ vi.mock('@/lib/supabase/client', () => ({
       getSession: vi.fn().mockResolvedValue({
         data: { session: { access_token: 'test-token' } },
       }),
+      getUser: vi.fn().mockResolvedValue({
+        data: { user: { email: 'mei.ling@gmail.com' } },
+      }),
+      onAuthStateChange: vi.fn().mockReturnValue({
+        data: { subscription: { unsubscribe: vi.fn() } },
+      }),
     },
   }),
 }));
@@ -18,13 +24,6 @@ vi.mock('@/lib/supabase/client', () => ({
 const { mockCapture } = vi.hoisted(() => ({ mockCapture: vi.fn() }));
 vi.mock('posthog-js', () => ({
   default: { capture: mockCapture },
-}));
-
-vi.mock('@/lib/hooks/use-user', () => ({
-  useUser: () => ({
-    user: { email: 'mei.ling@gmail.com' },
-    isLoading: false,
-  }),
 }));
 
 const mockFetch = vi.fn();
