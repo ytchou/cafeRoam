@@ -113,7 +113,7 @@ export function CheckInPopover({
             onClick={handleSubmit}
             disabled={!canSubmit}
             aria-label="Check In 打卡"
-            className="w-full rounded-lg bg-[var(--text-primary)] py-2.5 text-sm font-semibold text-white disabled:opacity-40"
+            className="w-full rounded-lg bg-text-primary py-2.5 text-sm font-semibold text-white disabled:opacity-40"
           >
             {busy ? 'Checking in...' : 'Check In 打卡'}
           </button>

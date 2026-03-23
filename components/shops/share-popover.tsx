@@ -86,7 +86,7 @@ export function SharePopover({
 
         <div className="space-y-4 p-4">
           <div className="flex items-center gap-3 rounded-xl bg-surface-section px-3 py-2.5">
-            <div className="h-10 w-10 flex-shrink-0 rounded-lg bg-border-warm" />
+            <div className="h-10 w-10 flex-shrink-0 rounded-lg bg-surface-card" />
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold text-text-body">
                 {shopName}

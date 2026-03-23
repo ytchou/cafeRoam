@@ -76,7 +76,7 @@ export function SaveToListSheet({
         <div className="py-2">
           {lists.length === 0 && (
             <div className="flex flex-col items-center px-4 py-10 text-center">
-              <div className="mb-3 h-10 w-10 rounded-full bg-border-warm" />
+              <div className="mb-3 h-10 w-10 rounded-full bg-surface-card" />
               <p className="mb-1 text-sm font-semibold text-text-primary">
                 No lists yet
               </p>
@@ -98,7 +98,7 @@ export function SaveToListSheet({
               key={list.id}
               className="flex cursor-pointer items-center gap-3 px-4 py-3 hover:bg-surface-section"
             >
-              <div className="h-10 w-10 flex-shrink-0 rounded-lg bg-border-warm" />
+              <div className="h-10 w-10 flex-shrink-0 rounded-lg bg-surface-card" />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium text-text-primary">
                   {list.name}

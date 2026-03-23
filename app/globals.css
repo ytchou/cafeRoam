@@ -116,7 +116,7 @@
 
   /* Extended CafeRoam design tokens */
   --brand: #e06b3f;
-  --espresso: #2c1810; /* alias for --active-dark */
+  --espresso: var(--active-dark);
 
   /* Text hierarchy */
   --text-primary: #1a1918;

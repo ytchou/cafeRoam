@@ -117,7 +117,7 @@ export function ShopReviews({
       {total > reviews.length && (
         <Link
           href={`/shops/${shopId}/reviews`}
-          className="mt-3 block text-sm font-medium text-status-open-text"
+          className="mt-3 block text-sm font-medium text-link-green"
         >
           See all {total} reviews →
         </Link>

@@ -197,7 +197,7 @@ function FilterContent({
         <button
           type="button"
           onClick={handleApply}
-          className="w-full rounded-full bg-brand py-2.5 font-[family-name:var(--font-body)] text-sm font-medium text-white"
+          className="w-full rounded-full bg-espresso py-2.5 font-[family-name:var(--font-body)] text-sm font-medium text-white"
         >
           {selected.size > 0 ? `Show ${selected.size} places` : 'Show places'}
         </button>

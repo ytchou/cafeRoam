@@ -97,7 +97,7 @@ export function SavePopover({
               key={list.id}
               className="flex cursor-pointer items-center gap-3 px-4 py-3 hover:bg-surface-section"
             >
-              <div className="h-10 w-10 flex-shrink-0 rounded-lg bg-border-warm" />
+              <div className="h-10 w-10 flex-shrink-0 rounded-lg bg-surface-card" />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium text-text-body">
                   {list.name}
