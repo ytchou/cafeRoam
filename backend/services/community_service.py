@@ -81,10 +81,7 @@ class CommunityService:
             query = query.in_("shop_id", shop_ids)
         if vibe_tag:
             tag_resp = (
-                self._db.table("shop_tags")
-                .select("shop_id")
-                .eq("tag_id", vibe_tag)
-                .execute()
+                self._db.table("shop_tags").select("shop_id").eq("tag_id", vibe_tag).execute()
             )
             tag_shop_ids = [row["shop_id"] for row in (tag_resp.data or [])]
             if not tag_shop_ids:
