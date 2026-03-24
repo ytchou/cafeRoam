@@ -9,7 +9,10 @@ import { useAnalytics } from '@/lib/posthog/use-analytics';
 
 function SearchPageContent() {
   const { query, mode, setQuery } = useSearchState();
-  const { results, isLoading, error, queryType, resultCount } = useSearch(query || null, mode);
+  const { results, isLoading, error, queryType, resultCount } = useSearch(
+    query || null,
+    mode
+  );
   const { capture } = useAnalytics();
   const lastFiredQuery = useRef<string | null>(null);
 

@@ -19,10 +19,16 @@ describe('POST /api/analytics/events', () => {
     const { POST } = await import('./route');
     const request = new NextRequest('http://localhost/api/analytics/events', {
       method: 'POST',
-      body: JSON.stringify({ event: 'filter_applied', properties: { filter_type: 'mode', filter_value: 'work' } }),
+      body: JSON.stringify({
+        event: 'filter_applied',
+        properties: { filter_type: 'mode', filter_value: 'work' },
+      }),
     });
 
     await POST(request);
-    expect(mockProxyToBackend).toHaveBeenCalledWith(request, '/analytics/events');
+    expect(mockProxyToBackend).toHaveBeenCalledWith(
+      request,
+      '/analytics/events'
+    );
   });
 });

@@ -46,7 +46,10 @@ describe('useAnalytics', () => {
     const { result } = renderHook(() => useAnalytics());
 
     act(() => {
-      result.current.capture('filter_applied', { filter_type: 'vibe', filter_value: 'quiet' });
+      result.current.capture('filter_applied', {
+        filter_type: 'vibe',
+        filter_value: 'quiet',
+      });
     });
 
     expect(mockFetchWithAuth).not.toHaveBeenCalled();
@@ -60,7 +63,10 @@ describe('useAnalytics', () => {
     const { result } = renderHook(() => useAnalytics());
 
     act(() => {
-      result.current.capture('filter_applied', { filter_type: 'vibe', filter_value: 'quiet' });
+      result.current.capture('filter_applied', {
+        filter_type: 'vibe',
+        filter_value: 'quiet',
+      });
     });
   });
 });
