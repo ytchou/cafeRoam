@@ -26,6 +26,7 @@ const CHECKINS = [
     shop_id: 'shop-d4e5f6',
     shop_name: '山小孩咖啡',
     shop_mrt: '台電大樓',
+    shop_photo_url: 'https://example.com/shops/shan-xiao-hai/exterior.jpg',
     photo_urls: ['https://example.com/photo1.jpg'],
     stars: 4,
     review_text: '很棒的工作環境',

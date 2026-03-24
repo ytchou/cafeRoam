@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
+import { Coffee } from 'lucide-react';
 import type { CheckInData } from '@/lib/hooks/use-user-checkins';
 import { formatRelativeTime } from '@/lib/utils';
 
@@ -29,7 +30,7 @@ export function CheckinHistoryTab({
   }
 
   return (
-    <div className="space-y-3">
+    <div className="flex flex-col gap-3">
       {checkins.map((checkin) => (
         <CheckinCard key={checkin.id} checkin={checkin} />
       ))}
@@ -41,47 +42,45 @@ function CheckinCard({ checkin }: { checkin: CheckInData }) {
   const date = formatRelativeTime(checkin.created_at);
 
   return (
-    <div className="flex gap-3 rounded-lg border p-3">
-      {checkin.photo_urls[0] && (
+    <div className="flex gap-3.5 rounded-2xl border border-[#F3F4F6] bg-white p-4 shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
+      {/* Thumbnail */}
+      {checkin.shop_photo_url ? (
         <Image
-          src={checkin.photo_urls[0]}
-          alt=""
-          width={60}
-          height={60}
-          className="rounded-md object-cover"
+          src={checkin.shop_photo_url}
+          alt={checkin.shop_name ?? ''}
+          width={72}
+          height={72}
+          className="h-[72px] w-[72px] flex-shrink-0 rounded-xl object-cover"
+          sizes="72px"
         />
-      )}
-      <div className="min-w-0 flex-1">
-        <Link
-          href={`/shop/${checkin.shop_id}`}
-          className="font-medium hover:underline"
+      ) : (
+        <div
+          data-testid="coffee-icon-fallback"
+          className="flex h-[72px] w-[72px] flex-shrink-0 items-center justify-center rounded-xl bg-[#F5EDE4]"
         >
-          {checkin.shop_name ?? 'Unknown Shop'}
-        </Link>
-        <div className="text-muted-foreground flex items-center gap-2 text-sm">
-          {checkin.stars != null && <StarDisplay count={checkin.stars} />}
-          <span>{date}</span>
+          <Coffee className="h-6 w-6 text-[#8B5E3C]" />
         </div>
-        {checkin.shop_mrt && (
-          <p className="text-muted-foreground text-xs">{checkin.shop_mrt}</p>
+      )}
+
+      {/* Info */}
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center justify-between">
+          <Link
+            href={`/shop/${checkin.shop_id}`}
+            className="truncate text-[15px] font-bold text-[#1A1918] hover:underline"
+          >
+            {checkin.shop_name ?? 'Unknown Shop'}
+          </Link>
+          <span className="ml-2 flex-shrink-0 text-xs text-[#9CA3AF]">
+            {date}
+          </span>
+        </div>
+        {checkin.review_text && (
+          <p className="mt-1 line-clamp-2 text-[13px] leading-[1.4] text-[#9CA3AF]">
+            {checkin.review_text}
+          </p>
         )}
       </div>
     </div>
-  );
-}
-
-function StarDisplay({ count }: { count: number }) {
-  return (
-    <span className="flex">
-      {Array.from({ length: 5 }, (_, i) => (
-        <span
-          key={i}
-          data-testid={i < count ? 'star-filled' : 'star-empty'}
-          className={i < count ? 'text-yellow-500' : 'text-gray-300'}
-        >
-          ★
-        </span>
-      ))}
-    </span>
   );
 }
