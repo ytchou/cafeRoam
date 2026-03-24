@@ -167,6 +167,7 @@ class CheckIn(CamelModel):
     review_text: str | None = None
     confirmed_tags: list[str] | None = None
     reviewed_at: datetime | None = None
+    is_public: bool = True
     created_at: datetime
 
     @field_validator("photo_urls")

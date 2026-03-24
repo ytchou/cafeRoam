@@ -41,6 +41,7 @@ class CheckInService:
         stars: int | None = None,
         review_text: str | None = None,
         confirmed_tags: list[str] | None = None,
+        is_public: bool = True,
     ) -> CreateCheckInResponse:
         """Create a check-in. DB trigger handles stamp creation and job queueing."""
         if not photo_urls:
@@ -74,6 +75,7 @@ class CheckInService:
             "photo_urls": photo_urls,
             "menu_photo_url": menu_photo_url,
             "note": note,
+            "is_public": is_public,
         }
         if stars is not None:
             checkin_data["stars"] = stars
