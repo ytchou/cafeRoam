@@ -17,10 +17,14 @@ def _make_db(shops_data: list, pending_jobs: list | None = None) -> MagicMock:
     db = MagicMock()
 
     shops_table = MagicMock()
-    shops_table.select.return_value.eq.return_value.execute.return_value = MagicMock(data=shops_data)
+    shops_table.select.return_value.eq.return_value.execute.return_value = MagicMock(
+        data=shops_data
+    )
 
     jobs_table = MagicMock()
-    jobs_table.select.return_value.eq.return_value.eq.return_value.execute.return_value = MagicMock(data=pending_jobs or [])
+    jobs_table.select.return_value.eq.return_value.eq.return_value.execute.return_value = MagicMock(
+        data=pending_jobs or []
+    )
 
     table_mocks: dict[str, MagicMock] = {"shops": shops_table, "job_queue": jobs_table}
     db.table.side_effect = lambda name: table_mocks.get(name, MagicMock())
@@ -31,10 +35,12 @@ def _make_db(shops_data: list, pending_jobs: list | None = None) -> MagicMock:
 class TestReembedLiveShopsScript:
     async def test_enqueues_generate_embedding_for_every_live_shop(self):
         """Running the script enqueues one batch job covering all live shops."""
-        db = _make_db(shops_data=[
-            {"id": "shop-taipei-01", "name": "虎記商行"},
-            {"id": "shop-taipei-02", "name": "木子鳥"},
-        ])
+        db = _make_db(
+            shops_data=[
+                {"id": "shop-taipei-01", "name": "虎記商行"},
+                {"id": "shop-taipei-02", "name": "木子鳥"},
+            ]
+        )
         queue = AsyncMock()
 
         with patch("scripts.reembed_live_shops.get_service_role_client", return_value=db):
@@ -55,7 +61,9 @@ class TestReembedLiveShopsScript:
             await main(dry_run=False, queue=queue)
 
         # Verify the shops query filtered by processing_status='live'
-        db._table_mocks["shops"].select.return_value.eq.assert_called_with("processing_status", "live")
+        db._table_mocks["shops"].select.return_value.eq.assert_called_with(
+            "processing_status", "live"
+        )
         queue.enqueue_batch.assert_called_once()
 
     async def test_skips_shops_with_existing_pending_jobs(self):

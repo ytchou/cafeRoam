@@ -1,4 +1,5 @@
 # State Machine Guards: Allowlist Over Exclusion
+
 **Date:** 2026-03-24
 **Context:** DEV-6 live-shop guard in generate_embedding handler
 
@@ -6,7 +7,7 @@
 
 **Root cause:** Negative guards (`!= X`) are safe only when the state space is binary. When it's an enum with 8+ values, a negative guard includes every unknown or unexpected value.
 
-**Prevention:** For state machine transitions, always use an allowlist of states that *should* advance, not an exclusion of states that shouldn't:
+**Prevention:** For state machine transitions, always use an allowlist of states that _should_ advance, not an exclusion of states that shouldn't:
 
 ```python
 # Wrong (negative guard — includes "publishing", "failed", "pending", etc.):

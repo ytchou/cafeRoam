@@ -7,6 +7,7 @@ Status: Approved
 ## Goal
 
 Enable natural language menu queries like "巴斯克蛋糕", "司康", "氮氣咖啡" by:
+
 1. Persisting extracted menu items into a dedicated `shop_menu_items` table
 2. Including menu item names in shop embedding text so they become searchable via vector similarity
 
@@ -46,6 +47,7 @@ CREATE INDEX idx_shop_menu_items_shop_id ON shop_menu_items(shop_id);
 **Current behavior:** Calls `llm.extract_menu_data()`, writes JSONB blob to `shops.menu_data`.
 
 **Updated behavior:**
+
 1. Call `llm.extract_menu_data()` (unchanged)
 2. If items returned:
    - DELETE existing `shop_menu_items` WHERE `shop_id = X` (replace-on-extract)
@@ -60,6 +62,7 @@ CREATE INDEX idx_shop_menu_items_shop_id ON shop_menu_items(shop_id);
 **Current behavior:** Builds text from `"{name}. {description}"`, embeds, sets `processing_status = "publishing"`, queues `PUBLISH_SHOP`.
 
 **Updated behavior:**
+
 1. Load shop data including `processing_status`
 2. Load menu items: `SELECT item_name FROM shop_menu_items WHERE shop_id = X`
 3. Build enriched embedding text:
@@ -72,7 +75,7 @@ CREATE INDEX idx_shop_menu_items_shop_id ON shop_menu_items(shop_id);
 **Status transition rules:**
 
 | Shop's current status | Status after embed | Queue PUBLISH_SHOP? |
-|-----------------------|--------------------|---------------------|
+| --------------------- | ------------------ | ------------------- |
 | `embedding`           | `publishing`       | Yes (new shop flow) |
 | `live`                | `live` (unchanged) | No (re-embed only)  |
 
@@ -128,18 +131,21 @@ User submits menu photo at check-in
 ## Testing Strategy
 
 **`test_enrich_menu_photo`:**
+
 - Given: LLM returns items — verify DELETE then INSERT into `shop_menu_items` (replace behavior)
 - Given: LLM returns empty items — verify no DELETE (guard preserved)
 - Verify: `GENERATE_EMBEDDING` job enqueued after extraction
 - Verify: `shops.menu_data` still written (dual-write)
 
 **`test_generate_embedding`:**
-- Given: shop has menu items — verify they appear in embedding text after ` | `
+
+- Given: shop has menu items — verify they appear in embedding text after `|`
 - Given: shop has no menu items — verify embedding text matches original format
 - Given: shop is already live — verify status stays `live` and no `PUBLISH_SHOP` enqueued
 - Given: shop is in `embedding` status — verify status advances to `publishing` and `PUBLISH_SHOP` enqueued
 
 **`test_reembed_live_shops` (script):**
+
 - Verify: GENERATE_EMBEDDING job enqueued for each live shop
 - Verify: non-live shops not enqueued
 

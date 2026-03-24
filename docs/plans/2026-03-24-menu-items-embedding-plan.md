@@ -15,8 +15,9 @@
 **Tech Stack:** Python 3.12+, FastAPI, supabase-py, pytest, asyncio
 
 **Acceptance Criteria:**
+
 - [ ] After a user submits a menu photo at check-in, its items are stored in `shop_menu_items` and visible via DB query
-- [ ] A shop with extracted menu items produces embedding text that includes those item names after ` | `
+- [ ] A shop with extracted menu items produces embedding text that includes those item names after `|`
 - [ ] Running `reembed_live_shops.py` enqueues one `GENERATE_EMBEDDING` job per live shop — and all 164 shops remain `live` status throughout the process
 - [ ] A search for "巴斯克蛋糕" ranks shops that have that item in `shop_menu_items` higher than before re-embedding
 - [ ] The new-shop pipeline (status `embedding` → `publishing` → `live`) is unchanged
@@ -40,6 +41,7 @@ Expected: `passed` with no failures in the test suite (4 known admin test failur
 ## Task 1: Migration — `shop_menu_items` table
 
 **Files:**
+
 - Create: `supabase/migrations/20260324000002_create_shop_menu_items.sql`
 
 **No test needed** — SQL migrations aren't unit tested. Verification is `supabase db diff` after applying.
@@ -84,6 +86,7 @@ git commit -m "feat(db): add shop_menu_items table for menu search enrichment"
 ## Task 2: Update `handle_enrich_menu_photo` — TDD
 
 **Files:**
+
 - Modify: `backend/tests/workers/test_handlers.py` — replace `TestEnrichMenuPhotoHandler`
 - Modify: `backend/workers/handlers/enrich_menu_photo.py` — add persistence + queue
 - Modify: `backend/workers/scheduler.py` — pass `queue` to handler
@@ -287,6 +290,7 @@ git commit -m "feat(worker): persist menu items to shop_menu_items and trigger r
 ## Task 3: Update `handle_generate_embedding` — TDD
 
 **Files:**
+
 - Modify: `backend/tests/workers/test_handlers.py` — replace `TestGenerateEmbeddingHandler`
 - Modify: `backend/workers/handlers/generate_embedding.py`
 
@@ -546,6 +550,7 @@ git commit -m "feat(worker): enrich embedding text with menu items + safe live-s
 ## Task 4: Re-embed Script — TDD
 
 **Files:**
+
 - Create: `backend/scripts/reembed_live_shops.py`
 - Create: `backend/tests/scripts/test_reembed_live_shops.py`
 
@@ -634,6 +639,7 @@ Expected: `ModuleNotFoundError: No module named 'scripts.reembed_live_shops'`
 **Step 3: Implement the script**
 
 Create `backend/scripts/__init__.py` if it doesn't exist:
+
 ```bash
 touch backend/scripts/__init__.py
 ```
@@ -770,15 +776,19 @@ graph TD
 ```
 
 **Wave 1** (no dependencies):
+
 - Task 1: Migration — `shop_menu_items` table
 
 **Wave 2** (depends on Wave 1):
+
 - Task 2: Update `handle_enrich_menu_photo` handler + scheduler
 
 **Wave 3** (depends on Wave 1; after Wave 2 due to shared test file):
+
 - Task 3: Update `handle_generate_embedding` handler
 
 **Wave 4** (depends on Wave 2 + Wave 3):
+
 - Task 4: `reembed_live_shops.py` script
 
 > Note: Tasks 2 and 3 both modify `backend/tests/workers/test_handlers.py`. They are sequential to avoid merge conflicts in that file.

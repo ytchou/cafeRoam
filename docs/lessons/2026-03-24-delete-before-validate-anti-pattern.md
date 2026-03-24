@@ -1,4 +1,5 @@
 # Replace-on-Extract: Validate Before Delete
+
 **Date:** 2026-03-24
 **Context:** Menu items embedding feature (DEV-6) — enrich_menu_photo handler
 
@@ -7,6 +8,7 @@
 **Root cause:** The guard was placed after the destructive operation. The natural instinct is to "clear space then fill it," but this creates a data-loss window whenever the fill step is conditional.
 
 **Prevention:** Always validate before destroying. The pattern for replace-on-extract:
+
 1. Build the replacement data first
 2. If replacement data is empty or invalid, return early — do NOT delete
 3. Only delete existing data when you have confirmed non-empty replacement ready
