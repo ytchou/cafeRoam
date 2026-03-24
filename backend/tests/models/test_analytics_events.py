@@ -3,8 +3,8 @@ import pytest
 from pydantic import ValidationError
 
 from models.analytics_events import (
-    AnalyticsEventRequest,
     PDPA_BLOCKED_FIELDS,
+    AnalyticsEventRequest,
     sanitize_passthrough,
 )
 
@@ -52,12 +52,12 @@ class TestSpecEventValidation:
         req = AnalyticsEventRequest(
             event="checkin_completed",
             properties={
-                "shop_id": "abc-123",
+                "shop_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
                 "has_text_note": True,
                 "has_menu_photo": False,
             },
         )
-        assert req.properties["shop_id"] == "abc-123"
+        assert req.properties["shop_id"] == "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
         # is_first_checkin_at_shop is NOT required from client — server enriches it
         assert "is_first_checkin_at_shop" not in req.properties
 
@@ -76,9 +76,14 @@ class TestSpecEventValidation:
         assert req.properties["filter_type"] == "mode"
 
     def test_session_start_valid(self):
-        """session_start has no client-required properties — server enriches all."""
-        req = AnalyticsEventRequest(event="session_start", properties={})
+        """session_start requires days_since_first_session and previous_sessions from client."""
+        req = AnalyticsEventRequest(
+            event="session_start",
+            properties={"days_since_first_session": 23, "previous_sessions": 5},
+        )
         assert req.event == "session_start"
+        assert req.properties["days_since_first_session"] == 23
+        assert req.properties["previous_sessions"] == 5
 
 
 class TestPassthroughEvents:

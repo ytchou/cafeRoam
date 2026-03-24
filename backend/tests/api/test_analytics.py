@@ -1,21 +1,19 @@
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock
 
 from fastapi.testclient import TestClient
 
-from api.deps import get_admin_db, get_current_user, get_user_db
+from api.deps import get_admin_db, get_current_user
 from main import app
 from providers.analytics import get_analytics_provider
 
 client = TestClient(app)
 
 
-def _setup_overrides(mock_analytics=None, user_id="user-test-123"):
+def _setup_overrides(mock_analytics=None, user_id="usr_test_a1b2c3d4"):
     """Set up common dependency overrides for analytics tests."""
-    mock_db = MagicMock()
     if mock_analytics is None:
         mock_analytics = MagicMock()
     app.dependency_overrides[get_current_user] = lambda: {"id": user_id}
-    app.dependency_overrides[get_user_db] = lambda: mock_db
     app.dependency_overrides[get_admin_db] = lambda: MagicMock()
     app.dependency_overrides[get_analytics_provider] = lambda: mock_analytics
     return mock_analytics
@@ -50,7 +48,7 @@ class TestAnalyticsEndpointAuth:
 
 class TestAnalyticsSpecEvents:
     def test_spec_event_fires_posthog_with_anonymized_id(self):
-        mock_analytics = _setup_overrides(user_id="user-abc-real-id")
+        mock_analytics = _setup_overrides(user_id="usr_a1b2c3d4e5f6")
         try:
             response = client.post(
                 "/analytics/events",
@@ -63,7 +61,7 @@ class TestAnalyticsSpecEvents:
             mock_analytics.track.assert_called_once()
             call_kwargs = mock_analytics.track.call_args
             # distinct_id must be anonymized, not raw user ID
-            assert call_kwargs[1]["distinct_id"] != "user-abc-real-id"
+            assert call_kwargs[1]["distinct_id"] != "usr_a1b2c3d4e5f6"
             assert len(call_kwargs[1]["distinct_id"]) == 64  # SHA-256 hex
         finally:
             app.dependency_overrides.clear()
@@ -97,7 +95,7 @@ class TestAnalyticsSpecEvents:
                 json={
                     "event": "checkin_completed",
                     "properties": {
-                        "shop_id": "shop-xyz",
+                        "shop_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
                         "has_text_note": True,
                         "has_menu_photo": False,
                     },
@@ -110,36 +108,25 @@ class TestAnalyticsSpecEvents:
         finally:
             app.dependency_overrides.clear()
 
-    def test_session_start_enriches_from_heartbeat(self):
-        """session_start should call session_heartbeat and enrich properties."""
-        mock_analytics = _setup_overrides(user_id="user-session-test")
-        mock_user_db = MagicMock()
-        mock_user_db.table.return_value.select.return_value.eq.return_value.single.return_value.execute.return_value = MagicMock(
-            data={
-                "session_count": 5,
-                "first_session_at": "2026-03-01T00:00:00+00:00",
-                "last_session_at": "2026-03-23T00:00:00+00:00",
-            }
-        )
-        app.dependency_overrides[get_user_db] = lambda: mock_user_db
+    def test_session_start_forwards_client_properties_to_posthog(self):
+        """session_start properties from the heartbeat response reach PostHog unchanged."""
+        mock_analytics = _setup_overrides(user_id="usr_a1b2c3d4e5f6")
         try:
-            with patch("api.analytics.ProfileService") as mock_profile_service_cls:
-                mock_service = mock_profile_service_cls.return_value
-                mock_service.session_heartbeat = AsyncMock(
-                    return_value={
+            response = client.post(
+                "/analytics/events",
+                json={
+                    "event": "session_start",
+                    "properties": {
                         "days_since_first_session": 23,
                         "previous_sessions": 5,
-                    }
-                )
-                response = client.post(
-                    "/analytics/events",
-                    json={"event": "session_start", "properties": {}},
-                )
-                assert response.status_code == 200
-                call_args = mock_analytics.track.call_args
-                props = call_args[0][1]
-                assert props["days_since_first_session"] == 23
-                assert props["previous_sessions"] == 5
+                    },
+                },
+            )
+            assert response.status_code == 200
+            call_args = mock_analytics.track.call_args
+            props = call_args[0][1]
+            assert props["days_since_first_session"] == 23
+            assert props["previous_sessions"] == 5
         finally:
             app.dependency_overrides.clear()
 
