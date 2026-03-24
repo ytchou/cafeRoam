@@ -1,32 +1,42 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 
-const mockCapture = vi.fn();
-vi.mock('posthog-js', () => ({
-  default: {
-    capture: mockCapture,
-  },
+// Mock fetchWithAuth at the module level
+const mockFetchWithAuth = vi.fn();
+vi.mock('@/lib/api/fetch', () => ({
+  fetchWithAuth: mockFetchWithAuth,
 }));
 
 describe('useAnalytics', () => {
   beforeEach(() => {
-    mockCapture.mockReset();
+    mockFetchWithAuth.mockReset();
+    mockFetchWithAuth.mockResolvedValue({ status: 'ok' });
   });
 
   afterEach(() => {
     vi.unstubAllEnvs();
   });
 
-  it('captures an event when PostHog key is set', async () => {
+  it('POSTs event to /api/analytics/events when key is set', async () => {
     vi.stubEnv('NEXT_PUBLIC_POSTHOG_KEY', 'phc_test123');
+    vi.resetModules();
     const { useAnalytics } = await import('../use-analytics');
     const { result } = renderHook(() => useAnalytics());
 
     act(() => {
-      result.current.capture('test_event', { foo: 'bar' });
+      result.current.capture('filter_applied', {
+        filter_type: 'mode',
+        filter_value: 'work',
+      });
     });
 
-    expect(mockCapture).toHaveBeenCalledWith('test_event', { foo: 'bar' });
+    expect(mockFetchWithAuth).toHaveBeenCalledWith('/api/analytics/events', {
+      method: 'POST',
+      body: JSON.stringify({
+        event: 'filter_applied',
+        properties: { filter_type: 'mode', filter_value: 'work' },
+      }),
+    });
   });
 
   it('no-ops when PostHog key is not set', async () => {
@@ -39,6 +49,19 @@ describe('useAnalytics', () => {
       result.current.capture('test_event', { foo: 'bar' });
     });
 
-    expect(mockCapture).not.toHaveBeenCalled();
+    expect(mockFetchWithAuth).not.toHaveBeenCalled();
+  });
+
+  it('does not throw on fetch failure', async () => {
+    vi.stubEnv('NEXT_PUBLIC_POSTHOG_KEY', 'phc_test123');
+    vi.resetModules();
+    mockFetchWithAuth.mockRejectedValue(new Error('Network error'));
+    const { useAnalytics } = await import('../use-analytics');
+    const { result } = renderHook(() => useAnalytics());
+
+    // Should not throw
+    act(() => {
+      result.current.capture('test_event', { foo: 'bar' });
+    });
   });
 });

@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback } from 'react';
-import posthog from 'posthog-js';
+import { fetchWithAuth } from '@/lib/api/fetch';
 
 export function useAnalytics() {
   const capture = useCallback(
@@ -9,7 +9,13 @@ export function useAnalytics() {
       const key = process.env.NEXT_PUBLIC_POSTHOG_KEY;
       if (!key) return;
 
-      posthog.capture(event, properties);
+      // Fire-and-forget: POST to backend analytics gateway
+      fetchWithAuth('/api/analytics/events', {
+        method: 'POST',
+        body: JSON.stringify({ event, properties }),
+      }).catch(() => {
+        // Silently swallow analytics failures — never block UI
+      });
     },
     []
   );
