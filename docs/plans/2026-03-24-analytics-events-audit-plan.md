@@ -15,6 +15,7 @@
 **Tech Stack:** FastAPI, Pydantic, PostHog Python SDK (via existing AnalyticsProvider protocol), Next.js API route proxy, Vitest + Testing Library
 
 **Acceptance Criteria:**
+
 - [ ] All 7 spec events fire server-side through PostHog with correct properties per `metrics.md`
 - [ ] Every event uses an anonymized `distinct_id` (SHA-256, no raw user IDs reach PostHog)
 - [ ] No duplicate events — each event fires once (server-side only for spec events)
@@ -26,6 +27,7 @@
 ## Task 1: Backend Event Models
 
 **Files:**
+
 - Create: `backend/models/analytics_events.py`
 - Test: `backend/tests/models/test_analytics_events.py`
 
@@ -238,19 +240,21 @@ git commit -m "feat(analytics): add Pydantic event models with spec validation +
 ## Task 2: Backend Analytics Endpoint
 
 **Files:**
+
 - Create: `backend/api/analytics.py`
 - Create: `backend/tests/api/test_analytics.py`
 - Modify: `backend/main.py:22` (add router import)
 - Modify: `backend/main.py:112-126` (register router)
 
 **API Contract:**
+
 ```yaml
 endpoint: POST /analytics/events
 request:
-  event: string        # event name
-  properties: object   # event properties (validated per event type)
+  event: string # event name
+  properties: object # event properties (validated per event type)
 response:
-  status: "ok"
+  status: 'ok'
 errors:
   401: missing/invalid Authorization header
   422: validation failure (missing required properties for spec events)
@@ -541,11 +545,13 @@ async def track_event(
 Then register the router in `main.py`:
 
 Add import at line ~16 (after other api imports):
+
 ```python
 from api.analytics import router as analytics_router
 ```
 
 Add router registration after the existing routers (after line 126):
+
 ```python
 app.include_router(analytics_router)
 ```
@@ -567,6 +573,7 @@ git commit -m "feat(analytics): POST /analytics/events endpoint with enrichment 
 ## Task 3: Migrate Search Response to Include Metadata
 
 **Files:**
+
 - Modify: `backend/api/search.py` (remove inline PostHog tracking, add metadata to response)
 - Modify: `backend/tests/api/test_search.py` (update test expectations)
 - Modify: `lib/hooks/use-search.ts` (update response type)
@@ -645,10 +652,13 @@ Modify `backend/api/search.py`:
 5. Change the return to wrap results with metadata:
 
 The endpoint return changes from:
+
 ```python
 return [r.model_dump(by_alias=True) for r in results]
 ```
+
 to:
+
 ```python
 return {
     "results": [r.model_dump(by_alias=True) for r in results],
@@ -682,6 +692,7 @@ git commit -m "refactor(search): remove inline PostHog tracking, add query metad
 ## Task 4: Next.js Analytics Proxy Route
 
 **Files:**
+
 - Create: `app/api/analytics/events/route.ts`
 - Create: `app/api/analytics/events/route.test.ts`
 
@@ -709,11 +720,17 @@ describe('POST /api/analytics/events', () => {
     const { POST } = await import('./route');
     const request = new NextRequest('http://localhost/api/analytics/events', {
       method: 'POST',
-      body: JSON.stringify({ event: 'filter_applied', properties: { filter_type: 'mode', filter_value: 'work' } }),
+      body: JSON.stringify({
+        event: 'filter_applied',
+        properties: { filter_type: 'mode', filter_value: 'work' },
+      }),
     });
 
     await POST(request);
-    expect(mockProxyToBackend).toHaveBeenCalledWith(request, '/analytics/events');
+    expect(mockProxyToBackend).toHaveBeenCalledWith(
+      request,
+      '/analytics/events'
+    );
   });
 });
 ```
@@ -752,6 +769,7 @@ git commit -m "feat(analytics): add Next.js proxy route for POST /analytics/even
 ## Task 5: Rewrite `useAnalytics` Hook to POST to Backend
 
 **Files:**
+
 - Modify: `lib/posthog/use-analytics.ts`
 - Modify: `lib/posthog/__tests__/use-analytics.test.ts`
 
@@ -882,6 +900,7 @@ git commit -m "refactor(analytics): route useAnalytics through backend gateway i
 ## Task 6: Update Frontend Event Call Sites
 
 **Files:**
+
 - Modify: `components/discovery/search-bar.tsx:27` (remove partial `search_submitted`)
 - Modify: `app/(protected)/search/page.tsx:16-26` (fire full `search_submitted` from search response)
 - Modify: `app/shops/[shopId]/[slug]/shop-detail-client.tsx:68-74` (read `?ref=` and `?q=` from URL)
@@ -922,7 +941,10 @@ export function useSearch(query: string | null, mode: SearchMode) {
 Change the analytics call to use `queryType` and `resultCount` from the search hook:
 
 ```typescript
-const { results, queryType, resultCount, isLoading, error } = useSearch(query || null, mode);
+const { results, queryType, resultCount, isLoading, error } = useSearch(
+  query || null,
+  mode
+);
 
 useEffect(() => {
   if (query && !isLoading && query !== lastFiredQuery.current) {
@@ -1008,6 +1030,7 @@ git commit -m "refactor(analytics): update frontend event call sites to use back
 ## Task 7: Update Frontend Tests for Changed Components
 
 **Files:**
+
 - Modify: `components/discovery/search-bar.test.tsx` (remove analytics assertions)
 - Modify: `app/(protected)/search/page.test.tsx` (update search_submitted assertions)
 - Modify: `app/shops/[shopId]/[slug]/shop-detail-client.test.tsx` (update shop_detail_viewed assertions)
@@ -1098,19 +1121,24 @@ graph TD
 ```
 
 **Wave 1** (parallel — no dependencies):
+
 - Task 1: Backend event models + tests
 - Task 4: Next.js proxy route + test
 
 **Wave 2** (parallel — depends on Wave 1):
+
 - Task 2: Backend analytics endpoint ← Task 1
 - Task 3: Search response migration (backend only)
 - Task 5: `useAnalytics` hook rewrite ← Task 4
 
 **Wave 3** (sequential — depends on Wave 2):
+
 - Task 6: Frontend event call site updates ← Tasks 2, 3, 5
 
 **Wave 4** (sequential — depends on Wave 3):
+
 - Task 7: Update frontend tests ← Task 6
 
 **Wave 5** (sequential — depends on Wave 4):
+
 - Task 8: Full test suite + lint ← Task 7

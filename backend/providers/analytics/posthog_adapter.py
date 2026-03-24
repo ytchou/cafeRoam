@@ -21,7 +21,7 @@ class PostHogAnalyticsAdapter:
     def track(
         self,
         event: str,
-        properties: dict[str, str | int | bool] | None = None,
+        properties: dict[str, str | int | bool | None] | None = None,
         *,
         distinct_id: str | None = None,
     ) -> None:
@@ -34,7 +34,7 @@ class PostHogAnalyticsAdapter:
         except Exception:
             logger.warning("PostHog track failed for event: %s", event, exc_info=True)
 
-    def identify(self, user_id: str, traits: dict[str, str | int | bool] | None = None) -> None:
+    def identify(self, user_id: str, traits: dict[str, str | int | bool | None] | None = None) -> None:
         try:
             self._client.identify(
                 distinct_id=user_id,
@@ -46,7 +46,7 @@ class PostHogAnalyticsAdapter:
     def page(
         self,
         name: str | None = None,
-        properties: dict[str, str | int | bool] | None = None,
+        properties: dict[str, str | int | bool | None] | None = None,
     ) -> None:
         try:
             self._client.capture(
