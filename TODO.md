@@ -1287,7 +1287,7 @@ _Designed in Pencil. Stamps, check-in history, account settings._
 
 **Chunk 3 — Re-embed Script (Wave 4):**
 
-- [ ] Write `backend/scripts/reembed_live_shops.py`
+- [x] Write `backend/scripts/reembed_live_shops.py`
 - [ ] Post-deploy: dry-run then enqueue 164 jobs
 
 ### Search Observability (DEV-9)
