@@ -16,11 +16,13 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from db.supabase_client import get_service_role_client
-from models.types import JobType
+from models.types import JobStatus, JobType
 from workers.queue import JobQueue
 
 
-async def main(dry_run: bool) -> None:
+async def main(dry_run: bool, queue: JobQueue | None = None) -> None:
+    """Main entrypoint. Accept an optional queue for testability (injected in tests,
+    created from DB connection when run as a script)."""
     print("\n=== Re-embed live shops with menu item enrichment ===\n")
 
     db = get_service_role_client()
@@ -38,15 +40,35 @@ async def main(dry_run: bool) -> None:
         print("\nDry-run — no jobs enqueued.")
         return
 
-    queue = JobQueue(db)
-    for r in rows:
-        await queue.enqueue(
+    # Deduplicate: skip shops that already have a pending GENERATE_EMBEDDING job
+    existing = (
+        db.table("job_queue")
+        .select("payload")
+        .eq("job_type", JobType.GENERATE_EMBEDDING.value)
+        .eq("status", JobStatus.PENDING.value)
+        .execute()
+        .data
+        or []
+    )
+    already_queued = {row["payload"].get("shop_id") for row in existing}
+    to_enqueue = [r for r in rows if r["id"] not in already_queued]
+
+    if len(to_enqueue) < len(rows):
+        print(f"Skipped {len(rows) - len(to_enqueue)} shop(s) — GENERATE_EMBEDDING job already pending.")
+
+    if not to_enqueue:
+        print("All shops already have pending jobs. Nothing to enqueue.")
+        return
+
+    _queue = queue or JobQueue(db)
+    for r in to_enqueue:
+        await _queue.enqueue(
             job_type=JobType.GENERATE_EMBEDDING,
             payload={"shop_id": r["id"]},
-            priority=3,
+            priority=3,  # lower than user-triggered re-embed (priority=5) — batch background work
         )
 
-    print(f"Enqueued {len(rows)} GENERATE_EMBEDDING jobs.")
+    print(f"Enqueued {len(to_enqueue)} GENERATE_EMBEDDING jobs.")
     print("Monitor worker logs: tail -f logs or Railway log stream.")
     print("All shops remain 'live' throughout — no search downtime.")
 
