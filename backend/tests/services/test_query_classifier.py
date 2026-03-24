@@ -1,4 +1,3 @@
-import pytest
 
 from services.query_classifier import classify
 
