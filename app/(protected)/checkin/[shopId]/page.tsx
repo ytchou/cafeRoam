@@ -77,7 +77,7 @@ export default function CheckInPage() {
 
       setSubmitState('submitting');
 
-      const checkinResult = await fetchWithAuth('/api/checkins', {
+      await fetchWithAuth('/api/checkins', {
         method: 'POST',
         body: JSON.stringify({
           shop_id: shopId,
