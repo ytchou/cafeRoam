@@ -61,10 +61,21 @@ async def handle_generate_embedding(
     if community_texts:
         text = f"{text} || {'. '.join(community_texts)}"
 
+    # Warn if community text is unusually large (design budget: ~1300 tokens total).
+    # OpenAI text-embedding-3-small supports 8191 tokens; ~4 chars/token as a rough heuristic.
+    if len(text) > 6000:
+        logger.warning(
+            "Embedding text exceeds expected budget — may approach token limit",
+            shop_id=shop_id,
+            text_length=len(text),
+        )
+
     # Generate embedding
     embedding = await embeddings.embed(text)
 
-    # Live-shop guard: use an allowlist of statuses that should advance through the pipeline.
+    # Live-shop guard: only advance status for shops in the pre-live pipeline stages.
+    # Shops already 'live' or 'publishing' must NOT advance — doing so would re-trigger
+    # PUBLISH_SHOP and could briefly remove a live shop from search results.
     should_advance = shop.get("processing_status") in {"embedding", "enriched"}
 
     update_data: dict[str, Any] = {
