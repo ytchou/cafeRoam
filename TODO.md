@@ -1325,8 +1325,8 @@ _Designed in Pencil. Stamps, check-in history, account settings._
 
 **Chunk 2 — Handler & Cron (Wave 3-4):**
 
-- [ ] Enhance `generate_embedding` handler with community text fetch
-- [ ] Nightly cron handler: `handle_reembed_reviewed_shops`
+- [x] Enhance `generate_embedding` handler with community text fetch
+- [x] Nightly cron handler: `handle_reembed_reviewed_shops`
 - [ ] Wire cron job + dispatcher in scheduler
 
 **Chunk 3 — Rollout & Verification (Wave 4-5):**

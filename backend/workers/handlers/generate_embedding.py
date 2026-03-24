@@ -1,3 +1,4 @@
+from datetime import UTC, datetime
 from typing import Any, cast
 
 import structlog
@@ -9,6 +10,11 @@ from workers.queue import JobQueue
 
 logger = structlog.get_logger()
 
+# Minimum character length for a check-in text to be included in embedding
+_MIN_TEXT_LENGTH = 15
+# Maximum number of community texts to include per shop
+_MAX_COMMUNITY_TEXTS = 20
+
 
 async def handle_generate_embedding(
     payload: dict[str, Any],
@@ -16,7 +22,7 @@ async def handle_generate_embedding(
     embeddings: EmbeddingsProvider,
     queue: JobQueue,
 ) -> None:
-    """Generate vector embedding for a shop, enriched with menu items if available.
+    """Generate vector embedding for a shop, enriched with menu items and community texts.
 
     Safe for re-embedding already-live shops: when processing_status is 'live',
     only the embedding column is updated — no status transition, no PUBLISH_SHOP job.
@@ -43,19 +49,30 @@ async def handle_generate_embedding(
     menu_rows = cast("list[dict[str, Any]]", menu_response.data or [])
     item_names = [row["item_name"] for row in menu_rows if row.get("item_name")]
 
-    # Build embedding text: append menu items after ' | ' if present
+    # Load community check-in texts (ranked by likes, text quality, recency)
+    community_response = db.rpc(
+        "get_ranked_checkin_texts",
+        {"p_shop_id": shop_id, "p_min_length": _MIN_TEXT_LENGTH, "p_limit": _MAX_COMMUNITY_TEXTS},
+    ).execute()
+    community_rows = cast("list[dict[str, Any]]", community_response.data or [])
+    community_texts = [row["text"] for row in community_rows if row.get("text")]
+
+    # Build embedding text: base | menu items || community texts
     base_text = f"{shop['name']}. {shop.get('description') or ''}"
     text = f"{base_text} | {', '.join(item_names)}" if item_names else base_text
+    if community_texts:
+        text = f"{text} || {'. '.join(community_texts)}"
 
     # Generate embedding
     embedding = await embeddings.embed(text)
 
     # Live-shop guard: use an allowlist of statuses that should advance through the pipeline.
-    # Shops already in 'live' or 'publishing' only get the embedding updated in-place —
-    # this prevents duplicate PUBLISH_SHOP jobs and avoids unexpected status transitions.
     should_advance = shop.get("processing_status") in {"embedding", "enriched"}
 
-    update_data: dict[str, Any] = {"embedding": embedding}
+    update_data: dict[str, Any] = {
+        "embedding": embedding,
+        "last_embedded_at": datetime.now(UTC).isoformat(),
+    }
     if should_advance:
         update_data["processing_status"] = "publishing"
 
@@ -66,6 +83,7 @@ async def handle_generate_embedding(
         shop_id=shop_id,
         dimensions=len(embedding),
         menu_items=len(item_names),
+        community_texts=len(community_texts),
         should_advance=should_advance,
     )
 
