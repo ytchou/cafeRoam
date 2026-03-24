@@ -24,7 +24,7 @@ Nightly cron (REEMBED_REVIEWED_SHOPS)
 
 #### 1. Nightly Cron Job — `REEMBED_REVIEWED_SHOPS`
 
-New job type registered in the worker scheduler. Runs once daily (03:00 UTC).
+New job type registered in the worker scheduler. Runs once daily at 03:30 CST (Asia/Taipei, UTC+8), offset from the 03:00 CST staleness sweep.
 
 Query: find `shop_id`s where `check_ins.created_at > shops.last_embedded_at` and the check-in has qualifying text (note or review_text ≥15 chars).
 
