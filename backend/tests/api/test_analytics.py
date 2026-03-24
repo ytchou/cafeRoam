@@ -25,7 +25,10 @@ class TestAnalyticsEndpointAuth:
     def test_requires_auth(self):
         response = client.post(
             "/analytics/events",
-            json={"event": "filter_applied", "properties": {"filter_type": "mode", "filter_value": "work"}},
+            json={
+                "event": "filter_applied",
+                "properties": {"filter_type": "mode", "filter_value": "work"},
+            },
         )
         assert response.status_code == 401
 
@@ -112,16 +115,22 @@ class TestAnalyticsSpecEvents:
         mock_analytics = _setup_overrides(user_id="user-session-test")
         mock_user_db = MagicMock()
         mock_user_db.table.return_value.select.return_value.eq.return_value.single.return_value.execute.return_value = MagicMock(
-            data={"session_count": 5, "first_session_at": "2026-03-01T00:00:00+00:00", "last_session_at": "2026-03-23T00:00:00+00:00"}
+            data={
+                "session_count": 5,
+                "first_session_at": "2026-03-01T00:00:00+00:00",
+                "last_session_at": "2026-03-23T00:00:00+00:00",
+            }
         )
         app.dependency_overrides[get_user_db] = lambda: mock_user_db
         try:
-            with patch("api.analytics.ProfileService") as MockProfileService:
-                mock_service = MockProfileService.return_value
-                mock_service.session_heartbeat = AsyncMock(return_value={
-                    "days_since_first_session": 23,
-                    "previous_sessions": 5,
-                })
+            with patch("api.analytics.ProfileService") as mock_profile_service_cls:
+                mock_service = mock_profile_service_cls.return_value
+                mock_service.session_heartbeat = AsyncMock(
+                    return_value={
+                        "days_since_first_session": 23,
+                        "previous_sessions": 5,
+                    }
+                )
                 response = client.post(
                     "/analytics/events",
                     json={"event": "session_start", "properties": {}},

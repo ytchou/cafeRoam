@@ -7,6 +7,7 @@ vi.mock('@/lib/posthog/use-analytics', () => ({
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn() }),
+  useSearchParams: () => ({ get: () => null }),
   redirect: vi.fn(),
 }));
 vi.mock('next/image', () => ({

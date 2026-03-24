@@ -1446,7 +1446,7 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 - [x] Update frontend tests for changed components (Task 7)
 
 **Chunk 4 — Verification (Wave 5):**
-- [ ] Full test suite + lint pass (Task 8)
+- [x] Full test suite + lint pass (Task 8)
 
 ---
 

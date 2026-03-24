@@ -22,8 +22,8 @@ vi.mock('@/lib/supabase/client', () => ({
 }));
 
 const { mockCapture } = vi.hoisted(() => ({ mockCapture: vi.fn() }));
-vi.mock('posthog-js', () => ({
-  default: { capture: mockCapture },
+vi.mock('@/lib/posthog/use-analytics', () => ({
+  useAnalytics: () => ({ capture: mockCapture }),
 }));
 
 const mockFetch = vi.fn();
