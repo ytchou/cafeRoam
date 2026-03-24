@@ -1442,7 +1442,7 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 - [x] Rewrite useAnalytics hook to POST to backend gateway (Task 5)
 
 **Chunk 3 — Frontend Wiring (Wave 3-4):**
-- [ ] Update all frontend event call sites (Task 6)
+- [x] Update all frontend event call sites (Task 6)
 - [ ] Update frontend tests for changed components (Task 7)
 
 **Chunk 4 — Verification (Wave 5):**

@@ -30,6 +30,7 @@ vi.mock('@/lib/hooks/use-user-lists', () => ({
 }));
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ back: vi.fn(), push: vi.fn() }),
+  useSearchParams: () => ({ get: () => null }),
 }));
 
 // Render-only child components — not under test here

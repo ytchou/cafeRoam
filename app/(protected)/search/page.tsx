@@ -9,7 +9,7 @@ import { useAnalytics } from '@/lib/posthog/use-analytics';
 
 function SearchPageContent() {
   const { query, mode, setQuery } = useSearchState();
-  const { results, isLoading, error } = useSearch(query || null, mode);
+  const { results, isLoading, error, queryType, resultCount } = useSearch(query || null, mode);
   const { capture } = useAnalytics();
   const lastFiredQuery = useRef<string | null>(null);
 
@@ -17,13 +17,13 @@ function SearchPageContent() {
     if (query && !isLoading && query !== lastFiredQuery.current) {
       capture('search_submitted', {
         query_text: query,
-        result_count: results.length,
-        mode_chip_active: mode,
+        query_type: queryType ?? 'unknown',
+        mode_chip_active: mode ?? 'none',
+        result_count: resultCount,
       });
       lastFiredQuery.current = query;
-      sessionStorage.setItem('last_search_query', query);
     }
-  }, [query, isLoading, results.length, mode, capture]);
+  }, [query, isLoading, queryType, resultCount, mode, capture]);
 
   return (
     <div className="bg-surface-warm min-h-screen">
@@ -58,6 +58,7 @@ function SearchPageContent() {
               <ShopCard
                 key={shop.id}
                 shop={shop as Parameters<typeof ShopCard>[0]['shop']}
+                searchQuery={query ?? undefined}
               />
             ))}
           </div>

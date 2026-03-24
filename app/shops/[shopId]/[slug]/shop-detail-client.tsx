@@ -17,6 +17,7 @@ import { DirectionsSheet } from '@/components/shops/directions-sheet';
 import { useShopReviews } from '@/lib/hooks/use-shop-reviews';
 import { useUser } from '@/lib/hooks/use-user';
 import { useGeolocation } from '@/lib/hooks/use-geolocation';
+import { useSearchParams } from 'next/navigation';
 import { useAnalytics } from '@/lib/posthog/use-analytics';
 
 interface ShopData {
@@ -54,6 +55,7 @@ interface ShopDetailClientProps {
 
 export function ShopDetailClient({ shop }: ShopDetailClientProps) {
   const { capture } = useAnalytics();
+  const searchParams = useSearchParams();
   const { user, isLoading: isUserLoading } = useUser();
   const { latitude, longitude, requestLocation } = useGeolocation();
   const router = useRouter();
@@ -68,10 +70,10 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
   useEffect(() => {
     capture('shop_detail_viewed', {
       shop_id: shop.id,
-      referrer: document.referrer,
-      session_search_query: sessionStorage.getItem('last_search_query'),
+      referrer: searchParams.get('ref') ?? 'direct',
+      session_search_query: searchParams.get('q') ?? null,
     });
-  }, [capture, shop.id]);
+  }, [capture, shop.id, searchParams]);
 
   const shareUrl =
     typeof window !== 'undefined'

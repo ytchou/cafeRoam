@@ -12,13 +12,18 @@ type ShopCardData = Pick<Shop, 'id' | 'name' | 'rating'> & {
 
 interface ShopCardProps {
   shop: ShopCardData;
+  searchQuery?: string;
 }
 
-export function ShopCard({ shop }: ShopCardProps) {
+export function ShopCard({ shop, searchQuery }: ShopCardProps) {
   const router = useRouter();
 
   function handleClick() {
-    router.push(`/shops/${shop.id}/${shop.slug ?? shop.id}`);
+    const base = `/shops/${shop.id}/${shop.slug ?? shop.id}`;
+    const params = searchQuery
+      ? `?ref=search&q=${encodeURIComponent(searchQuery)}`
+      : '';
+    router.push(`${base}${params}`);
   }
 
   const locationLabel = shop.mrt ?? '';
