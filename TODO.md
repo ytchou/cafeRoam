@@ -1427,6 +1427,29 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 
 ---
 
+### Analytics Events Audit (DEV-16)
+
+> **Design Doc:** [docs/designs/2026-03-24-analytics-events-audit-design.md](docs/designs/2026-03-24-analytics-events-audit-design.md)
+> **Plan:** [docs/plans/2026-03-24-analytics-events-audit-plan.md](docs/plans/2026-03-24-analytics-events-audit-plan.md)
+
+**Chunk 1 — Backend Models + Proxy (Wave 1):**
+- [x] Pydantic event models with spec validation + PDPA filter (Task 1)
+- [x] Next.js proxy route for POST /analytics/events (Task 4)
+
+**Chunk 2 — Backend Endpoint + Search Migration (Wave 2):**
+- [ ] POST /analytics/events endpoint with enrichment (Task 2)
+- [ ] Remove inline PostHog from GET /search, add query metadata to response (Task 3)
+- [ ] Rewrite useAnalytics hook to POST to backend gateway (Task 5)
+
+**Chunk 3 — Frontend Wiring (Wave 3-4):**
+- [ ] Update all frontend event call sites (Task 6)
+- [ ] Update frontend tests for changed components (Task 7)
+
+**Chunk 4 — Verification (Wave 5):**
+- [ ] Full test suite + lint pass (Task 8)
+
+---
+
 ### LINE Integration (V2)
 
 > Requires LINE Login (built in V1 auth) as prerequisite — LINE user ID is captured at auth time.
