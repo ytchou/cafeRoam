@@ -1283,7 +1283,7 @@ _Designed in Pencil. Stamps, check-in history, account settings._
 **Chunk 2 — Worker Updates (Waves 2-3):**
 
 - [x] Update `handle_enrich_menu_photo`: persist items + queue re-embed
-- [ ] Update `handle_generate_embedding`: menu items in text + live-shop guard
+- [x] Update `handle_generate_embedding`: menu items in text + live-shop guard
 
 **Chunk 3 — Re-embed Script (Wave 4):**
 
