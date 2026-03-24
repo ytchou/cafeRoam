@@ -75,7 +75,8 @@ class CommunityService:
             query = query.lt("created_at", cursor)
         if mrt:
             shop_resp = self._db.table("shops").select("id").eq("mrt", mrt).execute()
-            shop_ids = [row["id"] for row in (shop_resp.data or [])]
+            shop_rows = cast("list[dict[str, Any]]", shop_resp.data or [])
+            shop_ids = [row["id"] for row in shop_rows]
             if not shop_ids:
                 return CommunityFeedResponse(notes=[], next_cursor=None)
             query = query.in_("shop_id", shop_ids)
@@ -83,7 +84,8 @@ class CommunityService:
             tag_resp = (
                 self._db.table("shop_tags").select("shop_id").eq("tag_id", vibe_tag).execute()
             )
-            tag_shop_ids = [row["shop_id"] for row in (tag_resp.data or [])]
+            tag_rows = cast("list[dict[str, Any]]", tag_resp.data or [])
+            tag_shop_ids = [row["shop_id"] for row in tag_rows]
             if not tag_shop_ids:
                 return CommunityFeedResponse(notes=[], next_cursor=None)
             query = query.in_("shop_id", tag_shop_ids)
