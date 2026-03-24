@@ -1309,6 +1309,7 @@ _PostHog:_
 - [ ] Create PostHog project → set `NEXT_PUBLIC_POSTHOG_KEY` in Railway (frontend)
 - [ ] Confirm `NEXT_PUBLIC_POSTHOG_HOST` is set (defaults to `https://app.posthog.com` if omitted)
 - [ ] Verify pageview events in PostHog Live Events after first deploy
+- [ ] Set `ANON_SALT` to a random secret in Railway backend service (`openssl rand -hex 32`) — default `caferoam-dev-salt` must not reach production
 
 _Better Stack:_
 
