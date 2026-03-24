@@ -1363,22 +1363,25 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 > **Plan:** [docs/plans/2026-03-24-community-feed-plan.md](docs/plans/2026-03-24-community-feed-plan.md)
 
 **Chunk 1 — Database + Backend Service (Wave 1-2):**
+
 - [x] DB migration: add `is_public` column + RLS policies (Task 1)
 - [x] CommunityService: `is_public` filter + MRT/vibe_tag params (Task 2)
 - [x] CheckInService: accept `is_public` param (Task 4)
 
 **Chunk 2 — API + Auth Gate (Wave 3):**
+
 - [x] Auth-gate community feed/preview endpoints (Task 3)
 - [x] Add MRT and vibe_tag filter query params (Task 3)
 
 **Chunk 3 — Frontend (Wave 3-5):**
+
 - [x] Check-in form: "Share publicly" toggle (Task 5)
 - [x] Feed hook: auth fetcher + filter params (Task 6)
 - [x] Feed page: filter bar UI (Task 7)
 - [x] Explore preview: auth update (Task 8)
 
-
 **Chunk 4 — Verification (Wave 6):**
+
 - [x] Full lint + test pass (Task 9)
 
 ---

@@ -73,7 +73,9 @@ describe('useCommunityFeed', () => {
   it('includes vibe_tag filter in fetch URL when provided', () => {
     swrMock.mockReturnValue(swrReturning({ notes: [], nextCursor: null }));
 
-    renderHook(() => useCommunityFeed({ cursor: null, vibeTag: 'quiet_reading' }));
+    renderHook(() =>
+      useCommunityFeed({ cursor: null, vibeTag: 'quiet_reading' })
+    );
 
     expect(swrMock).toHaveBeenCalledWith(
       '/api/explore/community?vibe_tag=quiet_reading',

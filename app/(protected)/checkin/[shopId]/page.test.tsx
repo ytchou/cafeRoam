@@ -232,7 +232,9 @@ describe('CheckInPage', () => {
       json: async () => ({
         id: 'ci-public',
         shop_id: 'shop-d4e5f6',
-        photo_urls: ['https://example.supabase.co/storage/v1/object/public/checkin-photos/user-abc/photo.webp'],
+        photo_urls: [
+          'https://example.supabase.co/storage/v1/object/public/checkin-photos/user-abc/photo.webp',
+        ],
         created_at: '2026-03-24T10:00:00Z',
       }),
     });
@@ -263,7 +265,9 @@ describe('CheckInPage', () => {
       json: async () => ({
         id: 'ci-private',
         shop_id: 'shop-d4e5f6',
-        photo_urls: ['https://example.supabase.co/storage/v1/object/public/checkin-photos/user-abc/photo.webp'],
+        photo_urls: [
+          'https://example.supabase.co/storage/v1/object/public/checkin-photos/user-abc/photo.webp',
+        ],
         created_at: '2026-03-24T10:00:00Z',
       }),
     });

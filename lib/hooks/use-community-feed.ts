@@ -11,7 +11,11 @@ interface CommunityFeedOptions {
   vibeTag?: string | null;
 }
 
-export function useCommunityFeed({ cursor, mrt, vibeTag }: CommunityFeedOptions) {
+export function useCommunityFeed({
+  cursor,
+  mrt,
+  vibeTag,
+}: CommunityFeedOptions) {
   const params = new URLSearchParams();
   if (cursor) params.set('cursor', cursor);
   if (mrt) params.set('mrt', mrt);

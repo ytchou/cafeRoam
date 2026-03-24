@@ -54,7 +54,11 @@ export default function CommunityFeedPage() {
 
   const mrtStationNames = useMemo(
     () =>
-      [...new Set((stationsData as Array<{ name_zh: string }>).map((s) => s.name_zh))].sort(),
+      [
+        ...new Set(
+          (stationsData as Array<{ name_zh: string }>).map((s) => s.name_zh)
+        ),
+      ].sort(),
     []
   );
 
@@ -62,23 +66,17 @@ export default function CommunityFeedPage() {
     capture('community_feed_opened', { referrer: document.referrer });
   }, [capture]);
 
-  const handleMrtChange = useCallback(
-    (value: string) => {
-      setPrevPageNotes([]);
-      setSelectedMrt(value);
-      setCursor(null);
-    },
-    []
-  );
+  const handleMrtChange = useCallback((value: string) => {
+    setPrevPageNotes([]);
+    setSelectedMrt(value);
+    setCursor(null);
+  }, []);
 
-  const handleVibeTagToggle = useCallback(
-    (id: string) => {
-      setPrevPageNotes([]);
-      setSelectedVibeTag((prev) => (prev === id ? '' : id));
-      setCursor(null);
-    },
-    []
-  );
+  const handleVibeTagToggle = useCallback((id: string) => {
+    setPrevPageNotes([]);
+    setSelectedVibeTag((prev) => (prev === id ? '' : id));
+    setCursor(null);
+  }, []);
 
   const handleClearFilters = useCallback(() => {
     setPrevPageNotes([]);
@@ -154,7 +152,9 @@ export default function CommunityFeedPage() {
         >
           <option value="">All stations</option>
           {mrtStationNames.map((name) => (
-            <option key={name} value={name}>{name}</option>
+            <option key={name} value={name}>
+              {name}
+            </option>
           ))}
         </select>
 

@@ -17,6 +17,7 @@
 **Note on district vs MRT:** The design doc mentions "district" filters, but the `shops` table has no `district` column. It has `mrt` (MRT station name) which is a better location filter for Taipei users. This plan uses `mrt` instead of `district`.
 
 **Acceptance Criteria:**
+
 - [ ] An authenticated user can browse a feed of public check-ins from all users, not just role-holders
 - [ ] A user can toggle "Share publicly" when creating a check-in, defaulting to public
 - [ ] An authenticated user can filter the community feed by MRT station and/or vibe tag
@@ -28,6 +29,7 @@
 ### Task 1: Database Migration — add `is_public` to `check_ins`
 
 **Files:**
+
 - Create: `supabase/migrations/20260324000001_add_is_public_to_check_ins.sql`
 
 No test needed — SQL migration verified by applying to local Supabase.
@@ -68,6 +70,7 @@ CREATE POLICY "user_roles_public_read" ON user_roles
 Run: `cd /Users/ytchou/Project/caferoam/.worktrees/feat/community-feed && supabase db push`
 
 Verify:
+
 ```bash
 # Check column exists
 supabase db diff  # should show no pending changes
@@ -85,6 +88,7 @@ git commit -m "feat(db): add is_public column to check_ins with RLS for communit
 ### Task 2: Backend — update CommunityService to filter by `is_public`
 
 **Files:**
+
 - Modify: `backend/services/community_service.py` (lines 18-28, 45-55, 57-81)
 - Test: `backend/tests/services/test_community_service.py`
 - Modify: `backend/tests/factories.py` (add `is_public` to factory)
@@ -276,6 +280,7 @@ git commit -m "feat(community): filter feed by is_public, add mrt/vibe_tag filte
 ### Task 3: Backend — auth-gate community feed endpoints and add filter params
 
 **Files:**
+
 - Modify: `backend/api/explore.py` (lines 56-73)
 - Test: `backend/tests/api/test_community_api.py`
 
@@ -391,6 +396,7 @@ git commit -m "feat(api): auth-gate community feed, add mrt/vibe_tag filter para
 ### Task 4: Backend — add `is_public` to check-in creation
 
 **Files:**
+
 - Modify: `backend/api/checkins.py` (lines 14-21, 44-65)
 - Modify: `backend/services/checkin_service.py` (lines 34-89)
 - Test: `backend/tests/services/test_checkin_service.py` (add is_public test)
@@ -461,6 +467,7 @@ async def create(
 ```
 
 Add to `checkin_data` dict:
+
 ```python
 checkin_data: dict[str, Any] = {
     "user_id": user_id,
@@ -487,6 +494,7 @@ class CreateCheckInRequest(BaseModel):
 ```
 
 3. Pass `is_public` in the API handler:
+
 ```python
 result = await service.create(
     user_id=user["id"],
@@ -518,6 +526,7 @@ git commit -m "feat(checkin): accept is_public flag in check-in creation (defaul
 ### Task 5: Frontend — add "Share publicly" toggle to check-in form
 
 **Files:**
+
 - Modify: `app/(protected)/checkin/[shopId]/page.tsx`
 - Test: `app/(protected)/checkin/[shopId]/page.test.tsx` (create if not exists)
 
@@ -561,11 +570,13 @@ Expected: FAIL — no toggle element found
 In `app/(protected)/checkin/[shopId]/page.tsx`:
 
 1. Add state:
+
 ```typescript
 const [isPublic, setIsPublic] = useState(true);
 ```
 
 2. Add toggle UI after the note textarea (before submit button):
+
 ```tsx
 <div className="flex items-center justify-between rounded-lg bg-gray-50 px-4 py-3">
   <div>
@@ -583,6 +594,7 @@ const [isPublic, setIsPublic] = useState(true);
 ```
 
 3. Add `is_public` to submission payload:
+
 ```typescript
 const body = {
   shop_id: shopId,
@@ -597,6 +609,7 @@ const body = {
 ```
 
 4. Import Switch from shadcn/ui:
+
 ```typescript
 import { Switch } from '@/components/ui/switch';
 ```
@@ -618,6 +631,7 @@ git commit -m "feat(ui): add 'Share publicly' toggle to check-in form"
 ### Task 6: Frontend — update community feed hook to use auth fetcher and support filters
 
 **Files:**
+
 - Modify: `lib/hooks/use-community-feed.ts`
 - Test: (hook is thin data-fetching — tested via component integration tests in Task 7)
 
@@ -641,7 +655,11 @@ interface CommunityFeedOptions {
   vibeTag?: string | null;
 }
 
-export function useCommunityFeed({ cursor, mrt, vibeTag }: CommunityFeedOptions) {
+export function useCommunityFeed({
+  cursor,
+  mrt,
+  vibeTag,
+}: CommunityFeedOptions) {
   const params = new URLSearchParams();
   if (cursor) params.set('cursor', cursor);
   if (mrt) params.set('mrt', mrt);
@@ -666,6 +684,7 @@ export function useCommunityFeed({ cursor, mrt, vibeTag }: CommunityFeedOptions)
 ```
 
 Key changes:
+
 - `fetchPublic` → `fetchWithAuth` (auth-gated endpoint)
 - Accept `mrt` and `vibeTag` as params
 - Change from positional `cursor` param to options object
@@ -682,6 +701,7 @@ git commit -m "feat(hooks): update community feed hook with auth fetcher and fil
 ### Task 7: Frontend — add filter bar to community feed page
 
 **Files:**
+
 - Modify: `app/explore/community/page.tsx`
 - Test: `app/explore/community/page.test.tsx` (modify existing)
 
@@ -728,6 +748,7 @@ Expected: FAIL — no filter elements exist
    - "Clear filters" button when any filter is active
 
 3. Update the `useCommunityFeed` call:
+
 ```typescript
 const { notes, nextCursor, isLoading, mutate } = useCommunityFeed({
   cursor,
@@ -737,6 +758,7 @@ const { notes, nextCursor, isLoading, mutate } = useCommunityFeed({
 ```
 
 4. Reset cursor when filters change:
+
 ```typescript
 useEffect(() => {
   setCursor(null);
@@ -760,6 +782,7 @@ git commit -m "feat(ui): add MRT station and vibe tag filter bar to community fe
 ### Task 8: Frontend — update explore preview proxy to use auth
 
 **Files:**
+
 - Modify: `app/api/explore/community/route.ts`
 - Modify: `app/api/explore/community/preview/route.ts`
 - Modify: `app/explore/page.tsx` (update preview fetch to use auth)
@@ -867,22 +890,28 @@ graph TD
 ```
 
 **Wave 1** (no dependencies):
+
 - Task 1: DB Migration — `is_public` column + RLS policies
 
 **Wave 2** (parallel — depends on Wave 1):
+
 - Task 2: CommunityService `is_public` filter + filter params ← Task 1
 - Task 4: CheckIn `is_public` param ← Task 1
 
 **Wave 3** (parallel — depends on Wave 2):
+
 - Task 3: API auth-gate + filter query params ← Task 2
 - Task 5: CheckIn form toggle ← Task 4
 
 **Wave 4** (depends on Wave 3):
+
 - Task 6: Frontend feed hook update ← Task 3
 
 **Wave 5** (parallel — depends on Wave 4):
+
 - Task 7: Feed filter bar UI ← Task 6
 - Task 8: Preview auth update ← Task 6
 
 **Wave 6** (depends on all):
+
 - Task 9: Full verification ← all tasks

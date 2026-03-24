@@ -95,7 +95,9 @@ describe('Community Feed Page', () => {
 
   it('shows MRT station filter dropdown', () => {
     render(<CommunityFeedPage />);
-    expect(screen.getByRole('combobox', { name: /mrt station/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('combobox', { name: /mrt station/i })
+    ).toBeInTheDocument();
   });
 
   it('shows vibe tag filter chips', () => {
@@ -107,7 +109,9 @@ describe('Community Feed Page', () => {
     render(<CommunityFeedPage />);
     const select = screen.getByRole('combobox', { name: /mrt station/i });
     await userEvent.selectOptions(select, '中山');
-    expect(screen.getByRole('button', { name: /clear filters/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /clear filters/i })
+    ).toBeInTheDocument();
   });
 
   it('resets filters when clear filters is clicked', async () => {

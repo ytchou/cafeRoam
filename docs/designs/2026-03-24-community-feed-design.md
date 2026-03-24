@@ -10,12 +10,14 @@ Open the existing community feed to all authenticated users by adding a per-chec
 ## Context
 
 A working community feed already exists:
+
 - `CommunityService` with `get_feed()` (cursor-paginated), `get_preview()`, `toggle_like()`, `is_liked()`
 - `community_note_likes` table with RLS
 - `/explore/community` frontend page with cards, likes, and pagination
 - `CommunityCardFull` component
 
 Current limitations:
+
 - Feed is role-gated via `user_roles!inner(role)` join -- only bloggers/partners/admins appear
 - No opt-in/opt-out mechanism for check-in authors
 - No filters (district, vibe tag)
@@ -23,6 +25,7 @@ Current limitations:
 ## Approach
 
 Evolve the existing CommunityService in-place (Approach A). Alternatives considered:
+
 - **Separate FeedService + view**: Over-engineered for current scale
 - **Event-sourced feed table**: Way overkill -- triggers, denormalization, consistency concerns
 
@@ -33,13 +36,13 @@ Evolve the existing CommunityService in-place (Approach A). Alternatives conside
 
 ## Role Hierarchy
 
-| Role | Auth | Can write public check-ins | Can read community feed | Can moderate |
-|------|------|---------------------------|------------------------|-------------|
-| `user` (anonymous) | No | No | No | No |
-| `auth-user` (signed up) | Yes | Yes | Yes | No |
-| `blogger` | Yes | Yes | Yes | No |
-| `partner` | Yes | Yes | Yes | No |
-| `admin` | Yes | Yes | Yes | Yes |
+| Role                    | Auth | Can write public check-ins | Can read community feed | Can moderate |
+| ----------------------- | ---- | -------------------------- | ----------------------- | ------------ |
+| `user` (anonymous)      | No   | No                         | No                      | No           |
+| `auth-user` (signed up) | Yes  | Yes                        | Yes                     | No           |
+| `blogger`               | Yes  | Yes                        | Yes                     | No           |
+| `partner`               | Yes  | Yes                        | Yes                     | No           |
+| `admin`                 | Yes  | Yes                        | Yes                     | Yes          |
 
 Detailed role differentiation (permissions, badges, future paywall tier) deferred to a separate session.
 

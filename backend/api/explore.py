@@ -89,8 +89,8 @@ def community_like_toggle(
     service = CommunityService(db)
     try:
         count = service.toggle_like(checkin_id, user["id"])
-    except ValueError:
-        raise HTTPException(status_code=404, detail="Not found")
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail="Not found") from exc
     return {"likeCount": count}
 
 
