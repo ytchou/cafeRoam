@@ -124,56 +124,132 @@ class TestEnrichShopHandler:
 
 
 class TestGenerateEmbeddingHandler:
-    async def test_generates_embedding_and_stores(self):
+    def _make_db(
+        self, shop_data: dict, menu_items: list[dict]
+    ) -> tuple[MagicMock, MagicMock, MagicMock]:
+        """Return (db, shop_table_mock, menu_table_mock) with correct call chains."""
         db = MagicMock()
-        embeddings = AsyncMock()
-        embeddings.embed = AsyncMock(return_value=[0.1] * 1536)
 
-        db.table = MagicMock(
-            return_value=MagicMock(
-                select=MagicMock(
-                    return_value=MagicMock(
-                        eq=MagicMock(
-                            return_value=MagicMock(
-                                single=MagicMock(
-                                    return_value=MagicMock(
-                                        execute=MagicMock(
-                                            return_value=MagicMock(
-                                                data={
-                                                    "id": "shop-1",
-                                                    "name": "Test Cafe",
-                                                    "description": "A cozy cafe",
-                                                }
-                                            )
-                                        )
-                                    )
-                                )
-                            )
-                        )
-                    )
-                ),
-                update=MagicMock(
-                    return_value=MagicMock(
-                        eq=MagicMock(
-                            return_value=MagicMock(
-                                execute=MagicMock(return_value=MagicMock(data=[]))
-                            )
-                        )
-                    )
-                ),
-            )
+        shop_table = MagicMock()
+        shop_table.select.return_value.eq.return_value.single.return_value.execute.return_value = (
+            MagicMock(data=shop_data)
+        )
+        shop_table.update.return_value.eq.return_value.execute.return_value = MagicMock(data=[])
+
+        menu_table = MagicMock()
+        menu_table.select.return_value.eq.return_value.execute.return_value = MagicMock(
+            data=menu_items
         )
 
+        def table_side_effect(name: str):
+            return menu_table if name == "shop_menu_items" else shop_table
+
+        db.table.side_effect = table_side_effect
+        return db, shop_table, menu_table
+
+    async def test_includes_menu_items_in_embedding_text_when_available(self):
+        """When a shop has extracted menu items, they appear after ' | ' in the embedding text."""
+        db, _, _ = self._make_db(
+            shop_data={
+                "name": "虎記商行",
+                "description": "台灣老宅改建的咖啡館",
+                "processing_status": "live",
+            },
+            menu_items=[{"item_name": "巴斯克蛋糕"}, {"item_name": "司康"}],
+        )
+        embeddings = AsyncMock()
+        embeddings.embed = AsyncMock(return_value=[0.1] * 1536)
         queue = AsyncMock()
 
         await handle_generate_embedding(
-            payload={"shop_id": "shop-1"},
+            payload={"shop_id": "shop-taipei-01"},
             db=db,
             embeddings=embeddings,
             queue=queue,
         )
-        embeddings.embed.assert_called_once()
-        queue.enqueue.assert_called_once()  # Should queue publish step
+
+        embed_text = embeddings.embed.call_args[0][0]
+        assert "巴斯克蛋糕" in embed_text
+        assert "司康" in embed_text
+        assert " | " in embed_text
+
+    async def test_embedding_text_unchanged_when_no_menu_items(self):
+        """When a shop has no menu items, embedding text is name + description only."""
+        db, _, _ = self._make_db(
+            shop_data={
+                "name": "虎記商行",
+                "description": "台灣老宅改建的咖啡館",
+                "processing_status": "live",
+            },
+            menu_items=[],
+        )
+        embeddings = AsyncMock()
+        embeddings.embed = AsyncMock(return_value=[0.1] * 1536)
+        queue = AsyncMock()
+
+        await handle_generate_embedding(
+            payload={"shop_id": "shop-taipei-01"},
+            db=db,
+            embeddings=embeddings,
+            queue=queue,
+        )
+
+        embed_text = embeddings.embed.call_args[0][0]
+        assert embed_text == "虎記商行. 台灣老宅改建的咖啡館"
+        assert " | " not in embed_text
+
+    async def test_live_shop_embedding_updated_in_place_without_status_change(self):
+        """Re-embedding a live shop updates only the embedding column — shop stays visible in search."""
+        db, shop_table, _ = self._make_db(
+            shop_data={
+                "name": "虎記商行",
+                "description": "台灣老宅改建的咖啡館",
+                "processing_status": "live",
+            },
+            menu_items=[],
+        )
+        embeddings = AsyncMock()
+        embeddings.embed = AsyncMock(return_value=[0.1] * 1536)
+        queue = AsyncMock()
+
+        await handle_generate_embedding(
+            payload={"shop_id": "shop-taipei-01"},
+            db=db,
+            embeddings=embeddings,
+            queue=queue,
+        )
+
+        update_data = shop_table.update.call_args[0][0]
+        assert "embedding" in update_data
+        assert "processing_status" not in update_data
+        # No PUBLISH_SHOP job — shop was already live
+        queue.enqueue.assert_not_called()
+
+    async def test_new_shop_advances_status_and_queues_publish(self):
+        """A new shop going through the pipeline advances to 'publishing' and queues PUBLISH_SHOP."""
+        db, shop_table, _ = self._make_db(
+            shop_data={
+                "name": "虎記商行",
+                "description": "台灣老宅改建的咖啡館",
+                "processing_status": "embedding",
+            },
+            menu_items=[],
+        )
+        embeddings = AsyncMock()
+        embeddings.embed = AsyncMock(return_value=[0.1] * 1536)
+        queue = AsyncMock()
+
+        await handle_generate_embedding(
+            payload={"shop_id": "shop-taipei-01"},
+            db=db,
+            embeddings=embeddings,
+            queue=queue,
+        )
+
+        update_data = shop_table.update.call_args[0][0]
+        assert update_data.get("processing_status") == "publishing"
+        queue.enqueue.assert_called_once()
+        assert queue.enqueue.call_args.kwargs["job_type"].value == "publish_shop"
 
 
 class TestStalenessSweepHandler:
@@ -214,47 +290,79 @@ class TestStalenessSweepHandler:
 
 
 class TestEnrichMenuPhotoHandler:
-    async def test_calls_llm_and_updates_shop_menu_data(self):
+    async def test_replaces_menu_items_and_queues_reembed_when_items_extracted(self):
+        """When a menu photo is processed, existing items are replaced and a re-embed is queued."""
         db = MagicMock()
         llm = AsyncMock()
+        queue = AsyncMock()
+
         llm.extract_menu_data = AsyncMock(
             return_value=MagicMock(
-                items=["Cappuccino", "Latte"],
+                items=[
+                    {"name": "巴斯克蛋糕", "price": 120, "category": "dessert"},
+                    {"name": "手沖拿鐵", "price": 150, "category": "coffee"},
+                ]
             )
         )
-        db.table = MagicMock(
-            return_value=MagicMock(
-                update=MagicMock(
-                    return_value=MagicMock(
-                        eq=MagicMock(
-                            return_value=MagicMock(
-                                execute=MagicMock(return_value=MagicMock(data=[]))
-                            )
-                        )
-                    )
-                )
-            )
-        )
+
+        shop_table = MagicMock()
+        shop_table.update.return_value.eq.return_value.execute.return_value = MagicMock(data=[])
+
+        menu_table = MagicMock()
+        menu_table.delete.return_value.eq.return_value.execute.return_value = MagicMock(data=[])
+        menu_table.insert.return_value.execute.return_value = MagicMock(data=[])
+
+        def table_side_effect(name: str):
+            return menu_table if name == "shop_menu_items" else shop_table
+
+        db.table.side_effect = table_side_effect
 
         await handle_enrich_menu_photo(
-            payload={"shop_id": "shop-1", "image_url": "https://example.com/menu.jpg"},
+            payload={
+                "shop_id": "shop-zhongshan-01",
+                "image_url": "https://storage.example.com/menu.jpg",
+            },
             db=db,
             llm=llm,
+            queue=queue,
         )
-        llm.extract_menu_data.assert_called_once_with(image_url="https://example.com/menu.jpg")
-        db.table.return_value.update.assert_called_once()
 
-    async def test_skips_update_when_no_items_extracted(self):
+        # DELETE before INSERT (replace-on-extract)
+        menu_table.delete.return_value.eq.return_value.execute.assert_called_once()
+        # INSERT two items
+        menu_table.insert.return_value.execute.assert_called_once()
+        inserted = menu_table.insert.call_args[0][0]
+        assert len(inserted) == 2
+        assert inserted[0]["item_name"] == "巴斯克蛋糕"
+        assert inserted[0]["shop_id"] == "shop-zhongshan-01"
+        assert inserted[1]["item_name"] == "手沖拿鐵"
+        # Dual-write to shops.menu_data
+        shop_table.update.assert_called_once()
+        # Re-embed queued
+        queue.enqueue.assert_called_once()
+        assert queue.enqueue.call_args.kwargs["payload"]["shop_id"] == "shop-zhongshan-01"
+
+    async def test_preserves_existing_items_when_extraction_returns_empty(self):
+        """When no items are extracted, existing menu items are preserved and no re-embed is queued."""
         db = MagicMock()
         llm = AsyncMock()
+        queue = AsyncMock()
+
         llm.extract_menu_data = AsyncMock(return_value=MagicMock(items=[]))
 
         await handle_enrich_menu_photo(
-            payload={"shop_id": "shop-1", "image_url": "https://example.com/menu.jpg"},
+            payload={
+                "shop_id": "shop-zhongshan-01",
+                "image_url": "https://storage.example.com/menu.jpg",
+            },
             db=db,
             llm=llm,
+            queue=queue,
         )
+
+        # No DB writes, no job queued
         db.table.assert_not_called()
+        queue.enqueue.assert_not_called()
 
 
 class TestWeeklyEmailHandler:

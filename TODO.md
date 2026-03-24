@@ -1271,6 +1271,25 @@ _Designed in Pencil. Stamps, check-in history, account settings._
 
 - [ ] Review to make sure we have cover all analytics events needed
 
+### Menu Items & Search Enrichment (DEV-6)
+
+> **Design Doc:** [docs/designs/2026-03-24-menu-items-embedding-design.md](docs/designs/2026-03-24-menu-items-embedding-design.md)
+> **Plan:** [docs/plans/2026-03-24-menu-items-embedding-plan.md](docs/plans/2026-03-24-menu-items-embedding-plan.md)
+
+**Chunk 1 — DB Foundation (Wave 1):**
+
+- [x] Migration: `shop_menu_items` table + index
+
+**Chunk 2 — Worker Updates (Waves 2-3):**
+
+- [x] Update `handle_enrich_menu_photo`: persist items + queue re-embed
+- [x] Update `handle_generate_embedding`: menu items in text + live-shop guard
+
+**Chunk 3 — Re-embed Script (Wave 4):**
+
+- [x] Write `backend/scripts/reembed_live_shops.py`
+- [ ] Post-deploy: dry-run then enqueue 164 jobs
+
 ### Search Observability (DEV-9)
 
 > **Design Doc:** [docs/designs/2026-03-24-search-observability-design.md](docs/designs/2026-03-24-search-observability-design.md)

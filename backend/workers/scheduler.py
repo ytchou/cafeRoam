@@ -93,6 +93,7 @@ async def _dispatch_job(job: Job, db: Client, queue: JobQueue) -> None:
                     payload=job.payload,
                     db=db,
                     llm=llm,
+                    queue=queue,
                 )
         case JobType.GENERATE_EMBEDDING:
             embeddings = get_embeddings_provider()
