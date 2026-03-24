@@ -1443,7 +1443,7 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 
 **Chunk 3 — Frontend Wiring (Wave 3-4):**
 - [x] Update all frontend event call sites (Task 6)
-- [ ] Update frontend tests for changed components (Task 7)
+- [x] Update frontend tests for changed components (Task 7)
 
 **Chunk 4 — Verification (Wave 5):**
 - [ ] Full test suite + lint pass (Task 8)

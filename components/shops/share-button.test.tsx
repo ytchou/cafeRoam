@@ -44,7 +44,7 @@ describe('ShareButton', () => {
     await userEvent.click(screen.getByRole('button', { name: /分享/i }));
     expect(mockCapture).toHaveBeenCalledWith(
       'shop_url_copied',
-      expect.objectContaining({ shop_id: props.shopId })
+      { shop_id: props.shopId, copy_method: 'clipboard' }
     );
   });
 });
