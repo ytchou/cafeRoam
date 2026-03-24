@@ -205,7 +205,7 @@ async def run_weekly_email() -> None:
 async def run_reembed_reviewed_shops() -> None:
     db = get_service_role_client()
     queue = JobQueue(db=db)
-    await handle_reembed_reviewed_shops(db=db, queue=queue)
+    await queue.enqueue(job_type=JobType.REEMBED_REVIEWED_SHOPS, payload={})
 
 
 def create_scheduler() -> AsyncIOScheduler:
