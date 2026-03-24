@@ -60,7 +60,7 @@ describe('CommunityCardFull', () => {
       />
     );
 
-    expect(screen.getByText(/Hinoki Coffee · 大安/)).toBeInTheDocument();
+    expect(screen.getByText(/Hinoki Coffee · 中山站/)).toBeInTheDocument();
   });
 
   it('displays the like count', () => {

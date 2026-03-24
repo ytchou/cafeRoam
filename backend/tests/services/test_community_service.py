@@ -160,6 +160,8 @@ class TestCommunityServiceToggleLike:
 
     def test_adds_like_when_not_yet_liked(self):
         db = _make_db_mock(like_exists=False, like_count=5)
+        # toggle_like now checks is_public before inserting — prepend that response
+        db.execute.side_effect = [MagicMock(data={"id": "ci-1"}), *db.execute.side_effect]
         service = CommunityService(db)
 
         count = service.toggle_like("ci-1", "user-a1b2c3")
@@ -169,6 +171,7 @@ class TestCommunityServiceToggleLike:
 
     def test_removes_like_when_already_liked(self):
         db = _make_db_mock(like_exists=True, like_count=4)
+        db.execute.side_effect = [MagicMock(data={"id": "ci-1"}), *db.execute.side_effect]
         service = CommunityService(db)
 
         count = service.toggle_like("ci-1", "user-a1b2c3")
@@ -236,23 +239,36 @@ class TestCommunityServiceFeedFilters:
     def test_feed_with_mrt_filter(self):
         """When filtered by MRT, only matching check-ins appear."""
         rows = [make_community_note_row(checkin_id="ci-1")]
-        db = _make_db_mock(note_rows=rows)
+        db = _make_db_mock(note_rows=None)
+        # Two-step filter: shops lookup then check_ins query
+        db.execute.side_effect = [
+            MagicMock(data=[{"id": "shop-a1b2c3"}]),
+            MagicMock(data=rows),
+        ]
         service = CommunityService(db)
 
         result = service.get_feed(cursor=None, limit=10, mrt="中山")
 
         assert len(result.notes) == 1
-        db.eq.assert_any_call("shops.mrt", "中山")
+        db.eq.assert_any_call("mrt", "中山")
+        db.in_.assert_any_call("shop_id", ["shop-a1b2c3"])
 
     def test_feed_with_vibe_tag_filter(self):
         """When filtered by vibe tag, only matching check-ins appear."""
         rows = [make_community_note_row(checkin_id="ci-1")]
-        db = _make_db_mock(note_rows=rows)
+        db = _make_db_mock(note_rows=None)
+        # Two-step filter: shop_tags lookup then check_ins query
+        db.execute.side_effect = [
+            MagicMock(data=[{"shop_id": "shop-a1b2c3"}]),
+            MagicMock(data=rows),
+        ]
         service = CommunityService(db)
 
-        result = service.get_feed(cursor=None, limit=10, vibe_tag="quiet_reading")
+        result = service.get_feed(cursor=None, limit=10, vibe_tag="quiet")
 
         assert len(result.notes) == 1
+        db.eq.assert_any_call("tag_id", "quiet")
+        db.in_.assert_any_call("shop_id", ["shop-a1b2c3"])
 
     def test_feed_with_no_filters_returns_all_public(self):
         """Without filters, all public check-ins appear."""
