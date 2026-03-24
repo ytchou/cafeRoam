@@ -1363,7 +1363,7 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 > **Plan:** [docs/plans/2026-03-24-community-feed-plan.md](docs/plans/2026-03-24-community-feed-plan.md)
 
 **Chunk 1 — Database + Backend Service (Wave 1-2):**
-- [ ] DB migration: add `is_public` column + RLS policies (Task 1)
+- [x] DB migration: add `is_public` column + RLS policies (Task 1)
 - [ ] CommunityService: `is_public` filter + MRT/vibe_tag params (Task 2)
 - [ ] CheckInService: accept `is_public` param (Task 4)
 
