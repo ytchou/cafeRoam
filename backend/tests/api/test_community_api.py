@@ -201,7 +201,10 @@ class TestCommunityFeedFilters:
                 mock_cls.return_value.get_feed.return_value = feed
                 client.get("/explore/community?mrt=中山")
                 mock_cls.return_value.get_feed.assert_called_once_with(
-                    cursor=None, limit=10, mrt="中山", vibe_tag=None,
+                    cursor=None,
+                    limit=10,
+                    mrt="中山",
+                    vibe_tag=None,
                 )
         finally:
             app.dependency_overrides.pop(get_current_user, None)
@@ -219,7 +222,10 @@ class TestCommunityFeedFilters:
                 mock_cls.return_value.get_feed.return_value = feed
                 client.get("/explore/community?vibe_tag=quiet_reading")
                 mock_cls.return_value.get_feed.assert_called_once_with(
-                    cursor=None, limit=10, mrt=None, vibe_tag="quiet_reading",
+                    cursor=None,
+                    limit=10,
+                    mrt=None,
+                    vibe_tag="quiet_reading",
                 )
         finally:
             app.dependency_overrides.pop(get_current_user, None)
