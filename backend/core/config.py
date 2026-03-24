@@ -46,6 +46,9 @@ class Settings(BaseSettings):
     # Admin
     admin_user_ids: list[str] = []
 
+    # Anonymization
+    anon_salt: str = "caferoam-dev-salt"
+
     # Worker concurrency
     worker_poll_interval_seconds: int = 5
     worker_concurrency_enrich: int = 3
