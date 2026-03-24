@@ -1,3 +1,4 @@
+from pydantic import model_validator
 from pydantic_settings import BaseSettings
 
 
@@ -46,6 +47,9 @@ class Settings(BaseSettings):
     # Admin
     admin_user_ids: list[str] = []
 
+    # Anonymization
+    anon_salt: str = "caferoam-dev-salt"
+
     # Worker concurrency
     worker_poll_interval_seconds: int = 5
     worker_concurrency_enrich: int = 3
@@ -53,6 +57,15 @@ class Settings(BaseSettings):
     worker_concurrency_publish: int = 20
     worker_concurrency_scrape: int = 1
     worker_concurrency_default: int = 1
+
+    @model_validator(mode="after")
+    def check_production_salt(self) -> "Settings":
+        if self.environment != "development" and self.anon_salt == "caferoam-dev-salt":
+            raise ValueError(
+                "ANON_SALT must be changed from the development default"
+                " in non-development environments"
+            )
+        return self
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8", "extra": "ignore"}
 
