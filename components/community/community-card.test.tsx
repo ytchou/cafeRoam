@@ -66,7 +66,7 @@ describe('CommunityCard', () => {
     render(<CommunityCard note={defaultNote} />);
 
     expect(screen.getByText(/Hinoki Coffee/)).toBeInTheDocument();
-    expect(screen.getByText(/大安/)).toBeInTheDocument();
+    expect(screen.getByText(/中山站/)).toBeInTheDocument();
   });
 
   it('shows the author avatar initial when no avatar url', () => {

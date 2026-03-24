@@ -19,6 +19,7 @@ class CreateCheckInRequest(BaseModel):
     stars: int | None = None
     review_text: str | None = None
     confirmed_tags: list[str] | None = None
+    is_public: bool = True
 
     @field_validator("stars")
     @classmethod
@@ -59,6 +60,7 @@ async def create_checkin(
             stars=body.stars,
             review_text=body.review_text,
             confirmed_tags=body.confirmed_tags,
+            is_public=body.is_public,
         )
         return result.model_dump()
     except ValueError as e:

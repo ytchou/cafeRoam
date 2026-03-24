@@ -62,7 +62,7 @@ export function CommunityCard({ note }: CommunityCardProps) {
       >
         <Coffee className="h-3.5 w-3.5" />
         {note.shopName}
-        {note.shopDistrict && ` · ${note.shopDistrict}`}
+        {note.shopLocation && ` · ${note.shopLocation}`}
       </Link>
     </div>
   );

@@ -5,18 +5,37 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { CommunityCardFull } from '@/components/community/community-card-full';
+import stationsData from '@/lib/data/taipei-mrt-stations.json';
 import { useCommunityFeed } from '@/lib/hooks/use-community-feed';
 import { useLikeStatus } from '@/lib/hooks/use-like-status';
 import { useIsDesktop } from '@/lib/hooks/use-media-query';
 import { useAnalytics } from '@/lib/posthog/use-analytics';
+import type { CommunityNoteCard } from '@/types/community';
+
+const VIBE_TAGS = [
+  { id: 'quiet', label: 'Quiet' },
+  { id: 'laptop_friendly', label: 'Laptop friendly' },
+  { id: 'specialty_coffee_focused', label: 'Good coffee' },
+  { id: 'photogenic', label: 'Instagrammable' },
+] as const;
 
 export default function CommunityFeedPage() {
   const router = useRouter();
   const isDesktop = useIsDesktop();
   const [cursor, setCursor] = useState<string | null>(null);
-  const { notes, nextCursor, isLoading, mutate } = useCommunityFeed(cursor);
+  const [selectedMrt, setSelectedMrt] = useState<string>('');
+  const [selectedVibeTag, setSelectedVibeTag] = useState<string>('');
+  // Tracks notes from previous pages so "Load more" accumulates instead of replaces.
+  // Reset to [] when filters change; updated at click-time in handleLoadMore.
+  const [prevPageNotes, setPrevPageNotes] = useState<CommunityNoteCard[]>([]);
+  const { notes, nextCursor, isLoading, mutate } = useCommunityFeed({
+    cursor,
+    mrt: selectedMrt || null,
+    vibeTag: selectedVibeTag || null,
+  });
+  const allNotes = [...prevPageNotes, ...notes];
   const { likedIds: serverLikedIds } = useLikeStatus(
-    notes.map((n) => n.checkinId)
+    allNotes.map((n) => n.checkinId)
   );
   // localToggles tracks explicit user overrides: true = force-liked, false = force-unliked
   const [localToggles, setLocalToggles] = useState<Map<string, boolean>>(
@@ -33,9 +52,43 @@ export default function CommunityFeedPage() {
     return result;
   }, [serverLikedIds, localToggles]);
 
+  const mrtStationNames = useMemo(
+    () =>
+      [
+        ...new Set(
+          (stationsData as Array<{ name_zh: string }>).map((s) => s.name_zh)
+        ),
+      ].sort(),
+    []
+  );
+
   useEffect(() => {
     capture('community_feed_opened', { referrer: document.referrer });
   }, [capture]);
+
+  const handleMrtChange = useCallback((value: string) => {
+    setPrevPageNotes([]);
+    setSelectedMrt(value);
+    setCursor(null);
+  }, []);
+
+  const handleVibeTagToggle = useCallback((id: string) => {
+    setPrevPageNotes([]);
+    setSelectedVibeTag((prev) => (prev === id ? '' : id));
+    setCursor(null);
+  }, []);
+
+  const handleClearFilters = useCallback(() => {
+    setPrevPageNotes([]);
+    setSelectedMrt('');
+    setSelectedVibeTag('');
+    setCursor(null);
+  }, []);
+
+  const handleLoadMore = useCallback(() => {
+    setPrevPageNotes((prev) => [...prev, ...notes]);
+    setCursor(nextCursor);
+  }, [notes, nextCursor]);
 
   const handleLikeToggle = useCallback(
     async (checkinId: string) => {
@@ -90,10 +143,53 @@ export default function CommunityFeedPage() {
         </div>
       </header>
 
+      <div className="flex flex-wrap items-center gap-2 px-5 pb-3 lg:px-8">
+        <select
+          aria-label="MRT station"
+          value={selectedMrt}
+          onChange={(e) => handleMrtChange(e.target.value)}
+          className="rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs text-gray-700 focus:outline-none"
+        >
+          <option value="">All stations</option>
+          {mrtStationNames.map((name) => (
+            <option key={name} value={name}>
+              {name}
+            </option>
+          ))}
+        </select>
+
+        <div className="flex flex-wrap gap-1.5">
+          {VIBE_TAGS.map((tag) => (
+            <button
+              key={tag.id}
+              type="button"
+              onClick={() => handleVibeTagToggle(tag.id)}
+              className={`rounded-full border px-3 py-1 text-xs transition-colors ${
+                selectedVibeTag === tag.id
+                  ? 'border-amber-700 bg-amber-700 text-white'
+                  : 'border-gray-200 bg-white text-gray-600 hover:border-gray-400'
+              }`}
+            >
+              {tag.label}
+            </button>
+          ))}
+        </div>
+
+        {(selectedMrt || selectedVibeTag) && (
+          <button
+            type="button"
+            onClick={handleClearFilters}
+            className="rounded-full border border-gray-300 px-3 py-1 text-xs text-gray-500 hover:border-gray-500"
+          >
+            Clear filters
+          </button>
+        )}
+      </div>
+
       <div
         className={`${isDesktop ? 'grid grid-cols-2' : 'flex flex-col'} gap-4 px-5 pt-2 pb-24 lg:px-8`}
       >
-        {notes.map((note) => (
+        {allNotes.map((note) => (
           <CommunityCardFull
             key={note.checkinId}
             note={note}
@@ -110,7 +206,7 @@ export default function CommunityFeedPage() {
           </div>
         )}
 
-        {!isLoading && notes.length === 0 && (
+        {!isLoading && allNotes.length === 0 && (
           <div
             className={`${isDesktop ? 'col-span-2' : ''} py-12 text-center text-sm text-gray-400`}
           >
@@ -121,7 +217,7 @@ export default function CommunityFeedPage() {
         {nextCursor && !isLoading && (
           <button
             type="button"
-            onClick={() => setCursor(nextCursor)}
+            onClick={handleLoadMore}
             className={`${isDesktop ? 'col-span-2' : ''} text-map-pin flex items-center justify-center gap-1 py-2 text-sm font-medium`}
           >
             Load more notes

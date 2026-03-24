@@ -57,7 +57,7 @@ export function CommunityCardFull({
           >
             <Coffee className="h-3 w-3" />
             {note.shopName}
-            {note.shopDistrict && ` · ${note.shopDistrict}`}
+            {note.shopLocation && ` · ${note.shopLocation}`}
           </Link>
 
           <div className="flex items-center gap-3">

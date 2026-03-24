@@ -22,7 +22,7 @@ _MOCK_CARD = CommunityNoteCard(
     cover_photo_url="https://example.com/photo1.jpg",
     shop_name="Hinoki Coffee",
     shop_slug="hinoki-coffee",
-    shop_district="大安",
+    shop_location="中山站",
     like_count=12,
     created_at="2026-03-15T14:30:00",
 )
@@ -31,73 +31,97 @@ _MOCK_CARD = CommunityNoteCard(
 class TestCommunityPreview:
     """When the Explore page loads, it fetches the community preview."""
 
+    def test_returns_401_when_not_authenticated(self):
+        response = client.get("/explore/community/preview")
+        assert response.status_code == 401
+
     def test_returns_200_with_preview_cards(self):
-        with (
-            patch("api.explore.get_anon_client", return_value=MagicMock()),
-            patch("api.explore.CommunityService") as mock_cls,
-        ):
-            mock_cls.return_value.get_preview.return_value = [_MOCK_CARD]
-            response = client.get("/explore/community/preview")
+        app.dependency_overrides[get_current_user] = lambda: {
+            "id": "user-a1b2c3",
+            "email": "mei@example.com",
+        }
+        app.dependency_overrides[get_user_db] = lambda: MagicMock()
+        try:
+            with patch("api.explore.CommunityService") as mock_cls:
+                mock_cls.return_value.get_preview.return_value = [_MOCK_CARD]
+                response = client.get("/explore/community/preview")
 
-        assert response.status_code == 200
-        data = response.json()
-        assert len(data) == 1
-        assert data[0]["checkinId"] == "ci-1"
-        assert data[0]["author"]["displayName"] == "Mei-Ling ☕"
-
-    def test_is_public_no_auth_required(self):
-        with (
-            patch("api.explore.get_anon_client", return_value=MagicMock()),
-            patch("api.explore.CommunityService") as mock_cls,
-        ):
-            mock_cls.return_value.get_preview.return_value = []
-            response = client.get("/explore/community/preview")
-
-        assert response.status_code == 200
+            assert response.status_code == 200
+            data = response.json()
+            assert len(data) == 1
+            assert data[0]["checkinId"] == "ci-1"
+            assert data[0]["author"]["displayName"] == "Mei-Ling ☕"
+        finally:
+            app.dependency_overrides.pop(get_current_user, None)
+            app.dependency_overrides.pop(get_user_db, None)
 
     def test_returns_empty_list_when_no_notes(self):
-        with (
-            patch("api.explore.get_anon_client", return_value=MagicMock()),
-            patch("api.explore.CommunityService") as mock_cls,
-        ):
-            mock_cls.return_value.get_preview.return_value = []
-            response = client.get("/explore/community/preview")
+        app.dependency_overrides[get_current_user] = lambda: {
+            "id": "user-a1b2c3",
+            "email": "mei@example.com",
+        }
+        app.dependency_overrides[get_user_db] = lambda: MagicMock()
+        try:
+            with patch("api.explore.CommunityService") as mock_cls:
+                mock_cls.return_value.get_preview.return_value = []
+                response = client.get("/explore/community/preview")
 
-        assert response.json() == []
+            assert response.json() == []
+        finally:
+            app.dependency_overrides.pop(get_current_user, None)
+            app.dependency_overrides.pop(get_user_db, None)
 
 
 class TestCommunityFeed:
     """When a user opens the full community page, they get paginated results."""
+
+    def test_returns_401_when_not_authenticated(self):
+        response = client.get("/explore/community")
+        assert response.status_code == 401
 
     def test_returns_200_with_feed_and_cursor(self):
         feed = CommunityFeedResponse(
             notes=[_MOCK_CARD],
             next_cursor="2026-03-14T10:00:00",
         )
-        with (
-            patch("api.explore.get_anon_client", return_value=MagicMock()),
-            patch("api.explore.CommunityService") as mock_cls,
-        ):
-            mock_cls.return_value.get_feed.return_value = feed
-            response = client.get("/explore/community")
+        app.dependency_overrides[get_current_user] = lambda: {
+            "id": "user-a1b2c3",
+            "email": "mei@example.com",
+        }
+        app.dependency_overrides[get_user_db] = lambda: MagicMock()
+        try:
+            with patch("api.explore.CommunityService") as mock_cls:
+                mock_cls.return_value.get_feed.return_value = feed
+                response = client.get("/explore/community")
 
-        assert response.status_code == 200
-        data = response.json()
-        assert data["nextCursor"] == "2026-03-14T10:00:00"
-        assert len(data["notes"]) == 1
+            assert response.status_code == 200
+            data = response.json()
+            assert data["nextCursor"] == "2026-03-14T10:00:00"
+            assert len(data["notes"]) == 1
+        finally:
+            app.dependency_overrides.pop(get_current_user, None)
+            app.dependency_overrides.pop(get_user_db, None)
 
     def test_passes_cursor_and_limit_to_service(self):
         feed = CommunityFeedResponse(notes=[], next_cursor=None)
-        with (
-            patch("api.explore.get_anon_client", return_value=MagicMock()),
-            patch("api.explore.CommunityService") as mock_cls,
-        ):
-            mock_cls.return_value.get_feed.return_value = feed
-            client.get("/explore/community?cursor=2026-03-14T10:00:00&limit=5")
-            mock_cls.return_value.get_feed.assert_called_once_with(
-                cursor="2026-03-14T10:00:00",
-                limit=5,
-            )
+        app.dependency_overrides[get_current_user] = lambda: {
+            "id": "user-a1b2c3",
+            "email": "mei@example.com",
+        }
+        app.dependency_overrides[get_user_db] = lambda: MagicMock()
+        try:
+            with patch("api.explore.CommunityService") as mock_cls:
+                mock_cls.return_value.get_feed.return_value = feed
+                client.get("/explore/community?cursor=2026-03-14T10:00:00&limit=5")
+                mock_cls.return_value.get_feed.assert_called_once_with(
+                    cursor="2026-03-14T10:00:00",
+                    limit=5,
+                    mrt=None,
+                    vibe_tag=None,
+                )
+        finally:
+            app.dependency_overrides.pop(get_current_user, None)
+            app.dependency_overrides.pop(get_user_db, None)
 
 
 class TestCommunityLikeToggle:
@@ -145,6 +169,52 @@ class TestCommunityLikeCheck:
 
             assert response.status_code == 200
             assert response.json()["liked"] is True
+        finally:
+            app.dependency_overrides.pop(get_current_user, None)
+            app.dependency_overrides.pop(get_user_db, None)
+
+
+class TestCommunityFeedFilters:
+    """Community feed accepts filter query params."""
+
+    def test_passes_mrt_filter_to_service(self):
+        app.dependency_overrides[get_current_user] = lambda: {
+            "id": "user-a1b2c3",
+            "email": "mei@example.com",
+        }
+        app.dependency_overrides[get_user_db] = lambda: MagicMock()
+        try:
+            feed = CommunityFeedResponse(notes=[], next_cursor=None)
+            with patch("api.explore.CommunityService") as mock_cls:
+                mock_cls.return_value.get_feed.return_value = feed
+                client.get("/explore/community?mrt=中山")
+                mock_cls.return_value.get_feed.assert_called_once_with(
+                    cursor=None,
+                    limit=10,
+                    mrt="中山",
+                    vibe_tag=None,
+                )
+        finally:
+            app.dependency_overrides.pop(get_current_user, None)
+            app.dependency_overrides.pop(get_user_db, None)
+
+    def test_passes_vibe_tag_filter_to_service(self):
+        app.dependency_overrides[get_current_user] = lambda: {
+            "id": "user-a1b2c3",
+            "email": "mei@example.com",
+        }
+        app.dependency_overrides[get_user_db] = lambda: MagicMock()
+        try:
+            feed = CommunityFeedResponse(notes=[], next_cursor=None)
+            with patch("api.explore.CommunityService") as mock_cls:
+                mock_cls.return_value.get_feed.return_value = feed
+                client.get("/explore/community?vibe_tag=quiet_reading")
+                mock_cls.return_value.get_feed.assert_called_once_with(
+                    cursor=None,
+                    limit=10,
+                    mrt=None,
+                    vibe_tag="quiet_reading",
+                )
         finally:
             app.dependency_overrides.pop(get_current_user, None)
             app.dependency_overrides.pop(get_user_db, None)

@@ -492,3 +492,125 @@ class TestConfirmedTagsValidation:
         assert result.id == "ci-no-tags"
         table_calls = [c[0][0] for c in mock_supabase.table.call_args_list]
         assert "taxonomy_tags" not in table_calls
+
+
+class TestCheckInIsPublic:
+    """Check-in creation accepts is_public flag."""
+
+    async def test_creates_checkin_with_is_public_true(self, checkin_service, mock_supabase):
+        """When a user opts to share publicly, is_public is stored as true."""
+        count_table = MagicMock()
+        count_table.select.return_value.eq.return_value.eq.return_value.execute.return_value = (
+            MagicMock(count=0)
+        )
+
+        insert_table = MagicMock()
+        insert_table.insert.return_value.execute.return_value = MagicMock(
+            data=[
+                {
+                    "id": "ci-public-001",
+                    "user_id": "user-a1b2c3",
+                    "shop_id": "shop-d4e5f6",
+                    "photo_urls": ["https://cdn.caferoam.tw/checkins/latte.jpg"],
+                    "menu_photo_url": None,
+                    "note": None,
+                    "stars": None,
+                    "review_text": None,
+                    "confirmed_tags": None,
+                    "reviewed_at": None,
+                    "is_public": True,
+                    "created_at": "2026-03-24T10:00:00+00:00",
+                }
+            ]
+        )
+
+        mock_supabase.table.side_effect = [count_table, insert_table]
+
+        await checkin_service.create(
+            user_id="user-a1b2c3",
+            shop_id="shop-d4e5f6",
+            photo_urls=["https://cdn.caferoam.tw/checkins/latte.jpg"],
+            is_public=True,
+        )
+
+        # Verify the insert payload includes is_public=True
+        insert_call_kwargs = insert_table.insert.call_args[0][0]
+        assert insert_call_kwargs["is_public"] is True
+
+    async def test_creates_checkin_with_is_public_false(self, checkin_service, mock_supabase):
+        """When a user opts for privacy, is_public is stored as false."""
+        count_table = MagicMock()
+        count_table.select.return_value.eq.return_value.eq.return_value.execute.return_value = (
+            MagicMock(count=0)
+        )
+
+        insert_table = MagicMock()
+        insert_table.insert.return_value.execute.return_value = MagicMock(
+            data=[
+                {
+                    "id": "ci-private-001",
+                    "user_id": "user-a1b2c3",
+                    "shop_id": "shop-d4e5f6",
+                    "photo_urls": ["https://cdn.caferoam.tw/checkins/latte.jpg"],
+                    "menu_photo_url": None,
+                    "note": None,
+                    "stars": None,
+                    "review_text": None,
+                    "confirmed_tags": None,
+                    "reviewed_at": None,
+                    "is_public": False,
+                    "created_at": "2026-03-24T10:00:00+00:00",
+                }
+            ]
+        )
+
+        mock_supabase.table.side_effect = [count_table, insert_table]
+
+        await checkin_service.create(
+            user_id="user-a1b2c3",
+            shop_id="shop-d4e5f6",
+            photo_urls=["https://cdn.caferoam.tw/checkins/latte.jpg"],
+            is_public=False,
+        )
+
+        insert_call_kwargs = insert_table.insert.call_args[0][0]
+        assert insert_call_kwargs["is_public"] is False
+
+    async def test_is_public_defaults_to_true_when_omitted(self, checkin_service, mock_supabase):
+        """For backward compatibility, omitting is_public defaults to true."""
+        count_table = MagicMock()
+        count_table.select.return_value.eq.return_value.eq.return_value.execute.return_value = (
+            MagicMock(count=0)
+        )
+
+        insert_table = MagicMock()
+        insert_table.insert.return_value.execute.return_value = MagicMock(
+            data=[
+                {
+                    "id": "ci-default-001",
+                    "user_id": "user-a1b2c3",
+                    "shop_id": "shop-d4e5f6",
+                    "photo_urls": ["https://cdn.caferoam.tw/checkins/latte.jpg"],
+                    "menu_photo_url": None,
+                    "note": None,
+                    "stars": None,
+                    "review_text": None,
+                    "confirmed_tags": None,
+                    "reviewed_at": None,
+                    "is_public": True,
+                    "created_at": "2026-03-24T10:00:00+00:00",
+                }
+            ]
+        )
+
+        mock_supabase.table.side_effect = [count_table, insert_table]
+
+        await checkin_service.create(
+            user_id="user-a1b2c3",
+            shop_id="shop-d4e5f6",
+            photo_urls=["https://cdn.caferoam.tw/checkins/latte.jpg"],
+            # is_public not passed — should default to True
+        )
+
+        insert_call_kwargs = insert_table.insert.call_args[0][0]
+        assert insert_call_kwargs["is_public"] is True

@@ -29,6 +29,7 @@ def _make_db_mock(
     mock.limit.return_value = mock
     mock.lt.return_value = mock
     mock.in_.return_value = mock
+    mock.contains.return_value = mock
     mock.delete.return_value = mock
     mock.insert.return_value = mock
     mock.single.return_value = mock
@@ -159,6 +160,8 @@ class TestCommunityServiceToggleLike:
 
     def test_adds_like_when_not_yet_liked(self):
         db = _make_db_mock(like_exists=False, like_count=5)
+        # toggle_like now checks is_public before inserting — prepend that response
+        db.execute.side_effect = [MagicMock(data={"id": "ci-1"}), *db.execute.side_effect]
         service = CommunityService(db)
 
         count = service.toggle_like("ci-1", "user-a1b2c3")
@@ -168,6 +171,7 @@ class TestCommunityServiceToggleLike:
 
     def test_removes_like_when_already_liked(self):
         db = _make_db_mock(like_exists=True, like_count=4)
+        db.execute.side_effect = [MagicMock(data={"id": "ci-1"}), *db.execute.side_effect]
         service = CommunityService(db)
 
         count = service.toggle_like("ci-1", "user-a1b2c3")
@@ -199,3 +203,79 @@ class TestCommunityServiceIsLiked:
 
         service = CommunityService(db)
         assert service.is_liked("ci-1", "user-a1b2c3") is False
+
+
+class TestCommunityServiceIsPublicFiltering:
+    """Community feed only shows check-ins where is_public is true."""
+
+    def test_feed_excludes_private_checkins(self):
+        """Given a mix of public and private check-ins, the feed returns only public ones."""
+        public_row = make_community_note_row(checkin_id="ci-public", is_public=True)
+        db = _make_db_mock(note_rows=[public_row])
+        service = CommunityService(db)
+
+        result = service.get_feed(cursor=None, limit=10)
+
+        assert len(result.notes) == 1
+        assert result.notes[0].checkin_id == "ci-public"
+        db.eq.assert_any_call("is_public", True)
+
+    def test_preview_excludes_private_checkins(self):
+        """The explore page preview only surfaces public check-ins."""
+        public_row = make_community_note_row(checkin_id="ci-public", is_public=True)
+        db = _make_db_mock(note_rows=[public_row])
+        service = CommunityService(db)
+
+        result = service.get_preview(limit=3)
+
+        assert len(result) == 1
+        assert result[0].checkin_id == "ci-public"
+        db.eq.assert_any_call("is_public", True)
+
+
+class TestCommunityServiceFeedFilters:
+    """Community feed supports filtering by MRT station and vibe tag."""
+
+    def test_feed_with_mrt_filter(self):
+        """When filtered by MRT, only matching check-ins appear."""
+        rows = [make_community_note_row(checkin_id="ci-1")]
+        db = _make_db_mock(note_rows=None)
+        # Two-step filter: shops lookup then check_ins query
+        db.execute.side_effect = [
+            MagicMock(data=[{"id": "shop-a1b2c3"}]),
+            MagicMock(data=rows),
+        ]
+        service = CommunityService(db)
+
+        result = service.get_feed(cursor=None, limit=10, mrt="中山")
+
+        assert len(result.notes) == 1
+        db.eq.assert_any_call("mrt", "中山")
+        db.in_.assert_any_call("shop_id", ["shop-a1b2c3"])
+
+    def test_feed_with_vibe_tag_filter(self):
+        """When filtered by vibe tag, only matching check-ins appear."""
+        rows = [make_community_note_row(checkin_id="ci-1")]
+        db = _make_db_mock(note_rows=None)
+        # Two-step filter: shop_tags lookup then check_ins query
+        db.execute.side_effect = [
+            MagicMock(data=[{"shop_id": "shop-a1b2c3"}]),
+            MagicMock(data=rows),
+        ]
+        service = CommunityService(db)
+
+        result = service.get_feed(cursor=None, limit=10, vibe_tag="quiet")
+
+        assert len(result.notes) == 1
+        db.eq.assert_any_call("tag_id", "quiet")
+        db.in_.assert_any_call("shop_id", ["shop-a1b2c3"])
+
+    def test_feed_with_no_filters_returns_all_public(self):
+        """Without filters, all public check-ins appear."""
+        rows = [make_community_note_row(checkin_id=f"ci-{i}") for i in range(3)]
+        db = _make_db_mock(note_rows=rows)
+        service = CommunityService(db)
+
+        result = service.get_feed(cursor=None, limit=10)
+
+        assert len(result.notes) == 3

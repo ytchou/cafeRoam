@@ -135,7 +135,7 @@ export function makeCommunityNote(
       'https://example.supabase.co/storage/v1/object/public/checkin-photos/photo1.jpg',
     shopName: 'Hinoki Coffee',
     shopSlug: 'hinoki-coffee',
-    shopDistrict: '大安',
+    shopLocation: '中山站',
     likeCount: 12,
     createdAt: '2026-03-15T14:30:00',
     ...overrides,
