@@ -21,6 +21,7 @@ The existing pattern from DEV-6 (menu items) uses immediate re-embedding: menu p
 ## Rationale
 
 Community check-in text is not time-sensitive enough to warrant per-check-in re-embedding. A nightly batch:
+
 - Optimizes embedding API cost (one call per shop per day regardless of check-in volume)
 - Avoids redundant re-embeddings for popular shops
 - Uses the `last_embedded_at` column to efficiently identify shops needing updates

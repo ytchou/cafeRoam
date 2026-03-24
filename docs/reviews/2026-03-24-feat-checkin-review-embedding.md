@@ -7,27 +7,27 @@
 
 ## Pass 1 — Full Discovery
 
-*Agents: Bug Hunter (Sonnet), Standards (Sonnet), Architecture (Sonnet), Plan Alignment (Sonnet), Test Philosophy (Sonnet)*
+_Agents: Bug Hunter (Sonnet), Standards (Sonnet), Architecture (Sonnet), Plan Alignment (Sonnet), Test Philosophy (Sonnet)_
 
 ### Issues Found (15 total, 1 false positive → 14 to fix)
 
-| # | Severity | File:Line | Description | Flagged By |
-|---|----------|-----------|-------------|------------|
-| C1 | Critical | `backend/workers/scheduler.py:205-208` | Cron calls handler directly, bypassing queue retry/Sentry/audit trail; dispatch case is dead code | Bug Hunter, Standards, Architecture |
-| I1 | Important | `generate_embedding.py:14`, `handlers/reembed_reviewed_shops.py:11`, `scripts/reembed_reviewed_shops.py:23` | `_MIN_TEXT_LENGTH = 15` duplicated in 3 files — silent divergence risk | Bug Hunter, Architecture |
-| I2 | Important | `supabase/migrations/20260325000002-000004` | New RPCs missing `SECURITY DEFINER SET search_path = public` (breaks codebase-wide convention) | Bug Hunter |
-| I3 | Important | `supabase/migrations/20260325000003:13-15` | `IS NULL` branch permanently re-enqueues shops that miss the backfill — silently inflates cost | Bug Hunter |
-| I4 | Important | `backend/scripts/reembed_reviewed_shops.py:56-67` | Dedup checks only `PENDING` jobs, misses `IN_PROGRESS` — race on `embedding`/`last_embedded_at` | Bug Hunter |
-| I5 | Important | `supabase/migrations/20260325000002-000003` | RPCs declared `STABLE`; `VOLATILE` is safer to prevent cached results within a transaction | Architecture |
-| I6 | Important | `docs/designs/2026-03-24-checkin-review-embedding-design.md:27` | Design doc says "03:00 UTC" but implementation uses 03:30 CST (Asia/Taipei) = 19:30 UTC | Plan Alignment |
-| I7 | Important | `backend/tests/scripts/test_reembed_reviewed_shops.py` | Script tests don't assert which RPC name is called — regression gap | Plan Alignment |
-| M1 | Minor | `backend/workers/scheduler.py:207` | Unused `JobQueue` instance pattern (consequence of C1) | Bug Hunter |
-| M2 | Minor | `backend/scripts/reembed_reviewed_shops.py:57-65` | Queries `job_queue` table directly bypassing `JobQueue` abstraction; no LIMIT guard | Standards, Architecture |
-| M3 | Minor | `backend/workers/handlers/generate_embedding.py:69` | Meaningful live-shop guard comment removed without replacement | Standards |
-| ~~M4~~ | ~~Minor~~ | ~~`generate_embedding.py:13-16`~~ | ~~Redundant comments on constants~~ — **FALSE POSITIVE**: comments add domain context the names don't supply | Standards |
-| M5 | Minor | `tests/workers/test_reembed_reviewed_shops.py:13-18`, `tests/scripts/test_reembed_reviewed_shops.py:14-49` | Placeholder shop IDs `"shop-001"`, `"shop-002"` (should be UUIDs) | Standards, Test Philosophy |
-| M6 | Minor | `tests/workers/test_reembed_reviewed_shops.py:39`, `tests/workers/test_scheduler.py:6,13` | Implementation-framed test names (`test_calls_rpc_with_correct_min_length`, `test_scheduler_creates_cron_jobs`, etc.) | Test Philosophy |
-| M7 | Minor | `backend/workers/handlers/generate_embedding.py` | No runtime token-budget guard; oversized review sets could hit OpenAI's 8191-token limit causing permanent retry failures | Architecture |
+| #      | Severity  | File:Line                                                                                                   | Description                                                                                                               | Flagged By                          |
+| ------ | --------- | ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- |
+| C1     | Critical  | `backend/workers/scheduler.py:205-208`                                                                      | Cron calls handler directly, bypassing queue retry/Sentry/audit trail; dispatch case is dead code                         | Bug Hunter, Standards, Architecture |
+| I1     | Important | `generate_embedding.py:14`, `handlers/reembed_reviewed_shops.py:11`, `scripts/reembed_reviewed_shops.py:23` | `_MIN_TEXT_LENGTH = 15` duplicated in 3 files — silent divergence risk                                                    | Bug Hunter, Architecture            |
+| I2     | Important | `supabase/migrations/20260325000002-000004`                                                                 | New RPCs missing `SECURITY DEFINER SET search_path = public` (breaks codebase-wide convention)                            | Bug Hunter                          |
+| I3     | Important | `supabase/migrations/20260325000003:13-15`                                                                  | `IS NULL` branch permanently re-enqueues shops that miss the backfill — silently inflates cost                            | Bug Hunter                          |
+| I4     | Important | `backend/scripts/reembed_reviewed_shops.py:56-67`                                                           | Dedup checks only `PENDING` jobs, misses `IN_PROGRESS` — race on `embedding`/`last_embedded_at`                           | Bug Hunter                          |
+| I5     | Important | `supabase/migrations/20260325000002-000003`                                                                 | RPCs declared `STABLE`; `VOLATILE` is safer to prevent cached results within a transaction                                | Architecture                        |
+| I6     | Important | `docs/designs/2026-03-24-checkin-review-embedding-design.md:27`                                             | Design doc says "03:00 UTC" but implementation uses 03:30 CST (Asia/Taipei) = 19:30 UTC                                   | Plan Alignment                      |
+| I7     | Important | `backend/tests/scripts/test_reembed_reviewed_shops.py`                                                      | Script tests don't assert which RPC name is called — regression gap                                                       | Plan Alignment                      |
+| M1     | Minor     | `backend/workers/scheduler.py:207`                                                                          | Unused `JobQueue` instance pattern (consequence of C1)                                                                    | Bug Hunter                          |
+| M2     | Minor     | `backend/scripts/reembed_reviewed_shops.py:57-65`                                                           | Queries `job_queue` table directly bypassing `JobQueue` abstraction; no LIMIT guard                                       | Standards, Architecture             |
+| M3     | Minor     | `backend/workers/handlers/generate_embedding.py:69`                                                         | Meaningful live-shop guard comment removed without replacement                                                            | Standards                           |
+| ~~M4~~ | ~~Minor~~ | ~~`generate_embedding.py:13-16`~~                                                                           | ~~Redundant comments on constants~~ — **FALSE POSITIVE**: comments add domain context the names don't supply              | Standards                           |
+| M5     | Minor     | `tests/workers/test_reembed_reviewed_shops.py:13-18`, `tests/scripts/test_reembed_reviewed_shops.py:14-49`  | Placeholder shop IDs `"shop-001"`, `"shop-002"` (should be UUIDs)                                                         | Standards, Test Philosophy          |
+| M6     | Minor     | `tests/workers/test_reembed_reviewed_shops.py:39`, `tests/workers/test_scheduler.py:6,13`                   | Implementation-framed test names (`test_calls_rpc_with_correct_min_length`, `test_scheduler_creates_cron_jobs`, etc.)     | Test Philosophy                     |
+| M7     | Minor     | `backend/workers/handlers/generate_embedding.py`                                                            | No runtime token-budget guard; oversized review sets could hit OpenAI's 8191-token limit causing permanent retry failures | Architecture                        |
 
 ### Validation Results
 
@@ -42,6 +42,7 @@
 **Pre-fix SHA:** 4ff672417d41ffa7af8c2228b3fcde9817814d75
 
 **Issues fixed:**
+
 - [Critical] `scheduler.py:205-208` — `run_reembed_reviewed_shops` now enqueues `REEMBED_REVIEWED_SHOPS` job via queue (b708c91)
 - [Important] `_MIN_TEXT_LENGTH` duplicated in 3 files — moved to `CHECKIN_MIN_TEXT_LENGTH` in `models/types.py` (9d4dbb3)
 - [Important] RPCs 000002-000004 missing `SECURITY DEFINER SET search_path` — new migration 000005 recreates all 3 with `VOLATILE SECURITY DEFINER SET search_path = public` (a9b8b84)
@@ -58,16 +59,18 @@
 - [Minor] No token budget guard — added `logger.warning` when `len(text) > 6000` (f04a0f7)
 
 **Batch Test Run:**
+
 - `cd backend && uv run pytest` — PASS (524 passed)
 
 ---
 
 ## Pass 2 — Re-Verify
 
-*Agents re-run (smart routing): Bug Hunter, Standards, Architecture, Plan Alignment*
-*Agents skipped (Minor-only findings): Test Philosophy*
+_Agents re-run (smart routing): Bug Hunter, Standards, Architecture, Plan Alignment_
+_Agents skipped (Minor-only findings): Test Philosophy_
 
 ### Previously Flagged Issues — Resolution Status
+
 - [Critical] `scheduler.py:205-208` — ✓ Resolved
 - [Important] `_MIN_TEXT_LENGTH` duplicated — ✓ Resolved
 - [Important] RPCs missing SECURITY DEFINER — ✓ Resolved
@@ -79,11 +82,12 @@
 - All Minor issues — ✓ Resolved
 
 ### New Issues Found
-| Severity | File:Line | Description | Flagged By |
-|----------|-----------|-------------|------------|
-| Minor | `tests/scripts/test_reembed_reviewed_shops.py` | Assertion uses literal `15` instead of `CHECKIN_MIN_TEXT_LENGTH` — but this is intentional: hardcoding detects constant drift | Architecture, Plan Alignment |
 
-*Note: the hardcoded `15` in the RPC assertion is correct test practice — it catches unintended constant changes.*
+| Severity | File:Line                                      | Description                                                                                                                   | Flagged By                   |
+| -------- | ---------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ---------------------------- |
+| Minor    | `tests/scripts/test_reembed_reviewed_shops.py` | Assertion uses literal `15` instead of `CHECKIN_MIN_TEXT_LENGTH` — but this is intentional: hardcoding detects constant drift | Architecture, Plan Alignment |
+
+_Note: the hardcoded `15` in the RPC assertion is correct test practice — it catches unintended constant changes._
 
 **Loop exit: no Critical or Important issues remain.**
 

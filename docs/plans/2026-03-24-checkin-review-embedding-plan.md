@@ -15,6 +15,7 @@
 **Tech Stack:** Python 3.12+, Supabase (Postgres + pgvector), OpenAI text-embedding-3-small, APScheduler, pytest
 
 **Acceptance Criteria:**
+
 - [ ] A shop with check-in reviews mentioning "超好喝的拿鐵" ranks higher for latte queries than before
 - [ ] Only check-in texts ≥15 chars are included — short noise ("👍", "nice") is excluded
 - [ ] The nightly cron job re-embeds exactly the shops that received new check-in text since last embedding
@@ -26,6 +27,7 @@
 ### Task 1: Database Migration — `shops.last_embedded_at`
 
 **Files:**
+
 - Create: `supabase/migrations/20260325000001_add_last_embedded_at.sql`
 
 No test needed — pure DDL migration.
@@ -49,10 +51,12 @@ CREATE INDEX idx_shops_last_embedded_at ON shops (last_embedded_at)
 **Step 2: Verify migration applies cleanly**
 
 Run from worktree root:
+
 ```bash
 supabase db diff
 supabase db push
 ```
+
 Expected: migration applies without errors.
 
 **Step 3: Commit**
@@ -67,6 +71,7 @@ git commit -m "feat(db): add shops.last_embedded_at for nightly review re-embedd
 ### Task 2: Add `REEMBED_REVIEWED_SHOPS` Job Type
 
 **Files:**
+
 - Modify: `backend/models/types.py:387-396` (JobType enum)
 
 No test needed — enum value addition only.
@@ -101,6 +106,7 @@ git commit -m "feat: add REEMBED_REVIEWED_SHOPS job type (DEV-7)"
 ### Task 3: Enhance `handle_generate_embedding()` — Fetch & Append Community Texts
 
 **Files:**
+
 - Test: `backend/tests/workers/test_handlers.py` (extend `TestGenerateEmbeddingHandler`)
 - Modify: `backend/workers/handlers/generate_embedding.py`
 
@@ -241,6 +247,7 @@ async def test_updates_last_embedded_at_after_successful_embedding(self):
 ```bash
 cd backend && python -m pytest tests/workers/test_handlers.py::TestGenerateEmbeddingHandler -v
 ```
+
 Expected: 3 new tests FAIL (no `rpc` call in handler, no `||` in text, no `last_embedded_at` in update).
 
 **Step 3: Implement the handler changes**
@@ -355,6 +362,7 @@ async def handle_generate_embedding(
 ```bash
 cd backend && python -m pytest tests/workers/test_handlers.py::TestGenerateEmbeddingHandler -v
 ```
+
 Expected: ALL tests pass (existing + 3 new).
 
 **Step 5: Commit**
@@ -369,6 +377,7 @@ git commit -m "feat: include community check-in texts in shop embeddings (DEV-7)
 ### Task 4: Database RPC — `get_ranked_checkin_texts`
 
 **Files:**
+
 - Create: `supabase/migrations/20260325000002_create_get_ranked_checkin_texts_rpc.sql`
 
 No test needed — SQL function tested via integration tests in Task 3 (handler mocks the RPC) and manually in Task 7.
@@ -418,6 +427,7 @@ $$ LANGUAGE sql STABLE;
 supabase db diff
 supabase db push
 ```
+
 Expected: clean apply.
 
 **Step 3: Commit**
@@ -432,6 +442,7 @@ git commit -m "feat(db): add get_ranked_checkin_texts RPC for embedding handler 
 ### Task 5: Nightly Cron Handler — `handle_reembed_reviewed_shops`
 
 **Files:**
+
 - Test: `backend/tests/workers/test_reembed_reviewed_shops.py` (new file)
 - Create: `backend/workers/handlers/reembed_reviewed_shops.py`
 
@@ -497,6 +508,7 @@ class TestReembedReviewedShops:
 ```bash
 cd backend && python -m pytest tests/workers/test_reembed_reviewed_shops.py -v
 ```
+
 Expected: FAIL — module not found.
 
 **Step 3: Implement the handler**
@@ -550,6 +562,7 @@ async def handle_reembed_reviewed_shops(db: Client, queue: JobQueue) -> None:
 ```bash
 cd backend && python -m pytest tests/workers/test_reembed_reviewed_shops.py -v
 ```
+
 Expected: ALL 3 tests PASS.
 
 **Step 5: Commit**
@@ -564,6 +577,7 @@ git commit -m "feat: add nightly handler to find & re-embed shops with new revie
 ### Task 6: Database RPC — `find_shops_needing_review_reembed`
 
 **Files:**
+
 - Create: `supabase/migrations/20260325000003_create_find_shops_needing_review_reembed_rpc.sql`
 
 No test needed — SQL function, tested via handler integration.
@@ -613,6 +627,7 @@ git commit -m "feat(db): add find_shops_needing_review_reembed RPC for nightly c
 ### Task 7: Wire Cron Job + Dispatcher
 
 **Files:**
+
 - Modify: `backend/workers/scheduler.py:17,190-200,202-235`
 - Test: `backend/tests/workers/test_scheduler.py` (verify cron is registered)
 
@@ -633,6 +648,7 @@ def test_reembed_reviewed_shops_cron_is_registered(self):
 ```bash
 cd backend && python -m pytest tests/workers/test_scheduler.py -k "reembed_reviewed" -v
 ```
+
 Expected: FAIL — job not found.
 
 **Step 3: Implement scheduler + dispatcher wiring**
@@ -640,11 +656,13 @@ Expected: FAIL — job not found.
 In `backend/workers/scheduler.py`:
 
 Add import:
+
 ```python
 from workers.handlers.reembed_reviewed_shops import handle_reembed_reviewed_shops
 ```
 
 Add the cron trigger function (after `run_weekly_email`):
+
 ```python
 async def run_reembed_reviewed_shops() -> None:
     db = get_service_role_client()
@@ -653,6 +671,7 @@ async def run_reembed_reviewed_shops() -> None:
 ```
 
 Add the cron job in `create_scheduler()` (after the `delete_expired_accounts` job):
+
 ```python
 scheduler.add_job(
     run_reembed_reviewed_shops,
@@ -664,6 +683,7 @@ scheduler.add_job(
 ```
 
 Also add the dispatcher case in `_dispatch_job()` for the new job type:
+
 ```python
 case JobType.REEMBED_REVIEWED_SHOPS:
     await handle_reembed_reviewed_shops(db=db, queue=queue)
@@ -674,6 +694,7 @@ case JobType.REEMBED_REVIEWED_SHOPS:
 ```bash
 cd backend && python -m pytest tests/workers/test_scheduler.py -v
 ```
+
 Expected: ALL tests pass including the new one.
 
 **Step 5: Commit**
@@ -688,6 +709,7 @@ git commit -m "feat: wire nightly review re-embedding cron at 03:30 (DEV-7)"
 ### Task 8: Re-embed Script for Initial Rollout
 
 **Files:**
+
 - Create: `backend/scripts/reembed_reviewed_shops.py`
 - Test: `backend/tests/scripts/test_reembed_reviewed_shops.py`
 
@@ -768,6 +790,7 @@ class TestReembedReviewedShopsScript:
 ```bash
 cd backend && python -m pytest tests/scripts/test_reembed_reviewed_shops.py -v
 ```
+
 Expected: FAIL — module not found.
 
 **Step 3: Implement the script**
@@ -903,6 +926,7 @@ $$ LANGUAGE sql STABLE;
 ```bash
 cd backend && python -m pytest tests/scripts/test_reembed_reviewed_shops.py -v
 ```
+
 Expected: ALL 3 tests PASS.
 
 **Step 6: Commit**
@@ -925,6 +949,7 @@ No test needed — this is the verification step.
 ```bash
 cd backend && ruff check . && ruff format --check .
 ```
+
 Expected: no errors. Fix any issues.
 
 **Step 2: Run type checker**
@@ -932,6 +957,7 @@ Expected: no errors. Fix any issues.
 ```bash
 cd backend && mypy workers/handlers/generate_embedding.py workers/handlers/reembed_reviewed_shops.py scripts/reembed_reviewed_shops.py
 ```
+
 Expected: no type errors.
 
 **Step 3: Run full backend test suite**
@@ -939,6 +965,7 @@ Expected: no type errors.
 ```bash
 cd backend && python -m pytest -v
 ```
+
 Expected: ALL tests pass, no regressions.
 
 **Step 4: Commit any fixes**
@@ -946,6 +973,7 @@ Expected: ALL tests pass, no regressions.
 ```bash
 git add -A && git commit -m "chore: fix lint/type issues from DEV-7 implementation"
 ```
+
 (Skip if no fixes needed.)
 
 ---
@@ -988,20 +1016,25 @@ graph TD
 ```
 
 **Wave 1** (parallel — no dependencies):
+
 - Task 1: Migration — `shops.last_embedded_at`
 - Task 2: Add `REEMBED_REVIEWED_SHOPS` job type
 
 **Wave 2** (parallel — depends on Wave 1):
+
 - Task 4: RPC `get_ranked_checkin_texts` ← Task 1
 - Task 6: RPC `find_shops_needing_review_reembed` ← Task 1
 
 **Wave 3** (parallel — depends on Wave 2):
+
 - Task 3: Enhance `generate_embedding` handler ← Task 4
 - Task 5: Nightly cron handler ← Task 2, Task 6
 
 **Wave 4** (parallel — depends on Wave 3):
+
 - Task 7: Wire cron + dispatcher ← Task 3, Task 5
 - Task 8: Re-embed script ← Task 3
 
 **Wave 5** (sequential — depends on all):
+
 - Task 9: Full verification ← all tasks
