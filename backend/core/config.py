@@ -62,7 +62,8 @@ class Settings(BaseSettings):
     def check_production_salt(self) -> "Settings":
         if self.environment != "development" and self.anon_salt == "caferoam-dev-salt":
             raise ValueError(
-                "ANON_SALT must be changed from the development default in non-development environments"
+                "ANON_SALT must be changed from the development default"
+                " in non-development environments"
             )
         return self
 
