@@ -14,7 +14,7 @@ export default function CommunityFeedPage() {
   const router = useRouter();
   const isDesktop = useIsDesktop();
   const [cursor, setCursor] = useState<string | null>(null);
-  const { notes, nextCursor, isLoading, mutate } = useCommunityFeed(cursor);
+  const { notes, nextCursor, isLoading, mutate } = useCommunityFeed({ cursor });
   const { likedIds: serverLikedIds } = useLikeStatus(
     notes.map((n) => n.checkinId)
   );

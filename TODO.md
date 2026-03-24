@@ -1373,7 +1373,7 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 
 **Chunk 3 — Frontend (Wave 3-5):**
 - [x] Check-in form: "Share publicly" toggle (Task 5)
-- [ ] Feed hook: auth fetcher + filter params (Task 6)
+- [x] Feed hook: auth fetcher + filter params (Task 6)
 - [ ] Feed page: filter bar UI (Task 7)
 - [ ] Explore preview: auth update (Task 8)
 
