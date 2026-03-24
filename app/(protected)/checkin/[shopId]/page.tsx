@@ -6,6 +6,7 @@ import Image from 'next/image';
 import useSWR from 'swr';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
 import { PhotoUploader } from '@/components/checkins/photo-uploader';
 import { StarRating } from '@/components/reviews/star-rating';
 import { TagConfirmation } from '@/components/reviews/tag-confirmation';
@@ -39,6 +40,7 @@ export default function CheckInPage() {
   const [stars, setStars] = useState(0);
   const [reviewText, setReviewText] = useState('');
   const [confirmedTags, setConfirmedTags] = useState<string[]>([]);
+  const [isPublic, setIsPublic] = useState(true);
   const [submitState, setSubmitState] = useState<SubmitState>('idle');
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -81,6 +83,7 @@ export default function CheckInPage() {
           shop_id: shopId,
           photo_urls: photoUrls,
           menu_photo_url: menuPhotoUrl ?? null,
+          is_public: isPublic,
           note: note.trim() || null,
           ...(stars > 0 && {
             stars,
@@ -132,6 +135,7 @@ export default function CheckInPage() {
     shop,
     router,
     capture,
+    isPublic,
   ]);
 
   return (
@@ -228,6 +232,20 @@ export default function CheckInPage() {
               />
             </div>
           )}
+        </div>
+
+        <div className="flex items-center justify-between rounded-lg bg-gray-50 px-4 py-3">
+          <div>
+            <p className="text-sm font-medium text-gray-900">Share publicly</p>
+            <p className="text-xs text-gray-500">
+              Your check-in will appear in the community feed
+            </p>
+          </div>
+          <Switch
+            checked={isPublic}
+            onCheckedChange={setIsPublic}
+            aria-label="Share publicly"
+          />
         </div>
 
         <Button type="submit" disabled={!canSubmit} className="w-full">

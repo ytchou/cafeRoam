@@ -219,6 +219,80 @@ describe('CheckInPage', () => {
     });
   });
 
+  it('shows a "Share publicly" toggle that defaults to on', async () => {
+    render(<CheckInPage />);
+    await screen.findByText(/山小孩咖啡/);
+    const toggle = screen.getByRole('switch', { name: /share publicly/i });
+    expect(toggle).toBeChecked();
+  });
+
+  it('includes is_public: true in submission payload by default', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        id: 'ci-public',
+        shop_id: 'shop-d4e5f6',
+        photo_urls: ['https://example.supabase.co/storage/v1/object/public/checkin-photos/user-abc/photo.webp'],
+        created_at: '2026-03-24T10:00:00Z',
+      }),
+    });
+
+    render(<CheckInPage />);
+    await screen.findByText(/山小孩咖啡/);
+
+    const input = screen.getByTestId('photo-input');
+    const file = new File(['photo'], 'latte.jpg', { type: 'image/jpeg' });
+    await userEvent.upload(input, file);
+
+    const submitBtn = screen.getByRole('button', { name: /check in/i });
+    await userEvent.click(submitBtn);
+
+    await waitFor(() => {
+      const postCall = mockFetch.mock.calls.find(
+        (c) => c[0] === '/api/checkins' && c[1]?.method === 'POST'
+      );
+      expect(postCall).toBeDefined();
+      const body = JSON.parse(postCall![1].body);
+      expect(body.is_public).toBe(true);
+    });
+  });
+
+  it('sends is_public: false when user toggles off', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        id: 'ci-private',
+        shop_id: 'shop-d4e5f6',
+        photo_urls: ['https://example.supabase.co/storage/v1/object/public/checkin-photos/user-abc/photo.webp'],
+        created_at: '2026-03-24T10:00:00Z',
+      }),
+    });
+
+    render(<CheckInPage />);
+    await screen.findByText(/山小孩咖啡/);
+
+    // Toggle off
+    const toggle = screen.getByRole('switch', { name: /share publicly/i });
+    await userEvent.click(toggle);
+    expect(toggle).not.toBeChecked();
+
+    const input = screen.getByTestId('photo-input');
+    const file = new File(['photo'], 'latte.jpg', { type: 'image/jpeg' });
+    await userEvent.upload(input, file);
+
+    const submitBtn = screen.getByRole('button', { name: /check in/i });
+    await userEvent.click(submitBtn);
+
+    await waitFor(() => {
+      const postCall = mockFetch.mock.calls.find(
+        (c) => c[0] === '/api/checkins' && c[1]?.method === 'POST'
+      );
+      expect(postCall).toBeDefined();
+      const body = JSON.parse(postCall![1].body);
+      expect(body.is_public).toBe(false);
+    });
+  });
+
   it('fires checkin_completed PostHog event after successful submit', async () => {
     // Reset to clear beforeEach queue, then use url-based routing for this test
     mockFetch.mockReset();
