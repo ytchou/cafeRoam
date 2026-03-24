@@ -46,6 +46,8 @@ class JobQueue:
     ) -> list[str]:
         """Insert multiple jobs in a single DB round-trip."""
         now = datetime.now(UTC)
+        if not payloads:
+            return []
         records = [
             {
                 "job_type": job_type.value,
