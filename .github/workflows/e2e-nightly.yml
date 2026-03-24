@@ -13,6 +13,8 @@ jobs:
   e2e-full:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    # Skip when staging secrets are not configured (e.g. before E2E_STAGING_URL is set)
+    if: ${{ secrets.E2E_STAGING_URL != '' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -45,3 +47,11 @@ jobs:
           name: playwright-report-nightly
           path: playwright-report/
           retention-days: 14
+
+      - name: Notify on failure
+        if: ${{ failure() && secrets.SLACK_WEBHOOK_URL != '' }}
+        uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a # v2.1.1
+        with:
+          payload: '{"text":"E2E nightly failed: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"}'
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
