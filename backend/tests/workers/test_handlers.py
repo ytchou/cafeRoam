@@ -214,47 +214,73 @@ class TestStalenessSweepHandler:
 
 
 class TestEnrichMenuPhotoHandler:
-    async def test_calls_llm_and_updates_shop_menu_data(self):
+    async def test_replaces_menu_items_and_queues_reembed_when_items_extracted(self):
+        """When a menu photo is processed, existing items are replaced and a re-embed is queued."""
         db = MagicMock()
         llm = AsyncMock()
+        queue = AsyncMock()
+
         llm.extract_menu_data = AsyncMock(
             return_value=MagicMock(
-                items=["Cappuccino", "Latte"],
+                items=[
+                    {"name": "巴斯克蛋糕", "price": 120, "category": "dessert"},
+                    {"name": "手沖拿鐵", "price": 150, "category": "coffee"},
+                ]
             )
         )
-        db.table = MagicMock(
-            return_value=MagicMock(
-                update=MagicMock(
-                    return_value=MagicMock(
-                        eq=MagicMock(
-                            return_value=MagicMock(
-                                execute=MagicMock(return_value=MagicMock(data=[]))
-                            )
-                        )
-                    )
-                )
-            )
-        )
+
+        shop_table = MagicMock()
+        shop_table.update.return_value.eq.return_value.execute.return_value = MagicMock(data=[])
+
+        menu_table = MagicMock()
+        menu_table.delete.return_value.eq.return_value.execute.return_value = MagicMock(data=[])
+        menu_table.insert.return_value.execute.return_value = MagicMock(data=[])
+
+        def table_side_effect(name: str):
+            return menu_table if name == "shop_menu_items" else shop_table
+
+        db.table.side_effect = table_side_effect
 
         await handle_enrich_menu_photo(
-            payload={"shop_id": "shop-1", "image_url": "https://example.com/menu.jpg"},
+            payload={"shop_id": "shop-zhongshan-01", "image_url": "https://storage.example.com/menu.jpg"},
             db=db,
             llm=llm,
+            queue=queue,
         )
-        llm.extract_menu_data.assert_called_once_with(image_url="https://example.com/menu.jpg")
-        db.table.return_value.update.assert_called_once()
 
-    async def test_skips_update_when_no_items_extracted(self):
+        # DELETE before INSERT (replace-on-extract)
+        menu_table.delete.return_value.eq.return_value.execute.assert_called_once()
+        # INSERT two items
+        menu_table.insert.return_value.execute.assert_called_once()
+        inserted = menu_table.insert.call_args[0][0]
+        assert len(inserted) == 2
+        assert inserted[0]["item_name"] == "巴斯克蛋糕"
+        assert inserted[0]["shop_id"] == "shop-zhongshan-01"
+        assert inserted[1]["item_name"] == "手沖拿鐵"
+        # Dual-write to shops.menu_data
+        shop_table.update.assert_called_once()
+        # Re-embed queued
+        queue.enqueue.assert_called_once()
+        assert queue.enqueue.call_args.kwargs["payload"]["shop_id"] == "shop-zhongshan-01"
+
+    async def test_preserves_existing_items_when_extraction_returns_empty(self):
+        """When no items are extracted, existing menu items are preserved and no re-embed is queued."""
         db = MagicMock()
         llm = AsyncMock()
+        queue = AsyncMock()
+
         llm.extract_menu_data = AsyncMock(return_value=MagicMock(items=[]))
 
         await handle_enrich_menu_photo(
-            payload={"shop_id": "shop-1", "image_url": "https://example.com/menu.jpg"},
+            payload={"shop_id": "shop-zhongshan-01", "image_url": "https://storage.example.com/menu.jpg"},
             db=db,
             llm=llm,
+            queue=queue,
         )
+
+        # No DB writes, no job queued
         db.table.assert_not_called()
+        queue.enqueue.assert_not_called()
 
 
 class TestWeeklyEmailHandler:
