@@ -383,11 +383,16 @@ class EmailSendResult(BaseModel):
 
 # --- Job queue types ---
 
+# Minimum character length for a check-in text to be included in shop embeddings.
+# Used by nightly re-embed cron, generate_embedding handler, and rollout script — must stay in sync.
+CHECKIN_MIN_TEXT_LENGTH: int = 15
+
 
 class JobType(StrEnum):
     ENRICH_SHOP = "enrich_shop"
     ENRICH_MENU_PHOTO = "enrich_menu_photo"
     GENERATE_EMBEDDING = "generate_embedding"
+    REEMBED_REVIEWED_SHOPS = "reembed_reviewed_shops"
     STALENESS_SWEEP = "staleness_sweep"
     WEEKLY_EMAIL = "weekly_email"
     SCRAPE_SHOP = "scrape_shop"

@@ -1311,6 +1311,29 @@ _Designed in Pencil. Stamps, check-in history, account settings._
 - [x] Add `ANON_SALT` to env config and doctor check
 - [x] Final verification + commit design doc and ADRs
 
+### Check-in Review Embedding (DEV-7)
+
+> **Design Doc:** [docs/designs/2026-03-24-checkin-review-embedding-design.md](docs/designs/2026-03-24-checkin-review-embedding-design.md)
+> **Plan:** [docs/plans/2026-03-24-checkin-review-embedding-plan.md](docs/plans/2026-03-24-checkin-review-embedding-plan.md)
+
+**Chunk 1 — Database (Wave 1-2, parallel):**
+
+- [x] Migration: `shops.last_embedded_at` column
+- [x] Add `REEMBED_REVIEWED_SHOPS` job type
+- [x] RPC: `get_ranked_checkin_texts` (ranked text selection)
+- [x] RPC: `find_shops_needing_review_reembed` (nightly cron query)
+
+**Chunk 2 — Handler & Cron (Wave 3-4):**
+
+- [x] Enhance `generate_embedding` handler with community text fetch
+- [x] Nightly cron handler: `handle_reembed_reviewed_shops`
+- [x] Wire cron job + dispatcher in scheduler
+
+**Chunk 3 — Rollout & Verification (Wave 4-5):**
+
+- [x] Re-embed script for initial rollout
+- [x] Full lint, type-check, test suite verification
+
 ### Beta Program
 
 - [ ] Recruit 30-50 beta users (personal network + Threads coffee community)

@@ -125,9 +125,15 @@ class TestEnrichShopHandler:
 
 class TestGenerateEmbeddingHandler:
     def _make_db(
-        self, shop_data: dict, menu_items: list[dict]
+        self,
+        shop_data: dict,
+        menu_items: list[dict],
+        checkin_texts: list[dict] | None = None,
     ) -> tuple[MagicMock, MagicMock, MagicMock]:
-        """Return (db, shop_table_mock, menu_table_mock) with correct call chains."""
+        """Return (db, shop_table_mock, menu_table_mock) with correct call chains.
+
+        checkin_texts: rows returned by the RPC (each has 'text' key)
+        """
         db = MagicMock()
 
         shop_table = MagicMock()
@@ -139,6 +145,11 @@ class TestGenerateEmbeddingHandler:
         menu_table = MagicMock()
         menu_table.select.return_value.eq.return_value.execute.return_value = MagicMock(
             data=menu_items
+        )
+
+        # Community text via RPC
+        db.rpc.return_value.execute.return_value = MagicMock(
+            data=checkin_texts if checkin_texts is not None else []
         )
 
         def table_side_effect(name: str):
@@ -250,6 +261,90 @@ class TestGenerateEmbeddingHandler:
         assert update_data.get("processing_status") == "publishing"
         queue.enqueue.assert_called_once()
         assert queue.enqueue.call_args.kwargs["job_type"].value == "publish_shop"
+
+    async def test_includes_community_texts_in_embedding_when_available(self):
+        """When a shop has check-in reviews, they appear after ' || ' in the embedding text."""
+        db, _, _ = self._make_db(
+            shop_data={
+                "name": "山小孩咖啡",
+                "description": "安靜適合工作的獨立咖啡店",
+                "processing_status": "live",
+            },
+            menu_items=[{"item_name": "手沖拿鐵"}],
+            checkin_texts=[
+                {"text": "超好喝的拿鐵，環境安靜適合工作"},
+                {"text": "巴斯克蛋糕是必點的，每次來都會點"},
+            ],
+        )
+        embeddings = AsyncMock()
+        embeddings.embed = AsyncMock(return_value=[0.1] * 1536)
+        queue = AsyncMock()
+
+        await handle_generate_embedding(
+            payload={"shop_id": "shop-d4e5f6"},
+            db=db,
+            embeddings=embeddings,
+            queue=queue,
+        )
+
+        embed_text = embeddings.embed.call_args[0][0]
+        assert "超好喝的拿鐵" in embed_text
+        assert "巴斯克蛋糕是必點的" in embed_text
+        assert " || " in embed_text
+        # Menu items still present with single pipe
+        assert " | 手沖拿鐵" in embed_text
+
+    async def test_embedding_skips_community_section_when_no_qualifying_texts(self):
+        """When no check-in texts qualify (all too short or none exist), no ' || ' in embedding."""
+        db, _, _ = self._make_db(
+            shop_data={
+                "name": "山小孩咖啡",
+                "description": "安靜適合工作的獨立咖啡店",
+                "processing_status": "live",
+            },
+            menu_items=[{"item_name": "手沖拿鐵"}],
+            checkin_texts=[],  # No qualifying texts
+        )
+        embeddings = AsyncMock()
+        embeddings.embed = AsyncMock(return_value=[0.1] * 1536)
+        queue = AsyncMock()
+
+        await handle_generate_embedding(
+            payload={"shop_id": "shop-d4e5f6"},
+            db=db,
+            embeddings=embeddings,
+            queue=queue,
+        )
+
+        embed_text = embeddings.embed.call_args[0][0]
+        assert " || " not in embed_text
+        # Menu items still work
+        assert " | 手沖拿鐵" in embed_text
+
+    async def test_updates_last_embedded_at_after_successful_embedding(self):
+        """After generating an embedding, last_embedded_at is set on the shop row."""
+        db, shop_table, _ = self._make_db(
+            shop_data={
+                "name": "山小孩咖啡",
+                "description": "安靜適合工作的獨立咖啡店",
+                "processing_status": "live",
+            },
+            menu_items=[],
+            checkin_texts=[],
+        )
+        embeddings = AsyncMock()
+        embeddings.embed = AsyncMock(return_value=[0.1] * 1536)
+        queue = AsyncMock()
+
+        await handle_generate_embedding(
+            payload={"shop_id": "shop-d4e5f6"},
+            db=db,
+            embeddings=embeddings,
+            queue=queue,
+        )
+
+        update_data = shop_table.update.call_args[0][0]
+        assert "last_embedded_at" in update_data
 
 
 class TestStalenessSweepHandler:
