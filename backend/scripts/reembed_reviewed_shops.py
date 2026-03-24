@@ -51,12 +51,14 @@ async def main(
         print("\nDry-run — no jobs enqueued.")
         return
 
-    # Deduplicate against pending jobs
+    # Deduplicate against pending or in-progress (claimed) jobs to prevent concurrent
+    # embedding runs for the same shop, which would race on the embedding + last_embedded_at columns.
     existing = (
         db.table("job_queue")
         .select("payload")
         .eq("job_type", JobType.GENERATE_EMBEDDING.value)
-        .eq("status", JobStatus.PENDING.value)
+        .in_("status", [JobStatus.PENDING.value, JobStatus.CLAIMED.value])
+        .limit(10000)
         .execute()
         .data
         or []
@@ -66,7 +68,7 @@ async def main(
 
     if len(to_enqueue) < len(rows):
         skipped = len(rows) - len(to_enqueue)
-        print(f"Skipped {skipped} shop(s) — GENERATE_EMBEDDING job already pending.")
+        print(f"Skipped {skipped} shop(s) — GENERATE_EMBEDDING job already pending or in progress.")
 
     if not to_enqueue:
         print("All shops already have pending jobs. Nothing to enqueue.")
