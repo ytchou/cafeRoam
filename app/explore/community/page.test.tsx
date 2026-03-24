@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 
 import { makeCommunityNote } from '@/lib/test-utils/factories';
@@ -90,5 +91,31 @@ describe('Community Feed Page', () => {
     render(<CommunityFeedPage />);
     expect(screen.getByText('啡遊筆記')).toBeInTheDocument();
     (useIsDesktop as ReturnType<typeof vi.fn>).mockReturnValue(false);
+  });
+
+  it('shows MRT station filter dropdown', () => {
+    render(<CommunityFeedPage />);
+    expect(screen.getByRole('combobox', { name: /mrt station/i })).toBeInTheDocument();
+  });
+
+  it('shows vibe tag filter chips', () => {
+    render(<CommunityFeedPage />);
+    expect(screen.getByRole('button', { name: /quiet/i })).toBeInTheDocument();
+  });
+
+  it('shows clear filters button when MRT filter is active', async () => {
+    render(<CommunityFeedPage />);
+    const select = screen.getByRole('combobox', { name: /mrt station/i });
+    await userEvent.selectOptions(select, '中山');
+    expect(screen.getByRole('button', { name: /clear filters/i })).toBeInTheDocument();
+  });
+
+  it('resets filters when clear filters is clicked', async () => {
+    render(<CommunityFeedPage />);
+    const select = screen.getByRole('combobox', { name: /mrt station/i });
+    await userEvent.selectOptions(select, '中山');
+    const clearBtn = screen.getByRole('button', { name: /clear filters/i });
+    await userEvent.click(clearBtn);
+    expect(select).toHaveValue('');
   });
 });

@@ -1374,8 +1374,9 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 **Chunk 3 — Frontend (Wave 3-5):**
 - [x] Check-in form: "Share publicly" toggle (Task 5)
 - [x] Feed hook: auth fetcher + filter params (Task 6)
-- [ ] Feed page: filter bar UI (Task 7)
-- [ ] Explore preview: auth update (Task 8)
+- [x] Feed page: filter bar UI (Task 7)
+- [x] Explore preview: auth update (Task 8)
+
 
 **Chunk 4 — Verification (Wave 6):**
 - [ ] Full lint + test pass (Task 9)
