@@ -21,11 +21,6 @@ vi.mock('@/lib/supabase/client', () => ({
   }),
 }));
 
-const { mockCapture } = vi.hoisted(() => ({ mockCapture: vi.fn() }));
-vi.mock('posthog-js', () => ({
-  default: { capture: mockCapture },
-}));
-
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
@@ -43,7 +38,6 @@ describe('ProfilePage', () => {
   beforeEach(() => {
     vi.stubEnv('NEXT_PUBLIC_POSTHOG_KEY', 'phc_test');
     mockFetch.mockReset();
-    mockCapture.mockReset();
   });
 
   afterEach(() => {
@@ -148,9 +142,13 @@ describe('ProfilePage', () => {
     render(<ProfilePage />, { wrapper });
 
     await waitFor(() => {
-      expect(mockCapture).toHaveBeenCalledWith('profile_stamps_viewed', {
-        stamp_count: 2,
-      });
+      const analyticsCall = mockFetch.mock.calls.find(
+        (c) => c[0] === '/api/analytics/events'
+      );
+      expect(analyticsCall).toBeDefined();
+      const body = JSON.parse(analyticsCall![1].body);
+      expect(body.event).toBe('profile_stamps_viewed');
+      expect(body.properties).toEqual({ stamp_count: 2 });
     });
   });
 
@@ -159,9 +157,13 @@ describe('ProfilePage', () => {
     render(<ProfilePage />, { wrapper });
 
     await waitFor(() => {
-      expect(mockCapture).toHaveBeenCalledWith('profile_stamps_viewed', {
-        stamp_count: 0,
-      });
+      const analyticsCall = mockFetch.mock.calls.find(
+        (c) => c[0] === '/api/analytics/events'
+      );
+      expect(analyticsCall).toBeDefined();
+      const body = JSON.parse(analyticsCall![1].body);
+      expect(body.event).toBe('profile_stamps_viewed');
+      expect(body.properties).toEqual({ stamp_count: 0 });
     });
     expect(screen.getByText(/my memories/i)).toBeInTheDocument();
   });

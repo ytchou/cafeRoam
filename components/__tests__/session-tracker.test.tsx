@@ -11,11 +11,6 @@ vi.mock('@/lib/supabase/client', () => ({
   }),
 }));
 
-const { mockCapture } = vi.hoisted(() => ({ mockCapture: vi.fn() }));
-vi.mock('posthog-js', () => ({
-  default: { capture: mockCapture },
-}));
-
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
@@ -25,7 +20,6 @@ describe('SessionTracker', () => {
   beforeEach(() => {
     vi.stubEnv('NEXT_PUBLIC_POSTHOG_KEY', 'phc_test');
     mockFetch.mockReset();
-    mockCapture.mockReset();
   });
 
   afterEach(() => {
@@ -44,7 +38,13 @@ describe('SessionTracker', () => {
     render(<SessionTracker />);
 
     await waitFor(() => {
-      expect(mockCapture).toHaveBeenCalledWith('session_start', {
+      const analyticsCall = mockFetch.mock.calls.find(
+        (c) => c[0] === '/api/analytics/events'
+      );
+      expect(analyticsCall).toBeDefined();
+      const body = JSON.parse(analyticsCall![1].body);
+      expect(body.event).toBe('session_start');
+      expect(body.properties).toEqual({
         days_since_first_session: 3,
         previous_sessions: 5,
       });
@@ -62,6 +62,9 @@ describe('SessionTracker', () => {
     await waitFor(() => {
       expect(mockFetch).toHaveBeenCalled();
     });
-    expect(mockCapture).not.toHaveBeenCalled();
+    const analyticsCall = mockFetch.mock.calls.find(
+      (c) => c[0] === '/api/analytics/events'
+    );
+    expect(analyticsCall).toBeUndefined();
   });
 });

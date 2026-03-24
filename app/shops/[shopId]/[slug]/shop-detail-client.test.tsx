@@ -7,9 +7,6 @@ vi.mock('@/components/shops/directions-sheet', () => ({
 }));
 
 // Hook boundaries
-vi.mock('@/lib/posthog/use-analytics', () => ({
-  useAnalytics: () => ({ capture: vi.fn() }),
-}));
 vi.mock('@/lib/hooks/use-user', () => ({
   useUser: () => ({ user: null, isLoading: false }),
 }));
@@ -30,6 +27,7 @@ vi.mock('@/lib/hooks/use-user-lists', () => ({
 }));
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ back: vi.fn(), push: vi.fn() }),
+  useSearchParams: () => ({ get: () => null }),
 }));
 
 // Render-only child components — not under test here

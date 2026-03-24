@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { notFound, redirect } from 'next/navigation';
 import type { Metadata } from 'next';
 import { ShopDetailClient } from './shop-detail-client';
@@ -55,5 +56,9 @@ export default async function ShopDetailPage({
     redirect(`/shops/${shopId}/${shop.slug}`);
   }
 
-  return <ShopDetailClient shop={shop} />;
+  return (
+    <Suspense>
+      <ShopDetailClient shop={shop} />
+    </Suspense>
+  );
 }

@@ -145,6 +145,23 @@ class CheckInService:
             results.append(CheckInWithShop(**row))
         return results
 
+    async def is_first_checkin_at_shop(self, user_id: str, shop_id: str) -> bool:
+        """Return True if this is the user's first check-in at the given shop.
+
+        Counts existing check-ins for the user+shop pair. Since this is called
+        AFTER the check-in is created, count <= 1 means this was the first.
+        """
+        resp = await asyncio.to_thread(
+            lambda: (
+                self._db.table("check_ins")
+                .select("", count="exact")  # type: ignore[arg-type]
+                .eq("user_id", user_id)
+                .eq("shop_id", shop_id)
+                .execute()
+            )
+        )
+        return (resp.count or 0) <= 1
+
     async def get_by_shop(self, shop_id: str) -> list[CheckIn]:
         response = await asyncio.to_thread(
             lambda: (

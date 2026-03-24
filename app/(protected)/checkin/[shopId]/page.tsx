@@ -77,7 +77,7 @@ export default function CheckInPage() {
 
       setSubmitState('submitting');
 
-      const checkinResult = await fetchWithAuth('/api/checkins', {
+      await fetchWithAuth('/api/checkins', {
         method: 'POST',
         body: JSON.stringify({
           shop_id: shopId,
@@ -95,9 +95,10 @@ export default function CheckInPage() {
 
       capture('checkin_completed', {
         shop_id: shopId,
-        is_first_checkin_at_shop: checkinResult.is_first_checkin_at_shop,
         has_text_note: note.trim().length > 0,
         has_menu_photo: menuPhoto !== null,
+        // is_first_checkin_at_shop is server-authoritative — resolved by the analytics
+        // gateway via DB lookup, not trusted from the client.
       });
 
       toast('打卡成功！Stamp earned.', {

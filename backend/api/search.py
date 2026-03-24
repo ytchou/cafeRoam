@@ -8,8 +8,6 @@ from api.deps import get_admin_db, get_current_user, get_user_db
 from core.anonymize import anonymize_user_id
 from core.config import settings
 from models.types import SearchQuery
-from providers.analytics import get_analytics_provider
-from providers.analytics.interface import AnalyticsProvider
 from providers.embeddings import get_embeddings_provider
 from services.query_classifier import classify
 from services.search_service import SearchService
@@ -41,30 +39,6 @@ def _log_search_event(
         logger.warning("search_event insert failed", query_type=query_type, exc_info=True)
 
 
-def _track_search_analytics(
-    analytics: AnalyticsProvider,
-    user_id_anon: str,
-    query_text: str,
-    query_type: str,
-    mode_filter: str | None,
-    result_count: int,
-) -> None:
-    """Fire-and-forget: send search_submitted event to PostHog."""
-    try:
-        analytics.track(
-            "search_submitted",
-            {
-                "query_text": query_text,
-                "query_type": query_type,
-                "mode_chip_active": mode_filter or "none",
-                "result_count": result_count,
-            },
-            distinct_id=user_id_anon,
-        )
-    except Exception:
-        logger.warning("search_submitted analytics failed", query_type=query_type, exc_info=True)
-
-
 @router.get("/search")
 async def search(
     background_tasks: BackgroundTasks,
@@ -74,8 +48,7 @@ async def search(
     user: dict[str, Any] = Depends(get_current_user),  # noqa: B008
     db: Client = Depends(get_user_db),  # noqa: B008
     admin_db: Client = Depends(get_admin_db),  # noqa: B008
-    analytics: AnalyticsProvider = Depends(get_analytics_provider),  # noqa: B008
-) -> list[dict[str, Any]]:
+) -> dict[str, Any]:
     """Semantic search with optional mode filter. Auth required."""
     embeddings = get_embeddings_provider()
     service = SearchService(db=db, embeddings=embeddings)
@@ -90,8 +63,9 @@ async def search(
     background_tasks.add_task(
         _log_search_event, admin_db, user_id_anon, text, query_type, mode, result_count
     )
-    background_tasks.add_task(
-        _track_search_analytics, analytics, user_id_anon, text, query_type, mode, result_count
-    )
 
-    return [r.model_dump(by_alias=True) for r in results]
+    return {
+        "results": [r.model_dump(by_alias=True) for r in results],
+        "query_type": query_type,
+        "result_count": result_count,
+    }

@@ -12,6 +12,7 @@ from api.admin import router as admin_router
 from api.admin_roles import router as admin_roles_router
 from api.admin_shops import router as admin_shops_router
 from api.admin_taxonomy import router as admin_taxonomy_router
+from api.analytics import router as analytics_router
 from api.auth import router as auth_router
 from api.checkins import router as checkins_router
 from api.explore import router as explore_router
@@ -124,3 +125,4 @@ app.include_router(admin_roles_router)
 app.include_router(admin_shops_router)
 app.include_router(admin_taxonomy_router)
 app.include_router(maps_router)
+app.include_router(analytics_router)

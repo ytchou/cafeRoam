@@ -6,6 +6,8 @@ import type { SearchMode } from './use-search-state';
 
 interface SearchResponse {
   results: Shop[];
+  query_type: string;
+  result_count: number;
 }
 
 export function useSearch(query: string | null, mode: SearchMode) {
@@ -21,6 +23,8 @@ export function useSearch(query: string | null, mode: SearchMode) {
 
   return {
     results: data?.results ?? [],
+    queryType: data?.query_type ?? null,
+    resultCount: data?.result_count ?? 0,
     isLoading,
     error,
   };

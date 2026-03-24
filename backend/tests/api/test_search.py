@@ -27,10 +27,9 @@ class TestSearchAPI:
         mock_db.rpc = MagicMock(
             return_value=MagicMock(execute=MagicMock(return_value=MagicMock(data=[])))
         )
-        app.dependency_overrides[get_current_user] = lambda: {"id": "user-1"}
+        app.dependency_overrides[get_current_user] = lambda: {"id": "usr_a1b2c3d4e5f6"}
         app.dependency_overrides[get_user_db] = lambda: mock_db
         app.dependency_overrides[get_admin_db] = lambda: _mock_admin_db()
-        app.dependency_overrides[get_analytics_provider] = lambda: MagicMock()
         try:
             with patch("api.search.get_embeddings_provider") as mock_emb_factory:
                 mock_emb = AsyncMock()
@@ -42,6 +41,8 @@ class TestSearchAPI:
                     headers={"Authorization": "Bearer valid-jwt"},
                 )
                 assert response.status_code == 200
+                body = response.json()
+                assert "results" in body
                 mock_db.rpc.assert_called_once()
         finally:
             app.dependency_overrides.clear()
@@ -57,7 +58,6 @@ class TestSearchAPI:
         app.dependency_overrides[get_current_user] = lambda: {"id": "user-a1b2c3"}
         app.dependency_overrides[get_user_db] = lambda: mock_db
         app.dependency_overrides[get_admin_db] = lambda: mock_admin_db
-        app.dependency_overrides[get_analytics_provider] = lambda: MagicMock()
         try:
             with patch("api.search.get_embeddings_provider") as mock_emb_factory:
                 mock_emb = AsyncMock()
@@ -82,39 +82,53 @@ class TestSearchAPI:
         finally:
             app.dependency_overrides.clear()
 
-    def test_search_fires_posthog_event(self):
-        """When a user searches, a search_submitted PostHog event is fired."""
+    def test_search_response_includes_query_metadata(self):
+        """Search response must include query_type and result_count for frontend analytics."""
         mock_db = MagicMock()
         mock_db.rpc = MagicMock(
             return_value=MagicMock(execute=MagicMock(return_value=MagicMock(data=[])))
         )
-        mock_admin_db = _mock_admin_db()
-        mock_analytics = MagicMock()
-
-        app.dependency_overrides[get_current_user] = lambda: {"id": "user-a1b2c3"}
+        app.dependency_overrides[get_current_user] = lambda: {"id": "usr_b2c3d4e5f6a1"}
         app.dependency_overrides[get_user_db] = lambda: mock_db
-        app.dependency_overrides[get_admin_db] = lambda: mock_admin_db
+        app.dependency_overrides[get_admin_db] = lambda: _mock_admin_db()
+        try:
+            with patch("api.search.get_embeddings_provider") as mock_emb_factory:
+                mock_emb = AsyncMock()
+                mock_emb.embed = AsyncMock(return_value=[0.1] * 1536)
+                mock_emb_factory.return_value = mock_emb
+                response = client.get(
+                    "/search?text=matcha+latte",
+                    headers={"Authorization": "Bearer valid-jwt"},
+                )
+                assert response.status_code == 200
+                body = response.json()
+                assert "results" in body
+                assert "query_type" in body
+                assert "result_count" in body
+                assert isinstance(body["result_count"], int)
+        finally:
+            app.dependency_overrides.clear()
+
+    def test_search_no_longer_fires_posthog_directly(self):
+        """After migration, GET /search should NOT call analytics.track()."""
+        mock_db = MagicMock()
+        mock_db.rpc = MagicMock(
+            return_value=MagicMock(execute=MagicMock(return_value=MagicMock(data=[])))
+        )
+        mock_analytics = MagicMock()
+        app.dependency_overrides[get_current_user] = lambda: {"id": "usr_c3d4e5f6a1b2"}
+        app.dependency_overrides[get_user_db] = lambda: mock_db
+        app.dependency_overrides[get_admin_db] = lambda: _mock_admin_db()
         app.dependency_overrides[get_analytics_provider] = lambda: mock_analytics
         try:
             with patch("api.search.get_embeddings_provider") as mock_emb_factory:
                 mock_emb = AsyncMock()
                 mock_emb.embed = AsyncMock(return_value=[0.1] * 1536)
                 mock_emb_factory.return_value = mock_emb
-
-                response = client.get(
-                    "/search?text=latte&mode=work",
+                client.get(
+                    "/search?text=wifi",
                     headers={"Authorization": "Bearer valid-jwt"},
                 )
-                assert response.status_code == 200
-
-                mock_analytics.track.assert_called_once()
-                call_args = mock_analytics.track.call_args
-                assert call_args[0][0] == "search_submitted"
-                props = call_args[0][1]
-                assert props["query_text"] == "latte"
-                assert props["query_type"] == "item_specific"
-                assert props["mode_chip_active"] == "work"
-                assert props["result_count"] == 0
-                assert call_args[1]["distinct_id"] is not None
+                mock_analytics.track.assert_not_called()
         finally:
             app.dependency_overrides.clear()

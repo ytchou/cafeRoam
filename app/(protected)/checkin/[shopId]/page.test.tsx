@@ -65,11 +65,6 @@ vi.mock('@/lib/supabase/client', () => ({
   }),
 }));
 
-const { mockCapture } = vi.hoisted(() => ({ mockCapture: vi.fn() }));
-vi.mock('posthog-js', () => ({
-  default: { capture: mockCapture },
-}));
-
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
@@ -80,7 +75,6 @@ describe('CheckInPage', () => {
     vi.stubEnv('NEXT_PUBLIC_POSTHOG_KEY', 'phc_test');
     mockFetch.mockReset();
     mockBack.mockReset();
-    mockCapture.mockReset();
     // Mock shop fetch
     mockFetch.mockResolvedValueOnce({
       ok: true,
@@ -332,9 +326,14 @@ describe('CheckInPage', () => {
     await userEvent.click(submitBtn);
 
     await waitFor(() => {
-      expect(mockCapture).toHaveBeenCalledWith('checkin_completed', {
+      const analyticsCall = mockFetch.mock.calls.find(
+        (c) => c[0] === '/api/analytics/events'
+      );
+      expect(analyticsCall).toBeDefined();
+      const body = JSON.parse(analyticsCall![1].body);
+      expect(body.event).toBe('checkin_completed');
+      expect(body.properties).toEqual({
         shop_id: 'shop-d4e5f6',
-        is_first_checkin_at_shop: true,
         has_text_note: false,
         has_menu_photo: false,
       });
