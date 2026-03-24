@@ -1332,7 +1332,7 @@ _Designed in Pencil. Stamps, check-in history, account settings._
 **Chunk 3 — Rollout & Verification (Wave 4-5):**
 
 - [x] Re-embed script for initial rollout
-- [ ] Full lint, type-check, test suite verification
+- [x] Full lint, type-check, test suite verification
 
 ### Beta Program
 
