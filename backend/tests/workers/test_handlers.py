@@ -131,8 +131,8 @@ class TestGenerateEmbeddingHandler:
         db = MagicMock()
 
         shop_table = MagicMock()
-        shop_table.select.return_value.eq.return_value.single.return_value.execute.return_value = MagicMock(
-            data=shop_data
+        shop_table.select.return_value.eq.return_value.single.return_value.execute.return_value = (
+            MagicMock(data=shop_data)
         )
         shop_table.update.return_value.eq.return_value.execute.return_value = MagicMock(data=[])
 
@@ -318,7 +318,10 @@ class TestEnrichMenuPhotoHandler:
         db.table.side_effect = table_side_effect
 
         await handle_enrich_menu_photo(
-            payload={"shop_id": "shop-zhongshan-01", "image_url": "https://storage.example.com/menu.jpg"},
+            payload={
+                "shop_id": "shop-zhongshan-01",
+                "image_url": "https://storage.example.com/menu.jpg",
+            },
             db=db,
             llm=llm,
             queue=queue,
@@ -348,7 +351,10 @@ class TestEnrichMenuPhotoHandler:
         llm.extract_menu_data = AsyncMock(return_value=MagicMock(items=[]))
 
         await handle_enrich_menu_photo(
-            payload={"shop_id": "shop-zhongshan-01", "image_url": "https://storage.example.com/menu.jpg"},
+            payload={
+                "shop_id": "shop-zhongshan-01",
+                "image_url": "https://storage.example.com/menu.jpg",
+            },
             db=db,
             llm=llm,
             queue=queue,

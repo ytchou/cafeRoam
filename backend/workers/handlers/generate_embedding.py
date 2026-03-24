@@ -36,9 +36,7 @@ async def handle_generate_embedding(
     shop = cast("dict[str, Any]", response.data)
 
     # Load menu items if available
-    menu_response = (
-        db.table("shop_menu_items").select("item_name").eq("shop_id", shop_id).execute()
-    )
+    menu_response = db.table("shop_menu_items").select("item_name").eq("shop_id", shop_id).execute()
     menu_rows = cast("list[dict[str, Any]]", menu_response.data or [])
     item_names = [row["item_name"] for row in menu_rows if row.get("item_name")]
 
