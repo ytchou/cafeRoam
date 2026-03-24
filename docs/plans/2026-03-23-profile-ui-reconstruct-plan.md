@@ -15,6 +15,7 @@
 **Tech Stack:** Next.js, TypeScript, Tailwind CSS, lucide-react, FastAPI, Pydantic
 
 **Acceptance Criteria:**
+
 - [ ] Profile page displays a brown banner header with avatar, name, email, stats (Check-ins + Memories)
 - [ ] My Memories section shows a horizontal-scroll row of up to 3 memory cards (photo + shop name + diary note)
 - [ ] Check-in History shows cards with shop photo thumbnails (coffee icon fallback), shop name, relative date, and review text
@@ -25,6 +26,7 @@
 ### Task 1: Backend — Add `shop_photo_url` to CheckInWithShop
 
 **Files:**
+
 - Modify: `backend/models/types.py:105-118`
 - Modify: `backend/services/checkin_service.py:125-142`
 - Modify: `backend/tests/services/test_checkin_service.py:132-158`
@@ -106,6 +108,7 @@ Expected: FAIL — `shop_photo_url` field doesn't exist on `CheckInWithShop`
 **Step 3: Write minimal implementation**
 
 In `backend/models/types.py`, add field to `CheckInWithShop`:
+
 ```python
 class CheckInWithShop(CamelModel):
     id: str
@@ -125,6 +128,7 @@ class CheckInWithShop(CamelModel):
 ```
 
 In `backend/services/checkin_service.py`, update `get_by_user`:
+
 ```python
 async def get_by_user(self, user_id: str) -> list[CheckInWithShop]:
     response = await asyncio.to_thread(
@@ -149,6 +153,7 @@ async def get_by_user(self, user_id: str) -> list[CheckInWithShop]:
 ```
 
 Also update the existing test `test_user_checkin_history_includes_shop_name_and_mrt` to include `photo_urls` in the mock shops data so it doesn't break:
+
 ```python
 "shops": {"name": "Fuji Coffee", "mrt": "Zhongshan", "photo_urls": []},
 ```
@@ -170,6 +175,7 @@ git commit -m "feat(backend): add shop_photo_url to CheckInWithShop model"
 ### Task 2: Frontend — Update CheckInData type and factory
 
 **Files:**
+
 - Modify: `lib/hooks/use-user-checkins.ts:6-16`
 - Modify: `lib/test-utils/factories.ts:86-98`
 - Modify: `lib/hooks/use-user-checkins.test.ts` (update test fixtures)
@@ -181,6 +187,7 @@ No test needed — this is a type/data change only. Tests are updated to include
 **Step 1: Update the CheckInData interface**
 
 In `lib/hooks/use-user-checkins.ts`:
+
 ```typescript
 export interface CheckInData {
   id: string;
@@ -199,6 +206,7 @@ export interface CheckInData {
 **Step 2: Update the makeCheckIn factory**
 
 In `lib/test-utils/factories.ts`, add `shop_photo_url` to `makeCheckIn`:
+
 ```typescript
 export function makeCheckIn(overrides: Record<string, unknown> = {}) {
   return {
@@ -220,6 +228,7 @@ export function makeCheckIn(overrides: Record<string, unknown> = {}) {
 **Step 3: Update test fixtures**
 
 In `components/profile/checkin-history-tab.test.tsx`, add `shop_photo_url` to the test checkins array:
+
 ```typescript
 const checkins: CheckInData[] = [
   {
@@ -250,6 +259,7 @@ const checkins: CheckInData[] = [
 ```
 
 In `app/(protected)/profile/page.test.tsx`, add `shop_photo_url` to the mock checkins response:
+
 ```typescript
 // Inside mockAllEndpoints, update the checkins mock:
 {
@@ -283,6 +293,7 @@ git commit -m "feat(types): add shop_photo_url to CheckInData type and test fixt
 ### Task 3: Frontend — Rebuild ProfileHeader component
 
 **Files:**
+
 - Modify: `components/profile/profile-header.test.tsx`
 - Modify: `components/profile/profile-header.tsx`
 
@@ -464,6 +475,7 @@ git commit -m "feat(ui): rebuild ProfileHeader with brown banner and stats row"
 ### Task 4: Frontend — Rebuild PolaroidSection component
 
 **Files:**
+
 - Modify: `components/stamps/polaroid-section.test.tsx`
 - Modify: `components/stamps/polaroid-section.tsx`
 
@@ -675,6 +687,7 @@ git commit -m "feat(ui): rebuild PolaroidSection with horizontal scroll and new 
 ### Task 5: Frontend — Rebuild CheckinHistoryTab component
 
 **Files:**
+
 - Modify: `components/profile/checkin-history-tab.test.tsx`
 - Modify: `components/profile/checkin-history-tab.tsx`
 
@@ -882,6 +895,7 @@ git commit -m "feat(ui): rebuild CheckinHistoryTab with shop photo and new card 
 ### Task 6: Frontend — Update Profile page layout and wiring
 
 **Files:**
+
 - Modify: `app/(protected)/profile/page.test.tsx`
 - Modify: `app/(protected)/profile/page.tsx`
 
@@ -890,6 +904,7 @@ git commit -m "feat(ui): rebuild CheckinHistoryTab with shop photo and new card 
 Update `app/(protected)/profile/page.test.tsx`. Add a mock for `useUser` and update assertions.
 
 Add at the top of the file (after the existing mocks):
+
 ```typescript
 // Add mock for useUser hook
 vi.mock('@/lib/hooks/use-user', () => ({
@@ -901,6 +916,7 @@ vi.mock('@/lib/hooks/use-user', () => ({
 ```
 
 Update the `mockAllEndpoints` to include `stamp_count` in the profile response:
+
 ```typescript
 overrides.profile ?? {
   display_name: 'Mei-Ling',
@@ -911,6 +927,7 @@ overrides.profile ?? {
 ```
 
 Update mock checkins to include `shop_photo_url`:
+
 ```typescript
 {
   id: 'ci-1',
@@ -1136,20 +1153,25 @@ graph TD
 ```
 
 **Wave 1** (backend):
+
 - Task 1: Backend — add `shop_photo_url` to CheckInWithShop
 
 **Wave 2** (types — depends on Wave 1):
+
 - Task 2: Frontend — update CheckInData type and factory
 
 **Wave 3** (parallel components — depends on Wave 2):
+
 - Task 3: ProfileHeader rebuild
 - Task 4: PolaroidSection rebuild
 - Task 5: CheckinHistoryTab rebuild
 
 **Wave 4** (page wiring — depends on Wave 3):
+
 - Task 6: Profile page layout and wiring
 
 **Wave 5** (verification — depends on Wave 4):
+
 - Task 7: Full verification
 
 ---

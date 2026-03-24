@@ -193,7 +193,14 @@ describe('ProfilePage', () => {
   });
 
   it('renders memories count stat from stamp_count', async () => {
-    mockAllEndpoints({ profile: { display_name: 'Mei', avatar_url: null, checkin_count: 5, stamp_count: 12 } });
+    mockAllEndpoints({
+      profile: {
+        display_name: 'Mei',
+        avatar_url: null,
+        checkin_count: 5,
+        stamp_count: 12,
+      },
+    });
     render(<ProfilePage />, { wrapper });
 
     await waitFor(() => {

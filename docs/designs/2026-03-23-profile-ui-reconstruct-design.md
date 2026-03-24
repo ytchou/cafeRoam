@@ -12,14 +12,14 @@ Rebuild the Profile page UI to match the approved Pencil design. The page keeps 
 
 ## Decisions Summary
 
-| Decision | Choice | Rationale |
-|----------|--------|-----------|
-| Email source | Supabase auth session (client-side) | Already available, no backend change |
-| Second stat | Polaroid/Memory count (from stamp_count) | Stamps → Memories rebrand |
-| Check-in location | Skip entirely | Simplify card, no backend change |
-| Sort toggle | Skip entirely | API returns newest-first already |
-| Check-in thumbnail | Shop main photo (backend change) | Best UX, shows recognizable shop imagery |
-| Mobile memories | Horizontal scroll | Natural mobile pattern, swipeable |
+| Decision           | Choice                                   | Rationale                                |
+| ------------------ | ---------------------------------------- | ---------------------------------------- |
+| Email source       | Supabase auth session (client-side)      | Already available, no backend change     |
+| Second stat        | Polaroid/Memory count (from stamp_count) | Stamps → Memories rebrand                |
+| Check-in location  | Skip entirely                            | Simplify card, no backend change         |
+| Sort toggle        | Skip entirely                            | API returns newest-first already         |
+| Check-in thumbnail | Shop main photo (backend change)         | Best UX, shows recognizable shop imagery |
+| Mobile memories    | Horizontal scroll                        | Natural mobile pattern, swipeable        |
 
 ---
 
@@ -30,11 +30,13 @@ Rebuild the Profile page UI to match the approved Pencil design. The page keeps 
 Full redesign: brown banner with stats.
 
 **Props changes:**
+
 - Add `email: string | null` (from Supabase auth session)
 - Add `stampCount: number` (relabeled as "Memories")
 - Keep `displayName`, `avatarUrl`, `checkinCount`
 
 **Visual spec (from Pencil):**
+
 - Full-width `bg-[#8B5E3C]` (Map Brown) banner
 - Inner: max-w-4xl centered, `py-8 px-8`
 - Left side:
@@ -51,6 +53,7 @@ Full redesign: brown banner with stats.
 - Layout: `justify-between`, `items-center`
 
 **Mobile adaptation:**
+
 - Stack avatar + info vertically centered
 - Stats row below, centered
 - Reduce avatar to 64px, name to 22px, numbers to 28px
@@ -60,6 +63,7 @@ Full redesign: brown banner with stats.
 Change from 2-col grid to horizontal scroll with new card style.
 
 **Visual spec:**
+
 - Section header: "My Memories" (Bricolage 20px bold) + "3 recent visits" subtitle (13px `text-[#9CA3AF]`)
 - "View All" badge: brown pill (`bg-[#F5EDE4]`, `text-[#8B5E3C]`, rounded-full, with images icon)
 - Card row: horizontal scroll (`overflow-x-auto`), `gap-4`, scroll snap
@@ -80,9 +84,11 @@ Change from 2-col grid to horizontal scroll with new card style.
 New card design with shop photo.
 
 **Type changes:**
+
 - Frontend `CheckInData`: add `shop_photo_url: string | null`
 
 **Visual spec:**
+
 - Section header: "Check-in History" (Bricolage 20px bold) — no sort toggle
 - Each card:
   - White bg, `rounded-2xl`, border `border-[#F3F4F6]`, `p-4`, `gap-3.5`
@@ -114,6 +120,7 @@ New card design with shop photo.
 ## Backend Changes
 
 ### CheckInWithShop model (`backend/models/types.py`)
+
 ```python
 class CheckInWithShop(CamelModel):
     # ... existing fields ...
@@ -121,16 +128,19 @@ class CheckInWithShop(CamelModel):
 ```
 
 ### CheckInService.get_by_user (`backend/services/checkin_service.py`)
+
 Extend the shops JOIN to include `photo_urls`, extract first photo:
+
 ```python
 row["shop_photo_url"] = first_or_none(shop_data.get("photo_urls"))
 ```
 
 ### Frontend type (`lib/hooks/use-user-checkins.ts`)
+
 ```typescript
 export interface CheckInData {
   // ... existing fields ...
-  shop_photo_url: string | null;  // NEW
+  shop_photo_url: string | null; // NEW
 }
 ```
 
@@ -138,12 +148,12 @@ export interface CheckInData {
 
 ## Testing Strategy
 
-| Component | Test Focus |
-|-----------|-----------|
-| ProfileHeader | Banner renders, stats display correctly, email shows when provided, email hides when null, Edit Profile links to /settings |
-| PolaroidSection | Horizontal scroll container renders, correct card count (max 3), "View All" link present, empty state works |
+| Component         | Test Focus                                                                                                                                     |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| ProfileHeader     | Banner renders, stats display correctly, email shows when provided, email hides when null, Edit Profile links to /settings                     |
+| PolaroidSection   | Horizontal scroll container renders, correct card count (max 3), "View All" link present, empty state works                                    |
 | CheckinHistoryTab | Shop photo renders in thumbnail, coffee icon fallback when no photo, review_text displayed, no star ratings rendered, relative date formatting |
-| Backend | `shop_photo_url` populated from shops JOIN, null when shop has no photos |
+| Backend           | `shop_photo_url` populated from shops JOIN, null when shop has no photos                                                                       |
 
 ---
 

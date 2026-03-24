@@ -19,7 +19,7 @@ export function PolaroidSection({
   return (
     <div>
       {/* Section Header */}
-      <div className="flex items-center justify-between pb-4 pt-7">
+      <div className="flex items-center justify-between pt-7 pb-4">
         <div className="flex flex-col gap-0.5">
           <h2 className="font-heading text-xl font-bold text-[#1A1918]">
             My Memories
@@ -50,7 +50,7 @@ export function PolaroidSection({
       ) : (
         <div
           data-testid="memory-scroll"
-          className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 md:grid md:grid-cols-3 md:overflow-x-visible md:snap-none"
+          className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 md:grid md:snap-none md:grid-cols-3 md:overflow-x-visible"
         >
           {previewStamps.map((stamp) => (
             <div
@@ -58,8 +58,10 @@ export function PolaroidSection({
               data-testid="memory-card"
               role={onStampClick ? 'button' : undefined}
               tabIndex={onStampClick ? 0 : undefined}
-              aria-label={onStampClick ? (stamp.shop_name ?? 'Memory') : undefined}
-              className="min-w-[200px] flex-shrink-0 snap-start cursor-pointer rounded-lg bg-white p-2.5 shadow-[0_3px_12px_rgba(0,0,0,0.08)] transition-transform hover:scale-[1.02] md:min-w-0"
+              aria-label={
+                onStampClick ? (stamp.shop_name ?? 'Memory') : undefined
+              }
+              className="min-w-[200px] flex-shrink-0 cursor-pointer snap-start rounded-lg bg-white p-2.5 shadow-[0_3px_12px_rgba(0,0,0,0.08)] transition-transform hover:scale-[1.02] md:min-w-0"
               onClick={() => onStampClick?.(stamp)}
               onKeyDown={
                 onStampClick
@@ -91,7 +93,7 @@ export function PolaroidSection({
                 {stamp.shop_name ?? 'Unknown Shop'}
               </p>
               {stamp.diary_note && (
-                <p className="truncate text-[11px] italic text-[#9CA3AF]">
+                <p className="truncate text-[11px] text-[#9CA3AF] italic">
                   &ldquo;{stamp.diary_note}&rdquo;
                 </p>
               )}

@@ -59,7 +59,7 @@ export default function ProfilePage() {
         </section>
 
         <section>
-          <h2 className="pb-4 pt-7 font-heading text-xl font-bold text-[#1A1918]">
+          <h2 className="font-heading pt-7 pb-4 text-xl font-bold text-[#1A1918]">
             Check-in History
           </h2>
           <CheckinHistoryTab checkins={checkins} isLoading={checkinsLoading} />

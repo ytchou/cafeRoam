@@ -1,4 +1,5 @@
 # Mocked Supabase client can mask broken PostgREST column references
+
 **Date:** 2026-03-24
 **Context:** Profile UI Reconstruct — shop_photo_url implementation in checkin_service.py
 
@@ -7,6 +8,7 @@
 **Root cause:** The bug was introduced at the plan stage (the plan doc itself showed the wrong query), then propagated unchanged to the implementation. The mock-based tests couldn't catch it because they bypass PostgREST schema validation entirely.
 
 **Prevention:**
+
 1. Before writing a new Supabase relational query, check an existing working query in the same codebase for the correct join traversal pattern (`lists_service.py` had `shops(shop_photos(url))` — the correct form).
 2. When adding a new `select()` with a join to a table you haven't queried before, verify the column/relation name against the migration files in `supabase/migrations/` before writing the test mock.
 3. Plan docs that contain SQL/PostgREST snippets should be cross-checked against the schema — they can be wrong.

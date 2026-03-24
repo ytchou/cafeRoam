@@ -34,7 +34,9 @@ describe('PolaroidSection', () => {
   it('renders diary note in italic when present', () => {
     const stamps = [makeStamp({ diary_note: 'Perfect focus mode' })];
     render(<PolaroidSection stamps={stamps} />);
-    expect(screen.getByText('\u201cPerfect focus mode\u201d')).toBeInTheDocument();
+    expect(
+      screen.getByText('\u201cPerfect focus mode\u201d')
+    ).toBeInTheDocument();
   });
 
   it('shows total visits count in subtitle', () => {
@@ -47,7 +49,13 @@ describe('PolaroidSection', () => {
   });
 
   it('shows total visit count even when more than 3 stamps exist', () => {
-    const shopNames = ['山小孩咖啡', 'Fika Coffee', 'Hinoki Coffee', 'Rufous Coffee', '珈琲時光'];
+    const shopNames = [
+      '山小孩咖啡',
+      'Fika Coffee',
+      'Hinoki Coffee',
+      'Rufous Coffee',
+      '珈琲時光',
+    ];
     const stamps = shopNames.map((shop_name, i) =>
       makeStamp({ id: `stamp-${i}`, shop_name })
     );

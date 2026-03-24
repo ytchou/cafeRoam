@@ -41,9 +41,7 @@ export function ProfileHeader({
             <h1 className="font-heading text-[22px] font-bold text-white md:text-[26px]">
               {name}
             </h1>
-            {email && (
-              <p className="text-[13px] text-white/50">{email}</p>
-            )}
+            {email && <p className="text-[13px] text-white/50">{email}</p>}
             <Link
               href="/settings"
               className="text-[13px] font-medium text-white hover:underline"
