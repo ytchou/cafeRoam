@@ -1357,6 +1357,31 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 
 ---
 
+### Community Feed (DEV-12)
+
+> **Design Doc:** [docs/designs/2026-03-24-community-feed-design.md](docs/designs/2026-03-24-community-feed-design.md)
+> **Plan:** [docs/plans/2026-03-24-community-feed-plan.md](docs/plans/2026-03-24-community-feed-plan.md)
+
+**Chunk 1 — Database + Backend Service (Wave 1-2):**
+- [ ] DB migration: add `is_public` column + RLS policies (Task 1)
+- [ ] CommunityService: `is_public` filter + MRT/vibe_tag params (Task 2)
+- [ ] CheckInService: accept `is_public` param (Task 4)
+
+**Chunk 2 — API + Auth Gate (Wave 3):**
+- [ ] Auth-gate community feed/preview endpoints (Task 3)
+- [ ] Add MRT and vibe_tag filter query params (Task 3)
+
+**Chunk 3 — Frontend (Wave 3-5):**
+- [ ] Check-in form: "Share publicly" toggle (Task 5)
+- [ ] Feed hook: auth fetcher + filter params (Task 6)
+- [ ] Feed page: filter bar UI (Task 7)
+- [ ] Explore preview: auth update (Task 8)
+
+**Chunk 4 — Verification (Wave 6):**
+- [ ] Full lint + test pass (Task 9)
+
+---
+
 ### LINE Integration (V2)
 
 > Requires LINE Login (built in V1 auth) as prerequisite — LINE user ID is captured at auth time.
