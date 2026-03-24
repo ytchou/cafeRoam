@@ -28,13 +28,11 @@ async def handle_enrich_menu_photo(
         logger.info("No menu items extracted — preserving existing", shop_id=shop_id)
         return
 
-    # Replace-on-extract: delete existing items, then insert new batch
-    db.table("shop_menu_items").delete().eq("shop_id", shop_id).execute()
-
+    # Build rows first — filter items with empty/missing names before touching the DB
     rows = [
         {
             "shop_id": shop_id,
-            "item_name": item.get("name", ""),
+            "item_name": item["name"],
             "price": item.get("price"),
             "category": item.get("category"),
             "extracted_at": datetime.now(UTC).isoformat(),
@@ -42,8 +40,14 @@ async def handle_enrich_menu_photo(
         for item in result.items
         if item.get("name")
     ]
-    if rows:
-        db.table("shop_menu_items").insert(rows).execute()
+
+    if not rows:
+        logger.info("All extracted items had empty names — preserving existing", shop_id=shop_id)
+        return
+
+    # Replace-on-extract: only delete after we have valid rows to insert
+    db.table("shop_menu_items").delete().eq("shop_id", shop_id).execute()
+    db.table("shop_menu_items").insert(rows).execute()
 
     # Dual-write to shops.menu_data (temporary — kept until follow-up cleanup ticket)
     db.table("shops").update({"menu_data": result.items}).eq("id", shop_id).execute()
@@ -52,7 +56,7 @@ async def handle_enrich_menu_photo(
     await queue.enqueue(
         job_type=JobType.GENERATE_EMBEDDING,
         payload={"shop_id": shop_id},
-        priority=5,
+        priority=5,  # higher than batch re-embed (priority=3) — user-triggered
     )
 
     logger.info("Menu data extracted", shop_id=shop_id, item_count=len(rows))
