@@ -1278,7 +1278,7 @@ _Designed in Pencil. Stamps, check-in history, account settings._
 
 **Chunk 1 — DB Foundation (Wave 1):**
 
-- [ ] Migration: `shop_menu_items` table + index
+- [x] Migration: `shop_menu_items` table + index
 
 **Chunk 2 — Worker Updates (Waves 2-3):**
 
