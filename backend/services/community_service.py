@@ -17,13 +17,14 @@ _ROLE_LABELS: dict[str, str] = {
 
 _NOTE_SELECT = (
     "id,"
+    "is_public,"
     "review_text,"
     "stars,"
     "photo_urls,"
     "created_at,"
     "profiles!check_ins_user_id_fkey(display_name, avatar_url),"
-    "shops!check_ins_shop_id_fkey(name, slug, district),"
-    "user_roles!inner(role),"
+    "shops!check_ins_shop_id_fkey(name, slug, mrt),"
+    "user_roles(role),"
     "community_note_likes(count)"
 )
 
@@ -46,6 +47,7 @@ class CommunityService:
         response = (
             self._db.table("check_ins")
             .select(_NOTE_SELECT)
+            .eq("is_public", True)
             .not_.is_("review_text", "null")
             .order("created_at", desc=True)
             .limit(limit)
@@ -54,16 +56,27 @@ class CommunityService:
         rows = cast("list[dict[str, Any]]", response.data or [])
         return [self._row_to_card(row) for row in rows]
 
-    def get_feed(self, cursor: str | None, limit: int = 10) -> CommunityFeedResponse:
+    def get_feed(
+        self,
+        cursor: str | None,
+        limit: int = 10,
+        mrt: str | None = None,
+        vibe_tag: str | None = None,
+    ) -> CommunityFeedResponse:
         query = (
             self._db.table("check_ins")
             .select(_NOTE_SELECT)
+            .eq("is_public", True)
             .not_.is_("review_text", "null")
             .order("created_at", desc=True)
             .limit(limit + 1)
         )
         if cursor:
             query = query.lt("created_at", cursor)
+        if mrt:
+            query = query.eq("shops.mrt", mrt)
+        if vibe_tag:
+            query = query.contains("shops.shop_tags.tag_id", [vibe_tag])
 
         response = query.execute()
         rows = cast("list[dict[str, Any]]", response.data or [])
@@ -128,7 +141,7 @@ class CommunityService:
 
         shop_name: str = shop.get("name") or ""
         shop_slug: str = shop.get("slug") or ""
-        shop_district: str | None = shop.get("district")
+        shop_mrt: str | None = shop.get("mrt")
 
         roles_list = user_roles_data if isinstance(user_roles_data, list) else []
         first_role = next((r for r in roles_list if isinstance(r, dict)), None)
@@ -151,7 +164,7 @@ class CommunityService:
             cover_photo_url=cover,
             shop_name=shop_name,
             shop_slug=shop_slug,
-            shop_district=shop_district,
+            shop_district=shop_mrt,  # mrt used as location identifier
             like_count=_extract_count(row.get("community_note_likes")),
             created_at=row["created_at"],
         )

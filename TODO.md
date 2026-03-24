@@ -1364,8 +1364,8 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 
 **Chunk 1 — Database + Backend Service (Wave 1-2):**
 - [x] DB migration: add `is_public` column + RLS policies (Task 1)
-- [ ] CommunityService: `is_public` filter + MRT/vibe_tag params (Task 2)
-- [ ] CheckInService: accept `is_public` param (Task 4)
+- [x] CommunityService: `is_public` filter + MRT/vibe_tag params (Task 2)
+- [x] CheckInService: accept `is_public` param (Task 4)
 
 **Chunk 2 — API + Auth Gate (Wave 3):**
 - [ ] Auth-gate community feed/preview endpoints (Task 3)

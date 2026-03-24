@@ -174,7 +174,7 @@ def make_community_note_row(**overrides: object) -> dict:
     """A joined row as returned by the CommunityService PostgREST query.
 
     Accepts convenience overrides (checkin_id, display_name, avatar_url,
-    shop_name, shop_slug, shop_district) which are mapped to the correct
+    shop_name, shop_slug, shop_mrt, is_public) which are mapped to the correct
     nested structure that PostgREST returns for JOIN queries.
     """
     checkin_id = overrides.pop("checkin_id", "ci-j0k1l2")
@@ -182,10 +182,12 @@ def make_community_note_row(**overrides: object) -> dict:
     avatar_url = overrides.pop("avatar_url", None)
     shop_name = overrides.pop("shop_name", "Hinoki Coffee")
     shop_slug = overrides.pop("shop_slug", "hinoki-coffee")
-    shop_district = overrides.pop("shop_district", "大安")
+    shop_mrt = overrides.pop("shop_mrt", "大安")
+    is_public = overrides.pop("is_public", True)
 
     defaults: dict = {
         "id": checkin_id,
+        "is_public": is_public,
         "review_text": "Hinoki Coffee has the most incredible natural light in the afternoons. Brought my Kindle and ended up reading for three hours.",
         "stars": 5,
         "photo_urls": [
@@ -193,7 +195,7 @@ def make_community_note_row(**overrides: object) -> dict:
         ],
         "created_at": "2026-03-15T14:30:00",
         "profiles": {"display_name": display_name, "avatar_url": avatar_url},
-        "shops": {"name": shop_name, "slug": shop_slug, "district": shop_district},
+        "shops": {"name": shop_name, "slug": shop_slug, "mrt": shop_mrt},
         "user_roles": [{"role": "blogger"}],
         "community_note_likes": [{"count": 12}],
     }

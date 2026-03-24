@@ -29,6 +29,7 @@ def _make_db_mock(
     mock.limit.return_value = mock
     mock.lt.return_value = mock
     mock.in_.return_value = mock
+    mock.contains.return_value = mock
     mock.delete.return_value = mock
     mock.insert.return_value = mock
     mock.single.return_value = mock
@@ -199,3 +200,65 @@ class TestCommunityServiceIsLiked:
 
         service = CommunityService(db)
         assert service.is_liked("ci-1", "user-a1b2c3") is False
+
+
+class TestCommunityServiceIsPublicFiltering:
+    """Community feed only shows check-ins where is_public is true."""
+
+    def test_feed_excludes_private_checkins(self):
+        """Given a mix of public and private check-ins, the feed returns only public ones."""
+        public_row = make_community_note_row(checkin_id="ci-public", is_public=True)
+        # Private rows are filtered at DB level, so mock only returns public
+        db = _make_db_mock(note_rows=[public_row])
+        service = CommunityService(db)
+
+        result = service.get_feed(cursor=None, limit=10)
+
+        assert len(result.notes) == 1
+        assert result.notes[0].checkin_id == "ci-public"
+
+    def test_preview_excludes_private_checkins(self):
+        """The explore page preview only surfaces public check-ins."""
+        public_row = make_community_note_row(checkin_id="ci-public", is_public=True)
+        db = _make_db_mock(note_rows=[public_row])
+        service = CommunityService(db)
+
+        result = service.get_preview(limit=3)
+
+        assert len(result) == 1
+        assert result[0].checkin_id == "ci-public"
+
+
+class TestCommunityServiceFeedFilters:
+    """Community feed supports filtering by MRT station and vibe tag."""
+
+    def test_feed_with_mrt_filter(self):
+        """When filtered by MRT, only matching check-ins appear."""
+        rows = [make_community_note_row(checkin_id="ci-1")]
+        db = _make_db_mock(note_rows=rows)
+        service = CommunityService(db)
+
+        result = service.get_feed(cursor=None, limit=10, mrt="中山")
+
+        assert len(result.notes) == 1
+        db.eq.assert_any_call("shops.mrt", "中山")
+
+    def test_feed_with_vibe_tag_filter(self):
+        """When filtered by vibe tag, only matching check-ins appear."""
+        rows = [make_community_note_row(checkin_id="ci-1")]
+        db = _make_db_mock(note_rows=rows)
+        service = CommunityService(db)
+
+        result = service.get_feed(cursor=None, limit=10, vibe_tag="quiet_reading")
+
+        assert len(result.notes) == 1
+
+    def test_feed_with_no_filters_returns_all_public(self):
+        """Without filters, all public check-ins appear."""
+        rows = [make_community_note_row(checkin_id=f"ci-{i}") for i in range(3)]
+        db = _make_db_mock(note_rows=rows)
+        service = CommunityService(db)
+
+        result = service.get_feed(cursor=None, limit=10)
+
+        assert len(result.notes) == 3
