@@ -37,6 +37,31 @@ class JobQueue:
         rows = cast("list[dict[str, Any]]", response.data)
         return str(first(rows, "enqueue job")["id"])
 
+    async def enqueue_batch(
+        self,
+        job_type: JobType,
+        payloads: list[dict[str, Any]],
+        priority: int = 0,
+        scheduled_at: datetime | None = None,
+    ) -> list[str]:
+        """Insert multiple jobs in a single DB round-trip."""
+        now = datetime.now(UTC)
+        records = [
+            {
+                "job_type": job_type.value,
+                "payload": payload,
+                "status": JobStatus.PENDING.value,
+                "priority": priority,
+                "attempts": 0,
+                "max_attempts": 3,
+                "scheduled_at": (scheduled_at or now).isoformat(),
+            }
+            for payload in payloads
+        ]
+        response = self._db.table("job_queue").insert(records).execute()
+        rows = cast("list[dict[str, Any]]", response.data)
+        return [str(row["id"]) for row in rows]
+
     async def claim(self, job_type: JobType | None = None) -> Job | None:
         """Calls RPC `claim_job` which atomically claims the next pending job
         using FOR UPDATE SKIP LOCKED, ordered by priority DESC, scheduled_at ASC."""

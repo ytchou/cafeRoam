@@ -61,12 +61,11 @@ async def main(dry_run: bool, queue: JobQueue | None = None) -> None:
         return
 
     _queue = queue or JobQueue(db)
-    for r in to_enqueue:
-        await _queue.enqueue(
-            job_type=JobType.GENERATE_EMBEDDING,
-            payload={"shop_id": r["id"]},
-            priority=3,  # lower than user-triggered re-embed (priority=5) — batch background work
-        )
+    await _queue.enqueue_batch(
+        job_type=JobType.GENERATE_EMBEDDING,
+        payloads=[{"shop_id": r["id"]} for r in to_enqueue],
+        priority=3,  # lower than user-triggered re-embed (priority=5) — batch background work
+    )
 
     print(f"Enqueued {len(to_enqueue)} GENERATE_EMBEDDING jobs.")
     print("Monitor worker logs: tail -f logs or Railway log stream.")
