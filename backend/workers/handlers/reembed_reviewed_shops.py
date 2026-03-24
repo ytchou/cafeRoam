@@ -3,12 +3,10 @@ from typing import Any, cast
 import structlog
 from supabase import Client
 
-from models.types import JobType
+from models.types import CHECKIN_MIN_TEXT_LENGTH, JobType
 from workers.queue import JobQueue
 
 logger = structlog.get_logger()
-
-_MIN_TEXT_LENGTH = 15
 
 
 async def handle_reembed_reviewed_shops(db: Client, queue: JobQueue) -> None:
@@ -19,7 +17,7 @@ async def handle_reembed_reviewed_shops(db: Client, queue: JobQueue) -> None:
     """
     response = db.rpc(
         "find_shops_needing_review_reembed",
-        {"p_min_text_length": _MIN_TEXT_LENGTH},
+        {"p_min_text_length": CHECKIN_MIN_TEXT_LENGTH},
     ).execute()
 
     shop_rows = cast("list[dict[str, Any]]", response.data or [])

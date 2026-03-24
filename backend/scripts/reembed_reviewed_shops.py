@@ -17,10 +17,8 @@ from typing import Any, cast
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from db.supabase_client import get_service_role_client
-from models.types import JobStatus, JobType
+from models.types import CHECKIN_MIN_TEXT_LENGTH, JobStatus, JobType
 from workers.queue import JobQueue
-
-_MIN_TEXT_LENGTH = 15
 
 
 async def main(
@@ -37,7 +35,7 @@ async def main(
     # Find live shops with qualifying check-in text
     response = db.rpc(
         "find_shops_with_checkin_text",
-        {"p_min_text_length": _MIN_TEXT_LENGTH},
+        {"p_min_text_length": CHECKIN_MIN_TEXT_LENGTH},
     ).execute()
     rows = cast("list[dict[str, Any]]", response.data or [])
 
