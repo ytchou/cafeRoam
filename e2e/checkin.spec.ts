@@ -73,3 +73,7 @@ test.describe('J24 — Duplicate stamp at same shop (intended)', () => {
 test.describe('J30 — Check-in with optional menu photo + text note', () => {
   test.fixme('completing a check-in with menu photo and text note succeeds', async () => {});
 });
+
+test.describe('J39 — Check-in with review text → review visible on shop page', () => {
+  test.fixme('submitting a check-in with a text note shows the review in the shop detail reviews section', async () => {});
+});

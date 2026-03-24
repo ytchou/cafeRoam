@@ -96,3 +96,7 @@ test.describe('J28 — Desktop: 2-column shop detail layout', () => {
 test.describe('J29 — Mobile: mini card on pin tap', () => {
   test.fixme('on mobile viewport, tapping a map pin shows bottom mini card overlay', async () => {});
 });
+
+test.describe('J36 — Shop detail: tap Get Directions → DirectionsSheet opens', () => {
+  test.fixme('tapping the Directions button on a shop detail page opens the DirectionsSheet with route options', async () => {});
+});
