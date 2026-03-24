@@ -88,6 +88,7 @@ export function makeCheckIn(overrides: Record<string, unknown> = {}) {
     id: 'ci-j0k1l2',
     user_id: 'user-a1b2c3',
     shop_id: 'shop-d4e5f6',
+    shop_photo_url: null,
     photo_urls: [
       'https://example.supabase.co/storage/v1/object/public/checkin-photos/user-a1b2c3/photo1.jpg',
     ],

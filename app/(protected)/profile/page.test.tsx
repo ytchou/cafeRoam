@@ -11,6 +11,12 @@ vi.mock('@/lib/supabase/client', () => ({
       getSession: vi.fn().mockResolvedValue({
         data: { session: { access_token: 'test-token' } },
       }),
+      getUser: vi.fn().mockResolvedValue({
+        data: { user: { email: 'mei.ling@gmail.com' } },
+      }),
+      onAuthStateChange: vi.fn().mockReturnValue({
+        data: { subscription: { unsubscribe: vi.fn() } },
+      }),
     },
   }),
 }));
@@ -60,6 +66,7 @@ describe('ProfilePage', () => {
               display_name: 'Mei-Ling',
               avatar_url: null,
               checkin_count: 1,
+              stamp_count: 3,
             },
         });
       }
@@ -83,6 +90,7 @@ describe('ProfilePage', () => {
                 shop_id: 'shop-a',
                 shop_name: 'Fika Coffee',
                 shop_mrt: 'Daan',
+                shop_photo_url: 'https://example.com/shops/fika/exterior.jpg',
                 photo_urls: ['https://example.com/p.jpg'],
                 stars: 4,
                 review_text: null,
@@ -102,7 +110,7 @@ describe('ProfilePage', () => {
     await waitFor(() => {
       expect(screen.getByText('Mei-Ling')).toBeInTheDocument();
     });
-    expect(screen.getByText(/1 check-in/)).toBeInTheDocument();
+    expect(screen.getByText('Check-ins')).toBeInTheDocument();
   });
 
   it('renders the polaroid memories section', async () => {
@@ -166,12 +174,38 @@ describe('ProfilePage', () => {
     render(<ProfilePage />, { wrapper });
 
     await waitFor(() => {
-      expect(screen.getByTestId('polaroid-preview-card')).toBeInTheDocument();
+      expect(screen.getByTestId('memory-card')).toBeInTheDocument();
     });
-    await user.click(screen.getByTestId('polaroid-preview-card'));
+    await user.click(screen.getByTestId('memory-card'));
 
     await waitFor(() => {
-      expect(screen.getByText('山小孩咖啡')).toBeInTheDocument();
+      expect(screen.getAllByText('山小孩咖啡').length).toBeGreaterThan(1);
     });
+  });
+
+  it('renders email from auth session in profile header', async () => {
+    mockAllEndpoints();
+    render(<ProfilePage />, { wrapper });
+
+    await waitFor(() => {
+      expect(screen.getByText('mei.ling@gmail.com')).toBeInTheDocument();
+    });
+  });
+
+  it('renders memories count stat from stamp_count', async () => {
+    mockAllEndpoints({
+      profile: {
+        display_name: 'Mei',
+        avatar_url: null,
+        checkin_count: 5,
+        stamp_count: 12,
+      },
+    });
+    render(<ProfilePage />, { wrapper });
+
+    await waitFor(() => {
+      expect(screen.getByText('12')).toBeInTheDocument();
+    });
+    expect(screen.getByText('Memories')).toBeInTheDocument();
   });
 });
