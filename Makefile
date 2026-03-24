@@ -1,4 +1,4 @@
-.PHONY: help doctor setup dev dev-all migrate seed-shops restore-seed-user reset-db workers-enrich workers-embed test lint
+.PHONY: help doctor setup dev dev-all migrate seed-shops restore-seed-user reset-db workers-enrich workers-embed test lint format
 
 help:
 	@echo "CafeRoam — Available commands:"
@@ -13,7 +13,8 @@ help:
 	@echo "  make workers-embed       Run embedding generation worker locally"
 	@echo "  make test                Run Vitest tests"
 	@echo "  make doctor              Run environment preflight check (run before starting work)"
-	@echo "  make lint                Run ESLint + Prettier check + TypeScript check"
+	@echo "  make lint                Run all linters (ESLint + Prettier check + tsc + ruff check + mypy)"
+	@echo "  make format              Auto-fix formatting (Prettier + ruff format)"
 
 doctor:
 	@bash scripts/doctor.sh
@@ -82,3 +83,8 @@ test:
 
 lint:
 	pnpm lint && pnpm format:check && pnpm type-check
+	cd backend && uv run ruff format --check . && uv run ruff check . && uv run mypy .
+
+format:
+	pnpm prettier --write .
+	cd backend && uv run ruff format .
