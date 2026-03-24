@@ -28,12 +28,11 @@ test.describe('@critical J35 — Explore: Vibe tag → filtered shop results', (
 // --- Phase 2 stubs ---
 
 test.describe('J34 — Explore: Tarot draw → 3 café cards revealed', () => {
-  test.fixme(
-    'with geolocation granted, the Daily Draw section shows 3 café cards after loading',
-    async ({ page, context }) => {
-      await grantGeolocation(context, TAIPEI_COORDS);
-      await page.goto('/explore');
-    }
-  );
+  test.fixme('with geolocation granted, the Daily Draw section shows 3 café cards after loading', async ({
+    page,
+    context,
+  }) => {
+    await grantGeolocation(context, TAIPEI_COORDS);
+    await page.goto('/explore');
+  });
 });
-

@@ -14,7 +14,11 @@ test.describe('@critical J14 — Profile: stamp collection + check-in history', 
 
     // Stamp/polaroid section should render (even if empty for new users)
     await expect(
-      page.locator('[data-testid="polaroid-section"], [class*="polaroid"], [class*="stamp"]').first()
+      page
+        .locator(
+          '[data-testid="polaroid-section"], [class*="polaroid"], [class*="stamp"]'
+        )
+        .first()
     ).toBeVisible({ timeout: 10_000 });
   });
 });
@@ -48,15 +52,9 @@ test.describe('@critical J15 — Account deletion: request → grace period stat
 // --- Phase 2 stubs ---
 
 test.describe('J25 — Display name update', () => {
-  test.fixme(
-    'changing display name in settings reflects on profile page',
-    async () => {}
-  );
+  test.fixme('changing display name in settings reflects on profile page', async () => {});
 });
 
 test.describe('J38 — Account deletion: cancel during grace period', () => {
-  test.fixme(
-    'a user in the 30-day grace period can cancel deletion from the recovery page',
-    async () => {}
-  );
+  test.fixme('a user in the 30-day grace period can cancel deletion from the recovery page', async () => {});
 });

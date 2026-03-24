@@ -40,15 +40,9 @@ test.describe('@critical J16 — Community feed: public access', () => {
 // --- Phase 2 stubs ---
 
 test.describe('J32 — Community feed: authenticated user likes a check-in', () => {
-  test.fixme(
-    'tapping the like button on a community card increments the like count optimistically',
-    async () => {}
-  );
+  test.fixme('tapping the like button on a community card increments the like count optimistically', async () => {});
 });
 
 test.describe('J33 — Community feed: MRT filter scopes results', () => {
-  test.fixme(
-    'selecting a MRT station from the dropdown shows only check-ins near that station',
-    async () => {}
-  );
+  test.fixme('selecting a MRT station from the dropdown shows only check-ins near that station', async () => {});
 });
