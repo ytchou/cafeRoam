@@ -1,10 +1,10 @@
-import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from fastapi.testclient import TestClient
 
-from api.deps import get_current_user, get_user_db
+from api.deps import get_admin_db, get_current_user, get_user_db
 from main import app
+from providers.analytics import get_analytics_provider
 
 client = TestClient(app)
 
@@ -29,28 +29,20 @@ class TestSearchAPI:
         )
         app.dependency_overrides[get_current_user] = lambda: {"id": "user-1"}
         app.dependency_overrides[get_user_db] = lambda: mock_db
+        app.dependency_overrides[get_admin_db] = lambda: _mock_admin_db()
+        app.dependency_overrides[get_analytics_provider] = lambda: MagicMock()
         try:
-            with (
-                patch("api.search.get_embeddings_provider") as mock_emb_factory,
-                patch("api.search.SearchService") as mock_cls,
-                patch("api.search.get_admin_db", return_value=_mock_admin_db()),
-                patch("api.search.get_analytics_provider", return_value=MagicMock()),
-                patch("api.search.asyncio") as mock_asyncio,
-            ):
-                mock_asyncio.create_task = lambda coro: coro.close()
+            with patch("api.search.get_embeddings_provider") as mock_emb_factory:
                 mock_emb = AsyncMock()
                 mock_emb.embed = AsyncMock(return_value=[0.1] * 1536)
                 mock_emb.dimensions = 1536
                 mock_emb_factory.return_value = mock_emb
-                mock_svc = AsyncMock()
-                mock_svc.search.return_value = []
-                mock_cls.return_value = mock_svc
                 response = client.get(
                     "/search?text=good+wifi",
                     headers={"Authorization": "Bearer valid-jwt"},
                 )
                 assert response.status_code == 200
-                mock_cls.assert_called_once_with(db=mock_db, embeddings=mock_emb)
+                mock_db.rpc.assert_called_once()
         finally:
             app.dependency_overrides.clear()
 
@@ -64,34 +56,19 @@ class TestSearchAPI:
 
         app.dependency_overrides[get_current_user] = lambda: {"id": "user-a1b2c3"}
         app.dependency_overrides[get_user_db] = lambda: mock_db
+        app.dependency_overrides[get_admin_db] = lambda: mock_admin_db
+        app.dependency_overrides[get_analytics_provider] = lambda: MagicMock()
         try:
-            with (
-                patch("api.search.get_embeddings_provider") as mock_emb_factory,
-                patch("api.search.SearchService") as mock_cls,
-                patch("api.search.get_admin_db", return_value=mock_admin_db),
-                patch("api.search.get_analytics_provider") as mock_analytics_factory,
-                patch("api.search.asyncio") as mock_asyncio,
-            ):
+            with patch("api.search.get_embeddings_provider") as mock_emb_factory:
                 mock_emb = AsyncMock()
                 mock_emb.embed = AsyncMock(return_value=[0.1] * 1536)
                 mock_emb_factory.return_value = mock_emb
-                mock_svc = AsyncMock()
-                mock_svc.search.return_value = []
-                mock_cls.return_value = mock_svc
-                mock_analytics = MagicMock()
-                mock_analytics_factory.return_value = mock_analytics
-
-                tasks_created = []
-                mock_asyncio.create_task = lambda coro: tasks_created.append(coro)
 
                 response = client.get(
                     "/search?text=巴斯克蛋糕",
                     headers={"Authorization": "Bearer valid-jwt"},
                 )
                 assert response.status_code == 200
-
-                for coro in tasks_created:
-                    asyncio.run(coro)
 
                 mock_admin_db.table.assert_called_with("search_events")
                 insert_call = mock_admin_db.table.return_value.insert.call_args
@@ -112,37 +89,23 @@ class TestSearchAPI:
             return_value=MagicMock(execute=MagicMock(return_value=MagicMock(data=[])))
         )
         mock_admin_db = _mock_admin_db()
+        mock_analytics = MagicMock()
 
         app.dependency_overrides[get_current_user] = lambda: {"id": "user-a1b2c3"}
         app.dependency_overrides[get_user_db] = lambda: mock_db
+        app.dependency_overrides[get_admin_db] = lambda: mock_admin_db
+        app.dependency_overrides[get_analytics_provider] = lambda: mock_analytics
         try:
-            with (
-                patch("api.search.get_embeddings_provider") as mock_emb_factory,
-                patch("api.search.SearchService") as mock_cls,
-                patch("api.search.get_admin_db", return_value=mock_admin_db),
-                patch("api.search.get_analytics_provider") as mock_analytics_factory,
-                patch("api.search.asyncio") as mock_asyncio,
-            ):
+            with patch("api.search.get_embeddings_provider") as mock_emb_factory:
                 mock_emb = AsyncMock()
                 mock_emb.embed = AsyncMock(return_value=[0.1] * 1536)
                 mock_emb_factory.return_value = mock_emb
-                mock_svc = AsyncMock()
-                mock_svc.search.return_value = []
-                mock_cls.return_value = mock_svc
-                mock_analytics = MagicMock()
-                mock_analytics_factory.return_value = mock_analytics
-
-                tasks_created = []
-                mock_asyncio.create_task = lambda coro: tasks_created.append(coro)
 
                 response = client.get(
                     "/search?text=latte&mode=work",
                     headers={"Authorization": "Bearer valid-jwt"},
                 )
                 assert response.status_code == 200
-
-                for coro in tasks_created:
-                    asyncio.run(coro)
 
                 mock_analytics.track.assert_called_once()
                 call_args = mock_analytics.track.call_args
