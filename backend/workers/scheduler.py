@@ -20,6 +20,7 @@ from workers.handlers.generate_embedding import handle_generate_embedding
 from workers.handlers.publish_shop import handle_publish_shop
 from workers.handlers.scrape_batch import handle_scrape_batch
 from workers.handlers.scrape_shop import handle_scrape_shop
+from workers.handlers.reembed_reviewed_shops import handle_reembed_reviewed_shops
 from workers.handlers.staleness_sweep import handle_smart_staleness_sweep
 from workers.handlers.weekly_email import handle_weekly_email
 from workers.queue import JobQueue
@@ -132,6 +133,8 @@ async def _dispatch_job(job: Job, db: Client, queue: JobQueue) -> None:
             )
         case JobType.ADMIN_DIGEST_EMAIL:
             logger.info("Admin digest email not yet implemented, skipping")
+        case JobType.REEMBED_REVIEWED_SHOPS:
+            await handle_reembed_reviewed_shops(db=db, queue=queue)
         case _:
             logger.warning("Unknown job type", job_type=job.job_type)
 
@@ -199,6 +202,12 @@ async def run_weekly_email() -> None:
     await queue.enqueue(job_type=JobType.WEEKLY_EMAIL, payload={})
 
 
+async def run_reembed_reviewed_shops() -> None:
+    db = get_service_role_client()
+    queue = JobQueue(db=db)
+    await handle_reembed_reviewed_shops(db=db, queue=queue)
+
+
 def create_scheduler() -> AsyncIOScheduler:
     scheduler = AsyncIOScheduler(timezone="Asia/Taipei")
 
@@ -220,6 +229,13 @@ def create_scheduler() -> AsyncIOScheduler:
         "cron",
         hour=4,
         id="delete_expired_accounts",
+    )
+    scheduler.add_job(
+        run_reembed_reviewed_shops,
+        "cron",
+        hour=3,
+        minute=30,  # offset from staleness_sweep at 03:00
+        id="reembed_reviewed_shops",
     )
 
     for job_type in JobType:

@@ -16,3 +16,9 @@ class TestScheduler:
         job_ids = {job.id for job in scheduler.get_jobs()}
         for job_type in JobType:
             assert f"process_{job_type.value}" in job_ids
+
+    def test_reembed_reviewed_shops_cron_is_registered(self):
+        """The nightly review re-embedding cron job is registered at 03:30."""
+        scheduler = create_scheduler()
+        job = scheduler.get_job("reembed_reviewed_shops")
+        assert job is not None

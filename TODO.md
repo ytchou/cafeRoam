@@ -1327,7 +1327,7 @@ _Designed in Pencil. Stamps, check-in history, account settings._
 
 - [x] Enhance `generate_embedding` handler with community text fetch
 - [x] Nightly cron handler: `handle_reembed_reviewed_shops`
-- [ ] Wire cron job + dispatcher in scheduler
+- [x] Wire cron job + dispatcher in scheduler
 
 **Chunk 3 — Rollout & Verification (Wave 4-5):**
 
