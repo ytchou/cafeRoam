@@ -106,6 +106,15 @@ check "backend/.env exists" \
 check_env_var_localhost "${PROJECT_ROOT}/backend/.env" "SUPABASE_URL" \
   "backend/.env SUPABASE_URL points to localhost"
 
+check "ANON_SALT is set" \
+  "grep -q '^ANON_SALT=.' '${PROJECT_ROOT}/backend/.env'" \
+  "Add ANON_SALT=<random-secret> to backend/.env"
+
+# Production safety warning — does not count as a failure
+if grep -q '^ANON_SALT=caferoam-dev-salt$' "${PROJECT_ROOT}/backend/.env" 2>/dev/null; then
+  printf "${YELLOW}[WARN]${NC} ANON_SALT is set to the default dev value — change before deploying to production\n"
+fi
+
 printf "\n"
 
 # ─── Dependencies ─────────────────────────────────────────────────────────────

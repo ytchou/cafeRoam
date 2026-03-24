@@ -1284,8 +1284,8 @@ _Designed in Pencil. Stamps, check-in history, account settings._
 - [x] Wire observability into search endpoint (fire-and-forget Postgres + PostHog)
 
 **Chunk 3 — Config & Docs (Wave 3):**
-- [ ] Add `ANON_SALT` to env config and doctor check
-- [ ] Final verification + commit design doc and ADRs
+- [x] Add `ANON_SALT` to env config and doctor check
+- [x] Final verification + commit design doc and ADRs
 
 ### Beta Program
 
