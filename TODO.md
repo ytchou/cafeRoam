@@ -1368,11 +1368,11 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 - [x] CheckInService: accept `is_public` param (Task 4)
 
 **Chunk 2 — API + Auth Gate (Wave 3):**
-- [ ] Auth-gate community feed/preview endpoints (Task 3)
-- [ ] Add MRT and vibe_tag filter query params (Task 3)
+- [x] Auth-gate community feed/preview endpoints (Task 3)
+- [x] Add MRT and vibe_tag filter query params (Task 3)
 
 **Chunk 3 — Frontend (Wave 3-5):**
-- [ ] Check-in form: "Share publicly" toggle (Task 5)
+- [x] Check-in form: "Share publicly" toggle (Task 5)
 - [ ] Feed hook: auth fetcher + filter params (Task 6)
 - [ ] Feed page: filter bar UI (Task 7)
 - [ ] Explore preview: auth update (Task 8)

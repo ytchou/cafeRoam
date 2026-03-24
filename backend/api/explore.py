@@ -54,8 +54,11 @@ def vibe_shops(
 
 
 @router.get("/community/preview")
-def community_preview() -> list[dict[str, object]]:
-    db = get_anon_client()
+def community_preview(
+    user: dict[str, Any] = Depends(get_current_user),  # noqa: B008
+    db: Client = Depends(get_user_db),  # noqa: B008
+) -> list[dict[str, object]]:
+    """Community preview — auth required."""
     service = CommunityService(db)
     cards = service.get_preview(limit=3)
     return [c.model_dump(by_alias=True) for c in cards]
@@ -65,11 +68,14 @@ def community_preview() -> list[dict[str, object]]:
 def community_feed(
     cursor: str | None = Query(default=None),
     limit: int = Query(default=10, ge=1, le=50),
+    mrt: str | None = Query(default=None),
+    vibe_tag: str | None = Query(default=None),
+    user: dict[str, Any] = Depends(get_current_user),  # noqa: B008
+    db: Client = Depends(get_user_db),  # noqa: B008
 ) -> dict[str, object]:
-    """Paginated feed of partner reviews. Public — no auth required."""
-    db = get_anon_client()
+    """Paginated community feed — auth required."""
     service = CommunityService(db)
-    result = service.get_feed(cursor=cursor, limit=limit)
+    result = service.get_feed(cursor=cursor, limit=limit, mrt=mrt, vibe_tag=vibe_tag)
     return result.model_dump(by_alias=True)
 
 
