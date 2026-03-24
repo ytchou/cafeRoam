@@ -80,7 +80,8 @@ CafeRoam is a mobile-first web directory for Taiwan's independent coffee shop sc
 These will NOT be built in V1. Any scope change requires an explicit decision and a PRD_CHANGELOG.md entry.
 
 - Native iOS/Android app (web-first is the distribution strategy)
-- Public user profiles / social feed (check-in feed is private in V1, social layer is V2)
+- Public user profiles (profile page is private in V1)
+- ~~Public social feed~~ — **Moved to in-scope (2026-03-24):** Community feed of public check-ins, auth-gated, with district and vibe tag filters. See [design doc](docs/designs/2026-03-24-community-feed-design.md).
 - Shareable curated lists (lists are private in V1)
 - Shop owner claiming / premium pages
 - Personalized weekly email (needs usage data first)
