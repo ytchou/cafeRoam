@@ -12,3 +12,9 @@ CREATE TABLE shop_menu_items (
 );
 
 CREATE INDEX idx_shop_menu_items_shop_id ON shop_menu_items(shop_id);
+
+ALTER TABLE shop_menu_items ENABLE ROW LEVEL SECURITY;
+
+-- Menu items are derived from public shop data — public read, service-role-only writes
+CREATE POLICY "shop_menu_items_public_read" ON shop_menu_items
+    FOR SELECT USING (true);
