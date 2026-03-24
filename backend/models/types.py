@@ -388,6 +388,7 @@ class JobType(StrEnum):
     ENRICH_SHOP = "enrich_shop"
     ENRICH_MENU_PHOTO = "enrich_menu_photo"
     GENERATE_EMBEDDING = "generate_embedding"
+    REEMBED_REVIEWED_SHOPS = "reembed_reviewed_shops"
     STALENESS_SWEEP = "staleness_sweep"
     WEEKLY_EMAIL = "weekly_email"
     SCRAPE_SHOP = "scrape_shop"
