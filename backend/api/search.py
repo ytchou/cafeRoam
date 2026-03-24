@@ -1,14 +1,68 @@
+import asyncio
 from typing import Any
 
+import structlog
 from fastapi import APIRouter, Depends, Query
 from supabase import Client
 
-from api.deps import get_current_user, get_user_db
+from api.deps import get_admin_db, get_current_user, get_user_db
+from core.anonymize import anonymize_user_id
+from core.config import settings
 from models.types import SearchQuery
+from providers.analytics import get_analytics_provider
 from providers.embeddings import get_embeddings_provider
+from services.query_classifier import classify
 from services.search_service import SearchService
 
+logger = structlog.get_logger()
 router = APIRouter(tags=["search"])
+
+
+async def _log_search_event(
+    admin_db: Client,
+    user_id_anon: str,
+    query_text: str,
+    query_type: str,
+    mode_filter: str | None,
+    result_count: int,
+) -> None:
+    """Fire-and-forget: insert a row into search_events. Errors are logged, never raised."""
+    try:
+        admin_db.table("search_events").insert(
+            {
+                "user_id_anon": user_id_anon,
+                "query_text": query_text,
+                "query_type": query_type,
+                "mode_filter": mode_filter,
+                "result_count": result_count,
+            }
+        ).execute()
+    except Exception:
+        logger.warning("search_event insert failed", query_text=query_text, exc_info=True)
+
+
+async def _track_search_analytics(
+    user_id_anon: str,
+    query_text: str,
+    query_type: str,
+    mode_filter: str | None,
+    result_count: int,
+) -> None:
+    """Fire-and-forget: send search_submitted event to PostHog."""
+    try:
+        analytics = get_analytics_provider()
+        analytics.track(
+            "search_submitted",
+            {
+                "query_text": query_text,
+                "query_type": query_type,
+                "mode_chip_active": mode_filter or "none",
+                "result_count": result_count,
+            },
+            distinct_id=user_id_anon,
+        )
+    except Exception:
+        logger.warning("search_submitted analytics failed", query_text=query_text, exc_info=True)
 
 
 @router.get("/search")
@@ -24,4 +78,18 @@ async def search(
     service = SearchService(db=db, embeddings=embeddings)
     query = SearchQuery(text=text, limit=limit)
     results = await service.search(query, mode=mode)
+
+    # Fire-and-forget observability
+    query_type = classify(text)
+    user_id_anon = anonymize_user_id(user["id"], salt=settings.anon_salt)
+    admin_db = get_admin_db()
+    result_count = len(results)
+
+    asyncio.create_task(
+        _log_search_event(admin_db, user_id_anon, text, query_type, mode, result_count)
+    )
+    asyncio.create_task(
+        _track_search_analytics(user_id_anon, text, query_type, mode, result_count)
+    )
+
     return [r.model_dump(by_alias=True) for r in results]

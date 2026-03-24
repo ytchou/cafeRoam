@@ -1281,7 +1281,7 @@ _Designed in Pencil. Stamps, check-in history, account settings._
 - [x] Anonymize utility (`anonymize_user_id`) + tests
 
 **Chunk 2 — Integration (Wave 2):**
-- [ ] Wire observability into search endpoint (fire-and-forget Postgres + PostHog)
+- [x] Wire observability into search endpoint (fire-and-forget Postgres + PostHog)
 
 **Chunk 3 — Config & Docs (Wave 3):**
 - [ ] Add `ANON_SALT` to env config and doctor check
