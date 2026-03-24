@@ -20,7 +20,8 @@ CREATE POLICY "check_ins_public_read" ON check_ins
 CREATE POLICY "profiles_public_read" ON profiles
   FOR SELECT USING (auth.uid() IS NOT NULL);
 
--- RLS: allow reading user_roles for badge display (currently no RLS policy exists)
+-- RLS: allow authenticated users to read user_roles for badge display
+-- (user_roles had RLS enabled in the 20260318 migration but no SELECT policy existed)
 ALTER TABLE user_roles ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "user_roles_public_read" ON user_roles
-  FOR SELECT USING (true);
+  FOR SELECT USING (auth.uid() IS NOT NULL);

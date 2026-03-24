@@ -12,7 +12,7 @@ export interface CommunityNoteCard {
   coverPhotoUrl: string | null;
   shopName: string;
   shopSlug: string;
-  shopDistrict: string | null;
+  shopLocation: string | null;
   likeCount: number;
   createdAt: string;
 }

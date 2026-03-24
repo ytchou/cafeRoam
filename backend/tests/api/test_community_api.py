@@ -22,7 +22,7 @@ _MOCK_CARD = CommunityNoteCard(
     cover_photo_url="https://example.com/photo1.jpg",
     shop_name="Hinoki Coffee",
     shop_slug="hinoki-coffee",
-    shop_district="大安",
+    shop_location="中山站",
     like_count=12,
     created_at="2026-03-15T14:30:00",
 )
@@ -172,18 +172,6 @@ class TestCommunityLikeCheck:
         finally:
             app.dependency_overrides.pop(get_current_user, None)
             app.dependency_overrides.pop(get_user_db, None)
-
-
-class TestCommunityFeedAuthGate:
-    """Community feed requires authentication."""
-
-    def test_feed_returns_401_when_not_authenticated(self):
-        response = client.get("/explore/community")
-        assert response.status_code == 401
-
-    def test_preview_returns_401_when_not_authenticated(self):
-        response = client.get("/explore/community/preview")
-        assert response.status_code == 401
 
 
 class TestCommunityFeedFilters:

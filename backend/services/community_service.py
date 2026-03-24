@@ -74,9 +74,22 @@ class CommunityService:
         if cursor:
             query = query.lt("created_at", cursor)
         if mrt:
-            query = query.eq("shops.mrt", mrt)
+            shop_resp = self._db.table("shops").select("id").eq("mrt", mrt).execute()
+            shop_ids = [row["id"] for row in (shop_resp.data or [])]
+            if not shop_ids:
+                return CommunityFeedResponse(notes=[], next_cursor=None)
+            query = query.in_("shop_id", shop_ids)
         if vibe_tag:
-            query = query.contains("shops.shop_tags.tag_id", [vibe_tag])
+            tag_resp = (
+                self._db.table("shop_tags")
+                .select("shop_id")
+                .eq("tag_id", vibe_tag)
+                .execute()
+            )
+            tag_shop_ids = [row["shop_id"] for row in (tag_resp.data or [])]
+            if not tag_shop_ids:
+                return CommunityFeedResponse(notes=[], next_cursor=None)
+            query = query.in_("shop_id", tag_shop_ids)
 
         response = query.execute()
         rows = cast("list[dict[str, Any]]", response.data or [])
@@ -94,6 +107,17 @@ class CommunityService:
         )
 
     def toggle_like(self, checkin_id: str, user_id: str) -> int:
+        ci = (
+            self._db.table("check_ins")
+            .select("id")
+            .eq("id", checkin_id)
+            .eq("is_public", True)
+            .maybe_single()
+            .execute()
+        )
+        if ci is None or ci.data is None:
+            raise ValueError(f"Check-in {checkin_id!r} not found or not public")
+
         existing = (
             self._db.table("community_note_likes")
             .select("id")
@@ -134,7 +158,7 @@ class CommunityService:
     def _row_to_card(self, row: dict[str, Any]) -> CommunityNoteCard:
         profile: dict[str, Any] = row.get("profiles") or {}
         shop: dict[str, Any] = row.get("shops") or {}
-        user_roles_data = row.get("user_roles") or [{}]
+        user_roles_data = row.get("user_roles") or []
 
         display_name: str = profile.get("display_name") or "Anonymous"
         avatar_url: str | None = profile.get("avatar_url")
@@ -144,8 +168,8 @@ class CommunityService:
         shop_mrt: str | None = shop.get("mrt")
 
         roles_list = user_roles_data if isinstance(user_roles_data, list) else []
-        first_role = next((r for r in roles_list if isinstance(r, dict)), None)
-        role = first_role.get("role", "blogger") if first_role else row.get("role", "blogger")
+        first_role = next((r for r in roles_list if isinstance(r, dict) and r.get("role")), None)
+        role: str | None = first_role.get("role") if first_role else None
 
         photo_urls = row.get("photo_urls") or []
         cover = photo_urls[0] if photo_urls else None
@@ -157,14 +181,14 @@ class CommunityService:
             author=CommunityNoteAuthor(
                 display_name=display_name,
                 avatar_url=avatar_url,
-                role_label=_ROLE_LABELS.get(role, "Contributor"),
+                role_label=_ROLE_LABELS.get(role or "", "Contributor"),
             ),
             review_text=row["review_text"],
             star_rating=row.get("stars"),
             cover_photo_url=cover,
             shop_name=shop_name,
             shop_slug=shop_slug,
-            shop_district=shop_mrt,  # mrt used as location identifier
+            shop_location=shop_mrt,
             like_count=_extract_count(row.get("community_note_likes")),
             created_at=row["created_at"],
         )

@@ -315,7 +315,7 @@ class CommunityNoteCard(CamelModel):
     cover_photo_url: str | None = None
     shop_name: str
     shop_slug: str
-    shop_district: str | None = None
+    shop_location: str | None = None
     like_count: int = 0
     created_at: datetime
 

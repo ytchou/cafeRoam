@@ -208,7 +208,6 @@ class TestCommunityServiceIsPublicFiltering:
     def test_feed_excludes_private_checkins(self):
         """Given a mix of public and private check-ins, the feed returns only public ones."""
         public_row = make_community_note_row(checkin_id="ci-public", is_public=True)
-        # Private rows are filtered at DB level, so mock only returns public
         db = _make_db_mock(note_rows=[public_row])
         service = CommunityService(db)
 
@@ -216,6 +215,7 @@ class TestCommunityServiceIsPublicFiltering:
 
         assert len(result.notes) == 1
         assert result.notes[0].checkin_id == "ci-public"
+        db.eq.assert_any_call("is_public", True)
 
     def test_preview_excludes_private_checkins(self):
         """The explore page preview only surfaces public check-ins."""
@@ -227,6 +227,7 @@ class TestCommunityServiceIsPublicFiltering:
 
         assert len(result) == 1
         assert result[0].checkin_id == "ci-public"
+        db.eq.assert_any_call("is_public", True)
 
 
 class TestCommunityServiceFeedFilters:

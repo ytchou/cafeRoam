@@ -87,7 +87,10 @@ def community_like_toggle(
 ) -> dict[str, int]:
     """Toggle like on a community note. Auth required."""
     service = CommunityService(db)
-    count = service.toggle_like(checkin_id, user["id"])
+    try:
+        count = service.toggle_like(checkin_id, user["id"])
+    except ValueError:
+        raise HTTPException(status_code=404, detail="Not found")
     return {"likeCount": count}
 
 
