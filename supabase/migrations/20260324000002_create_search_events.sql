@@ -11,6 +11,9 @@ CREATE TABLE IF NOT EXISTS search_events (
 
 COMMENT ON TABLE search_events IS 'Search query log for observability. user_id_anon is a one-way hash — no PII.';
 
+-- Deny all REST API access; service role bypasses RLS and retains full read/write access.
+ALTER TABLE search_events ENABLE ROW LEVEL SECURITY;
+
 CREATE INDEX idx_search_events_created_at ON search_events (created_at);
 CREATE INDEX idx_search_events_zero_results ON search_events (result_count) WHERE result_count = 0;
 CREATE INDEX idx_search_events_query_type ON search_events (query_type);
