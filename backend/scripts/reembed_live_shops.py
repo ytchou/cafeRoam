@@ -54,7 +54,8 @@ async def main(dry_run: bool, queue: JobQueue | None = None) -> None:
     to_enqueue = [r for r in rows if r["id"] not in already_queued]
 
     if len(to_enqueue) < len(rows):
-        print(f"Skipped {len(rows) - len(to_enqueue)} shop(s) — GENERATE_EMBEDDING job already pending.")
+        skipped = len(rows) - len(to_enqueue)
+        print(f"Skipped {skipped} shop(s) — GENERATE_EMBEDDING job already pending.")
 
     if not to_enqueue:
         print("All shops already have pending jobs. Nothing to enqueue.")
