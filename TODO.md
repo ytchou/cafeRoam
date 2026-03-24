@@ -1437,9 +1437,9 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 - [x] Next.js proxy route for POST /analytics/events (Task 4)
 
 **Chunk 2 — Backend Endpoint + Search Migration (Wave 2):**
-- [ ] POST /analytics/events endpoint with enrichment (Task 2)
-- [ ] Remove inline PostHog from GET /search, add query metadata to response (Task 3)
-- [ ] Rewrite useAnalytics hook to POST to backend gateway (Task 5)
+- [x] POST /analytics/events endpoint with enrichment (Task 2)
+- [x] Remove inline PostHog from GET /search, add query metadata to response (Task 3)
+- [x] Rewrite useAnalytics hook to POST to backend gateway (Task 5)
 
 **Chunk 3 — Frontend Wiring (Wave 3-4):**
 - [ ] Update all frontend event call sites (Task 6)
