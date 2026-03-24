@@ -27,7 +27,7 @@ class TestSearchAPI:
         mock_db.rpc = MagicMock(
             return_value=MagicMock(execute=MagicMock(return_value=MagicMock(data=[])))
         )
-        app.dependency_overrides[get_current_user] = lambda: {"id": "user-1"}
+        app.dependency_overrides[get_current_user] = lambda: {"id": "usr_a1b2c3d4e5f6"}
         app.dependency_overrides[get_user_db] = lambda: mock_db
         app.dependency_overrides[get_admin_db] = lambda: _mock_admin_db()
         try:
@@ -88,7 +88,7 @@ class TestSearchAPI:
         mock_db.rpc = MagicMock(
             return_value=MagicMock(execute=MagicMock(return_value=MagicMock(data=[])))
         )
-        app.dependency_overrides[get_current_user] = lambda: {"id": "user-meta"}
+        app.dependency_overrides[get_current_user] = lambda: {"id": "usr_b2c3d4e5f6a1"}
         app.dependency_overrides[get_user_db] = lambda: mock_db
         app.dependency_overrides[get_admin_db] = lambda: _mock_admin_db()
         try:
@@ -116,7 +116,7 @@ class TestSearchAPI:
             return_value=MagicMock(execute=MagicMock(return_value=MagicMock(data=[])))
         )
         mock_analytics = MagicMock()
-        app.dependency_overrides[get_current_user] = lambda: {"id": "user-no-ph"}
+        app.dependency_overrides[get_current_user] = lambda: {"id": "usr_c3d4e5f6a1b2"}
         app.dependency_overrides[get_user_db] = lambda: mock_db
         app.dependency_overrides[get_admin_db] = lambda: _mock_admin_db()
         app.dependency_overrides[get_analytics_provider] = lambda: mock_analytics

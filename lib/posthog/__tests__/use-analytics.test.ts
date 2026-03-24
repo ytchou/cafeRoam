@@ -17,7 +17,7 @@ describe('useAnalytics', () => {
     vi.unstubAllEnvs();
   });
 
-  it('POSTs event to /api/analytics/events when key is set', async () => {
+  it('tracks an event to the backend when analytics is configured', async () => {
     vi.stubEnv('NEXT_PUBLIC_POSTHOG_KEY', 'phc_test123');
     vi.resetModules();
     const { useAnalytics } = await import('../use-analytics');
@@ -39,29 +39,28 @@ describe('useAnalytics', () => {
     });
   });
 
-  it('no-ops when PostHog key is not set', async () => {
+  it('does not send events when analytics is not configured', async () => {
     vi.stubEnv('NEXT_PUBLIC_POSTHOG_KEY', '');
     vi.resetModules();
     const { useAnalytics } = await import('../use-analytics');
     const { result } = renderHook(() => useAnalytics());
 
     act(() => {
-      result.current.capture('test_event', { foo: 'bar' });
+      result.current.capture('filter_applied', { filter_type: 'vibe', filter_value: 'quiet' });
     });
 
     expect(mockFetchWithAuth).not.toHaveBeenCalled();
   });
 
-  it('does not throw on fetch failure', async () => {
+  it('a network failure does not break the calling component', async () => {
     vi.stubEnv('NEXT_PUBLIC_POSTHOG_KEY', 'phc_test123');
     vi.resetModules();
     mockFetchWithAuth.mockRejectedValue(new Error('Network error'));
     const { useAnalytics } = await import('../use-analytics');
     const { result } = renderHook(() => useAnalytics());
 
-    // Should not throw
     act(() => {
-      result.current.capture('test_event', { foo: 'bar' });
+      result.current.capture('filter_applied', { filter_type: 'vibe', filter_value: 'quiet' });
     });
   });
 });
