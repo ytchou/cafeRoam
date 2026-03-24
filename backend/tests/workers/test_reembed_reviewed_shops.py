@@ -9,11 +9,14 @@ class TestReembedReviewedShops:
         db = MagicMock()
         queue = AsyncMock()
 
+        shop_id_1 = "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+        shop_id_2 = "b2c3d4e5-f6a7-8901-bcde-f12345678901"
+
         # RPC returns shops needing re-embedding
         db.rpc.return_value.execute.return_value = MagicMock(
             data=[
-                {"id": "shop-001"},
-                {"id": "shop-002"},
+                {"id": shop_id_1},
+                {"id": shop_id_2},
             ]
         )
 
@@ -22,8 +25,8 @@ class TestReembedReviewedShops:
         queue.enqueue_batch.assert_called_once()
         payloads = queue.enqueue_batch.call_args.kwargs["payloads"]
         assert len(payloads) == 2
-        assert payloads[0] == {"shop_id": "shop-001"}
-        assert payloads[1] == {"shop_id": "shop-002"}
+        assert payloads[0] == {"shop_id": shop_id_1}
+        assert payloads[1] == {"shop_id": shop_id_2}
 
     async def test_skips_when_no_shops_need_reembedding(self):
         """When no shops have new check-in text, no jobs are enqueued."""
@@ -36,8 +39,8 @@ class TestReembedReviewedShops:
 
         queue.enqueue_batch.assert_not_called()
 
-    async def test_calls_rpc_with_correct_min_length(self):
-        """The RPC is called with the minimum text length filter (15 chars)."""
+    async def test_check_ins_under_minimum_length_do_not_trigger_reembed(self):
+        """Short check-in texts (under 15 chars) are excluded so noise does not cause unnecessary re-embeds."""
         db = MagicMock()
         queue = AsyncMock()
         db.rpc.return_value.execute.return_value = MagicMock(data=[])
