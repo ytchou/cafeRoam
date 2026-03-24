@@ -50,7 +50,11 @@ async def handle_generate_embedding(
     # Load community check-in texts (ranked by likes, text quality, recency)
     community_response = db.rpc(
         "get_ranked_checkin_texts",
-        {"p_shop_id": shop_id, "p_min_length": CHECKIN_MIN_TEXT_LENGTH, "p_limit": _MAX_COMMUNITY_TEXTS},
+        {
+            "p_shop_id": shop_id,
+            "p_min_length": CHECKIN_MIN_TEXT_LENGTH,
+            "p_limit": _MAX_COMMUNITY_TEXTS,
+        },
     ).execute()
     community_rows = cast("list[dict[str, Any]]", community_response.data or [])
     community_texts = [row["text"] for row in community_rows if row.get("text")]

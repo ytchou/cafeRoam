@@ -2,7 +2,6 @@ from unittest.mock import AsyncMock, MagicMock
 
 from scripts.reembed_reviewed_shops import main
 
-
 SHOP_ID_1 = "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
 SHOP_ID_2 = "b2c3d4e5-f6a7-8901-bcde-f12345678901"
 
@@ -27,9 +26,7 @@ class TestReembedReviewedShopsScript:
 
         await main(dry_run=False, db=db, queue=queue)
 
-        db.rpc.assert_called_once_with(
-            "find_shops_with_checkin_text", {"p_min_text_length": 15}
-        )
+        db.rpc.assert_called_once_with("find_shops_with_checkin_text", {"p_min_text_length": 15})
         queue.enqueue_batch.assert_called_once()
         payloads = queue.enqueue_batch.call_args.kwargs["payloads"]
         assert len(payloads) == 2

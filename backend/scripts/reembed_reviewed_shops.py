@@ -52,7 +52,8 @@ async def main(
         return
 
     # Deduplicate against pending or in-progress (claimed) jobs to prevent concurrent
-    # embedding runs for the same shop, which would race on the embedding + last_embedded_at columns.
+    # embedding runs for the same shop, which would race on the embedding
+    # + last_embedded_at columns.
     existing = (
         db.table("job_queue")
         .select("payload")
