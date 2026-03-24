@@ -18,10 +18,16 @@ class PostHogAnalyticsAdapter:
             on_error=_on_error,
         )
 
-    def track(self, event: str, properties: dict[str, str | int | bool] | None = None) -> None:
+    def track(
+        self,
+        event: str,
+        properties: dict[str, str | int | bool] | None = None,
+        *,
+        distinct_id: str | None = None,
+    ) -> None:
         try:
             self._client.capture(
-                distinct_id="server",
+                distinct_id=distinct_id or "server",
                 event=event,
                 properties=properties,
             )
