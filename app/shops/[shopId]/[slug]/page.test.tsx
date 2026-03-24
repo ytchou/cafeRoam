@@ -1,10 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 
-vi.mock('@/lib/posthog/use-analytics', () => ({
-  useAnalytics: () => ({ capture: vi.fn() }),
-}));
-
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn() }),
   useSearchParams: () => ({ get: () => null }),

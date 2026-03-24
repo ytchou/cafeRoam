@@ -7,9 +7,6 @@ vi.mock('@/components/shops/directions-sheet', () => ({
 }));
 
 // Hook boundaries
-vi.mock('@/lib/posthog/use-analytics', () => ({
-  useAnalytics: () => ({ capture: vi.fn() }),
-}));
 vi.mock('@/lib/hooks/use-user', () => ({
   useUser: () => ({ user: null, isLoading: false }),
 }));
