@@ -1320,8 +1320,8 @@ _Designed in Pencil. Stamps, check-in history, account settings._
 
 - [x] Migration: `shops.last_embedded_at` column
 - [x] Add `REEMBED_REVIEWED_SHOPS` job type
-- [ ] RPC: `get_ranked_checkin_texts` (ranked text selection)
-- [ ] RPC: `find_shops_needing_review_reembed` (nightly cron query)
+- [x] RPC: `get_ranked_checkin_texts` (ranked text selection)
+- [x] RPC: `find_shops_needing_review_reembed` (nightly cron query)
 
 **Chunk 2 — Handler & Cron (Wave 3-4):**
 
