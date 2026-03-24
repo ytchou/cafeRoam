@@ -17,6 +17,7 @@ loop gets to it the entire body runs synchronously in one shot.
 
 **Prevention:**
 When writing fire-and-forget background work in FastAPI:
+
 1. **Use `BackgroundTasks`** (FastAPI-native) for synchronous callables — FastAPI runs
    them after the response is sent, in the same thread (for sync functions).
 2. **Use `asyncio.to_thread(sync_fn, ...)`** inside an `async` task if you need the

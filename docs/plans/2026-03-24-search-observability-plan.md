@@ -15,6 +15,7 @@
 **Tech Stack:** FastAPI, Supabase (Postgres), PostHog (via existing `AnalyticsProvider`), structlog, hashlib (SHA-256 for anonymization)
 
 **Acceptance Criteria:**
+
 - [ ] A search query logs an event to the `search_events` Postgres table with anonymized user ID, query text, query type, mode filter, and result count
 - [ ] A search query fires a `search_submitted` PostHog event with the same properties including server-classified `query_type`
 - [ ] Zero-result searches are identifiable via `result_count = 0` in both channels
@@ -26,6 +27,7 @@
 ### Task 1: Database migration — `search_events` table
 
 **Files:**
+
 - Create: `supabase/migrations/20260324000001_create_search_events.sql`
 
 No test needed — this is a SQL DDL migration with no application logic.
@@ -70,6 +72,7 @@ git commit -m "feat(db): add search_events table for query observability (DEV-9)
 ### Task 2: Query type classifier — keyword heuristic
 
 **Files:**
+
 - Create: `backend/services/query_classifier.py`
 - Test: `backend/tests/services/test_query_classifier.py`
 
@@ -208,6 +211,7 @@ git commit -m "feat: add query_type keyword classifier with TDD (DEV-9)"
 ### Task 3: Update analytics provider to support `distinct_id`
 
 **Files:**
+
 - Modify: `backend/providers/analytics/interface.py:4-5`
 - Modify: `backend/providers/analytics/posthog_adapter.py:21-29`
 - Test: `backend/tests/providers/test_posthog_adapter.py` (create if not exists)
@@ -332,6 +336,7 @@ git commit -m "feat: add distinct_id param to AnalyticsProvider.track (DEV-9)"
 ### Task 4: Add `anon_salt` config and `anonymize_user_id` utility
 
 **Files:**
+
 - Modify: `backend/core/config.py:46` (add `anon_salt` setting)
 - Create: `backend/core/anonymize.py`
 - Test: `backend/tests/core/test_anonymize.py`
@@ -421,6 +426,7 @@ git commit -m "feat: add anonymize_user_id utility and anon_salt config (DEV-9)"
 ### Task 5: Wire search observability into the search endpoint
 
 **Files:**
+
 - Modify: `backend/api/search.py`
 - Modify: `backend/tests/api/test_search.py`
 
@@ -689,6 +695,7 @@ git commit -m "feat: wire search observability into search endpoint (DEV-9)"
 ### Task 6: Add `anon_salt` to environment config
 
 **Files:**
+
 - Modify: `backend/.env.example` (add `ANON_SALT`)
 - Modify: `scripts/doctor.sh` (add health check for `ANON_SALT` in production)
 
@@ -719,6 +726,7 @@ git commit -m "chore: add ANON_SALT to env example and doctor check (DEV-9)"
 ### Task 7: Final verification and design/ADR commit
 
 **Files:**
+
 - Commit: `docs/designs/2026-03-24-search-observability-design.md`
 - Commit: `docs/decisions/2026-03-24-search-observability-dual-storage.md`
 - Commit: `docs/decisions/2026-03-24-query-type-keyword-heuristic.md`
@@ -771,14 +779,17 @@ graph TD
 ```
 
 **Wave 1** (parallel — no dependencies):
+
 - Task 1: DB migration (`search_events` table)
 - Task 2: Query classifier (keyword heuristic + tests)
 - Task 3: Analytics provider `distinct_id` update + tests
 - Task 4: Anonymize utility + tests
 
 **Wave 2** (sequential — depends on all of Wave 1):
+
 - Task 5: Wire search observability into endpoint ← Tasks 1, 2, 3, 4
 
 **Wave 3** (parallel — depends on Wave 2):
+
 - Task 6: Environment config updates
 - Task 7: Final verification + design/ADR commit

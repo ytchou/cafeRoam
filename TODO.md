@@ -1029,6 +1029,7 @@ _Highlighted check-in reviews from partner/blogger users. Reuses existing check-
 - [x] Frontend: `/explore/community` feed page with TDD
 - [x] Frontend: Proxy routes (preview, feed, like)
 - [x] Analytics: `community_note_viewed`, `community_note_liked`, `community_feed_opened`
+
 ### UI Reconstruct — Find
 
 > **Design Doc:** [docs/designs/2026-03-18-find-ui-reconstruct-design.md](docs/designs/2026-03-18-find-ui-reconstruct-design.md)
@@ -1271,19 +1272,23 @@ _Designed in Pencil. Stamps, check-in history, account settings._
 - [ ] Review to make sure we have cover all analytics events needed
 
 ### Search Observability (DEV-9)
+
 > **Design Doc:** [docs/designs/2026-03-24-search-observability-design.md](docs/designs/2026-03-24-search-observability-design.md)
 > **Plan:** [docs/plans/2026-03-24-search-observability-plan.md](docs/plans/2026-03-24-search-observability-plan.md)
 
 **Chunk 1 — Foundation (Wave 1, parallel):**
+
 - [x] DB migration: `search_events` table
 - [x] Query type classifier (keyword heuristic + TDD)
 - [x] Analytics provider `distinct_id` support + tests
 - [x] Anonymize utility (`anonymize_user_id`) + tests
 
 **Chunk 2 — Integration (Wave 2):**
+
 - [x] Wire observability into search endpoint (fire-and-forget Postgres + PostHog)
 
 **Chunk 3 — Config & Docs (Wave 3):**
+
 - [x] Add `ANON_SALT` to env config and doctor check
 - [x] Final verification + commit design doc and ADRs
 
