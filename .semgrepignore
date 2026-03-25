@@ -1,0 +1,4 @@
+# JsonLd.tsx uses dangerouslySetInnerHTML for JSON-LD injection only.
+# XSS is mitigated by escaping </ → <\/ before injection.
+# This is the standard React pattern for JSON-LD structured data.
+components/seo/JsonLd.tsx
