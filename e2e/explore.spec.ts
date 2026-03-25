@@ -27,12 +27,40 @@ test.describe('@critical J35 — Explore: Vibe tag → filtered shop results', (
 
 // --- Phase 2 stubs ---
 
-test.describe('J34 — Explore: Tarot draw → 3 café cards revealed', () => {
-  test.fixme('with geolocation granted, the Daily Draw section shows 3 café cards after loading', async ({
+test.describe('@critical J34 — Explore: Tarot draw → 3 café cards revealed', () => {
+  test('with geolocation granted, the Daily Draw section shows 3 café cards after loading', async ({
     page,
     context,
   }) => {
     await grantGeolocation(context, TAIPEI_COORDS);
     await page.goto('/explore');
+    await page.waitForLoadState('networkidle');
+
+    // Wait for the Daily Draw section header
+    const dailyDrawHeader = page.getByText(/your daily draw/i);
+    await expect(dailyDrawHeader).toBeVisible({ timeout: 15_000 });
+
+    // Check for empty state — skip if no shops in radius
+    const emptyState = page.getByText(/enable location|expand radius|no caf/i);
+    if (await emptyState.isVisible({ timeout: 2_000 }).catch(() => false)) {
+      test.skip(true, 'No shops available in tarot draw radius');
+    }
+
+    // Wait for skeleton loaders to disappear (skeletons have animate-pulse)
+    await expect(page.locator('.animate-pulse').first()).toBeHidden({ timeout: 15_000 });
+
+    // Should have 3 tarot card buttons (140px height, with tarot-gold border)
+    const tarotCards = page.locator('button:has(span.uppercase)');
+    await expect(tarotCards).toHaveCount(3, { timeout: 10_000 });
+
+    // Tap the first card to open the reveal drawer
+    await tarotCards.first().click();
+
+    // Drawer should open with shop name (h2 heading inside the drawer)
+    const drawerHeading = page.getByRole('heading', { level: 2 });
+    await expect(drawerHeading).toBeVisible({ timeout: 5_000 });
+
+    // Verify drawer has a "Let's Go" link (navigates to shop detail)
+    await expect(page.getByText(/Let's Go/i)).toBeVisible();
   });
 });

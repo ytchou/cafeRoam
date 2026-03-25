@@ -97,6 +97,40 @@ test.describe('J29 — Mobile: mini card on pin tap', () => {
   test.fixme('on mobile viewport, tapping a map pin shows bottom mini card overlay', async () => {});
 });
 
-test.describe('J36 — Shop detail: tap Get Directions → DirectionsSheet opens', () => {
-  test.fixme('tapping the Directions button on a shop detail page opens the DirectionsSheet with route options', async () => {});
+test.describe('@critical J36 — Shop detail: tap Get Directions → DirectionsSheet opens', () => {
+  test('tapping the Directions button on a shop detail page opens the DirectionsSheet with route options', async ({
+    page,
+    context,
+  }) => {
+    await grantGeolocation(context, TAIPEI_COORDS);
+
+    // Fetch a seeded shop with coordinates
+    const response = await page.request.get('/api/shops?featured=true&limit=1');
+    const shops = await response.json();
+    const shop = shops[0];
+    test.skip(!shop, 'No seeded shops available');
+
+    // Navigate to the shop detail page
+    await page.goto(`/shops/${shop.id}/${shop.slug || ''}`);
+    await page.waitForLoadState('networkidle');
+
+    // "Get There" button should be visible (only renders if shop has lat/lng)
+    const getThereBtn = page.getByRole('button', { name: /get there/i });
+    test.skip(!(await getThereBtn.isVisible({ timeout: 5_000 }).catch(() => false)),
+      'Shop has no coordinates — Get There button not rendered');
+
+    // Tap "Get There"
+    await getThereBtn.click();
+
+    // DirectionsSheet should open with "Directions" heading
+    await expect(page.getByText('Directions')).toBeVisible({ timeout: 10_000 });
+
+    // At least one route info row should appear (Walking, Driving, or MRT station name)
+    const routeRow = page.getByText(/Walking|Driving|Station/i).first();
+    await expect(routeRow).toBeVisible({ timeout: 10_000 });
+
+    // Google Maps and Apple Maps deep links should be present
+    await expect(page.getByRole('link', { name: /Google Maps/i })).toBeVisible();
+    await expect(page.getByRole('link', { name: /Apple Maps/i })).toBeVisible();
+  });
 });

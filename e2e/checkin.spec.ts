@@ -74,6 +74,53 @@ test.describe('J30 — Check-in with optional menu photo + text note', () => {
   test.fixme('completing a check-in with menu photo and text note succeeds', async () => {});
 });
 
-test.describe('J39 — Check-in with review text → review visible on shop page', () => {
-  test.fixme('submitting a check-in with a text note shows the review in the shop detail reviews section', async () => {});
+test.describe('@critical J39 — Check-in with review text → review visible on shop page', () => {
+  test('submitting a check-in with a text note shows the review in the shop detail reviews section', async ({
+    authedPage: page,
+  }) => {
+    // Get a seeded shop
+    const response = await page.request.get('/api/shops?featured=true&limit=1');
+    const shops = await response.json();
+    const shop = shops[0];
+    test.skip(!shop, 'No seeded shops available');
+
+    // Navigate to check-in page
+    await page.goto(`/checkin/${shop.id}`);
+    await expect(page.getByText('Check In')).toBeVisible({ timeout: 10_000 });
+
+    // Upload a test photo (required for check-in)
+    const fileInput = page.locator('[data-testid="photo-input"]');
+    await fileInput.setInputFiles(TEST_PHOTO);
+    await expect(page.locator('img[src^="blob:"]')).toBeVisible({ timeout: 10_000 });
+
+    // Give a star rating (required before review text textarea appears)
+    const threeStarBtn = page.getByRole('button', { name: /3 stars/i });
+    await threeStarBtn.click();
+
+    // Fill in the review text with a distinctive string
+    const reviewText = `E2E test review ${Date.now()} — excellent espresso`;
+    const reviewTextarea = page.getByPlaceholder(/How was your visit/i);
+    await expect(reviewTextarea).toBeVisible({ timeout: 5_000 });
+    await reviewTextarea.fill(reviewText);
+
+    // Submit the check-in
+    const submitButton = page.getByRole('button', { name: /打卡|Check In/i });
+    await submitButton.click();
+
+    // Wait for navigation away from check-in page
+    await page.waitForURL((url) => !url.pathname.startsWith('/checkin'), {
+      timeout: 15_000,
+    });
+
+    // Navigate to the shop detail page
+    await page.goto(`/shops/${shop.id}/${shop.slug || ''}`);
+    await page.waitForLoadState('networkidle');
+
+    // Scroll to the reviews section — "打卡評價" heading
+    const reviewsHeading = page.getByRole('heading', { name: '打卡評價' });
+    await expect(reviewsHeading).toBeVisible({ timeout: 10_000 });
+
+    // Assert the review text we just submitted is visible on the page
+    await expect(page.getByText(reviewText)).toBeVisible({ timeout: 10_000 });
+  });
 });

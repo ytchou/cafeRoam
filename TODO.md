@@ -1477,6 +1477,28 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 
 ---
 
+### Phase-2 E2E Stubs (DEV-25)
+
+> **Design Doc:** [docs/designs/2026-03-25-phase2-e2e-stubs-design.md](docs/designs/2026-03-25-phase2-e2e-stubs-design.md)
+> **Plan:** [docs/plans/2026-03-25-phase2-e2e-stubs-plan.md](docs/plans/2026-03-25-phase2-e2e-stubs-plan.md)
+
+**Chunk 1 — Community Feed Tests (Wave 1–2):**
+- [x] J32: Like toggle increments count (`feed.spec.ts`)
+- [ ] J33: MRT filter scopes results (`feed.spec.ts`)
+
+**Chunk 2 — Discovery & Explore Tests (Wave 1):**
+- [x] J34: Tarot draw → 3 café cards revealed (`explore.spec.ts`)
+- [x] J36: Get Directions → DirectionsSheet opens (`discovery.spec.ts`)
+
+**Chunk 3 — Profile & Check-in Tests (Wave 1):**
+- [x] J38: Account deletion cancel during grace period (`profile.spec.ts`)
+- [x] J39: Check-in review text visible on shop page (`checkin.spec.ts`)
+
+**Chunk 4 — Final Verification:**
+- [ ] Run all 6 journeys + full suite regression check
+
+---
+
 ### LINE Integration (V2)
 
 > Requires LINE Login (built in V1 auth) as prerequisite — LINE user ID is captured at auth time.
