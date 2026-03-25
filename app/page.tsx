@@ -1,5 +1,6 @@
 'use client';
 import { useMemo, useState, Suspense, useCallback } from 'react';
+import { WebsiteJsonLd } from '@/components/seo/WebsiteJsonLd';
 import { useRouter } from 'next/navigation';
 import { useIsDesktop } from '@/lib/hooks/use-media-query';
 import { useShops } from '@/lib/hooks/use-shops';
@@ -125,8 +126,11 @@ function FindPageContent() {
 
 export default function FindPage() {
   return (
-    <Suspense>
-      <FindPageContent />
-    </Suspense>
+    <>
+      <WebsiteJsonLd />
+      <Suspense>
+        <FindPageContent />
+      </Suspense>
+    </>
   );
 }
