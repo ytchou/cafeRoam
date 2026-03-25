@@ -18,7 +18,9 @@
       "app/api/explore/tarot-draw/route.ts",
       "app/api/explore/vibes/route.ts",
       "app/api/explore/vibes/[slug]/shops/route.ts",
-      "app/api/maps/directions/route.ts"
+      "app/api/maps/directions/route.ts",
+      "app/api/analytics/events/route.ts",
+      "lib/posthog/use-analytics.ts"
     ],
     "critical_patterns": ["app/api/**/route.ts"],
     "critical_threshold": 80,
@@ -66,7 +68,9 @@
       "api/explore.py",
       "api/feed.py",
       "api/maps.py",
-      "api/profile.py"
+      "api/profile.py",
+      "api/analytics.py",
+      "models/analytics_events.py"
     ],
     "critical_patterns": [
       "services/*.py",
