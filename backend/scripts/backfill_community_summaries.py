@@ -25,13 +25,21 @@ async def main(dry_run: bool, queue: JobQueue | None = None) -> None:
     print("\n=== Backfill community summaries for live shops ===\n")
 
     db = get_service_role_client()
-    rows = db.table("shops").select("id, name").eq("processing_status", "live").execute().data
+    # Only fetch shops that haven't been summarized yet (re-run safe)
+    rows = (
+        db.table("shops")
+        .select("id, name")
+        .eq("processing_status", "live")
+        .is_("community_summary", "null")
+        .execute()
+        .data
+    )
 
     if not rows:
-        print("No live shops found. Nothing to do.")
+        print("No live shops without a community summary. Nothing to do.")
         return
 
-    print(f"Found {len(rows)} live shops.\n")
+    print(f"Found {len(rows)} live shops without a community summary.\n")
 
     if dry_run:
         for r in rows:
@@ -39,12 +47,12 @@ async def main(dry_run: bool, queue: JobQueue | None = None) -> None:
         print("\nDry-run — no jobs enqueued.")
         return
 
-    # Deduplicate: skip shops that already have a pending SUMMARIZE_REVIEWS job
+    # Deduplicate: skip shops that already have a pending or claimed SUMMARIZE_REVIEWS job
     existing = (
         db.table("job_queue")
         .select("payload")
         .eq("job_type", JobType.SUMMARIZE_REVIEWS.value)
-        .eq("status", JobStatus.PENDING.value)
+        .in_("status", [JobStatus.PENDING.value, JobStatus.CLAIMED.value])
         .execute()
         .data
         or []
@@ -54,7 +62,7 @@ async def main(dry_run: bool, queue: JobQueue | None = None) -> None:
 
     if len(to_enqueue) < len(rows):
         skipped = len(rows) - len(to_enqueue)
-        print(f"Skipped {skipped} shop(s) — SUMMARIZE_REVIEWS job already pending.")
+        print(f"Skipped {skipped} shop(s) — SUMMARIZE_REVIEWS job already in flight.")
 
     if not to_enqueue:
         print("All shops already have pending jobs. Nothing to enqueue.")

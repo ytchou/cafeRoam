@@ -4,13 +4,11 @@ from typing import Any, cast
 import structlog
 from supabase import Client
 
-from models.types import CHECKIN_MIN_TEXT_LENGTH, JobType
+from models.types import CHECKIN_MIN_TEXT_LENGTH, MAX_COMMUNITY_TEXTS, JobType
 from providers.llm.interface import LLMProvider
 from workers.queue import JobQueue
 
 logger = structlog.get_logger()
-
-_MAX_COMMUNITY_TEXTS = 20
 
 
 async def handle_summarize_reviews(
@@ -34,7 +32,7 @@ async def handle_summarize_reviews(
         {
             "p_shop_id": shop_id,
             "p_min_length": CHECKIN_MIN_TEXT_LENGTH,
-            "p_limit": _MAX_COMMUNITY_TEXTS,
+            "p_limit": MAX_COMMUNITY_TEXTS,
         },
     ).execute()
 
@@ -52,6 +50,15 @@ async def handle_summarize_reviews(
 
     # Generate community summary via Claude Haiku
     summary = await llm.summarize_reviews(texts)
+
+    if not summary:
+        logger.warning("LLM returned empty summary — skipping DB write", shop_id=shop_id)
+        await queue.enqueue(
+            job_type=JobType.GENERATE_EMBEDDING,
+            payload={"shop_id": shop_id},
+            priority=2,
+        )
+        return
 
     # Persist summary to DB
     db.table("shops").update(

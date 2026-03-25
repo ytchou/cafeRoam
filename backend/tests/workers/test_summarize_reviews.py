@@ -103,6 +103,30 @@ class TestSummarizeReviewsHandler:
         # No embedding enqueued on failure
         queue.enqueue.assert_not_called()
 
+    async def test_filters_out_empty_and_none_texts_before_calling_claude(self):
+        """When RPC returns rows with None or empty text values, only qualifying texts are passed to Claude."""
+        db = self._make_db(
+            checkin_texts=[
+                {"text": "有料咖啡，環境好"},
+                {"text": None},
+                {"text": ""},
+                {"text": "巴斯克蛋糕必點"},
+            ]
+        )
+        llm = AsyncMock()
+        llm.summarize_reviews = AsyncMock(return_value="顧客推薦咖啡和甜點。")
+        queue = AsyncMock()
+
+        await handle_summarize_reviews(
+            payload={"shop_id": "shop-a1b2c3"},
+            db=db,
+            llm=llm,
+            queue=queue,
+        )
+
+        # Only the two non-empty texts are passed to Claude
+        llm.summarize_reviews.assert_called_once_with(["有料咖啡，環境好", "巴斯克蛋糕必點"])
+
     async def test_rpc_called_with_correct_parameters(self):
         """The handler calls get_ranked_checkin_texts with the correct shop_id and min length."""
         db = self._make_db(checkin_texts=[])
