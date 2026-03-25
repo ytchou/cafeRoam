@@ -67,11 +67,83 @@ test.describe('@critical J11 — Check-in: no photo → validation error', () =>
 // --- Phase 2 stubs ---
 
 test.describe('J24 — Duplicate stamp at same shop (intended)', () => {
-  test.fixme('checking in at the same shop twice awards a second stamp', async () => {});
+  test('checking in at the same shop twice awards a second stamp', async ({
+    authedPage: page,
+  }) => {
+    const response = await page.request.get('/api/shops?featured=true&limit=1');
+    const shops = await response.json();
+    const shopId = shops[0]?.id;
+    test.skip(!shopId, 'No seeded shops available');
+
+    async function doCheckin() {
+      await page.goto(`/checkin/${shopId}`);
+      await expect(page.getByText('Check In')).toBeVisible({ timeout: 10_000 });
+      await page.locator('[data-testid="photo-input"]').setInputFiles(TEST_PHOTO);
+      await expect(page.locator('img[src^="blob:"]')).toBeVisible({ timeout: 10_000 });
+      await page.getByRole('button', { name: /打卡|Check In/i }).click();
+      await page.waitForURL((url) => !url.pathname.startsWith('/checkin'), { timeout: 15_000 });
+    }
+
+    // First check-in
+    await doCheckin();
+
+    // Check stamp count on profile after first check-in
+    await page.goto('/profile');
+    await page.waitForLoadState('networkidle');
+    const stamps = page.locator('[data-testid="memory-scroll"] [class*="polaroid"], [class*="stamp"]');
+    const firstCount = await stamps.count();
+
+    // Second check-in at the same shop (duplicate stamps are the intended mechanic)
+    await doCheckin();
+    await expect(page.locator('[data-sonner-toast]')).toBeVisible({ timeout: 5_000 });
+
+    // Stamp count should have increased by at least 1
+    await page.goto('/profile');
+    await page.waitForLoadState('networkidle');
+    await expect(async () => {
+      const secondCount = await stamps.count();
+      expect(secondCount).toBeGreaterThan(firstCount);
+    }).toPass({ timeout: 10_000 });
+  });
 });
 
 test.describe('J30 — Check-in with optional menu photo + text note', () => {
-  test.fixme('completing a check-in with menu photo and text note succeeds', async () => {});
+  test('completing a check-in with menu photo and text note succeeds', async ({
+    authedPage: page,
+  }) => {
+    const response = await page.request.get('/api/shops?featured=true&limit=1');
+    const shops = await response.json();
+    const shopId = shops[0]?.id;
+    test.skip(!shopId, 'No seeded shops available');
+
+    await page.goto(`/checkin/${shopId}`);
+    await expect(page.getByText('Check In')).toBeVisible({ timeout: 10_000 });
+
+    // Upload main photo (required)
+    await page.locator('[data-testid="photo-input"]').setInputFiles(TEST_PHOTO);
+    await expect(page.locator('img[src^="blob:"]')).toBeVisible({ timeout: 10_000 });
+
+    // Expand the optional menu photo section and upload
+    const menuPhotoToggle = page.getByText(/Menu photo.*optional/i);
+    await menuPhotoToggle.click();
+    // Second file input appears after expanding the menu photo section
+    const menuPhotoInput = page.locator('input[type="file"]').nth(1);
+    await menuPhotoInput.setInputFiles(TEST_PHOTO);
+
+    // Fill in the optional text note
+    const noteInput = page
+      .locator('#note')
+      .or(page.getByPlaceholder(/What did you have/i));
+    await expect(noteInput).toBeVisible({ timeout: 5_000 });
+    await noteInput.fill('Excellent flat white — silky microfoam and great ambiance');
+
+    // Submit the check-in
+    await page.getByRole('button', { name: /打卡|Check In/i }).click();
+
+    // Should navigate away and show success toast
+    await page.waitForURL((url) => !url.pathname.startsWith('/checkin'), { timeout: 15_000 });
+    await expect(page.locator('[data-sonner-toast]')).toBeVisible({ timeout: 5_000 });
+  });
 });
 
 test.describe('@critical J39 — Check-in with review text → review visible on shop page', () => {

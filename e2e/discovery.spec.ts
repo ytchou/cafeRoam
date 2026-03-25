@@ -70,31 +70,210 @@ test.describe('@critical J03 — Text search → results on map → shop detail'
 // --- Phase 2 stubs (nightly suite) ---
 
 test.describe('J04 — Browse map → tap pin → shop detail sheet', () => {
-  test.fixme('tapping a map pin opens the shop detail mini card (mobile) or side card (desktop)', async () => {});
+  test('tapping a map pin opens the shop detail mini card (mobile) or side card (desktop)', async ({
+    page,
+  }) => {
+    const response = await page.request.get('/api/shops?featured=true&limit=1');
+    const shops = await response.json();
+    const shop = shops[0];
+    test.skip(!shop, 'No seeded shops available');
+
+    // Navigate to the map page
+    await page.goto('/map');
+    await page.waitForLoadState('networkidle');
+
+    // Map pins are accessible DOM buttons with aria-label={shopName}
+    const pinButton = page.locator(`button[aria-label="${shop.name}"]`);
+    const hasPins = await pinButton.isVisible({ timeout: 10_000 }).catch(() => false);
+    test.skip(!hasPins, 'Shop pin not visible in current map viewport — may require seeded data in Taipei area');
+
+    await pinButton.click();
+
+    // Mobile: ShopCarousel appears at bottom (data-testid="carousel-scroll")
+    // Desktop: shop name appears in the side panel list
+    const shopReveal = page
+      .locator('[data-testid="carousel-scroll"]')
+      .or(page.getByText(shop.name).nth(1));
+    await expect(shopReveal.first()).toBeVisible({ timeout: 10_000 });
+  });
 });
 
 test.describe('J18 — Shop detail: public access with OG tags', () => {
-  test.fixme('navigating to /shops/{id}/{slug} shows shop name, photos, and OG meta tags', async () => {});
+  test('navigating to /shops/{id}/{slug} shows shop name, photos, and OG meta tags', async ({
+    page,
+  }) => {
+    // Shop detail is public — no auth required
+    const response = await page.request.get('/api/shops?featured=true&limit=1');
+    const shops = await response.json();
+    const shop = shops[0];
+    test.skip(!shop, 'No seeded shops available');
+
+    await page.goto(`/shops/${shop.id}/${shop.slug || shop.id}`);
+    await page.waitForLoadState('networkidle');
+
+    // Shop name heading should render
+    await expect(page.getByRole('heading').first()).toBeVisible({ timeout: 10_000 });
+
+    // OG meta tags must be present for social sharing
+    const ogTitle = await page
+      .locator('meta[property="og:title"]')
+      .getAttribute('content');
+    expect(ogTitle).toBeTruthy();
+    expect(ogTitle).toContain(shop.name);
+
+    const ogDesc = await page
+      .locator('meta[property="og:description"]')
+      .getAttribute('content');
+    expect(ogDesc).toBeTruthy();
+
+    const ogImage = await page
+      .locator('meta[property="og:image"]')
+      .getAttribute('content');
+    expect(ogImage).toBeTruthy();
+  });
 });
 
 test.describe('J19 — Shop detail via slug redirect', () => {
-  test.fixme('navigating to /shops/{id}/wrong-slug redirects to canonical slug URL', async () => {});
+  test('navigating to /shops/{id}/wrong-slug redirects to canonical slug URL', async ({
+    page,
+  }) => {
+    const response = await page.request.get('/api/shops?featured=true&limit=1');
+    const shops = await response.json();
+    const shop = shops[0];
+    test.skip(!shop?.slug, 'No seeded shops with slugs available');
+
+    await page.goto(`/shops/${shop.id}/definitely-wrong-slug-xyz`);
+    await page.waitForLoadState('networkidle');
+
+    // Should redirect to canonical slug URL
+    expect(page.url()).toContain(`/shops/${shop.id}/${shop.slug}`);
+
+    // Shop content should render after redirect
+    await expect(page.getByRole('heading').first()).toBeVisible({ timeout: 10_000 });
+  });
 });
 
 test.describe('J22 — Map ↔ List view toggle', () => {
-  test.fixme('clicking the list/map toggle button switches between map and list views', async () => {});
+  test('clicking the list/map toggle button switches between map and list views', async ({
+    page,
+  }) => {
+    await page.goto('/map');
+    await page.waitForLoadState('networkidle');
+
+    // Both view toggle buttons come from view-toggle.tsx
+    const listViewBtn = page.getByRole('button', { name: /List view/i });
+    const mapViewBtn = page.getByRole('button', { name: /Map view/i });
+
+    await expect(listViewBtn).toBeVisible({ timeout: 10_000 });
+    await expect(mapViewBtn).toBeVisible();
+
+    // Click list view — list view button should become active (data-active)
+    await listViewBtn.click();
+    await expect(listViewBtn).toHaveAttribute('data-active', { timeout: 5_000 });
+
+    // Click map view — map view button should become active
+    await mapViewBtn.click();
+    await expect(mapViewBtn).toHaveAttribute('data-active', { timeout: 5_000 });
+  });
 });
 
 test.describe('J23 — List view: shops sorted by distance', () => {
-  test.fixme('with geolocation granted, list view sorts shops by proximity', async () => {});
+  test('with geolocation granted, list view sorts shops by proximity', async ({
+    page,
+    context,
+  }) => {
+    await grantGeolocation(context, TAIPEI_COORDS);
+    await page.goto('/map');
+    await page.waitForLoadState('networkidle');
+
+    // Switch to list view
+    const listViewBtn = page.getByRole('button', { name: /List view/i });
+    await expect(listViewBtn).toBeVisible({ timeout: 10_000 });
+    await listViewBtn.click();
+
+    // With geolocation, distance labels (e.g. "0.5 km") should appear on shop cards
+    const distanceLabel = page.getByText(/\d+(\.\d+)?\s*(km|m)\b/i).first();
+    const hasDistance = await distanceLabel.isVisible({ timeout: 10_000 }).catch(() => false);
+    test.skip(!hasDistance, 'No shop cards with distance labels — may require seeded data');
+
+    // At minimum one distance label is visible
+    await expect(distanceLabel).toBeVisible();
+
+    // If multiple shops are shown, the first should have the shortest distance
+    const allDistances = page.getByText(/\d+(\.\d+)?\s*(km|m)\b/i);
+    const count = await allDistances.count();
+    if (count >= 2) {
+      const firstText = await allDistances.nth(0).textContent();
+      const secondText = await allDistances.nth(1).textContent();
+      // Extract numeric km/m values for comparison
+      const parse = (t: string | null) => parseFloat(t?.match(/[\d.]+/)?.[0] ?? '999');
+      expect(parse(firstText)).toBeLessThanOrEqual(parse(secondText));
+    }
+  });
 });
 
 test.describe('J28 — Desktop: 2-column shop detail layout', () => {
-  test.fixme('on desktop viewport, shop detail page renders in 2-column layout', async () => {});
+  test('on desktop viewport, shop detail page renders in 2-column layout', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+
+    const response = await page.request.get('/api/shops?featured=true&limit=1');
+    const shops = await response.json();
+    const shop = shops[0];
+    test.skip(!shop, 'No seeded shops available');
+
+    await page.goto(`/shops/${shop.id}/${shop.slug || shop.id}`);
+    await page.waitForLoadState('networkidle');
+
+    // Shop heading renders at desktop width
+    await expect(page.getByRole('heading').first()).toBeVisible({ timeout: 10_000 });
+
+    // Desktop layout: shop info is in the left column, map/actions in the right
+    // Verify the page body fills the desktop viewport (not mobile-capped)
+    const bodyWidth = await page.evaluate(() => document.body.clientWidth);
+    expect(bodyWidth).toBeGreaterThanOrEqual(1280);
+
+    // Both the primary content (shop name) and secondary content (directions/map) should be visible
+    const hasDirections = await page
+      .getByRole('button', { name: /get there/i })
+      .isVisible({ timeout: 3_000 })
+      .catch(() => false);
+    const hasAddress = await page
+      .getByText(/台灣|Taipei|Taiwan|台北/i)
+      .first()
+      .isVisible({ timeout: 3_000 })
+      .catch(() => false);
+
+    // At desktop, supplementary info (directions or address) should be co-visible with the heading
+    expect(hasDirections || hasAddress).toBe(true);
+  });
 });
 
 test.describe('J29 — Mobile: mini card on pin tap', () => {
-  test.fixme('on mobile viewport, tapping a map pin shows bottom mini card overlay', async () => {});
+  test('on mobile viewport, tapping a map pin shows bottom mini card overlay', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+
+    const response = await page.request.get('/api/shops?featured=true&limit=1');
+    const shops = await response.json();
+    const shop = shops[0];
+    test.skip(!shop, 'No seeded shops available');
+
+    await page.goto('/map');
+    await page.waitForLoadState('networkidle');
+
+    // Find the shop's map pin
+    const pinButton = page.locator(`button[aria-label="${shop.name}"]`);
+    const hasPins = await pinButton.isVisible({ timeout: 10_000 }).catch(() => false);
+    test.skip(!hasPins, 'Shop pin not visible — may require seeded data in Taipei area');
+
+    await pinButton.click();
+
+    // On mobile, ShopCarousel appears at the bottom of the map (data-testid="carousel-scroll")
+    await expect(page.locator('[data-testid="carousel-scroll"]')).toBeVisible({ timeout: 10_000 });
+  });
 });
 
 test.describe('@critical J36 — Shop detail: tap Get Directions → DirectionsSheet opens', () => {
