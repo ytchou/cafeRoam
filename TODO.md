@@ -1561,7 +1561,7 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 - [x] Integrate JSON-LD into shop detail page
 - [x] Integrate JSON-LD into homepage
 - [x] Explore + vibes page metadata
-- [ ] Verification & lint pass
+- [x] Verification & lint pass
 
 **Phase 2 — Content Flywheel (future ticket):**
 - [ ] Auto-generated landing pages per district/intent
