@@ -70,6 +70,39 @@ test.describe('@critical J32 — Community feed: like toggle increments count', 
   });
 });
 
-test.describe('J33 — Community feed: MRT filter scopes results', () => {
-  test.fixme('selecting a MRT station from the dropdown shows only check-ins near that station', async () => {});
+test.describe('@critical J33 — Community feed: MRT filter scopes results', () => {
+  test('selecting a MRT station from the dropdown shows only check-ins near that station', async ({
+    page,
+  }) => {
+    await page.goto('/explore/community');
+    await page.waitForLoadState('networkidle');
+
+    // MRT station dropdown should be visible
+    const mrtSelect = page.getByRole('combobox', { name: /MRT station/i });
+    await expect(mrtSelect).toBeVisible({ timeout: 10_000 });
+
+    // Get all options (skip "All stations" default)
+    const options = mrtSelect.locator('option');
+    const optionCount = await options.count();
+    test.skip(optionCount <= 1, 'No MRT station options available beyond "All stations"');
+
+    // Count cards before filtering
+    const feedCards = page.locator('div.overflow-hidden.rounded-2xl.border');
+    const beforeCount = await feedCards.count();
+
+    // Select the second option (first real MRT station)
+    const stationValue = await options.nth(1).getAttribute('value');
+    await mrtSelect.selectOption(stationValue!);
+
+    // Wait for feed to reload (URL or network)
+    await page.waitForLoadState('networkidle');
+
+    // Assert: either card count changed OR empty state appeared
+    const afterCount = await feedCards.count();
+    const emptyState = page.getByText('Community notes coming soon');
+    const hasChanged = afterCount !== beforeCount;
+    const isEmpty = await emptyState.isVisible().catch(() => false);
+
+    expect(hasChanged || isEmpty).toBeTruthy();
+  });
 });

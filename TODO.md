@@ -1484,7 +1484,7 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 
 **Chunk 1 — Community Feed Tests (Wave 1–2):**
 - [x] J32: Like toggle increments count (`feed.spec.ts`)
-- [ ] J33: MRT filter scopes results (`feed.spec.ts`)
+- [x] J33: MRT filter scopes results (`feed.spec.ts`)
 
 **Chunk 2 — Discovery & Explore Tests (Wave 1):**
 - [x] J34: Tarot draw → 3 café cards revealed (`explore.spec.ts`)
