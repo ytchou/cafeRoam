@@ -286,7 +286,7 @@ Core infrastructure everything else depends on. No user-facing product yet.
 **Chunk 2 — Pipeline Integration (Wave 3-4):**
 - [x] Persist layer: write `uploaded_at`, enqueue classification job
 - [x] Classification handler: thumbnail rewrite → Vision → update category + is_menu + cap enforcement
-- [ ] Scheduler: register `CLASSIFY_SHOP_PHOTOS` dispatch
+- [x] Scheduler: register `CLASSIFY_SHOP_PHOTOS` dispatch
 - [x] GET /feed API route (public community activity feed)
 - [x] Admin dashboard API (overview, dead-letter, retry, reject)
 

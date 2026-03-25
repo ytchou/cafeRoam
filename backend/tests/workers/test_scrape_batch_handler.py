@@ -4,6 +4,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
+from models.types import JobType
 from providers.scraper.interface import BatchScrapeInput, BatchScrapeResult, ScrapedPhotoData, ScrapedShopData
 from workers.handlers.scrape_batch import handle_scrape_batch
 
@@ -90,10 +91,9 @@ async def test_all_shops_scraped_successfully_enqueues_enrichment(
     # All shops initially set to "scraping" in a single batch UPDATE
     mock_db.table.return_value.update.return_value.in_.assert_called()
 
-    # ENRICH_SHOP enqueued for each shop
-    assert mock_queue.enqueue.call_count == 2
-    enqueued_types = [c.kwargs["job_type"].value for c in mock_queue.enqueue.call_args_list]
-    assert enqueued_types == ["enrich_shop", "enrich_shop"]
+    # ENRICH_SHOP enqueued for each shop (CLASSIFY_SHOP_PHOTOS may also fire for shops with photos)
+    enrich_calls = [c for c in mock_queue.enqueue.call_args_list if c.kwargs.get("job_type") == JobType.ENRICH_SHOP]
+    assert len(enrich_calls) == 2
 
     # Scraper was called once (one Apify actor run)
     mock_scraper.scrape_batch.assert_called_once()

@@ -18,6 +18,7 @@ from workers.handlers.enrich_menu_photo import handle_enrich_menu_photo
 from workers.handlers.enrich_shop import handle_enrich_shop
 from workers.handlers.generate_embedding import handle_generate_embedding
 from workers.handlers.publish_shop import handle_publish_shop
+from workers.handlers.classify_shop_photos import handle_classify_shop_photos
 from workers.handlers.reembed_reviewed_shops import handle_reembed_reviewed_shops
 from workers.handlers.scrape_batch import handle_scrape_batch
 from workers.handlers.scrape_shop import handle_scrape_shop
@@ -135,6 +136,14 @@ async def _dispatch_job(job: Job, db: Client, queue: JobQueue) -> None:
             logger.info("Admin digest email not yet implemented, skipping")
         case JobType.REEMBED_REVIEWED_SHOPS:
             await handle_reembed_reviewed_shops(db=db, queue=queue)
+        case JobType.CLASSIFY_SHOP_PHOTOS:
+            llm = get_llm_provider()
+            await handle_classify_shop_photos(
+                payload=job.payload,
+                db=db,
+                llm=llm,
+                queue=queue,
+            )
         case _:
             logger.warning("Unknown job type", job_type=job.job_type)
 
