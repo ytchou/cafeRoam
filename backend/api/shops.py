@@ -24,12 +24,16 @@ def _extract_display_name(row: dict[str, Any]) -> str | None:
     return cast("str | None", profiles.get("display_name"))
 
 
-_SHOP_COLUMNS = (
+_SHOP_LIST_COLUMNS = (
     "id, name, slug, address, city, mrt, latitude, longitude, "
     "rating, review_count, description, processing_status, "
     "mode_work, mode_rest, mode_social, "
-    "phone, website, opening_hours, price_range, "
-    "created_at, updated_at"
+    "created_at"
+)
+
+_SHOP_DETAIL_COLUMNS = (
+    f"{_SHOP_LIST_COLUMNS}, "
+    "phone, website, opening_hours, price_range, updated_at"
 )
 
 
@@ -41,7 +45,7 @@ async def list_shops(
 ) -> list[Any]:
     """List shops. Public — no auth required."""
     db = get_anon_client()
-    query = db.table("shops").select(f"{_SHOP_COLUMNS}, shop_photos(url)")
+    query = db.table("shops").select(f"{_SHOP_LIST_COLUMNS}, shop_photos(url)")
     if city:
         query = query.eq("city", city)
     if featured:
@@ -65,7 +69,7 @@ async def get_shop(shop_id: str) -> Any:
     response = (
         db.table("shops")
         .select(
-            f"{_SHOP_COLUMNS}, shop_photos(url), "
+            f"{_SHOP_DETAIL_COLUMNS}, shop_photos(url), "
             "shop_tags(tag_id, taxonomy_tags(id, dimension, label, label_zh))"
         )
         .eq("id", shop_id)
