@@ -59,3 +59,44 @@
 | 20 | Debatable | "…succeeds" framing is functional but slightly signature-adjacent |
 
 **Skipped (false positives):** #16 (Playwright 1.58 handles `test.skip` in `if` blocks), #17 (pre-existing code, out of scope)
+
+## Fix Pass 1
+
+**Pre-fix SHA:** c88baf05e2afdda3de78d9e7ffa7283b445ea6b1
+**Fix SHA:** 4e0616f
+
+**Issues fixed:**
+- [Critical] feed.spec.ts:51-52 — Dead skip replaced with `isVisible()` check before `test.skip`
+- [Critical] search.spec.ts:102-108 — Vacuous `isActive || url.length > 0` replaced with `expect(isActive).toBe(true)`
+- [Critical] profile.spec.ts:82-133 — try/catch recovery guard added to J38 to always cancel deletion on failure
+- [Important] checkin.spec.ts:93 — Stamp locator CSS comma scope fixed via `.locator()` chaining; baseline count wait added
+- [Important] checkin.spec.ts (J39) — `shop.slug || ''` fixed to `shop.slug || shop.id`
+- [Important] discovery.spec.ts:94-97 — J04 `.or()` ambiguity resolved with explicit isVisible viewport branch
+- [Important] discovery.spec.ts:206-211 — Distance comparison normalised to metres (was mixing km/m numerically)
+- [Important] discovery.spec.ts:228-230 — J28 viewport guard added; skips when mobile config can't serve desktop layout
+- [Important] lists.spec.ts J27 — List ID fetched immediately after creation; try/finally cleanup on all exit paths
+- [Important] fixtures/auth.ts — storageState writes atomically (tmpPath + renameSync) preventing partial-read race
+- [Important] all spec files — `shops[0]` replaced with `first(shops)`; helpers.ts `first()` helper added
+- [Minor] explore.spec.ts:53 — `button:has(span.uppercase)` replaced with data-testid scoped locator
+- [Minor] feed.spec.ts:90 — Tailwind CSS chain replaced with semantic data-testid selector
+- [Minor] pwa.spec.ts:4 — Test name reframed from HTTP signature to user installability outcome
+- [Minor] lists.spec.ts — Placeholder English list names replaced with realistic Chinese strings
+
+**Issues skipped (false positives / no-code-change):**
+- #11 (first() helper): helpers.ts created; existing `[0]` usages updated
+- #13 (scope creep/TODO): Docs update only — tests are high quality and ship with the branch
+- #14 (toHaveAttribute check): Boolean attribute existence check is correct Playwright pattern
+- #16 (test.skip in if): Playwright 1.58 handles this correctly — confirmed incorrect finding
+- #17 (coffee search term): Pre-existing J03 code, not introduced by this branch
+
+**Batch Test Run:**
+- `pnpm test` — PASS (158 test files, 871 tests)
+
+## Final State
+
+**Iterations completed:** 1
+**All Critical/Important resolved:** Yes
+**Remaining issues:**
+- None blocking. Minor issues resolved in Fix Pass 1.
+
+**Review log:** docs/reviews/2026-03-25-feat-phase2-e2e-stubs.md
