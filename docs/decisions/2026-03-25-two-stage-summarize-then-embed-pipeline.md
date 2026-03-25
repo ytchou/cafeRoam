@@ -19,7 +19,8 @@ DEV-23 adds Claude Haiku summarization of check-in review texts before they're e
 ## Rationale
 
 Two separate jobs with graceful fallback gives the best failure isolation for this project's DB-as-queue pattern:
-- `community_summary` is persisted to DB *before* `GENERATE_EMBEDDING` is enqueued — durable across retries at no extra cost
+
+- `community_summary` is persisted to DB _before_ `GENERATE_EMBEDDING` is enqueued — durable across retries at no extra cost
 - If Claude fails, only the summarization job retries; the embedding job is never wasted
 - `handle_generate_embedding()` falls back to raw concatenation when `community_summary` is NULL — existing shops continue to re-embed unaffected during the backfill window
 - Clean handler boundaries match the existing pattern established in DEV-6/DEV-7

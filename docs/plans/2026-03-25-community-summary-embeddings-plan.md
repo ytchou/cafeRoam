@@ -15,6 +15,7 @@
 **Tech Stack:** Python (FastAPI workers), Claude Haiku (via Anthropic SDK), Supabase (Postgres), pytest
 
 **Acceptance Criteria:**
+
 - [ ] A shop with check-in reviews gets a Claude-generated community summary stored in `shops.community_summary`
 - [ ] The nightly re-embed pipeline produces summaries before re-embedding, not raw concatenation
 - [ ] A shop whose summary fails to generate still gets re-embedded using the existing raw concatenation fallback
@@ -26,6 +27,7 @@
 ### Task 1: DB Migration — Add community_summary columns and update job_type CHECK
 
 **Files:**
+
 - Create: `supabase/migrations/20260325000007_add_community_summary_and_summarize_reviews_job.sql`
 
 **Step 1: Write migration**
@@ -66,6 +68,7 @@ git commit -m "chore(DEV-23): add community_summary columns and summarize_review
 ### Task 2: Add SUMMARIZE_REVIEWS to Python JobType enum
 
 **Files:**
+
 - Modify: `backend/models/types.py` (JobType enum, around line 404)
 
 **Step 1: Add enum value**
@@ -90,6 +93,7 @@ git commit -m "chore(DEV-23): add SUMMARIZE_REVIEWS to JobType enum"
 ### Task 3: Add `summarize_reviews()` to LLM provider protocol and Anthropic adapter
 
 **Files:**
+
 - Modify: `backend/providers/llm/interface.py:12-20`
 - Modify: `backend/providers/llm/anthropic_adapter.py`
 - Test: `backend/tests/providers/test_llm_provider.py`
@@ -219,6 +223,7 @@ git commit -m "feat(DEV-23): add summarize_reviews to LLM provider protocol and 
 ### Task 4: Write `handle_summarize_reviews` worker handler
 
 **Files:**
+
 - Create: `backend/workers/handlers/summarize_reviews.py`
 - Create: `backend/tests/workers/test_summarize_reviews.py`
 
@@ -460,6 +465,7 @@ git commit -m "feat(DEV-23): add handle_summarize_reviews worker handler with TD
 ### Task 5: Update `handle_generate_embedding` to prefer `community_summary`
 
 **Files:**
+
 - Modify: `backend/workers/handlers/generate_embedding.py:57-70`
 - Modify: `backend/tests/workers/test_handlers.py` (TestGenerateEmbeddingHandler)
 
@@ -541,10 +547,13 @@ Expected: FAIL — current code doesn't read `community_summary` from shop data.
 In `backend/workers/handlers/generate_embedding.py`, update the shop select to include `community_summary`:
 
 Change line ~37:
+
 ```python
         .select("name, description, processing_status")
 ```
+
 to:
+
 ```python
         .select("name, description, processing_status, community_summary")
 ```
@@ -597,6 +606,7 @@ git commit -m "feat(DEV-23): generate_embedding prefers community_summary with r
 ### Task 6: Update `handle_reembed_reviewed_shops` to enqueue SUMMARIZE_REVIEWS
 
 **Files:**
+
 - Modify: `backend/workers/handlers/reembed_reviewed_shops.py:33-36`
 - Modify: `backend/tests/workers/test_reembed_reviewed_shops.py`
 
@@ -673,6 +683,7 @@ git commit -m "feat(DEV-23): reembed cron enqueues SUMMARIZE_REVIEWS instead of 
 ### Task 7: Update scheduler dispatch to handle SUMMARIZE_REVIEWS
 
 **Files:**
+
 - Modify: `backend/workers/scheduler.py` (imports + `_dispatch_job`)
 
 **Step 1: Add import and dispatch case**
@@ -715,6 +726,7 @@ git commit -m "feat(DEV-23): wire SUMMARIZE_REVIEWS dispatch in scheduler"
 ### Task 8: Write backfill script
 
 **Files:**
+
 - Create: `backend/scripts/backfill_community_summaries.py`
 - Create: `backend/tests/scripts/test_backfill_community_summaries.py`
 
@@ -994,20 +1006,24 @@ graph TD
 ```
 
 **Wave 1** (parallel — no dependencies):
+
 - Task 1: DB migration (community_summary columns + job_type constraint)
 - Task 2: Python JobType enum update
 - Task 3: LLM provider `summarize_reviews()` method
 
 **Wave 2** (parallel — depends on Wave 1):
+
 - Task 4: `handle_summarize_reviews` handler ← Tasks 1, 2, 3
 - Task 5: `handle_generate_embedding` community_summary preference ← Task 2
 - Task 6: `handle_reembed_reviewed_shops` enqueue change ← Task 2
 
 **Wave 3** (parallel — depends on Wave 2):
+
 - Task 7: Scheduler dispatch wiring ← Task 4
 - Task 8: Backfill script ← Task 2
 
 **Wave 4** (sequential — depends on all):
+
 - Task 9: Full test suite + coverage verification ← Tasks 5, 6, 7, 8
 
 ---

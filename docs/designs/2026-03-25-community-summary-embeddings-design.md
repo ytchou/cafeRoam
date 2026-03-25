@@ -116,6 +116,7 @@ Estimated cost: ~$0.49 (164 shops × $0.003).
 ### Two Separate Job Types (not inline summarization)
 
 `SUMMARIZE_REVIEWS` and `GENERATE_EMBEDDING` are independent jobs. This means:
+
 - Each is retriable independently (Claude failure doesn't waste an embedding API call)
 - `community_summary` is persisted to DB before embedding runs — durable across retries
 - Clean separation of concerns: summarization handler has no knowledge of embedding logic
@@ -123,6 +124,7 @@ Estimated cost: ~$0.49 (164 shops × $0.003).
 ### Graceful Fallback
 
 `handle_generate_embedding()` reads `community_summary` if present, otherwise falls back to raw concatenation. This ensures:
+
 - Live shops continue to re-embed even if their summary fails
 - No regression for shops that haven't been summarized yet
 - Existing shops stay searchable during the backfill window
@@ -134,6 +136,7 @@ Summarizing 20 short review snippets into a 150–200 char thematic summary is a
 ### community_summary as First-Class Column
 
 `community_summary` is not just an embedding artifact — it's a user-facing display field:
+
 - Shop detail page: "What visitors say" section
 - Search result cards: community snippet
 
@@ -143,42 +146,46 @@ A separate UI ticket (DEV-UI-COMMUNITY-SUMMARY) tracks the display work.
 
 With summary replacing raw concatenation, the community text block shrinks significantly:
 
-| Component | Tokens (raw) | Tokens (summarized) |
-|-----------|---|---|
-| Shop name + description | ~200 | ~200 |
-| Menu items | ~100 | ~100 |
-| Community block | ~1000 (20 × ~50) | ~50 (200 chars) |
-| **Total** | **~1300** | **~350** |
+| Component               | Tokens (raw)     | Tokens (summarized) |
+| ----------------------- | ---------------- | ------------------- |
+| Shop name + description | ~200             | ~200                |
+| Menu items              | ~100             | ~100                |
+| Community block         | ~1000 (20 × ~50) | ~50 (200 chars)     |
+| **Total**               | **~1300**        | **~350**            |
 
 Summarization frees ~950 tokens — headroom for future enrichment fields.
 
 ## Error Handling
 
-| Scenario | Behavior |
-|---|---|
-| Claude call fails | Job fails; retried up to 3×. Embedding not triggered until summary succeeds. |
-| No qualifying texts | Skip Claude; directly enqueue `GENERATE_EMBEDDING` (no summary written). |
-| `community_summary` is NULL | `handle_generate_embedding()` falls back to raw concatenation. |
-| Backfill re-run | Skip shops where `community_summary_updated_at > (now() - 1 day)`. |
+| Scenario                    | Behavior                                                                     |
+| --------------------------- | ---------------------------------------------------------------------------- |
+| Claude call fails           | Job fails; retried up to 3×. Embedding not triggered until summary succeeds. |
+| No qualifying texts         | Skip Claude; directly enqueue `GENERATE_EMBEDDING` (no summary written).     |
+| `community_summary` is NULL | `handle_generate_embedding()` falls back to raw concatenation.               |
+| Backfill re-run             | Skip shops where `community_summary_updated_at > (now() - 1 day)`.           |
 
 ## Testing Strategy
 
 ### Backend (pytest)
 
 **`test_handle_summarize_reviews.py`** (new):
+
 - Happy path: texts fetched → Claude called → summary stored → GENERATE_EMBEDDING enqueued
 - No-texts guard: empty text list → Claude skipped → GENERATE_EMBEDDING enqueued directly
 - LLM failure → job fails (no embedding enqueued)
 - Summary stored with correct `community_summary_updated_at`
 
 **`test_handle_generate_embedding.py`** (update):
+
 - Existing tests: verify fallback behavior when `community_summary` is NULL (raw concat)
 - New test: when `community_summary` is set → used as community block, raw texts not used
 
 **`test_llm_provider.py`** (update):
+
 - Add `summarize_reviews()` contract test: input list[str] → non-empty string output
 
 **`test_backfill_community_summaries.py`** (new):
+
 - Idempotency: shops with recent `community_summary_updated_at` are skipped
 - Only live shops with qualifying texts are enqueued
 
@@ -189,11 +196,11 @@ Summarization frees ~950 tokens — headroom for future enrichment fields.
 
 ## Cost Estimate
 
-| Scenario | Cost |
-|---|---|
-| One-time backfill (164 shops) | ~$0.49 |
+| Scenario                             | Cost         |
+| ------------------------------------ | ------------ |
+| One-time backfill (164 shops)        | ~$0.49       |
 | Nightly re-summarize (~10 shops avg) | ~$0.03/night |
-| Monthly steady-state | ~$0.90/month |
+| Monthly steady-state                 | ~$0.90/month |
 
 ## Future Work
 
