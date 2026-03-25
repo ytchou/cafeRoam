@@ -406,6 +406,7 @@ class JobType(StrEnum):
     PUBLISH_SHOP = "publish_shop"
     ADMIN_DIGEST_EMAIL = "admin_digest_email"
     CLASSIFY_SHOP_PHOTOS = "classify_shop_photos"
+    SUMMARIZE_REVIEWS = "summarize_reviews"
 
 
 class JobStatus(StrEnum):

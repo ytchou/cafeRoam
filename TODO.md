@@ -1539,9 +1539,9 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 
 **Chunk 1 — Foundation (Wave 1):**
 
-- [ ] DB migration: community_summary columns + job_type CHECK (Task 1)
-- [ ] Add SUMMARIZE_REVIEWS to Python JobType enum (Task 2)
-- [ ] Add summarize_reviews() to LLM provider protocol + adapter (Task 3)
+- [x] DB migration: community_summary columns + job_type CHECK (Task 1)
+- [x] Add SUMMARIZE_REVIEWS to Python JobType enum (Task 2)
+- [x] Add summarize_reviews() to LLM provider protocol + adapter (Task 3)
 
 **Chunk 2 — Handlers (Wave 2):**
 

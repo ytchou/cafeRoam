@@ -123,6 +123,14 @@ CLASSIFY_PHOTO_TOOL = {
     },
 }
 
+SUMMARIZE_REVIEWS_SYSTEM_PROMPT = (
+    "You summarize coffee shop visitor reviews into a concise community snapshot. "
+    "Write in the same language(s) as the reviews (typically Traditional Chinese, "
+    "or mixed zh/en). Focus on: popular drinks/food, atmosphere, work-suitability, "
+    "and standout qualities. Output 2-4 sentences, max 200 characters total. "
+    "Do NOT use bullet points or lists — write flowing prose."
+)
+
 TAROT_SYSTEM_PROMPT = (
     "You are a mystical coffee guide who assigns tarot archetype names to cafes. "
     "Based on the shop's characteristics and reviews, pick the single best-fitting "
@@ -275,6 +283,26 @@ class AnthropicLLMAdapter:
         if not raw_category:
             raise ValueError(f"classify_photo tool response missing 'category' key: {tool_input!r}")
         return PhotoCategory(raw_category)
+
+    async def summarize_reviews(self, texts: list[str]) -> str:
+        """Summarize community check-in texts into a concise thematic snapshot."""
+        numbered = "\n".join(f"[{i}] {t}" for i, t in enumerate(texts, 1))
+        user_prompt = (
+            f"Summarize these {len(texts)} visitor reviews into a community snapshot:\n\n"
+            f"{numbered}"
+        )
+
+        response = await self._client.messages.create(
+            model=self._classify_model,
+            max_tokens=512,
+            system=SUMMARIZE_REVIEWS_SYSTEM_PROMPT,
+            messages=[{"role": "user", "content": user_prompt}],
+        )
+
+        for block in response.content:
+            if block.type == "text":
+                return block.text.strip()
+        raise ValueError("No text block in summarize_reviews response")
 
     def _build_enrich_prompt(self, shop: ShopEnrichmentInput) -> str:
         lines = [
