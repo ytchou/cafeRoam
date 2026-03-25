@@ -1555,8 +1555,8 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 - [x] llms.txt route handler for AI crawlers
 - [x] JSON-LD base component
 - [x] FAQ generation from taxonomy data
-- [ ] ShopJsonLd (CafeOrCoffeeShop + FAQPage schema)
-- [ ] WebsiteJsonLd (SearchAction schema)
+- [x] ShopJsonLd (CafeOrCoffeeShop + FAQPage schema)
+- [x] WebsiteJsonLd (SearchAction schema)
 - [ ] Enhanced root layout metadata (metadataBase, OG, Twitter)
 - [ ] Integrate JSON-LD into shop detail page
 - [ ] Integrate JSON-LD into homepage
