@@ -15,6 +15,7 @@
 **Tech Stack:** Python 3.12+, Pydantic, Anthropic SDK (Claude Haiku Vision), Supabase (Postgres), pytest
 
 **Acceptance Criteria:**
+
 - [ ] Apify adapter extracts `images[]` with `uploadedAt`, filters photos older than 5yr, caps at 30
 - [ ] Persist layer writes `uploaded_at` to `shop_photos` and enqueues classification job
 - [ ] Classification worker classifies each photo as MENU/VIBE/SKIP and enforces 5 MENU + 10 VIBE caps
@@ -25,6 +26,7 @@
 ### Task 1: DB migration — add `uploaded_at` to `shop_photos`
 
 **Files:**
+
 - Create: `supabase/migrations/20260325000006_add_uploaded_at_to_shop_photos.sql`
 
 No test needed — pure schema change.
@@ -53,6 +55,7 @@ git commit -m "chore: add uploaded_at column and unclassified index to shop_phot
 ### Task 2: Model types — `PhotoCategory`, `ScrapedPhotoData`, `CLASSIFY_SHOP_PHOTOS` job type
 
 **Files:**
+
 - Modify: `backend/models/types.py` (add `PhotoCategory` enum after line 388, add `CLASSIFY_SHOP_PHOTOS` to `JobType`)
 - Modify: `backend/providers/scraper/interface.py` (add `ScrapedPhotoData`, change `photo_urls` → `photos`)
 - Test: `backend/tests/models/test_types.py`
@@ -143,6 +146,7 @@ git commit -m "feat(DEV-18): add PhotoCategory enum, ScrapedPhotoData model, CLA
 ### Task 3: Apify adapter — parse `images[]` with age filter, cap, fallback
 
 **Files:**
+
 - Modify: `backend/providers/scraper/apify_adapter.py` (update `_parse_place`)
 - Test: `backend/tests/providers/test_apify_adapter.py`
 
@@ -464,6 +468,7 @@ git commit -m "feat(DEV-18): parse images[] with age filter and cap in apify ada
 ### Task 4: Persist layer — write `uploaded_at`, enqueue classification job
 
 **Files:**
+
 - Modify: `backend/workers/persist.py` (update photo upsert + add enqueue)
 - Test: `backend/tests/workers/test_persist.py` (create if not exists, or add to existing handler tests)
 
@@ -630,6 +635,7 @@ git commit -m "feat(DEV-18): persist uploaded_at and enqueue classify_shop_photo
 ### Task 5: LLM provider — add `classify_photo` method
 
 **Files:**
+
 - Modify: `backend/providers/llm/interface.py` (add method to protocol)
 - Modify: `backend/providers/llm/anthropic_adapter.py` (implement with Haiku + tool use)
 - Modify: `backend/providers/llm/__init__.py` (pass classify_model to adapter)
@@ -867,6 +873,7 @@ git commit -m "feat(DEV-18): add classify_photo to LLM provider with Haiku model
 ### Task 6: Classification worker handler
 
 **Files:**
+
 - Create: `backend/workers/handlers/classify_shop_photos.py`
 - Test: `backend/tests/workers/test_classify_shop_photos.py`
 
@@ -1165,6 +1172,7 @@ git commit -m "feat(DEV-18): add classify_shop_photos worker handler with Vision
 ### Task 7: Register handler in scheduler
 
 **Files:**
+
 - Modify: `backend/workers/scheduler.py` (add import + dispatch case)
 - Test: `backend/tests/workers/test_scheduler_dispatch.py`
 
@@ -1286,16 +1294,20 @@ graph TD
 ```
 
 **Wave 1** (parallel — no dependencies):
+
 - Task 1: DB migration (`uploaded_at` column)
 - Task 2: Model types (`PhotoCategory`, `ScrapedPhotoData`, `JobType`)
 
 **Wave 2** (parallel — depends on Wave 1):
+
 - Task 3: Apify adapter ← Task 2
 - Task 5: LLM `classify_photo` ← Task 2
 
 **Wave 3** (parallel — depends on Wave 2):
+
 - Task 4: Persist layer ← Task 1, 2, 3
 - Task 6: Classification handler ← Task 2, 5
 
 **Wave 4** (sequential — depends on Wave 3):
+
 - Task 7: Scheduler registration ← Task 6

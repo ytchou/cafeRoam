@@ -7,6 +7,7 @@ Related: DEV-6 (menu extraction depends on quality MENU photos)
 ## Goal
 
 Improve scraped photo quality and utility by:
+
 1. Capturing photo freshness (`uploaded_at`) from Apify's `images[]` field
 2. Filtering stale photos at scrape time (age > 5yr, cap 30)
 3. Classifying photos asynchronously into MENU / VIBE / SKIP via Claude Haiku
@@ -24,13 +25,13 @@ New handler `classify_shop_photos.py`. Fetches unclassified photos (`category IS
 
 ## Components
 
-| File | Change |
-|---|---|
-| `backend/providers/scraper/interface.py` | `photo_urls: list[str]` → `photos: list[PhotoData]` (url + uploaded_at) |
-| `backend/providers/scraper/apify_adapter.py` | Parse `images[]` with age filter + cap 30; fallback to `imageUrls` if absent |
-| `backend/workers/persist.py` | Write `uploaded_at` to `shop_photos`; enqueue `classify_shop_photos` after upsert |
+| File                                               | Change                                                                               |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `backend/providers/scraper/interface.py`           | `photo_urls: list[str]` → `photos: list[PhotoData]` (url + uploaded_at)              |
+| `backend/providers/scraper/apify_adapter.py`       | Parse `images[]` with age filter + cap 30; fallback to `imageUrls` if absent         |
+| `backend/workers/persist.py`                       | Write `uploaded_at` to `shop_photos`; enqueue `classify_shop_photos` after upsert    |
 | `backend/workers/handlers/classify_shop_photos.py` | New — thumbnail rewrite → Claude Haiku → update category + is_menu + cap enforcement |
-| `supabase/migrations/...` | Add `uploaded_at TIMESTAMPTZ` to `shop_photos` (nullable) |
+| `supabase/migrations/...`                          | Add `uploaded_at TIMESTAMPTZ` to `shop_photos` (nullable)                            |
 
 ## Data Flow
 
@@ -77,22 +78,24 @@ The worker stores the original URL in the DB — only the thumbnail is sent to C
 
 ## Error Handling
 
-| Scenario | Behaviour |
-|---|---|
-| `images[]` absent from Apify response | Fall back to `imageUrls` with `uploaded_at=None`; age filter skipped |
-| Claude Vision fails on one photo | Log + continue; photo stays `category=NULL`, safe to retry via one-off run |
-| Worker job fails mid-batch | Idempotent — always queries `WHERE category IS NULL`; re-trigger safely |
-| Thumbnail URL rewrite fails (unexpected format) | Use original URL, log warning |
+| Scenario                                        | Behaviour                                                                  |
+| ----------------------------------------------- | -------------------------------------------------------------------------- |
+| `images[]` absent from Apify response           | Fall back to `imageUrls` with `uploaded_at=None`; age filter skipped       |
+| Claude Vision fails on one photo                | Log + continue; photo stays `category=NULL`, safe to retry via one-off run |
+| Worker job fails mid-batch                      | Idempotent — always queries `WHERE category IS NULL`; re-trigger safely    |
+| Thumbnail URL rewrite fails (unexpected format) | Use original URL, log warning                                              |
 
 ## Testing Strategy
 
 ### Unit tests — `test_apify_adapter.py`
+
 - `images[]` parsing with `uploadedAt` → `PhotoData`
 - Age filter drops photos older than 5yr
 - Cap at 30 enforced, sorted by recency
 - Fallback to `imageUrls` when `images[]` absent
 
 ### Unit tests — `test_classify_shop_photos.py`
+
 - Thumbnail URL rewrite (`=w1920-h1080-k-no` → `=w400-h225-k-no`)
 - MENU priority: photo qualifying for both → MENU
 - 5 MENU cap: 6th MENU photo downgraded to SKIP (newest 5 kept)
@@ -100,14 +103,17 @@ The worker stores the original URL in the DB — only the thumbnail is sent to C
 - Idempotency: re-running on already-classified shop is a no-op
 
 ### Integration test — `test_classify_shop_photos.py`
+
 - Worker with mocked Claude Vision: classifies batch, updates `category` + `is_menu` in DB correctly
 
 ## Testing Classification
 
 **(a) New e2e journey?**
+
 - [ ] No — internal data pipeline feature; no user-facing critical path introduced
 
 **(b) Coverage gate impact?**
+
 - [x] Yes — `classify_shop_photos.py` and updated `apify_adapter.py` are enrichment pipeline code; verify 80% coverage gate is met for both
 
 ## Legal Note

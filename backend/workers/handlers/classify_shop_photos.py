@@ -39,7 +39,7 @@ async def handle_classify_shop_photos(
         .is_("category", "null")
         .execute()
     )
-    photos = response.data
+    photos: list[dict[str, Any]] = response.data  # type: ignore[assignment]
     if not photos:
         logger.info("No unclassified photos", shop_id=shop_id)
         return
@@ -96,7 +96,8 @@ def _get_existing_category_counts(db: Client, shop_id: str) -> dict[PhotoCategor
         .execute()
     )
     counts: dict[PhotoCategory, int] = {}
-    for row in response.data:
+    rows: list[dict[str, Any]] = response.data  # type: ignore[assignment]
+    for row in rows:
         try:
             cat = PhotoCategory(row["category"])
         except ValueError:
