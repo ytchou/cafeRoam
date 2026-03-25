@@ -1540,3 +1540,32 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 - [ ] Push notifications via LINE Messaging API (replace or supplement weekly email)
 - [ ] Rich menu: quick-access to search, check-in, lists from within LINE app
 - [ ] Chatbot: natural language shop discovery via LINE chat (semantic search over Messaging API)
+
+---
+
+### SEO & GEO Optimization (DEV-14)
+
+> **Design Doc:** [docs/designs/2026-03-25-seo-geo-optimization-design.md](docs/designs/2026-03-25-seo-geo-optimization-design.md)
+> **Plan:** [docs/plans/2026-03-25-seo-geo-optimization-plan.md](docs/plans/2026-03-25-seo-geo-optimization-plan.md)
+
+**Phase 1 — Technical Foundation:**
+- [ ] Backend: expose phone, website, hours, price in shop endpoint
+- [ ] robots.ts with AI bot allowances
+- [ ] Dynamic sitemap.ts for all live shops
+- [ ] llms.txt route handler for AI crawlers
+- [ ] JSON-LD base component
+- [ ] FAQ generation from taxonomy data
+- [ ] ShopJsonLd (CafeOrCoffeeShop + FAQPage schema)
+- [ ] WebsiteJsonLd (SearchAction schema)
+- [ ] Enhanced root layout metadata (metadataBase, OG, Twitter)
+- [ ] Integrate JSON-LD into shop detail page
+- [ ] Integrate JSON-LD into homepage
+- [ ] Explore + vibes page metadata
+- [ ] Verification & lint pass
+
+**Phase 2 — Content Flywheel (future ticket):**
+- [ ] Auto-generated landing pages per district/intent
+- [ ] Freshness signals on shop pages
+
+**Phase 3 — Authority (future):**
+- [ ] Blog outreach to Taipei lifestyle/food blogs
