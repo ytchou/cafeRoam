@@ -1545,9 +1545,9 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 
 **Chunk 2 — Handlers (Wave 2):**
 
-- [ ] handle_summarize_reviews worker handler (Task 4)
-- [ ] generate_embedding: prefer community_summary with raw-text fallback (Task 5)
-- [ ] reembed_reviewed_shops: enqueue SUMMARIZE_REVIEWS instead of GENERATE_EMBEDDING (Task 6)
+- [x] handle_summarize_reviews worker handler (Task 4)
+- [x] generate_embedding: prefer community_summary with raw-text fallback (Task 5)
+- [x] reembed_reviewed_shops: enqueue SUMMARIZE_REVIEWS instead of GENERATE_EMBEDDING (Task 6)
 
 **Chunk 3 — Wiring + Script (Wave 3):**
 

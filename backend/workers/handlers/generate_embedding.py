@@ -32,7 +32,7 @@ async def handle_generate_embedding(
     # Load shop data including processing_status for the live-shop guard
     response = (
         db.table("shops")
-        .select("name, description, processing_status")
+        .select("name, description, processing_status, community_summary")
         .eq("id", shop_id)
         .single()
         .execute()
@@ -59,11 +59,16 @@ async def handle_generate_embedding(
     community_rows = cast("list[dict[str, Any]]", community_response.data or [])
     community_texts = [row["text"] for row in community_rows if row.get("text")]
 
-    # Build embedding text: base | menu items || community texts
+    # Build embedding text: base | menu items || community block
     base_text = f"{shop['name']}. {shop.get('description') or ''}"
     text = f"{base_text} | {', '.join(item_names)}" if item_names else base_text
-    if community_texts:
-        text = f"{text} || {'. '.join(community_texts)}"
+
+    # Prefer stored community_summary; fall back to raw concatenation
+    community_block = shop.get("community_summary")
+    if not community_block and community_texts:
+        community_block = ". ".join(community_texts)
+    if community_block:
+        text = f"{text} || {community_block}"
 
     # Warn if community text is unusually large (design budget: ~1300 tokens total).
     # OpenAI text-embedding-3-small supports 8191 tokens; ~4 chars/token as a rough heuristic.
