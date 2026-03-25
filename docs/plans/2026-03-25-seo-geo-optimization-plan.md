@@ -15,6 +15,7 @@
 **Tech Stack:** Next.js 16 (App Router metadata API), Schema.org JSON-LD, Supabase (server client for sitemap queries)
 
 **Acceptance Criteria:**
+
 - [ ] `/sitemap.xml` returns valid XML listing all live shops + static pages
 - [ ] `/robots.txt` allows public paths, disallows auth-gated paths, explicitly allows AI bots
 - [ ] `/llms.txt` returns a plain-text description of CafeRoam for AI crawlers
@@ -26,6 +27,7 @@
 ### Task 1: Backend — Expose SEO Fields from Shops Endpoint
 
 **Files:**
+
 - Modify: `backend/api/shops.py:27-31` (add columns to `_SHOP_COLUMNS`)
 - Modify: `backend/api/shops.py:59-96` (include new fields in response)
 - Test: `backend/tests/api/test_shops.py` (add test for new fields)
@@ -156,6 +158,7 @@ git commit -m "feat(api): expose phone, website, hours, price in shop endpoint f
 ### Task 2: Robots.txt (`app/robots.ts`)
 
 **Files:**
+
 - Create: `app/robots.ts`
 - Test: `app/robots.test.ts`
 
@@ -174,7 +177,14 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: '*',
         allow: ['/', '/shops/', '/explore/'],
-        disallow: ['/profile', '/lists', '/settings', '/login', '/signup', '/api/'],
+        disallow: [
+          '/profile',
+          '/lists',
+          '/settings',
+          '/login',
+          '/signup',
+          '/api/',
+        ],
       },
       {
         userAgent: 'GPTBot',
@@ -210,6 +220,7 @@ git commit -m "feat(seo): add robots.ts with AI bot allowances"
 ### Task 3: Dynamic Sitemap (`app/sitemap.ts`)
 
 **Files:**
+
 - Create: `app/sitemap.ts`
 - Test: `lib/__tests__/seo/sitemap.test.ts`
 
@@ -239,8 +250,16 @@ describe('sitemap generation', () => {
   it('generates sitemap entries for all live shops plus static pages', async () => {
     mockExecute.mockResolvedValue({
       data: [
-        { id: 'shop-1', slug: 'cafe-flaneur', updated_at: '2026-03-20T14:30:00Z' },
-        { id: 'shop-2', slug: 'beans-and-leaves', updated_at: '2026-03-18T10:00:00Z' },
+        {
+          id: 'shop-1',
+          slug: 'cafe-flaneur',
+          updated_at: '2026-03-20T14:30:00Z',
+        },
+        {
+          id: 'shop-2',
+          slug: 'beans-and-leaves',
+          updated_at: '2026-03-18T10:00:00Z',
+        },
       ],
     });
 
@@ -329,6 +348,7 @@ git commit -m "feat(seo): add dynamic sitemap.ts for all live shops"
 ### Task 4: llms.txt Route Handler (`app/llms.txt/route.ts`)
 
 **Files:**
+
 - Create: `app/llms.txt/route.ts`
 - Test: `lib/__tests__/seo/llms-txt.test.ts`
 
@@ -343,7 +363,9 @@ describe('llms.txt route', () => {
     const { GET } = await import('@/app/llms.txt/route');
     const response = await GET();
 
-    expect(response.headers.get('content-type')).toBe('text/plain; charset=utf-8');
+    expect(response.headers.get('content-type')).toBe(
+      'text/plain; charset=utf-8'
+    );
 
     const text = await response.text();
 
@@ -448,6 +470,7 @@ git commit -m "feat(geo): add llms.txt route handler for AI crawlers"
 ### Task 5: JSON-LD Base Component (`components/seo/JsonLd.tsx`)
 
 **Files:**
+
 - Create: `components/seo/JsonLd.tsx`
 - Test: `components/seo/__tests__/JsonLd.test.tsx`
 
@@ -523,6 +546,7 @@ git commit -m "feat(seo): add generic JsonLd server component"
 ### Task 6: FAQ Generation Logic (`components/seo/generateShopFaq.ts`)
 
 **Files:**
+
 - Create: `components/seo/generateShopFaq.ts`
 - Test: `components/seo/__tests__/generateShopFaq.test.ts`
 
@@ -538,12 +562,27 @@ describe('generateShopFaq', () => {
     name: 'Café Flâneur',
     address: '台北市大安區復興南路一段219巷18號',
     mrt: '大安站',
-    modeScores: { work: 0.85, rest: 0.60, social: 0.40 },
+    modeScores: { work: 0.85, rest: 0.6, social: 0.4 },
     taxonomyTags: [
-      { id: 'laptop_friendly', dimension: 'functionality', label: 'Laptop Friendly', labelZh: '適合帶筆電' },
+      {
+        id: 'laptop_friendly',
+        dimension: 'functionality',
+        label: 'Laptop Friendly',
+        labelZh: '適合帶筆電',
+      },
       { id: 'quiet', dimension: 'ambience', label: 'Quiet', labelZh: '安靜' },
-      { id: 'pour_over', dimension: 'coffee', label: 'Pour Over', labelZh: '手沖咖啡' },
-      { id: 'deep_work', dimension: 'mode', label: 'Deep Work', labelZh: '深度工作' },
+      {
+        id: 'pour_over',
+        dimension: 'coffee',
+        label: 'Pour Over',
+        labelZh: '手沖咖啡',
+      },
+      {
+        id: 'deep_work',
+        dimension: 'mode',
+        label: 'Deep Work',
+        labelZh: '深度工作',
+      },
     ],
     openingHours: { Mon: '08:00-18:00', Tue: '08:00-18:00' },
   };
@@ -580,7 +619,9 @@ describe('generateShopFaq', () => {
   it('skips coffee FAQ when no coffee tags', () => {
     const shopNoCoffee = {
       ...baseShop,
-      taxonomyTags: baseShop.taxonomyTags.filter((t) => t.dimension !== 'coffee'),
+      taxonomyTags: baseShop.taxonomyTags.filter(
+        (t) => t.dimension !== 'coffee'
+      ),
     };
     const faq = generateShopFaq(shopNoCoffee);
     const coffeeQuestion = faq.find((q) => q.question.includes('coffee'));
@@ -609,7 +650,11 @@ interface ShopForFaq {
   name: string;
   address?: string;
   mrt?: string | null;
-  modeScores?: { work?: number | null; rest?: number | null; social?: number | null } | null;
+  modeScores?: {
+    work?: number | null;
+    rest?: number | null;
+    social?: number | null;
+  } | null;
   taxonomyTags?: Array<{
     id: string;
     dimension: string;
@@ -634,9 +679,15 @@ export function generateShopFaq(shop: ShopForFaq): FaqEntry[] {
   // 1. Remote work suitability (always include — core CafeRoam value prop)
   const workScore = shop.modeScores?.work;
   const funcTags = tagsByDimension('functionality');
-  const workTags = funcTags.length > 0 ? funcTags.join(', ') : 'a comfortable workspace';
+  const workTags =
+    funcTags.length > 0 ? funcTags.join(', ') : 'a comfortable workspace';
   if (workScore !== null && workScore !== undefined) {
-    const suitability = workScore >= 0.7 ? 'highly suitable' : workScore >= 0.4 ? 'suitable' : 'not ideal';
+    const suitability =
+      workScore >= 0.7
+        ? 'highly suitable'
+        : workScore >= 0.4
+          ? 'suitable'
+          : 'not ideal';
     faq.push({
       question: `Is ${shop.name} good for remote work?`,
       answer: `${shop.name} is ${suitability} for remote work (score: ${Math.round(workScore * 100)}%). Features include: ${workTags}.`,
@@ -702,6 +753,7 @@ git commit -m "feat(geo): add FAQ generation from shop taxonomy data"
 ### Task 7: Shop JSON-LD Component (`components/seo/ShopJsonLd.tsx`)
 
 **Files:**
+
 - Create: `components/seo/ShopJsonLd.tsx`
 - Test: `components/seo/__tests__/ShopJsonLd.test.tsx`
 
@@ -909,6 +961,7 @@ git commit -m "feat(seo): add ShopJsonLd component with CafeOrCoffeeShop + FAQPa
 ### Task 8: Website JSON-LD Component (`components/seo/WebsiteJsonLd.tsx`)
 
 **Files:**
+
 - Create: `components/seo/WebsiteJsonLd.tsx`
 - Test: `components/seo/__tests__/WebsiteJsonLd.test.tsx`
 
@@ -987,6 +1040,7 @@ git commit -m "feat(seo): add WebsiteJsonLd component with SearchAction"
 ### Task 9: Enhanced Root Layout Metadata (`app/layout.tsx`)
 
 **Files:**
+
 - Modify: `app/layout.tsx:47-66` (enhance metadata export)
 
 No test needed — metadata export is a static Next.js config object. Verified by visual inspection and existing e2e OG tests.
@@ -997,7 +1051,9 @@ Replace the `metadata` export (lines 47-66) with enhanced version:
 
 ```typescript
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? 'https://caferoam.tw'),
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_APP_URL ?? 'https://caferoam.tw'
+  ),
   title: {
     default: 'CafeRoam 啡遊 — 探索台灣精品咖啡廳',
     template: '%s — 啡遊',
@@ -1031,6 +1087,7 @@ export const metadata: Metadata = {
 ```
 
 Key changes:
+
 - Added `metadataBase` for absolute canonical URLs
 - Changed `title` to template format (child pages use `%s — 啡遊` pattern)
 - Enhanced `description` in Traditional Chinese targeting Taiwan audience
@@ -1049,6 +1106,7 @@ git commit -m "feat(seo): enhance root layout metadata with metadataBase, OG, Tw
 ### Task 10: Integrate JSON-LD into Shop Detail Page
 
 **Files:**
+
 - Modify: `app/shops/[shopId]/[slug]/page.tsx:42-64` (add ShopJsonLd to render)
 
 No test needed — integration verified by existing e2e test in `e2e/discovery.spec.ts` that checks OG meta. JSON-LD rendering is already unit tested in Task 7.
@@ -1101,6 +1159,7 @@ git commit -m "feat(seo): integrate ShopJsonLd into shop detail page"
 ### Task 11: Integrate WebsiteJsonLd into Homepage
 
 **Files:**
+
 - Modify: `app/page.tsx` (add WebsiteJsonLd + metadata export)
 
 No test needed — `WebsiteJsonLd` is already unit tested. Homepage metadata is a static export.
@@ -1112,6 +1171,7 @@ Read the file to understand where to add the import and component.
 **Step 2: Add metadata export and WebsiteJsonLd**
 
 Add at top of file:
+
 ```typescript
 import { WebsiteJsonLd } from '@/components/seo/WebsiteJsonLd';
 import type { Metadata } from 'next';
@@ -1139,6 +1199,7 @@ git commit -m "feat(seo): add homepage metadata and WebsiteJsonLd"
 ### Task 12: Explore Page Metadata
 
 **Files:**
+
 - Modify: `app/explore/page.tsx` (add metadata export if server component, or add to layout)
 - Modify: `app/explore/vibes/[slug]/page.tsx` (add generateMetadata)
 
@@ -1149,15 +1210,21 @@ No test needed — static metadata exports and simple generateMetadata using exi
 Read `app/explore/page.tsx` to check if it's a client or server component.
 
 If client component, create `app/explore/layout.tsx` with:
+
 ```typescript
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: '探索咖啡廳',
-  description: '用不同方式探索台灣的獨立咖啡廳——隨機抽牌、依氛圍瀏覽、或看看社群最新打卡。',
+  description:
+    '用不同方式探索台灣的獨立咖啡廳——隨機抽牌、依氛圍瀏覽、或看看社群最新打卡。',
 };
 
-export default function ExploreLayout({ children }: { children: React.ReactNode }) {
+export default function ExploreLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return children;
 }
 ```
@@ -1265,6 +1332,7 @@ graph TD
 ```
 
 **Wave 1** (parallel — no dependencies):
+
 - Task 1: Backend SEO fields
 - Task 2: robots.ts
 - Task 3: sitemap.ts
@@ -1273,16 +1341,19 @@ graph TD
 - Task 6: FAQ generation logic
 
 **Wave 2** (parallel — depends on Wave 1):
+
 - Task 7: ShopJsonLd component ← Tasks 1, 5, 6
 - Task 8: WebsiteJsonLd component ← Task 5
 
 **Wave 3** (parallel — depends on Wave 2):
+
 - Task 9: Root layout metadata (independent, placed here for logical ordering)
 - Task 10: Integrate ShopJsonLd into shop page ← Task 7
 - Task 11: Integrate WebsiteJsonLd into homepage ← Task 8
 - Task 12: Explore page metadata (independent)
 
 **Wave 4** (sequential — depends on all):
+
 - Task 13: Final verification & lint ← all previous tasks
 
 ---
@@ -1291,10 +1362,12 @@ graph TD
 
 ```markdown
 ### SEO & GEO Optimization (DEV-14)
+
 > **Design Doc:** [docs/designs/2026-03-25-seo-geo-optimization-design.md](docs/designs/2026-03-25-seo-geo-optimization-design.md)
 > **Plan:** [docs/plans/2026-03-25-seo-geo-optimization-plan.md](docs/plans/2026-03-25-seo-geo-optimization-plan.md)
 
 **Phase 1 — Technical Foundation:**
+
 - [ ] Backend: expose phone, website, hours, price in shop endpoint
 - [ ] robots.ts with AI bot allowances
 - [ ] Dynamic sitemap.ts for all live shops
@@ -1310,9 +1383,11 @@ graph TD
 - [ ] Verification & lint pass
 
 **Phase 2 — Content Flywheel (future ticket):**
+
 - [ ] Auto-generated landing pages per district/intent
 - [ ] Freshness signals on shop pages
 
 **Phase 3 — Authority (future):**
+
 - [ ] Blog outreach to Taipei lifestyle/food blogs
 ```

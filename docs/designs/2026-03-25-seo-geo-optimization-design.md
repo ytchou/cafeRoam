@@ -37,6 +37,7 @@ PRD positions SEO as the **secondary** discovery channel (6-12 month horizon), w
 ### 3. llms.txt (`app/llms.txt/route.ts`)
 
 Route handler returning `text/plain` with:
+
 - Site identity: what CafeRoam is, target audience, geographic scope (Taiwan)
 - Data structure: shops with mode scores (work/rest/social), taxonomy tags across 5 dimensions
 - Taxonomy dimensions: functionality, time, ambience, mode, coffee
@@ -84,13 +85,13 @@ Route handler returning `text/plain` with:
 
 Auto-generate 3-5 Q&A pairs per shop from taxonomy data:
 
-| Question Pattern | Answer Source |
-|---|---|
-| "Is {shop} good for remote work?" | `mode_work` score + functionality tags |
-| "What's the vibe at {shop}?" | Ambience tags + mode scores |
-| "Where is {shop} located?" | Address + MRT station |
-| "What kind of coffee does {shop} serve?" | Coffee dimension tags |
-| "When is {shop} open?" | Opening hours (if available) |
+| Question Pattern                         | Answer Source                          |
+| ---------------------------------------- | -------------------------------------- |
+| "Is {shop} good for remote work?"        | `mode_work` score + functionality tags |
+| "What's the vibe at {shop}?"             | Ambience tags + mode scores            |
+| "Where is {shop} located?"               | Address + MRT station                  |
+| "What kind of coffee does {shop} serve?" | Coffee dimension tags                  |
+| "When is {shop} open?"                   | Opening hours (if available)           |
 
 This gives AI engines citable, structured answers — the core GEO play.
 
@@ -113,16 +114,19 @@ This gives AI engines citable, structured answers — the core GEO play.
 ### 5. Enhanced Metadata
 
 #### Root Layout (`app/layout.tsx`)
+
 - Add `metadataBase: new URL('https://caferoam.com')`
 - Add Twitter card config: `card: 'summary_large_image'`
 - Enhance default OG: `type: 'website'`, `locale: 'zh_TW'`, `siteName: '啡遊 CafeRoam'`
 
 #### Homepage (`app/page.tsx`)
+
 - Add `generateMetadata` with targeted title/description
 - Title: `啡遊 CafeRoam — 探索台灣精品咖啡廳`
 - Description targeting primary search intents (remote work cafes, quiet cafes, etc.)
 
 #### Explore Pages
+
 - `/explore` — general discovery metadata
 - `/explore/vibes/[slug]` — vibe-specific titles and descriptions from tag data
 
@@ -155,6 +159,7 @@ All server-rendered via `<script type="application/ld+json">`.
 ## CMO Perspective
 
 **Why this matters for growth:**
+
 - Every shop page becomes a rich, citable result in both Google and AI engines
 - FAQ schema answers the exact questions people ask on Threads ("is X good for work?")
 - llms.txt makes CafeRoam legible to AI crawlers as a Taiwan cafe authority
@@ -162,6 +167,7 @@ All server-rendered via `<script type="application/ld+json">`.
 - Auto-generated landing pages (Phase 2) target long-tail search intents passively
 
 **Content strategy alignment:**
+
 - Phase 1 is infrastructure — no editorial effort needed
 - Phase 2 auto-generates from existing data — no content team required
 - Phase 3 is the only phase requiring human effort (outreach)
@@ -169,12 +175,15 @@ All server-rendered via `<script type="application/ld+json">`.
 ## Testing Classification
 
 ### (a) New e2e journey?
+
 - [ ] No — SEO changes are server-rendered metadata/structured data. No new user-facing interactive paths.
 
 ### (b) Coverage gate impact?
+
 - [ ] No — no critical-path services touched. Backend shops endpoint gets minor field additions (exposing existing DB columns).
 
 ### Recommended Tests
+
 - **Unit:** JSON-LD output correctness (valid schema, required fields present)
 - **Unit:** FAQ generation logic (produces sensible Q&A from taxonomy data)
 - **Unit:** Sitemap generation (includes all live shops, excludes non-live)
