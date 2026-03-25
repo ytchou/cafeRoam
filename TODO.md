@@ -1550,7 +1550,7 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 
 **Phase 1 — Technical Foundation:**
 - [x] Backend: expose phone, website, hours, price in shop endpoint
-- [ ] robots.ts with AI bot allowances
+- [x] robots.ts with AI bot allowances
 - [ ] Dynamic sitemap.ts for all live shops
 - [ ] llms.txt route handler for AI crawlers
 - [ ] JSON-LD base component
