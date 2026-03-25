@@ -271,6 +271,24 @@ Core infrastructure everything else depends on. No user-facing product yet.
 
 - [x] Wire new handlers into scheduler dispatch loop
 - [x] POST /submissions API route (user shop submission)
+
+### Photo Classification (DEV-18)
+
+> **Design Doc:** [docs/designs/2026-03-25-dev18-photo-classification-design.md](docs/designs/2026-03-25-dev18-photo-classification-design.md)
+> **Plan:** [docs/plans/2026-03-25-photo-classification-plan.md](docs/plans/2026-03-25-photo-classification-plan.md)
+
+**Chunk 1 — Foundation (Wave 1-2):**
+
+- [x] DB migration: `uploaded_at` column on `shop_photos`
+- [x] Model types: `PhotoCategory`, `ScrapedPhotoData`, `CLASSIFY_SHOP_PHOTOS` job type
+- [x] Apify adapter: parse `images[]` with age filter + cap 30 + fallback
+- [x] LLM provider: `classify_photo` method with Haiku + tool use
+
+**Chunk 2 — Pipeline Integration (Wave 3-4):**
+
+- [x] Persist layer: write `uploaded_at`, enqueue classification job
+- [x] Classification handler: thumbnail rewrite → Vision → update category + is_menu + cap enforcement
+- [x] Scheduler: register `CLASSIFY_SHOP_PHOTOS` dispatch
 - [x] GET /feed API route (public community activity feed)
 - [x] Admin dashboard API (overview, dead-letter, retry, reject)
 

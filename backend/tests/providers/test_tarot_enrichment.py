@@ -22,7 +22,10 @@ class TestTarotEnrichment:
             ),
         ]
         return AnthropicLLMAdapter(
-            api_key="test-key", model="claude-sonnet-4-20250514", taxonomy=taxonomy
+            api_key="test-key",
+            model="claude-sonnet-4-20250514",
+            classify_model="claude-haiku-4-5-20251001",
+            taxonomy=taxonomy,
         )
 
     @pytest.fixture

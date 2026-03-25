@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # CafeRoam Doctor — Local environment preflight check
+# Checks all required services and environment variables before dev work.
 #
 # Usage: make doctor (or bash scripts/doctor.sh)
 #
@@ -109,6 +110,10 @@ check_env_var_localhost "${PROJECT_ROOT}/backend/.env" "SUPABASE_URL" \
 check "ANON_SALT is set" \
   "grep -q '^ANON_SALT=.' '${PROJECT_ROOT}/backend/.env'" \
   "Add ANON_SALT=<random-secret> to backend/.env"
+
+check "ANTHROPIC_API_KEY is set (required for LLM enrichment and photo classification)" \
+  "grep -q '^ANTHROPIC_API_KEY=.' '${PROJECT_ROOT}/backend/.env'" \
+  "Add ANTHROPIC_API_KEY=<key> to backend/.env (get from console.anthropic.com)"
 
 # Production safety warning — does not count as a failure
 if grep -q '^ANON_SALT=caferoam-dev-salt$' "${PROJECT_ROOT}/backend/.env" 2>/dev/null; then

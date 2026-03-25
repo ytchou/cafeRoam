@@ -1,6 +1,14 @@
+from datetime import datetime
 from typing import Protocol, runtime_checkable
 
 from pydantic import BaseModel
+
+
+class ScrapedPhotoData(BaseModel):
+    """A single photo from the scraper with optional upload timestamp."""
+
+    url: str
+    uploaded_at: datetime | None = None
 
 
 class ScrapedShopData(BaseModel):
@@ -22,7 +30,7 @@ class ScrapedShopData(BaseModel):
     permanently_closed: bool = False
     categories: list[str] = []
     reviews: list[dict[str, str | int | None]] = []
-    photo_urls: list[str] = []
+    photos: list[ScrapedPhotoData] = []
 
 
 class BatchScrapeInput(BaseModel):

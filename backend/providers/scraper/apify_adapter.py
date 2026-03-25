@@ -1,14 +1,23 @@
 import asyncio
+import contextlib
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import structlog
 from apify_client import ApifyClient
 
-from providers.scraper.interface import BatchScrapeInput, BatchScrapeResult, ScrapedShopData
+from providers.scraper.interface import (
+    BatchScrapeInput,
+    BatchScrapeResult,
+    ScrapedPhotoData,
+    ScrapedShopData,
+)
 
 logger = structlog.get_logger()
 
 _ACTOR_ID = "compass/crawler-google-places"
+_PHOTO_MAX_AGE = timedelta(days=365 * 5)
+_PHOTO_CAP = 30
 
 
 class ApifyScraperAdapter:
@@ -145,8 +154,40 @@ class ApifyScraperAdapter:
                 for r in place.get("reviews", [])
                 if r.get("text")
             ],
-            photo_urls=place.get("imageUrls", [])[:10],
+            photos=self._parse_photos(place),
         )
+
+    def _parse_photos(self, place: dict[str, Any]) -> list[ScrapedPhotoData]:
+        """Parse photos from images[] (preferred) or imageUrls[] (fallback)."""
+        images = place.get("images")
+        if images and isinstance(images, list):
+            return self._parse_images_array(images)
+        # Fallback: flat imageUrls with no metadata
+        return [ScrapedPhotoData(url=url) for url in place.get("imageUrls", [])[:_PHOTO_CAP]]
+
+    def _parse_images_array(self, images: list[dict[str, Any]]) -> list[ScrapedPhotoData]:
+        """Parse rich images[] objects, filter by age, cap, sort by recency."""
+        now = datetime.now(UTC)
+        cutoff = now - _PHOTO_MAX_AGE
+        photos: list[ScrapedPhotoData] = []
+
+        for img in images:
+            url = img.get("imageUrl")
+            if not url:
+                continue
+            uploaded_at = None
+            raw_date = img.get("uploadedAt")
+            if raw_date:
+                with contextlib.suppress(ValueError, AttributeError):
+                    uploaded_at = datetime.fromisoformat(raw_date.replace("Z", "+00:00"))
+            # Age filter: skip old photos (only when we have a date)
+            if uploaded_at and uploaded_at < cutoff:
+                continue
+            photos.append(ScrapedPhotoData(url=url, uploaded_at=uploaded_at))
+
+        # Sort by recency (newest first); photos without dates go last
+        photos.sort(key=lambda p: p.uploaded_at or datetime.min.replace(tzinfo=UTC), reverse=True)
+        return photos[:_PHOTO_CAP]
 
     async def _run_actor(self, run_input: dict[str, Any]) -> list[dict[str, Any]]:
         """Run Apify actor synchronously in a thread pool (client is sync)."""

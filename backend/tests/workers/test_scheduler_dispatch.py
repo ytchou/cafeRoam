@@ -46,3 +46,21 @@ async def test_dispatch_routes_publish_shop_to_handler():
     with patch("workers.scheduler.handle_publish_shop", new_callable=AsyncMock) as mock_handler:
         await _dispatch_job(job, MagicMock(), MagicMock())
         mock_handler.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_dispatch_classify_shop_photos():
+    """CLASSIFY_SHOP_PHOTOS jobs are dispatched to the classification handler."""
+    job = _make_job(JobType.CLASSIFY_SHOP_PHOTOS, {"shop_id": "shop-01"})
+
+    with (
+        patch("workers.scheduler.get_llm_provider") as mock_get_llm,
+        patch(
+            "workers.scheduler.handle_classify_shop_photos", new_callable=AsyncMock
+        ) as mock_handler,
+    ):
+        mock_get_llm.return_value = MagicMock()
+        await _dispatch_job(job, MagicMock(), MagicMock())
+
+    mock_handler.assert_called_once()
+    assert mock_handler.call_args.kwargs["payload"]["shop_id"] == "shop-01"

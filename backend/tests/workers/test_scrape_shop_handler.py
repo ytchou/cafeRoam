@@ -2,7 +2,8 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from providers.scraper.interface import ScrapedShopData
+from models.types import JobType
+from providers.scraper.interface import ScrapedPhotoData, ScrapedShopData
 from workers.handlers.scrape_shop import handle_scrape_shop
 
 
@@ -43,7 +44,7 @@ def scraped_data():
         reviews=[
             {"text": "Great coffee", "stars": 5, "published_at": "2026-01-01"},
         ],
-        photo_urls=["https://img1.jpg"],
+        photos=[ScrapedPhotoData(url="https://img1.jpg")],
     )
 
 
@@ -56,10 +57,13 @@ async def test_scrape_shop_success(mock_db, mock_scraper, mock_queue, scraped_da
 
     # Should update shop with scraped data
     mock_db.table.assert_any_call("shops")
-    # Should queue ENRICH_SHOP
-    mock_queue.enqueue.assert_called_once()
-    enqueue_call = mock_queue.enqueue.call_args
-    assert enqueue_call.kwargs["job_type"].value == "enrich_shop"
+    # Should queue ENRICH_SHOP (CLASSIFY_SHOP_PHOTOS may also be enqueued for photos)
+    enrich_calls = [
+        c
+        for c in mock_queue.enqueue.call_args_list
+        if c.kwargs.get("job_type") == JobType.ENRICH_SHOP
+    ]
+    assert len(enrich_calls) == 1
 
 
 @pytest.mark.asyncio

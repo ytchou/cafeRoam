@@ -388,6 +388,12 @@ class EmailSendResult(BaseModel):
 CHECKIN_MIN_TEXT_LENGTH: int = 15
 
 
+class PhotoCategory(StrEnum):
+    MENU = "MENU"
+    VIBE = "VIBE"
+    SKIP = "SKIP"
+
+
 class JobType(StrEnum):
     ENRICH_SHOP = "enrich_shop"
     ENRICH_MENU_PHOTO = "enrich_menu_photo"
@@ -399,6 +405,7 @@ class JobType(StrEnum):
     SCRAPE_BATCH = "scrape_batch"
     PUBLISH_SHOP = "publish_shop"
     ADMIN_DIGEST_EMAIL = "admin_digest_email"
+    CLASSIFY_SHOP_PHOTOS = "classify_shop_photos"
 
 
 class JobStatus(StrEnum):

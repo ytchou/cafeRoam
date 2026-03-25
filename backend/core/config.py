@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     llm_provider: str = "anthropic"
     anthropic_api_key: str = ""
     anthropic_model: str = "claude-sonnet-4-6"
+    anthropic_classify_model: str = "claude-haiku-4-5-20251001"
 
     # Embeddings
     embeddings_provider: str = "openai"

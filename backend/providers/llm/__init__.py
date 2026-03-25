@@ -11,6 +11,7 @@ def get_llm_provider(taxonomy: list[TaxonomyTag] | None = None) -> LLMProvider:
             return AnthropicLLMAdapter(
                 api_key=settings.anthropic_api_key,
                 model=settings.anthropic_model,
+                classify_model=settings.anthropic_classify_model,
                 taxonomy=taxonomy or [],
             )
         case _:

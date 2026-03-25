@@ -7,6 +7,7 @@ from core.tarot_vocabulary import TAROT_TITLES, TITLE_TO_TAGS
 from models.types import (
     EnrichmentResult,
     MenuExtractionResult,
+    PhotoCategory,
     ShopEnrichmentInput,
     ShopModeScores,
     TarotEnrichmentResult,
@@ -102,6 +103,26 @@ ASSIGN_TAROT_TOOL = {
     },
 }
 
+CLASSIFY_PHOTO_TOOL = {
+    "name": "classify_photo",
+    "description": "Classify a coffee shop photo into one category.",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "category": {
+                "type": "string",
+                "enum": ["MENU", "VIBE", "SKIP"],
+                "description": (
+                    "MENU: photo contains readable menu board, price list, or drink list text. "
+                    "VIBE: photo shows shop ambience, interior, exterior, or food/drinks. "
+                    "SKIP: photo is blurry, irrelevant, or primarily shows people."
+                ),
+            },
+        },
+        "required": ["category"],
+    },
+}
+
 TAROT_SYSTEM_PROMPT = (
     "You are a mystical coffee guide who assigns tarot archetype names to cafes. "
     "Based on the shop's characteristics and reviews, pick the single best-fitting "
@@ -134,9 +155,16 @@ MODE_SCORES: dict[str, ShopModeScores] = {
 
 
 class AnthropicLLMAdapter:
-    def __init__(self, api_key: str, model: str, taxonomy: list[TaxonomyTag]):
+    def __init__(
+        self,
+        api_key: str,
+        model: str,
+        taxonomy: list[TaxonomyTag],
+        classify_model: str,
+    ):
         self._client = AsyncAnthropic(api_key=api_key)
         self._model = model
+        self._classify_model = classify_model
         self._taxonomy = taxonomy
         self._taxonomy_by_id: dict[str, TaxonomyTag] = {tag.id: tag for tag in taxonomy}
 
@@ -215,6 +243,38 @@ class AnthropicLLMAdapter:
         validated_title = title if title in TAROT_TITLES else None
 
         return TarotEnrichmentResult(tarot_title=validated_title, flavor_text=flavor)
+
+    async def classify_photo(self, image_url: str) -> PhotoCategory:
+        response = await self._client.messages.create(
+            model=self._classify_model,
+            max_tokens=128,
+            messages=[
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "image",
+                            "source": {"type": "url", "url": image_url},
+                        },
+                        {
+                            "type": "text",
+                            "text": (
+                                "Classify this coffee shop photo. "
+                                "If both MENU and VIBE apply, choose MENU."
+                            ),
+                        },
+                    ],
+                }
+            ],
+            tools=[CLASSIFY_PHOTO_TOOL],
+            tool_choice={"type": "tool", "name": "classify_photo"},
+        )
+
+        tool_input = self._extract_tool_input(response, "classify_photo")
+        raw_category = tool_input.get("category")
+        if not raw_category:
+            raise ValueError(f"classify_photo tool response missing 'category' key: {tool_input!r}")
+        return PhotoCategory(raw_category)
 
     def _build_enrich_prompt(self, shop: ShopEnrichmentInput) -> str:
         lines = [
