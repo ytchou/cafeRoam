@@ -1556,7 +1556,7 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 
 **Chunk 4 — Verification (Wave 4):**
 
-- [ ] Full test suite + coverage gate pass (Task 9)
+- [x] Full test suite + coverage gate pass (Task 9)
 
 ---
 
