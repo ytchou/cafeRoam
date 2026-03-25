@@ -1,5 +1,6 @@
 from unittest.mock import MagicMock, patch
 
+import pytest
 from fastapi.testclient import TestClient
 
 from main import app
@@ -212,3 +213,74 @@ class TestShopsAPI:
         # The chain must have had .eq("processing_status", "live") applied
         chain.eq.assert_any_call("processing_status", "live")
         chain.limit.assert_called()
+
+
+@pytest.fixture
+def mock_shop_row():
+    """Realistic shop row as returned by Supabase."""
+    return {
+        "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+        "name": "Café Flâneur",
+        "slug": "cafe-flaneur",
+        "address": "台北市大安區復興南路一段219巷18號",
+        "city": "Taipei",
+        "mrt": "大安站",
+        "latitude": 25.0339,
+        "longitude": 121.5436,
+        "rating": 4.5,
+        "review_count": 42,
+        "description": "A quiet corner for deep work and pour-over coffee.",
+        "processing_status": "live",
+        "mode_work": 0.85,
+        "mode_rest": 0.60,
+        "mode_social": 0.40,
+        "created_at": "2026-01-15T10:00:00+00:00",
+        "phone": "+886-2-2700-1234",
+        "website": "https://cafeflaneur.tw",
+        "opening_hours": {"Mon": "08:00-18:00", "Tue": "08:00-18:00"},
+        "price_range": "$$",
+        "updated_at": "2026-03-20T14:30:00+00:00",
+        "shop_photos": [{"url": "https://storage.example.com/photo1.jpg"}],
+        "shop_tags": [
+            {
+                "tag_id": "laptop_friendly",
+                "taxonomy_tags": {
+                    "id": "laptop_friendly",
+                    "dimension": "functionality",
+                    "label": "Laptop Friendly",
+                    "label_zh": "適合帶筆電",
+                },
+            }
+        ],
+    }
+
+
+class TestGetShopSeoFields:
+    """GET /shops/{shop_id} returns SEO-enrichment fields."""
+
+    @patch("api.shops.get_anon_client")
+    def test_shop_response_includes_seo_fields(
+        self, mock_get_client: MagicMock, mock_shop_row: dict
+    ):
+        """When fetching a shop, response includes phone, website, openingHours, priceRange, and updatedAt for JSON-LD."""
+        mock_db = MagicMock()
+        mock_get_client.return_value = mock_db
+        mock_db.table.return_value.select.return_value.eq.return_value.limit.return_value.execute.return_value = MagicMock(
+            data=[mock_shop_row]
+        )
+
+        response = client.get(f"/shops/{mock_shop_row['id']}")
+        assert response.status_code == 200
+        data = response.json()
+
+        # New SEO fields
+        assert data["phone"] == "+886-2-2700-1234"
+        assert data["website"] == "https://cafeflaneur.tw"
+        assert data["openingHours"] == {"Mon": "08:00-18:00", "Tue": "08:00-18:00"}
+        assert data["priceRange"] == "$$"
+        assert data["updatedAt"] == "2026-03-20T14:30:00+00:00"
+
+        # Existing fields still present
+        assert data["name"] == "Café Flâneur"
+        assert data["modeScores"]["work"] == 0.85
+        assert len(data["taxonomyTags"]) == 1

@@ -94,20 +94,34 @@ These will NOT be built in V1. Any scope change requires an explicit decision an
 
 ## 8. Monetization & Business Model
 
-**Model:** Free for users, monetize supply side. $0 revenue target for first 6 months.
+**Model:** Phased marketplace monetization — build demand first, then monetize both user and supply sides.
 
-**Pricing tiers:**
+| Phase | Timeline | Trigger | Revenue source |
+| ----- | --------- | ------- | -------------- |
+| Phase 1: Free | Launch → month 2-3 | N/A | NT$0 |
+| Phase 2: User membership | Month 2-3+ | 100+ WAU AND 20%+ of free users hitting feature caps | User subscriptions |
+| Phase 3: Supply-side | Month 3-6+ | Inbound "Claim this page" signal + shop traffic is demonstrable | Shop sponsorships |
 
-| Tier             | Price           | What's included                                                         |
-| ---------------- | --------------- | ----------------------------------------------------------------------- |
-| User — Free      | $0              | Full directory, semantic search (auth-gated), lists, check-ins, profile |
-| Shop — Basic     | Free            | Auto-listed from data pipeline                                          |
-| Shop — Sponsored | NT$500-1,000/mo | Featured placement in search results (Phase 2, 6+ months)               |
-| Shop — Premium   | NT$300-1,000/mo | Analytics, menu management, review response (Year 2)                    |
+**User pricing tiers:**
 
-**Cost structure (rough):** Railway ~$5/mo, Supabase Free → Pro $25/mo, Apify ~$10-30/mo (scraping), Claude Haiku ~$5-20/mo (enrichment), OpenAI embeddings ~$2-5/mo. Total: ~$50-80/month at launch.
+| Tier | Price | What's included |
+| ---- | ----- | --------------- |
+| Unauthenticated | Free | Directory, map, shop detail (aggregate data only — no reviews/check-in depth) |
+| Free (auth-user) | $0 | Full directory + shop detail, 5 AI searches/day, 3 lists, unlimited check-ins, 10-15 community feed/day |
+| Member | NT$59/mo or NT$449/yr | Unlimited AI search, unlimited lists, full community feed, list export, personalized recs, member badge |
 
-**Unit economics:** CAC ~$0 (organic Threads). LTV unknown until retention proven. Target 1,000 WAU before monetization.
+**Shop tiers:**
+
+| Tier | Price | What's included |
+| ---- | ----- | --------------- |
+| Unclaimed | Free | Auto-listed from data pipeline. "Claim this page" badge visible. |
+| Claimed | Free | Owner-verified: update info, basic analytics, review responses, Verified badge |
+| Sponsored | NT$500-1,000/mo | Featured in search results, highlighted in directory *(Phase 3, details: DEV-35)* |
+| Premium | NT$300-1,000/mo | Full analytics, menu management, event posts *(Phase 3, details: DEV-35)* |
+
+**Cost structure (rough):** Railway ~$5/mo, Supabase Free → Pro $25/mo, Apify ~$10-30/mo (scraping), Claude Haiku ~$5-20/mo (enrichment), OpenAI embeddings ~$2-5/mo. Total: ~NT$1,500-2,400/month at launch.
+
+**Unit economics:** CAC ~$0 (organic Threads). Break-even: ~25-40 paid members. Lifestyle ceiling: NT$50,000-100,000/month (from ASSUMPTIONS.md). LTV unknown until retention proven.
 
 ---
 
@@ -133,6 +147,8 @@ These will NOT be built in V1. Any scope change requires an explicit decision an
 - Check-in rate: 20%+ of logged-in users check in at least once per month
 - Email open rate: 30%+ (industry average 20%)
 - Week-4 retention: 40%+ of week-1 users return by week 4
+- Membership conversion rate: 3-5% of WAU on paid tier (Phase 2 health signal)
+- Feature cap hit rate: 20%+ of free users hitting search or feed caps (Phase 2 launch trigger)
 
 **Minimum Lovable Product threshold:** 20 of 30 beta users say "this is better than anything I've used to find coffee shops in Taiwan."
 

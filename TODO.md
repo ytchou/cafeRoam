@@ -1578,19 +1578,19 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 
 **Phase 1 — Technical Foundation:**
 
-- [ ] Backend: expose phone, website, hours, price in shop endpoint
-- [ ] robots.ts with AI bot allowances
-- [ ] Dynamic sitemap.ts for all live shops
-- [ ] llms.txt route handler for AI crawlers
-- [ ] JSON-LD base component
-- [ ] FAQ generation from taxonomy data
-- [ ] ShopJsonLd (CafeOrCoffeeShop + FAQPage schema)
-- [ ] WebsiteJsonLd (SearchAction schema)
-- [ ] Enhanced root layout metadata (metadataBase, OG, Twitter)
-- [ ] Integrate JSON-LD into shop detail page
-- [ ] Integrate JSON-LD into homepage
-- [ ] Explore + vibes page metadata
-- [ ] Verification & lint pass
+- [x] Backend: expose phone, website, hours, price in shop endpoint
+- [x] robots.ts with AI bot allowances
+- [x] Dynamic sitemap.ts for all live shops
+- [x] llms.txt route handler for AI crawlers
+- [x] JSON-LD base component
+- [x] FAQ generation from taxonomy data
+- [x] ShopJsonLd (CafeOrCoffeeShop + FAQPage schema)
+- [x] WebsiteJsonLd (SearchAction schema)
+- [x] Enhanced root layout metadata (metadataBase, OG, Twitter)
+- [x] Integrate JSON-LD into shop detail page
+- [x] Integrate JSON-LD into homepage
+- [x] Explore + vibes page metadata
+- [x] Verification & lint pass
 
 **Phase 2 — Content Flywheel (future ticket):**
 
