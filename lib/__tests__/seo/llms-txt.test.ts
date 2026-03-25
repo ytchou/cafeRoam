@@ -5,7 +5,9 @@ describe('llms.txt route', () => {
     const { GET } = await import('@/app/llms.txt/route');
     const response = await GET();
 
-    expect(response.headers.get('content-type')).toBe('text/plain; charset=utf-8');
+    expect(response.headers.get('content-type')).toBe(
+      'text/plain; charset=utf-8'
+    );
 
     const text = await response.text();
 

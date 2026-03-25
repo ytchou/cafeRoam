@@ -8,7 +8,11 @@ export function JsonLd({ data }: JsonLdProps) {
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(data).replace(/<\//g, '<\\/') }}
+      // nosemgrep: typescript.react.security.audit.react-dangerouslysetinnerhtml.react-dangerouslysetinnerhtml
+      // JSON-LD requires dangerouslySetInnerHTML. XSS prevented by escaping </
+      dangerouslySetInnerHTML={{
+        __html: JSON.stringify(data).replace(/<\//g, '<\\/'),
+      }}
     />
   );
 }

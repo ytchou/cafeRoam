@@ -1549,6 +1549,7 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 > **Plan:** [docs/plans/2026-03-25-seo-geo-optimization-plan.md](docs/plans/2026-03-25-seo-geo-optimization-plan.md)
 
 **Phase 1 — Technical Foundation:**
+
 - [x] Backend: expose phone, website, hours, price in shop endpoint
 - [x] robots.ts with AI bot allowances
 - [x] Dynamic sitemap.ts for all live shops
@@ -1564,8 +1565,10 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 - [x] Verification & lint pass
 
 **Phase 2 — Content Flywheel (future ticket):**
+
 - [ ] Auto-generated landing pages per district/intent
 - [ ] Freshness signals on shop pages
 
 **Phase 3 — Authority (future):**
+
 - [ ] Blog outreach to Taipei lifestyle/food blogs

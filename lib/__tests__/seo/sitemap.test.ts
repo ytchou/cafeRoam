@@ -31,8 +31,16 @@ describe('sitemap generation', () => {
   it('when the sitemap is requested, it includes static pages, vibe pages, and all live shop URLs', async () => {
     mockShopsExecute.mockResolvedValue({
       data: [
-        { id: 'shop-1', slug: 'cafe-flaneur', updated_at: '2026-03-20T14:30:00Z' },
-        { id: 'shop-2', slug: 'beans-and-leaves', updated_at: '2026-03-18T10:00:00Z' },
+        {
+          id: 'shop-1',
+          slug: 'cafe-flaneur',
+          updated_at: '2026-03-20T14:30:00Z',
+        },
+        {
+          id: 'shop-2',
+          slug: 'beans-and-leaves',
+          updated_at: '2026-03-18T10:00:00Z',
+        },
       ],
       error: null,
     });

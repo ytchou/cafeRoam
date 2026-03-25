@@ -5,7 +5,9 @@ import { WebsiteJsonLd } from '../WebsiteJsonLd';
 describe('WebsiteJsonLd', () => {
   it('renders WebSite schema with SearchAction', () => {
     const { container } = render(<WebsiteJsonLd />);
-    const script = container.querySelector('script[type="application/ld+json"]');
+    const script = container.querySelector(
+      'script[type="application/ld+json"]'
+    );
     expect(script).not.toBeNull();
 
     const data = JSON.parse(script!.textContent!);

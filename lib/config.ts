@@ -1,1 +1,2 @@
-export const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://caferoam.tw';
+export const BASE_URL =
+  process.env.NEXT_PUBLIC_APP_URL ?? 'https://caferoam.tw';

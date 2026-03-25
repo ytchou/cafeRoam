@@ -6,12 +6,27 @@ describe('generateShopFaq', () => {
     name: 'Café Flâneur',
     address: '台北市大安區復興南路一段219巷18號',
     mrt: '大安站',
-    modeScores: { work: 0.85, rest: 0.60, social: 0.40 },
+    modeScores: { work: 0.85, rest: 0.6, social: 0.4 },
     taxonomyTags: [
-      { id: 'laptop_friendly', dimension: 'functionality', label: 'Laptop Friendly', labelZh: '適合帶筆電' },
+      {
+        id: 'laptop_friendly',
+        dimension: 'functionality',
+        label: 'Laptop Friendly',
+        labelZh: '適合帶筆電',
+      },
       { id: 'quiet', dimension: 'ambience', label: 'Quiet', labelZh: '安靜' },
-      { id: 'pour_over', dimension: 'coffee', label: 'Pour Over', labelZh: '手沖咖啡' },
-      { id: 'deep_work', dimension: 'mode', label: 'Deep Work', labelZh: '深度工作' },
+      {
+        id: 'pour_over',
+        dimension: 'coffee',
+        label: 'Pour Over',
+        labelZh: '手沖咖啡',
+      },
+      {
+        id: 'deep_work',
+        dimension: 'mode',
+        label: 'Deep Work',
+        labelZh: '深度工作',
+      },
     ],
     openingHours: { Mon: '08:00-18:00', Tue: '08:00-18:00' },
   };
@@ -48,7 +63,9 @@ describe('generateShopFaq', () => {
   it('skips coffee FAQ when no coffee tags', () => {
     const shopNoCoffee = {
       ...baseShop,
-      taxonomyTags: baseShop.taxonomyTags.filter((t) => t.dimension !== 'coffee'),
+      taxonomyTags: baseShop.taxonomyTags.filter(
+        (t) => t.dimension !== 'coffee'
+      ),
     };
     const faq = generateShopFaq(shopNoCoffee);
     const coffeeQuestion = faq.find((q) => q.question.includes('coffee'));

@@ -2,7 +2,11 @@ export interface ShopForFaq {
   name: string;
   address?: string;
   mrt?: string | null;
-  modeScores?: { work?: number | null; rest?: number | null; social?: number | null } | null;
+  modeScores?: {
+    work?: number | null;
+    rest?: number | null;
+    social?: number | null;
+  } | null;
   taxonomyTags?: Array<{
     id: string;
     dimension: string;
@@ -34,9 +38,15 @@ export function generateShopFaq(shop: ShopForFaq): FaqEntry[] {
   // 1. Remote work suitability (always include — core CafeRoam value prop)
   const workScore = shop.modeScores?.work;
   const funcTags = byDimension.get('functionality') ?? [];
-  const workTags = funcTags.length > 0 ? funcTags.join(', ') : 'a comfortable workspace';
+  const workTags =
+    funcTags.length > 0 ? funcTags.join(', ') : 'a comfortable workspace';
   if (workScore !== null && workScore !== undefined) {
-    const suitability = workScore >= 0.7 ? 'highly suitable' : workScore >= 0.4 ? 'suitable' : 'not ideal';
+    const suitability =
+      workScore >= 0.7
+        ? 'highly suitable'
+        : workScore >= 0.4
+          ? 'suitable'
+          : 'not ideal';
     faq.push({
       question: `Is ${shop.name} good for remote work?`,
       answer: `${shop.name} is ${suitability} for remote work. Features include: ${workTags}.`,

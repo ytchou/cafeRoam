@@ -18,7 +18,7 @@ const shop = {
   website: 'https://cafeflaneur.tw',
   openingHours: { Mon: '08:00-18:00' },
   priceRange: '$$',
-  modeScores: { work: 0.85, rest: 0.60, social: 0.40 },
+  modeScores: { work: 0.85, rest: 0.6, social: 0.4 },
   taxonomyTags: [
     { id: 'quiet', dimension: 'ambience', label: 'Quiet', labelZh: '安靜' },
   ],
@@ -27,7 +27,9 @@ const shop = {
 describe('ShopJsonLd', () => {
   it('renders CafeOrCoffeeShop JSON-LD with correct schema', () => {
     const { container } = render(<ShopJsonLd shop={shop} />);
-    const scripts = container.querySelectorAll('script[type="application/ld+json"]');
+    const scripts = container.querySelectorAll(
+      'script[type="application/ld+json"]'
+    );
 
     // Should have 2 scripts: CafeOrCoffeeShop + FAQPage
     expect(scripts.length).toBe(2);
@@ -44,7 +46,9 @@ describe('ShopJsonLd', () => {
 
   it('renders FAQPage JSON-LD with generated questions', () => {
     const { container } = render(<ShopJsonLd shop={shop} />);
-    const scripts = container.querySelectorAll('script[type="application/ld+json"]');
+    const scripts = container.querySelectorAll(
+      'script[type="application/ld+json"]'
+    );
     const faqSchema = JSON.parse(scripts[1].textContent!);
 
     expect(faqSchema['@type']).toBe('FAQPage');
@@ -63,7 +67,9 @@ describe('ShopJsonLd', () => {
     };
 
     const { container } = render(<ShopJsonLd shop={minimalShop} />);
-    const scripts = container.querySelectorAll('script[type="application/ld+json"]');
+    const scripts = container.querySelectorAll(
+      'script[type="application/ld+json"]'
+    );
     const shopSchema = JSON.parse(scripts[0].textContent!);
 
     expect(shopSchema.telephone).toBeUndefined();

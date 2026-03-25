@@ -11,14 +11,18 @@ describe('JsonLd component', () => {
     };
 
     const { container } = render(<JsonLd data={data} />);
-    const script = container.querySelector('script[type="application/ld+json"]');
+    const script = container.querySelector(
+      'script[type="application/ld+json"]'
+    );
     expect(script).not.toBeNull();
     expect(JSON.parse(script!.textContent!)).toEqual(data);
   });
 
   it('does not render when data is null', () => {
     const { container } = render(<JsonLd data={null} />);
-    const script = container.querySelector('script[type="application/ld+json"]');
+    const script = container.querySelector(
+      'script[type="application/ld+json"]'
+    );
     expect(script).toBeNull();
   });
 
@@ -30,7 +34,9 @@ describe('JsonLd component', () => {
     };
 
     const { container } = render(<JsonLd data={data} />);
-    const script = container.querySelector('script[type="application/ld+json"]');
+    const script = container.querySelector(
+      'script[type="application/ld+json"]'
+    );
     expect(script).not.toBeNull();
     expect(script!.innerHTML).not.toContain('</script>');
     expect(JSON.parse(script!.innerHTML)).toEqual(data);

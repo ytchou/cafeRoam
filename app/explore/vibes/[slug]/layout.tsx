@@ -5,6 +5,10 @@ export const metadata: Metadata = {
   description: '依氛圍標籤探索台灣最具特色的獨立咖啡廳。',
 };
 
-export default function VibesLayout({ children }: { children: React.ReactNode }) {
+export default function VibesLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return children;
 }

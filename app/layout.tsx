@@ -45,7 +45,9 @@ const bricolageGrotesque = Bricolage_Grotesque({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? 'https://caferoam.tw'),
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_APP_URL ?? 'https://caferoam.tw'
+  ),
   title: {
     default: 'CafeRoam 啡遊 — 探索台灣精品咖啡廳',
     template: '%s — 啡遊',

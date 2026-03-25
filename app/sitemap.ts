@@ -5,15 +5,17 @@ import { BASE_URL } from '@/lib/config';
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const supabase = createAnonClient();
 
-  const [{ data: shops, error: shopsError }, { data: vibes, error: vibesError }] =
-    await Promise.all([
-      supabase
-        .from('shops')
-        .select('id, slug, updated_at')
-        .eq('processing_status', 'live')
-        .limit(5000),
-      supabase.from('vibe_collections').select('slug'),
-    ]);
+  const [
+    { data: shops, error: shopsError },
+    { data: vibes, error: vibesError },
+  ] = await Promise.all([
+    supabase
+      .from('shops')
+      .select('id, slug, updated_at')
+      .eq('processing_status', 'live')
+      .limit(5000),
+    supabase.from('vibe_collections').select('slug'),
+  ]);
 
   if (shopsError) {
     console.error('[sitemap] Failed to fetch shops:', shopsError.message);

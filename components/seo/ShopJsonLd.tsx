@@ -60,12 +60,14 @@ export function ShopJsonLd({ shop }: ShopJsonLdProps) {
     ...(shop.priceRange && { priceRange: shop.priceRange }),
     ...(shop.openingHours &&
       Object.keys(shop.openingHours).length > 0 && {
-        openingHoursSpecification: Object.entries(shop.openingHours).map(([day, hours]) => ({
-          '@type': 'OpeningHoursSpecification',
-          dayOfWeek: `https://schema.org/${day}`,
-          opens: hours.split('–')[0]?.trim(),
-          closes: hours.split('–')[1]?.trim(),
-        })),
+        openingHoursSpecification: Object.entries(shop.openingHours).map(
+          ([day, hours]) => ({
+            '@type': 'OpeningHoursSpecification',
+            dayOfWeek: `https://schema.org/${day}`,
+            opens: hours.split('–')[0]?.trim(),
+            closes: hours.split('–')[1]?.trim(),
+          })
+        ),
       }),
   };
 
