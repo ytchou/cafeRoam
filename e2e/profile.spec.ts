@@ -52,9 +52,100 @@ test.describe('@critical J15 — Account deletion: request → grace period stat
 // --- Phase 2 stubs ---
 
 test.describe('J25 — Display name update', () => {
-  test.fixme('changing display name in settings reflects on profile page', async () => {});
+  test('changing display name in settings reflects on profile page', async ({
+    authedPage: page,
+  }) => {
+    await page.goto('/settings');
+    await page.waitForLoadState('networkidle');
+
+    const displayNameInput = page.locator('#display-name');
+    await expect(displayNameInput).toBeVisible({ timeout: 10_000 });
+
+    // Fill with a unique timestamp-based name (max 30 chars)
+    const newName = `林小雨 ${Date.now()}`.slice(0, 30);
+    await displayNameInput.fill(newName);
+
+    const saveButton = page.getByRole('button', { name: /Save changes/i });
+    await saveButton.click();
+
+    // Success message confirms the save
+    await expect(page.getByText(/Profile updated!/i)).toBeVisible({
+      timeout: 10_000,
+    });
+
+    // Navigate to profile and verify the new name is shown
+    await page.goto('/profile');
+    await page.waitForLoadState('networkidle');
+
+    await expect(page.getByText(newName)).toBeVisible({ timeout: 10_000 });
+  });
 });
 
-test.describe('J38 — Account deletion: cancel during grace period', () => {
-  test.fixme('a user in the 30-day grace period can cancel deletion from the recovery page', async () => {});
+test.describe
+  .serial('@critical J38 — Account deletion: cancel during grace period', () => {
+  test('a user in the 30-day grace period can cancel deletion from the recovery page', async ({
+    authedPage: page,
+  }) => {
+    // Step 1: Navigate to settings and initiate account deletion
+    await page.goto('/settings');
+    await page.waitForLoadState('networkidle');
+
+    const deleteButton = page.getByRole('button', {
+      name: /delete account|刪除帳號/i,
+    });
+    await expect(deleteButton).toBeVisible({ timeout: 10_000 });
+    await deleteButton.click();
+
+    // Step 2: Type "DELETE" in the confirmation input
+    const confirmInput = page.getByPlaceholder('Type DELETE');
+    await expect(confirmInput).toBeVisible({ timeout: 5_000 });
+    await confirmInput.fill('DELETE');
+
+    // Step 3: Click "Confirm Delete"
+    const confirmButton = page.getByRole('button', { name: /Confirm Delete/i });
+    await expect(confirmButton).toBeEnabled();
+    await confirmButton.click();
+
+    // Recovery guard: if any step below fails after deletion is initiated, always attempt
+    // to cancel so the shared test account is not left in a grace-period state.
+    try {
+      // Step 4: Wait for deletion to process — should show grace period messaging
+      // The page may redirect or show a confirmation
+      await expect(
+        page.getByText(
+          /30.*(day|天)|grace period|scheduled for deletion|即將刪除/i
+        )
+      ).toBeVisible({ timeout: 10_000 });
+
+      // Step 5: Navigate to recovery page and cancel
+      await page.goto('/account/recover');
+      await page.waitForLoadState('networkidle');
+
+      const cancelButton = page.getByRole('button', {
+        name: /Cancel Deletion|取消刪除/i,
+      });
+      await expect(cancelButton).toBeVisible({ timeout: 10_000 });
+      await cancelButton.click();
+
+      // Step 6: Should redirect to home after cancellation
+      await page.waitForURL('/', { timeout: 15_000 });
+      expect(page.url()).toMatch(/\/$/);
+
+      // Step 7: Verify account is restored — profile page loads normally
+      await page.goto('/profile');
+      await page.waitForLoadState('networkidle');
+      await expect(
+        page.locator('[data-testid="profile-header"], header').first()
+      ).toBeVisible({ timeout: 10_000 });
+    } catch (err) {
+      // Best-effort recovery: navigate to /account/recover and cancel deletion
+      // to prevent the shared test account from being left in a corrupted state.
+      await page.goto('/account/recover').catch(() => null);
+      await page
+        .getByRole('button', { name: /Cancel Deletion|取消刪除/i })
+        .click({ timeout: 10_000 })
+        .catch(() => null);
+      throw err;
+    }
+  });
 });
