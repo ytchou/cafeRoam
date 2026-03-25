@@ -23,6 +23,7 @@ from workers.handlers.reembed_reviewed_shops import handle_reembed_reviewed_shop
 from workers.handlers.scrape_batch import handle_scrape_batch
 from workers.handlers.scrape_shop import handle_scrape_shop
 from workers.handlers.staleness_sweep import handle_smart_staleness_sweep
+from workers.handlers.summarize_reviews import handle_summarize_reviews
 from workers.handlers.weekly_email import handle_weekly_email
 from workers.queue import JobQueue
 
@@ -139,6 +140,14 @@ async def _dispatch_job(job: Job, db: Client, queue: JobQueue) -> None:
         case JobType.CLASSIFY_SHOP_PHOTOS:
             llm = get_llm_provider()
             await handle_classify_shop_photos(
+                payload=job.payload,
+                db=db,
+                llm=llm,
+                queue=queue,
+            )
+        case JobType.SUMMARIZE_REVIEWS:
+            llm = get_llm_provider()
+            await handle_summarize_reviews(
                 payload=job.payload,
                 db=db,
                 llm=llm,

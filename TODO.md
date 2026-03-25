@@ -1551,8 +1551,8 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 
 **Chunk 3 — Wiring + Script (Wave 3):**
 
-- [ ] Scheduler dispatch for SUMMARIZE_REVIEWS (Task 7)
-- [ ] Backfill script for 164 live shops (Task 8)
+- [x] Scheduler dispatch for SUMMARIZE_REVIEWS (Task 7)
+- [x] Backfill script for 164 live shops (Task 8)
 
 **Chunk 4 — Verification (Wave 4):**
 
