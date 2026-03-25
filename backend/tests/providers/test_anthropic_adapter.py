@@ -46,6 +46,7 @@ class TestAnthropicEnrichShop:
         return AnthropicLLMAdapter(
             api_key="test-key",
             model="claude-sonnet-4-6",
+            classify_model="claude-haiku-4-5-20251001",
             taxonomy=SAMPLE_TAXONOMY,
         )
 
@@ -270,6 +271,7 @@ class TestAnthropicExtractMenuData:
         return AnthropicLLMAdapter(
             api_key="test-key",
             model="claude-sonnet-4-6",
+            classify_model="claude-haiku-4-5-20251001",
             taxonomy=SAMPLE_TAXONOMY,
         )
 
