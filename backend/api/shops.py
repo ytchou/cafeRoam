@@ -27,7 +27,9 @@ def _extract_display_name(row: dict[str, Any]) -> str | None:
 _SHOP_COLUMNS = (
     "id, name, slug, address, city, mrt, latitude, longitude, "
     "rating, review_count, description, processing_status, "
-    "mode_work, mode_rest, mode_social, created_at"
+    "mode_work, mode_rest, mode_social, "
+    "phone, website, opening_hours, price_range, "
+    "created_at, updated_at"
 )
 
 

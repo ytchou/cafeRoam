@@ -1549,7 +1549,7 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 > **Plan:** [docs/plans/2026-03-25-seo-geo-optimization-plan.md](docs/plans/2026-03-25-seo-geo-optimization-plan.md)
 
 **Phase 1 — Technical Foundation:**
-- [ ] Backend: expose phone, website, hours, price in shop endpoint
+- [x] Backend: expose phone, website, hours, price in shop endpoint
 - [ ] robots.ts with AI bot allowances
 - [ ] Dynamic sitemap.ts for all live shops
 - [ ] llms.txt route handler for AI crawlers
