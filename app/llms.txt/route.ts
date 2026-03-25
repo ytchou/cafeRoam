@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://caferoam.tw';
+import { BASE_URL } from '@/lib/config';
 
 const LLMS_TXT = `# CafeRoam 啡遊
 > Discover Taiwan's best independent coffee shops with AI-powered semantic search.

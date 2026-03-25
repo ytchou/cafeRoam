@@ -1,32 +1,21 @@
 import { JsonLd } from './JsonLd';
-import { generateShopFaq } from './generateShopFaq';
-
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://caferoam.tw';
+import { generateShopFaq, type ShopForFaq } from './generateShopFaq';
+import { BASE_URL } from '@/lib/config';
 
 interface ShopJsonLdProps {
-  shop: {
+  shop: ShopForFaq & {
     id: string;
-    name: string;
     slug?: string | null;
     description?: string | null;
-    address?: string;
     latitude?: number | null;
     longitude?: number | null;
-    mrt?: string | null;
     rating?: number | null;
     reviewCount?: number;
     photoUrls?: string[];
     phone?: string | null;
     website?: string | null;
-    openingHours?: Record<string, string> | null;
     priceRange?: string | null;
-    modeScores?: { work?: number | null; rest?: number | null; social?: number | null } | null;
-    taxonomyTags?: Array<{
-      id: string;
-      dimension: string;
-      label: string;
-      labelZh: string;
-    }>;
+    city?: string | null;
   };
 }
 
@@ -44,6 +33,7 @@ export function ShopJsonLd({ shop }: ShopJsonLdProps) {
       address: {
         '@type': 'PostalAddress',
         streetAddress: shop.address,
+        ...(shop.city && { addressLocality: shop.city }),
         addressCountry: 'TW',
       },
     }),
@@ -68,6 +58,15 @@ export function ShopJsonLd({ shop }: ShopJsonLdProps) {
     ...(shop.phone && { telephone: shop.phone }),
     ...(shop.website && { sameAs: shop.website }),
     ...(shop.priceRange && { priceRange: shop.priceRange }),
+    ...(shop.openingHours &&
+      Object.keys(shop.openingHours).length > 0 && {
+        openingHoursSpecification: Object.entries(shop.openingHours).map(([day, hours]) => ({
+          '@type': 'OpeningHoursSpecification',
+          dayOfWeek: `https://schema.org/${day}`,
+          opens: hours.split('–')[0]?.trim(),
+          closes: hours.split('–')[1]?.trim(),
+        })),
+      }),
   };
 
   // Generate FAQ from taxonomy data

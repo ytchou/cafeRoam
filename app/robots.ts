@@ -1,6 +1,5 @@
 import type { MetadataRoute } from 'next';
-
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://caferoam.tw';
+import { BASE_URL } from '@/lib/config';
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -12,19 +11,23 @@ export default function robots(): MetadataRoute.Robots {
       },
       {
         userAgent: 'GPTBot',
-        allow: '/',
+        allow: ['/', '/shops/', '/explore/'],
+        disallow: ['/profile', '/lists', '/settings', '/login', '/signup', '/api/'],
       },
       {
         userAgent: 'ClaudeBot',
-        allow: '/',
+        allow: ['/', '/shops/', '/explore/'],
+        disallow: ['/profile', '/lists', '/settings', '/login', '/signup', '/api/'],
       },
       {
         userAgent: 'PerplexityBot',
-        allow: '/',
+        allow: ['/', '/shops/', '/explore/'],
+        disallow: ['/profile', '/lists', '/settings', '/login', '/signup', '/api/'],
       },
       {
         userAgent: 'Google-Extended',
-        allow: '/',
+        allow: ['/', '/shops/', '/explore/'],
+        disallow: ['/profile', '/lists', '/settings', '/login', '/signup', '/api/'],
       },
     ],
     sitemap: `${BASE_URL}/sitemap.xml`,

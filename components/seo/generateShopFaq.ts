@@ -1,4 +1,4 @@
-interface ShopForFaq {
+export interface ShopForFaq {
   name: string;
   address?: string;
   mrt?: string | null;
@@ -21,23 +21,30 @@ export function generateShopFaq(shop: ShopForFaq): FaqEntry[] {
   const faq: FaqEntry[] = [];
   const tags = shop.taxonomyTags ?? [];
 
-  const tagsByDimension = (dim: string) =>
-    tags.filter((t) => t.dimension === dim).map((t) => t.label);
+  const byDimension = new Map<string, string[]>();
+  for (const tag of tags) {
+    const bucket = byDimension.get(tag.dimension);
+    if (bucket) {
+      bucket.push(tag.label);
+    } else {
+      byDimension.set(tag.dimension, [tag.label]);
+    }
+  }
 
   // 1. Remote work suitability (always include — core CafeRoam value prop)
   const workScore = shop.modeScores?.work;
-  const funcTags = tagsByDimension('functionality');
+  const funcTags = byDimension.get('functionality') ?? [];
   const workTags = funcTags.length > 0 ? funcTags.join(', ') : 'a comfortable workspace';
   if (workScore !== null && workScore !== undefined) {
     const suitability = workScore >= 0.7 ? 'highly suitable' : workScore >= 0.4 ? 'suitable' : 'not ideal';
     faq.push({
       question: `Is ${shop.name} good for remote work?`,
-      answer: `${shop.name} is ${suitability} for remote work (score: ${Math.round(workScore * 100)}%). Features include: ${workTags}.`,
+      answer: `${shop.name} is ${suitability} for remote work. Features include: ${workTags}.`,
     });
   }
 
   // 2. Vibe / ambience
-  const ambienceTags = tagsByDimension('ambience');
+  const ambienceTags = byDimension.get('ambience') ?? [];
   if (ambienceTags.length > 0) {
     faq.push({
       question: `What's the vibe at ${shop.name}?`,
@@ -55,7 +62,7 @@ export function generateShopFaq(shop: ShopForFaq): FaqEntry[] {
   }
 
   // 4. Coffee offerings (only if coffee tags exist)
-  const coffeeTags = tagsByDimension('coffee');
+  const coffeeTags = byDimension.get('coffee') ?? [];
   if (coffeeTags.length > 0) {
     faq.push({
       question: `What kind of coffee does ${shop.name} serve?`,

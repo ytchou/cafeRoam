@@ -1,7 +1,6 @@
 import type { MetadataRoute } from 'next';
 import { createAnonClient } from '@/lib/supabase/server';
-
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://caferoam.tw';
+import { BASE_URL } from '@/lib/config';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const supabase = createAnonClient();

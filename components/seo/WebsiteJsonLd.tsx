@@ -1,6 +1,5 @@
 import { JsonLd } from './JsonLd';
-
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://caferoam.tw';
+import { BASE_URL } from '@/lib/config';
 
 export function WebsiteJsonLd() {
   return (
