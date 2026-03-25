@@ -4,15 +4,14 @@ from workers.handlers.reembed_reviewed_shops import handle_reembed_reviewed_shop
 
 
 class TestReembedReviewedShops:
-    async def test_enqueues_embedding_jobs_for_shops_with_new_checkins(self):
-        """Given shops with check-ins newer than their last embedding, re-embed jobs are enqueued."""
+    async def test_enqueues_summarize_reviews_jobs_for_shops_with_new_checkins(self):
+        """Given shops with check-ins newer than their last embedding, SUMMARIZE_REVIEWS jobs are enqueued."""
         db = MagicMock()
         queue = AsyncMock()
 
         shop_id_1 = "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
         shop_id_2 = "b2c3d4e5-f6a7-8901-bcde-f12345678901"
 
-        # RPC returns shops needing re-embedding
         db.rpc.return_value.execute.return_value = MagicMock(
             data=[
                 {"id": shop_id_1},
@@ -23,7 +22,9 @@ class TestReembedReviewedShops:
         await handle_reembed_reviewed_shops(db=db, queue=queue)
 
         queue.enqueue_batch.assert_called_once()
-        payloads = queue.enqueue_batch.call_args.kwargs["payloads"]
+        call_kwargs = queue.enqueue_batch.call_args.kwargs
+        assert call_kwargs["job_type"].value == "summarize_reviews"
+        payloads = call_kwargs["payloads"]
         assert len(payloads) == 2
         assert payloads[0] == {"shop_id": shop_id_1}
         assert payloads[1] == {"shop_id": shop_id_2}

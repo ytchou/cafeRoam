@@ -1532,6 +1532,34 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 
 ---
 
+### Community Summary Embeddings (DEV-23)
+
+> **Design Doc:** [docs/designs/2026-03-25-community-summary-embeddings-design.md](docs/designs/2026-03-25-community-summary-embeddings-design.md)
+> **Plan:** [docs/plans/2026-03-25-community-summary-embeddings-plan.md](docs/plans/2026-03-25-community-summary-embeddings-plan.md)
+
+**Chunk 1 — Foundation (Wave 1):**
+
+- [x] DB migration: community_summary columns + job_type CHECK (Task 1)
+- [x] Add SUMMARIZE_REVIEWS to Python JobType enum (Task 2)
+- [x] Add summarize_reviews() to LLM provider protocol + adapter (Task 3)
+
+**Chunk 2 — Handlers (Wave 2):**
+
+- [x] handle_summarize_reviews worker handler (Task 4)
+- [x] generate_embedding: prefer community_summary with raw-text fallback (Task 5)
+- [x] reembed_reviewed_shops: enqueue SUMMARIZE_REVIEWS instead of GENERATE_EMBEDDING (Task 6)
+
+**Chunk 3 — Wiring + Script (Wave 3):**
+
+- [x] Scheduler dispatch for SUMMARIZE_REVIEWS (Task 7)
+- [x] Backfill script for 164 live shops (Task 8)
+
+**Chunk 4 — Verification (Wave 4):**
+
+- [x] Full test suite + coverage gate pass (Task 9)
+
+---
+
 ### LINE Integration (V2)
 
 > Requires LINE Login (built in V1 auth) as prerequisite — LINE user ID is captured at auth time.

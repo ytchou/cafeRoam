@@ -29,7 +29,7 @@ async def handle_reembed_reviewed_shops(db: Client, queue: JobQueue) -> None:
     logger.info("Re-embedding shops with new check-in text", count=len(shop_ids))
 
     await queue.enqueue_batch(
-        job_type=JobType.GENERATE_EMBEDDING,
+        job_type=JobType.SUMMARIZE_REVIEWS,
         payloads=[{"shop_id": sid} for sid in shop_ids],
         priority=2,  # lower than user-triggered work
     )

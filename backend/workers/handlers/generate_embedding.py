@@ -4,14 +4,11 @@ from typing import Any, cast
 import structlog
 from supabase import Client
 
-from models.types import CHECKIN_MIN_TEXT_LENGTH, JobType
+from models.types import CHECKIN_MIN_TEXT_LENGTH, MAX_COMMUNITY_TEXTS, JobType
 from providers.embeddings.interface import EmbeddingsProvider
 from workers.queue import JobQueue
 
 logger = structlog.get_logger()
-
-# Maximum number of community texts to include per shop
-_MAX_COMMUNITY_TEXTS = 20
 
 
 async def handle_generate_embedding(
@@ -32,7 +29,7 @@ async def handle_generate_embedding(
     # Load shop data including processing_status for the live-shop guard
     response = (
         db.table("shops")
-        .select("name, description, processing_status")
+        .select("name, description, processing_status, community_summary")
         .eq("id", shop_id)
         .single()
         .execute()
@@ -47,23 +44,29 @@ async def handle_generate_embedding(
     menu_rows = cast("list[dict[str, Any]]", menu_response.data or [])
     item_names = [row["item_name"] for row in menu_rows if row.get("item_name")]
 
-    # Load community check-in texts (ranked by likes, text quality, recency)
-    community_response = db.rpc(
-        "get_ranked_checkin_texts",
-        {
-            "p_shop_id": shop_id,
-            "p_min_length": CHECKIN_MIN_TEXT_LENGTH,
-            "p_limit": _MAX_COMMUNITY_TEXTS,
-        },
-    ).execute()
-    community_rows = cast("list[dict[str, Any]]", community_response.data or [])
-    community_texts = [row["text"] for row in community_rows if row.get("text")]
+    # Load community check-in texts — only needed when no stored summary exists (fallback path)
+    community_block = shop.get("community_summary")
+    if not community_block:
+        community_response = db.rpc(
+            "get_ranked_checkin_texts",
+            {
+                "p_shop_id": shop_id,
+                "p_min_length": CHECKIN_MIN_TEXT_LENGTH,
+                "p_limit": MAX_COMMUNITY_TEXTS,
+            },
+        ).execute()
+        community_rows = cast("list[dict[str, Any]]", community_response.data or [])
+        community_texts = [row["text"] for row in community_rows if row.get("text")]
+        if community_texts:
+            community_block = ". ".join(community_texts)
+    else:
+        community_texts = []
 
-    # Build embedding text: base | menu items || community texts
+    # Build embedding text: base | menu items || community block
     base_text = f"{shop['name']}. {shop.get('description') or ''}"
     text = f"{base_text} | {', '.join(item_names)}" if item_names else base_text
-    if community_texts:
-        text = f"{text} || {'. '.join(community_texts)}"
+    if community_block:
+        text = f"{text} || {community_block}"
 
     # Warn if community text is unusually large (design budget: ~1300 tokens total).
     # OpenAI text-embedding-3-small supports 8191 tokens; ~4 chars/token as a rough heuristic.

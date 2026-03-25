@@ -346,6 +346,68 @@ class TestGenerateEmbeddingHandler:
         update_data = shop_table.update.call_args[0][0]
         assert "last_embedded_at" in update_data
 
+    async def test_uses_community_summary_when_available(self):
+        """When a shop has community_summary, it replaces raw check-in texts in the embedding."""
+        db, _, _ = self._make_db(
+            shop_data={
+                "name": "山小孩咖啡",
+                "description": "安靜適合工作的獨立咖啡店",
+                "processing_status": "live",
+                "community_summary": "顧客推薦拿鐵和巴斯克蛋糕，環境安靜適合工作。",
+            },
+            menu_items=[{"item_name": "手沖拿鐵"}],
+            checkin_texts=[
+                {"text": "超好喝的拿鐵，環境安靜適合工作"},
+                {"text": "巴斯克蛋糕是必點的"},
+            ],
+        )
+        embeddings = AsyncMock()
+        embeddings.embed = AsyncMock(return_value=[0.1] * 1536)
+        queue = AsyncMock()
+
+        await handle_generate_embedding(
+            payload={"shop_id": "shop-d4e5f6"},
+            db=db,
+            embeddings=embeddings,
+            queue=queue,
+        )
+
+        embed_text = embeddings.embed.call_args[0][0]
+        # Community summary used instead of raw texts
+        assert "顧客推薦拿鐵和巴斯克蛋糕" in embed_text
+        assert " || " in embed_text
+        # Raw texts NOT individually present (summary replaced them)
+        assert "超好喝的拿鐵，環境安靜適合工作. 巴斯克蛋糕是必點的" not in embed_text
+
+    async def test_falls_back_to_raw_texts_when_community_summary_is_null(self):
+        """When community_summary is NULL, raw check-in texts are used (backward compatibility)."""
+        db, _, _ = self._make_db(
+            shop_data={
+                "name": "山小孩咖啡",
+                "description": "安靜適合工作的獨立咖啡店",
+                "processing_status": "live",
+                "community_summary": None,
+            },
+            menu_items=[],
+            checkin_texts=[
+                {"text": "超好喝的拿鐵，環境安靜適合工作"},
+            ],
+        )
+        embeddings = AsyncMock()
+        embeddings.embed = AsyncMock(return_value=[0.1] * 1536)
+        queue = AsyncMock()
+
+        await handle_generate_embedding(
+            payload={"shop_id": "shop-d4e5f6"},
+            db=db,
+            embeddings=embeddings,
+            queue=queue,
+        )
+
+        embed_text = embeddings.embed.call_args[0][0]
+        assert "超好喝的拿鐵" in embed_text
+        assert " || " in embed_text
+
 
 class TestStalenessSweepHandler:
     async def test_queues_enrichment_for_stale_shops(self):

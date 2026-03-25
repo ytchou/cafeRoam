@@ -387,6 +387,10 @@ class EmailSendResult(BaseModel):
 # Used by nightly re-embed cron, generate_embedding handler, and rollout script — must stay in sync.
 CHECKIN_MIN_TEXT_LENGTH: int = 15
 
+# Maximum number of community check-in texts fetched per shop for summarization and embedding.
+# Used by summarize_reviews handler and generate_embedding handler — must stay in sync.
+MAX_COMMUNITY_TEXTS: int = 20
+
 
 class PhotoCategory(StrEnum):
     MENU = "MENU"
@@ -406,6 +410,7 @@ class JobType(StrEnum):
     PUBLISH_SHOP = "publish_shop"
     ADMIN_DIGEST_EMAIL = "admin_digest_email"
     CLASSIFY_SHOP_PHOTOS = "classify_shop_photos"
+    SUMMARIZE_REVIEWS = "summarize_reviews"
 
 
 class JobStatus(StrEnum):
