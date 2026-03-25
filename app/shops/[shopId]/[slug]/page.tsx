@@ -2,6 +2,7 @@ import { Suspense } from 'react';
 import { notFound, redirect } from 'next/navigation';
 import type { Metadata } from 'next';
 import { ShopDetailClient } from './shop-detail-client';
+import { ShopJsonLd } from '@/components/seo/ShopJsonLd';
 import { BACKEND_URL } from '@/lib/api/proxy';
 
 interface Params {
@@ -57,8 +58,11 @@ export default async function ShopDetailPage({
   }
 
   return (
-    <Suspense>
-      <ShopDetailClient shop={shop} />
-    </Suspense>
+    <>
+      <ShopJsonLd shop={shop} />
+      <Suspense>
+        <ShopDetailClient shop={shop} />
+      </Suspense>
+    </>
   );
 }

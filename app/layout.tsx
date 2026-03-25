@@ -45,9 +45,21 @@ const bricolageGrotesque = Bricolage_Grotesque({
 });
 
 export const metadata: Metadata = {
-  title: 'CafeRoam 啡遊',
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? 'https://caferoam.tw'),
+  title: {
+    default: 'CafeRoam 啡遊 — 探索台灣精品咖啡廳',
+    template: '%s — 啡遊',
+  },
   description:
-    "Discover Taiwan's best independent coffee shops with AI-powered semantic search.",
+    '啡遊 CafeRoam 幫你找到適合當下心情的台灣獨立咖啡廳——深度工作、放鬆休息、或朋友聚會。AI 語意搜尋，探索台灣精品咖啡文化。',
+  openGraph: {
+    type: 'website',
+    locale: 'zh_TW',
+    siteName: '啡遊 CafeRoam',
+  },
+  twitter: {
+    card: 'summary_large_image',
+  },
   icons: {
     icon: [
       { url: '/favicon.png', sizes: '32x32', type: 'image/png' },

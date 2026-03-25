@@ -1557,10 +1557,10 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 - [x] FAQ generation from taxonomy data
 - [x] ShopJsonLd (CafeOrCoffeeShop + FAQPage schema)
 - [x] WebsiteJsonLd (SearchAction schema)
-- [ ] Enhanced root layout metadata (metadataBase, OG, Twitter)
-- [ ] Integrate JSON-LD into shop detail page
-- [ ] Integrate JSON-LD into homepage
-- [ ] Explore + vibes page metadata
+- [x] Enhanced root layout metadata (metadataBase, OG, Twitter)
+- [x] Integrate JSON-LD into shop detail page
+- [x] Integrate JSON-LD into homepage
+- [x] Explore + vibes page metadata
 - [ ] Verification & lint pass
 
 **Phase 2 — Content Flywheel (future ticket):**
