@@ -14,11 +14,11 @@ from providers.embeddings import get_embeddings_provider
 from providers.llm import get_llm_provider
 from providers.scraper import get_scraper_provider
 from workers.handlers.account_deletion import delete_expired_accounts
+from workers.handlers.classify_shop_photos import handle_classify_shop_photos
 from workers.handlers.enrich_menu_photo import handle_enrich_menu_photo
 from workers.handlers.enrich_shop import handle_enrich_shop
 from workers.handlers.generate_embedding import handle_generate_embedding
 from workers.handlers.publish_shop import handle_publish_shop
-from workers.handlers.classify_shop_photos import handle_classify_shop_photos
 from workers.handlers.reembed_reviewed_shops import handle_reembed_reviewed_shops
 from workers.handlers.scrape_batch import handle_scrape_batch
 from workers.handlers.scrape_shop import handle_scrape_shop

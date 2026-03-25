@@ -38,9 +38,7 @@ def mock_queue():
 async def test_persist_photos_includes_uploaded_at(mock_db, mock_queue):
     """When photos have uploaded_at, the upsert includes the timestamp."""
     ts = datetime(2025, 6, 15, 10, 0, tzinfo=UTC)
-    data = _make_shop_data(
-        photos=[ScrapedPhotoData(url="https://cdn/photo1.jpg", uploaded_at=ts)]
-    )
+    data = _make_shop_data(photos=[ScrapedPhotoData(url="https://cdn/photo1.jpg", uploaded_at=ts)])
 
     await persist_scraped_data(shop_id="shop-01", data=data, db=mock_db, queue=mock_queue)
 
@@ -53,16 +51,13 @@ async def test_persist_photos_includes_uploaded_at(mock_db, mock_queue):
 @pytest.mark.asyncio
 async def test_persist_enqueues_classify_job_when_photos_present(mock_db, mock_queue):
     """After persisting photos, a classify_shop_photos job is enqueued."""
-    data = _make_shop_data(
-        photos=[ScrapedPhotoData(url="https://cdn/p1.jpg")]
-    )
+    data = _make_shop_data(photos=[ScrapedPhotoData(url="https://cdn/p1.jpg")])
 
     await persist_scraped_data(shop_id="shop-01", data=data, db=mock_db, queue=mock_queue)
 
     enqueue_calls = mock_queue.enqueue.call_args_list
     classify_calls = [
-        c for c in enqueue_calls
-        if c.kwargs.get("job_type") == JobType.CLASSIFY_SHOP_PHOTOS
+        c for c in enqueue_calls if c.kwargs.get("job_type") == JobType.CLASSIFY_SHOP_PHOTOS
     ]
     assert len(classify_calls) == 1
     assert classify_calls[0].kwargs["payload"]["shop_id"] == "shop-01"
@@ -77,7 +72,6 @@ async def test_persist_skips_classify_when_no_photos(mock_db, mock_queue):
 
     enqueue_calls = mock_queue.enqueue.call_args_list
     classify_calls = [
-        c for c in enqueue_calls
-        if c.kwargs.get("job_type") == JobType.CLASSIFY_SHOP_PHOTOS
+        c for c in enqueue_calls if c.kwargs.get("job_type") == JobType.CLASSIFY_SHOP_PHOTOS
     ]
     assert len(classify_calls) == 0

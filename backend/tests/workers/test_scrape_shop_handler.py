@@ -58,7 +58,11 @@ async def test_scrape_shop_success(mock_db, mock_scraper, mock_queue, scraped_da
     # Should update shop with scraped data
     mock_db.table.assert_any_call("shops")
     # Should queue ENRICH_SHOP (CLASSIFY_SHOP_PHOTOS may also be enqueued for photos)
-    enrich_calls = [c for c in mock_queue.enqueue.call_args_list if c.kwargs.get("job_type") == JobType.ENRICH_SHOP]
+    enrich_calls = [
+        c
+        for c in mock_queue.enqueue.call_args_list
+        if c.kwargs.get("job_type") == JobType.ENRICH_SHOP
+    ]
     assert len(enrich_calls) == 1
 
 

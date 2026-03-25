@@ -61,16 +61,24 @@ class TestClassifyShopPhotosHandler:
         # Mock: 2 unclassified photos
         mock_db.table.return_value.select.return_value.eq.return_value.is_.return_value.execute.return_value = MagicMock(
             data=[
-                {"id": "p1", "url": "https://cdn/menu.jpg=w1920-h1080-k-no", "uploaded_at": "2025-06-15T00:00:00+00:00"},
-                {"id": "p2", "url": "https://cdn/cozy.jpg=w1920-h1080-k-no", "uploaded_at": "2025-05-10T00:00:00+00:00"},
+                {
+                    "id": "p1",
+                    "url": "https://cdn/menu.jpg=w1920-h1080-k-no",
+                    "uploaded_at": "2025-06-15T00:00:00+00:00",
+                },
+                {
+                    "id": "p2",
+                    "url": "https://cdn/cozy.jpg=w1920-h1080-k-no",
+                    "uploaded_at": "2025-05-10T00:00:00+00:00",
+                },
             ]
         )
-        mock_db.table.return_value.update.return_value.in_.return_value.execute.return_value = MagicMock()
+        mock_db.table.return_value.update.return_value.in_.return_value.execute.return_value = (
+            MagicMock()
+        )
 
         # Mock LLM: first=MENU, second=VIBE
-        mock_llm.classify_photo = AsyncMock(
-            side_effect=[PhotoCategory.MENU, PhotoCategory.VIBE]
-        )
+        mock_llm.classify_photo = AsyncMock(side_effect=[PhotoCategory.MENU, PhotoCategory.VIBE])
 
         await handle_classify_shop_photos(
             payload={"shop_id": "shop-01"},
@@ -108,13 +116,19 @@ class TestClassifyShopPhotosHandler:
         from workers.handlers.classify_shop_photos import handle_classify_shop_photos
 
         photos = [
-            {"id": f"p{i}", "url": f"https://cdn/m{i}.jpg=w800-h600-k-no", "uploaded_at": f"2025-0{i+1}-01T00:00:00+00:00"}
+            {
+                "id": f"p{i}",
+                "url": f"https://cdn/m{i}.jpg=w800-h600-k-no",
+                "uploaded_at": f"2025-0{i + 1}-01T00:00:00+00:00",
+            }
             for i in range(7)
         ]
         mock_db.table.return_value.select.return_value.eq.return_value.is_.return_value.execute.return_value = MagicMock(
             data=photos
         )
-        mock_db.table.return_value.update.return_value.in_.return_value.execute.return_value = MagicMock()
+        mock_db.table.return_value.update.return_value.in_.return_value.execute.return_value = (
+            MagicMock()
+        )
 
         mock_llm.classify_photo = AsyncMock(return_value=PhotoCategory.MENU)
 
@@ -140,13 +154,19 @@ class TestClassifyShopPhotosHandler:
         assert len(in_calls[skip_idx].args[1]) == 2
 
     @pytest.mark.asyncio
-    async def test_menu_cap_enforcement_respects_globally_classified_photos(self, mock_db, mock_llm, mock_queue):
+    async def test_menu_cap_enforcement_respects_globally_classified_photos(
+        self, mock_db, mock_llm, mock_queue
+    ):
         """When 3 MENU photos already exist from a prior run, only 2 new MENU slots remain."""
         from workers.handlers.classify_shop_photos import handle_classify_shop_photos
 
         # 4 unclassified photos, all will classify as MENU
         photos = [
-            {"id": f"p{i}", "url": f"https://cdn/m{i}.jpg=w800-h600-k-no", "uploaded_at": f"2025-0{i+1}-01T00:00:00+00:00"}
+            {
+                "id": f"p{i}",
+                "url": f"https://cdn/m{i}.jpg=w800-h600-k-no",
+                "uploaded_at": f"2025-0{i + 1}-01T00:00:00+00:00",
+            }
             for i in range(4)
         ]
         mock_db.table.return_value.select.return_value.eq.return_value.is_.return_value.execute.return_value = MagicMock(
@@ -156,7 +176,9 @@ class TestClassifyShopPhotosHandler:
         mock_db.table.return_value.select.return_value.eq.return_value.not_.is_.return_value.neq.return_value.execute.return_value = MagicMock(
             data=[{"category": "MENU"}, {"category": "MENU"}, {"category": "MENU"}]
         )
-        mock_db.table.return_value.update.return_value.in_.return_value.execute.return_value = MagicMock()
+        mock_db.table.return_value.update.return_value.in_.return_value.execute.return_value = (
+            MagicMock()
+        )
 
         mock_llm.classify_photo = AsyncMock(return_value=PhotoCategory.MENU)
 
@@ -189,7 +211,9 @@ class TestClassifyShopPhotosHandler:
                 {"id": "p2", "url": "https://cdn/fail.jpg", "uploaded_at": None},
             ]
         )
-        mock_db.table.return_value.update.return_value.in_.return_value.execute.return_value = MagicMock()
+        mock_db.table.return_value.update.return_value.in_.return_value.execute.return_value = (
+            MagicMock()
+        )
 
         mock_llm.classify_photo = AsyncMock(
             side_effect=[PhotoCategory.VIBE, Exception("Vision API error")]

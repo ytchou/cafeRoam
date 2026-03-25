@@ -39,7 +39,9 @@ async def test_parse_images_array_with_uploaded_at(adapter):
 
     assert result is not None
     assert len(result.photos) == 2
-    assert result.photos[0].url == "https://lh5.googleusercontent.com/p/AF1Qip_photo1=w1920-h1080-k-no"
+    assert (
+        result.photos[0].url == "https://lh5.googleusercontent.com/p/AF1Qip_photo1=w1920-h1080-k-no"
+    )
     assert result.photos[0].uploaded_at is not None
     assert result.photos[0].uploaded_at.year == 2025
 

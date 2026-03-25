@@ -1,11 +1,17 @@
 import asyncio
+import contextlib
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import structlog
 from apify_client import ApifyClient
 
-from providers.scraper.interface import BatchScrapeInput, BatchScrapeResult, ScrapedPhotoData, ScrapedShopData
+from providers.scraper.interface import (
+    BatchScrapeInput,
+    BatchScrapeResult,
+    ScrapedPhotoData,
+    ScrapedShopData,
+)
 
 logger = structlog.get_logger()
 
@@ -157,10 +163,7 @@ class ApifyScraperAdapter:
         if images and isinstance(images, list):
             return self._parse_images_array(images)
         # Fallback: flat imageUrls with no metadata
-        return [
-            ScrapedPhotoData(url=url)
-            for url in place.get("imageUrls", [])[:_PHOTO_CAP]
-        ]
+        return [ScrapedPhotoData(url=url) for url in place.get("imageUrls", [])[:_PHOTO_CAP]]
 
     def _parse_images_array(self, images: list[dict[str, Any]]) -> list[ScrapedPhotoData]:
         """Parse rich images[] objects, filter by age, cap, sort by recency."""
@@ -175,10 +178,8 @@ class ApifyScraperAdapter:
             uploaded_at = None
             raw_date = img.get("uploadedAt")
             if raw_date:
-                try:
+                with contextlib.suppress(ValueError, AttributeError):
                     uploaded_at = datetime.fromisoformat(raw_date.replace("Z", "+00:00"))
-                except (ValueError, AttributeError):
-                    pass
             # Age filter: skip old photos (only when we have a date)
             if uploaded_at and uploaded_at < cutoff:
                 continue
