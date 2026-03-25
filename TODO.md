@@ -1532,6 +1532,34 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 
 ---
 
+### Community Summary Embeddings (DEV-23)
+
+> **Design Doc:** [docs/designs/2026-03-25-community-summary-embeddings-design.md](docs/designs/2026-03-25-community-summary-embeddings-design.md)
+> **Plan:** [docs/plans/2026-03-25-community-summary-embeddings-plan.md](docs/plans/2026-03-25-community-summary-embeddings-plan.md)
+
+**Chunk 1 — Foundation (Wave 1):**
+
+- [ ] DB migration: community_summary columns + job_type CHECK (Task 1)
+- [ ] Add SUMMARIZE_REVIEWS to Python JobType enum (Task 2)
+- [ ] Add summarize_reviews() to LLM provider protocol + adapter (Task 3)
+
+**Chunk 2 — Handlers (Wave 2):**
+
+- [ ] handle_summarize_reviews worker handler (Task 4)
+- [ ] generate_embedding: prefer community_summary with raw-text fallback (Task 5)
+- [ ] reembed_reviewed_shops: enqueue SUMMARIZE_REVIEWS instead of GENERATE_EMBEDDING (Task 6)
+
+**Chunk 3 — Wiring + Script (Wave 3):**
+
+- [ ] Scheduler dispatch for SUMMARIZE_REVIEWS (Task 7)
+- [ ] Backfill script for 164 live shops (Task 8)
+
+**Chunk 4 — Verification (Wave 4):**
+
+- [ ] Full test suite + coverage gate pass (Task 9)
+
+---
+
 ### LINE Integration (V2)
 
 > Requires LINE Login (built in V1 auth) as prerequisite — LINE user ID is captured at auth time.
@@ -1540,3 +1568,32 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 - [ ] Push notifications via LINE Messaging API (replace or supplement weekly email)
 - [ ] Rich menu: quick-access to search, check-in, lists from within LINE app
 - [ ] Chatbot: natural language shop discovery via LINE chat (semantic search over Messaging API)
+
+---
+
+### SEO & GEO Optimization (DEV-14)
+
+> **Design Doc:** [docs/designs/2026-03-25-seo-geo-optimization-design.md](docs/designs/2026-03-25-seo-geo-optimization-design.md)
+> **Plan:** [docs/plans/2026-03-25-seo-geo-optimization-plan.md](docs/plans/2026-03-25-seo-geo-optimization-plan.md)
+
+**Phase 1 — Technical Foundation:**
+- [ ] Backend: expose phone, website, hours, price in shop endpoint
+- [ ] robots.ts with AI bot allowances
+- [ ] Dynamic sitemap.ts for all live shops
+- [ ] llms.txt route handler for AI crawlers
+- [ ] JSON-LD base component
+- [ ] FAQ generation from taxonomy data
+- [ ] ShopJsonLd (CafeOrCoffeeShop + FAQPage schema)
+- [ ] WebsiteJsonLd (SearchAction schema)
+- [ ] Enhanced root layout metadata (metadataBase, OG, Twitter)
+- [ ] Integrate JSON-LD into shop detail page
+- [ ] Integrate JSON-LD into homepage
+- [ ] Explore + vibes page metadata
+- [ ] Verification & lint pass
+
+**Phase 2 — Content Flywheel (future ticket):**
+- [ ] Auto-generated landing pages per district/intent
+- [ ] Freshness signals on shop pages
+
+**Phase 3 — Authority (future):**
+- [ ] Blog outreach to Taipei lifestyle/food blogs
