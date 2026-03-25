@@ -49,8 +49,11 @@ test.describe('@critical J34 — Explore: Tarot draw → 3 café cards revealed'
     // Wait for skeleton loaders to disappear (skeletons have animate-pulse)
     await expect(page.locator('.animate-pulse').first()).toBeHidden({ timeout: 15_000 });
 
-    // Should have 3 tarot card buttons (140px height, with tarot-gold border)
-    const tarotCards = page.locator('button:has(span.uppercase)');
+    // Tarot card buttons have data-testid="tarot-card" or are scoped inside the daily-draw section
+    const tarotCards = page
+      .locator('[data-testid="daily-draw"]')
+      .getByRole('button')
+      .or(page.locator('[data-testid="tarot-card"]'));
     await expect(tarotCards).toHaveCount(3, { timeout: 10_000 });
 
     // Tap the first card to open the reveal drawer

@@ -1,4 +1,5 @@
 import { test, expect } from './fixtures/auth';
+import { first } from './fixtures/helpers';
 
 test.describe('@critical J12 — Create list → add shop → shop appears in list', () => {
   test('creating a list and viewing it shows the list on the lists page', async ({
@@ -109,7 +110,7 @@ test.describe('J26 — Delete list', () => {
     await expect(page.getByText(listName)).toBeVisible({ timeout: 10_000 });
 
     // Find and click the delete button for this list
-    const listCard = page.locator('li, article, [data-list-id], div').filter({ hasText: listName }).first();
+    const listCard = page.locator('li, article, [data-list-id]').filter({ hasText: listName }).first();
     const deleteBtn = listCard.getByRole('button', { name: /delete|trash/i });
 
     const hasDeleteBtn = await deleteBtn.isVisible({ timeout: 3_000 }).catch(() => false);
@@ -141,64 +142,64 @@ test.describe('J27 — Remove shop from list', () => {
   }) => {
     const shopsResponse = await page.request.get('/api/shops?featured=true&limit=1');
     const shops = await shopsResponse.json();
-    const shop = shops[0];
+    const shop = first(shops);
     test.skip(!shop, 'No seeded shops available');
 
     // Create a fresh test list
     await page.goto('/lists');
     await expect(page.getByText('My Lists')).toBeVisible({ timeout: 10_000 });
 
-    const listName = `Remove Shop Test ${Date.now()}`;
+    const listName = `咖啡廳週末清單-${Date.now()}`;
     await page.getByPlaceholder('Create new list').fill(listName);
     await page.getByRole('button', { name: 'Add' }).click();
     await expect(page.getByText(listName)).toBeVisible({ timeout: 10_000 });
 
-    // Navigate to shop detail and save it to the test list
-    await page.goto(`/shops/${shop.id}/${shop.slug || shop.id}`);
-    await page.waitForLoadState('networkidle');
-
-    // Open save-to-list sheet via the "Save" button on the shop detail page
-    const saveBtn = page.getByRole('button', { name: /^Save$/i });
-    await expect(saveBtn).toBeVisible({ timeout: 10_000 });
-    await saveBtn.click();
-
-    // Check the test list checkbox in the sheet
-    const listCheckbox = page.getByRole('checkbox', { name: listName });
-    await expect(listCheckbox).toBeVisible({ timeout: 5_000 });
-    await listCheckbox.check();
-
-    // Close the sheet
-    await page.getByRole('button', { name: /Done/i }).click();
-
-    // Get the list ID so we can navigate to its detail page
+    // Fetch the list ID immediately after creation so cleanup can always run,
+    // even if a later step skips or throws.
     const listsResp = await page.request.get('/api/lists');
     const allLists = await listsResp.json();
-    const testList = (Array.isArray(allLists) ? allLists : []).find(
+    const createdList = (Array.isArray(allLists) ? allLists : []).find(
       (l: { name: string; id: string }) => l.name === listName
     );
-    test.skip(!testList, 'Could not retrieve created list via API');
+    if (!createdList) {
+      test.skip(true, 'Could not retrieve created list via API');
+    }
 
-    // Navigate to list detail — shop should appear
-    await page.goto(`/lists/${testList.id}`);
-    await page.waitForLoadState('networkidle');
-    await expect(page.getByText(shop.name)).toBeVisible({ timeout: 10_000 });
+    try {
+      // Navigate to shop detail and save it to the test list
+      await page.goto(`/shops/${shop!.id}/${shop!.slug || shop!.id}`);
+      await page.waitForLoadState('networkidle');
 
-    // Remove the shop: go back to shop detail and uncheck the list
-    await page.goto(`/shops/${shop.id}/${shop.slug || shop.id}`);
-    await page.waitForLoadState('networkidle');
-    await page.getByRole('button', { name: /^Save$/i }).click();
+      const saveBtn = page.getByRole('button', { name: /^Save$/i });
+      await expect(saveBtn).toBeVisible({ timeout: 10_000 });
+      await saveBtn.click();
 
-    const checkedListCheckbox = page.getByRole('checkbox', { name: listName });
-    await expect(checkedListCheckbox).toBeChecked({ timeout: 5_000 });
-    await checkedListCheckbox.uncheck();
-    await page.getByRole('button', { name: /Done/i }).click();
+      const listCheckbox = page.getByRole('checkbox', { name: listName });
+      await expect(listCheckbox).toBeVisible({ timeout: 5_000 });
+      await listCheckbox.check();
+      await page.getByRole('button', { name: /Done/i }).click();
 
-    // Navigate back to list detail — shop should be removed
-    await page.goto(`/lists/${testList.id}`);
-    await page.waitForLoadState('networkidle');
-    await expect(page.getByText(shop.name)).toBeHidden({ timeout: 10_000 });
+      // Navigate to list detail — shop should appear
+      await page.goto(`/lists/${createdList!.id}`);
+      await page.waitForLoadState('networkidle');
+      await expect(page.getByText(shop!.name)).toBeVisible({ timeout: 10_000 });
 
-    // Cleanup
-    await page.request.delete(`/api/lists/${testList.id}`);
+      // Remove the shop: go back to shop detail and uncheck the list
+      await page.goto(`/shops/${shop!.id}/${shop!.slug || shop!.id}`);
+      await page.waitForLoadState('networkidle');
+      await page.getByRole('button', { name: /^Save$/i }).click();
+
+      const checkedListCheckbox = page.getByRole('checkbox', { name: listName });
+      await expect(checkedListCheckbox).toBeChecked({ timeout: 5_000 });
+      await checkedListCheckbox.uncheck();
+      await page.getByRole('button', { name: /Done/i }).click();
+
+      // List detail should no longer show the shop
+      await page.goto(`/lists/${createdList!.id}`);
+      await page.waitForLoadState('networkidle');
+      await expect(page.getByText(shop!.name)).toBeHidden({ timeout: 10_000 });
+    } finally {
+      await page.request.delete(`/api/lists/${createdList!.id}`).catch(() => null);
+    }
   });
 });

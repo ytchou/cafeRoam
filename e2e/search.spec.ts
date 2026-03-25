@@ -98,14 +98,11 @@ test.describe('J21 — Filter pills: toggle WiFi → results update', () => {
     await wifiFilter.click();
     await page.waitForLoadState('networkidle');
 
-    // Filter should now show as active (aria-pressed="true" or data-active)
-    const isActive =
-      (await wifiFilter.getAttribute('aria-pressed')) === 'true' ||
-      (await wifiFilter.getAttribute('data-active')) !== null;
-
-    // Either the filter is tracked as active OR results changed (re-fetched with filter)
-    // At minimum the page should still render without errors
-    expect(isActive || page.url().length > 0).toBe(true);
+    // Filter should now show as active (aria-pressed="true" or data-active="true")
+    const ariaPressed = await wifiFilter.getAttribute('aria-pressed');
+    const dataActive = await wifiFilter.getAttribute('data-active');
+    const isActive = ariaPressed === 'true' || dataActive === 'true';
+    expect(isActive, 'WiFi filter should be marked as active after clicking').toBe(true);
     await expect(wifiFilter).toBeVisible();
   });
 });

@@ -4,6 +4,7 @@ import {
   denyGeolocation,
   TAIPEI_COORDS,
 } from './fixtures/geolocation';
+import { first } from './fixtures/helpers';
 
 test.describe('@critical J01 — Near Me: grant geolocation → map with shop pins', () => {
   test('tapping 我附近 with granted geolocation navigates to /map with lat/lng params', async ({
@@ -75,7 +76,7 @@ test.describe('J04 — Browse map → tap pin → shop detail sheet', () => {
   }) => {
     const response = await page.request.get('/api/shops?featured=true&limit=1');
     const shops = await response.json();
-    const shop = shops[0];
+    const shop = first(shops);
     test.skip(!shop, 'No seeded shops available');
 
     // Navigate to the map page
@@ -90,11 +91,16 @@ test.describe('J04 — Browse map → tap pin → shop detail sheet', () => {
     await pinButton.click();
 
     // Mobile: ShopCarousel appears at bottom (data-testid="carousel-scroll")
-    // Desktop: shop name appears in the side panel list
-    const shopReveal = page
+    // Desktop: shop name appears in the side panel (second occurrence — first is the map pin label)
+    // Check mobile carousel first; if absent, fall back to desktop side-panel text
+    const isCarouselVisible = await page
       .locator('[data-testid="carousel-scroll"]')
-      .or(page.getByText(shop.name).nth(1));
-    await expect(shopReveal.first()).toBeVisible({ timeout: 10_000 });
+      .isVisible({ timeout: 5_000 })
+      .catch(() => false);
+    const shopReveal = isCarouselVisible
+      ? page.locator('[data-testid="carousel-scroll"]')
+      : page.getByText(shop.name).nth(1);
+    await expect(shopReveal).toBeVisible({ timeout: 10_000 });
   });
 });
 
@@ -105,7 +111,7 @@ test.describe('J18 — Shop detail: public access with OG tags', () => {
     // Shop detail is public — no auth required
     const response = await page.request.get('/api/shops?featured=true&limit=1');
     const shops = await response.json();
-    const shop = shops[0];
+    const shop = first(shops);
     test.skip(!shop, 'No seeded shops available');
 
     await page.goto(`/shops/${shop.id}/${shop.slug || shop.id}`);
@@ -139,7 +145,7 @@ test.describe('J19 — Shop detail via slug redirect', () => {
   }) => {
     const response = await page.request.get('/api/shops?featured=true&limit=1');
     const shops = await response.json();
-    const shop = shops[0];
+    const shop = first(shops);
     test.skip(!shop?.slug, 'No seeded shops with slugs available');
 
     await page.goto(`/shops/${shop.id}/definitely-wrong-slug-xyz`);
@@ -205,9 +211,13 @@ test.describe('J23 — List view: shops sorted by distance', () => {
     if (count >= 2) {
       const firstText = await allDistances.nth(0).textContent();
       const secondText = await allDistances.nth(1).textContent();
-      // Extract numeric km/m values for comparison
-      const parse = (t: string | null) => parseFloat(t?.match(/[\d.]+/)?.[0] ?? '999');
-      expect(parse(firstText)).toBeLessThanOrEqual(parse(secondText));
+      // Normalize both values to metres before comparing (handles mixed km/m units)
+      const parseMetres = (t: string | null): number => {
+        const m = t?.match(/([\d.]+)\s*(km|m)\b/i);
+        if (!m) return 999_000;
+        return m[2].toLowerCase() === 'km' ? parseFloat(m[1]) * 1000 : parseFloat(m[1]);
+      };
+      expect(parseMetres(firstText)).toBeLessThanOrEqual(parseMetres(secondText));
     }
   });
 });
@@ -216,11 +226,15 @@ test.describe('J28 — Desktop: 2-column shop detail layout', () => {
   test('on desktop viewport, shop detail page renders in 2-column layout', async ({
     page,
   }) => {
+    // Skip on mobile projects — viewport override doesn't change User-Agent or device profile
+    const viewport = page.viewportSize();
+    test.skip(!!viewport && viewport.width < 1024, 'Desktop layout test — skipped on mobile viewport');
+
     await page.setViewportSize({ width: 1280, height: 800 });
 
     const response = await page.request.get('/api/shops?featured=true&limit=1');
     const shops = await response.json();
-    const shop = shops[0];
+    const shop = first(shops);
     test.skip(!shop, 'No seeded shops available');
 
     await page.goto(`/shops/${shop.id}/${shop.slug || shop.id}`);
@@ -258,7 +272,7 @@ test.describe('J29 — Mobile: mini card on pin tap', () => {
 
     const response = await page.request.get('/api/shops?featured=true&limit=1');
     const shops = await response.json();
-    const shop = shops[0];
+    const shop = first(shops);
     test.skip(!shop, 'No seeded shops available');
 
     await page.goto('/map');
@@ -286,7 +300,7 @@ test.describe('@critical J36 — Shop detail: tap Get Directions → DirectionsS
     // Fetch a seeded shop with coordinates
     const response = await page.request.get('/api/shops?featured=true&limit=1');
     const shops = await response.json();
-    const shop = shops[0];
+    const shop = first(shops);
     test.skip(!shop, 'No seeded shops available');
 
     // Navigate to the shop detail page

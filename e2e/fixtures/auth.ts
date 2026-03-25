@@ -1,11 +1,13 @@
 import { test as base, type Page } from '@playwright/test';
 import { fileURLToPath } from 'node:url';
+import { renameSync, mkdirSync } from 'node:fs';
 import path from 'node:path';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const STORAGE_STATE_PATH = path.join(__dirname, '..', '.auth', 'user.json');
+const AUTH_DIR = path.join(__dirname, '..', '.auth');
+const STORAGE_STATE_PATH = path.join(AUTH_DIR, 'user.json');
 
 async function loginFresh(
   browser: import('@playwright/test').Browser,
@@ -19,7 +21,14 @@ async function loginFresh(
   await pg.fill('#password', password);
   await pg.click('button[type="submit"]');
   await pg.waitForURL('/', { timeout: 15_000 });
-  await ctx.storageState({ path: STORAGE_STATE_PATH });
+
+  // Write to a temp file then rename atomically — prevents concurrent workers from
+  // reading a partially-written JSON file if two sessions refresh at the same time.
+  mkdirSync(AUTH_DIR, { recursive: true });
+  const tmpPath = `${STORAGE_STATE_PATH}.tmp`;
+  await ctx.storageState({ path: tmpPath });
+  renameSync(tmpPath, STORAGE_STATE_PATH);
+
   await pg.close();
   await ctx.close();
   return browser.newContext({ storageState: STORAGE_STATE_PATH });

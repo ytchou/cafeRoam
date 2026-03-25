@@ -103,31 +103,44 @@ test.describe.serial('@critical J38 — Account deletion: cancel during grace pe
     await expect(confirmButton).toBeEnabled();
     await confirmButton.click();
 
-    // Step 4: Wait for deletion to process — should show grace period messaging
-    // The page may redirect or show a confirmation
-    await expect(
-      page.getByText(/30.*(day|天)|grace period|scheduled for deletion|即將刪除/i)
-    ).toBeVisible({ timeout: 10_000 });
+    // Recovery guard: if any step below fails after deletion is initiated, always attempt
+    // to cancel so the shared test account is not left in a grace-period state.
+    try {
+      // Step 4: Wait for deletion to process — should show grace period messaging
+      // The page may redirect or show a confirmation
+      await expect(
+        page.getByText(/30.*(day|天)|grace period|scheduled for deletion|即將刪除/i)
+      ).toBeVisible({ timeout: 10_000 });
 
-    // Step 5: Navigate to recovery page and cancel
-    await page.goto('/account/recover');
-    await page.waitForLoadState('networkidle');
+      // Step 5: Navigate to recovery page and cancel
+      await page.goto('/account/recover');
+      await page.waitForLoadState('networkidle');
 
-    const cancelButton = page.getByRole('button', {
-      name: /Cancel Deletion|取消刪除/i,
-    });
-    await expect(cancelButton).toBeVisible({ timeout: 10_000 });
-    await cancelButton.click();
+      const cancelButton = page.getByRole('button', {
+        name: /Cancel Deletion|取消刪除/i,
+      });
+      await expect(cancelButton).toBeVisible({ timeout: 10_000 });
+      await cancelButton.click();
 
-    // Step 6: Should redirect to home after cancellation
-    await page.waitForURL('/', { timeout: 15_000 });
-    expect(page.url()).toMatch(/\/$/);
+      // Step 6: Should redirect to home after cancellation
+      await page.waitForURL('/', { timeout: 15_000 });
+      expect(page.url()).toMatch(/\/$/);
 
-    // Step 7: Verify account is restored — profile page loads normally
-    await page.goto('/profile');
-    await page.waitForLoadState('networkidle');
-    await expect(
-      page.locator('[data-testid="profile-header"], header').first()
-    ).toBeVisible({ timeout: 10_000 });
+      // Step 7: Verify account is restored — profile page loads normally
+      await page.goto('/profile');
+      await page.waitForLoadState('networkidle');
+      await expect(
+        page.locator('[data-testid="profile-header"], header').first()
+      ).toBeVisible({ timeout: 10_000 });
+    } catch (err) {
+      // Best-effort recovery: navigate to /account/recover and cancel deletion
+      // to prevent the shared test account from being left in a corrupted state.
+      await page.goto('/account/recover').catch(() => null);
+      await page
+        .getByRole('button', { name: /Cancel Deletion|取消刪除/i })
+        .click({ timeout: 10_000 })
+        .catch(() => null);
+      throw err;
+    }
   });
 });
