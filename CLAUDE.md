@@ -83,8 +83,8 @@ make reset-db                  # !! DESTRUCTIVE — wipes all data. Has a 5s war
 1. **Auth wall:** Unauthenticated users get directory + map + shop detail only. Semantic search, lists, and check-ins require login.
 2. **Lists cap:** Max 3 lists per user. Enforce at the API level — not just the UI.
 3. **Check-in requires photo:** At least one photo upload is mandatory. Text note and menu photo are optional.
-4. **Stamps are per-shop:** One stamp design per shop. Multiple check-ins at the same shop earn duplicate stamps (intended collection mechanic).
-5. **PDPA cascade on deletion:** Account deletion must cascade all personal data — check-in photos (Supabase Storage), text notes, lists, stamps, profile. Non-negotiable. Build before launch.
+4. **Polaroid wall:** Each check-in generates a polaroid card. Multiple check-ins at the same shop create multiple polaroids (intended collection mechanic). Non-transferable, non-purchasable in V1.
+5. **PDPA cascade on deletion:** Account deletion must cascade all personal data — check-in photos (Supabase Storage), text notes, lists, polaroids, profile. Non-negotiable. Build before launch.
 6. **Provider abstraction:** Never import provider SDKs in business logic. Always use Protocol classes from `backend/providers/`.
 
 ---
