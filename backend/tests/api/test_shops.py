@@ -1,6 +1,6 @@
-import pytest
 from unittest.mock import MagicMock, patch
 
+import pytest
 from fastapi.testclient import TestClient
 
 from main import app
@@ -265,8 +265,8 @@ class TestGetShopSeoFields:
         """When fetching a shop, response includes phone, website, openingHours, priceRange, and updatedAt for JSON-LD."""
         mock_db = MagicMock()
         mock_get_client.return_value = mock_db
-        mock_db.table.return_value.select.return_value.eq.return_value.limit.return_value.execute.return_value = (
-            MagicMock(data=[mock_shop_row])
+        mock_db.table.return_value.select.return_value.eq.return_value.limit.return_value.execute.return_value = MagicMock(
+            data=[mock_shop_row]
         )
 
         response = client.get(f"/shops/{mock_shop_row['id']}")
