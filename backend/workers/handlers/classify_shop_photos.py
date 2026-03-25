@@ -10,7 +10,7 @@ from workers.queue import JobQueue
 
 logger = structlog.get_logger()
 
-_SIZE_SUFFIX_RE = re.compile(r"=[wsh]\d+[^/]*$")
+_SIZE_SUFFIX_RE = re.compile(r"=[wsh]\d+[^/]*(?=/|$)")
 _MENU_CAP = 5
 _VIBE_CAP = 10
 
@@ -44,27 +44,37 @@ async def handle_classify_shop_photos(
         logger.info("No unclassified photos", shop_id=shop_id)
         return
 
+    # Query already-classified counts to enforce global caps across runs
+    existing_counts = _get_existing_category_counts(db, shop_id)
+
     logger.info("Classifying photos", shop_id=shop_id, count=len(photos))
 
-    # Classify each photo individually (for fault isolation)
+    # Classify each photo individually (for fault isolation); accumulate in memory
     classified: list[dict[str, Any]] = []
     for photo in photos:
         thumbnail = to_thumbnail_url(photo["url"])
         try:
             category = await llm.classify_photo(thumbnail)
         except Exception:
-            logger.warning("Photo classification failed, skipping", photo_id=photo["id"])
+            logger.warning(
+                "Photo classification failed, skipping",
+                photo_id=photo["id"],
+                exc_info=True,
+            )
             continue
 
-        db.table("shop_photos").update(
-            {"category": category.value, "is_menu": category == PhotoCategory.MENU}
-        ).eq("id", photo["id"]).execute()
+        classified.append(
+            {"id": photo["id"], "category": category, "uploaded_at": photo.get("uploaded_at")}
+        )
 
-        classified.append({"id": photo["id"], "category": category, "uploaded_at": photo.get("uploaded_at")})
+    # Enforce caps against global totals; mutates item["category"] for excess rows
+    menu_slots = max(0, _MENU_CAP - existing_counts.get(PhotoCategory.MENU, 0))
+    vibe_slots = max(0, _VIBE_CAP - existing_counts.get(PhotoCategory.VIBE, 0))
+    _enforce_cap(classified, PhotoCategory.MENU, menu_slots)
+    _enforce_cap(classified, PhotoCategory.VIBE, vibe_slots)
 
-    # Enforce caps: keep newest N per category, downgrade extras to SKIP
-    _enforce_cap(db, classified, PhotoCategory.MENU, _MENU_CAP)
-    _enforce_cap(db, classified, PhotoCategory.VIBE, _VIBE_CAP)
+    # Batch write: one update call per final category
+    _batch_write(db, classified)
 
     logger.info(
         "Photo classification complete",
@@ -75,25 +85,51 @@ async def handle_classify_shop_photos(
     )
 
 
+def _get_existing_category_counts(db: Client, shop_id: str) -> dict[PhotoCategory, int]:
+    """Query already-classified (non-null, non-SKIP) photo counts per category for a shop."""
+    response = (
+        db.table("shop_photos")
+        .select("category")
+        .eq("shop_id", shop_id)
+        .not_.is_("category", "null")
+        .neq("category", PhotoCategory.SKIP.value)
+        .execute()
+    )
+    counts: dict[PhotoCategory, int] = {}
+    for row in response.data:
+        try:
+            cat = PhotoCategory(row["category"])
+        except ValueError:
+            continue
+        counts[cat] = counts.get(cat, 0) + 1
+    return counts
+
+
 def _enforce_cap(
-    db: Client,
     classified: list[dict[str, Any]],
     category: PhotoCategory,
-    cap: int,
+    remaining_slots: int,
 ) -> None:
     """Downgrade excess photos of a category to SKIP, keeping newest by uploaded_at."""
     matching = [c for c in classified if c["category"] == category]
-    if len(matching) <= cap:
+    if len(matching) <= remaining_slots:
         return
 
-    # Sort by uploaded_at descending (None last)
     matching.sort(
         key=lambda c: c.get("uploaded_at") or "",
         reverse=True,
     )
-    excess = matching[cap:]
-    for item in excess:
-        db.table("shop_photos").update(
-            {"category": PhotoCategory.SKIP.value, "is_menu": False}
-        ).eq("id", item["id"]).execute()
+    for item in matching[remaining_slots:]:
         item["category"] = PhotoCategory.SKIP
+
+
+def _batch_write(db: Client, classified: list[dict[str, Any]]) -> None:
+    """Write all classified results to DB in one update call per category."""
+    ids_by_category: dict[PhotoCategory, list[str]] = {}
+    for item in classified:
+        ids_by_category.setdefault(item["category"], []).append(item["id"])
+
+    for category, ids in ids_by_category.items():
+        db.table("shop_photos").update(
+            {"category": category.value, "is_menu": category == PhotoCategory.MENU}
+        ).in_("id", ids).execute()
