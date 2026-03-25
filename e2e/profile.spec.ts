@@ -52,7 +52,31 @@ test.describe('@critical J15 — Account deletion: request → grace period stat
 // --- Phase 2 stubs ---
 
 test.describe('J25 — Display name update', () => {
-  test.fixme('changing display name in settings reflects on profile page', async () => {});
+  test('changing display name in settings reflects on profile page', async ({
+    authedPage: page,
+  }) => {
+    await page.goto('/settings');
+    await page.waitForLoadState('networkidle');
+
+    const displayNameInput = page.locator('#display-name');
+    await expect(displayNameInput).toBeVisible({ timeout: 10_000 });
+
+    // Fill with a unique timestamp-based name (max 30 chars)
+    const newName = `Tester ${Date.now()}`.slice(0, 30);
+    await displayNameInput.fill(newName);
+
+    const saveButton = page.getByRole('button', { name: /Save changes/i });
+    await saveButton.click();
+
+    // Success message confirms the save
+    await expect(page.getByText(/Profile updated!/i)).toBeVisible({ timeout: 10_000 });
+
+    // Navigate to profile and verify the new name is shown
+    await page.goto('/profile');
+    await page.waitForLoadState('networkidle');
+
+    await expect(page.getByText(newName)).toBeVisible({ timeout: 10_000 });
+  });
 });
 
 test.describe.serial('@critical J38 — Account deletion: cancel during grace period', () => {
