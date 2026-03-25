@@ -1,6 +1,18 @@
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 
+/**
+ * Anon client for unauthenticated server contexts (sitemap, metadata, etc.)
+ * that have no request/cookie scope. Uses the public anon key with no session.
+ */
+export function createAnonClient() {
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    { cookies: { getAll: () => [], setAll: () => {} } }
+  );
+}
+
 export async function createClient() {
   const cookieStore = await cookies();
 
