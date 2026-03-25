@@ -288,8 +288,7 @@ class AnthropicLLMAdapter:
         """Summarize community check-in texts into a concise thematic snapshot."""
         numbered = "\n".join(f"[{i}] {t}" for i, t in enumerate(texts, 1))
         user_prompt = (
-            f"Summarize these {len(texts)} visitor reviews into a community snapshot:\n\n"
-            f"{numbered}"
+            f"Summarize these {len(texts)} visitor reviews into a community snapshot:\n\n{numbered}"
         )
 
         response = await self._client.messages.create(

@@ -69,7 +69,7 @@ async def main(dry_run: bool, queue: JobQueue | None = None) -> None:
 
     print(f"Enqueued {len(to_enqueue)} SUMMARIZE_REVIEWS jobs.")
     print("Monitor worker logs: tail -f logs or Railway log stream.")
-    print("Cost estimate: ~${:.2f}".format(len(to_enqueue) * 0.003))
+    print(f"Cost estimate: ~${len(to_enqueue) * 0.003:.2f}")
 
 
 if __name__ == "__main__":

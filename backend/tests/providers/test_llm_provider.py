@@ -20,9 +20,7 @@ class TestSummarizeReviews:
 
         with patch.object(adapter, "_client") as mock_client:
             mock_client.messages.create = AsyncMock(return_value=mock_response)
-            result = await adapter.summarize_reviews(
-                ["超好喝的拿鐵", "巴斯克蛋糕很讚，環境安靜"]
-            )
+            result = await adapter.summarize_reviews(["超好喝的拿鐵", "巴斯克蛋糕很讚，環境安靜"])
 
         assert result == "顧客推薦拿鐵和巴斯克蛋糕，環境安靜適合工作。"
         mock_client.messages.create.assert_called_once()

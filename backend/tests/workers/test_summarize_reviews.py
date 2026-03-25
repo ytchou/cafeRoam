@@ -85,9 +85,7 @@ class TestSummarizeReviewsHandler:
 
     async def test_llm_failure_propagates_without_enqueuing_embedding(self):
         """When Claude fails, the exception propagates and no GENERATE_EMBEDDING is enqueued."""
-        db = self._make_db(
-            checkin_texts=[{"text": "好喝的咖啡，推薦拿鐵"}]
-        )
+        db = self._make_db(checkin_texts=[{"text": "好喝的咖啡，推薦拿鐵"}])
         llm = AsyncMock()
         llm.summarize_reviews = AsyncMock(side_effect=RuntimeError("Claude API error"))
         queue = AsyncMock()
