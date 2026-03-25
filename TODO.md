@@ -1495,7 +1495,7 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 - [x] J39: Check-in review text visible on shop page (`checkin.spec.ts`)
 
 **Chunk 4 — Final Verification:**
-- [ ] Run all 6 journeys + full suite regression check
+- [x] Run all 6 journeys + full suite regression check
 
 ---
 
