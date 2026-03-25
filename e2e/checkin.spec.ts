@@ -22,7 +22,9 @@ test.describe('@critical J10 — Check-in: upload photo → submit → stamp awa
 
     const fileInput = page.locator('[data-testid="photo-input"]');
     await fileInput.setInputFiles(TEST_PHOTO);
-    await expect(page.locator('img[src^="blob:"]')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('img[src^="blob:"]')).toBeVisible({
+      timeout: 10_000,
+    });
 
     const submitButton = page.getByRole('button', { name: /打卡|Check In/i });
     await submitButton.click();
@@ -30,7 +32,9 @@ test.describe('@critical J10 — Check-in: upload photo → submit → stamp awa
     await page.waitForURL((url) => !url.pathname.startsWith('/checkin'), {
       timeout: 15_000,
     });
-    await expect(page.locator('[data-sonner-toast]')).toBeVisible({ timeout: 5_000 });
+    await expect(page.locator('[data-sonner-toast]')).toBeVisible({
+      timeout: 5_000,
+    });
   });
 });
 
@@ -65,10 +69,16 @@ test.describe('J24 — Duplicate stamp at same shop (intended)', () => {
     async function doCheckin() {
       await page.goto(`/checkin/${shopId}`);
       await expect(page.getByText('Check In')).toBeVisible({ timeout: 10_000 });
-      await page.locator('[data-testid="photo-input"]').setInputFiles(TEST_PHOTO);
-      await expect(page.locator('img[src^="blob:"]')).toBeVisible({ timeout: 10_000 });
+      await page
+        .locator('[data-testid="photo-input"]')
+        .setInputFiles(TEST_PHOTO);
+      await expect(page.locator('img[src^="blob:"]')).toBeVisible({
+        timeout: 10_000,
+      });
       await page.getByRole('button', { name: /打卡|Check In/i }).click();
-      await page.waitForURL((url) => !url.pathname.startsWith('/checkin'), { timeout: 15_000 });
+      await page.waitForURL((url) => !url.pathname.startsWith('/checkin'), {
+        timeout: 15_000,
+      });
     }
 
     await doCheckin();
@@ -84,7 +94,9 @@ test.describe('J24 — Duplicate stamp at same shop (intended)', () => {
     const firstCount = await stamps.count();
 
     await doCheckin();
-    await expect(page.locator('[data-sonner-toast]')).toBeVisible({ timeout: 5_000 });
+    await expect(page.locator('[data-sonner-toast]')).toBeVisible({
+      timeout: 5_000,
+    });
 
     // Stamp count should have increased by at least 1
     await page.goto('/profile');
@@ -109,7 +121,9 @@ test.describe('J30 — Check-in with optional menu photo + text note', () => {
     await expect(page.getByText('Check In')).toBeVisible({ timeout: 10_000 });
 
     await page.locator('[data-testid="photo-input"]').setInputFiles(TEST_PHOTO);
-    await expect(page.locator('img[src^="blob:"]')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('img[src^="blob:"]')).toBeVisible({
+      timeout: 10_000,
+    });
 
     const menuPhotoToggle = page.getByText(/Menu photo.*optional/i);
     await menuPhotoToggle.click();
@@ -120,12 +134,18 @@ test.describe('J30 — Check-in with optional menu photo + text note', () => {
       .locator('#note')
       .or(page.getByPlaceholder(/What did you have/i));
     await expect(noteInput).toBeVisible({ timeout: 5_000 });
-    await noteInput.fill('Excellent flat white — silky microfoam and great ambiance');
+    await noteInput.fill(
+      'Excellent flat white — silky microfoam and great ambiance'
+    );
 
     await page.getByRole('button', { name: /打卡|Check In/i }).click();
 
-    await page.waitForURL((url) => !url.pathname.startsWith('/checkin'), { timeout: 15_000 });
-    await expect(page.locator('[data-sonner-toast]')).toBeVisible({ timeout: 5_000 });
+    await page.waitForURL((url) => !url.pathname.startsWith('/checkin'), {
+      timeout: 15_000,
+    });
+    await expect(page.locator('[data-sonner-toast]')).toBeVisible({
+      timeout: 5_000,
+    });
   });
 });
 
@@ -143,7 +163,9 @@ test.describe('@critical J39 — Check-in with review text → review visible on
 
     const fileInput = page.locator('[data-testid="photo-input"]');
     await fileInput.setInputFiles(TEST_PHOTO);
-    await expect(page.locator('img[src^="blob:"]')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('img[src^="blob:"]')).toBeVisible({
+      timeout: 10_000,
+    });
 
     const threeStarBtn = page.getByRole('button', { name: /3 stars/i });
     await threeStarBtn.click();

@@ -69,7 +69,9 @@ test.describe('J25 — Display name update', () => {
     await saveButton.click();
 
     // Success message confirms the save
-    await expect(page.getByText(/Profile updated!/i)).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText(/Profile updated!/i)).toBeVisible({
+      timeout: 10_000,
+    });
 
     // Navigate to profile and verify the new name is shown
     await page.goto('/profile');
@@ -79,7 +81,8 @@ test.describe('J25 — Display name update', () => {
   });
 });
 
-test.describe.serial('@critical J38 — Account deletion: cancel during grace period', () => {
+test.describe
+  .serial('@critical J38 — Account deletion: cancel during grace period', () => {
   test('a user in the 30-day grace period can cancel deletion from the recovery page', async ({
     authedPage: page,
   }) => {
@@ -109,7 +112,9 @@ test.describe.serial('@critical J38 — Account deletion: cancel during grace pe
       // Step 4: Wait for deletion to process — should show grace period messaging
       // The page may redirect or show a confirmation
       await expect(
-        page.getByText(/30.*(day|天)|grace period|scheduled for deletion|即將刪除/i)
+        page.getByText(
+          /30.*(day|天)|grace period|scheduled for deletion|即將刪除/i
+        )
       ).toBeVisible({ timeout: 10_000 });
 
       // Step 5: Navigate to recovery page and cancel

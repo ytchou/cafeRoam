@@ -85,8 +85,13 @@ test.describe('J04 — Browse map → tap pin → shop detail sheet', () => {
 
     // Map pins are accessible DOM buttons with aria-label={shopName}
     const pinButton = page.locator(`button[aria-label="${shop.name}"]`);
-    const hasPins = await pinButton.isVisible({ timeout: 10_000 }).catch(() => false);
-    test.skip(!hasPins, 'Shop pin not visible in current map viewport — may require seeded data in Taipei area');
+    const hasPins = await pinButton
+      .isVisible({ timeout: 10_000 })
+      .catch(() => false);
+    test.skip(
+      !hasPins,
+      'Shop pin not visible in current map viewport — may require seeded data in Taipei area'
+    );
 
     await pinButton.click();
 
@@ -118,7 +123,9 @@ test.describe('J18 — Shop detail: public access with OG tags', () => {
     await page.waitForLoadState('networkidle');
 
     // Shop name heading should render
-    await expect(page.getByRole('heading').first()).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole('heading').first()).toBeVisible({
+      timeout: 10_000,
+    });
 
     // OG meta tags must be present for social sharing
     const ogTitle = await page
@@ -155,7 +162,9 @@ test.describe('J19 — Shop detail via slug redirect', () => {
     expect(page.url()).toContain(`/shops/${shop.id}/${shop.slug}`);
 
     // Shop content should render after redirect
-    await expect(page.getByRole('heading').first()).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole('heading').first()).toBeVisible({
+      timeout: 10_000,
+    });
   });
 });
 
@@ -175,7 +184,9 @@ test.describe('J22 — Map ↔ List view toggle', () => {
 
     // Click list view — list view button should become active (data-active)
     await listViewBtn.click();
-    await expect(listViewBtn).toHaveAttribute('data-active', { timeout: 5_000 });
+    await expect(listViewBtn).toHaveAttribute('data-active', {
+      timeout: 5_000,
+    });
 
     // Click map view — map view button should become active
     await mapViewBtn.click();
@@ -199,8 +210,13 @@ test.describe('J23 — List view: shops sorted by distance', () => {
 
     // With geolocation, distance labels (e.g. "0.5 km") should appear on shop cards
     const distanceLabel = page.getByText(/\d+(\.\d+)?\s*(km|m)\b/i).first();
-    const hasDistance = await distanceLabel.isVisible({ timeout: 10_000 }).catch(() => false);
-    test.skip(!hasDistance, 'No shop cards with distance labels — may require seeded data');
+    const hasDistance = await distanceLabel
+      .isVisible({ timeout: 10_000 })
+      .catch(() => false);
+    test.skip(
+      !hasDistance,
+      'No shop cards with distance labels — may require seeded data'
+    );
 
     // At minimum one distance label is visible
     await expect(distanceLabel).toBeVisible();
@@ -215,9 +231,13 @@ test.describe('J23 — List view: shops sorted by distance', () => {
       const parseMetres = (t: string | null): number => {
         const m = t?.match(/([\d.]+)\s*(km|m)\b/i);
         if (!m) return 999_000;
-        return m[2].toLowerCase() === 'km' ? parseFloat(m[1]) * 1000 : parseFloat(m[1]);
+        return m[2].toLowerCase() === 'km'
+          ? parseFloat(m[1]) * 1000
+          : parseFloat(m[1]);
       };
-      expect(parseMetres(firstText)).toBeLessThanOrEqual(parseMetres(secondText));
+      expect(parseMetres(firstText)).toBeLessThanOrEqual(
+        parseMetres(secondText)
+      );
     }
   });
 });
@@ -228,7 +248,10 @@ test.describe('J28 — Desktop: 2-column shop detail layout', () => {
   }) => {
     // Skip on mobile projects — viewport override doesn't change User-Agent or device profile
     const viewport = page.viewportSize();
-    test.skip(!!viewport && viewport.width < 1024, 'Desktop layout test — skipped on mobile viewport');
+    test.skip(
+      !!viewport && viewport.width < 1024,
+      'Desktop layout test — skipped on mobile viewport'
+    );
 
     await page.setViewportSize({ width: 1280, height: 800 });
 
@@ -241,7 +264,9 @@ test.describe('J28 — Desktop: 2-column shop detail layout', () => {
     await page.waitForLoadState('networkidle');
 
     // Shop heading renders at desktop width
-    await expect(page.getByRole('heading').first()).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole('heading').first()).toBeVisible({
+      timeout: 10_000,
+    });
 
     // Desktop layout: shop info is in the left column, map/actions in the right
     // Verify the page body fills the desktop viewport (not mobile-capped)
@@ -280,13 +305,20 @@ test.describe('J29 — Mobile: mini card on pin tap', () => {
 
     // Find the shop's map pin
     const pinButton = page.locator(`button[aria-label="${shop.name}"]`);
-    const hasPins = await pinButton.isVisible({ timeout: 10_000 }).catch(() => false);
-    test.skip(!hasPins, 'Shop pin not visible — may require seeded data in Taipei area');
+    const hasPins = await pinButton
+      .isVisible({ timeout: 10_000 })
+      .catch(() => false);
+    test.skip(
+      !hasPins,
+      'Shop pin not visible — may require seeded data in Taipei area'
+    );
 
     await pinButton.click();
 
     // On mobile, ShopCarousel appears at the bottom of the map (data-testid="carousel-scroll")
-    await expect(page.locator('[data-testid="carousel-scroll"]')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('[data-testid="carousel-scroll"]')).toBeVisible({
+      timeout: 10_000,
+    });
   });
 });
 
@@ -309,8 +341,10 @@ test.describe('@critical J36 — Shop detail: tap Get Directions → DirectionsS
 
     // "Get There" button should be visible (only renders if shop has lat/lng)
     const getThereBtn = page.getByRole('button', { name: /get there/i });
-    test.skip(!(await getThereBtn.isVisible({ timeout: 5_000 }).catch(() => false)),
-      'Shop has no coordinates — Get There button not rendered');
+    test.skip(
+      !(await getThereBtn.isVisible({ timeout: 5_000 }).catch(() => false)),
+      'Shop has no coordinates — Get There button not rendered'
+    );
 
     // Tap "Get There"
     await getThereBtn.click();
@@ -323,7 +357,9 @@ test.describe('@critical J36 — Shop detail: tap Get Directions → DirectionsS
     await expect(routeRow).toBeVisible({ timeout: 10_000 });
 
     // Google Maps and Apple Maps deep links should be present
-    await expect(page.getByRole('link', { name: /Google Maps/i })).toBeVisible();
+    await expect(
+      page.getByRole('link', { name: /Google Maps/i })
+    ).toBeVisible();
     await expect(page.getByRole('link', { name: /Apple Maps/i })).toBeVisible();
   });
 });

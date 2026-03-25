@@ -110,10 +110,15 @@ test.describe('J26 — Delete list', () => {
     await expect(page.getByText(listName)).toBeVisible({ timeout: 10_000 });
 
     // Find and click the delete button for this list
-    const listCard = page.locator('li, article, [data-list-id]').filter({ hasText: listName }).first();
+    const listCard = page
+      .locator('li, article, [data-list-id]')
+      .filter({ hasText: listName })
+      .first();
     const deleteBtn = listCard.getByRole('button', { name: /delete|trash/i });
 
-    const hasDeleteBtn = await deleteBtn.isVisible({ timeout: 3_000 }).catch(() => false);
+    const hasDeleteBtn = await deleteBtn
+      .isVisible({ timeout: 3_000 })
+      .catch(() => false);
     if (!hasDeleteBtn) {
       // Deletion may be behind a menu — try the last button in the card (options/kebab)
       const optionsBtn = listCard.getByRole('button').last();
@@ -126,8 +131,19 @@ test.describe('J26 — Delete list', () => {
     // Confirmation dialog: "Delete '{name}'? This won't remove the shops."
     const confirmBtn = page
       .getByRole('button', { name: /^(OK|Confirm|Delete|Yes)$/i })
-      .or(page.getByText(/This won't remove the shops/i).locator('..').getByRole('button').last());
-    if (await confirmBtn.first().isVisible({ timeout: 2_000 }).catch(() => false)) {
+      .or(
+        page
+          .getByText(/This won't remove the shops/i)
+          .locator('..')
+          .getByRole('button')
+          .last()
+      );
+    if (
+      await confirmBtn
+        .first()
+        .isVisible({ timeout: 2_000 })
+        .catch(() => false)
+    ) {
       await confirmBtn.first().click();
     }
 
@@ -140,7 +156,9 @@ test.describe('J27 — Remove shop from list', () => {
   test('removing a shop from a list updates the shop count', async ({
     authedPage: page,
   }) => {
-    const shopsResponse = await page.request.get('/api/shops?featured=true&limit=1');
+    const shopsResponse = await page.request.get(
+      '/api/shops?featured=true&limit=1'
+    );
     const shops = await shopsResponse.json();
     const shop = first(shops);
     test.skip(!shop, 'No seeded shops available');
@@ -189,7 +207,9 @@ test.describe('J27 — Remove shop from list', () => {
       await page.waitForLoadState('networkidle');
       await page.getByRole('button', { name: /^Save$/i }).click();
 
-      const checkedListCheckbox = page.getByRole('checkbox', { name: listName });
+      const checkedListCheckbox = page.getByRole('checkbox', {
+        name: listName,
+      });
       await expect(checkedListCheckbox).toBeChecked({ timeout: 5_000 });
       await checkedListCheckbox.uncheck();
       await page.getByRole('button', { name: /Done/i }).click();
@@ -199,7 +219,9 @@ test.describe('J27 — Remove shop from list', () => {
       await page.waitForLoadState('networkidle');
       await expect(page.getByText(shop!.name)).toBeHidden({ timeout: 10_000 });
     } finally {
-      await page.request.delete(`/api/lists/${createdList!.id}`).catch(() => null);
+      await page.request
+        .delete(`/api/lists/${createdList!.id}`)
+        .catch(() => null);
     }
   });
 });

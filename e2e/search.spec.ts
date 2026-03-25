@@ -38,7 +38,10 @@ test.describe('J08 — Mode chip: select "work" → filtered results', () => {
       .getByRole('button', { name: /^Work$/i })
       .or(page.getByRole('button', { name: /工作模式|work mode/i }));
 
-    const hasChip = await workChip.first().isVisible({ timeout: 3_000 }).catch(() => false);
+    const hasChip = await workChip
+      .first()
+      .isVisible({ timeout: 3_000 })
+      .catch(() => false);
     test.skip(!hasChip, 'Work mode chip not available in current search UI');
 
     await workChip.first().click();
@@ -65,7 +68,9 @@ test.describe('J09 — Suggestion chip: tap preset → search executes', () => {
     await chip.click();
 
     // Search input should be auto-filled with the chip text
-    const searchInput = page.locator('form[role="search"]').getByRole('textbox');
+    const searchInput = page
+      .locator('form[role="search"]')
+      .getByRole('textbox');
     await expect(searchInput).toHaveValue('有插座可以久坐', { timeout: 5_000 });
 
     // Results should load
@@ -85,7 +90,9 @@ test.describe('J21 — Filter pills: toggle WiFi → results update', () => {
     await page.goto('/search');
     await page.waitForLoadState('networkidle');
 
-    const searchInput = page.locator('form[role="search"]').getByRole('textbox');
+    const searchInput = page
+      .locator('form[role="search"]')
+      .getByRole('textbox');
     await searchInput.fill('咖啡廳');
     await searchInput.press('Enter');
     await expect(page.getByText('搜尋中…')).toBeHidden({ timeout: 15_000 });
@@ -102,7 +109,10 @@ test.describe('J21 — Filter pills: toggle WiFi → results update', () => {
     const ariaPressed = await wifiFilter.getAttribute('aria-pressed');
     const dataActive = await wifiFilter.getAttribute('data-active');
     const isActive = ariaPressed === 'true' || dataActive === 'true';
-    expect(isActive, 'WiFi filter should be marked as active after clicking').toBe(true);
+    expect(
+      isActive,
+      'WiFi filter should be marked as active after clicking'
+    ).toBe(true);
     await expect(wifiFilter).toBeVisible();
   });
 });

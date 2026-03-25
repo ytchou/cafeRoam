@@ -48,7 +48,9 @@ test.describe('@critical J32 — Community feed: like toggle increments count', 
 
     // Find the first like button (LikeButton has aria-label containing "this note")
     const likeButton = page.locator('button[aria-pressed]').first();
-    const hasFeed = await likeButton.isVisible({ timeout: 10_000 }).catch(() => false);
+    const hasFeed = await likeButton
+      .isVisible({ timeout: 10_000 })
+      .catch(() => false);
     test.skip(!hasFeed, 'No community notes in feed');
 
     // Read current count from the <span> sibling inside the button
@@ -66,7 +68,9 @@ test.describe('@critical J32 — Community feed: like toggle increments count', 
 
     // Assert count changed by 1
     const expectedCount = wasLiked ? beforeCount - 1 : beforeCount + 1;
-    await expect(countSpan).toHaveText(String(expectedCount), { timeout: 5_000 });
+    await expect(countSpan).toHaveText(String(expectedCount), {
+      timeout: 5_000,
+    });
   });
 });
 
@@ -84,11 +88,16 @@ test.describe('@critical J33 — Community feed: MRT filter scopes results', () 
     // Get all options (skip "All stations" default)
     const options = mrtSelect.locator('option');
     const optionCount = await options.count();
-    test.skip(optionCount <= 1, 'No MRT station options available beyond "All stations"');
+    test.skip(
+      optionCount <= 1,
+      'No MRT station options available beyond "All stations"'
+    );
 
     // Count cards before filtering
     // data-testid="community-card" avoids coupling to Tailwind class names that change on refactors
-    const feedCards = page.locator('[data-testid="community-card"], article[data-testid]');
+    const feedCards = page.locator(
+      '[data-testid="community-card"], article[data-testid]'
+    );
     const beforeCount = await feedCards.count();
 
     // Select the second option (first real MRT station)

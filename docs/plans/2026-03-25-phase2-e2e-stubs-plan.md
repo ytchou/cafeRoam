@@ -15,6 +15,7 @@
 **Tech Stack:** Playwright, TypeScript, existing `e2e/fixtures/auth.ts` and `e2e/fixtures/geolocation.ts`
 
 **Acceptance Criteria:**
+
 - [ ] All 6 stubs (`test.fixme()`) are replaced with passing `@critical` tests
 - [ ] `npx playwright test e2e/feed.spec.ts e2e/explore.spec.ts e2e/discovery.spec.ts e2e/profile.spec.ts e2e/checkin.spec.ts` passes with 0 failures (given seeded data)
 - [ ] J38 (account deletion cancel) restores the test user to normal state after execution
@@ -25,6 +26,7 @@
 ### Task 1: J32 — Community feed like toggle (`e2e/feed.spec.ts`)
 
 **Files:**
+
 - Modify: `e2e/feed.spec.ts:42-44` (replace `test.fixme` stub)
 
 **Step 1: Write the test**
@@ -67,7 +69,9 @@ test.describe('@critical J32 — Community feed: like toggle increments count', 
 
     // Assert count changed by 1
     const expectedCount = wasLiked ? beforeCount - 1 : beforeCount + 1;
-    await expect(countSpan).toHaveText(String(expectedCount), { timeout: 5_000 });
+    await expect(countSpan).toHaveText(String(expectedCount), {
+      timeout: 5_000,
+    });
   });
 });
 ```
@@ -89,6 +93,7 @@ git commit -m "test(e2e): implement J32 — community feed like toggle"
 ### Task 2: J33 — Community feed MRT filter (`e2e/feed.spec.ts`)
 
 **Files:**
+
 - Modify: `e2e/feed.spec.ts:46-48` (replace `test.fixme` stub)
 
 **Depends on:** Task 1 (same file, import already changed)
@@ -113,7 +118,10 @@ test.describe('@critical J33 — Community feed: MRT filter scopes results', () 
     // Get all options (skip "All stations" default)
     const options = mrtSelect.locator('option');
     const optionCount = await options.count();
-    test.skip(optionCount <= 1, 'No MRT station options available beyond "All stations"');
+    test.skip(
+      optionCount <= 1,
+      'No MRT station options available beyond "All stations"'
+    );
 
     // Count cards before filtering
     const feedCards = page.locator('div.overflow-hidden.rounded-2xl.border');
@@ -154,6 +162,7 @@ git commit -m "test(e2e): implement J33 — community feed MRT filter"
 ### Task 3: J34 — Explore tarot draw (`e2e/explore.spec.ts`)
 
 **Files:**
+
 - Modify: `e2e/explore.spec.ts:30-38` (replace `test.fixme` stub)
 
 **Step 1: Write the test**
@@ -182,7 +191,9 @@ test.describe('@critical J34 — Explore: Tarot draw → 3 café cards revealed'
     }
 
     // Wait for skeleton loaders to disappear (skeletons have animate-pulse)
-    await expect(page.locator('.animate-pulse').first()).toBeHidden({ timeout: 15_000 });
+    await expect(page.locator('.animate-pulse').first()).toBeHidden({
+      timeout: 15_000,
+    });
 
     // Should have 3 tarot card buttons (140px height, with tarot-gold border)
     const tarotCards = page.locator('button:has(span.uppercase)');
@@ -218,6 +229,7 @@ git commit -m "test(e2e): implement J34 — explore tarot draw reveals 3 cards"
 ### Task 4: J36 — Shop detail Get Directions (`e2e/discovery.spec.ts`)
 
 **Files:**
+
 - Modify: `e2e/discovery.spec.ts:100-102` (replace `test.fixme` stub)
 
 **Step 1: Write the test**
@@ -245,8 +257,10 @@ test.describe('@critical J36 — Shop detail: tap Get Directions → DirectionsS
 
     // "Get There" button should be visible (only renders if shop has lat/lng)
     const getThereBtn = page.getByRole('button', { name: /get there/i });
-    test.skip(!(await getThereBtn.isVisible({ timeout: 5_000 }).catch(() => false)),
-      'Shop has no coordinates — Get There button not rendered');
+    test.skip(
+      !(await getThereBtn.isVisible({ timeout: 5_000 }).catch(() => false)),
+      'Shop has no coordinates — Get There button not rendered'
+    );
 
     // Tap "Get There"
     await getThereBtn.click();
@@ -259,7 +273,9 @@ test.describe('@critical J36 — Shop detail: tap Get Directions → DirectionsS
     await expect(routeRow).toBeVisible({ timeout: 10_000 });
 
     // Google Maps and Apple Maps deep links should be present
-    await expect(page.getByRole('link', { name: /Google Maps/i })).toBeVisible();
+    await expect(
+      page.getByRole('link', { name: /Google Maps/i })
+    ).toBeVisible();
     await expect(page.getByRole('link', { name: /Apple Maps/i })).toBeVisible();
   });
 });
@@ -282,6 +298,7 @@ git commit -m "test(e2e): implement J36 — shop detail Get Directions opens she
 ### Task 5: J38 — Account deletion cancel (`e2e/profile.spec.ts`)
 
 **Files:**
+
 - Modify: `e2e/profile.spec.ts:58-60` (replace `test.fixme` stub)
 
 **Step 1: Write the test**
@@ -290,7 +307,8 @@ This is a serial test that modifies account state. The auth fixture is already i
 
 ```typescript
 // Replace lines 58-60 with:
-test.describe.serial('@critical J38 — Account deletion: cancel during grace period', () => {
+test.describe
+  .serial('@critical J38 — Account deletion: cancel during grace period', () => {
   test('a user in the 30-day grace period can cancel deletion from the recovery page', async ({
     authedPage: page,
   }) => {
@@ -317,7 +335,9 @@ test.describe.serial('@critical J38 — Account deletion: cancel during grace pe
     // Step 4: Wait for deletion to process — should show grace period messaging
     // The page may redirect or show a confirmation
     await expect(
-      page.getByText(/30.*(day|天)|grace period|scheduled for deletion|即將刪除/i)
+      page.getByText(
+        /30.*(day|天)|grace period|scheduled for deletion|即將刪除/i
+      )
     ).toBeVisible({ timeout: 10_000 });
 
     // Step 5: Navigate to recovery page and cancel
@@ -361,6 +381,7 @@ git commit -m "test(e2e): implement J38 — account deletion cancel during grace
 ### Task 6: J39 — Check-in with review text visible on shop page (`e2e/checkin.spec.ts`)
 
 **Files:**
+
 - Modify: `e2e/checkin.spec.ts:77-79` (replace `test.fixme` stub)
 
 **Step 1: Write the test**
@@ -386,7 +407,9 @@ test.describe('@critical J39 — Check-in with review text → review visible on
     // Upload a test photo (required for check-in)
     const fileInput = page.locator('[data-testid="photo-input"]');
     await fileInput.setInputFiles(TEST_PHOTO);
-    await expect(page.locator('img[src^="blob:"]')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('img[src^="blob:"]')).toBeVisible({
+      timeout: 10_000,
+    });
 
     // Give a star rating (required before review text textarea appears)
     const threeStarBtn = page.getByRole('button', { name: /3 stars/i });
@@ -491,6 +514,7 @@ graph TD
 ```
 
 **Wave 1** (parallel — no dependencies, each touches a different file):
+
 - Task 1: J32 feed like toggle (`feed.spec.ts`)
 - Task 3: J34 tarot draw (`explore.spec.ts`)
 - Task 4: J36 directions sheet (`discovery.spec.ts`)
@@ -498,9 +522,11 @@ graph TD
 - Task 6: J39 review text (`checkin.spec.ts`)
 
 **Wave 2** (depends on Task 1 — same file):
+
 - Task 2: J33 MRT filter (`feed.spec.ts`) ← Task 1
 
 **Wave 3** (depends on all):
+
 - Task 7: Final verification ← All tasks
 
 **Note:** Task 1 changes the import in `feed.spec.ts` from `@playwright/test` to `./fixtures/auth`. Task 2 depends on this import change, so it must run after Task 1. All other tasks touch different files and can run in parallel.
