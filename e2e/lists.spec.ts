@@ -9,7 +9,7 @@ test.describe('@critical J12 — Create list → add shop → shop appears in li
     await expect(page.getByText('My Lists')).toBeVisible({ timeout: 10_000 });
 
     // Create a new list with a unique name
-    const listName = `E2E Test List ${Date.now()}`;
+    const listName = `台北咖啡清單 ${Date.now()}`;
     const input = page.getByPlaceholder('Create new list');
     await input.fill(listName);
 
@@ -54,7 +54,7 @@ test.describe('@critical J13 — Create 3 lists → 4th list → cap error', () 
     const listsToCreate = 3 - currentCount;
     for (let i = 0; i < listsToCreate; i++) {
       const listInput = page.getByPlaceholder('Create new list');
-      const name = `Cap Test ${Date.now()}-${i}`;
+      const name = `週末探店 ${Date.now()}-${i}`;
       await listInput.fill(name);
       await page.getByRole('button', { name: 'Add' }).click();
       await expect(page.getByText(name)).toBeVisible({ timeout: 5_000 });
@@ -67,7 +67,7 @@ test.describe('@critical J13 — Create 3 lists → 4th list → cap error', () 
     // Assert cap is enforced: either input is hidden (UI-level) or 4th attempt shows error
     const input = page.getByPlaceholder('Create new list');
     if (await input.isVisible()) {
-      await input.fill('Over Limit');
+      await input.fill('板橋好咖啡廳');
       await page.getByRole('button', { name: 'Add' }).click();
       // Should show error toast about the 3-list limit
       await expect(

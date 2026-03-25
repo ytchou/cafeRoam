@@ -1497,6 +1497,16 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 **Chunk 4 — Final Verification:**
 - [x] Run all 6 journeys + full suite regression check
 
+**Additional journeys also implemented in this branch (beyond original plan):**
+- [x] J04: Browse map → tap pin → shop detail sheet (`discovery.spec.ts`)
+- [x] J17: PWA manifest returns valid brand metadata + icons (`pwa.spec.ts`)
+- [x] J20: Out-of-Taiwan geolocation → appropriate fallback (`edge-cases.spec.ts`)
+- [x] J24: Duplicate stamp at same shop awards second stamp (`checkin.spec.ts`)
+- [x] J26: Delete list removes it from lists page (`lists.spec.ts`)
+- [x] J27: Remove shop from list updates shop count (`lists.spec.ts`)
+- [x] J08: Work mode chip filters search results (`search.spec.ts`)
+- [x] J09: Suggestion chip auto-fills search and shows results (`search.spec.ts`)
+
 ---
 
 ### LINE Integration (V2)

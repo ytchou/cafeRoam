@@ -62,7 +62,7 @@ test.describe('J25 — Display name update', () => {
     await expect(displayNameInput).toBeVisible({ timeout: 10_000 });
 
     // Fill with a unique timestamp-based name (max 30 chars)
-    const newName = `Tester ${Date.now()}`.slice(0, 30);
+    const newName = `林小雨 ${Date.now()}`.slice(0, 30);
     await displayNameInput.fill(newName);
 
     const saveButton = page.getByRole('button', { name: /Save changes/i });
