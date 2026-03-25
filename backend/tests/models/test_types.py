@@ -7,6 +7,7 @@ from models.types import (
     JobStatus,
     List,
     ListItem,
+    PhotoCategory,
     SearchFilters,
     SearchQuery,
     Shop,
@@ -152,6 +153,18 @@ class TestShopEnrichmentInput:
         assert shop.rating == 4.5
         assert shop.review_count == 42
         assert shop.socket == "yes"
+
+
+class TestPhotoCategory:
+    def test_photo_category_values(self):
+        """Photo categories cover the three classification buckets."""
+        assert PhotoCategory.MENU == "MENU"
+        assert PhotoCategory.VIBE == "VIBE"
+        assert PhotoCategory.SKIP == "SKIP"
+
+    def test_photo_category_membership(self):
+        """A string can be validated as a PhotoCategory."""
+        assert PhotoCategory("MENU") == PhotoCategory.MENU
 
 
 class TestJobStatus:

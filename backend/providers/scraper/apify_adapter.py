@@ -4,7 +4,7 @@ from typing import Any
 import structlog
 from apify_client import ApifyClient
 
-from providers.scraper.interface import BatchScrapeInput, BatchScrapeResult, ScrapedShopData
+from providers.scraper.interface import BatchScrapeInput, BatchScrapeResult, ScrapedPhotoData, ScrapedShopData
 
 logger = structlog.get_logger()
 
@@ -145,7 +145,7 @@ class ApifyScraperAdapter:
                 for r in place.get("reviews", [])
                 if r.get("text")
             ],
-            photo_urls=place.get("imageUrls", [])[:10],
+            photos=[ScrapedPhotoData(url=url) for url in place.get("imageUrls", [])[:10]],
         )
 
     async def _run_actor(self, run_input: dict[str, Any]) -> list[dict[str, Any]]:

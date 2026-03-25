@@ -117,10 +117,10 @@ async def persist_scraped_data(
                 raise  # Caller must reset shop status to "failed" before propagating
 
     # Store photos — upsert on (shop_id, url) to avoid duplicates on re-scrape
-    if data.photo_urls:
+    if data.photos:
         photo_rows = [
-            {"shop_id": shop_id, "url": url, "sort_order": i}
-            for i, url in enumerate(data.photo_urls)
+            {"shop_id": shop_id, "url": photo.url, "sort_order": i}
+            for i, photo in enumerate(data.photos)
         ]
         db.table("shop_photos").upsert(photo_rows, on_conflict="shop_id,url").execute()
 

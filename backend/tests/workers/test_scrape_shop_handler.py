@@ -2,7 +2,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from providers.scraper.interface import ScrapedShopData
+from providers.scraper.interface import ScrapedPhotoData, ScrapedShopData
 from workers.handlers.scrape_shop import handle_scrape_shop
 
 
@@ -43,7 +43,7 @@ def scraped_data():
         reviews=[
             {"text": "Great coffee", "stars": 5, "published_at": "2026-01-01"},
         ],
-        photo_urls=["https://img1.jpg"],
+        photos=[ScrapedPhotoData(url="https://img1.jpg")],
     )
 
 

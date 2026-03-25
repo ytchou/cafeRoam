@@ -71,5 +71,5 @@ async def handle_scrape_shop(
         "Shop scraped",
         shop_id=shop_id,
         reviews=len(data.reviews),
-        photos=len(data.photo_urls),
+        photos=len(data.photos),
     )

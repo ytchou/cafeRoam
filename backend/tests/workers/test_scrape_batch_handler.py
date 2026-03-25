@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from providers.scraper.interface import BatchScrapeInput, BatchScrapeResult, ScrapedShopData
+from providers.scraper.interface import BatchScrapeInput, BatchScrapeResult, ScrapedPhotoData, ScrapedShopData
 from workers.handlers.scrape_batch import handle_scrape_batch
 
 _BATCH_ID = "b1a2c3d4-e5f6-7890-abcd-ef1234567890"
@@ -26,7 +26,7 @@ def scraped_data_a():
         review_count=120,
         country_code="TW",
         reviews=[{"text": "環境舒適，咖啡香濃", "stars": 5, "published_at": "2026-01-15"}],
-        photo_urls=["https://img.example.com/a.jpg"],
+        photos=[ScrapedPhotoData(url="https://img.example.com/a.jpg")],
     )
 
 
@@ -42,7 +42,7 @@ def scraped_data_b():
         review_count=80,
         country_code="TW",
         reviews=[],
-        photo_urls=[],
+        photos=[],
     )
 
 

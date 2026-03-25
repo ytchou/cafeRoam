@@ -278,8 +278,8 @@ Core infrastructure everything else depends on. No user-facing product yet.
 > **Plan:** [docs/plans/2026-03-25-photo-classification-plan.md](docs/plans/2026-03-25-photo-classification-plan.md)
 
 **Chunk 1 — Foundation (Wave 1-2):**
-- [ ] DB migration: `uploaded_at` column on `shop_photos`
-- [ ] Model types: `PhotoCategory`, `ScrapedPhotoData`, `CLASSIFY_SHOP_PHOTOS` job type
+- [x] DB migration: `uploaded_at` column on `shop_photos`
+- [x] Model types: `PhotoCategory`, `ScrapedPhotoData`, `CLASSIFY_SHOP_PHOTOS` job type
 - [ ] Apify adapter: parse `images[]` with age filter + cap 30 + fallback
 - [ ] LLM provider: `classify_photo` method with Haiku + tool use
 
