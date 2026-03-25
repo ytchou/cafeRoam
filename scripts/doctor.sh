@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # CafeRoam Doctor — Local environment preflight check
+# Checks all required services and environment variables before dev work.
 #
 # Usage: make doctor (or bash scripts/doctor.sh)
 #
