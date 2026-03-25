@@ -62,3 +62,19 @@ async def test_classify_photo_sends_image_url(adapter):
     image_block = messages[0]["content"][0]
     assert image_block["type"] == "image"
     assert image_block["source"]["url"] == "https://cdn/cozy-interior.jpg"
+
+
+@pytest.mark.asyncio
+async def test_classify_photo_menu_wins_when_both_menu_and_vibe_apply(adapter):
+    """When Claude selects MENU for a dual-purpose photo, the adapter returns MENU (not VIBE)."""
+    mock_response = MagicMock()
+    mock_response.content = [_tool_use_block("classify_photo", {"category": "MENU"})]
+    adapter._client.messages.create = AsyncMock(return_value=mock_response)
+
+    result = await adapter.classify_photo("https://cdn/menu-on-table.jpg")
+
+    assert result == PhotoCategory.MENU
+    # Verify the prompt includes the MENU-priority instruction
+    call_kwargs = adapter._client.messages.create.call_args.kwargs
+    text_block = call_kwargs["messages"][0]["content"][1]
+    assert "MENU" in text_block["text"] and "VIBE" in text_block["text"]

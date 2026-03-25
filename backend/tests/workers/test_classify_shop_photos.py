@@ -27,11 +27,22 @@ class TestThumbnailUrl:
         result = to_thumbnail_url(url)
         assert result == "https://lh5.googleusercontent.com/p/AF1Qip_xyz=w400-h225-k-no"
 
+    def test_rewrites_size_suffix_when_trailing_path_follows(self):
+        from workers.handlers.classify_shop_photos import to_thumbnail_url
+
+        url = "https://lh5.googleusercontent.com/p/AF1Qip_abc=w1920-h1080-k-no/extra"
+        result = to_thumbnail_url(url)
+        assert result == "https://lh5.googleusercontent.com/p/AF1Qip_abc=w400-h225-k-no/extra"
+
 
 class TestClassifyShopPhotosHandler:
     @pytest.fixture
     def mock_db(self):
         db = MagicMock()
+        # Default: existing counts query returns no previously classified photos
+        db.table.return_value.select.return_value.eq.return_value.not_.is_.return_value.neq.return_value.execute.return_value = MagicMock(
+            data=[]
+        )
         return db
 
     @pytest.fixture
@@ -54,7 +65,7 @@ class TestClassifyShopPhotosHandler:
                 {"id": "p2", "url": "https://cdn/cozy.jpg=w1920-h1080-k-no", "uploaded_at": "2025-05-10T00:00:00+00:00"},
             ]
         )
-        mock_db.table.return_value.update.return_value.eq.return_value.execute.return_value = MagicMock()
+        mock_db.table.return_value.update.return_value.in_.return_value.execute.return_value = MagicMock()
 
         # Mock LLM: first=MENU, second=VIBE
         mock_llm.classify_photo = AsyncMock(
@@ -103,7 +114,7 @@ class TestClassifyShopPhotosHandler:
         mock_db.table.return_value.select.return_value.eq.return_value.is_.return_value.execute.return_value = MagicMock(
             data=photos
         )
-        mock_db.table.return_value.update.return_value.eq.return_value.execute.return_value = MagicMock()
+        mock_db.table.return_value.update.return_value.in_.return_value.execute.return_value = MagicMock()
 
         mock_llm.classify_photo = AsyncMock(return_value=PhotoCategory.MENU)
 
@@ -114,13 +125,58 @@ class TestClassifyShopPhotosHandler:
             queue=mock_queue,
         )
 
-        # All 7 are written as MENU first, then 2 extras are overwritten as SKIP.
-        # The implementation does a write-then-downgrade, so 9 total DB calls.
+        # Exactly 2 batch update calls (MENU batch + SKIP batch), not 9 individual writes.
         update_calls = mock_db.table.return_value.update.call_args_list
-        skip_updates = [c for c in update_calls if c.args[0].get("category") == "SKIP"]
-        menu_updates = [c for c in update_calls if c.args[0].get("category") == "MENU"]
-        assert len(menu_updates) == 7   # initial write for all 7
-        assert len(skip_updates) == 2   # _enforce_cap downgrades 2 oldest
+        assert len(update_calls) == 2
+
+        categories_written = {c.args[0]["category"] for c in update_calls}
+        assert categories_written == {"MENU", "SKIP"}
+
+        # MENU batch preserves exactly 5 photos (the 5 newest by uploaded_at)
+        in_calls = mock_db.table.return_value.update.return_value.in_.call_args_list
+        menu_idx = next(i for i, c in enumerate(update_calls) if c.args[0]["category"] == "MENU")
+        skip_idx = next(i for i, c in enumerate(update_calls) if c.args[0]["category"] == "SKIP")
+        assert len(in_calls[menu_idx].args[1]) == 5
+        assert len(in_calls[skip_idx].args[1]) == 2
+
+    @pytest.mark.asyncio
+    async def test_menu_cap_enforcement_respects_globally_classified_photos(self, mock_db, mock_llm, mock_queue):
+        """When 3 MENU photos already exist from a prior run, only 2 new MENU slots remain."""
+        from workers.handlers.classify_shop_photos import handle_classify_shop_photos
+
+        # 4 unclassified photos, all will classify as MENU
+        photos = [
+            {"id": f"p{i}", "url": f"https://cdn/m{i}.jpg=w800-h600-k-no", "uploaded_at": f"2025-0{i+1}-01T00:00:00+00:00"}
+            for i in range(4)
+        ]
+        mock_db.table.return_value.select.return_value.eq.return_value.is_.return_value.execute.return_value = MagicMock(
+            data=photos
+        )
+        # Simulate 3 already-classified MENU photos from a prior run
+        mock_db.table.return_value.select.return_value.eq.return_value.not_.is_.return_value.neq.return_value.execute.return_value = MagicMock(
+            data=[{"category": "MENU"}, {"category": "MENU"}, {"category": "MENU"}]
+        )
+        mock_db.table.return_value.update.return_value.in_.return_value.execute.return_value = MagicMock()
+
+        mock_llm.classify_photo = AsyncMock(return_value=PhotoCategory.MENU)
+
+        await handle_classify_shop_photos(
+            payload={"shop_id": "shop-01"},
+            db=mock_db,
+            llm=mock_llm,
+            queue=mock_queue,
+        )
+
+        # Only 2 slots remain (cap=5, 3 already used). 2 kept as MENU, 2 downgraded to SKIP.
+        update_calls = mock_db.table.return_value.update.call_args_list
+        categories_written = {c.args[0]["category"] for c in update_calls}
+        assert categories_written == {"MENU", "SKIP"}
+
+        in_calls = mock_db.table.return_value.update.return_value.in_.call_args_list
+        menu_idx = next(i for i, c in enumerate(update_calls) if c.args[0]["category"] == "MENU")
+        skip_idx = next(i for i, c in enumerate(update_calls) if c.args[0]["category"] == "SKIP")
+        assert len(in_calls[menu_idx].args[1]) == 2  # 2 new MENU (newest)
+        assert len(in_calls[skip_idx].args[1]) == 2  # 2 downgraded to SKIP
 
     @pytest.mark.asyncio
     async def test_continues_on_single_photo_failure(self, mock_db, mock_llm, mock_queue):
@@ -133,7 +189,7 @@ class TestClassifyShopPhotosHandler:
                 {"id": "p2", "url": "https://cdn/fail.jpg", "uploaded_at": None},
             ]
         )
-        mock_db.table.return_value.update.return_value.eq.return_value.execute.return_value = MagicMock()
+        mock_db.table.return_value.update.return_value.in_.return_value.execute.return_value = MagicMock()
 
         mock_llm.classify_photo = AsyncMock(
             side_effect=[PhotoCategory.VIBE, Exception("Vision API error")]
@@ -146,6 +202,6 @@ class TestClassifyShopPhotosHandler:
             queue=mock_queue,
         )
 
-        # First photo classified, second skipped (stays NULL)
+        # First photo classified (one batch update for VIBE), second skipped (stays NULL)
         update_calls = mock_db.table.return_value.update.call_args_list
-        assert len(update_calls) == 1  # Only one update (the successful one)
+        assert len(update_calls) == 1
