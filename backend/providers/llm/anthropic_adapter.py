@@ -160,7 +160,7 @@ class AnthropicLLMAdapter:
         api_key: str,
         model: str,
         taxonomy: list[TaxonomyTag],
-        classify_model: str = "claude-haiku-4-5-20251001",
+        classify_model: str,
     ):
         self._client = AsyncAnthropic(api_key=api_key)
         self._model = model
@@ -271,7 +271,10 @@ class AnthropicLLMAdapter:
         )
 
         tool_input = self._extract_tool_input(response, "classify_photo")
-        return PhotoCategory(tool_input["category"])
+        raw_category = tool_input.get("category")
+        if not raw_category:
+            raise ValueError(f"classify_photo tool response missing 'category' key: {tool_input!r}")
+        return PhotoCategory(raw_category)
 
     def _build_enrich_prompt(self, shop: ShopEnrichmentInput) -> str:
         lines = [
