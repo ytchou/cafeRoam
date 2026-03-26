@@ -42,8 +42,8 @@ This is the **source of truth** for all e2e test journeys. Each journey has:
 | J15 | Account deletion: request → 30-day grace period shown    | `profile.spec.ts`   | Implemented |
 | J16 | Community feed: public access + filter UI renders        | `feed.spec.ts`      | Implemented |
 | J35 | Explore: vibe tag → navigates to filtered shops page     | `explore.spec.ts`   | Implemented |
-| J40 | Follow/unfollow: button state toggle                     | `following.spec.ts`  | Implemented |
-| J41 | Follow: auth wall redirects to login                     | `following.spec.ts`  | Implemented |
+| J40 | Follow/unfollow: button state toggle                     | `following.spec.ts` | Implemented |
+| J41 | Follow: auth wall redirects to login                     | `following.spec.ts` | Implemented |
 
 ## Full Suite (nightly)
 

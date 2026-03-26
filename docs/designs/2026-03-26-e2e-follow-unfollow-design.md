@@ -45,10 +45,10 @@ test.describe('@critical J41 — Follow requires authentication')
 
 ### Components touched
 
-| Component | Role |
-|-----------|------|
+| Component               | Role                             |
+| ----------------------- | -------------------------------- |
 | `e2e/following.spec.ts` | New spec file (sole deliverable) |
-| `docs/e2e-journeys.md` | Add J40, J41 entries |
+| `docs/e2e-journeys.md`  | Add J40, J41 entries             |
 
 ### Data flow
 

@@ -15,6 +15,7 @@
 **Tech Stack:** Playwright, TypeScript
 
 **Acceptance Criteria:**
+
 - [ ] Authenticated user can follow a shop and see the button label change to "Unfollow this shop"
 - [ ] Authenticated user can unfollow a shop and see the button label revert to "Follow this shop"
 - [ ] Unauthenticated user clicking follow is redirected to `/login`
@@ -25,6 +26,7 @@
 ### Task 1: Write E2E spec — J40 authenticated follow/unfollow toggle
 
 **Files:**
+
 - Create: `e2e/following.spec.ts`
 
 **Step 1: Write the spec file with J40 serial tests**
@@ -33,70 +35,65 @@
 import { test, expect } from './fixtures/auth';
 import { first } from './fixtures/helpers';
 
-test.describe.serial(
-  '@critical J40 — Follow/unfollow toggle',
-  () => {
-    let shopUrl: string;
+test.describe.serial('@critical J40 — Follow/unfollow toggle', () => {
+  let shopUrl: string;
 
-    test.beforeAll(async ({ browser }) => {
-      const ctx = await browser.newContext();
-      const page = await ctx.newPage();
-      const response = await page.request.get(
-        '/api/shops?featured=true&limit=1'
-      );
-      const shops = await response.json();
-      const shop = first(shops);
-      if (shop) {
-        shopUrl = `/shops/${shop.id}/${shop.slug || shop.id}`;
-      }
-      await page.close();
-      await ctx.close();
+  test.beforeAll(async ({ browser }) => {
+    const ctx = await browser.newContext();
+    const page = await ctx.newPage();
+    const response = await page.request.get('/api/shops?featured=true&limit=1');
+    const shops = await response.json();
+    const shop = first(shops);
+    if (shop) {
+      shopUrl = `/shops/${shop.id}/${shop.slug || shop.id}`;
+    }
+    await page.close();
+    await ctx.close();
+  });
+
+  test('following a shop toggles button to "Unfollow this shop"', async ({
+    authedPage: page,
+  }) => {
+    test.skip(!shopUrl, 'No seeded shops available');
+
+    await page.goto(shopUrl);
+    await page.waitForLoadState('networkidle');
+
+    const followBtn = page.getByRole('button', {
+      name: 'Follow this shop',
     });
+    await expect(followBtn).toBeVisible({ timeout: 10_000 });
 
-    test('following a shop toggles button to "Unfollow this shop"', async ({
-      authedPage: page,
-    }) => {
-      test.skip(!shopUrl, 'No seeded shops available');
+    await followBtn.click();
 
-      await page.goto(shopUrl);
-      await page.waitForLoadState('networkidle');
+    // After click, button label should change to "Unfollow this shop"
+    await expect(
+      page.getByRole('button', { name: 'Unfollow this shop' })
+    ).toBeVisible({ timeout: 10_000 });
+  });
 
-      const followBtn = page.getByRole('button', {
-        name: 'Follow this shop',
-      });
-      await expect(followBtn).toBeVisible({ timeout: 10_000 });
+  test('unfollowing the shop reverts button to "Follow this shop"', async ({
+    authedPage: page,
+  }) => {
+    test.skip(!shopUrl, 'No seeded shops available');
 
-      await followBtn.click();
+    await page.goto(shopUrl);
+    await page.waitForLoadState('networkidle');
 
-      // After click, button label should change to "Unfollow this shop"
-      await expect(
-        page.getByRole('button', { name: 'Unfollow this shop' })
-      ).toBeVisible({ timeout: 10_000 });
+    // Should be in "following" state from previous test
+    const unfollowBtn = page.getByRole('button', {
+      name: 'Unfollow this shop',
     });
+    await expect(unfollowBtn).toBeVisible({ timeout: 10_000 });
 
-    test('unfollowing the shop reverts button to "Follow this shop"', async ({
-      authedPage: page,
-    }) => {
-      test.skip(!shopUrl, 'No seeded shops available');
+    await unfollowBtn.click();
 
-      await page.goto(shopUrl);
-      await page.waitForLoadState('networkidle');
-
-      // Should be in "following" state from previous test
-      const unfollowBtn = page.getByRole('button', {
-        name: 'Unfollow this shop',
-      });
-      await expect(unfollowBtn).toBeVisible({ timeout: 10_000 });
-
-      await unfollowBtn.click();
-
-      // After click, button label should revert to "Follow this shop"
-      await expect(
-        page.getByRole('button', { name: 'Follow this shop' })
-      ).toBeVisible({ timeout: 10_000 });
-    });
-  }
-);
+    // After click, button label should revert to "Follow this shop"
+    await expect(
+      page.getByRole('button', { name: 'Follow this shop' })
+    ).toBeVisible({ timeout: 10_000 });
+  });
+});
 ```
 
 **Step 2: Run the test to verify it works against the dev server**
@@ -116,6 +113,7 @@ git commit -m "test(DEV-61): E2E follow/unfollow toggle journey (J40)"
 ### Task 2: Add J41 auth wall test to the spec
 
 **Files:**
+
 - Modify: `e2e/following.spec.ts`
 
 **Step 1: Append the auth wall test group**
@@ -125,38 +123,36 @@ Add below the J40 block, using standard `@playwright/test` import alias for unau
 ```typescript
 import { test as unauthTest, expect as unauthExpect } from '@playwright/test';
 
-unauthTest.describe(
-  '@critical J41 — Follow requires authentication',
-  () => {
-    unauthTest(
-      'unauthenticated user clicking follow is redirected to login',
-      async ({ page }) => {
-        const response = await page.request.get(
-          '/api/shops?featured=true&limit=1'
-        );
-        const shops = await response.json();
-        const shop = first(shops);
-        unauthTest.skip(!shop, 'No seeded shops available');
+unauthTest.describe('@critical J41 — Follow requires authentication', () => {
+  unauthTest(
+    'unauthenticated user clicking follow is redirected to login',
+    async ({ page }) => {
+      const response = await page.request.get(
+        '/api/shops?featured=true&limit=1'
+      );
+      const shops = await response.json();
+      const shop = first(shops);
+      unauthTest.skip(!shop, 'No seeded shops available');
 
-        await page.goto(`/shops/${shop.id}/${shop.slug || shop.id}`);
-        await page.waitForLoadState('networkidle');
+      await page.goto(`/shops/${shop.id}/${shop.slug || shop.id}`);
+      await page.waitForLoadState('networkidle');
 
-        const followBtn = page.getByRole('button', {
-          name: 'Follow this shop',
-        });
-        await unauthExpect(followBtn).toBeVisible({ timeout: 10_000 });
+      const followBtn = page.getByRole('button', {
+        name: 'Follow this shop',
+      });
+      await unauthExpect(followBtn).toBeVisible({ timeout: 10_000 });
 
-        await followBtn.click();
+      await followBtn.click();
 
-        // Auth wall redirects to /login
-        await page.waitForURL(/\/login/, { timeout: 10_000 });
-      }
-    );
-  }
-);
+      // Auth wall redirects to /login
+      await page.waitForURL(/\/login/, { timeout: 10_000 });
+    }
+  );
+});
 ```
 
 Note: The file needs both imports at the top:
+
 ```typescript
 import { test, expect } from './fixtures/auth';
 import { test as unauthTest, expect as unauthExpect } from '@playwright/test';
@@ -180,6 +176,7 @@ git commit -m "test(DEV-61): E2E follow auth wall journey (J41)"
 ### Task 3: Update E2E journey inventory
 
 **Files:**
+
 - Modify: `docs/e2e-journeys.md`
 
 **Step 1: Add J40 and J41 entries**
@@ -187,8 +184,8 @@ git commit -m "test(DEV-61): E2E follow auth wall journey (J41)"
 In the "Critical Paths" table, add:
 
 ```markdown
-| J40 | Follow/unfollow: button state toggle               | `following.spec.ts` | Implemented |
-| J41 | Follow: auth wall redirects to login                | `following.spec.ts` | Implemented |
+| J40 | Follow/unfollow: button state toggle | `following.spec.ts` | Implemented |
+| J41 | Follow: auth wall redirects to login | `following.spec.ts` | Implemented |
 ```
 
 In the "Full Suite" table, no entries needed (both are critical).
@@ -221,12 +218,15 @@ graph TD
 ```
 
 **Wave 1** (single file creation):
+
 - Task 1: J40 follow/unfollow serial spec
 
 **Wave 2** (depends on Wave 1 — same file):
+
 - Task 2: J41 auth wall test ← Task 1
 
 **Wave 3** (depends on Wave 2 — docs update):
+
 - Task 3: Update journey inventory ← Task 2
 
 ---
