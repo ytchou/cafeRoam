@@ -1702,7 +1702,7 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 
 **Chunk 4 — Admin UI + Search CTAs:**
 - [x] Update admin UI (rejection reason dropdown, pending_review status)
-- [ ] Add suggest-a-cafe CTAs to search page
+- [x] Add suggest-a-cafe CTAs to search page
 
 **Chunk 5 — Verification:**
 - [ ] Full test pass + lint + type check

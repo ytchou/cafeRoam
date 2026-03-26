@@ -1,5 +1,6 @@
 'use client';
 import { Suspense, useEffect, useRef } from 'react';
+import Link from 'next/link';
 import { useSearch } from '@/lib/hooks/use-search';
 import { useSearchState } from '@/lib/hooks/use-search-state';
 import { ShopCard } from '@/components/shops/shop-card';
@@ -52,6 +53,14 @@ function SearchPageContent() {
               {query ? `沒有找到結果「${query}」` : '輸入關鍵字開始搜尋'}
             </p>
             <SuggestionChips onSelect={setQuery} />
+            {query && (
+              <Link
+                href="/submit"
+                className="text-terracotta-500 mt-4 inline-block text-sm hover:underline"
+              >
+                找不到？推薦咖啡廳給我們
+              </Link>
+            )}
           </div>
         )}
 
@@ -64,6 +73,18 @@ function SearchPageContent() {
                 searchQuery={query ?? undefined}
               />
             ))}
+          </div>
+        )}
+
+        {!isLoading && results.length > 0 && (
+          <div className="mt-6 rounded-lg border border-gray-100 bg-white p-4 text-center">
+            <p className="mb-2 text-sm text-gray-500">知道我們沒收錄的咖啡廳嗎？</p>
+            <Link
+              href="/submit"
+              className="text-terracotta-500 text-sm font-medium hover:underline"
+            >
+              推薦咖啡廳
+            </Link>
           </div>
         )}
       </div>
