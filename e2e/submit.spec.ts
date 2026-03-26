@@ -32,4 +32,56 @@ test.describe.serial('@critical J40 — Community shop submission', () => {
     await expect(page.getByText(uniqueUrl)).toBeVisible();
     await expect(page.getByText('處理中').first()).toBeVisible();
   });
+
+  test('submitting a duplicate URL shows error', async ({ authedPage: page }) => {
+    await page.goto('/submit');
+
+    // Submit the same URL that was submitted in the happy path test
+    const urlInput = page.getByPlaceholder('貼上 Google Maps 連結');
+    await urlInput.fill(uniqueUrl);
+
+    const submitButton = page.getByRole('button', { name: '送出' });
+    await submitButton.click();
+
+    // Error message should appear (409 duplicate from backend)
+    await expect(page.locator('.text-red-600')).toBeVisible({ timeout: 10_000 });
+
+    // URL input should NOT be cleared (form preserved on error)
+    await expect(urlInput).toHaveValue(uniqueUrl);
+
+    // Success message should NOT appear
+    await expect(page.getByText('感謝推薦！我們正在處理中。')).toBeHidden();
+  });
+
+  test('invalid URL shows inline validation error without network request', async ({
+    authedPage: page,
+  }) => {
+    await page.goto('/submit');
+
+    const urlInput = page.getByPlaceholder('貼上 Google Maps 連結');
+    // Must be a syntactically valid URL (passes browser type="url") but not a
+    // Google Maps URL so MAPS_URL_PATTERN rejects it and the React error fires.
+    await urlInput.fill('https://example.com/not-a-maps-url');
+
+    // Submit button should be enabled (url is non-empty)
+    const submitButton = page.getByRole('button', { name: '送出' });
+    await expect(submitButton).toBeEnabled();
+
+    // Intercept to verify no network request is made
+    let apiCalled = false;
+    await page.route('**/api/submissions', (route) => {
+      if (route.request().method() === 'POST') apiCalled = true;
+      return route.continue();
+    });
+
+    await submitButton.click();
+
+    // Inline validation error should appear
+    await expect(page.getByText('請輸入有效的 Google Maps 連結')).toBeVisible();
+
+    // No API call should have been made (client-side validation catches it)
+    expect(apiCalled).toBe(false);
+
+    await page.unroute('**/api/submissions');
+  });
 });

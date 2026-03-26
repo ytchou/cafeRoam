@@ -1754,8 +1754,8 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 - [x] Create submit.spec.ts with happy path (@critical J40)
 
 **Wave 2 — Edge Cases:**
-- [ ] Add duplicate guard test (409 error handling)
-- [ ] Add URL validation test (client-side, no API call)
+- [x] Add duplicate guard test (409 error handling)
+- [x] Add URL validation test (client-side, no API call)
 
 **Wave 3 — Verification:**
 - [ ] Full E2E suite regression check (mobile + desktop)
