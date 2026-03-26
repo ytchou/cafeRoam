@@ -21,13 +21,23 @@ async def handle_publish_shop(
     now = datetime.now(UTC).isoformat()
 
     # Check shop source to decide whether to auto-publish or hold for review
-    shop_response = (
-        db.table("shops")
-        .select("name, source")
-        .eq("id", shop_id)
-        .single()
-        .execute()
-    )
+    from postgrest.exceptions import APIError  # noqa: PLC0415
+
+    try:
+        shop_response = (
+            db.table("shops")
+            .select("name, source")
+            .eq("id", shop_id)
+            .single()
+            .execute()
+        )
+    except APIError as e:
+        logger.error(
+            "publish_shop: shop row not found — may have been deleted before worker ran",
+            shop_id=shop_id,
+            error=str(e),
+        )
+        return
     shop_data = cast("dict[str, Any]", shop_response.data)
     shop_name = shop_data.get("name", "Unknown")
     source = shop_data.get("source")
