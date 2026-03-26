@@ -1758,4 +1758,4 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 - [x] Add URL validation test (client-side, no API call)
 
 **Wave 3 — Verification:**
-- [ ] Full E2E suite regression check (mobile + desktop)
+- [x] Full E2E suite regression check (mobile + desktop)
