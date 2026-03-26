@@ -1693,7 +1693,7 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 - [x] Migration: `search_cache` table with pgvector HNSW index
 - [x] Migration: `cache_hit` column on `search_events`
 - [x] Query normalizer + cache key hashing (TDD)
-- [ ] SearchCacheProvider protocol + factory
+- [x] SearchCacheProvider protocol + factory
 - [ ] Config settings (TTL, threshold, provider)
 
 **Chunk 2 — Adapters (Wave 2):**
