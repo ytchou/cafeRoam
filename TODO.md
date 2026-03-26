@@ -1706,4 +1706,4 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 
 **Chunk 5 — Verification:**
 - [x] Full test pass + lint + type check
-- [ ] Commit design doc, ADR, spec/PRD updates
+- [x] Commit design doc, ADR, spec/PRD updates
