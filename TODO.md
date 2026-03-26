@@ -1652,3 +1652,28 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 
 - [x] Instrument GA4 events on shop detail and search pages
 - [x] Full test suite, lint, and type-check pass
+
+---
+
+### Shop Follower Subscriptions (DEV-20)
+> **Design Doc:** [docs/designs/2026-03-26-shop-followers-design.md](docs/designs/2026-03-26-shop-followers-design.md)
+> **Plan:** [docs/plans/2026-03-26-shop-followers-plan.md](docs/plans/2026-03-26-shop-followers-plan.md)
+
+**Chunk 1 — Database + Backend Models:**
+- [ ] Create `shop_followers` migration with RLS
+- [ ] Add Pydantic response models (FollowResponse, FollowerCountResponse, etc.)
+
+**Chunk 2 — Backend Service + API:**
+- [ ] Write FollowerService with TDD (follow, unfollow, count, following list)
+- [ ] Write follower API routes with TDD (POST/DELETE follow, GET count, GET following)
+
+**Chunk 3 — Frontend:**
+- [ ] Add TypeScript types + `useShopFollow` hook
+- [ ] Create Next.js proxy routes
+- [ ] Build FollowButton component with TDD (heart toggle)
+- [ ] Integrate FollowButton into shop actions row
+- [ ] Add Following section + count to profile page
+
+**Chunk 4 — Polish + Docs:**
+- [ ] Lint + type check + full test pass
+- [ ] Update SPEC.md, PRD.md, pricing strategy
