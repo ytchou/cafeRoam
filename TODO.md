@@ -27,8 +27,8 @@
 **Chunk 3 — Frontend Proxies + Components (Waves 5–7):**
 - [x] Task 10: Next.js proxy routes for claims
 - [x] Task 11: Next.js proxy routes for admin claims
-- [ ] Task 12: VerifiedBadge component
-- [ ] Task 13: Update ClaimBanner + ShopData type
+- [x] Task 12: VerifiedBadge component
+- [x] Task 13: Update ClaimBanner + ShopData type
 - [ ] Task 14: Claim form page (/shops/[shopId]/claim)
 - [ ] Task 15: Admin Claims tab in /admin panel
 
