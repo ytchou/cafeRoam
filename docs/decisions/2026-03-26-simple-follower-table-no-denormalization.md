@@ -1,4 +1,4 @@
-# ADR: Simple follower table with COUNT(*) over denormalized counts
+# ADR: Simple follower table with COUNT(\*) over denormalized counts
 
 Date: 2026-03-26
 
@@ -23,4 +23,4 @@ CafeRoam has 164 shops and is in early launch. A `COUNT(*)` query on an indexed 
 
 - Advantage: Simplest possible implementation, fewer moving parts, easier to test
 - Advantage: No trigger maintenance, no eventual consistency concerns
-- Disadvantage: COUNT(*) queries scale linearly with followers per shop — acceptable for years at projected growth
+- Disadvantage: COUNT(\*) queries scale linearly with followers per shop — acceptable for years at projected growth

@@ -15,6 +15,7 @@
 **Tech Stack:** Supabase (Postgres + RLS), FastAPI, Pydantic (CamelModel), Next.js, SWR, Tailwind CSS, lucide-react (Heart icon)
 
 **Acceptance Criteria:**
+
 - [ ] An authenticated user can tap a heart icon on a shop page to follow it, and tap again to unfollow
 - [ ] A shop with 10+ followers shows a public follower count; shops below threshold show no count
 - [ ] A user can see all shops they follow on their profile page, with a total following count in the header
@@ -26,6 +27,7 @@
 ### Task 1: Database Migration — `shop_followers` table + RLS
 
 **Files:**
+
 - Create: `supabase/migrations/20260326000001_create_shop_followers.sql`
 
 **Step 1: Write the migration SQL**
@@ -79,6 +81,7 @@ git commit -m "feat(DEV-20): add shop_followers table with RLS"
 ### Task 2: Backend — Pydantic response models
 
 **Files:**
+
 - Modify: `backend/models/types.py` (append at end)
 
 **Step 1: Write the models**
@@ -126,6 +129,7 @@ git commit -m "feat(DEV-20): add follower Pydantic response models"
 ### Task 3: Backend — FollowerService with TDD
 
 **Files:**
+
 - Create: `backend/tests/services/test_follower_service.py`
 - Create: `backend/services/follower_service.py`
 - Modify: `backend/tests/factories.py` (add `make_follow_row`)
@@ -570,6 +574,7 @@ git commit -m "feat(DEV-20): add FollowerService with TDD (follow, unfollow, cou
 ### Task 4: Backend — API routes with TDD
 
 **Files:**
+
 - Create: `backend/tests/api/test_followers_api.py`
 - Create: `backend/api/followers.py`
 - Modify: `backend/main.py:113-128` (add router import + include)
@@ -905,6 +910,7 @@ git commit -m "feat(DEV-20): add follower API routes (follow, unfollow, count, f
 ### Task 5: Frontend — TypeScript types + `useShopFollow` hook
 
 **Files:**
+
 - Modify: `lib/types/index.ts` (add interfaces)
 - Create: `lib/hooks/use-shop-follow.ts`
 
@@ -975,7 +981,7 @@ export function useShopFollow(shopId: string, isAuthenticated: boolean) {
     mutate(
       {
         count: followerCount + (wasFollowing ? -1 : 1),
-        visible: (followerCount + (wasFollowing ? -1 : 1)) >= 10,
+        visible: followerCount + (wasFollowing ? -1 : 1) >= 10,
         isFollowing: !wasFollowing,
       },
       false
@@ -1026,6 +1032,7 @@ git commit -m "feat(DEV-20): add follower TypeScript types and useShopFollow hoo
 ### Task 6: Frontend — Next.js proxy routes
 
 **Files:**
+
 - Create: `app/api/shops/[shopId]/follow/route.ts`
 - Create: `app/api/shops/[shopId]/followers/count/route.ts`
 - Create: `app/api/me/following/route.ts`
@@ -1095,6 +1102,7 @@ git commit -m "feat(DEV-20): add Next.js proxy routes for follower endpoints"
 ### Task 7: Frontend — FollowButton component with TDD
 
 **Files:**
+
 - Create: `components/shops/follow-button.test.tsx`
 - Create: `components/shops/follow-button.tsx`
 
@@ -1137,17 +1145,27 @@ describe('FollowButton', () => {
 
   it('renders outline heart when not following', () => {
     render(
-      <FollowButton shopId="shop-1" isAuthenticated={true} onRequireAuth={() => {}} />
+      <FollowButton
+        shopId="shop-1"
+        isAuthenticated={true}
+        onRequireAuth={() => {}}
+      />
     );
     const button = screen.getByRole('button', { name: /follow/i });
     expect(button).toBeInTheDocument();
-    expect(button.querySelector('[data-following="false"]')).toBeInTheDocument();
+    expect(
+      button.querySelector('[data-following="false"]')
+    ).toBeInTheDocument();
   });
 
   it('renders filled heart when following', () => {
     mockHookReturn = { ...mockHookReturn, isFollowing: true };
     render(
-      <FollowButton shopId="shop-1" isAuthenticated={true} onRequireAuth={() => {}} />
+      <FollowButton
+        shopId="shop-1"
+        isAuthenticated={true}
+        onRequireAuth={() => {}}
+      />
     );
     const button = screen.getByRole('button', { name: /unfollow/i });
     expect(button.querySelector('[data-following="true"]')).toBeInTheDocument();
@@ -1155,7 +1173,11 @@ describe('FollowButton', () => {
 
   it('calls toggleFollow when authenticated user clicks', () => {
     render(
-      <FollowButton shopId="shop-1" isAuthenticated={true} onRequireAuth={() => {}} />
+      <FollowButton
+        shopId="shop-1"
+        isAuthenticated={true}
+        onRequireAuth={() => {}}
+      />
     );
     fireEvent.click(screen.getByRole('button', { name: /follow/i }));
     expect(mockToggleFollow).toHaveBeenCalledOnce();
@@ -1164,7 +1186,11 @@ describe('FollowButton', () => {
   it('calls onRequireAuth instead of toggle when not authenticated', () => {
     const onRequireAuth = vi.fn();
     render(
-      <FollowButton shopId="shop-1" isAuthenticated={false} onRequireAuth={onRequireAuth} />
+      <FollowButton
+        shopId="shop-1"
+        isAuthenticated={false}
+        onRequireAuth={onRequireAuth}
+      />
     );
     fireEvent.click(screen.getByRole('button', { name: /follow/i }));
     expect(mockToggleFollow).not.toHaveBeenCalled();
@@ -1174,7 +1200,11 @@ describe('FollowButton', () => {
   it('shows follower count when above threshold', () => {
     mockHookReturn = { ...mockHookReturn, followerCount: 42, showCount: true };
     render(
-      <FollowButton shopId="shop-1" isAuthenticated={true} onRequireAuth={() => {}} />
+      <FollowButton
+        shopId="shop-1"
+        isAuthenticated={true}
+        onRequireAuth={() => {}}
+      />
     );
     expect(screen.getByText('42')).toBeInTheDocument();
   });
@@ -1182,7 +1212,11 @@ describe('FollowButton', () => {
   it('hides follower count when below threshold', () => {
     mockHookReturn = { ...mockHookReturn, followerCount: 3, showCount: false };
     render(
-      <FollowButton shopId="shop-1" isAuthenticated={true} onRequireAuth={() => {}} />
+      <FollowButton
+        shopId="shop-1"
+        isAuthenticated={true}
+        onRequireAuth={() => {}}
+      />
     );
     expect(screen.queryByText('3')).not.toBeInTheDocument();
   });
@@ -1237,7 +1271,7 @@ export function FollowButton({
         data-following={isFollowing}
         className={`h-4 w-4 transition-transform duration-300 ${
           isFollowing
-            ? 'fill-red-500 text-red-500 scale-110'
+            ? 'scale-110 fill-red-500 text-red-500'
             : 'text-text-primary scale-100'
         }`}
       />
@@ -1268,6 +1302,7 @@ git commit -m "feat(DEV-20): add FollowButton component with heart toggle and TD
 ### Task 8: Frontend — Integrate FollowButton into shop actions row
 
 **Files:**
+
 - Modify: `components/shops/shop-actions-row.tsx`
 
 **Step 1: Add FollowButton to the actions row**
@@ -1277,6 +1312,7 @@ No separate test needed — FollowButton is already tested. This is wiring.
 Modify `components/shops/shop-actions-row.tsx`:
 
 1. Add import at top:
+
 ```typescript
 import { FollowButton } from './follow-button';
 ```
@@ -1307,6 +1343,7 @@ git commit -m "feat(DEV-20): integrate FollowButton into shop actions row"
 ### Task 9: Frontend — Profile "Following" section + header stat
 
 **Files:**
+
 - Create: `lib/hooks/use-user-following.ts`
 - Create: `components/profile/following-section.tsx`
 - Modify: `components/profile/profile-header.tsx` (add followingCount prop)
@@ -1390,11 +1427,13 @@ export function FollowingSection({ shops, isLoading }: FollowingSectionProps) {
           href={`/shops/${shop.id}/${shop.slug ?? ''}`}
           className="flex items-center gap-4 rounded-xl bg-white p-4 shadow-sm transition-shadow hover:shadow-md"
         >
-          <div className="flex-1 min-w-0">
-            <p className="font-heading text-sm font-semibold text-[#1A1918] truncate">
+          <div className="min-w-0 flex-1">
+            <p className="font-heading truncate text-sm font-semibold text-[#1A1918]">
               {shop.name}
             </p>
-            <p className="text-text-secondary text-xs truncate">{shop.address}</p>
+            <p className="text-text-secondary truncate text-xs">
+              {shop.address}
+            </p>
             {shop.mrt && (
               <p className="text-text-secondary mt-0.5 text-xs">{shop.mrt}</p>
             )}
@@ -1430,17 +1469,24 @@ Modify `components/profile/profile-header.tsx`:
 Modify `app/(protected)/profile/page.tsx`:
 
 1. Add imports:
+
 ```typescript
 import { useUserFollowing } from '@/lib/hooks/use-user-following';
 import { FollowingSection } from '@/components/profile/following-section';
 ```
 
 2. Add hook call inside `ProfilePage()`:
+
 ```typescript
-const { shops: followingShops, total: followingTotal, isLoading: followingLoading } = useUserFollowing();
+const {
+  shops: followingShops,
+  total: followingTotal,
+  isLoading: followingLoading,
+} = useUserFollowing();
 ```
 
 3. Pass `followingCount` to `ProfileHeader`:
+
 ```tsx
 <ProfileHeader
   displayName={profile?.display_name ?? null}
@@ -1453,6 +1499,7 @@ const { shops: followingShops, total: followingTotal, isLoading: followingLoadin
 ```
 
 4. Add "Following" section before Check-in History:
+
 ```tsx
 <section>
   <h2 className="font-heading pt-7 pb-4 text-xl font-bold text-[#1A1918]">
@@ -1513,6 +1560,7 @@ git commit -m "fix(DEV-20): lint and type-check fixes"
 ### Task 11: Update SPEC.md, PRD.md, and pricing strategy
 
 **Files:**
+
 - Modify: `SPEC.md` (add shop_followers to data model, add business rules)
 - Modify: `PRD.md` (add "Shop following" to in-scope features)
 - Modify: `SPEC_CHANGELOG.md` (add entry)
@@ -1524,6 +1572,7 @@ No test needed — documentation only.
 **Step 1: Update SPEC.md**
 
 Add `shop_followers` to data model section. Add follower business rules:
+
 - "Shop following: any authenticated user (Free or Member) can follow/unfollow shops. Follower count is publicly visible only when >= 10."
 - "Follow is separate from lists — different intent (updates vs. organization)."
 
@@ -1534,11 +1583,13 @@ Add "Shop following" to the in-scope features list (Section 7).
 **Step 3: Add changelog entries**
 
 `SPEC_CHANGELOG.md`:
+
 ```
 2026-03-26 | Data Model, Business Rules | Added shop_followers table and follower business rules (10+ threshold, free tier access) | DEV-20 shop follower subscriptions
 ```
 
 `PRD_CHANGELOG.md`:
+
 ```
 2026-03-26 | In-scope Features | Added "Shop following" (heart toggle on shop page, follower counts, profile Following section) | DEV-20 shop follower subscriptions
 ```
@@ -1602,24 +1653,30 @@ graph TD
 ```
 
 **Wave 1** (parallel — no dependencies):
+
 - Task 1: DB migration (`shop_followers` table)
 - Task 2: Pydantic response models
 
 **Wave 2** (parallel — depends on Wave 1):
+
 - Task 3: FollowerService with TDD ← Task 1, Task 2
 - Task 5: TypeScript types + `useShopFollow` hook ← Task 2 (model alignment)
 
 **Wave 3** (parallel — depends on Wave 2):
+
 - Task 4: API routes with TDD ← Task 3
 - Task 6: Next.js proxy routes ← Task 5
 - Task 7: FollowButton component with TDD ← Task 5
 
 **Wave 4** (parallel — depends on Wave 3):
+
 - Task 8: Integrate FollowButton into shop actions row ← Task 7, Task 6
 - Task 9: Profile "Following" section + header stat ← Task 5, Task 6
 
 **Wave 5** (sequential — depends on Wave 4):
+
 - Task 10: Lint + type check + full test pass ← Task 8, Task 9
 
 **Wave 6** (sequential — depends on Wave 5):
+
 - Task 11: Update SPEC.md, PRD.md, pricing strategy ← Task 10

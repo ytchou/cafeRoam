@@ -40,11 +40,13 @@ export function FollowingSection({ shops, isLoading }: FollowingSectionProps) {
           href={`/shops/${shop.id}${shop.slug ? `/${shop.slug}` : ''}`}
           className="flex items-center gap-4 rounded-xl bg-white p-4 shadow-sm transition-shadow hover:shadow-md"
         >
-          <div className="flex-1 min-w-0">
-            <p className="font-heading text-sm font-semibold text-[#1A1918] truncate">
+          <div className="min-w-0 flex-1">
+            <p className="font-heading truncate text-sm font-semibold text-[#1A1918]">
               {shop.name}
             </p>
-            <p className="text-text-secondary text-xs truncate">{shop.address}</p>
+            <p className="text-text-secondary truncate text-xs">
+              {shop.address}
+            </p>
             {shop.mrt && (
               <p className="text-text-secondary mt-0.5 text-xs">{shop.mrt}</p>
             )}

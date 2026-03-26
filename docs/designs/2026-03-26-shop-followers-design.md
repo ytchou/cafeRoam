@@ -8,15 +8,15 @@ _Generated: 2026-03-26 via /brainstorming_
 
 ## 1. Decisions Summary
 
-| Decision | Choice | Rationale |
-|----------|--------|-----------|
-| Scope | Follow-only (no broadcast) | Shop claiming (DEV-19) is out of V1 scope; broadcast depends on it |
-| Access tier | Free (any authenticated user) | Maximize follower base for social proof and future broadcast value |
-| Follower count visibility | Public with 10+ threshold | Avoid embarrassing low counts; show social proof once meaningful |
-| UX pattern | Heart toggle in shop detail header | Compact, familiar mobile pattern (Instagram-like) |
-| Follow vs. List | Separate concepts | Different intent: follow = "I want updates", list = "I'm organizing" |
-| Profile integration | "Following" section + count in header stats | Centralized follow management; profiles are private in V1 |
-| Backend architecture | Simple table + COUNT(*) | Minimal complexity, appropriate for current scale (164 shops) |
+| Decision                  | Choice                                      | Rationale                                                            |
+| ------------------------- | ------------------------------------------- | -------------------------------------------------------------------- |
+| Scope                     | Follow-only (no broadcast)                  | Shop claiming (DEV-19) is out of V1 scope; broadcast depends on it   |
+| Access tier               | Free (any authenticated user)               | Maximize follower base for social proof and future broadcast value   |
+| Follower count visibility | Public with 10+ threshold                   | Avoid embarrassing low counts; show social proof once meaningful     |
+| UX pattern                | Heart toggle in shop detail header          | Compact, familiar mobile pattern (Instagram-like)                    |
+| Follow vs. List           | Separate concepts                           | Different intent: follow = "I want updates", list = "I'm organizing" |
+| Profile integration       | "Following" section + count in header stats | Centralized follow management; profiles are private in V1            |
+| Backend architecture      | Simple table + COUNT(\*)                    | Minimal complexity, appropriate for current scale (164 shops)        |
 
 ---
 
@@ -45,14 +45,14 @@ CREATE INDEX idx_shop_followers_user_id ON shop_followers(user_id);
 
 ### Component Map
 
-| Layer | Component | Responsibility |
-|-------|-----------|----------------|
-| DB | `shop_followers` table + RLS + indexes | Store follow relationships |
-| Backend | `backend/services/follower_service.py` | Follow/unfollow logic, count queries, threshold check |
-| Backend | `backend/api/followers.py` | REST endpoints |
-| Frontend | `FollowButton` component | Heart toggle (auth-gated), optimistic UI |
-| Frontend | Shop detail page | Heart in header, conditional follower count (10+ threshold) |
-| Frontend | Profile page | "Following" section/tab, follow count in header stats |
+| Layer    | Component                              | Responsibility                                              |
+| -------- | -------------------------------------- | ----------------------------------------------------------- |
+| DB       | `shop_followers` table + RLS + indexes | Store follow relationships                                  |
+| Backend  | `backend/services/follower_service.py` | Follow/unfollow logic, count queries, threshold check       |
+| Backend  | `backend/api/followers.py`             | REST endpoints                                              |
+| Frontend | `FollowButton` component               | Heart toggle (auth-gated), optimistic UI                    |
+| Frontend | Shop detail page                       | Heart in header, conditional follower count (10+ threshold) |
+| Frontend | Profile page                           | "Following" section/tab, follow count in header stats       |
 
 ---
 
@@ -130,13 +130,13 @@ GET    /api/me/following                     → List shops I follow (auth requi
 
 ## 5. Error Handling
 
-| Scenario | Behavior |
-|----------|----------|
+| Scenario                       | Behavior                                                  |
+| ------------------------------ | --------------------------------------------------------- |
 | Double follow (race condition) | Idempotent — unique constraint catches it, return success |
-| Unfollow when not following | Idempotent — DELETE affects 0 rows, return success |
-| Follow deleted shop | FK constraint prevents it, return 404 |
-| Network failure on follow | Optimistic UI rolls back heart state |
-| Unauthenticated follow attempt | Frontend intercepts, shows login prompt |
+| Unfollow when not following    | Idempotent — DELETE affects 0 rows, return success        |
+| Follow deleted shop            | FK constraint prevents it, return 404                     |
+| Network failure on follow      | Optimistic UI rolls back heart state                      |
+| Unauthenticated follow attempt | Frontend intercepts, shows login prompt                   |
 
 ---
 
@@ -171,6 +171,7 @@ GET    /api/me/following                     → List shops I follow (auth requi
 ### Backend (pytest)
 
 **Unit tests — `FollowerService`:**
+
 - Follow a shop → creates relationship, returns count
 - Unfollow a shop → removes relationship, returns count
 - Follow idempotency → duplicate follow returns success, not error
@@ -181,6 +182,7 @@ GET    /api/me/following                     → List shops I follow (auth requi
 - Follow non-existent shop → raises 404
 
 **Integration tests — API routes:**
+
 - Auth gating → unauthenticated requests return 401
 - Full follow/unfollow cycle via API
 - Pagination on /me/following
@@ -201,6 +203,7 @@ GET    /api/me/following                     → List shops I follow (auth requi
 ## 8. Spec & PRD Updates Required
 
 After implementation:
+
 - **SPEC.md:** Add `shop_followers` to data model section, add follower business rules (free tier, 10+ threshold)
 - **PRD.md:** Add "Shop following" to in-scope features
 - **Pricing strategy:** Add "Follow shops" to Free tier feature table

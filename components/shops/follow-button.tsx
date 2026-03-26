@@ -36,7 +36,7 @@ export function FollowButton({
         data-following={isFollowing}
         className={`h-4 w-4 transition-transform duration-300 ${
           isFollowing
-            ? 'fill-red-500 text-red-500 scale-110'
+            ? 'scale-110 fill-red-500 text-red-500'
             : 'text-text-primary scale-100'
         }`}
       />

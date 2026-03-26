@@ -19,12 +19,16 @@ vi.mock('@/lib/supabase/client', () => ({
   createClient: () => ({
     auth: {
       getSession: () =>
-        Promise.resolve({ data: { session: { access_token: 'test-token-abc123' } } }),
+        Promise.resolve({
+          data: { session: { access_token: 'test-token-abc123' } },
+        }),
     },
   }),
 }));
 
-function renderButton(props: Partial<React.ComponentProps<typeof FollowButton>> = {}) {
+function renderButton(
+  props: Partial<React.ComponentProps<typeof FollowButton>> = {}
+) {
   return render(
     <SWRConfig value={{ provider: () => new Map(), dedupingInterval: 0 }}>
       <FollowButton
@@ -43,11 +47,23 @@ describe('Shop follow button', () => {
     // Default: authenticated user, not following, below visibility threshold
     mockFetchWithAuth.mockImplementation((url: string) => {
       if (url.includes('/count')) {
-        return Promise.resolve({ count: 0, visible: false, isFollowing: false });
+        return Promise.resolve({
+          count: 0,
+          visible: false,
+          isFollowing: false,
+        });
       }
-      return Promise.resolve({ following: true, followerCount: 1, visible: false });
+      return Promise.resolve({
+        following: true,
+        followerCount: 1,
+        visible: false,
+      });
     });
-    mockFetchPublic.mockResolvedValue({ count: 0, visible: false, isFollowing: null });
+    mockFetchPublic.mockResolvedValue({
+      count: 0,
+      visible: false,
+      isFollowing: null,
+    });
   });
 
   it('shows a follow button when the user has not yet followed this shop', async () => {
@@ -56,7 +72,9 @@ describe('Shop follow button', () => {
       screen.getByRole('button', { name: /follow this shop/i })
     );
     expect(button).toBeInTheDocument();
-    expect(button.querySelector('[data-following="false"]')).toBeInTheDocument();
+    expect(
+      button.querySelector('[data-following="false"]')
+    ).toBeInTheDocument();
   });
 
   it('shows an unfollow button when the user already follows this shop', async () => {
@@ -64,7 +82,11 @@ describe('Shop follow button', () => {
       if (url.includes('/count')) {
         return Promise.resolve({ count: 15, visible: true, isFollowing: true });
       }
-      return Promise.resolve({ following: false, followerCount: 14, visible: true });
+      return Promise.resolve({
+        following: false,
+        followerCount: 14,
+        visible: true,
+      });
     });
     renderButton({ isAuthenticated: true });
     const button = await waitFor(() =>
@@ -90,7 +112,11 @@ describe('Shop follow button', () => {
   });
 
   it('an unauthenticated user clicking the button is prompted to sign in instead of following', async () => {
-    mockFetchPublic.mockResolvedValue({ count: 0, visible: false, isFollowing: null });
+    mockFetchPublic.mockResolvedValue({
+      count: 0,
+      visible: false,
+      isFollowing: null,
+    });
     const onRequireAuth = vi.fn();
     renderButton({ isAuthenticated: false, onRequireAuth });
     const button = await waitFor(() =>
@@ -103,16 +129,28 @@ describe('Shop follow button', () => {
   it('displays the follower count once the shop reaches the visibility threshold', async () => {
     mockFetchWithAuth.mockImplementation((url: string) => {
       if (url.includes('/count')) {
-        return Promise.resolve({ count: 42, visible: true, isFollowing: false });
+        return Promise.resolve({
+          count: 42,
+          visible: true,
+          isFollowing: false,
+        });
       }
-      return Promise.resolve({ following: true, followerCount: 43, visible: true });
+      return Promise.resolve({
+        following: true,
+        followerCount: 43,
+        visible: true,
+      });
     });
     renderButton({ isAuthenticated: true });
     await waitFor(() => expect(screen.getByText('42')).toBeInTheDocument());
   });
 
   it('hides the follower count for shops with few followers', async () => {
-    mockFetchPublic.mockResolvedValue({ count: 3, visible: false, isFollowing: null });
+    mockFetchPublic.mockResolvedValue({
+      count: 3,
+      visible: false,
+      isFollowing: null,
+    });
     renderButton({ isAuthenticated: false });
     await waitFor(() =>
       screen.getByRole('button', { name: /follow this shop/i })

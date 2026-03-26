@@ -19,7 +19,11 @@ export default function ProfilePage() {
   const { profile, isLoading: profileLoading } = useUserProfile();
   const { stamps, isLoading: stampsLoading } = useUserStamps();
   const { checkins, isLoading: checkinsLoading } = useUserCheckins();
-  const { shops: followingShops, total: followingTotal, isLoading: followingLoading } = useUserFollowing();
+  const {
+    shops: followingShops,
+    total: followingTotal,
+    isLoading: followingLoading,
+  } = useUserFollowing();
   const [selectedStamp, setSelectedStamp] = useState<StampData | null>(null);
   const { capture } = useAnalytics();
   const hasFiredRef = useRef(false);
@@ -66,7 +70,10 @@ export default function ProfilePage() {
           <h2 className="font-heading pt-7 pb-4 text-xl font-bold text-[#1A1918]">
             Following
           </h2>
-          <FollowingSection shops={followingShops} isLoading={followingLoading} />
+          <FollowingSection
+            shops={followingShops}
+            isLoading={followingLoading}
+          />
         </section>
 
         <section>

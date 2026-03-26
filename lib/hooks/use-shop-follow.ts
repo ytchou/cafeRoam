@@ -24,7 +24,10 @@ export function useShopFollow(shopId: string, isAuthenticated: boolean) {
     const wasFollowing = isFollowing;
     const prevData = data;
 
-    const optimisticCount = Math.max(0, followerCount + (wasFollowing ? -1 : 1));
+    const optimisticCount = Math.max(
+      0,
+      followerCount + (wasFollowing ? -1 : 1)
+    );
     mutate(
       {
         count: optimisticCount,
