@@ -1707,4 +1707,4 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 - [x] Lint + type check + full test pass
 
 **Chunk 4 — Docs:**
-- [ ] Update `.env.example` and doctor script
+- [x] Update `.env.example` and doctor script
