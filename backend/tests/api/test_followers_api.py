@@ -50,7 +50,7 @@ class TestFollowShop:
         try:
             with patch("api.followers.FollowerService") as mock_cls:
                 mock_cls.return_value.follow.return_value = FollowResponse(
-                    following=True, follower_count=5
+                    following=True, follower_count=5, visible=False
                 )
                 response = client.post("/shops/shop-d4e5f6/follow")
 
@@ -86,7 +86,7 @@ class TestUnfollowShop:
         try:
             with patch("api.followers.FollowerService") as mock_cls:
                 mock_cls.return_value.unfollow.return_value = FollowResponse(
-                    following=False, follower_count=4
+                    following=False, follower_count=4, visible=False
                 )
                 response = client.delete("/shops/shop-d4e5f6/follow")
 
@@ -161,6 +161,8 @@ class TestGetFollowing:
                     ],
                     total=1,
                     page=1,
+                    limit=20,
+                    has_more=False,
                 )
                 response = client.get("/me/following?page=1&limit=20")
 

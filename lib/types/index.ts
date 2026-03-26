@@ -153,6 +153,7 @@ export interface SearchQuery {
 export interface FollowResponse {
   following: boolean;
   followerCount: number;
+  visible: boolean;
 }
 
 export interface FollowerCountResponse {
@@ -167,6 +168,7 @@ export interface FollowedShop {
   address: string;
   slug: string | null;
   mrt: string | null;
+  primaryTag: string | null;
   followedAt: string;
 }
 
@@ -174,4 +176,6 @@ export interface FollowingListResponse {
   shops: FollowedShop[];
   total: number;
   page: number;
+  limit: number;
+  hasMore: boolean;
 }

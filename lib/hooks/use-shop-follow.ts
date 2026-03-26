@@ -9,8 +9,9 @@ const fetcher = (url: string) => fetchPublic<FollowerCountResponse>(url);
 const authFetcher = (url: string) => fetchWithAuth(url);
 
 export function useShopFollow(shopId: string, isAuthenticated: boolean) {
+  const swrKey = `/api/shops/${shopId}/followers/count${isAuthenticated ? '?auth=1' : ''}`;
   const { data, error, isLoading, mutate } = useSWR<FollowerCountResponse>(
-    `/api/shops/${shopId}/followers/count`,
+    swrKey,
     isAuthenticated ? authFetcher : fetcher,
     { revalidateOnFocus: false }
   );
@@ -23,11 +24,11 @@ export function useShopFollow(shopId: string, isAuthenticated: boolean) {
     const wasFollowing = isFollowing;
     const prevData = data;
 
-    // Optimistic update
+    const optimisticCount = Math.max(0, followerCount + (wasFollowing ? -1 : 1));
     mutate(
       {
-        count: followerCount + (wasFollowing ? -1 : 1),
-        visible: (followerCount + (wasFollowing ? -1 : 1)) >= 10,
+        count: optimisticCount,
+        visible: optimisticCount >= 10,
         isFollowing: !wasFollowing,
       },
       false
@@ -40,17 +41,15 @@ export function useShopFollow(shopId: string, isAuthenticated: boolean) {
         { method }
       );
 
-      // Update with server response
       mutate(
         {
           count: result.followerCount,
-          visible: result.followerCount >= 10,
+          visible: result.visible,
           isFollowing: result.following,
         },
         false
       );
     } catch {
-      // Rollback on error
       mutate(prevData, false);
     }
   }, [shopId, isFollowing, followerCount, data, mutate]);

@@ -104,9 +104,7 @@ export function ShopActionsRow({
           <FollowButton
             shopId={shopId}
             isAuthenticated={!!user}
-            onRequireAuth={() =>
-              router.push(`/login?next=${encodeURIComponent(`/shops/${shopId}`)}`)
-            }
+            onRequireAuth={() => requireAuth(() => {})}
           />
         </>
       ) : (
@@ -124,9 +122,7 @@ export function ShopActionsRow({
           <FollowButton
             shopId={shopId}
             isAuthenticated={!!user}
-            onRequireAuth={() =>
-              router.push(`/login?next=${encodeURIComponent(`/shops/${shopId}`)}`)
-            }
+            onRequireAuth={() => requireAuth(() => {})}
           />
           <CheckInSheet
             shopId={shopId}

@@ -10,13 +10,13 @@ CREATE TABLE shop_followers (
 CREATE INDEX idx_shop_followers_shop_id ON shop_followers(shop_id);
 CREATE INDEX idx_shop_followers_user_id ON shop_followers(user_id);
 
--- RLS: users manage their own follows; anyone can read aggregate counts
+-- RLS: users manage their own follows; all rows publicly readable for aggregate count queries
 ALTER TABLE shop_followers ENABLE ROW LEVEL SECURITY;
 
--- Users can see their own follow rows (needed for is_following check)
-CREATE POLICY "Users can view own follows"
+-- Anyone can read follower rows — API only surfaces aggregate counts, never raw user_ids
+CREATE POLICY "Public can read follower rows"
   ON shop_followers FOR SELECT
-  USING (auth.uid() = user_id);
+  USING (true);
 
 -- Users can follow shops
 CREATE POLICY "Users can follow shops"
@@ -27,6 +27,3 @@ CREATE POLICY "Users can follow shops"
 CREATE POLICY "Users can unfollow shops"
   ON shop_followers FOR DELETE
   USING (auth.uid() = user_id);
-
--- Service role can read all follows (for count queries from unauthenticated users)
--- This is handled automatically by service_role bypassing RLS

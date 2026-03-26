@@ -178,13 +178,13 @@ class TestGetFollowing:
                     "address": "台北市大安區溫州街74巷5弄2號",
                     "slug": "mountain-kid-coffee",
                     "mrt": "台電大樓",
+                    "primary_tag": "工作咖啡廳",
                 },
             },
         ]
 
         db.execute.side_effect = [
-            MagicMock(data=follow_rows),
-            MagicMock(data=[{"id": "follow-1"}], count=1),
+            MagicMock(data=follow_rows, count=1),
         ]
 
         service = FollowerService(db=db)
@@ -192,6 +192,9 @@ class TestGetFollowing:
 
         assert result.page == 1
         assert result.total == 1
+        assert result.limit == 20
+        assert result.has_more is False
         assert len(result.shops) == 1
         assert result.shops[0].name == "山小孩咖啡"
+        assert result.shops[0].primary_tag == "工作咖啡廳"
         assert result.shops[0].followed_at == "2026-03-20T10:00:00"

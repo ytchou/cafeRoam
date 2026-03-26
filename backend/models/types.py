@@ -480,6 +480,7 @@ class ActivityFeedEvent(BaseModel):
 class FollowResponse(CamelModel):
     following: bool
     follower_count: int
+    visible: bool
 
 
 class FollowerCountResponse(CamelModel):
@@ -494,6 +495,7 @@ class FollowedShopSummary(CamelModel):
     address: str
     slug: str | None = None
     mrt: str | None = None
+    primary_tag: str | None = None
     followed_at: str
 
 
@@ -501,3 +503,5 @@ class FollowingListResponse(CamelModel):
     shops: list[FollowedShopSummary]
     total: int
     page: int
+    limit: int
+    has_more: bool

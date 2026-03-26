@@ -37,7 +37,7 @@ export function FollowingSection({ shops, isLoading }: FollowingSectionProps) {
       {shops.map((shop) => (
         <Link
           key={shop.id}
-          href={`/shops/${shop.id}/${shop.slug ?? ''}`}
+          href={`/shops/${shop.id}${shop.slug ? `/${shop.slug}` : ''}`}
           className="flex items-center gap-4 rounded-xl bg-white p-4 shadow-sm transition-shadow hover:shadow-md"
         >
           <div className="flex-1 min-w-0">
