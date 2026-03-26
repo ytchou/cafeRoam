@@ -69,7 +69,10 @@ import {
   POST as communityLikePOST,
 } from '../explore/community/[checkinId]/like/route';
 import { GET as mapsDirectionsGET } from '../maps/directions/route';
-import { GET as submissionsGET, POST as submissionsPOST } from '../submissions/route';
+import {
+  GET as submissionsGET,
+  POST as submissionsPOST,
+} from '../submissions/route';
 import { GET as meFollowingGET } from '../me/following/route';
 import {
   DELETE as shopFollowDELETE,
