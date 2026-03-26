@@ -1660,7 +1660,7 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 > **Plan:** [docs/plans/2026-03-26-shop-followers-plan.md](docs/plans/2026-03-26-shop-followers-plan.md)
 
 **Chunk 1 — Database + Backend Models:**
-- [ ] Create `shop_followers` migration with RLS
+- [x] Create `shop_followers` migration with RLS
 - [ ] Add Pydantic response models (FollowResponse, FollowerCountResponse, etc.)
 
 **Chunk 2 — Backend Service + API:**
