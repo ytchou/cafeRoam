@@ -160,7 +160,7 @@ class TestListRoles:
                 {
                     "id": "r2",
                     "user_id": "u2",
-                    "role": "paid_user",
+                    "role": "member",
                     "granted_at": "2026-03-18T11:00:00",
                     "granted_by": _ADMIN_ID,
                 },
@@ -171,10 +171,10 @@ class TestListRoles:
         try:
             with patch("api.deps.settings") as mock_settings:
                 mock_settings.admin_user_ids = [_ADMIN_ID]
-                response = client.get("/admin/roles?role=paid_user")
+                response = client.get("/admin/roles?role=member")
         finally:
             app.dependency_overrides.clear()
 
         assert response.status_code == 200
         assert len(response.json()) == 1
-        assert response.json()[0]["role"] == "paid_user"
+        assert response.json()[0]["role"] == "member"

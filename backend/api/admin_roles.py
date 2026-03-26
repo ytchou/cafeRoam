@@ -8,7 +8,7 @@ from api.deps import get_admin_db, require_admin
 
 router = APIRouter(prefix="/admin/roles", tags=["admin"])
 
-_VALID_ROLES = {"blogger", "paid_user", "partner", "admin"}
+_VALID_ROLES = {"blogger", "member", "partner", "admin"}
 
 
 class GrantRoleRequest(BaseModel):

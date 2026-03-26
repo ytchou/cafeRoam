@@ -12,7 +12,7 @@ _ROLE_LABELS: dict[str, str] = {
     "blogger": "Coffee blogger",
     "partner": "Partner",
     "admin": "Admin",
-    "paid_user": "Supporter",
+    "member": "Supporter",
 }
 
 _NOTE_SELECT = (
