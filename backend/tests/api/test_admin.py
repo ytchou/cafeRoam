@@ -113,12 +113,12 @@ def test_admin_cannot_retry_a_job_that_has_already_completed():
         app.dependency_overrides.clear()
 
 
-def test_rejecting_submission_removes_the_associated_shop():
+def test_rejecting_submission_sets_shop_rejected():
     app.dependency_overrides[get_current_user] = _admin_user
     try:
         mock_db = MagicMock()
         mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value = (
-            MagicMock(data=[{"shop_id": "shop-1"}])
+            MagicMock(data=[{"shop_id": "shop-1", "status": "pending_review"}])
         )
         with (
             patch("api.admin.get_service_role_client", return_value=mock_db),
@@ -126,11 +126,16 @@ def test_rejecting_submission_removes_the_associated_shop():
             patch("api.deps.settings") as mock_settings,
         ):
             mock_settings.admin_user_ids = [_ADMIN_ID]
-            response = client.post("/admin/pipeline/reject/sub-1")
+            response = client.post(
+                "/admin/pipeline/reject/sub-1",
+                json={"rejection_reason": "not_a_cafe"},
+            )
         assert response.status_code == 200
         assert "rejected" in response.json()["message"]
-        # Verify shop deletion was triggered
-        mock_db.table.return_value.delete.return_value.eq.assert_called_once()
+        # Verify shop was set to rejected (not deleted)
+        table_calls = [c.args[0] for c in mock_db.table.call_args_list]
+        assert "shops" in table_calls
+        mock_db.table.return_value.delete.return_value.eq.assert_not_called()
     finally:
         app.dependency_overrides.clear()
 
@@ -147,7 +152,10 @@ def test_rejecting_nonexistent_submission_returns_404():
             patch("api.deps.settings") as mock_settings,
         ):
             mock_settings.admin_user_ids = [_ADMIN_ID]
-            response = client.post("/admin/pipeline/reject/missing-sub")
+            response = client.post(
+                "/admin/pipeline/reject/missing-sub",
+                json={"rejection_reason": "other"},
+            )
         assert response.status_code == 404
     finally:
         app.dependency_overrides.clear()

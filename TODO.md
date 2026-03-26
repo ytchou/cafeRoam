@@ -1705,5 +1705,5 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 - [x] Add suggest-a-cafe CTAs to search page
 
 **Chunk 5 — Verification:**
-- [ ] Full test pass + lint + type check
+- [x] Full test pass + lint + type check
 - [ ] Commit design doc, ADR, spec/PRD updates

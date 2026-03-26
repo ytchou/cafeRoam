@@ -228,7 +228,10 @@ async def reject_submission(
         # Cancel in-flight jobs for this shop
         db.rpc(
             "cancel_shop_jobs",
-            {"p_shop_id": str(shop_id), "p_reason": f"Submission rejected: {body.rejection_reason}"},
+            {
+                "p_shop_id": str(shop_id),
+                "p_reason": f"Submission rejected: {body.rejection_reason}",
+            },
         ).execute()
         # Set shop to rejected instead of deleting
         db.table("shops").update(
