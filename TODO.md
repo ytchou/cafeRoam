@@ -1751,7 +1751,7 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 
 **Wave 1 — Setup:**
 - [x] Add `/submit` to auth wall protected routes (auth.spec.ts)
-- [ ] Create submit.spec.ts with happy path (@critical J40)
+- [x] Create submit.spec.ts with happy path (@critical J40)
 
 **Wave 2 — Edge Cases:**
 - [ ] Add duplicate guard test (409 error handling)
