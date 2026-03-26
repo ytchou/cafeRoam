@@ -1669,8 +1669,8 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 
 **Chunk 3 — Frontend:**
 - [x] Add TypeScript types + `useShopFollow` hook
-- [ ] Create Next.js proxy routes
-- [ ] Build FollowButton component with TDD (heart toggle)
+- [x] Create Next.js proxy routes
+- [x] Build FollowButton component with TDD (heart toggle)
 - [ ] Integrate FollowButton into shop actions row
 - [ ] Add Following section + count to profile page
 
