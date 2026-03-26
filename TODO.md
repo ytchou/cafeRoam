@@ -1622,4 +1622,4 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 
 **Chunk 3 — Verification (Wave 4):**
 
-- [ ] Lint, type-check, full test suite pass
+- [x] Lint, type-check, full test suite pass
