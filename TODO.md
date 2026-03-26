@@ -1613,7 +1613,7 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 - [x] Create ConsentProvider + useConsent hook with tests
 
 **Chunk 2 — Analytics Providers:**
-- [ ] Create CookieConsentBanner with tests
+- [x] Create CookieConsentBanner with tests
 - [ ] Create GA4Provider with consent mode v2 and tests
 - [ ] Gate PostHogProvider behind consent with updated tests
 
