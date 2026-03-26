@@ -13,6 +13,7 @@ import { MenuHighlights } from '@/components/shops/menu-highlights';
 import { RecentCheckinsStrip } from '@/components/shops/recent-checkins-strip';
 import { ShopMapThumbnail } from '@/components/shops/shop-map-thumbnail';
 import { ShopReviews } from '@/components/shops/shop-reviews';
+import { CommunitySummary } from '@/components/shops/community-summary';
 import { DirectionsSheet } from '@/components/shops/directions-sheet';
 import { useShopReviews } from '@/lib/hooks/use-shop-reviews';
 import { useUser } from '@/lib/hooks/use-user';
@@ -41,6 +42,7 @@ interface ShopData {
   openNow?: boolean;
   distance?: string;
   address?: string;
+  communitySummary?: string | null;
   checkinPreview?: { count: number; previewPhotoUrl: string | null };
   recentCheckins?: Array<{
     id: string;
@@ -157,6 +159,7 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
 
       <div className="border-border-warm mx-5 border-t" />
 
+      <CommunitySummary summary={shop.communitySummary ?? null} />
       <ShopReviews
         reviews={reviews}
         total={total}

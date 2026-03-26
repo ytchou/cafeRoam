@@ -20,6 +20,7 @@ SHOP_ROW = {
     "mode_rest": 0.5,
     "mode_social": 0.3,
     "processing_status": "live",
+    "community_summary": None,
 }
 
 
@@ -193,6 +194,41 @@ class TestShopsAPI:
         assert "photo_urls" not in data
         assert "modeScores" in data
         assert "mode_scores" not in data
+
+    def test_get_shop_detail_includes_community_summary(self):
+        """GET /shops/{id} returns communitySummary when the shop has one."""
+        shop_data = {
+            **SHOP_ROW,
+            "community_summary": "顧客推薦拿鐵和巴斯克蛋糕，環境安靜適合工作。",
+            "shop_photos": [],
+            "shop_tags": [],
+        }
+        shop_chain = _simple_select_chain([shop_data])
+
+        with patch("api.shops.get_anon_client") as mock_sb:
+            mock_sb.return_value = MagicMock(table=MagicMock(return_value=shop_chain))
+            response = client.get("/shops/shop-001")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["communitySummary"] == "顧客推薦拿鐵和巴斯克蛋糕，環境安靜適合工作。"
+
+    def test_get_shop_detail_community_summary_null_when_absent(self):
+        """GET /shops/{id} returns communitySummary: null when shop has no summary."""
+        shop_data = {
+            **SHOP_ROW,
+            "shop_photos": [],
+            "shop_tags": [],
+        }
+        shop_chain = _simple_select_chain([shop_data])
+
+        with patch("api.shops.get_anon_client") as mock_sb:
+            mock_sb.return_value = MagicMock(table=MagicMock(return_value=shop_chain))
+            response = client.get("/shops/shop-001")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["communitySummary"] is None
 
     def test_list_shops_featured_returns_live_shops_only(self):
         """GET /shops?featured=true filters to processing_status=live shops."""

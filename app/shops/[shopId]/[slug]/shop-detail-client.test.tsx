@@ -59,6 +59,10 @@ vi.mock('@/components/shops/shop-actions-row', () => ({
 vi.mock('@/components/shops/claim-banner', () => ({
   ClaimBanner: () => <p>Is this your café? Claim this page →</p>,
 }));
+vi.mock('@/components/shops/community-summary', () => ({
+  CommunitySummary: ({ summary }: { summary: string | null }) =>
+    summary ? <p data-testid="community-summary">{summary}</p> : null,
+}));
 
 import { ShopDetailClient } from './shop-detail-client';
 import { DirectionsSheet } from '@/components/shops/directions-sheet';
@@ -157,5 +161,32 @@ describe('ShopDetailClient — new layout components', () => {
   it('renders the claim banner at the bottom of the shop view', () => {
     render(<ShopDetailClient shop={shopWithMap} />);
     expect(screen.getByText(/Is this your café/i)).toBeInTheDocument();
+  });
+});
+
+describe('ShopDetailClient — community summary', () => {
+  beforeEach(() => {
+    vi.mocked(useGeolocation).mockReturnValue({
+      latitude: null,
+      longitude: null,
+      error: null,
+      loading: false,
+      requestLocation: vi.fn(),
+    });
+  });
+
+  it('a user sees the community summary when the shop has one', () => {
+    const shopWithSummary = {
+      ...shopWithMap,
+      communitySummary: '顧客推薦拿鐵和巴斯克蛋糕，環境安靜適合工作。',
+    };
+    render(<ShopDetailClient shop={shopWithSummary} />);
+    expect(screen.getByTestId('community-summary')).toBeInTheDocument();
+    expect(screen.getByText(/顧客推薦拿鐵/)).toBeInTheDocument();
+  });
+
+  it('a user does not see a community summary section when the shop has none', () => {
+    render(<ShopDetailClient shop={shopWithMap} />);
+    expect(screen.queryByTestId('community-summary')).not.toBeInTheDocument();
   });
 });

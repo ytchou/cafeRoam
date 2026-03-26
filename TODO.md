@@ -1603,6 +1603,29 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 
 ---
 
+### Community Summary Display (DEV-34)
+
+> **Design Doc:** [docs/designs/2026-03-26-community-summary-display-design.md](docs/designs/2026-03-26-community-summary-display-design.md)
+> **Plan:** [docs/plans/2026-03-26-community-summary-display-plan.md](docs/plans/2026-03-26-community-summary-display-plan.md)
+
+**Chunk 1 — Backend (Wave 1):**
+
+- [x] DB migration: add `community_summary` to `search_shops` RPC
+- [x] Backend model: add `community_summary` to `Shop` + API column selections
+- [x] Frontend types: add `communitySummary` to `Shop` TS interface
+
+**Chunk 2 — Frontend Components (Wave 2-3):**
+
+- [x] Create `CommunitySummary` component (sparkle icon + tooltip)
+- [x] Add community snippet to `ShopCardCompact` (80-char truncation)
+- [x] Integrate `CommunitySummary` into shop detail page (above Reviews)
+
+**Chunk 3 — Verification (Wave 4):**
+
+- [x] Lint, type-check, full test suite pass
+
+---
+
 ### GA4 + Shared Cookie Consent Banner (DEV-30)
 
 > **Design Doc:** [docs/designs/2026-03-26-ga4-consent-banner-design.md](docs/designs/2026-03-26-ga4-consent-banner-design.md)
