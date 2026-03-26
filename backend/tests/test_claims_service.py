@@ -24,7 +24,6 @@ def _make_service(*, existing_claims=None, insert_row=None):
     ins_chain.execute.return_value.data = [insert_row or {"id": CLAIM_ID}]
 
     call_count = {"n": 0}
-    original_table = db.table
 
     def table_side(name):
         call_count["n"] += 1
