@@ -1,0 +1,87 @@
+import asyncio
+from typing import Any, Literal
+
+import structlog
+from fastapi import APIRouter, Depends, Query
+
+from api.deps import require_admin
+from db.supabase_client import get_service_role_client
+from models.types import CamelModel
+from providers.email import get_email_provider
+from services.claims_service import ClaimsService
+
+logger = structlog.get_logger()
+router = APIRouter(prefix="/admin/claims", tags=["admin-claims"])
+
+ClaimRejectionReason = Literal["invalid_proof", "not_an_owner", "duplicate_request", "other"]
+
+
+class RejectClaimBody(CamelModel):
+    rejection_reason: ClaimRejectionReason
+
+
+def get_claims_service() -> ClaimsService:
+    return ClaimsService(db=get_service_role_client(), email=get_email_provider())
+
+
+@router.get("")
+async def list_claims(
+    status: str | None = Query(default="pending"),
+    user: dict[str, Any] = Depends(require_admin),  # noqa: B008
+) -> list[dict[str, Any]]:
+    db = get_service_role_client()
+    query = (
+        db.table("shop_claims")
+        .select("*, shops(name, address)")
+        .order("created_at", desc=True)
+        .limit(50)
+    )
+    if status:
+        query = query.eq("status", status)
+    result = await asyncio.to_thread(lambda: query.execute())
+    return result.data or []
+
+
+@router.get("/{claim_id}/proof-url")
+async def get_proof_url(
+    claim_id: str,
+    user: dict[str, Any] = Depends(require_admin),  # noqa: B008
+) -> dict[str, str]:
+    db = get_service_role_client()
+    result = await asyncio.to_thread(
+        lambda: db.table("shop_claims")
+        .select("proof_photo_url")
+        .eq("id", claim_id)
+        .single()
+        .execute()
+    )
+    storage_path = result.data["proof_photo_url"]
+    signed = await asyncio.to_thread(
+        lambda: db.storage.from_("claim-proofs").create_signed_url(storage_path, 3600)
+    )
+    return {"proofUrl": signed["signedUrl"]}
+
+
+@router.post("/{claim_id}/approve")
+async def approve_claim(
+    claim_id: str,
+    user: dict[str, Any] = Depends(require_admin),  # noqa: B008
+    svc: ClaimsService = Depends(get_claims_service),  # noqa: B008
+) -> dict[str, str]:
+    await svc.approve_claim(claim_id=claim_id, admin_user_id=user["id"])
+    return {"message": "Claim approved"}
+
+
+@router.post("/{claim_id}/reject")
+async def reject_claim(
+    claim_id: str,
+    body: RejectClaimBody,
+    user: dict[str, Any] = Depends(require_admin),  # noqa: B008
+    svc: ClaimsService = Depends(get_claims_service),  # noqa: B008
+) -> dict[str, str]:
+    await svc.reject_claim(
+        claim_id=claim_id,
+        reason=body.rejection_reason,
+        admin_user_id=user["id"],
+    )
+    return {"message": "Claim rejected"}

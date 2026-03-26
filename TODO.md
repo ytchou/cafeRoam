@@ -21,7 +21,7 @@
 - [x] Task 5: ClaimsService with TDD (submit, approve, reject)
 - [x] Task 6: Add claimStatus to GET /shops/:id response
 - [x] Task 7: Claims API router (upload-url, submit, me)
-- [ ] Task 8: Admin Claims API (list, proof-url, approve, reject)
+- [x] Task 8: Admin Claims API (list, proof-url, approve, reject)
 - [ ] Task 9: Register routers in main.py
 
 **Chunk 3 — Frontend Proxies + Components (Waves 5–7):**
