@@ -32,11 +32,13 @@ def search_service(mock_supabase, mock_embeddings):
 
 
 class TestSearchService:
-    async def test_search_embeds_query_text(self, search_service, mock_embeddings, mock_supabase):
+    async def test_search_embeds_normalized_query_text(
+        self, search_service, mock_embeddings, mock_supabase
+    ):
         mock_supabase.rpc = MagicMock(
             return_value=MagicMock(execute=MagicMock(return_value=MagicMock(data=[])))
         )
-        query = SearchQuery(text="good wifi for working")
+        query = SearchQuery(text="Good WiFi for Working!")
         await search_service.search(query)
         mock_embeddings.embed.assert_called_once_with("good wifi for working")
 
@@ -46,15 +48,15 @@ class TestSearchService:
             return_value=MagicMock(execute=MagicMock(return_value=MagicMock(data=[shop_data])))
         )
         query = SearchQuery(text="good wifi")
-        results = await search_service.search(query)
-        assert len(results) == 1
-        assert results[0].similarity_score == 0.85
+        response = await search_service.search(query)
+        assert len(response.results) == 1
+        assert response.results[0].similarity_score == 0.85
 
     async def test_search_respects_limit(self, search_service, mock_supabase):
         mock_supabase.rpc = MagicMock(
             return_value=MagicMock(execute=MagicMock(return_value=MagicMock(data=[])))
         )
-        query = SearchQuery(text="test", limit=5)
+        query = SearchQuery(text="靜謐工作空間", limit=5)
         await search_service.search(query)
         call_args = mock_supabase.rpc.call_args
         assert call_args is not None
@@ -84,16 +86,16 @@ class TestSearchService:
             )
         )
         query = SearchQuery(text="best coffee")
-        results = await search_service.search(query)
-        assert len(results) == 2
-        assert results[0].shop.id == "shop-high"
-        assert results[1].shop.id == "shop-low"
+        response = await search_service.search(query)
+        assert len(response.results) == 2
+        assert response.results[0].shop.id == "shop-high"
+        assert response.results[1].shop.id == "shop-low"
 
     async def test_search_default_limit_is_20(self, search_service, mock_supabase):
         mock_supabase.rpc = MagicMock(
             return_value=MagicMock(execute=MagicMock(return_value=MagicMock(data=[])))
         )
-        query = SearchQuery(text="test")
+        query = SearchQuery(text="濃縮咖啡")
         await search_service.search(query)
         call_args = mock_supabase.rpc.call_args
         params = call_args[1] if call_args[1] else call_args[0][1]
@@ -105,10 +107,11 @@ class TestSearchService:
             return_value=MagicMock(execute=MagicMock(return_value=MagicMock(data=[shop_data])))
         )
         query = SearchQuery(text="coffee")
-        results = await search_service.search(query)
-        assert results[0].taxonomy_boost == 0.0
-        assert results[0].taxonomy_boost == 0.0
-        assert results[0].total_score == pytest.approx(results[0].similarity_score * 0.7, rel=1e-4)
+        response = await search_service.search(query)
+        assert response.results[0].taxonomy_boost == 0.0
+        assert response.results[0].total_score == pytest.approx(
+            response.results[0].similarity_score * 0.7, rel=1e-4
+        )
 
 
 _SEARCH_SHOP_ROW = make_shop_row()
@@ -166,14 +169,14 @@ async def test_taxonomy_boost_increases_score(mock_db_with_idf, mock_embeddings)
         filters=SearchFilters(dimensions={"ambience": ["quiet"]}),
         limit=10,
     )
-    results = await service.search(query)
+    response = await service.search(query)
 
-    assert len(results) > 0
+    assert len(response.results) > 0
     # Taxonomy boost should be > 0 when tags match
-    assert results[0].taxonomy_boost > 0.0
+    assert response.results[0].taxonomy_boost > 0.0
     # total_score should be weighted combination
-    assert results[0].total_score == pytest.approx(
-        results[0].similarity_score * 0.7 + results[0].taxonomy_boost * 0.3,
+    assert response.results[0].total_score == pytest.approx(
+        response.results[0].similarity_score * 0.7 + response.results[0].taxonomy_boost * 0.3,
         rel=1e-4,
     )
 
@@ -206,7 +209,7 @@ class TestSearchCacheIntegration:
         cached_entry.id = "entry-1"
         cached_entry.results = [
             {
-                "shop": {"name": "CachedShop"},
+                "shop": {"name": "芒果咖啡工坊"},
                 "similarityScore": 0.9,
                 "taxonomyBoost": 0.0,
                 "totalScore": 0.63,
@@ -216,12 +219,13 @@ class TestSearchCacheIntegration:
 
         service = SearchService(db=mock_supabase, embeddings=mock_embeddings, cache=mock_cache)
         query = SearchQuery(text="good wifi coffee")
-        results = await service.search(query)
+        response = await service.search(query)
 
         mock_embeddings.embed.assert_not_called()
         mock_supabase.rpc.assert_not_called()
         mock_cache.increment_hit.assert_called_once_with("entry-1")
-        assert results == cached_entry.results
+        assert response.results == cached_entry.results
+        assert response.cache_hit is True
 
     async def test_tier2_semantic_hit_skips_full_search(
         self, mock_supabase, mock_embeddings, mock_cache
@@ -233,7 +237,7 @@ class TestSearchCacheIntegration:
         similar_entry.id = "entry-2"
         similar_entry.results = [
             {
-                "shop": {"name": "SimilarShop"},
+                "shop": {"name": "靜巷咖啡"},
                 "similarityScore": 0.88,
                 "taxonomyBoost": 0.0,
                 "totalScore": 0.62,
@@ -243,12 +247,13 @@ class TestSearchCacheIntegration:
 
         service = SearchService(db=mock_supabase, embeddings=mock_embeddings, cache=mock_cache)
         query = SearchQuery(text="nice wifi café")
-        results = await service.search(query)
+        response = await service.search(query)
 
         mock_embeddings.embed.assert_called_once()
         mock_supabase.rpc.assert_not_called()
         mock_cache.increment_hit.assert_called_once_with("entry-2")
-        assert results == similar_entry.results
+        assert response.results == similar_entry.results
+        assert response.cache_hit is True
 
     async def test_full_miss_runs_pipeline_and_caches_result(
         self, mock_supabase, mock_embeddings, mock_cache
@@ -261,9 +266,10 @@ class TestSearchCacheIntegration:
 
         service = SearchService(db=mock_supabase, embeddings=mock_embeddings, cache=mock_cache)
         query = SearchQuery(text="unique rare query")
-        results = await service.search(query)
+        response = await service.search(query)
 
-        assert len(results) == 1
+        assert len(response.results) == 1
+        assert response.cache_hit is False
         mock_cache.store.assert_called_once()
 
     async def test_cache_is_optional_none_skips_all_cache_logic(
@@ -274,6 +280,7 @@ class TestSearchCacheIntegration:
             return_value=MagicMock(execute=MagicMock(return_value=MagicMock(data=[])))
         )
         service = SearchService(db=mock_supabase, embeddings=mock_embeddings, cache=None)
-        query = SearchQuery(text="test query")
-        results = await service.search(query)
-        assert results == []
+        query = SearchQuery(text="貓咪咖啡館")
+        response = await service.search(query)
+        assert response.results == []
+        assert response.cache_hit is False

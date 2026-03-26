@@ -20,6 +20,10 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 BEGIN
+  -- Bound the HNSW ANN candidate set to limit scan cost.
+  -- The default ef_search is tied to ef_construction and can be large;
+  -- 40 is sufficient to find the single best match above a 0.85 threshold.
+  SET LOCAL hnsw.ef_search = 40;
   RETURN QUERY
   SELECT
     sc.id,

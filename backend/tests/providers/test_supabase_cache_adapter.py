@@ -1,4 +1,3 @@
-from datetime import datetime, timezone
 from unittest.mock import MagicMock
 
 import pytest
@@ -36,7 +35,7 @@ class TestGetByHash:
                     "query_text": "good coffee",
                     "mode_filter": None,
                     "query_embedding": [0.1] * 10,
-                    "results": [{"shop": {"name": "TestShop"}}],
+                    "results": [{"shop": {"name": "鳶山咖啡"}}],
                     "hit_count": 3,
                     "expires_at": future_ts,
                 }
@@ -67,7 +66,7 @@ class TestFindSimilar:
                     "query_text": "nice coffee",
                     "mode_filter": None,
                     "query_embedding": [0.1] * 10,
-                    "results": [{"shop": {"name": "SimilarShop"}}],
+                    "results": [{"shop": {"name": "靜巷咖啡"}}],
                     "hit_count": 1,
                     "expires_at": future_ts,
                     "similarity": 0.92,

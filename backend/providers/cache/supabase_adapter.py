@@ -2,25 +2,17 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+import asyncio
 from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING, Any, cast
+
+from providers.cache.interface import CacheEntry
 
 if TYPE_CHECKING:
     from supabase import Client
 
-
-@dataclass
-class CacheEntry:
-    id: str
-    query_hash: str
-    query_text: str
-    mode_filter: str | None
-    query_embedding: list[float]
-    results: list[dict[str, Any]]
-    hit_count: int
-    expires_at: str
-    is_expired: bool
+# Tier 1 lookups do not need the query_embedding vector (~6KB per row).
+_CACHE_SELECT_COLS = "id, query_hash, query_text, mode_filter, results, hit_count, expires_at"
 
 
 def _parse_entry(row: dict[str, Any]) -> CacheEntry:
@@ -29,7 +21,7 @@ def _parse_entry(row: dict[str, Any]) -> CacheEntry:
         expires_dt = datetime.fromisoformat(expires_str)
         is_expired = expires_dt < datetime.now(UTC)
     except (ValueError, TypeError):
-        is_expired = False
+        is_expired = True  # fail closed: treat unparseable timestamp as expired
     return CacheEntry(
         id=row["id"],
         query_hash=row["query_hash"],
@@ -50,13 +42,15 @@ class SupabaseSearchCacheAdapter:
 
     async def get_by_hash(self, query_hash: str) -> CacheEntry | None:
         now_iso = datetime.now(UTC).isoformat()
-        response = (
-            self._db.table("search_cache")
-            .select("*")
-            .eq("query_hash", query_hash)
-            .gt("expires_at", now_iso)
-            .limit(1)
-            .execute()
+        response = await asyncio.to_thread(
+            lambda: (
+                self._db.table("search_cache")
+                .select(_CACHE_SELECT_COLS)
+                .eq("query_hash", query_hash)
+                .gt("expires_at", now_iso)
+                .limit(1)
+                .execute()
+            )
         )
         rows = cast("list[dict[str, Any]]", response.data)
         if not rows:
@@ -69,14 +63,14 @@ class SupabaseSearchCacheAdapter:
         mode: str | None,
         threshold: float,
     ) -> CacheEntry | None:
-        response = self._db.rpc(
-            "search_cache_similar",
-            {
-                "query_embedding": embedding,
-                "similarity_threshold": threshold,
-                "filter_mode": mode,
-            },
-        ).execute()
+        params = {
+            "query_embedding": embedding,
+            "similarity_threshold": threshold,
+            "filter_mode": mode,
+        }
+        response = await asyncio.to_thread(
+            lambda: self._db.rpc("search_cache_similar", params).execute()
+        )
         rows = cast("list[dict[str, Any]]", response.data)
         if not rows:
             return None
@@ -91,21 +85,26 @@ class SupabaseSearchCacheAdapter:
         results: list[dict[str, Any]],
     ) -> None:
         expires_at = datetime.now(UTC) + timedelta(seconds=self._ttl_seconds)
-        self._db.table("search_cache").upsert(
-            {
-                "query_hash": query_hash,
-                "query_text": query_text,
-                "mode_filter": mode,
-                "query_embedding": embedding,
-                "results": results,
-                "hit_count": 0,
-                "expires_at": expires_at.isoformat(),
-            },
-            on_conflict="query_hash",
-        ).execute()
+        payload = {
+            "query_hash": query_hash,
+            "query_text": query_text,
+            "mode_filter": mode,
+            "query_embedding": embedding,
+            "results": results,
+            "expires_at": expires_at.isoformat(),
+            # hit_count omitted: DB DEFAULT 0 handles new rows;
+            # existing rows on conflict retain their accumulated count.
+        }
+        await asyncio.to_thread(
+            lambda: (
+                self._db.table("search_cache").upsert(payload, on_conflict="query_hash").execute()
+            )
+        )
 
     async def increment_hit(self, entry_id: str) -> None:
-        self._db.rpc(
-            "increment_search_cache_hit",
-            {"entry_id": entry_id},
-        ).execute()
+        await asyncio.to_thread(
+            lambda: self._db.rpc(
+                "increment_search_cache_hit",
+                {"entry_id": entry_id},
+            ).execute()
+        )

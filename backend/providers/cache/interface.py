@@ -1,6 +1,8 @@
+from dataclasses import dataclass
 from typing import Any, Protocol
 
 
+@dataclass
 class CacheEntry:
     """Represents a cached search result row."""
 

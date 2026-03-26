@@ -186,7 +186,7 @@ class TestSearchAPI:
                 mock_emb.embed = AsyncMock(return_value=[0.1] * 1536)
                 mock_emb_factory.return_value = mock_emb
                 response = client.get(
-                    "/search?text=test+cache",
+                    "/search?text=espresso+tonic",
                     headers={"Authorization": "Bearer valid-jwt"},
                 )
                 assert response.status_code == 200
@@ -244,7 +244,7 @@ class TestSearchCacheAPI:
                 cached_entry.id = "cached-1"
                 cached_entry.results = [
                     {
-                        "shop": {"name": "CachedShop"},
+                        "shop": {"name": "芒果咖啡工坊"},
                         "similarityScore": 0.9,
                         "taxonomyBoost": 0.0,
                         "totalScore": 0.63,

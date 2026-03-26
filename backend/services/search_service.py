@@ -1,5 +1,6 @@
 import math
 import time
+from dataclasses import dataclass
 from typing import Any, cast
 
 from supabase import Client
@@ -9,6 +10,15 @@ from models.types import SearchQuery, SearchResult, Shop
 from providers.cache.interface import SearchCacheProvider
 from providers.embeddings.interface import EmbeddingsProvider
 from services.query_normalizer import hash_cache_key, normalize_query
+
+
+@dataclass
+class SearchResponse:
+    """Return value from SearchService.search() — carries results and cache provenance."""
+
+    results: list
+    cache_hit: bool
+
 
 _SHOP_FIELDS_HANDLED_SEPARATELY = {"photo_urls", "taxonomy_tags", "mode_scores"}
 
@@ -37,7 +47,7 @@ class SearchService:
         query: SearchQuery,
         mode: str | None = None,
         mode_threshold: float = 0.4,
-    ) -> list:
+    ) -> SearchResponse:
         normalized = normalize_query(query.text)
         cache_key = hash_cache_key(normalized, mode)
 
@@ -46,7 +56,7 @@ class SearchService:
             cached = await self._cache.get_by_hash(cache_key)
             if cached and not cached.is_expired:
                 await self._cache.increment_hit(cached.id)
-                return cached.results
+                return SearchResponse(results=cached.results, cache_hit=True)
 
         # Generate embedding (needed for Tier 2 + full search)
         query_embedding = await self._embeddings.embed(normalized)
@@ -57,7 +67,7 @@ class SearchService:
             similar = await self._cache.find_similar(query_embedding, mode, threshold)
             if similar and not similar.is_expired:
                 await self._cache.increment_hit(similar.id)
-                return similar.results
+                return SearchResponse(results=similar.results, cache_hit=True)
 
         # Full search pipeline
         results = await self._full_search(query_embedding, query, mode, mode_threshold)
@@ -67,7 +77,7 @@ class SearchService:
             serialized = [r.model_dump(by_alias=True) for r in results]
             await self._cache.store(cache_key, normalized, mode, query_embedding, serialized)
 
-        return results
+        return SearchResponse(results=results, cache_hit=False)
 
     async def _full_search(
         self,

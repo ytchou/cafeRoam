@@ -57,29 +57,33 @@ async def search(
     cache = get_search_cache_provider(admin_db)
     service = SearchService(db=db, embeddings=embeddings, cache=cache)
     query = SearchQuery(text=text, limit=limit)
-    results = await service.search(query, mode=mode)
-
-    # Cache hits return list[dict]; full search returns list[SearchResult]
-    cache_hit = isinstance(results, list) and len(results) > 0 and isinstance(results[0], dict)
+    response = await service.search(query, mode=mode)
 
     query_type = classify(text)
     user_id_anon = anonymize_user_id(user["id"], salt=settings.anon_salt)
-    result_count = len(results)
+    result_count = len(response.results)
 
     background_tasks.add_task(
-        _log_search_event, admin_db, user_id_anon, text, query_type, mode, result_count, cache_hit
+        _log_search_event,
+        admin_db,
+        user_id_anon,
+        text,
+        query_type,
+        mode,
+        result_count,
+        response.cache_hit,
     )
 
-    if cache_hit:
+    if response.cache_hit:
         return {
-            "results": results,
+            "results": response.results,
             "query_type": query_type,
             "result_count": result_count,
             "cache_hit": True,
         }
 
     return {
-        "results": [r.model_dump(by_alias=True) for r in results],
+        "results": [r.model_dump(by_alias=True) for r in response.results],
         "query_type": query_type,
         "result_count": result_count,
         "cache_hit": False,
