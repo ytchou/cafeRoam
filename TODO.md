@@ -1690,7 +1690,7 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 > **Plan:** [docs/plans/2026-03-26-semantic-search-cache-plan.md](docs/plans/2026-03-26-semantic-search-cache-plan.md)
 
 **Chunk 1 — Foundation (Wave 1):**
-- [ ] Migration: `search_cache` table with pgvector HNSW index
+- [x] Migration: `search_cache` table with pgvector HNSW index
 - [ ] Migration: `cache_hit` column on `search_events`
 - [ ] Query normalizer + cache key hashing (TDD)
 - [ ] SearchCacheProvider protocol + factory
