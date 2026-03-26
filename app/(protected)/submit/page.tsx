@@ -15,16 +15,17 @@ interface Submission {
 const MAPS_URL_PATTERN =
   /^https?:\/\/(www\.)?(google\.(com|com\.tw)\/maps|maps\.google\.(com|com\.tw)|goo\.gl\/maps|maps\.app\.goo\.gl)/;
 
+const STATUS_LABELS: Record<string, string> = {
+  pending: '處理中',
+  processing: '處理中',
+  pending_review: '審核中',
+  live: '已上線',
+  rejected: '未通過',
+  failed: '處理失敗',
+};
+
 function statusLabel(status: string): string {
-  const map: Record<string, string> = {
-    pending: '處理中',
-    processing: '處理中',
-    pending_review: '審核中',
-    live: '已上線',
-    rejected: '未通過',
-    failed: '處理失敗',
-  };
-  return map[status] ?? status;
+  return STATUS_LABELS[status] ?? status;
 }
 
 function statusColor(status: string): string {
