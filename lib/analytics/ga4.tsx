@@ -7,6 +7,18 @@ import { useConsent } from '@/lib/consent/use-consent';
 declare global {
   interface Window {
     gtag?: (...args: unknown[]) => void;
+    dataLayer?: unknown[];
+  }
+}
+
+// Ensures window.gtag and dataLayer are ready to queue commands before the GA4
+// script loads. GA4 drains the dataLayer queue on init, so pre-queued consent
+// commands are processed even if the script hasn't loaded yet.
+function ensureGtagQueue() {
+  window.dataLayer = window.dataLayer ?? [];
+  if (!window.gtag) {
+    // eslint-disable-next-line prefer-rest-params
+    window.gtag = function gtag() { (window.dataLayer as unknown[]).push(arguments); };
   }
 }
 
@@ -15,12 +27,13 @@ export function GA4Provider() {
   const { consent } = useConsent();
   const defaultSetRef = useRef(false);
 
-  // Set consent defaults once (before GA script loads)
+  // Set consent defaults once — queued to dataLayer before GA4 script loads
   useEffect(() => {
     if (!gaId || defaultSetRef.current) return;
     defaultSetRef.current = true;
 
-    window.gtag?.('consent', 'default', {
+    ensureGtagQueue();
+    window.gtag!('consent', 'default', {
       analytics_storage: 'denied',
       ad_storage: 'denied',
       ad_user_data: 'denied',
@@ -32,7 +45,8 @@ export function GA4Provider() {
   useEffect(() => {
     if (!gaId || consent === 'pending') return;
 
-    window.gtag?.('consent', 'update', {
+    ensureGtagQueue();
+    window.gtag!('consent', 'update', {
       analytics_storage: consent,
     });
   }, [gaId, consent]);
