@@ -4,15 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { createClient } from '@/lib/supabase/client';
-
-const REJECTION_REASONS = [
-  { value: 'permanently_closed', label: 'Permanently closed' },
-  { value: 'not_a_cafe', label: 'Not a café' },
-  { value: 'duplicate', label: 'Duplicate of existing shop' },
-  { value: 'outside_coverage', label: 'Outside coverage area' },
-  { value: 'invalid_url', label: 'Invalid URL' },
-  { value: 'other', label: 'Other' },
-];
+import { ADMIN_REJECTION_REASONS } from '@/lib/constants/rejection-reasons';
 
 interface Submission {
   id: string;
