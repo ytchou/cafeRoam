@@ -1624,4 +1624,4 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 
 **Chunk 4 — Instrumentation + Verification:**
 - [x] Instrument GA4 events on shop detail and search pages
-- [ ] Full test suite, lint, and type-check pass
+- [x] Full test suite, lint, and type-check pass
