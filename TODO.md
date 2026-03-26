@@ -1675,5 +1675,5 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 - [x] Add Following section + count to profile page
 
 **Chunk 4 — Polish + Docs:**
-- [ ] Lint + type check + full test pass
+- [x] Lint + type check + full test pass
 - [ ] Update SPEC.md, PRD.md, pricing strategy

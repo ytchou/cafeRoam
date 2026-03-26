@@ -7,8 +7,8 @@ from fastapi.testclient import TestClient
 from api.deps import get_admin_db, get_current_user, get_optional_user, get_user_db
 from main import app
 from models.types import (
-    FollowerCountResponse,
     FollowedShopSummary,
+    FollowerCountResponse,
     FollowingListResponse,
     FollowResponse,
 )
@@ -65,9 +65,7 @@ class TestFollowShop:
         _override_auth()
         try:
             with patch("api.followers.FollowerService") as mock_cls:
-                mock_cls.return_value.follow.side_effect = ValueError(
-                    "Shop not found: bad-id"
-                )
+                mock_cls.return_value.follow.side_effect = ValueError("Shop not found: bad-id")
                 response = client.post("/shops/bad-id/follow")
 
             assert response.status_code == 404
@@ -108,8 +106,8 @@ class TestGetFollowerCount:
         _override_admin_db()
         try:
             with patch("api.followers.FollowerService") as mock_cls:
-                mock_cls.return_value.get_follower_count.return_value = (
-                    FollowerCountResponse(count=42, visible=True, is_following=None)
+                mock_cls.return_value.get_follower_count.return_value = FollowerCountResponse(
+                    count=42, visible=True, is_following=None
                 )
                 response = client.get("/shops/shop-d4e5f6/followers/count")
 
@@ -127,8 +125,8 @@ class TestGetFollowerCount:
         _override_admin_db()
         try:
             with patch("api.followers.FollowerService") as mock_cls:
-                mock_cls.return_value.get_follower_count.return_value = (
-                    FollowerCountResponse(count=15, visible=True, is_following=True)
+                mock_cls.return_value.get_follower_count.return_value = FollowerCountResponse(
+                    count=15, visible=True, is_following=True
                 )
                 response = client.get("/shops/shop-d4e5f6/followers/count")
 
@@ -150,21 +148,19 @@ class TestGetFollowing:
         _override_auth()
         try:
             with patch("api.followers.FollowerService") as mock_cls:
-                mock_cls.return_value.get_following.return_value = (
-                    FollowingListResponse(
-                        shops=[
-                            FollowedShopSummary(
-                                id="shop-d4e5f6",
-                                name="山小孩咖啡",
-                                address="台北市大安區溫州街74巷5弄2號",
-                                slug="mountain-kid-coffee",
-                                mrt="台電大樓",
-                                followed_at="2026-03-20T10:00:00",
-                            )
-                        ],
-                        total=1,
-                        page=1,
-                    )
+                mock_cls.return_value.get_following.return_value = FollowingListResponse(
+                    shops=[
+                        FollowedShopSummary(
+                            id="shop-d4e5f6",
+                            name="山小孩咖啡",
+                            address="台北市大安區溫州街74巷5弄2號",
+                            slug="mountain-kid-coffee",
+                            mrt="台電大樓",
+                            followed_at="2026-03-20T10:00:00",
+                        )
+                    ],
+                    total=1,
+                    page=1,
                 )
                 response = client.get("/me/following?page=1&limit=20")
 

@@ -40,16 +40,14 @@ class FollowerService:
 
     def unfollow(self, *, user_id: str, shop_id: str) -> FollowResponse:
         """Unfollow a shop. Idempotent — unfollowing when not following returns success."""
-        self._db.table("shop_followers").delete().eq(
-            "user_id", user_id
-        ).eq("shop_id", shop_id).execute()
+        self._db.table("shop_followers").delete().eq("user_id", user_id).eq(
+            "shop_id", shop_id
+        ).execute()
 
         count = self._get_count(shop_id)
         return FollowResponse(following=False, follower_count=count)
 
-    def get_follower_count(
-        self, *, shop_id: str, user_id: str | None
-    ) -> FollowerCountResponse:
+    def get_follower_count(self, *, shop_id: str, user_id: str | None) -> FollowerCountResponse:
         """Get follower count with visibility threshold and optional is_following check."""
         count = self._get_count(shop_id)
         visible = count >= FOLLOWER_VISIBILITY_THRESHOLD
@@ -66,9 +64,7 @@ class FollowerService:
             )
             is_following = row.data is not None
 
-        return FollowerCountResponse(
-            count=count, visible=visible, is_following=is_following
-        )
+        return FollowerCountResponse(count=count, visible=visible, is_following=is_following)
 
     def get_following(
         self, *, user_id: str, page: int = 1, limit: int = 20

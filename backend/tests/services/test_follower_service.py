@@ -59,7 +59,7 @@ class TestFollow:
         service = FollowerService(db=db)
         try:
             service.follow(user_id="user-a1b2c3", shop_id="nonexistent")
-            assert False, "Should have raised ValueError"
+            raise AssertionError("Should have raised ValueError")
         except ValueError as e:
             assert "not found" in str(e).lower()
 
