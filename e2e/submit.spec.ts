@@ -37,7 +37,9 @@ test.describe.serial('@critical J40 — Community shop submission', () => {
     await expect(page.getByText('處理中').first()).toBeVisible();
   });
 
-  test('submitting a duplicate URL shows error', async ({ authedPage: page }) => {
+  test('submitting a duplicate URL shows error', async ({
+    authedPage: page,
+  }) => {
     await page.goto('/submit');
 
     // Submit the same URL that was submitted in the happy path test
@@ -49,7 +51,7 @@ test.describe.serial('@critical J40 — Community shop submission', () => {
 
     // Error message should appear (409 duplicate from backend)
     await expect(
-      page.getByText('This URL has already been submitted'),
+      page.getByText('This URL has already been submitted')
     ).toBeVisible({ timeout: 10_000 });
 
     // URL input should NOT be cleared (form preserved on error)

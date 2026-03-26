@@ -12,12 +12,12 @@ Add E2E Playwright coverage for the community shop submission flow (`/submit`). 
 
 ## Decisions
 
-| Decision | Choice | Alternative rejected |
-|----------|--------|---------------------|
-| API strategy | Hit real local backend | Playwright route interception (diverges from existing E2E patterns) |
-| Auth wall test | Skip — already in auth.spec.ts | Duplicate in submit.spec.ts (redundant) |
-| Critical tag | Yes — `@critical J40` | No tag (submit is a growth mechanic) |
-| Data isolation | Unique URLs per run | DB cleanup in afterEach (unnecessary complexity) |
+| Decision       | Choice                         | Alternative rejected                                                |
+| -------------- | ------------------------------ | ------------------------------------------------------------------- |
+| API strategy   | Hit real local backend         | Playwright route interception (diverges from existing E2E patterns) |
+| Auth wall test | Skip — already in auth.spec.ts | Duplicate in submit.spec.ts (redundant)                             |
+| Critical tag   | Yes — `@critical J40`          | No tag (submit is a growth mechanic)                                |
+| Data isolation | Unique URLs per run            | DB cleanup in afterEach (unnecessary complexity)                    |
 
 ## Architecture
 
@@ -28,20 +28,22 @@ Uses the existing `authedPage` fixture from `e2e/fixtures/auth.ts`. All requests
 ### Data Strategy
 
 Generate unique Google Maps URLs per test run using `Date.now()` suffix:
+
 ```
 https://maps.app.goo.gl/e2eTest${Date.now()}
 ```
+
 No DB cleanup needed. Each run creates fresh submissions that don't collide.
 
 ## Test Cases
 
 ### `@critical J40 — Community shop submission` (3 tests)
 
-| # | Test description | Actions | Assertions |
-|---|-----------------|---------|------------|
-| 1 | Authenticated user submits a shop URL and sees confirmation | Navigate to `/submit`, enter unique Google Maps URL, click submit | Success message visible; submission appears in history with "處理中" badge |
-| 2 | Submitting a duplicate URL shows error | Submit the same URL from test 1 again | Error message visible (409 duplicate); form NOT cleared |
-| 3 | Invalid URL shows inline validation error | Enter `not-a-url`, attempt submit | Inline error "請輸入有效的 Google Maps 連結"; no network request fired |
+| #   | Test description                                            | Actions                                                           | Assertions                                                                 |
+| --- | ----------------------------------------------------------- | ----------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| 1   | Authenticated user submits a shop URL and sees confirmation | Navigate to `/submit`, enter unique Google Maps URL, click submit | Success message visible; submission appears in history with "處理中" badge |
+| 2   | Submitting a duplicate URL shows error                      | Submit the same URL from test 1 again                             | Error message visible (409 duplicate); form NOT cleared                    |
+| 3   | Invalid URL shows inline validation error                   | Enter `not-a-url`, attempt submit                                 | Inline error "請輸入有效的 Google Maps 連結"; no network request fired     |
 
 ### Auth wall coverage
 
@@ -67,7 +69,9 @@ authedPage fixture (cached JWT)
 ## Testing Classification
 
 **(a) New e2e journey?**
+
 - [x] Yes — `@critical J40` community shop submission
 
 **(b) Coverage gate impact?**
+
 - [ ] No — only adding tests, no critical-path service code modified

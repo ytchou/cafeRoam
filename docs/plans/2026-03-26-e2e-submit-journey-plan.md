@@ -15,6 +15,7 @@
 **Tech Stack:** Playwright, TypeScript
 
 **Acceptance Criteria:**
+
 - [ ] An authenticated user can submit a Google Maps URL on `/submit` and see a success message plus the submission in their history
 - [ ] Submitting a duplicate URL shows an error and does not clear the form
 - [ ] Entering an invalid URL shows inline validation without making a network request
@@ -25,6 +26,7 @@
 ### Task 1: Add `/submit` to auth wall protected routes
 
 **Files:**
+
 - Modify: `e2e/auth.spec.ts:23` (after the `/checkin/:shopId` test)
 
 **Step 1: Add the test case**
@@ -32,12 +34,12 @@
 Insert after line 23 (after the checkin redirect test):
 
 ```typescript
-  test('unauthenticated user accessing /submit is redirected to /login', async ({
-    page,
-  }) => {
-    await page.goto('/submit');
-    await page.waitForURL(/\/login/, { timeout: 10_000 });
-  });
+test('unauthenticated user accessing /submit is redirected to /login', async ({
+  page,
+}) => {
+  await page.goto('/submit');
+  await page.waitForURL(/\/login/, { timeout: 10_000 });
+});
 ```
 
 **Step 2: Run test to verify it passes**
@@ -57,6 +59,7 @@ git commit -m "test(DEV-62): add /submit to auth wall E2E coverage"
 ### Task 2: Create submit E2E spec — happy path
 
 **Files:**
+
 - Create: `e2e/submit.spec.ts`
 
 **Step 1: Write the spec file with the happy path test**
@@ -118,6 +121,7 @@ git commit -m "test(DEV-62): E2E happy path — submit shop URL and see confirma
 ### Task 3: Add duplicate guard test
 
 **Files:**
+
 - Modify: `e2e/submit.spec.ts` (add test inside the existing `serial` describe block)
 
 **Step 1: Add the duplicate test after the happy path**
@@ -125,27 +129,25 @@ git commit -m "test(DEV-62): E2E happy path — submit shop URL and see confirma
 Append inside the `test.describe.serial` block, after the happy path test:
 
 ```typescript
-  test('submitting a duplicate URL shows error', async ({
-    authedPage: page,
-  }) => {
-    await page.goto('/submit');
+test('submitting a duplicate URL shows error', async ({ authedPage: page }) => {
+  await page.goto('/submit');
 
-    // Submit the same URL that was submitted in the happy path test
-    const urlInput = page.getByPlaceholder('貼上 Google Maps 連結');
-    await urlInput.fill(uniqueUrl);
+  // Submit the same URL that was submitted in the happy path test
+  const urlInput = page.getByPlaceholder('貼上 Google Maps 連結');
+  await urlInput.fill(uniqueUrl);
 
-    const submitButton = page.getByRole('button', { name: '送出' });
-    await submitButton.click();
+  const submitButton = page.getByRole('button', { name: '送出' });
+  await submitButton.click();
 
-    // Error message should appear (409 duplicate from backend)
-    await expect(page.locator('.text-red-600')).toBeVisible({ timeout: 10_000 });
+  // Error message should appear (409 duplicate from backend)
+  await expect(page.locator('.text-red-600')).toBeVisible({ timeout: 10_000 });
 
-    // URL input should NOT be cleared (form preserved on error)
-    await expect(urlInput).toHaveValue(uniqueUrl);
+  // URL input should NOT be cleared (form preserved on error)
+  await expect(urlInput).toHaveValue(uniqueUrl);
 
-    // Success message should NOT appear
-    await expect(page.getByText('感謝推薦！我們正在處理中。')).toBeHidden();
-  });
+  // Success message should NOT appear
+  await expect(page.getByText('感謝推薦！我們正在處理中。')).toBeHidden();
+});
 ```
 
 **Step 2: Run both tests serially to verify**
@@ -165,6 +167,7 @@ git commit -m "test(DEV-62): E2E duplicate guard — submitting existing URL sho
 ### Task 4: Add URL validation test
 
 **Files:**
+
 - Modify: `e2e/submit.spec.ts` (add test inside the existing `serial` describe block)
 
 **Step 1: Add the validation test**
@@ -172,36 +175,36 @@ git commit -m "test(DEV-62): E2E duplicate guard — submitting existing URL sho
 Append inside the `test.describe.serial` block:
 
 ```typescript
-  test('invalid URL shows inline validation error without network request', async ({
-    authedPage: page,
-  }) => {
-    await page.goto('/submit');
+test('invalid URL shows inline validation error without network request', async ({
+  authedPage: page,
+}) => {
+  await page.goto('/submit');
 
-    const urlInput = page.getByPlaceholder('貼上 Google Maps 連結');
-    await urlInput.fill('not-a-valid-url');
+  const urlInput = page.getByPlaceholder('貼上 Google Maps 連結');
+  await urlInput.fill('not-a-valid-url');
 
-    // Submit button should be enabled (url is non-empty)
-    const submitButton = page.getByRole('button', { name: '送出' });
-    await expect(submitButton).toBeEnabled();
+  // Submit button should be enabled (url is non-empty)
+  const submitButton = page.getByRole('button', { name: '送出' });
+  await expect(submitButton).toBeEnabled();
 
-    // Intercept to verify no network request is made
-    let apiCalled = false;
-    await page.route('**/api/submissions', (route) => {
-      apiCalled = true;
-      return route.continue();
-    });
-
-    await submitButton.click();
-
-    // Inline validation error should appear
-    await expect(page.getByText('請輸入有效的 Google Maps 連結')).toBeVisible();
-
-    // No API call should have been made (client-side validation catches it)
-    expect(apiCalled).toBe(false);
-
-    // Clean up route handler
-    await page.unroute('**/api/submissions');
+  // Intercept to verify no network request is made
+  let apiCalled = false;
+  await page.route('**/api/submissions', (route) => {
+    apiCalled = true;
+    return route.continue();
   });
+
+  await submitButton.click();
+
+  // Inline validation error should appear
+  await expect(page.getByText('請輸入有效的 Google Maps 連結')).toBeVisible();
+
+  // No API call should have been made (client-side validation catches it)
+  expect(apiCalled).toBe(false);
+
+  // Clean up route handler
+  await page.unroute('**/api/submissions');
+});
 ```
 
 **Step 2: Run the full suite to verify all 3 tests pass**
@@ -226,6 +229,7 @@ git commit -m "test(DEV-62): E2E URL validation — invalid URL shows error, no 
 ### Task 5: Final verification and cleanup
 
 **Files:**
+
 - No new files
 
 **Step 1: Run the full E2E suite to check for regressions**
@@ -270,16 +274,20 @@ graph TD
 ```
 
 **Wave 1** (parallel — no dependencies):
+
 - Task 1: Add `/submit` to auth.spec.ts protected routes
 - Task 2: Create submit.spec.ts with happy path
 
 **Wave 2** (depends on Wave 1):
+
 - Task 3: Add duplicate guard test ← Task 2 (same file, serial block depends on happy path)
 
 **Wave 3** (depends on Wave 2):
+
 - Task 4: Add URL validation test ← Task 3 (same file)
 
 **Wave 4** (depends on all):
+
 - Task 5: Final verification ← Tasks 1-4
 
 ---
@@ -287,16 +295,20 @@ graph TD
 ## TODO
 
 ### E2E: Community Shop Submission Journey (DEV-62)
+
 > **Design Doc:** [docs/designs/2026-03-26-e2e-submit-journey-design.md](docs/designs/2026-03-26-e2e-submit-journey-design.md)
 > **Plan:** [docs/plans/2026-03-26-e2e-submit-journey-plan.md](docs/plans/2026-03-26-e2e-submit-journey-plan.md)
 
 **Wave 1 — Setup:**
+
 - [ ] Add `/submit` to auth wall protected routes (auth.spec.ts)
 - [ ] Create submit.spec.ts with happy path (@critical J40)
 
 **Wave 2 — Edge Cases:**
+
 - [ ] Add duplicate guard test (409 error handling)
 - [ ] Add URL validation test (client-side, no API call)
 
 **Wave 3 — Verification:**
+
 - [ ] Full E2E suite regression check (mobile + desktop)

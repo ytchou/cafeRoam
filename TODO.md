@@ -1746,18 +1746,22 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 - [x] Update `.env.example` and doctor script
 
 ### E2E: Community Shop Submission Journey (DEV-62)
+
 > **Design Doc:** [docs/designs/2026-03-26-e2e-submit-journey-design.md](docs/designs/2026-03-26-e2e-submit-journey-design.md)
 > **Plan:** [docs/plans/2026-03-26-e2e-submit-journey-plan.md](docs/plans/2026-03-26-e2e-submit-journey-plan.md)
 
 **Wave 1 — Setup:**
+
 - [x] Add `/submit` to auth wall protected routes (auth.spec.ts)
 - [x] Create submit.spec.ts with happy path (@critical J40)
 
 **Wave 2 — Edge Cases:**
+
 - [x] Add duplicate guard test (409 error handling)
 - [x] Add URL validation test (client-side, no API call)
 
 **Wave 3 — Verification:**
+
 - [x] Full E2E suite regression check (mobile + desktop)
 
 ### E2E: Shop Follow/Unfollow Journey (DEV-61)

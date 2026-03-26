@@ -162,7 +162,9 @@ describe('shops route', () => {
 
 describe('shops/[shopId] route', () => {
   it('GET proxies to /shops/:shopId', async () => {
-    await shopGET(makeRequest(), { params: Promise.resolve({ shopId: 'shop-1' }) });
+    await shopGET(makeRequest(), {
+      params: Promise.resolve({ shopId: 'shop-1' }),
+    });
     expect(mockProxy).toHaveBeenCalledWith(
       expect.any(NextRequest),
       '/shops/shop-1'
