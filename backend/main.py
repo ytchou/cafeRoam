@@ -15,6 +15,7 @@ from api.admin_taxonomy import router as admin_taxonomy_router
 from api.analytics import router as analytics_router
 from api.auth import router as auth_router
 from api.checkins import router as checkins_router
+from api.claims import router as claims_router
 from api.explore import router as explore_router
 from api.feed import router as feed_router
 from api.followers import router as followers_router
@@ -116,6 +117,7 @@ app.include_router(profile_router)
 app.include_router(shops_router)
 app.include_router(search_router)
 app.include_router(checkins_router)
+app.include_router(claims_router)
 app.include_router(lists_router)
 app.include_router(stamps_router)
 app.include_router(feed_router)

@@ -24,6 +24,7 @@ class Settings(BaseSettings):
     email_provider: str = "resend"
     resend_api_key: str = ""
     email_from: str = "CafeRoam <noreply@caferoam.tw>"
+    admin_email: str = "hello@caferoam.tw"
 
     # Analytics
     analytics_provider: str = "posthog"

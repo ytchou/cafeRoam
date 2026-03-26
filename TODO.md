@@ -20,7 +20,7 @@
 **Chunk 2 — Backend Services + API (Waves 2–4):**
 - [x] Task 5: ClaimsService with TDD (submit, approve, reject)
 - [x] Task 6: Add claimStatus to GET /shops/:id response
-- [ ] Task 7: Claims API router (upload-url, submit, me)
+- [x] Task 7: Claims API router (upload-url, submit, me)
 - [ ] Task 8: Admin Claims API (list, proof-url, approve, reject)
 - [ ] Task 9: Register routers in main.py
 
