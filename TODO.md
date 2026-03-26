@@ -25,8 +25,8 @@
 - [x] Task 9: Register routers in main.py
 
 **Chunk 3 — Frontend Proxies + Components (Waves 5–7):**
-- [ ] Task 10: Next.js proxy routes for claims
-- [ ] Task 11: Next.js proxy routes for admin claims
+- [x] Task 10: Next.js proxy routes for claims
+- [x] Task 11: Next.js proxy routes for admin claims
 - [ ] Task 12: VerifiedBadge component
 - [ ] Task 13: Update ClaimBanner + ShopData type
 - [ ] Task 14: Claim form page (/shops/[shopId]/claim)
