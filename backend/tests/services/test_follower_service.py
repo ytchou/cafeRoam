@@ -17,13 +17,9 @@ class TestFollow:
         db.insert.return_value = db
         db.select.return_value = db
         db.eq.return_value = db
-        db.single.return_value = db
-        db.maybe_single.return_value = db
 
-        # insert → success
         insert_resp = MagicMock(data=make_follow_row())
-        # count query → 5 followers
-        count_resp = MagicMock(data=[{"count": 5}])
+        count_resp = MagicMock(count=5, data=[])
         db.execute.side_effect = [insert_resp, count_resp]
 
         service = FollowerService(db=db)
@@ -38,13 +34,10 @@ class TestFollow:
         db.insert.return_value = db
         db.select.return_value = db
         db.eq.return_value = db
-        db.single.return_value = db
-        db.maybe_single.return_value = db
 
-        # insert raises unique violation (23505)
         db.execute.side_effect = [
             APIError({"message": "duplicate key", "code": "23505"}),
-            MagicMock(data=[{"count": 10}]),  # count query still works
+            MagicMock(count=10, data=[]),
         ]
 
         service = FollowerService(db=db)
@@ -57,12 +50,8 @@ class TestFollow:
         db = MagicMock()
         db.table.return_value = db
         db.insert.return_value = db
-        db.select.return_value = db
         db.eq.return_value = db
-        db.single.return_value = db
-        db.maybe_single.return_value = db
 
-        # insert raises FK violation (23503)
         db.execute.side_effect = APIError(
             {"message": "violates foreign key constraint", "code": "23503"}
         )
@@ -85,10 +74,8 @@ class TestUnfollow:
         db.select.return_value = db
         db.eq.return_value = db
 
-        # delete → success
         delete_resp = MagicMock(data=[make_follow_row()])
-        # count query → 4 followers
-        count_resp = MagicMock(data=[{"count": 4}])
+        count_resp = MagicMock(count=4, data=[])
         db.execute.side_effect = [delete_resp, count_resp]
 
         service = FollowerService(db=db)
@@ -104,10 +91,8 @@ class TestUnfollow:
         db.select.return_value = db
         db.eq.return_value = db
 
-        # delete affects 0 rows
         delete_resp = MagicMock(data=[])
-        # count → 0
-        count_resp = MagicMock(data=[{"count": 0}])
+        count_resp = MagicMock(count=0, data=[])
         db.execute.side_effect = [delete_resp, count_resp]
 
         service = FollowerService(db=db)
@@ -127,15 +112,12 @@ class TestGetFollowerCount:
         db.eq.return_value = db
         db.maybe_single.return_value = db
 
-        count_resp = MagicMock(data=[{"count": 42}])
-        # is_following check
+        count_resp = MagicMock(count=42, data=[])
         follow_resp = MagicMock(data=make_follow_row())
         db.execute.side_effect = [count_resp, follow_resp]
 
         service = FollowerService(db=db)
-        result = service.get_follower_count(
-            shop_id="shop-d4e5f6", user_id="user-a1b2c3"
-        )
+        result = service.get_follower_count(shop_id="shop-d4e5f6", user_id="user-a1b2c3")
 
         assert result.count == 42
         assert result.visible is True
@@ -146,9 +128,8 @@ class TestGetFollowerCount:
         db.table.return_value = db
         db.select.return_value = db
         db.eq.return_value = db
-        db.maybe_single.return_value = db
 
-        count_resp = MagicMock(data=[{"count": 3}])
+        count_resp = MagicMock(count=3, data=[])
         db.execute.side_effect = [count_resp]
 
         service = FollowerService(db=db)
@@ -165,14 +146,12 @@ class TestGetFollowerCount:
         db.eq.return_value = db
         db.maybe_single.return_value = db
 
-        count_resp = MagicMock(data=[{"count": 15}])
-        follow_resp = MagicMock(data=None)  # not following
+        count_resp = MagicMock(count=15, data=[])
+        follow_resp = MagicMock(data=None)
         db.execute.side_effect = [count_resp, follow_resp]
 
         service = FollowerService(db=db)
-        result = service.get_follower_count(
-            shop_id="shop-d4e5f6", user_id="user-a1b2c3"
-        )
+        result = service.get_follower_count(shop_id="shop-d4e5f6", user_id="user-a1b2c3")
 
         assert result.count == 15
         assert result.visible is True
@@ -202,12 +181,10 @@ class TestGetFollowing:
                 },
             },
         ]
-        count_rows = [{"id": "follow-1"}]  # total = 1
 
-        # page query, then count query
         db.execute.side_effect = [
             MagicMock(data=follow_rows),
-            MagicMock(data=count_rows, count=1),
+            MagicMock(data=[{"id": "follow-1"}], count=1),
         ]
 
         service = FollowerService(db=db)
