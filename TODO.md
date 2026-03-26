@@ -1692,7 +1692,7 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 **Chunk 1 — Foundation (Wave 1):**
 - [x] Migration: `search_cache` table with pgvector HNSW index
 - [x] Migration: `cache_hit` column on `search_events`
-- [ ] Query normalizer + cache key hashing (TDD)
+- [x] Query normalizer + cache key hashing (TDD)
 - [ ] SearchCacheProvider protocol + factory
 - [ ] Config settings (TTL, threshold, provider)
 
