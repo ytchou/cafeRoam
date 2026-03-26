@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render } from '@testing-library/react';
-import { ConsentProvider } from '@/lib/consent/provider';
 
 // Mock @next/third-parties/google
 vi.mock('@next/third-parties/google', () => ({
@@ -14,6 +13,14 @@ const gtagCalls: unknown[][] = [];
 const mockGtag = (...args: unknown[]) => {
   gtagCalls.push(args);
 };
+
+// After vi.resetModules(), both GA4Provider and ConsentProvider must be
+// re-imported together so they share the same ConsentContext instance.
+async function importModules() {
+  const { GA4Provider } = await import('../ga4');
+  const { ConsentProvider } = await import('@/lib/consent/provider');
+  return { GA4Provider, ConsentProvider };
+}
 
 describe('GA4Provider', () => {
   beforeEach(() => {
@@ -35,7 +42,7 @@ describe('GA4Provider', () => {
   it('renders nothing when GA measurement ID is not set', async () => {
     vi.stubEnv('NEXT_PUBLIC_GA_MEASUREMENT_ID', '');
     vi.resetModules();
-    const { GA4Provider } = await import('../ga4');
+    const { GA4Provider, ConsentProvider } = await importModules();
     const { container } = render(
       <ConsentProvider>
         <GA4Provider />
@@ -46,7 +53,7 @@ describe('GA4Provider', () => {
 
   it('sets consent default to denied on mount when no consent cookie exists', async () => {
     vi.resetModules();
-    const { GA4Provider } = await import('../ga4');
+    const { GA4Provider, ConsentProvider } = await importModules();
     render(
       <ConsentProvider>
         <GA4Provider />
@@ -65,7 +72,7 @@ describe('GA4Provider', () => {
   it('updates consent to granted when the visitor accepts cookies', async () => {
     document.cookie = 'caferoam_consent=granted; path=/';
     vi.resetModules();
-    const { GA4Provider } = await import('../ga4');
+    const { GA4Provider, ConsentProvider } = await importModules();
     render(
       <ConsentProvider>
         <GA4Provider />
@@ -83,7 +90,7 @@ describe('GA4Provider', () => {
 
   it('does not fire consent update when consent is pending', async () => {
     vi.resetModules();
-    const { GA4Provider } = await import('../ga4');
+    const { GA4Provider, ConsentProvider } = await importModules();
     render(
       <ConsentProvider>
         <GA4Provider />

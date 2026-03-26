@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { ConsentProvider } from '@/lib/consent/provider';
 
 // Mock posthog-js before importing the provider
 const mockInit = vi.fn();
@@ -12,8 +11,12 @@ vi.mock('posthog-js', () => ({
   },
 }));
 
-function renderWithConsent(children: React.ReactNode) {
-  return render(<ConsentProvider>{children}</ConsentProvider>);
+// After vi.resetModules(), both PostHogProvider and ConsentProvider must be
+// re-imported together so they share the same ConsentContext instance.
+async function importModules() {
+  const { PostHogProvider } = await import('../provider');
+  const { ConsentProvider } = await import('@/lib/consent/provider');
+  return { PostHogProvider, ConsentProvider };
 }
 
 describe('PostHogProvider', () => {
@@ -31,22 +34,26 @@ describe('PostHogProvider', () => {
   });
 
   it('renders children when PostHog key is not set', async () => {
-    const { PostHogProvider } = await import('../provider');
-    renderWithConsent(
-      <PostHogProvider>
-        <div data-testid="child">Hello</div>
-      </PostHogProvider>
+    const { PostHogProvider, ConsentProvider } = await importModules();
+    render(
+      <ConsentProvider>
+        <PostHogProvider>
+          <div data-testid="child">Hello</div>
+        </PostHogProvider>
+      </ConsentProvider>
     );
     expect(screen.getByTestId('child')).toBeInTheDocument();
   });
 
   it('does not initialize PostHog when consent is pending', async () => {
     vi.stubEnv('NEXT_PUBLIC_POSTHOG_KEY', 'phc_test123');
-    const { PostHogProvider } = await import('../provider');
-    renderWithConsent(
-      <PostHogProvider>
-        <div data-testid="child">Hello</div>
-      </PostHogProvider>
+    const { PostHogProvider, ConsentProvider } = await importModules();
+    render(
+      <ConsentProvider>
+        <PostHogProvider>
+          <div data-testid="child">Hello</div>
+        </PostHogProvider>
+      </ConsentProvider>
     );
     // Wait a tick for the useEffect
     await new Promise((r) => setTimeout(r, 50));
@@ -58,11 +65,13 @@ describe('PostHogProvider', () => {
     vi.stubEnv('NEXT_PUBLIC_POSTHOG_HOST', 'https://app.posthog.com');
     document.cookie = 'caferoam_consent=granted; path=/';
 
-    const { PostHogProvider } = await import('../provider');
-    renderWithConsent(
-      <PostHogProvider>
-        <div data-testid="child">Hello</div>
-      </PostHogProvider>
+    const { PostHogProvider, ConsentProvider } = await importModules();
+    render(
+      <ConsentProvider>
+        <PostHogProvider>
+          <div data-testid="child">Hello</div>
+        </PostHogProvider>
+      </ConsentProvider>
     );
     // Wait for dynamic import + init
     await new Promise((r) => setTimeout(r, 100));
@@ -76,11 +85,13 @@ describe('PostHogProvider', () => {
     vi.stubEnv('NEXT_PUBLIC_POSTHOG_KEY', 'phc_test123');
     document.cookie = 'caferoam_consent=denied; path=/';
 
-    const { PostHogProvider } = await import('../provider');
-    renderWithConsent(
-      <PostHogProvider>
-        <div data-testid="child">Hello</div>
-      </PostHogProvider>
+    const { PostHogProvider, ConsentProvider } = await importModules();
+    render(
+      <ConsentProvider>
+        <PostHogProvider>
+          <div data-testid="child">Hello</div>
+        </PostHogProvider>
+      </ConsentProvider>
     );
     await new Promise((r) => setTimeout(r, 50));
     expect(mockInit).not.toHaveBeenCalled();
