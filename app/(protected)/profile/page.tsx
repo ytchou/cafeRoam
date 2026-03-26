@@ -5,11 +5,13 @@ import { useUser } from '@/lib/hooks/use-user';
 import { useUserStamps } from '@/lib/hooks/use-user-stamps';
 import { useUserProfile } from '@/lib/hooks/use-user-profile';
 import { useUserCheckins } from '@/lib/hooks/use-user-checkins';
+import { useUserFollowing } from '@/lib/hooks/use-user-following';
 import { useAnalytics } from '@/lib/posthog/use-analytics';
 import { PolaroidSection } from '@/components/stamps/polaroid-section';
 import { StampDetailSheet } from '@/components/stamps/stamp-detail-sheet';
 import { ProfileHeader } from '@/components/profile/profile-header';
 import { CheckinHistoryTab } from '@/components/profile/checkin-history-tab';
+import { FollowingSection } from '@/components/profile/following-section';
 import type { StampData } from '@/lib/hooks/use-user-stamps';
 
 export default function ProfilePage() {
@@ -17,6 +19,7 @@ export default function ProfilePage() {
   const { profile, isLoading: profileLoading } = useUserProfile();
   const { stamps, isLoading: stampsLoading } = useUserStamps();
   const { checkins, isLoading: checkinsLoading } = useUserCheckins();
+  const { shops: followingShops, total: followingTotal, isLoading: followingLoading } = useUserFollowing();
   const [selectedStamp, setSelectedStamp] = useState<StampData | null>(null);
   const { capture } = useAnalytics();
   const hasFiredRef = useRef(false);
@@ -41,6 +44,7 @@ export default function ProfilePage() {
           email={user?.email ?? null}
           checkinCount={profile?.checkin_count ?? 0}
           stampCount={profile?.stamp_count ?? 0}
+          followingCount={followingTotal}
         />
       )}
 
@@ -56,6 +60,13 @@ export default function ProfilePage() {
               onStampClick={(stamp) => setSelectedStamp(stamp)}
             />
           )}
+        </section>
+
+        <section>
+          <h2 className="font-heading pt-7 pb-4 text-xl font-bold text-[#1A1918]">
+            Following
+          </h2>
+          <FollowingSection shops={followingShops} isLoading={followingLoading} />
         </section>
 
         <section>
