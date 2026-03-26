@@ -1702,7 +1702,7 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 - [x] RPC functions: `search_cache_similar`, `increment_search_cache_hit`
 
 **Chunk 3 — Integration (Wave 3-4):**
-- [ ] Integrate cache into SearchService (TDD)
+- [x] Integrate cache into SearchService (TDD)
 - [ ] Wire cache into search API endpoint
 - [ ] Lint + type check + full test pass
 

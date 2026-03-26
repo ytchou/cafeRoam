@@ -176,3 +176,90 @@ async def test_taxonomy_boost_increases_score(mock_db_with_idf, mock_embeddings)
         results[0].similarity_score * 0.7 + results[0].taxonomy_boost * 0.3,
         rel=1e-4,
     )
+
+
+class TestSearchCacheIntegration:
+    """Cache integration with the search pipeline."""
+
+    @pytest.fixture
+    def mock_cache(self):
+        cache = AsyncMock()
+        cache.get_by_hash = AsyncMock(return_value=None)
+        cache.find_similar = AsyncMock(return_value=None)
+        cache.store = AsyncMock()
+        cache.increment_hit = AsyncMock()
+        return cache
+
+    @pytest.fixture
+    def mock_embeddings(self):
+        emb = AsyncMock()
+        emb.embed = AsyncMock(return_value=[0.1] * 1536)
+        emb.dimensions = 1536
+        return emb
+
+    async def test_tier1_exact_hit_skips_embedding_and_search(
+        self, mock_supabase, mock_embeddings, mock_cache
+    ):
+        """When a user repeats the exact same search, no OpenAI call or DB query happens."""
+        cached_entry = MagicMock()
+        cached_entry.is_expired = False
+        cached_entry.id = "entry-1"
+        cached_entry.results = [{"shop": {"name": "CachedShop"}, "similarityScore": 0.9, "taxonomyBoost": 0.0, "totalScore": 0.63}]
+        mock_cache.get_by_hash = AsyncMock(return_value=cached_entry)
+
+        service = SearchService(db=mock_supabase, embeddings=mock_embeddings, cache=mock_cache)
+        query = SearchQuery(text="good wifi coffee")
+        results = await service.search(query)
+
+        mock_embeddings.embed.assert_not_called()
+        mock_supabase.rpc.assert_not_called()
+        mock_cache.increment_hit.assert_called_once_with("entry-1")
+        assert results == cached_entry.results
+
+    async def test_tier2_semantic_hit_skips_full_search(
+        self, mock_supabase, mock_embeddings, mock_cache
+    ):
+        """When a semantically similar query was cached, pgvector search is skipped."""
+        mock_cache.get_by_hash = AsyncMock(return_value=None)
+        similar_entry = MagicMock()
+        similar_entry.is_expired = False
+        similar_entry.id = "entry-2"
+        similar_entry.results = [{"shop": {"name": "SimilarShop"}, "similarityScore": 0.88, "taxonomyBoost": 0.0, "totalScore": 0.62}]
+        mock_cache.find_similar = AsyncMock(return_value=similar_entry)
+
+        service = SearchService(db=mock_supabase, embeddings=mock_embeddings, cache=mock_cache)
+        query = SearchQuery(text="nice wifi café")
+        results = await service.search(query)
+
+        mock_embeddings.embed.assert_called_once()
+        mock_supabase.rpc.assert_not_called()
+        mock_cache.increment_hit.assert_called_once_with("entry-2")
+        assert results == similar_entry.results
+
+    async def test_full_miss_runs_pipeline_and_caches_result(
+        self, mock_supabase, mock_embeddings, mock_cache
+    ):
+        """When no cache entry matches, the full search runs and the result is cached."""
+        shop_data = make_shop_row()
+        mock_supabase.rpc = MagicMock(
+            return_value=MagicMock(execute=MagicMock(return_value=MagicMock(data=[shop_data])))
+        )
+
+        service = SearchService(db=mock_supabase, embeddings=mock_embeddings, cache=mock_cache)
+        query = SearchQuery(text="unique rare query")
+        results = await service.search(query)
+
+        assert len(results) == 1
+        mock_cache.store.assert_called_once()
+
+    async def test_cache_is_optional_none_skips_all_cache_logic(
+        self, mock_supabase, mock_embeddings
+    ):
+        """When no cache provider is supplied, search works exactly as before."""
+        mock_supabase.rpc = MagicMock(
+            return_value=MagicMock(execute=MagicMock(return_value=MagicMock(data=[])))
+        )
+        service = SearchService(db=mock_supabase, embeddings=mock_embeddings, cache=None)
+        query = SearchQuery(text="test query")
+        results = await service.search(query)
+        assert results == []
