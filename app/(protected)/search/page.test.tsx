@@ -94,4 +94,26 @@ describe('Search results page', () => {
     expect(screen.getByText(/搜尋失敗/)).toBeInTheDocument();
     expect(screen.getByTestId('suggestion-chips')).toBeInTheDocument();
   });
+
+  it('shows suggest-a-cafe CTA when search returns no results with a query', () => {
+    mockUseSearchState.mockReturnValue(defaultSearchState);
+    mockUseSearch.mockReturnValue({
+      results: [],
+      isLoading: false,
+      error: null,
+    });
+    render(<SearchPage />);
+    expect(screen.getByText(/推薦咖啡廳給我們/i)).toBeInTheDocument();
+  });
+
+  it('shows suggest-a-cafe link at bottom of search results', () => {
+    mockUseSearchState.mockReturnValue(defaultSearchState);
+    mockUseSearch.mockReturnValue({
+      results: [{ id: '1', name: '山小孩咖啡', slug: 'shan', rating: 4.6 }],
+      isLoading: false,
+      error: null,
+    });
+    render(<SearchPage />);
+    expect(screen.getByText(/知道我們沒收錄的咖啡廳嗎/i)).toBeInTheDocument();
+  });
 });

@@ -69,6 +69,10 @@ import {
   POST as communityLikePOST,
 } from '../explore/community/[checkinId]/like/route';
 import { GET as mapsDirectionsGET } from '../maps/directions/route';
+import {
+  GET as submissionsGET,
+  POST as submissionsPOST,
+} from '../submissions/route';
 import { GET as meFollowingGET } from '../me/following/route';
 import {
   DELETE as shopFollowDELETE,
@@ -551,6 +555,24 @@ describe('explore/community/[checkinId]/like route', () => {
     expect(mockProxy).toHaveBeenCalledWith(
       expect.any(NextRequest),
       '/explore/community/ci-1/like'
+    );
+  });
+});
+
+describe('submissions route', () => {
+  it('GET returns user submission history from backend', async () => {
+    await submissionsGET(makeRequest());
+    expect(mockProxy).toHaveBeenCalledWith(
+      expect.any(NextRequest),
+      '/submissions'
+    );
+  });
+
+  it('POST submits a café URL and forwards to backend', async () => {
+    await submissionsPOST(makeRequest());
+    expect(mockProxy).toHaveBeenCalledWith(
+      expect.any(NextRequest),
+      '/submissions'
     );
   });
 });

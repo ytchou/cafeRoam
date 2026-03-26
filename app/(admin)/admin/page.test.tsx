@@ -166,7 +166,7 @@ describe('AdminDashboard', () => {
     );
   });
 
-  it('asks for confirmation and rejects a pending submission when the admin clicks Reject', async () => {
+  it('shows inline rejection picker when the admin clicks Reject on a pending submission', async () => {
     const overviewData = {
       job_counts: {
         pending: 0,
@@ -190,7 +190,86 @@ describe('AdminDashboard', () => {
       json: () => Promise.resolve(overviewData),
     });
 
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    const user = userEvent.setup();
+    render(<AdminDashboard />);
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole('button', { name: /reject/i })
+      ).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole('button', { name: /reject/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('combobox')).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: /confirm/i })
+      ).toBeInTheDocument();
+    });
+  });
+
+  it('shows approve/reject buttons and pending_review badge for a pending_review submission', async () => {
+    const overviewData = {
+      job_counts: {
+        pending: 0,
+        claimed: 0,
+        completed: 0,
+        failed: 0,
+        dead_letter: 0,
+      },
+      recent_submissions: [
+        {
+          id: 'sub-review-001',
+          google_maps_url: 'https://maps.google.com/?cid=3333333333',
+          status: 'pending_review',
+          submitted_by: 'user-abc',
+          created_at: '2026-03-26T00:00:00.000Z',
+        },
+      ],
+    };
+
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve(overviewData),
+    });
+
+    render(<AdminDashboard />);
+
+    await waitFor(() => {
+      expect(screen.getByText('pending_review')).toBeInTheDocument();
+    });
+
+    expect(
+      screen.getByRole('button', { name: /approve/i })
+    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /reject/i })).toBeInTheDocument();
+  });
+
+  it('shows rejection reason dropdown when admin clicks Reject on a pending_review submission', async () => {
+    const overviewData = {
+      job_counts: {
+        pending: 0,
+        claimed: 0,
+        completed: 0,
+        failed: 0,
+        dead_letter: 0,
+      },
+      recent_submissions: [
+        {
+          id: 'sub-review-002',
+          google_maps_url: 'https://maps.google.com/?cid=4444444444',
+          status: 'pending_review',
+          submitted_by: 'user-def',
+          created_at: '2026-03-26T01:00:00.000Z',
+        },
+      ],
+    };
+
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve(overviewData),
+    });
 
     const user = userEvent.setup();
     render(<AdminDashboard />);
@@ -203,12 +282,27 @@ describe('AdminDashboard', () => {
 
     await user.click(screen.getByRole('button', { name: /reject/i }));
 
-    expect(window.confirm).toHaveBeenCalled();
+    await waitFor(() => {
+      expect(screen.getByRole('combobox')).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: /confirm/i })
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: /cancel/i })
+      ).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole('button', { name: /confirm/i }));
+
     expect(mockFetch).toHaveBeenCalledWith(
-      '/api/admin/pipeline/reject/sub-pending-002',
+      '/api/admin/pipeline/reject/sub-review-002',
       expect.objectContaining({
         method: 'POST',
-        headers: { Authorization: `Bearer ${testSession.access_token}` },
+        headers: expect.objectContaining({
+          Authorization: `Bearer ${testSession.access_token}`,
+          'Content-Type': 'application/json',
+        }),
+        body: expect.stringContaining('"rejection_reason"'),
       })
     );
   });

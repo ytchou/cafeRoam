@@ -1,14 +1,29 @@
 from datetime import UTC, datetime
-from typing import Any, cast
+from typing import Any, Literal, cast
 
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel
 
 from api.deps import require_admin
 from core.db import first
 from db.supabase_client import get_service_role_client
 from middleware.admin_audit import log_admin_action
 from models.types import JobType
+
+RejectionReasonType = Literal[
+    "permanently_closed",
+    "not_a_cafe",
+    "duplicate",
+    "outside_coverage",
+    "invalid_url",
+    "other",
+]
+
+
+class RejectSubmissionRequest(BaseModel):
+    rejection_reason: RejectionReasonType
+
 
 logger = structlog.get_logger()
 
@@ -45,7 +60,12 @@ async def list_submissions(
 ) -> list[dict[str, Any]]:
     """List shop submissions, optionally filtered by status."""
     db = get_service_role_client()
-    query = db.table("shop_submissions").select("*").order("created_at", desc=True).limit(50)
+    query = (
+        db.table("shop_submissions")
+        .select("*, shops(name, processing_status, address)")
+        .order("created_at", desc=True)
+        .limit(50)
+    )
     if status:
         query = query.eq("status", status)
     response = query.execute()
@@ -115,30 +135,43 @@ async def approve_submission(
     submission_id: str,
     user: dict[str, Any] = Depends(require_admin),  # noqa: B008
 ) -> dict[str, str]:
-    """Approve a submission — marks it live and records the review timestamp."""
+    """Approve a submission — set shop live, emit activity feed, record review."""
     db = get_service_role_client()
 
     sub_response = (
-        db.table("shop_submissions").select("id, status").eq("id", submission_id).execute()
+        db.table("shop_submissions")
+        .select("id, status, shop_id, submitted_by")
+        .eq("id", submission_id)
+        .execute()
     )
     if not sub_response.data:
         raise HTTPException(status_code=404, detail=f"Submission {submission_id} not found")
 
-    sub_status = first(cast("list[dict[str, Any]]", sub_response.data), "fetch submission")[
-        "status"
-    ]
-    if sub_status not in ("pending", "processing"):
+    sub_data = first(cast("list[dict[str, Any]]", sub_response.data), "fetch submission")
+    sub_status = sub_data["status"]
+    shop_id = sub_data.get("shop_id")
+    submitted_by = sub_data.get("submitted_by")
+
+    if sub_status not in ("pending", "processing", "pending_review"):
         raise HTTPException(
             status_code=409,
             detail=f"Submission {submission_id} cannot be approved (status: {sub_status})",
         )
 
+    if not shop_id:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Submission {submission_id} has no associated shop — cannot approve",
+        )
+
+    now = datetime.now(UTC).isoformat()
+
     # Conditional update — only succeeds if submission is still approvable (TOCTOU guard)
     update_response = (
         db.table("shop_submissions")
-        .update({"status": "live", "reviewed_at": datetime.now(UTC).isoformat()})
+        .update({"status": "live", "reviewed_at": now})
         .eq("id", submission_id)
-        .in_("status", ["pending", "processing"])
+        .in_("status", ["pending", "processing", "pending_review"])
         .execute()
     )
     if not update_response.data:
@@ -147,11 +180,34 @@ async def approve_submission(
             detail=f"Submission {submission_id} status changed concurrently — refresh and retry",
         )
 
+    # Set the associated shop to live — fetch name in same round-trip via .select()
+    shop_update = (
+        db.table("shops")
+        .update({"processing_status": "live", "updated_at": now})
+        .eq("id", shop_id)
+        .select("name")
+        .execute()
+    )
+    shop_rows = cast("list[dict[str, Any]]", shop_update.data or [])
+    shop_name = shop_rows[0].get("name", "Unknown") if shop_rows else "Unknown"
+
+    # Emit activity feed event for user-submitted shops
+    if submitted_by:
+        db.table("activity_feed").insert(
+            {
+                "event_type": "shop_added",
+                "actor_id": submitted_by,
+                "shop_id": shop_id,
+                "metadata": {"shop_name": shop_name},
+            }
+        ).execute()
+
     log_admin_action(
         admin_user_id=user["id"],
         action=f"POST /admin/pipeline/approve/{submission_id}",
         target_type="submission",
         target_id=submission_id,
+        payload={"shop_id": str(shop_id) if shop_id else None},
     )
     return {"message": f"Submission {submission_id} approved"}
 
@@ -159,9 +215,10 @@ async def approve_submission(
 @router.post("/reject/{submission_id}")
 async def reject_submission(
     submission_id: str,
+    body: RejectSubmissionRequest,
     user: dict[str, Any] = Depends(require_admin),  # noqa: B008
 ) -> dict[str, str]:
-    """Reject a submission and remove the associated shop."""
+    """Reject a submission — mark rejected with reason, set shop to rejected."""
     db = get_service_role_client()
 
     sub_response = (
@@ -179,24 +236,48 @@ async def reject_submission(
             detail=f"Submission {submission_id} is already live — cannot reject a published shop",
         )
 
-    db.table("shop_submissions").update(
-        {"status": "failed", "failure_reason": "Rejected by admin"}
-    ).eq("id", submission_id).execute()
+    now = datetime.now(UTC).isoformat()
+
+    # Conditional update — only succeeds if submission is still rejectable (TOCTOU guard)
+    reject_response = (
+        db.table("shop_submissions")
+        .update(
+            {
+                "status": "rejected",
+                "rejection_reason": body.rejection_reason,
+                "reviewed_at": now,
+            }
+        )
+        .eq("id", submission_id)
+        .in_("status", ["pending", "processing", "pending_review"])
+        .execute()
+    )
+    if not reject_response.data:
+        raise HTTPException(
+            status_code=409,
+            detail=f"Submission {submission_id} status changed concurrently — refresh and retry",
+        )
 
     if shop_id:
-        # Cancel in-flight jobs for this shop (JSONB payload filter)
+        # Cancel in-flight jobs for this shop
         db.rpc(
             "cancel_shop_jobs",
-            {"p_shop_id": str(shop_id), "p_reason": "Submission rejected by admin"},
+            {
+                "p_shop_id": str(shop_id),
+                "p_reason": f"Submission rejected: {body.rejection_reason}",
+            },
         ).execute()
-        db.table("shops").delete().eq("id", shop_id).execute()
+        # Set shop to rejected instead of deleting
+        db.table("shops").update({"processing_status": "rejected", "updated_at": now}).eq(
+            "id", shop_id
+        ).execute()
 
     log_admin_action(
         admin_user_id=user["id"],
         action=f"POST /admin/pipeline/reject/{submission_id}",
         target_type="submission",
         target_id=submission_id,
-        payload={"shop_id": str(shop_id) if shop_id else None},
+        payload={"shop_id": str(shop_id) if shop_id else None, "reason": body.rejection_reason},
     )
     return {"message": f"Submission {submission_id} rejected"}
 

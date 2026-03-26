@@ -1683,6 +1683,37 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 - [x] Lint + type check + full test pass
 - [x] Update SPEC.md, PRD.md, pricing strategy
 
+### DEV-38: Community Shop Submission Pipeline
+
+> **Design Doc:** [docs/designs/2026-03-26-community-shop-submission-design.md](docs/designs/2026-03-26-community-shop-submission-design.md)
+> **Plan:** [docs/plans/2026-03-26-community-shop-submission-plan.md](docs/plans/2026-03-26-community-shop-submission-plan.md)
+
+**Chunk 1 — DB Migration + Backend Pipeline:**
+
+- [x] Expand shop_submissions table (pending_review status, rejection_reason column)
+- [x] Add 5/day rate limit on submissions API
+- [x] Route user submissions to pending_review in publish_shop handler
+
+**Chunk 2 — Admin Endpoints:**
+
+- [x] Update admin approve endpoint (set shop live + emit activity feed)
+- [x] Update admin reject endpoint (canned reasons, keep shop row)
+
+**Chunk 3 — Frontend API + Submit Page:**
+
+- [x] Add GET /submissions endpoint + Next.js proxy
+- [x] Build /submit page (form + submission history)
+
+**Chunk 4 — Admin UI + Search CTAs:**
+
+- [x] Update admin UI (rejection reason dropdown, pending_review status)
+- [x] Add suggest-a-cafe CTAs to search page
+
+**Chunk 5 — Verification:**
+
+- [x] Full test pass + lint + type check
+- [x] Commit design doc, ADR, spec/PRD updates
+
 ---
 
 ### Semantic Search Cache (DEV-36)

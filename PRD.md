@@ -89,7 +89,7 @@ These will NOT be built in V1. Any scope change requires an explicit decision an
 - Coverage outside Taipei
 - Comment/review system
 - CAFFÈCOIN integration
-- Community data contributions
+- ~~Community data contributions~~ — **Moved to in-scope (2026-03-26):** Authenticated users can submit café Google Maps URLs. Submissions are enriched via existing pipeline and require admin approval before going live. See [design doc](docs/designs/2026-03-26-community-shop-submission-design.md).
 
 ---
 

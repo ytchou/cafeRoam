@@ -1,8 +1,10 @@
 import re
+from datetime import UTC, datetime, time
 from typing import Any, cast
 
 import structlog
 from fastapi import APIRouter, Depends, HTTPException
+from postgrest import CountMethod
 from postgrest.exceptions import APIError
 from pydantic import BaseModel, field_validator
 from supabase import Client
@@ -46,6 +48,22 @@ async def submit_shop(
 ) -> SubmitShopResponse:
     """Submit a Google Maps URL to add a new shop."""
     user_id = user["id"]
+
+    # Rate limit: 5 active submissions per day per user (excludes rejected/failed)
+    today_start = datetime.combine(datetime.now(UTC).date(), time.min, tzinfo=UTC).isoformat()
+    rate_check = (
+        db.table("shop_submissions")
+        .select("id", count=CountMethod.exact)
+        .eq("submitted_by", user_id)
+        .gte("created_at", today_start)
+        .not_.in_("status", ["rejected", "failed"])
+        .execute()
+    )
+    if (rate_check.count or 0) >= 5:
+        raise HTTPException(
+            status_code=429,
+            detail="You can submit up to 5 cafés per day",
+        )
 
     # Check for duplicate submission (unique constraint enforces this at DB level too)
     existing = (
@@ -128,3 +146,20 @@ async def submit_shop(
         submission_id=submission_id,
         message="Thanks! We're adding this shop to CafeRoam.",
     )
+
+
+@router.get("/submissions", response_model=list[dict[str, Any]])
+async def list_user_submissions(
+    user: dict[str, Any] = Depends(get_current_user),  # noqa: B008
+    db: Client = Depends(get_user_db),  # noqa: B008
+) -> list[dict[str, Any]]:
+    """Return the current user's submissions (RLS-filtered)."""
+    response = (
+        db.table("shop_submissions")
+        .select("id, google_maps_url, status, rejection_reason, created_at, updated_at")
+        .eq("submitted_by", user["id"])
+        .order("created_at", desc=True)
+        .limit(50)
+        .execute()
+    )
+    return cast("list[dict[str, Any]]", response.data)
