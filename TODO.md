@@ -1618,7 +1618,7 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 - [x] Gate PostHogProvider behind consent with updated tests
 
 **Chunk 3 — Wiring + Events:**
-- [ ] Wire ConsentProvider, GA4, and banner into root layout
+- [x] Wire ConsentProvider, GA4, and banner into root layout
 - [ ] Create GA4 event helpers with tests
 - [ ] Update .env.example and doctor.sh
 
