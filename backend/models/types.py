@@ -48,6 +48,7 @@ class Shop(CamelModel):
     google_place_id: str | None = None
     created_at: datetime
     updated_at: datetime
+    community_summary: str | None = None
 
 
 class User(CamelModel):
