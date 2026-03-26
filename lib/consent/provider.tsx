@@ -25,7 +25,8 @@ function readConsentCookie(): ConsentState {
 }
 
 function writeConsentCookie(value: 'granted' | 'denied') {
-  document.cookie = `${COOKIE_NAME}=${value}; max-age=${COOKIE_MAX_AGE}; path=/; SameSite=Lax`;
+  const secure = location.protocol === 'https:' ? '; Secure' : '';
+  document.cookie = `${COOKIE_NAME}=${value}; max-age=${COOKIE_MAX_AGE}; path=/; SameSite=Lax${secure}`;
 }
 
 export function ConsentProvider({ children }: { children: React.ReactNode }) {
