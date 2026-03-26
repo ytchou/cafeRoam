@@ -9,7 +9,7 @@ import { useGeolocation } from '@/lib/hooks/use-geolocation';
 import { useSearchState } from '@/lib/hooks/use-search-state';
 import { useUser } from '@/lib/hooks/use-user';
 import { useAnalytics } from '@/lib/posthog/use-analytics';
-import { trackSearch } from '@/lib/analytics/ga4-events';
+import { trackSearch, trackSignupCtaClick } from '@/lib/analytics/ga4-events';
 import { MapMobileLayout } from '@/components/map/map-mobile-layout';
 import { ListMobileLayout } from '@/components/map/list-mobile-layout';
 import { MapDesktopLayout } from '@/components/map/map-desktop-layout';
@@ -58,6 +58,7 @@ function FindPageContent() {
   const handleSearch = useCallback(
     (q: string) => {
       if (q && !user) {
+        trackSignupCtaClick('banner');
         router.push('/login');
         return;
       }
