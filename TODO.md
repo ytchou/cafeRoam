@@ -1609,19 +1609,23 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 > **Plan:** [docs/plans/2026-03-26-ga4-consent-banner-plan.md](docs/plans/2026-03-26-ga4-consent-banner-plan.md)
 
 **Chunk 1 — Foundations:**
+
 - [x] Install `@next/third-parties`
 - [x] Create ConsentProvider + useConsent hook with tests
 
 **Chunk 2 — Analytics Providers:**
+
 - [x] Create CookieConsentBanner with tests
 - [x] Create GA4Provider with consent mode v2 and tests
 - [x] Gate PostHogProvider behind consent with updated tests
 
 **Chunk 3 — Wiring + Events:**
+
 - [x] Wire ConsentProvider, GA4, and banner into root layout
 - [x] Create GA4 event helpers with tests
 - [x] Update .env.example and doctor.sh
 
 **Chunk 4 — Instrumentation + Verification:**
+
 - [x] Instrument GA4 events on shop detail and search pages
 - [x] Full test suite, lint, and type-check pass

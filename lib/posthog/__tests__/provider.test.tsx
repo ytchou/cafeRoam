@@ -73,10 +73,13 @@ describe('PostHogProvider', () => {
       </ConsentProvider>
     );
     await waitFor(() =>
-      expect(mockInit).toHaveBeenCalledWith('phc_test123', expect.objectContaining({
-        api_host: 'https://app.posthog.com',
-        capture_pageview: true,
-      }))
+      expect(mockInit).toHaveBeenCalledWith(
+        'phc_test123',
+        expect.objectContaining({
+          api_host: 'https://app.posthog.com',
+          capture_pageview: true,
+        })
+      )
     );
   });
 

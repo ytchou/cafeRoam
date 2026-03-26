@@ -17,8 +17,10 @@ declare global {
 function ensureGtagQueue() {
   window.dataLayer = window.dataLayer ?? [];
   if (!window.gtag) {
-    // eslint-disable-next-line prefer-rest-params
-    window.gtag = function gtag() { (window.dataLayer as unknown[]).push(arguments); };
+    window.gtag = function gtag() {
+      // eslint-disable-next-line prefer-rest-params
+      (window.dataLayer as unknown[]).push(arguments);
+    };
   }
 }
 

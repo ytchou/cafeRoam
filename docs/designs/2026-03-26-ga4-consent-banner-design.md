@@ -72,12 +72,12 @@ app/layout.tsx
 
 Four lightweight events fired client-side via `gtag('event', ...)`:
 
-| Event | When | Parameters |
-|-------|------|------------|
-| `search` | Unauthenticated directory search | `search_term` |
-| `shop_detail_view` | Any shop detail page open | `shop_id` |
+| Event              | When                             | Parameters                          |
+| ------------------ | -------------------------------- | ----------------------------------- |
+| `search`           | Unauthenticated directory search | `search_term`                       |
+| `shop_detail_view` | Any shop detail page open        | `shop_id`                           |
 | `signup_cta_click` | CTA button clicks prompting auth | `cta_location` (header/card/banner) |
-| `page_view` | Automatic (GA4 built-in) | — |
+| `page_view`        | Automatic (GA4 built-in)         | —                                   |
 
 These are intentionally simple — no PII, no user IDs. Rich event tracking stays in PostHog.
 
@@ -120,24 +120,26 @@ GA4 is purely client-side. The existing PostHog backend gateway is unaffected.
 ### Testing Classification
 
 **(a) New e2e journey?**
+
 - [ ] No — cookie consent is a UX overlay, not a new critical user path
 
 **(b) Coverage gate impact?**
+
 - [ ] No — doesn't touch critical-path services (search, checkin, lists)
 
 ## Files Changed
 
-| File | Change |
-|------|--------|
-| `lib/consent/provider.tsx` | **New** — ConsentProvider context |
-| `lib/consent/use-consent.ts` | **New** — `useConsent()` hook |
-| `components/cookie-consent-banner.tsx` | **New** — Banner UI |
-| `lib/analytics/ga4.tsx` | **New** — GA4 wrapper with consent mode v2 |
-| `lib/posthog/provider.tsx` | **Modified** — consume ConsentProvider, defer init |
-| `app/layout.tsx` | **Modified** — wrap with ConsentProvider, add GA4 |
-| `.env.example` | **Modified** — add `NEXT_PUBLIC_GA_MEASUREMENT_ID` |
-| `scripts/doctor.sh` | **Modified** — add GA4 env var check (warn-only) |
-| `package.json` | **Modified** — add `@next/third-parties` |
+| File                                   | Change                                             |
+| -------------------------------------- | -------------------------------------------------- |
+| `lib/consent/provider.tsx`             | **New** — ConsentProvider context                  |
+| `lib/consent/use-consent.ts`           | **New** — `useConsent()` hook                      |
+| `components/cookie-consent-banner.tsx` | **New** — Banner UI                                |
+| `lib/analytics/ga4.tsx`                | **New** — GA4 wrapper with consent mode v2         |
+| `lib/posthog/provider.tsx`             | **Modified** — consume ConsentProvider, defer init |
+| `app/layout.tsx`                       | **Modified** — wrap with ConsentProvider, add GA4  |
+| `.env.example`                         | **Modified** — add `NEXT_PUBLIC_GA_MEASUREMENT_ID` |
+| `scripts/doctor.sh`                    | **Modified** — add GA4 env var check (warn-only)   |
+| `package.json`                         | **Modified** — add `@next/third-parties`           |
 
 ## Decisions
 

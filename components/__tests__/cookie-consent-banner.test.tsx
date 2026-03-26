@@ -19,9 +19,7 @@ describe('CookieConsentBanner', () => {
 
   it('shows the consent banner when the visitor has not yet decided', () => {
     renderBanner();
-    expect(
-      screen.getByText(/we use cookies/i)
-    ).toBeInTheDocument();
+    expect(screen.getByText(/we use cookies/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /accept/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /reject/i })).toBeInTheDocument();
   });

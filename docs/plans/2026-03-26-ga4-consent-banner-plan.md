@@ -15,6 +15,7 @@
 **Tech Stack:** `@next/third-parties` (GA4), `posthog-js` (existing), React Context, Vitest + Testing Library
 
 **Acceptance Criteria:**
+
 - [ ] A visitor who has not yet accepted cookies sees a consent banner at the bottom of the page
 - [ ] After accepting cookies, GA4 and PostHog both track pageviews; after rejecting, neither sets analytics cookies
 - [ ] The consent preference persists across page reloads via a `caferoam_consent` cookie
@@ -26,6 +27,7 @@
 ### Task 1: Install `@next/third-parties` dependency
 
 **Files:**
+
 - Modify: `package.json`
 
 **Step 1: Install the package**
@@ -33,6 +35,7 @@
 No test needed — dependency installation.
 
 Run (from worktree root):
+
 ```bash
 pnpm add @next/third-parties
 ```
@@ -40,9 +43,11 @@ pnpm add @next/third-parties
 **Step 2: Verify installation**
 
 Run:
+
 ```bash
 pnpm ls @next/third-parties
 ```
+
 Expected: Shows `@next/third-parties` with a version number.
 
 **Step 3: Commit**
@@ -57,6 +62,7 @@ git commit -m "chore(DEV-30): add @next/third-parties for GA4 integration"
 ### Task 2: Create ConsentProvider and useConsent hook
 
 **Files:**
+
 - Create: `lib/consent/provider.tsx`
 - Create: `lib/consent/use-consent.ts`
 - Create: `lib/consent/__tests__/provider.test.tsx`
@@ -166,9 +172,11 @@ describe('ConsentProvider', () => {
 **Step 2: Run tests to verify they fail**
 
 Run:
+
 ```bash
 pnpm vitest run lib/consent/__tests__/provider.test.tsx
 ```
+
 Expected: FAIL — modules not found.
 
 **Step 3: Implement ConsentProvider**
@@ -247,9 +255,11 @@ export function useConsent(): ConsentContextValue {
 **Step 4: Run tests to verify they pass**
 
 Run:
+
 ```bash
 pnpm vitest run lib/consent/__tests__/provider.test.tsx
 ```
+
 Expected: All 6 tests PASS.
 
 **Step 5: Commit**
@@ -264,6 +274,7 @@ git commit -m "feat(DEV-30): add ConsentProvider context and useConsent hook"
 ### Task 3: Create CookieConsentBanner component
 
 **Files:**
+
 - Create: `components/cookie-consent-banner.tsx`
 - Create: `components/__tests__/cookie-consent-banner.test.tsx`
 
@@ -293,9 +304,7 @@ describe('CookieConsentBanner', () => {
 
   it('shows the consent banner when the visitor has not yet decided', () => {
     renderBanner();
-    expect(
-      screen.getByText(/we use cookies/i)
-    ).toBeInTheDocument();
+    expect(screen.getByText(/we use cookies/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /accept/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /reject/i })).toBeInTheDocument();
   });
@@ -335,9 +344,11 @@ describe('CookieConsentBanner', () => {
 **Step 2: Run tests to verify they fail**
 
 Run:
+
 ```bash
 pnpm vitest run components/__tests__/cookie-consent-banner.test.tsx
 ```
+
 Expected: FAIL — module not found.
 
 **Step 3: Implement CookieConsentBanner**
@@ -358,12 +369,15 @@ export function CookieConsentBanner() {
   return (
     <div
       role="banner"
-      className="fixed inset-x-0 bottom-0 z-50 border-t bg-background/95 p-4 backdrop-blur-sm sm:p-6"
+      className="bg-background/95 fixed inset-x-0 bottom-0 z-50 border-t p-4 backdrop-blur-sm sm:p-6"
     >
       <div className="mx-auto flex max-w-lg flex-col items-center gap-3 sm:flex-row sm:gap-4">
         <p className="text-muted-foreground text-center text-sm sm:text-left">
           We use cookies to analyze traffic and improve your experience.{' '}
-          <a href="/privacy" className="text-primary underline underline-offset-4">
+          <a
+            href="/privacy"
+            className="text-primary underline underline-offset-4"
+          >
             Privacy Policy
           </a>
         </p>
@@ -388,9 +402,11 @@ export function CookieConsentBanner() {
 **Step 4: Run tests to verify they pass**
 
 Run:
+
 ```bash
 pnpm vitest run components/__tests__/cookie-consent-banner.test.tsx
 ```
+
 Expected: All 5 tests PASS.
 
 **Step 5: Commit**
@@ -405,6 +421,7 @@ git commit -m "feat(DEV-30): add CookieConsentBanner component with shadcn/ui"
 ### Task 4: Create GA4 wrapper with consent mode v2
 
 **Files:**
+
 - Create: `lib/analytics/ga4.tsx`
 - Create: `lib/analytics/__tests__/ga4.test.tsx`
 
@@ -516,9 +533,11 @@ describe('GA4Provider', () => {
 **Step 2: Run tests to verify they fail**
 
 Run:
+
 ```bash
 pnpm vitest run lib/analytics/__tests__/ga4.test.tsx
 ```
+
 Expected: FAIL — module not found.
 
 **Step 3: Implement GA4Provider**
@@ -574,9 +593,11 @@ export function GA4Provider() {
 **Step 4: Run tests to verify they pass**
 
 Run:
+
 ```bash
 pnpm vitest run lib/analytics/__tests__/ga4.test.tsx
 ```
+
 Expected: All 4 tests PASS.
 
 **Step 5: Commit**
@@ -591,6 +612,7 @@ git commit -m "feat(DEV-30): add GA4Provider with consent mode v2"
 ### Task 5: Modify PostHogProvider to respect consent
 
 **Files:**
+
 - Modify: `lib/posthog/provider.tsx`
 - Modify: `lib/posthog/__tests__/provider.test.tsx`
 
@@ -667,10 +689,13 @@ describe('PostHogProvider', () => {
     );
     // Wait for dynamic import + init
     await new Promise((r) => setTimeout(r, 100));
-    expect(mockInit).toHaveBeenCalledWith('phc_test123', expect.objectContaining({
-      api_host: 'https://app.posthog.com',
-      capture_pageview: true,
-    }));
+    expect(mockInit).toHaveBeenCalledWith(
+      'phc_test123',
+      expect.objectContaining({
+        api_host: 'https://app.posthog.com',
+        capture_pageview: true,
+      })
+    );
   });
 
   it('does not initialize PostHog when consent is denied', async () => {
@@ -692,9 +717,11 @@ describe('PostHogProvider', () => {
 **Step 2: Run tests to verify they fail**
 
 Run:
+
 ```bash
 pnpm vitest run lib/posthog/__tests__/provider.test.tsx
 ```
+
 Expected: FAIL — PostHogProvider doesn't consume consent yet.
 
 **Step 3: Update PostHogProvider implementation**
@@ -734,9 +761,11 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
 **Step 4: Run tests to verify they pass**
 
 Run:
+
 ```bash
 pnpm vitest run lib/posthog/__tests__/provider.test.tsx
 ```
+
 Expected: All 4 tests PASS.
 
 **Step 5: Commit**
@@ -751,6 +780,7 @@ git commit -m "feat(DEV-30): gate PostHogProvider behind ConsentProvider"
 ### Task 6: Wire ConsentProvider + GA4 + Banner into root layout
 
 **Files:**
+
 - Modify: `app/layout.tsx`
 
 **Step 1: No new test needed**
@@ -764,6 +794,7 @@ No test needed — structural wiring covered by existing unit tests and type-che
 Modify `app/layout.tsx`:
 
 1. Add imports:
+
 ```tsx
 import { ConsentProvider } from '@/lib/consent/provider';
 import { GA4Provider } from '@/lib/analytics/ga4';
@@ -795,6 +826,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
 ```
 
 Key points:
+
 - `ConsentProvider` wraps everything (outermost)
 - `GA4Provider` is a sibling of `PostHogProvider` — both read consent from the same context
 - `CookieConsentBanner` at the bottom (renders fixed, so DOM position doesn't matter visually)
@@ -803,9 +835,11 @@ Key points:
 **Step 3: Verify type-check passes**
 
 Run:
+
 ```bash
 pnpm type-check
 ```
+
 Expected: No new type errors.
 
 **Step 4: Commit**
@@ -820,6 +854,7 @@ git commit -m "feat(DEV-30): wire ConsentProvider, GA4, and consent banner into 
 ### Task 7: Add GA4 custom event helper and instrument events
 
 **Files:**
+
 - Create: `lib/analytics/ga4-events.ts`
 - Create: `lib/analytics/__tests__/ga4-events.test.ts`
 
@@ -895,9 +930,11 @@ describe('GA4 event helpers', () => {
 **Step 2: Run tests to verify they fail**
 
 Run:
+
 ```bash
 pnpm vitest run lib/analytics/__tests__/ga4-events.test.ts
 ```
+
 Expected: FAIL — module not found.
 
 **Step 3: Implement GA4 event helpers**
@@ -934,9 +971,11 @@ export function trackSignupCtaClick(ctaLocation: string) {
 **Step 4: Run tests to verify they pass**
 
 Run:
+
 ```bash
 pnpm vitest run lib/analytics/__tests__/ga4-events.test.ts
 ```
+
 Expected: All 4 tests PASS.
 
 **Step 5: Commit**
@@ -951,6 +990,7 @@ git commit -m "feat(DEV-30): add GA4 custom event helpers (search, shop_detail_v
 ### Task 8: Instrument GA4 events in existing pages
 
 **Files:**
+
 - Modify: `app/shops/[shopId]/[slug]/shop-detail-client.tsx` (add `trackShopDetailView`)
 - Modify: `app/page.tsx` (add `trackSearch` on directory search, if applicable)
 
@@ -985,9 +1025,11 @@ trackSearch(query);
 **Step 4: Verify type-check passes**
 
 Run:
+
 ```bash
 pnpm type-check
 ```
+
 Expected: No new type errors.
 
 **Step 5: Commit**
@@ -1002,6 +1044,7 @@ git commit -m "feat(DEV-30): instrument GA4 events on shop detail and search pag
 ### Task 9: Update `.env.example` and `scripts/doctor.sh`
 
 **Files:**
+
 - Modify: `.env.example`
 - Modify: `scripts/doctor.sh`
 
@@ -1035,9 +1078,11 @@ Note: This is a `printf` warning, NOT a `check` call — it should not increment
 **Step 4: Verify doctor runs cleanly**
 
 Run:
+
 ```bash
 bash scripts/doctor.sh
 ```
+
 Expected: Shows `[WARN]` for GA4 measurement ID (not a failure).
 
 **Step 5: Commit**
@@ -1056,25 +1101,31 @@ git commit -m "chore(DEV-30): add GA4 env var to .env.example and doctor.sh warn
 **Step 1: Run all frontend tests**
 
 Run:
+
 ```bash
 pnpm test
 ```
+
 Expected: All tests pass, including the new consent/GA4/PostHog tests and all existing tests.
 
 **Step 2: Run lint**
 
 Run:
+
 ```bash
 pnpm lint
 ```
+
 Expected: No lint errors.
 
 **Step 3: Run type-check**
 
 Run:
+
 ```bash
 pnpm type-check
 ```
+
 Expected: No type errors.
 
 **Step 4: Fix any issues found**
@@ -1130,23 +1181,28 @@ graph TD
 ```
 
 **Wave 1** (parallel — no dependencies):
+
 - Task 1: Install `@next/third-parties`
 - Task 2: ConsentProvider + useConsent
 
 **Wave 2** (parallel — depends on Wave 1):
+
 - Task 3: CookieConsentBanner ← Task 2
 - Task 4: GA4Provider ← Task 1, Task 2
 - Task 5: PostHog consent gate ← Task 2
 
 **Wave 3** (parallel — depends on Wave 2):
+
 - Task 6: Wire into root layout ← Task 3, Task 4, Task 5
 - Task 7: GA4 event helpers ← Task 1
 - Task 9: Env + doctor updates ← (independent)
 
 **Wave 4** (depends on Wave 3):
+
 - Task 8: Instrument GA4 events in pages ← Task 7
 
 **Wave 5** (depends on all):
+
 - Task 10: Full test suite verification ← all tasks
 
 ---
@@ -1154,23 +1210,28 @@ graph TD
 ## TODO
 
 ### GA4 + Shared Cookie Consent Banner (DEV-30)
+
 > **Design Doc:** [docs/designs/2026-03-26-ga4-consent-banner-design.md](docs/designs/2026-03-26-ga4-consent-banner-design.md)
 > **Plan:** [docs/plans/2026-03-26-ga4-consent-banner-plan.md](docs/plans/2026-03-26-ga4-consent-banner-plan.md)
 
 **Chunk 1 — Foundations:**
+
 - [ ] Install `@next/third-parties`
 - [ ] Create ConsentProvider + useConsent hook with tests
 
 **Chunk 2 — Analytics Providers:**
+
 - [ ] Create CookieConsentBanner with tests
 - [ ] Create GA4Provider with consent mode v2 and tests
 - [ ] Gate PostHogProvider behind consent with updated tests
 
 **Chunk 3 — Wiring + Events:**
+
 - [ ] Wire ConsentProvider, GA4, and banner into root layout
 - [ ] Create GA4 event helpers with tests
 - [ ] Update .env.example and doctor.sh
 
 **Chunk 4 — Instrumentation + Verification:**
+
 - [ ] Instrument GA4 events on shop detail and search pages
 - [ ] Full test suite, lint, and type-check pass
