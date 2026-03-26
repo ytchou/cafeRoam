@@ -18,7 +18,7 @@ describe('GA4 event helpers', () => {
     vi.unstubAllEnvs();
   });
 
-  it('trackSearch sends a search event with the search term', async () => {
+  it('when a visitor searches, a search event is sent to GA4', async () => {
     const { trackSearch } = await import('../ga4-events');
     trackSearch('quiet cafe near Taipei 101');
 
@@ -29,7 +29,7 @@ describe('GA4 event helpers', () => {
     ]);
   });
 
-  it('trackShopDetailView sends a shop_detail_view event with the shop ID', async () => {
+  it('when a visitor views a shop, a shop_detail_view event is sent to GA4', async () => {
     const { trackShopDetailView } = await import('../ga4-events');
     trackShopDetailView('shop_abc123');
 
@@ -40,7 +40,7 @@ describe('GA4 event helpers', () => {
     ]);
   });
 
-  it('trackSignupCtaClick sends a signup_cta_click event with the CTA location', async () => {
+  it('when a visitor clicks a signup CTA, a signup_cta_click event is sent to GA4', async () => {
     const { trackSignupCtaClick } = await import('../ga4-events');
     trackSignupCtaClick('header');
 

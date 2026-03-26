@@ -34,7 +34,7 @@ describe('ConsentProvider', () => {
     expect(screen.getByTestId('consent-state')).toHaveTextContent('pending');
   });
 
-  it('reads granted state from existing cookie on mount', () => {
+  it('given a visitor who previously accepted, consent loads as granted', () => {
     document.cookie = 'caferoam_consent=granted; path=/';
     render(
       <ConsentProvider>
@@ -44,7 +44,7 @@ describe('ConsentProvider', () => {
     expect(screen.getByTestId('consent-state')).toHaveTextContent('granted');
   });
 
-  it('reads denied state from existing cookie on mount', () => {
+  it('given a visitor who previously rejected, consent loads as denied', () => {
     document.cookie = 'caferoam_consent=denied; path=/';
     render(
       <ConsentProvider>

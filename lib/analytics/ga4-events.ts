@@ -1,3 +1,6 @@
+// These helpers fire regardless of consent state — this is intentional.
+// GA4 consent mode v2 handles denied users server-side via cookieless modeling.
+// PostHog, by contrast, is blocked at init-time and never captures when denied.
 function isEnabled(): boolean {
   return !!process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
 }

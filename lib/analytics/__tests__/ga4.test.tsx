@@ -39,7 +39,7 @@ describe('GA4Provider', () => {
     document.cookie = 'caferoam_consent=; max-age=0; path=/';
   });
 
-  it('renders nothing when GA measurement ID is not set', async () => {
+  it('when GA is not configured, no tracking script is injected', async () => {
     vi.stubEnv('NEXT_PUBLIC_GA_MEASUREMENT_ID', '');
     vi.resetModules();
     const { GA4Provider, ConsentProvider } = await importModules();
@@ -51,7 +51,7 @@ describe('GA4Provider', () => {
     expect(container.innerHTML).toBe('');
   });
 
-  it('sets consent default to denied on mount when no consent cookie exists', async () => {
+  it('given a first-time visitor with no consent decision, GA4 loads in denied consent mode', async () => {
     vi.resetModules();
     const { GA4Provider, ConsentProvider } = await importModules();
     render(

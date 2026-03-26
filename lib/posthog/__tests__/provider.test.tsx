@@ -45,7 +45,7 @@ describe('PostHogProvider', () => {
     expect(screen.getByTestId('child')).toBeInTheDocument();
   });
 
-  it('does not initialize PostHog when consent is pending', async () => {
+  it('when consent is pending, PostHog is not initialized', async () => {
     vi.stubEnv('NEXT_PUBLIC_POSTHOG_KEY', 'phc_test123');
     const { PostHogProvider, ConsentProvider } = await importModules();
     render(
@@ -59,7 +59,7 @@ describe('PostHogProvider', () => {
     expect(mockInit).not.toHaveBeenCalled();
   });
 
-  it('initializes PostHog when consent is granted', async () => {
+  it('when a visitor grants consent, PostHog is initialized with the API key', async () => {
     vi.stubEnv('NEXT_PUBLIC_POSTHOG_KEY', 'phc_test123');
     vi.stubEnv('NEXT_PUBLIC_POSTHOG_HOST', 'https://app.posthog.com');
     document.cookie = 'caferoam_consent=granted; path=/';
@@ -80,7 +80,7 @@ describe('PostHogProvider', () => {
     );
   });
 
-  it('does not initialize PostHog when consent is denied', async () => {
+  it('when consent is denied, PostHog is not initialized', async () => {
     vi.stubEnv('NEXT_PUBLIC_POSTHOG_KEY', 'phc_test123');
     document.cookie = 'caferoam_consent=denied; path=/';
 
