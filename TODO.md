@@ -1610,7 +1610,7 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 
 **Chunk 1 — Foundations:**
 - [x] Install `@next/third-parties`
-- [ ] Create ConsentProvider + useConsent hook with tests
+- [x] Create ConsentProvider + useConsent hook with tests
 
 **Chunk 2 — Analytics Providers:**
 - [ ] Create CookieConsentBanner with tests
