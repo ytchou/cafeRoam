@@ -86,7 +86,7 @@ export default function ClaimPage() {
         填寫以下資訊，我們將在 48 小時內完成審核。
       </p>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-6" noValidate>
         <div>
           <label htmlFor="claim-name" className="mb-1 block text-sm font-medium">
             姓名 (Name)

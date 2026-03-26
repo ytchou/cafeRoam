@@ -1,5 +1,6 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('next/navigation', () => ({
   useParams: () => ({ shopId: 'shop-1' }),
@@ -17,9 +18,16 @@ vi.mock('@/lib/supabase/client', () => ({
   }),
 }));
 
+const mockFetch = vi.fn();
+global.fetch = mockFetch;
+
 import ClaimPage from './page';
 
 describe('ClaimPage', () => {
+  beforeEach(() => {
+    mockFetch.mockReset();
+  });
+
   it('renders all required form fields', () => {
     render(<ClaimPage />);
     expect(screen.getByLabelText(/姓名/i)).toBeInTheDocument();
@@ -30,31 +38,28 @@ describe('ClaimPage', () => {
 
   it('disables submit button when required fields are empty', () => {
     render(<ClaimPage />);
-    const submitBtn = screen.getByRole('button', { name: /送出/i });
-    expect(submitBtn).toBeDisabled();
+    expect(screen.getByRole('button', { name: /送出/i })).toBeDisabled();
   });
 
   it('shows confirmation message after successful submission', async () => {
-    global.fetch = vi.fn()
+    mockFetch
       .mockResolvedValueOnce({
         ok: true,
         json: async () => ({ uploadUrl: 'https://storage/upload', storagePath: 'path/to/file' }),
       })
-      .mockResolvedValueOnce(new Response(null, { status: 200 }))
+      .mockResolvedValueOnce({ ok: true })
       .mockResolvedValueOnce({
         ok: true,
         json: async () => ({ claimId: 'claim-1', message: '認領申請已送出' }),
       });
 
     render(<ClaimPage />);
-    fireEvent.change(screen.getByLabelText(/姓名/i), { target: { value: 'Alice Chen' } });
-    fireEvent.change(screen.getByLabelText(/Email/i), { target: { value: 'alice@test.com' } });
 
-    const fileInput = screen.getByLabelText(/證明照片/i);
-    const file = new File(['photo'], 'proof.jpg', { type: 'image/jpeg' });
-    fireEvent.change(fileInput, { target: { files: [file] } });
+    await userEvent.type(screen.getByLabelText(/姓名/i), 'Alice Chen');
+    await userEvent.type(screen.getByLabelText(/Email/i), 'alice@test.com');
+    await userEvent.upload(screen.getByLabelText(/證明照片/i), new File(['photo'], 'proof.jpg', { type: 'image/jpeg' }));
 
-    fireEvent.click(screen.getByRole('button', { name: /送出/i }));
+    await userEvent.click(screen.getByRole('button', { name: /送出/i }));
 
     await waitFor(() => {
       expect(screen.getByText(/已送出/i)).toBeInTheDocument();
