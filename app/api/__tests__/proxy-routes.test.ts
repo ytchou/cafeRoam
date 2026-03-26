@@ -49,7 +49,7 @@ import {
 import { GET as listsGET, POST as listsPOST } from '../lists/route';
 import { GET as pinGET } from '../lists/pins/route';
 import { GET as searchGET } from '../search/route';
-import { GET as shopGET } from '../shops/[id]/route';
+import { GET as shopGET } from '../shops/[shopId]/route';
 import { GET as shopsGET } from '../shops/route';
 import { GET as stampsGET } from '../stamps/route';
 import { GET as listsSummariesGET } from '../lists/summaries/route';
@@ -58,8 +58,8 @@ import { GET as batchesGET } from '../admin/pipeline/batches/route';
 import { GET as batchDetailGET } from '../admin/pipeline/batches/[batchId]/route';
 import { GET as pipelineStatusGET } from '../admin/shops/pipeline-status/route';
 import { PATCH as checkinReviewPATCH } from '../checkins/[id]/review/route';
-import { GET as shopCheckinsGET } from '../shops/[id]/checkins/route';
-import { GET as shopReviewsGET } from '../shops/[id]/reviews/route';
+import { GET as shopCheckinsGET } from '../shops/[shopId]/checkins/route';
+import { GET as shopReviewsGET } from '../shops/[shopId]/reviews/route';
 import { GET as deadLetterGET } from '../admin/pipeline/dead-letter/route';
 import { GET as tarotDrawGET } from '../explore/tarot-draw/route';
 import { GET as communityFeedGET } from '../explore/community/route';
@@ -160,9 +160,9 @@ describe('shops route', () => {
   });
 });
 
-describe('shops/[id] route', () => {
-  it('GET proxies to /shops/:id', async () => {
-    await shopGET(makeRequest(), { params: Promise.resolve({ id: 'shop-1' }) });
+describe('shops/[shopId] route', () => {
+  it('GET proxies to /shops/:shopId', async () => {
+    await shopGET(makeRequest(), { params: Promise.resolve({ shopId: 'shop-1' }) });
     expect(mockProxy).toHaveBeenCalledWith(
       expect.any(NextRequest),
       '/shops/shop-1'
@@ -473,10 +473,10 @@ describe('checkins/[id]/review route', () => {
   });
 });
 
-describe('shops/[id]/checkins route', () => {
-  it('GET proxies to /shops/:id/checkins', async () => {
+describe('shops/[shopId]/checkins route', () => {
+  it('GET proxies to /shops/:shopId/checkins', async () => {
     await shopCheckinsGET(makeRequest(), {
-      params: Promise.resolve({ id: 'shop-1' }),
+      params: Promise.resolve({ shopId: 'shop-1' }),
     });
     expect(mockProxy).toHaveBeenCalledWith(
       expect.any(NextRequest),
@@ -485,10 +485,10 @@ describe('shops/[id]/checkins route', () => {
   });
 });
 
-describe('shops/[id]/reviews route', () => {
-  it('GET proxies to /shops/:id/reviews', async () => {
+describe('shops/[shopId]/reviews route', () => {
+  it('GET proxies to /shops/:shopId/reviews', async () => {
     await shopReviewsGET(makeRequest(), {
-      params: Promise.resolve({ id: 'shop-1' }),
+      params: Promise.resolve({ shopId: 'shop-1' }),
     });
     expect(mockProxy).toHaveBeenCalledWith(
       expect.any(NextRequest),
