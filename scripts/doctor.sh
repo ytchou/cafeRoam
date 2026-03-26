@@ -120,6 +120,10 @@ if grep -q '^ANON_SALT=caferoam-dev-salt$' "${PROJECT_ROOT}/backend/.env" 2>/dev
   printf "${YELLOW}[WARN]${NC} ANON_SALT is set to the default dev value — change before deploying to production\n"
 fi
 
+check "SEARCH_CACHE_PROVIDER is set in backend/.env" \
+  "grep -q '^SEARCH_CACHE_PROVIDER=.' '${PROJECT_ROOT}/backend/.env'" \
+  "Add SEARCH_CACHE_PROVIDER=supabase (or 'none' to disable) to backend/.env"
+
 # GA4 is optional for local dev — warn if not set, don't fail
 if ! grep -q '^NEXT_PUBLIC_GA_MEASUREMENT_ID=.' "${PROJECT_ROOT}/.env.local" 2>/dev/null; then
   printf "${YELLOW}[WARN]${NC} NEXT_PUBLIC_GA_MEASUREMENT_ID not set in .env.local — GA4 analytics disabled\n"

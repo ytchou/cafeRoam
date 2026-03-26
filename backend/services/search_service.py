@@ -1,11 +1,24 @@
 import math
 import time
+from dataclasses import dataclass
 from typing import Any, cast
 
 from supabase import Client
 
+from core.config import settings
 from models.types import SearchQuery, SearchResult, Shop
+from providers.cache.interface import SearchCacheProvider
 from providers.embeddings.interface import EmbeddingsProvider
+from services.query_normalizer import hash_cache_key, normalize_query
+
+
+@dataclass
+class SearchResponse:
+    """Return value from SearchService.search() — carries results and cache provenance."""
+
+    results: list[Any]
+    cache_hit: bool
+
 
 _SHOP_FIELDS_HANDLED_SEPARATELY = {"photo_urls", "taxonomy_tags", "mode_scores"}
 
@@ -19,28 +32,67 @@ _IDF_TTL = 3600.0  # seconds
 
 
 class SearchService:
-    def __init__(self, db: Client, embeddings: EmbeddingsProvider):
+    def __init__(
+        self,
+        db: Client,
+        embeddings: EmbeddingsProvider,
+        cache: SearchCacheProvider | None = None,
+    ):
         self._db = db
         self._embeddings = embeddings
+        self._cache = cache
 
     async def search(
         self,
         query: SearchQuery,
         mode: str | None = None,
         mode_threshold: float = 0.4,
-    ) -> list[SearchResult]:
-        """Embed query, optionally pre-filter by mode,
-        run pgvector similarity, apply taxonomy boost.
-        """
-        query_embedding = await self._embeddings.embed(query.text)
+    ) -> SearchResponse:
+        normalized = normalize_query(query.text)
+        cache_key = hash_cache_key(normalized, mode)
 
+        # Tier 1: exact text match
+        if self._cache is not None:
+            cached = await self._cache.get_by_hash(cache_key)
+            if cached and not cached.is_expired:
+                await self._cache.increment_hit(cached.id)
+                return SearchResponse(results=cached.results, cache_hit=True)
+
+        # Generate embedding (needed for Tier 2 + full search)
+        query_embedding = await self._embeddings.embed(normalized)
+
+        # Tier 2: semantic similarity
+        if self._cache is not None:
+            threshold = settings.search_cache_similarity_threshold
+            similar = await self._cache.find_similar(query_embedding, mode, threshold)
+            if similar and not similar.is_expired:
+                await self._cache.increment_hit(similar.id)
+                return SearchResponse(results=similar.results, cache_hit=True)
+
+        # Full search pipeline
+        results = await self._full_search(query_embedding, query, mode, mode_threshold)
+
+        # Cache the result
+        if self._cache is not None:
+            serialized = [r.model_dump(by_alias=True) for r in results]
+            await self._cache.store(cache_key, normalized, mode, query_embedding, serialized)
+
+        return SearchResponse(results=results, cache_hit=False)
+
+    async def _full_search(
+        self,
+        query_embedding: list[float],
+        query: SearchQuery,
+        mode: str | None,
+        mode_threshold: float,
+    ) -> list[SearchResult]:
+        """Run the full pgvector search + taxonomy boost pipeline."""
         limit = query.limit or 20
         rpc_params: dict[str, Any] = {
             "query_embedding": query_embedding,
             "match_count": limit,
         }
 
-        # Mode pre-filter
         if mode and mode in ("work", "rest", "social"):
             rpc_params["filter_mode_field"] = f"mode_{mode}"
             rpc_params["filter_mode_threshold"] = mode_threshold
@@ -53,9 +105,6 @@ class SearchService:
         response = self._db.rpc("search_shops", rpc_params).execute()
         rows = cast("list[dict[str, Any]]", response.data)
 
-        # Load IDF cache if needed (module-level, shared across requests).
-        # Cold-start: the first request with dimension filters triggers the initial
-        # load; until then, _compute_taxonomy_boost falls back to count-based scoring.
         if query.filters and query.filters.dimensions:
             await self._load_idf_cache()
 
