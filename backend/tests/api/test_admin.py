@@ -8,6 +8,17 @@ from main import app
 client = TestClient(app)
 
 _ADMIN_ID = "a7f3c2e1-4b58-4d9a-8c6e-123456789abc"
+_REGULAR_USER_ID = "a1b2c3d4-0000-0000-0000-000000000002"
+_SHOP_1_ID = "c3d4e5f6-0001-0001-0001-000000000001"
+_SHOP_2_ID = "c3d4e5f6-0002-0002-0002-000000000002"
+_SUB_1_ID = "b2c3d4e5-0001-0001-0001-000000000001"
+_SUB_2_ID = "b2c3d4e5-0002-0002-0002-000000000002"
+_JOB_1_ID = "d4e5f6a7-0001-0001-0001-000000000001"
+_JOB_2_ID = "d4e5f6a7-0002-0002-0002-000000000002"
+_JOB_10_ID = "d4e5f6a7-0010-0010-0010-000000000010"
+_JOB_11_ID = "d4e5f6a7-0011-0011-0011-000000000011"
+_MISSING_JOB_ID = "00000000-0000-0000-0000-000000000001"
+_MISSING_SUB_ID = "00000000-0000-0000-0000-000000000002"
 
 
 def _admin_user():
@@ -21,7 +32,7 @@ def test_unauthenticated_user_cannot_access_pipeline_overview():
 
 def test_non_admin_user_is_blocked_from_pipeline_overview():
     """Non-admin users should get 403."""
-    app.dependency_overrides[get_current_user] = lambda: {"id": "regular-user"}
+    app.dependency_overrides[get_current_user] = lambda: {"id": _REGULAR_USER_ID}
     try:
         mock_db = MagicMock()
         with (
@@ -62,7 +73,7 @@ def test_retrying_failed_job_re_enqueues_it():
     try:
         mock_db = MagicMock()
         mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value = (
-            MagicMock(data=[{"id": "job-1", "status": "failed"}])
+            MagicMock(data=[{"id": _JOB_1_ID, "status": "failed"}])
         )
         with (
             patch("api.admin.get_service_role_client", return_value=mock_db),
@@ -70,7 +81,7 @@ def test_retrying_failed_job_re_enqueues_it():
             patch("api.deps.settings") as mock_settings,
         ):
             mock_settings.admin_user_ids = [_ADMIN_ID]
-            response = client.post("/admin/pipeline/retry/job-1")
+            response = client.post(f"/admin/pipeline/retry/{_JOB_1_ID}")
         assert response.status_code == 200
         assert "re-queued" in response.json()["message"]
     finally:
@@ -89,7 +100,7 @@ def test_admin_gets_not_found_error_when_retrying_a_job_that_does_not_exist():
             patch("api.deps.settings") as mock_settings,
         ):
             mock_settings.admin_user_ids = [_ADMIN_ID]
-            response = client.post("/admin/pipeline/retry/missing-job")
+            response = client.post(f"/admin/pipeline/retry/{_MISSING_JOB_ID}")
         assert response.status_code == 404
     finally:
         app.dependency_overrides.clear()
@@ -100,14 +111,14 @@ def test_admin_cannot_retry_a_job_that_has_already_completed():
     try:
         mock_db = MagicMock()
         mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value = (
-            MagicMock(data=[{"id": "job-2", "status": "completed"}])
+            MagicMock(data=[{"id": _JOB_2_ID, "status": "completed"}])
         )
         with (
             patch("api.admin.get_service_role_client", return_value=mock_db),
             patch("api.deps.settings") as mock_settings,
         ):
             mock_settings.admin_user_ids = [_ADMIN_ID]
-            response = client.post("/admin/pipeline/retry/job-2")
+            response = client.post(f"/admin/pipeline/retry/{_JOB_2_ID}")
         assert response.status_code == 409
     finally:
         app.dependency_overrides.clear()
@@ -118,7 +129,7 @@ def test_rejecting_submission_sets_shop_rejected():
     try:
         mock_db = MagicMock()
         mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value = (
-            MagicMock(data=[{"shop_id": "shop-1", "status": "pending_review"}])
+            MagicMock(data=[{"shop_id": _SHOP_1_ID, "status": "pending_review"}])
         )
         with (
             patch("api.admin.get_service_role_client", return_value=mock_db),
@@ -127,7 +138,7 @@ def test_rejecting_submission_sets_shop_rejected():
         ):
             mock_settings.admin_user_ids = [_ADMIN_ID]
             response = client.post(
-                "/admin/pipeline/reject/sub-1",
+                f"/admin/pipeline/reject/{_SUB_1_ID}",
                 json={"rejection_reason": "not_a_cafe"},
             )
         assert response.status_code == 200
@@ -153,7 +164,7 @@ def test_rejecting_nonexistent_submission_returns_404():
         ):
             mock_settings.admin_user_ids = [_ADMIN_ID]
             response = client.post(
-                "/admin/pipeline/reject/missing-sub",
+                f"/admin/pipeline/reject/{_MISSING_SUB_ID}",
                 json={"rejection_reason": "other"},
             )
         assert response.status_code == 404
@@ -169,7 +180,7 @@ class TestAdminJobsList:
             mock_db = MagicMock()
             select_rv = mock_db.table.return_value.select.return_value
             select_rv.order.return_value.range.return_value.execute.return_value = MagicMock(
-                data=[{"id": "job-1", "job_type": "enrich_shop", "status": "pending"}],
+                data=[{"id": _JOB_1_ID, "job_type": "enrich_shop", "status": "pending"}],
                 count=1,
             )
             with (
@@ -215,8 +226,8 @@ class TestAdminSubmissions:
             select_rv = mock_db.table.return_value.select.return_value
             select_rv.order.return_value.limit.return_value.execute.return_value = MagicMock(
                 data=[
-                    {"id": "sub-1", "status": "pending", "shop_id": "shop-1"},
-                    {"id": "sub-2", "status": "processing", "shop_id": "shop-2"},
+                    {"id": _SUB_1_ID, "status": "pending", "shop_id": _SHOP_1_ID},
+                    {"id": _SUB_2_ID, "status": "processing", "shop_id": _SHOP_2_ID},
                 ]
             )
             with (
@@ -240,7 +251,7 @@ class TestAdminSubmissions:
             select_rv = mock_db.table.return_value.select.return_value
             # When status filter is applied, eq() is called after limit()
             select_rv.order.return_value.limit.return_value.eq.return_value.execute.return_value = (
-                MagicMock(data=[{"id": "sub-1", "status": "pending", "shop_id": "shop-1"}])
+                MagicMock(data=[{"id": _SUB_1_ID, "status": "pending", "shop_id": _SHOP_1_ID}])
             )
             with (
                 patch("api.admin.get_service_role_client", return_value=mock_db),
@@ -264,8 +275,8 @@ class TestAdminDeadLetter:
             select_rv = mock_db.table.return_value.select.return_value
             select_rv.in_.return_value.order.return_value.limit.return_value.execute.return_value = MagicMock(
                 data=[
-                    {"id": "job-10", "status": "failed", "job_type": "enrich_shop"},
-                    {"id": "job-11", "status": "dead_letter", "job_type": "scrape_shop"},
+                    {"id": _JOB_10_ID, "status": "failed", "job_type": "enrich_shop"},
+                    {"id": _JOB_11_ID, "status": "dead_letter", "job_type": "scrape_shop"},
                 ]
             )
             with (
@@ -290,11 +301,11 @@ class TestAdminApproveSubmission:
             mock_db = MagicMock()
             # First call: select to fetch submission status
             mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value = (
-                MagicMock(data=[{"id": "sub-1", "status": "pending"}])
+                MagicMock(data=[{"id": _SUB_1_ID, "status": "pending"}])
             )
             # Second call: conditional update
             mock_db.table.return_value.update.return_value.eq.return_value.in_.return_value.execute.return_value = MagicMock(
-                data=[{"id": "sub-1", "status": "live"}]
+                data=[{"id": _SUB_1_ID, "status": "live"}]
             )
             with (
                 patch("api.admin.get_service_role_client", return_value=mock_db),
@@ -302,7 +313,7 @@ class TestAdminApproveSubmission:
                 patch("api.deps.settings") as mock_settings,
             ):
                 mock_settings.admin_user_ids = [_ADMIN_ID]
-                response = client.post("/admin/pipeline/approve/sub-1")
+                response = client.post(f"/admin/pipeline/approve/{_SUB_1_ID}")
             assert response.status_code == 200
             assert "approved" in response.json()["message"]
         finally:
@@ -321,7 +332,7 @@ class TestAdminApproveSubmission:
                 patch("api.deps.settings") as mock_settings,
             ):
                 mock_settings.admin_user_ids = [_ADMIN_ID]
-                response = client.post("/admin/pipeline/approve/missing-sub")
+                response = client.post(f"/admin/pipeline/approve/{_MISSING_SUB_ID}")
             assert response.status_code == 404
         finally:
             app.dependency_overrides.clear()
@@ -332,14 +343,14 @@ class TestAdminApproveSubmission:
         try:
             mock_db = MagicMock()
             mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value = (
-                MagicMock(data=[{"id": "sub-2", "status": "live"}])
+                MagicMock(data=[{"id": _SUB_2_ID, "status": "live"}])
             )
             with (
                 patch("api.admin.get_service_role_client", return_value=mock_db),
                 patch("api.deps.settings") as mock_settings,
             ):
                 mock_settings.admin_user_ids = [_ADMIN_ID]
-                response = client.post("/admin/pipeline/approve/sub-2")
+                response = client.post(f"/admin/pipeline/approve/{_SUB_2_ID}")
             assert response.status_code == 409
         finally:
             app.dependency_overrides.clear()
@@ -352,10 +363,10 @@ class TestAdminJobCancel:
         try:
             mock_db = MagicMock()
             mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value = (
-                MagicMock(data=[{"id": "job-1", "status": "pending"}])
+                MagicMock(data=[{"id": _JOB_1_ID, "status": "pending"}])
             )
             mock_db.table.return_value.update.return_value.eq.return_value.in_.return_value.execute.return_value = MagicMock(
-                data=[{"id": "job-1", "status": "dead_letter"}]
+                data=[{"id": _JOB_1_ID, "status": "dead_letter"}]
             )
             with (
                 patch("api.admin.get_service_role_client", return_value=mock_db),
@@ -363,7 +374,7 @@ class TestAdminJobCancel:
                 patch("api.deps.settings") as mock_settings,
             ):
                 mock_settings.admin_user_ids = [_ADMIN_ID]
-                response = client.post("/admin/pipeline/jobs/job-1/cancel")
+                response = client.post(f"/admin/pipeline/jobs/{_JOB_1_ID}/cancel")
             assert response.status_code == 200
             assert "cancelled" in response.json()["message"].lower()
         finally:
@@ -375,14 +386,14 @@ class TestAdminJobCancel:
         try:
             mock_db = MagicMock()
             mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value = (
-                MagicMock(data=[{"id": "job-1", "status": "completed"}])
+                MagicMock(data=[{"id": _JOB_1_ID, "status": "completed"}])
             )
             with (
                 patch("api.admin.get_service_role_client", return_value=mock_db),
                 patch("api.deps.settings") as mock_settings,
             ):
                 mock_settings.admin_user_ids = [_ADMIN_ID]
-                response = client.post("/admin/pipeline/jobs/job-1/cancel")
+                response = client.post(f"/admin/pipeline/jobs/{_JOB_1_ID}/cancel")
             assert response.status_code == 409
         finally:
             app.dependency_overrides.clear()
