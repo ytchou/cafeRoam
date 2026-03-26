@@ -2,9 +2,10 @@ import asyncio
 from typing import Any, Literal
 
 import structlog
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 from api.deps import require_admin
+from core.db import first
 from db.supabase_client import get_service_role_client
 from models.types import CamelModel
 from providers.email import get_email_provider
@@ -52,10 +53,12 @@ async def get_proof_url(
         lambda: db.table("shop_claims")
         .select("proof_photo_url")
         .eq("id", claim_id)
-        .single()
+        .limit(1)
         .execute()
     )
-    storage_path = result.data["proof_photo_url"]
+    if not result.data:
+        raise HTTPException(status_code=404, detail="Claim not found")
+    storage_path = first(result.data, "proof photo")["proof_photo_url"]
     signed = await asyncio.to_thread(
         lambda: db.storage.from_("claim-proofs").create_signed_url(storage_path, 3600)
     )

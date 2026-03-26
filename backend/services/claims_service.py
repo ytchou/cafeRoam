@@ -118,15 +118,17 @@ class ClaimsService:
             .execute()
         )
 
-        # Assign shop_owner role
+        # Assign shop_owner role. upsert with ignore_duplicates=True maps to
+        # INSERT ... ON CONFLICT DO NOTHING, so re-approvals are safe.
         await asyncio.to_thread(
             lambda: self._db.table("user_roles")
-            .insert(
+            .upsert(
                 {
                     "user_id": claim["user_id"],
                     "role": "shop_owner",
                     "granted_by": admin_user_id,
-                }
+                },
+                ignore_duplicates=True,
             )
             .execute()
         )
