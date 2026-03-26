@@ -2,6 +2,7 @@ from datetime import UTC, datetime
 from typing import Any, cast
 
 import structlog
+from postgrest.exceptions import APIError
 from supabase import Client
 
 logger = structlog.get_logger()
@@ -21,8 +22,6 @@ async def handle_publish_shop(
     now = datetime.now(UTC).isoformat()
 
     # Check shop source to decide whether to auto-publish or hold for review
-    from postgrest.exceptions import APIError  # noqa: PLC0415
-
     try:
         shop_response = (
             db.table("shops")
