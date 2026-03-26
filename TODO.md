@@ -1682,3 +1682,29 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 
 - [x] Lint + type check + full test pass
 - [x] Update SPEC.md, PRD.md, pricing strategy
+
+---
+
+### Semantic Search Cache (DEV-36)
+> **Design Doc:** [docs/designs/2026-03-26-semantic-search-cache-design.md](docs/designs/2026-03-26-semantic-search-cache-design.md)
+> **Plan:** [docs/plans/2026-03-26-semantic-search-cache-plan.md](docs/plans/2026-03-26-semantic-search-cache-plan.md)
+
+**Chunk 1 — Foundation (Wave 1):**
+- [ ] Migration: `search_cache` table with pgvector HNSW index
+- [ ] Migration: `cache_hit` column on `search_events`
+- [ ] Query normalizer + cache key hashing (TDD)
+- [ ] SearchCacheProvider protocol + factory
+- [ ] Config settings (TTL, threshold, provider)
+
+**Chunk 2 — Adapters (Wave 2):**
+- [ ] NullSearchCacheAdapter + factory tests
+- [ ] SupabaseSearchCacheAdapter (TDD)
+- [ ] RPC functions: `search_cache_similar`, `increment_search_cache_hit`
+
+**Chunk 3 — Integration (Wave 3-4):**
+- [ ] Integrate cache into SearchService (TDD)
+- [ ] Wire cache into search API endpoint
+- [ ] Lint + type check + full test pass
+
+**Chunk 4 — Docs:**
+- [ ] Update `.env.example` and doctor script
