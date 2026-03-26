@@ -6,6 +6,7 @@ interface ProfileHeaderProps {
   email: string | null;
   checkinCount: number;
   stampCount: number;
+  followingCount: number;
 }
 
 export function ProfileHeader({
@@ -14,6 +15,7 @@ export function ProfileHeader({
   email,
   checkinCount,
   stampCount,
+  followingCount,
 }: ProfileHeaderProps) {
   const name = displayName || 'User';
   const initial = name.charAt(0).toUpperCase();
@@ -65,6 +67,13 @@ export function ProfileHeader({
               {stampCount}
             </span>
             <span className="text-xs font-medium text-white/50">Memories</span>
+          </div>
+          <div className="h-12 w-px bg-white/30" />
+          <div className="flex flex-col items-center px-8">
+            <span className="font-heading text-[28px] font-bold text-white md:text-[32px]">
+              {followingCount}
+            </span>
+            <span className="text-xs font-medium text-white/50">Following</span>
           </div>
         </div>
       </div>

@@ -69,6 +69,12 @@ import {
   POST as communityLikePOST,
 } from '../explore/community/[checkinId]/like/route';
 import { GET as mapsDirectionsGET } from '../maps/directions/route';
+import { GET as meFollowingGET } from '../me/following/route';
+import {
+  DELETE as shopFollowDELETE,
+  POST as shopFollowPOST,
+} from '../shops/[shopId]/follow/route';
+import { GET as shopFollowerCountGET } from '../shops/[shopId]/followers/count/route';
 
 const mockProxy = vi.mocked(proxyToBackend);
 const mockResponse = new Response('{}', { status: 200 });
@@ -545,6 +551,50 @@ describe('explore/community/[checkinId]/like route', () => {
     expect(mockProxy).toHaveBeenCalledWith(
       expect.any(NextRequest),
       '/explore/community/ci-1/like'
+    );
+  });
+});
+
+describe('me/following route', () => {
+  it('GET proxies to /me/following', async () => {
+    await meFollowingGET(makeRequest());
+    expect(mockProxy).toHaveBeenCalledWith(
+      expect.any(NextRequest),
+      '/me/following'
+    );
+  });
+});
+
+describe('shops/[shopId]/follow route', () => {
+  it('POST follows the given shop', async () => {
+    await shopFollowPOST(makeRequest(), {
+      params: Promise.resolve({ shopId: 'shop-1' }),
+    });
+    expect(mockProxy).toHaveBeenCalledWith(
+      expect.any(NextRequest),
+      '/shops/shop-1/follow'
+    );
+  });
+
+  it('DELETE unfollows the given shop', async () => {
+    await shopFollowDELETE(makeRequest(), {
+      params: Promise.resolve({ shopId: 'shop-1' }),
+    });
+    expect(mockProxy).toHaveBeenCalledWith(
+      expect.any(NextRequest),
+      '/shops/shop-1/follow'
+    );
+  });
+});
+
+describe('shops/[shopId]/followers/count route', () => {
+  it('GET proxies to /shops/:shopId/followers/count', async () => {
+    await shopFollowerCountGET(makeRequest(), {
+      params: Promise.resolve({ shopId: 'shop-1' }),
+    });
+    expect(mockProxy).toHaveBeenCalledWith(
+      expect.any(NextRequest),
+      '/shops/shop-1/followers/count'
     );
   });
 });

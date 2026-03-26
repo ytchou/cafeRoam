@@ -31,21 +31,22 @@
 
 ## 2. System Modules
 
-| Module                | Responsibility                                                                                                                            | Phase |
-| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ----- |
-| Data pipeline         | One-time data collection (Cafe Nomad seed → Apify/Google Maps verify + scrape) + ongoing enrichment (Claude Haiku + embedding generation) | 1     |
-| Taxonomy system       | Canonical tag database; powers filter UI and search ranking                                                                               | 1     |
-| Auth system           | Supabase Auth, session management, route protection, PDPA consent                                                                         | 1     |
-| Provider abstractions | LLMProvider, EmbeddingsProvider, EmailProvider, MapsProvider, AnalyticsProvider (Python Protocol classes)                                 | 1     |
-| Admin/ops             | Internal data quality dashboard, manual enrichment and verification UI                                                                    | 1     |
-| Background workers    | FastAPI embedded workers (APScheduler): enrichment, embedding refresh, weekly email cron                                                  | 1     |
-| Shop directory        | Mobile list view + mobile/desktop map view; responsive layouts at ≥1024px; geolocation; multi-dimension filters                           | 2     |
-| Semantic search       | pgvector similarity + taxonomy boost; AI search bar with suggestion chips and mode chips on Home and Map screens                          | 2     |
-| User lists            | Create/edit/delete (max 3), add/remove shops                                                                                              | 2     |
-| Check-in system       | Standalone check-in page; photo upload (required), text note (optional), menu photo (optional); stamp generation; unlocks review          | 2     |
-| Reviews               | Check-in-gated reviews: star rating + text, one review per user per shop, visible to logged-in users on Shop Detail page                  | 2     |
-| User profile          | Private profile page: check-in history, stamp collection, lists                                                                           | 2     |
-| Retention             | Weekly curated email (fixed schedule), stamp collection display                                                                           | 3     |
+| Module                | Responsibility                                                                                                                                                       | Phase |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
+| Data pipeline         | One-time data collection (Cafe Nomad seed → Apify/Google Maps verify + scrape) + ongoing enrichment (Claude Haiku + embedding generation)                            | 1     |
+| Taxonomy system       | Canonical tag database; powers filter UI and search ranking                                                                                                          | 1     |
+| Auth system           | Supabase Auth, session management, route protection, PDPA consent                                                                                                    | 1     |
+| Provider abstractions | LLMProvider, EmbeddingsProvider, EmailProvider, MapsProvider, AnalyticsProvider (Python Protocol classes)                                                            | 1     |
+| Admin/ops             | Internal data quality dashboard, manual enrichment and verification UI                                                                                               | 1     |
+| Background workers    | FastAPI embedded workers (APScheduler): enrichment, embedding refresh, weekly email cron                                                                             | 1     |
+| Shop directory        | Mobile list view + mobile/desktop map view; responsive layouts at ≥1024px; geolocation; multi-dimension filters                                                      | 2     |
+| Semantic search       | pgvector similarity + taxonomy boost; AI search bar with suggestion chips and mode chips on Home and Map screens                                                     | 2     |
+| User lists            | Create/edit/delete (max 3), add/remove shops                                                                                                                         | 2     |
+| Check-in system       | Standalone check-in page; photo upload (required), text note (optional), menu photo (optional); stamp generation; unlocks review                                     | 2     |
+| Reviews               | Check-in-gated reviews: star rating + text, one review per user per shop, visible to logged-in users on Shop Detail page                                             | 2     |
+| User profile          | Private profile page: check-in history, stamp collection, lists                                                                                                      | 2     |
+| Retention             | Weekly curated email (fixed schedule), stamp collection display                                                                                                      | 3     |
+| Shop followers        | `shop_followers` table: user_id + shop_id unique pair, created_at. Indexes on both FKs. Follow/unfollow toggle on shop page; follower count display (≥10 threshold). | 3     |
 
 ---
 
@@ -190,4 +191,5 @@ pnpm setup                     # Runs all steps automatically
 - **Community feed does not require a role:** Any authenticated user's public check-ins appear in the feed. The `user_roles` table is used for display badges (blogger, partner, admin) only — not for gating visibility.
 - **Role hierarchy:** Six levels — `user` (anonymous, no auth), `auth-user` (signed up, free tier), `member` (paid subscription, NT$59/mo), `blogger`, `partner`, `admin`. Community feed readable by `auth-user` and above. Feature caps apply to `auth-user`; `member` has no caps. Detailed role permissions deferred to implementation of DEV-17.
 - **Check-in social visibility:** On Shop Detail, unauthenticated visitors see only the total check-in count and one representative photo. Logged-in users see the full Recent Check-ins strip (photo thumbnails with @username and date). The community feed is a separate surface from Shop Detail.
+- **Shop following:** Any authenticated user (Free or Member) can follow/unfollow shops. Follower count is publicly visible only when ≥ 10; below that threshold the count is hidden. Follow is separate from lists — different intent (broadcast updates vs. organization). PDPA cascade on account deletion must include `shop_followers` rows.
 - **Responsive layouts (UX-defined):** Two distinct layout sets exist. Mobile (< 1024px): Home (terracotta search-hero with suggestion chips), Map (full-bleed + glassmorphism overlay), Shop Detail (single-column scroll). Desktop (≥ 1024px): Home (search-first landing, centered search bar, no hero map), Map (full-viewport map + floating card), Shop Detail (single-column scroll on all breakpoints — the 2-column desktop layout was removed in the 2026-03-20 Shop View reconstruct; see docs/designs/2026-03-20-shop-view-ui-reconstruct-design.md). See `docs/designs/ux/DESIGN_HANDOFF.md` for approved screenshots and layout intent.

@@ -82,6 +82,7 @@ These will NOT be built in V1. Any scope change requires an explicit decision an
 - Native iOS/Android app (web-first is the distribution strategy)
 - Public user profiles (profile page is private in V1)
 - ~~Public social feed~~ — **Moved to in-scope (2026-03-24):** Community feed of public check-ins, auth-gated, with district and vibe tag filters. See [design doc](docs/designs/2026-03-24-community-feed-design.md).
+- **Shop following** — heart toggle on shop page, follower counts (10+ threshold), profile Following section
 - Shareable curated lists (lists are private in V1)
 - Shop owner claiming / premium pages
 - Personalized weekly email (needs usage data first)
