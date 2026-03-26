@@ -1757,4 +1757,4 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 
 **Chunk 2 — Docs:**
 
-- [ ] Update E2E journey inventory (J40, J41)
+- [x] Update E2E journey inventory (J40, J41)
