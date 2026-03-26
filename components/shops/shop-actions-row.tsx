@@ -10,6 +10,7 @@ import { CheckInSheet } from './check-in-sheet';
 import { CheckInPopover } from './check-in-popover';
 import { SavePopover } from './save-popover';
 import { SharePopover } from './share-popover';
+import { FollowButton } from './follow-button';
 import { SaveToListSheet } from '@/components/lists/save-to-list-sheet';
 import { trackSignupCtaClick } from '@/lib/analytics/ga4-events';
 
@@ -100,6 +101,13 @@ export function ShopActionsRow({
             onOpenChange={setShareOpen}
             trigger={shareBtn}
           />
+          <FollowButton
+            shopId={shopId}
+            isAuthenticated={!!user}
+            onRequireAuth={() =>
+              router.push(`/login?next=${encodeURIComponent(`/shops/${shopId}`)}`)
+            }
+          />
         </>
       ) : (
         <>
@@ -112,6 +120,13 @@ export function ShopActionsRow({
             open={shareOpen}
             onOpenChange={setShareOpen}
             trigger={shareBtn}
+          />
+          <FollowButton
+            shopId={shopId}
+            isAuthenticated={!!user}
+            onRequireAuth={() =>
+              router.push(`/login?next=${encodeURIComponent(`/shops/${shopId}`)}`)
+            }
           />
           <CheckInSheet
             shopId={shopId}
