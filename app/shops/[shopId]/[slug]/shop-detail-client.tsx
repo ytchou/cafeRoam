@@ -75,7 +75,10 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
       session_search_query: searchParams.get('q') ?? null,
     });
     trackShopDetailView(shop.id);
-  }, [capture, shop.id, searchParams]);
+    // searchParams intentionally excluded: only track on initial shop load,
+    // not on subsequent query-string changes within the same shop page.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [capture, shop.id]);
 
   const shareUrl =
     typeof window !== 'undefined'
