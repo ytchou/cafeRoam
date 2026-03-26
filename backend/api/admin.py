@@ -115,30 +115,37 @@ async def approve_submission(
     submission_id: str,
     user: dict[str, Any] = Depends(require_admin),  # noqa: B008
 ) -> dict[str, str]:
-    """Approve a submission — marks it live and records the review timestamp."""
+    """Approve a submission — set shop live, emit activity feed, record review."""
     db = get_service_role_client()
 
     sub_response = (
-        db.table("shop_submissions").select("id, status").eq("id", submission_id).execute()
+        db.table("shop_submissions")
+        .select("id, status, shop_id, submitted_by")
+        .eq("id", submission_id)
+        .execute()
     )
     if not sub_response.data:
         raise HTTPException(status_code=404, detail=f"Submission {submission_id} not found")
 
-    sub_status = first(cast("list[dict[str, Any]]", sub_response.data), "fetch submission")[
-        "status"
-    ]
-    if sub_status not in ("pending", "processing"):
+    sub_data = first(cast("list[dict[str, Any]]", sub_response.data), "fetch submission")
+    sub_status = sub_data["status"]
+    shop_id = sub_data.get("shop_id")
+    submitted_by = sub_data.get("submitted_by")
+
+    if sub_status not in ("pending", "processing", "pending_review"):
         raise HTTPException(
             status_code=409,
             detail=f"Submission {submission_id} cannot be approved (status: {sub_status})",
         )
 
+    now = datetime.now(UTC).isoformat()
+
     # Conditional update — only succeeds if submission is still approvable (TOCTOU guard)
     update_response = (
         db.table("shop_submissions")
-        .update({"status": "live", "reviewed_at": datetime.now(UTC).isoformat()})
+        .update({"status": "live", "reviewed_at": now})
         .eq("id", submission_id)
-        .in_("status", ["pending", "processing"])
+        .in_("status", ["pending", "processing", "pending_review"])
         .execute()
     )
     if not update_response.data:
@@ -147,11 +154,33 @@ async def approve_submission(
             detail=f"Submission {submission_id} status changed concurrently — refresh and retry",
         )
 
+    # Set the associated shop to live
+    if shop_id:
+        db.table("shops").update(
+            {"processing_status": "live", "updated_at": now}
+        ).eq("id", shop_id).execute()
+
+        # Emit activity feed event
+        if submitted_by:
+            shop_name_response = (
+                db.table("shops").select("name").eq("id", shop_id).single().execute()
+            )
+            shop_name = cast("dict[str, Any]", shop_name_response.data).get("name", "Unknown")
+            db.table("activity_feed").insert(
+                {
+                    "event_type": "shop_added",
+                    "actor_id": submitted_by,
+                    "shop_id": shop_id,
+                    "metadata": {"shop_name": shop_name},
+                }
+            ).execute()
+
     log_admin_action(
         admin_user_id=user["id"],
         action=f"POST /admin/pipeline/approve/{submission_id}",
         target_type="submission",
         target_id=submission_id,
+        payload={"shop_id": str(shop_id) if shop_id else None},
     )
     return {"message": f"Submission {submission_id} approved"}
 

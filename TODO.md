@@ -1693,7 +1693,7 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 - [x] Route user submissions to pending_review in publish_shop handler
 
 **Chunk 2 — Admin Endpoints:**
-- [ ] Update admin approve endpoint (set shop live + emit activity feed)
+- [x] Update admin approve endpoint (set shop live + emit activity feed)
 - [ ] Update admin reject endpoint (canned reasons, keep shop row)
 
 **Chunk 3 — Frontend API + Submit Page:**
