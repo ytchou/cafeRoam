@@ -57,6 +57,7 @@ export default function AdminDashboard() {
   async function handleSubmissionAction(submissionId: string, action: 'approve' | 'reject') {
     if (!tokenRef.current) return;
     if (action === 'reject') {
+      setRejectionReason('not_a_cafe');
       setRejectingId(submissionId);
       return;
     }
@@ -212,7 +213,7 @@ export default function AdminDashboard() {
                               onChange={(e) => setRejectionReason(e.target.value)}
                               className="rounded border px-2 py-1 text-xs"
                             >
-                              {REJECTION_REASONS.map((r) => (
+                              {ADMIN_REJECTION_REASONS.map((r) => (
                                 <option key={r.value} value={r.value}>
                                   {r.label}
                                 </option>
