@@ -16,6 +16,4 @@ def get_search_cache_provider(db_client: object) -> SearchCacheProvider:
 
             return NullSearchCacheAdapter()
         case _:
-            raise ValueError(
-                f"Unknown search cache provider: {settings.search_cache_provider}"
-            )
+            raise ValueError(f"Unknown search cache provider: {settings.search_cache_provider}")

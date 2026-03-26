@@ -1,6 +1,6 @@
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
 from fastapi.testclient import TestClient
 
 from api.deps import get_admin_db, get_current_user, get_user_db
@@ -24,6 +24,7 @@ class TestSearchAPI:
         with patch("api.search.get_search_cache_provider") as mock:
             mock.return_value = NullSearchCacheAdapter()
             yield mock
+
     def test_search_requires_auth(self):
         """GET /search should require auth."""
         response = client.get("/search?text=good+wifi")
@@ -241,7 +242,14 @@ class TestSearchCacheAPI:
                 cached_entry = MagicMock()
                 cached_entry.is_expired = False
                 cached_entry.id = "cached-1"
-                cached_entry.results = [{"shop": {"name": "CachedShop"}, "similarityScore": 0.9, "taxonomyBoost": 0.0, "totalScore": 0.63}]
+                cached_entry.results = [
+                    {
+                        "shop": {"name": "CachedShop"},
+                        "similarityScore": 0.9,
+                        "taxonomyBoost": 0.0,
+                        "totalScore": 0.63,
+                    }
+                ]
                 mock_cache = AsyncMock()
                 mock_cache.get_by_hash = AsyncMock(return_value=cached_entry)
                 mock_cache.increment_hit = AsyncMock()

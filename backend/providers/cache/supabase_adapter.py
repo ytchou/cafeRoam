@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
-from typing import Any, cast
+from datetime import UTC, datetime, timedelta
+from typing import TYPE_CHECKING, Any, cast
 
-from supabase import Client
+if TYPE_CHECKING:
+    from supabase import Client
 
 
 @dataclass
@@ -26,7 +27,7 @@ def _parse_entry(row: dict[str, Any]) -> CacheEntry:
     expires_str = row["expires_at"]
     try:
         expires_dt = datetime.fromisoformat(expires_str)
-        is_expired = expires_dt < datetime.now(timezone.utc)
+        is_expired = expires_dt < datetime.now(UTC)
     except (ValueError, TypeError):
         is_expired = False
     return CacheEntry(
@@ -48,7 +49,7 @@ class SupabaseSearchCacheAdapter:
         self._ttl_seconds = ttl_seconds
 
     async def get_by_hash(self, query_hash: str) -> CacheEntry | None:
-        now_iso = datetime.now(timezone.utc).isoformat()
+        now_iso = datetime.now(UTC).isoformat()
         response = (
             self._db.table("search_cache")
             .select("*")
@@ -89,7 +90,7 @@ class SupabaseSearchCacheAdapter:
         embedding: list[float],
         results: list[dict[str, Any]],
     ) -> None:
-        expires_at = datetime.now(timezone.utc) + timedelta(seconds=self._ttl_seconds)
+        expires_at = datetime.now(UTC) + timedelta(seconds=self._ttl_seconds)
         self._db.table("search_cache").upsert(
             {
                 "query_hash": query_hash,

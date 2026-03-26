@@ -204,7 +204,14 @@ class TestSearchCacheIntegration:
         cached_entry = MagicMock()
         cached_entry.is_expired = False
         cached_entry.id = "entry-1"
-        cached_entry.results = [{"shop": {"name": "CachedShop"}, "similarityScore": 0.9, "taxonomyBoost": 0.0, "totalScore": 0.63}]
+        cached_entry.results = [
+            {
+                "shop": {"name": "CachedShop"},
+                "similarityScore": 0.9,
+                "taxonomyBoost": 0.0,
+                "totalScore": 0.63,
+            }
+        ]
         mock_cache.get_by_hash = AsyncMock(return_value=cached_entry)
 
         service = SearchService(db=mock_supabase, embeddings=mock_embeddings, cache=mock_cache)
@@ -224,7 +231,14 @@ class TestSearchCacheIntegration:
         similar_entry = MagicMock()
         similar_entry.is_expired = False
         similar_entry.id = "entry-2"
-        similar_entry.results = [{"shop": {"name": "SimilarShop"}, "similarityScore": 0.88, "taxonomyBoost": 0.0, "totalScore": 0.62}]
+        similar_entry.results = [
+            {
+                "shop": {"name": "SimilarShop"},
+                "similarityScore": 0.88,
+                "taxonomyBoost": 0.0,
+                "totalScore": 0.62,
+            }
+        ]
         mock_cache.find_similar = AsyncMock(return_value=similar_entry)
 
         service = SearchService(db=mock_supabase, embeddings=mock_embeddings, cache=mock_cache)
