@@ -125,3 +125,4 @@ class FollowerService:
         if resp.count is not None:
             return resp.count
         return len(resp.data or [])
+
