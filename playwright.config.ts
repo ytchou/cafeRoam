@@ -7,7 +7,7 @@ try {
   for (const line of readFileSync('.env.local', 'utf-8').split('\n')) {
     const match = line.match(/^([^#=]+)=(.*)$/);
     if (match && !(match[1].trim() in process.env)) {
-      process.env[match[1].trim()] = match[2].trim();
+      process.env[match[1].trim()] = match[2].trim().replace(/^(['"])(.*)\1$/, '$2');
     }
   }
 } catch {
@@ -39,10 +39,12 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
   ],
-  webServer: {
-    command: 'pnpm dev',
-    port: 3000,
-    reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
-  },
+  webServer: process.env.E2E_BASE_URL
+    ? undefined
+    : {
+        command: 'pnpm dev',
+        port: 3000,
+        reuseExistingServer: !process.env.CI,
+        timeout: 120_000,
+      },
 });
