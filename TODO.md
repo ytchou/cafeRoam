@@ -1698,7 +1698,7 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 
 **Chunk 3 — Frontend API + Submit Page:**
 - [x] Add GET /submissions endpoint + Next.js proxy
-- [ ] Build /submit page (form + submission history)
+- [x] Build /submit page (form + submission history)
 
 **Chunk 4 — Admin UI + Search CTAs:**
 - [x] Update admin UI (rejection reason dropdown, pending_review status)
