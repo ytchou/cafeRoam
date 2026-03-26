@@ -1752,7 +1752,7 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 
 **Chunk 1 — E2E Spec:**
 
-- [ ] J40: Follow/unfollow button state toggle (serial)
+- [x] J40: Follow/unfollow button state toggle (serial)
 - [ ] J41: Follow auth wall redirect to /login
 
 **Chunk 2 — Docs:**
