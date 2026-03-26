@@ -472,3 +472,32 @@ class ActivityFeedEvent(BaseModel):
     shop_id: str | None = None
     metadata: dict[str, Any] = {}
     created_at: datetime | None = None
+
+
+# --- Follower types ---
+
+
+class FollowResponse(CamelModel):
+    following: bool
+    follower_count: int
+
+
+class FollowerCountResponse(CamelModel):
+    count: int
+    visible: bool
+    is_following: bool | None = None
+
+
+class FollowedShopSummary(CamelModel):
+    id: str
+    name: str
+    address: str
+    slug: str | None = None
+    mrt: str | None = None
+    followed_at: str
+
+
+class FollowingListResponse(CamelModel):
+    shops: list[FollowedShopSummary]
+    total: int
+    page: int

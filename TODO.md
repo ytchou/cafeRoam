@@ -1661,7 +1661,7 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 
 **Chunk 1 — Database + Backend Models:**
 - [x] Create `shop_followers` migration with RLS
-- [ ] Add Pydantic response models (FollowResponse, FollowerCountResponse, etc.)
+- [x] Add Pydantic response models (FollowResponse, FollowerCountResponse, etc.)
 
 **Chunk 2 — Backend Service + API:**
 - [ ] Write FollowerService with TDD (follow, unfollow, count, following list)
