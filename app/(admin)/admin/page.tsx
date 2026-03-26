@@ -19,13 +19,41 @@ interface PipelineOverview {
   recent_submissions: Submission[];
 }
 
+interface Claim {
+  id: string;
+  shop_id: string;
+  user_id: string;
+  status: string;
+  contact_name: string;
+  contact_email: string;
+  role: string;
+  created_at: string;
+  shops?: { name: string; address?: string };
+}
+
 export default function AdminDashboard() {
   const [data, setData] = useState<PipelineOverview | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState<'submissions' | 'claims'>('submissions');
   const [rejectingId, setRejectingId] = useState<string | null>(null);
   const [rejectionReason, setRejectionReason] = useState<string>('not_a_cafe');
+  const [claims, setClaims] = useState<Claim[]>([]);
+  const [claimsLoading, setClaimsLoading] = useState(false);
+  const [claimRejectingId, setClaimRejectingId] = useState<string | null>(null);
+  const [claimRejectionReason, setClaimRejectionReason] = useState<string>('invalid_proof');
   const tokenRef = useRef<string | null>(null);
+
+  const fetchClaims = useCallback(async (token: string) => {
+    setClaimsLoading(true);
+    const res = await fetch('/api/admin/claims?status=pending', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (res.ok) {
+      setClaims(await res.json());
+    }
+    setClaimsLoading(false);
+  }, []);
 
   const fetchOverview = useCallback(async (token: string) => {
     const res = await fetch('/api/admin/pipeline/overview', {
@@ -120,6 +148,24 @@ export default function AdminDashboard() {
     <div className="space-y-8">
       <h1 className="text-2xl font-bold">Pipeline Dashboard</h1>
 
+      <div className="flex gap-4 border-b pb-2">
+        <button
+          type="button"
+          onClick={() => setTab('submissions')}
+          className={tab === 'submissions' ? 'font-semibold border-b-2 border-black' : 'text-gray-500'}
+        >
+          Submissions
+        </button>
+        <button
+          type="button"
+          onClick={() => { setTab('claims'); if (tokenRef.current) fetchClaims(tokenRef.current); }}
+          className={tab === 'claims' ? 'font-semibold border-b-2 border-black' : 'text-gray-500'}
+        >
+          Claims
+        </button>
+      </div>
+
+      {tab === 'submissions' && (<>
       <section>
         <h2 className="mb-4 text-lg font-semibold">Job Queue</h2>
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
@@ -249,6 +295,138 @@ export default function AdminDashboard() {
           </table>
         )}
       </section>
+      </>)}
+
+      {tab === 'claims' && (
+        <section>
+          <h2 className="mb-4 text-lg font-semibold">Pending Claims</h2>
+          {claimsLoading ? (
+            <p>Loading claims...</p>
+          ) : claims.length === 0 ? (
+            <p className="text-gray-500">No pending claims.</p>
+          ) : (
+            <table className="w-full text-left text-sm">
+              <thead>
+                <tr className="border-b text-gray-500">
+                  <th className="pb-2">Shop</th>
+                  <th className="pb-2">Contact</th>
+                  <th className="pb-2">Role</th>
+                  <th className="pb-2">Date</th>
+                  <th className="pb-2">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {claims.map((claim) => (
+                  <tr key={claim.id} className="border-b">
+                    <td className="py-2">{claim.shops?.name ?? '—'}</td>
+                    <td className="py-2">
+                      <div>{claim.contact_name}</div>
+                      <div className="text-xs text-gray-500">{claim.contact_email}</div>
+                    </td>
+                    <td className="py-2">{claim.role}</td>
+                    <td className="py-2 text-gray-500">
+                      {new Date(claim.created_at).toLocaleDateString()}
+                    </td>
+                    <td className="py-2">
+                      <div className="flex flex-col gap-2">
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              const res = await fetch(`/api/admin/claims/${claim.id}/proof-url`, {
+                                headers: { Authorization: `Bearer ${tokenRef.current}` },
+                              });
+                              if (res.ok) {
+                                const { proofUrl } = await res.json();
+                                window.open(proofUrl, '_blank');
+                              }
+                            }}
+                            className="rounded bg-blue-50 px-2 py-1 text-xs text-blue-700 hover:bg-blue-100"
+                          >
+                            View Proof
+                          </button>
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              const res = await fetch(`/api/admin/claims/${claim.id}/approve`, {
+                                method: 'POST',
+                                headers: { Authorization: `Bearer ${tokenRef.current}` },
+                              });
+                              if (res.ok) {
+                                toast.success('Claim approved');
+                                if (tokenRef.current) fetchClaims(tokenRef.current);
+                              } else {
+                                toast.error('Failed to approve');
+                              }
+                            }}
+                            className="rounded bg-green-50 px-2 py-1 text-xs text-green-700 hover:bg-green-100"
+                          >
+                            Approve
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setClaimRejectionReason('invalid_proof');
+                              setClaimRejectingId(claim.id);
+                            }}
+                            className="rounded bg-red-50 px-2 py-1 text-xs text-red-600 hover:bg-red-100"
+                          >
+                            Reject
+                          </button>
+                        </div>
+                        {claimRejectingId === claim.id && (
+                          <div className="flex items-center gap-2">
+                            <select
+                              value={claimRejectionReason}
+                              onChange={(e) => setClaimRejectionReason(e.target.value)}
+                              className="rounded border px-2 py-1 text-xs"
+                            >
+                              <option value="invalid_proof">Invalid proof</option>
+                              <option value="not_an_owner">Not an owner</option>
+                              <option value="duplicate_request">Duplicate request</option>
+                              <option value="other">Other</option>
+                            </select>
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                const res = await fetch(`/api/admin/claims/${claimRejectingId}/reject`, {
+                                  method: 'POST',
+                                  headers: {
+                                    Authorization: `Bearer ${tokenRef.current}`,
+                                    'Content-Type': 'application/json',
+                                  },
+                                  body: JSON.stringify({ rejectionReason: claimRejectionReason }),
+                                });
+                                if (res.ok) {
+                                  toast.success('Claim rejected');
+                                  setClaimRejectingId(null);
+                                  if (tokenRef.current) fetchClaims(tokenRef.current);
+                                } else {
+                                  toast.error('Failed to reject');
+                                }
+                              }}
+                              className="rounded bg-red-600 px-2 py-1 text-xs text-white"
+                            >
+                              Confirm
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setClaimRejectingId(null)}
+                              className="text-xs text-gray-500"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </section>
+      )}
     </div>
   );
 }

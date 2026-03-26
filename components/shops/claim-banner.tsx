@@ -6,7 +6,7 @@ interface ClaimBannerProps {
   claimStatus: 'pending' | 'approved' | 'rejected' | null;
 }
 
-export function ClaimBanner({ shopId, shopName: _shopName, claimStatus }: ClaimBannerProps) {
+export function ClaimBanner({ shopId, claimStatus }: ClaimBannerProps) {
   if (claimStatus === 'approved') return null;
 
   if (claimStatus === 'pending') {

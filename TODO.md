@@ -29,8 +29,8 @@
 - [x] Task 11: Next.js proxy routes for admin claims
 - [x] Task 12: VerifiedBadge component
 - [x] Task 13: Update ClaimBanner + ShopData type
-- [ ] Task 14: Claim form page (/shops/[shopId]/claim)
-- [ ] Task 15: Admin Claims tab in /admin panel
+- [x] Task 14: Claim form page (/shops/[shopId]/claim)
+- [x] Task 15: Admin Claims tab in /admin panel
 
 **Chunk 4 — E2E (Wave 8):**
 - [ ] Task 16: E2E claim flow journey (J15)
