@@ -47,6 +47,7 @@ export function ShopCardCompact({
 }: ShopCardCompactProps) {
   const photos = shop.photo_urls ?? shop.photoUrls ?? [];
   const photoUrl = photos.at(0) ?? null;
+  const summary = shop.community_summary ?? shop.communitySummary ?? null;
 
   return (
     <article
@@ -81,14 +82,11 @@ export function ShopCardCompact({
         <span className="text-text-secondary font-[family-name:var(--font-body)] text-[13px]">
           {formatMeta(shop)}
         </span>
-        {(() => {
-          const summary = shop.community_summary ?? shop.communitySummary;
-          return summary ? (
-            <span className="text-text-tertiary truncate font-[family-name:var(--font-body)] text-[12px]">
-              {truncateSnippet(summary)}
-            </span>
-          ) : null;
-        })()}
+        {summary && (
+          <span className="text-text-tertiary font-[family-name:var(--font-body)] text-[12px]">
+            {truncateSnippet(summary)}
+          </span>
+        )}
       </div>
       <ChevronRight
         data-testid="compact-card-arrow"
