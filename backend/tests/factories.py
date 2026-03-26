@@ -170,6 +170,16 @@ def make_user_role(**overrides: object) -> dict:
     return {**defaults, **overrides}
 
 
+def make_follow_row(**overrides: object) -> dict:
+    defaults = {
+        "id": "follow-abc123",
+        "user_id": "user-a1b2c3",
+        "shop_id": "shop-d4e5f6",
+        "created_at": _TS,
+    }
+    return {**defaults, **overrides}
+
+
 def make_community_note_row(**overrides: object) -> dict:
     """A joined row as returned by the CommunityService PostgREST query.
 
