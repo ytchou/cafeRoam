@@ -1610,7 +1610,7 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 
 **Chunk 1 — Backend (Wave 1):**
 
-- [ ] DB migration: add `community_summary` to `search_shops` RPC
+- [x] DB migration: add `community_summary` to `search_shops` RPC
 - [ ] Backend model: add `community_summary` to `Shop` + API column selections
 - [ ] Frontend types: add `communitySummary` to `Shop` TS interface
 
