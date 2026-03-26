@@ -1,10 +1,14 @@
 import { test, expect } from './fixtures/auth';
 
-// Generate a unique-per-run Google Maps URL to avoid cross-run collisions.
-// The backend validates the URL prefix matches Google Maps domains.
-const uniqueUrl = `https://maps.app.goo.gl/e2eTest${Date.now()}`;
+// Generate unique-per-project URL to avoid collisions when mobile + desktop run in parallel.
+// Module-scope Date.now() would evaluate at ~same millisecond across two worker processes.
+let uniqueUrl: string;
 
 test.describe.serial('@critical J40 — Community shop submission', () => {
+  test.beforeAll(async ({}, workerInfo) => {
+    uniqueUrl = `https://maps.app.goo.gl/e2eTest${workerInfo.project.name}-${Date.now()}`;
+  });
+
   test('authenticated user submits a shop URL and sees confirmation', async ({
     authedPage: page,
   }) => {
@@ -44,7 +48,9 @@ test.describe.serial('@critical J40 — Community shop submission', () => {
     await submitButton.click();
 
     // Error message should appear (409 duplicate from backend)
-    await expect(page.locator('.text-red-600')).toBeVisible({ timeout: 10_000 });
+    await expect(
+      page.getByText('This URL has already been submitted'),
+    ).toBeVisible({ timeout: 10_000 });
 
     // URL input should NOT be cleared (form preserved on error)
     await expect(urlInput).toHaveValue(uniqueUrl);
