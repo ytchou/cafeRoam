@@ -3,6 +3,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from fastapi.testclient import TestClient
 
+from api.claims import get_claims_service
 from api.deps import get_current_user
 from main import app
 
@@ -40,22 +41,25 @@ class TestSubmitClaim:
         mock_svc.submit_claim.return_value = {"id": "claim-abc"}
 
         mock_db = MagicMock()
-        mock_db.table.return_value.select.return_value.eq.return_value.single.return_value.execute.return_value.data = {"name": "Fika Fika Cafe"}
+        mock_db.table.return_value.select.return_value.eq.return_value.single.return_value.execute.return_value.data = {
+            "name": "Fika Fika Cafe"
+        }
 
-        with (
-            patch("api.claims.get_claims_service", return_value=mock_svc),
-            patch("api.claims.get_service_role_client", return_value=mock_db),
-        ):
-            resp = client.post(
-                "/claims",
-                json={
-                    "shopId": "shop-1",
-                    "contactName": "Alice Chen",
-                    "contactEmail": "alice@caferoam.tw",
-                    "role": "owner",
-                    "proofPhotoPath": "claim-proofs/shop-1/proof.jpg",
-                },
-            )
+        app.dependency_overrides[get_claims_service] = lambda: mock_svc
+        try:
+            with patch("api.claims.get_service_role_client", return_value=mock_db):
+                resp = client.post(
+                    "/claims",
+                    json={
+                        "shopId": "shop-1",
+                        "contactName": "Alice Chen",
+                        "contactEmail": "alice@caferoam.tw",
+                        "role": "owner",
+                        "proofPhotoPath": "claim-proofs/shop-1/proof.jpg",
+                    },
+                )
+        finally:
+            app.dependency_overrides.pop(get_claims_service, None)
         assert resp.status_code == 201
         assert resp.json()["claimId"] == "claim-abc"
 
@@ -68,22 +72,25 @@ class TestSubmitClaim:
         )
 
         mock_db = MagicMock()
-        mock_db.table.return_value.select.return_value.eq.return_value.single.return_value.execute.return_value.data = {"name": "Fika Fika Cafe"}
+        mock_db.table.return_value.select.return_value.eq.return_value.single.return_value.execute.return_value.data = {
+            "name": "Fika Fika Cafe"
+        }
 
-        with (
-            patch("api.claims.get_claims_service", return_value=mock_svc),
-            patch("api.claims.get_service_role_client", return_value=mock_db),
-        ):
-            resp = client.post(
-                "/claims",
-                json={
-                    "shopId": "shop-1",
-                    "contactName": "Alice Chen",
-                    "contactEmail": "alice@caferoam.tw",
-                    "role": "owner",
-                    "proofPhotoPath": "claim-proofs/shop-1/proof.jpg",
-                },
-            )
+        app.dependency_overrides[get_claims_service] = lambda: mock_svc
+        try:
+            with patch("api.claims.get_service_role_client", return_value=mock_db):
+                resp = client.post(
+                    "/claims",
+                    json={
+                        "shopId": "shop-1",
+                        "contactName": "Alice Chen",
+                        "contactEmail": "alice@caferoam.tw",
+                        "role": "owner",
+                        "proofPhotoPath": "claim-proofs/shop-1/proof.jpg",
+                    },
+                )
+        finally:
+            app.dependency_overrides.pop(get_claims_service, None)
         assert resp.status_code == 409
 
 
@@ -101,7 +108,9 @@ class TestGetMyClaim:
 
     def test_returns_null_when_no_claim(self, client):
         mock_db = MagicMock()
-        mock_db.table.return_value.select.return_value.eq.return_value.eq.return_value.limit.return_value.execute.return_value.data = []
+        mock_db.table.return_value.select.return_value.eq.return_value.eq.return_value.limit.return_value.execute.return_value.data = (
+            []
+        )
 
         with patch("api.claims.get_service_role_client", return_value=mock_db):
             resp = client.get("/claims/me?shop_id=shop-1")

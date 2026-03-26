@@ -22,7 +22,7 @@
 - [x] Task 6: Add claimStatus to GET /shops/:id response
 - [x] Task 7: Claims API router (upload-url, submit, me)
 - [x] Task 8: Admin Claims API (list, proof-url, approve, reject)
-- [ ] Task 9: Register routers in main.py
+- [x] Task 9: Register routers in main.py
 
 **Chunk 3 — Frontend Proxies + Components (Waves 5–7):**
 - [ ] Task 10: Next.js proxy routes for claims

@@ -3,6 +3,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from fastapi.testclient import TestClient
 
+from api.admin_claims import get_claims_service
 from api.deps import require_admin
 from main import app
 
@@ -42,8 +43,11 @@ class TestListClaims:
 class TestApproveClaim:
     def test_approve_calls_service_and_returns_200(self, client):
         mock_svc = AsyncMock()
-        with patch("api.admin_claims.get_claims_service", return_value=mock_svc):
+        app.dependency_overrides[get_claims_service] = lambda: mock_svc
+        try:
             resp = client.post("/admin/claims/claim-1/approve")
+        finally:
+            app.dependency_overrides.pop(get_claims_service, None)
         assert resp.status_code == 200
         mock_svc.approve_claim.assert_called_once_with(
             claim_id="claim-1", admin_user_id="admin-1"
@@ -57,10 +61,13 @@ class TestRejectClaim:
 
     def test_reject_with_reason_returns_200(self, client):
         mock_svc = AsyncMock()
-        with patch("api.admin_claims.get_claims_service", return_value=mock_svc):
+        app.dependency_overrides[get_claims_service] = lambda: mock_svc
+        try:
             resp = client.post(
                 "/admin/claims/claim-1/reject",
                 json={"rejectionReason": "invalid_proof"},
             )
+        finally:
+            app.dependency_overrides.pop(get_claims_service, None)
         assert resp.status_code == 200
         mock_svc.reject_claim.assert_called_once()
