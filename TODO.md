@@ -15,7 +15,7 @@
 - [x] Task 1: user_roles migration (paid_user→member, add shop_owner)
 - [x] Task 2: shop_claims table migration + Storage bucket
 - [x] Task 3: Audit and replace paid_user in backend code
-- [ ] Task 4: Add Claim Pydantic types to models/types.py
+- [x] Task 4: Add Claim Pydantic types to models/types.py
 
 **Chunk 2 — Backend Services + API (Waves 2–4):**
 - [ ] Task 5: ClaimsService with TDD (submit, approve, reject)
