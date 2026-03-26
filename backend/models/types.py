@@ -460,6 +460,7 @@ class ShopSubmission(BaseModel):
     shop_id: str | None = None
     status: str = "pending"
     failure_reason: str | None = None
+    rejection_reason: str | None = None
     reviewed_at: datetime | None = None
     created_at: datetime | None = None
     updated_at: datetime | None = None
