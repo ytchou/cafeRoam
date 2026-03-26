@@ -1676,4 +1676,4 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 
 **Chunk 4 — Polish + Docs:**
 - [x] Lint + type check + full test pass
-- [ ] Update SPEC.md, PRD.md, pricing strategy
+- [x] Update SPEC.md, PRD.md, pricing strategy

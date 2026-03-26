@@ -90,6 +90,7 @@ The default experience for logged-in users. Generous enough to demonstrate value
 | Polaroid wall       | Login gated                            | Full                 | Full         |
 | Reviews             | Login gated                            | Full                 | Full         |
 | Community feed      | Login gated                            | 10-15/day hybrid     | Unlimited    |
+| Follow shops        | Login gated                            | Unlimited            | Unlimited    |
 | Profile             | Login gated                            | Basic                | Customizable |
 | List export/sharing | —                                      | —                    | Yes          |
 | Personalized recs   | —                                      | —                    | Yes          |
