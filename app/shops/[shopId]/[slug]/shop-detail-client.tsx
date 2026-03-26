@@ -20,6 +20,7 @@ import { useUser } from '@/lib/hooks/use-user';
 import { useGeolocation } from '@/lib/hooks/use-geolocation';
 import { useSearchParams } from 'next/navigation';
 import { useAnalytics } from '@/lib/posthog/use-analytics';
+import { trackShopDetailView } from '@/lib/analytics/ga4-events';
 
 interface ShopData {
   id: string;
@@ -75,7 +76,11 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
       referrer: searchParams.get('ref') ?? 'direct',
       session_search_query: searchParams.get('q') ?? null,
     });
-  }, [capture, shop.id, searchParams]);
+    trackShopDetailView(shop.id);
+    // searchParams intentionally excluded: only track on initial shop load,
+    // not on subsequent query-string changes within the same shop page.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [capture, shop.id]);
 
   const shareUrl =
     typeof window !== 'undefined'

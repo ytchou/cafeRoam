@@ -7,6 +7,9 @@ import {
   Noto_Sans_TC,
 } from 'next/font/google';
 
+import { ConsentProvider } from '@/lib/consent/provider';
+import { GA4Provider } from '@/lib/analytics/ga4';
+import { CookieConsentBanner } from '@/components/cookie-consent-banner';
 import { PostHogProvider } from '@/lib/posthog/provider';
 import { SessionTracker } from '@/components/session-tracker';
 import { AppShell } from '@/components/navigation/app-shell';
@@ -95,11 +98,15 @@ export default function RootLayout({ children }: RootLayoutProps) {
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${notoSansTC.variable} ${bricolageGrotesque.variable} ${dmSans.variable} antialiased`}
       >
-        <PostHogProvider>
-          <SessionTracker />
-          <AppShell>{children}</AppShell>
-          {process.env.NODE_ENV === 'development' && <Agentation />}
-        </PostHogProvider>
+        <ConsentProvider>
+          <GA4Provider />
+          <PostHogProvider>
+            <SessionTracker />
+            <AppShell>{children}</AppShell>
+            {process.env.NODE_ENV === 'development' && <Agentation />}
+          </PostHogProvider>
+          <CookieConsentBanner />
+        </ConsentProvider>
       </body>
     </html>
   );

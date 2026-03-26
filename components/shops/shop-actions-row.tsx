@@ -11,6 +11,7 @@ import { CheckInPopover } from './check-in-popover';
 import { SavePopover } from './save-popover';
 import { SharePopover } from './share-popover';
 import { SaveToListSheet } from '@/components/lists/save-to-list-sheet';
+import { trackSignupCtaClick } from '@/lib/analytics/ga4-events';
 
 interface ShopActionsRowProps {
   shopId: string;
@@ -36,6 +37,7 @@ export function ShopActionsRow({
   function requireAuth(then: () => void) {
     if (isUserLoading) return;
     if (!user) {
+      trackSignupCtaClick('card');
       router.push(`/login?next=${encodeURIComponent(`/shops/${shopId}`)}`);
       return;
     }
