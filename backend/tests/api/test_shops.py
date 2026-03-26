@@ -20,6 +20,7 @@ SHOP_ROW = {
     "mode_rest": 0.5,
     "mode_social": 0.3,
     "processing_status": "live",
+    "community_summary": None,
 }
 
 
