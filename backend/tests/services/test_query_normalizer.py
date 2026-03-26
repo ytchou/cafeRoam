@@ -1,5 +1,3 @@
-import pytest
-
 from services.query_normalizer import hash_cache_key, normalize_query
 
 
