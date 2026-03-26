@@ -1689,8 +1689,8 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 
 **Chunk 1 — DB Migration + Backend Pipeline:**
 - [x] Expand shop_submissions table (pending_review status, rejection_reason column)
-- [ ] Add 5/day rate limit on submissions API
-- [ ] Route user submissions to pending_review in publish_shop handler
+- [x] Add 5/day rate limit on submissions API
+- [x] Route user submissions to pending_review in publish_shop handler
 
 **Chunk 2 — Admin Endpoints:**
 - [ ] Update admin approve endpoint (set shop live + emit activity feed)
