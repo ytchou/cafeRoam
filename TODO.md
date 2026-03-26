@@ -18,7 +18,7 @@
 - [x] Task 4: Add Claim Pydantic types to models/types.py
 
 **Chunk 2 — Backend Services + API (Waves 2–4):**
-- [ ] Task 5: ClaimsService with TDD (submit, approve, reject)
+- [x] Task 5: ClaimsService with TDD (submit, approve, reject)
 - [ ] Task 6: Add claimStatus to GET /shops/:id response
 - [ ] Task 7: Claims API router (upload-url, submit, me)
 - [ ] Task 8: Admin Claims API (list, proof-url, approve, reject)
