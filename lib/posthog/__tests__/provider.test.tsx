@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 
 // Mock posthog-js before importing the provider
 const mockInit = vi.fn();
@@ -95,5 +95,35 @@ describe('PostHogProvider', () => {
     );
     await new Promise((r) => setTimeout(r, 50));
     expect(mockInit).not.toHaveBeenCalled();
+  });
+
+  it('when a visitor revokes consent, analytics capture stops', async () => {
+    vi.stubEnv('NEXT_PUBLIC_POSTHOG_KEY', 'phc_test123');
+    vi.stubEnv('NEXT_PUBLIC_POSTHOG_HOST', 'https://app.posthog.com');
+    document.cookie = 'caferoam_consent=granted; path=/';
+
+    const { PostHogProvider, ConsentProvider } = await importModules();
+    const { useConsent } = await import('@/lib/consent/use-consent');
+
+    function RevokeButton() {
+      const { updateConsent } = useConsent();
+      return (
+        <button data-testid="revoke" onClick={() => updateConsent('denied')}>
+          Revoke
+        </button>
+      );
+    }
+
+    render(
+      <ConsentProvider>
+        <PostHogProvider>
+          <RevokeButton />
+        </PostHogProvider>
+      </ConsentProvider>
+    );
+
+    await waitFor(() => expect(mockInit).toHaveBeenCalled());
+    fireEvent.click(screen.getByTestId('revoke'));
+    await waitFor(() => expect(mockOptOut).toHaveBeenCalled());
   });
 });
