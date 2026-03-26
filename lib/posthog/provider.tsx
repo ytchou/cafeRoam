@@ -1,13 +1,16 @@
 'use client';
 
 import { useEffect } from 'react';
+import { useConsent } from '@/lib/consent/use-consent';
 
 export function PostHogProvider({ children }: { children: React.ReactNode }) {
+  const { consent } = useConsent();
+
   useEffect(() => {
     const key = process.env.NEXT_PUBLIC_POSTHOG_KEY;
     const host = process.env.NEXT_PUBLIC_POSTHOG_HOST;
 
-    if (!key) return;
+    if (!key || consent !== 'granted') return;
 
     import('posthog-js').then(({ default: posthog }) => {
       posthog.init(key, {
@@ -18,7 +21,7 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
         persistence: 'localStorage+cookie',
       });
     });
-  }, []);
+  }, [consent]);
 
   return <>{children}</>;
 }

@@ -1615,7 +1615,7 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 **Chunk 2 — Analytics Providers:**
 - [x] Create CookieConsentBanner with tests
 - [x] Create GA4Provider with consent mode v2 and tests
-- [ ] Gate PostHogProvider behind consent with updated tests
+- [x] Gate PostHogProvider behind consent with updated tests
 
 **Chunk 3 — Wiring + Events:**
 - [ ] Wire ConsentProvider, GA4, and banner into root layout
