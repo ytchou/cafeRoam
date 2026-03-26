@@ -1694,7 +1694,7 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 
 **Chunk 2 — Admin Endpoints:**
 - [x] Update admin approve endpoint (set shop live + emit activity feed)
-- [ ] Update admin reject endpoint (canned reasons, keep shop row)
+- [x] Update admin reject endpoint (canned reasons, keep shop row)
 
 **Chunk 3 — Frontend API + Submit Page:**
 - [ ] Add GET /submissions endpoint + Next.js proxy

@@ -3,12 +3,17 @@ from typing import Any, cast
 
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel
 
 from api.deps import require_admin
 from core.db import first
 from db.supabase_client import get_service_role_client
 from middleware.admin_audit import log_admin_action
 from models.types import JobType
+
+
+class RejectSubmissionRequest(BaseModel):
+    rejection_reason: str
 
 logger = structlog.get_logger()
 
@@ -188,9 +193,10 @@ async def approve_submission(
 @router.post("/reject/{submission_id}")
 async def reject_submission(
     submission_id: str,
+    body: RejectSubmissionRequest,
     user: dict[str, Any] = Depends(require_admin),  # noqa: B008
 ) -> dict[str, str]:
-    """Reject a submission and remove the associated shop."""
+    """Reject a submission — mark rejected with reason, set shop to rejected."""
     db = get_service_role_client()
 
     sub_response = (
@@ -208,24 +214,33 @@ async def reject_submission(
             detail=f"Submission {submission_id} is already live — cannot reject a published shop",
         )
 
+    now = datetime.now(UTC).isoformat()
+
     db.table("shop_submissions").update(
-        {"status": "failed", "failure_reason": "Rejected by admin"}
+        {
+            "status": "rejected",
+            "rejection_reason": body.rejection_reason,
+            "reviewed_at": now,
+        }
     ).eq("id", submission_id).execute()
 
     if shop_id:
-        # Cancel in-flight jobs for this shop (JSONB payload filter)
+        # Cancel in-flight jobs for this shop
         db.rpc(
             "cancel_shop_jobs",
-            {"p_shop_id": str(shop_id), "p_reason": "Submission rejected by admin"},
+            {"p_shop_id": str(shop_id), "p_reason": f"Submission rejected: {body.rejection_reason}"},
         ).execute()
-        db.table("shops").delete().eq("id", shop_id).execute()
+        # Set shop to rejected instead of deleting
+        db.table("shops").update(
+            {"processing_status": "rejected", "updated_at": now}
+        ).eq("id", shop_id).execute()
 
     log_admin_action(
         admin_user_id=user["id"],
         action=f"POST /admin/pipeline/reject/{submission_id}",
         target_type="submission",
         target_id=submission_id,
-        payload={"shop_id": str(shop_id) if shop_id else None},
+        payload={"shop_id": str(shop_id) if shop_id else None, "reason": body.rejection_reason},
     )
     return {"message": f"Submission {submission_id} rejected"}
 
