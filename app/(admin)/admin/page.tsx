@@ -5,6 +5,15 @@ import Link from 'next/link';
 import { toast } from 'sonner';
 import { createClient } from '@/lib/supabase/client';
 
+const REJECTION_REASONS = [
+  { value: 'permanently_closed', label: 'Permanently closed' },
+  { value: 'not_a_cafe', label: 'Not a café' },
+  { value: 'duplicate', label: 'Duplicate of existing shop' },
+  { value: 'outside_coverage', label: 'Outside coverage area' },
+  { value: 'invalid_url', label: 'Invalid URL' },
+  { value: 'other', label: 'Other' },
+];
+
 interface Submission {
   id: string;
   google_maps_url: string;
@@ -22,6 +31,8 @@ export default function AdminDashboard() {
   const [data, setData] = useState<PipelineOverview | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [rejectingId, setRejectingId] = useState<string | null>(null);
+  const [rejectionReason, setRejectionReason] = useState<string>('not_a_cafe');
   const tokenRef = useRef<string | null>(null);
 
   const fetchOverview = useCallback(async (token: string) => {
@@ -51,18 +62,12 @@ export default function AdminDashboard() {
     load();
   }, [fetchOverview]);
 
-  async function handleSubmissionAction(
-    submissionId: string,
-    action: 'approve' | 'reject'
-  ) {
+  async function handleSubmissionAction(submissionId: string, action: 'approve' | 'reject') {
     if (!tokenRef.current) return;
-    if (
-      action === 'reject' &&
-      !window.confirm(
-        'Reject this submission and permanently remove the associated shop?'
-      )
-    )
+    if (action === 'reject') {
+      setRejectingId(submissionId);
       return;
+    }
     try {
       const res = await fetch(`/api/admin/pipeline/${action}/${submissionId}`, {
         method: 'POST',
@@ -74,6 +79,30 @@ export default function AdminDashboard() {
         return;
       }
       toast.success(`Submission ${action}d`);
+      fetchOverview(tokenRef.current);
+    } catch {
+      toast.error('Network error');
+    }
+  }
+
+  async function confirmReject() {
+    if (!tokenRef.current || !rejectingId) return;
+    try {
+      const res = await fetch(`/api/admin/pipeline/reject/${rejectingId}`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${tokenRef.current}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ rejection_reason: rejectionReason }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        toast.error(body.detail || 'Failed to reject submission');
+        return;
+      }
+      toast.success('Submission rejected');
+      setRejectingId(null);
       fetchOverview(tokenRef.current);
     } catch {
       toast.error('Network error');
@@ -148,7 +177,9 @@ export default function AdminDashboard() {
                           ? 'bg-green-100 text-green-700'
                           : sub.status === 'failed'
                             ? 'bg-red-100 text-red-700'
-                            : 'bg-yellow-100 text-yellow-700'
+                            : sub.status === 'pending_review'
+                              ? 'bg-blue-100 text-blue-700'
+                              : 'bg-yellow-100 text-yellow-700'
                       }`}
                     >
                       {sub.status}
@@ -159,26 +190,58 @@ export default function AdminDashboard() {
                   </td>
                   <td className="py-2">
                     {(sub.status === 'pending' ||
-                      sub.status === 'processing') && (
-                      <div className="flex gap-2">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            handleSubmissionAction(sub.id, 'approve')
-                          }
-                          className="rounded bg-green-50 px-2 py-1 text-xs text-green-700 hover:bg-green-100"
-                        >
-                          Approve
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            handleSubmissionAction(sub.id, 'reject')
-                          }
-                          className="rounded bg-red-50 px-2 py-1 text-xs text-red-600 hover:bg-red-100"
-                        >
-                          Reject
-                        </button>
+                      sub.status === 'processing' ||
+                      sub.status === 'pending_review') && (
+                      <div>
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleSubmissionAction(sub.id, 'approve')
+                            }
+                            className="rounded bg-green-50 px-2 py-1 text-xs text-green-700 hover:bg-green-100"
+                          >
+                            Approve
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleSubmissionAction(sub.id, 'reject')
+                            }
+                            className="rounded bg-red-50 px-2 py-1 text-xs text-red-600 hover:bg-red-100"
+                          >
+                            Reject
+                          </button>
+                        </div>
+                        {rejectingId === sub.id && (
+                          <div className="mt-2 flex items-center gap-2">
+                            <select
+                              value={rejectionReason}
+                              onChange={(e) => setRejectionReason(e.target.value)}
+                              className="rounded border px-2 py-1 text-xs"
+                            >
+                              {REJECTION_REASONS.map((r) => (
+                                <option key={r.value} value={r.value}>
+                                  {r.label}
+                                </option>
+                              ))}
+                            </select>
+                            <button
+                              type="button"
+                              onClick={confirmReject}
+                              className="rounded bg-red-600 px-2 py-1 text-xs text-white"
+                            >
+                              Confirm
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setRejectingId(null)}
+                              className="text-xs text-gray-500"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        )}
                       </div>
                     )}
                   </td>

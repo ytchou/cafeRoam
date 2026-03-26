@@ -1701,7 +1701,7 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 - [ ] Build /submit page (form + submission history)
 
 **Chunk 4 — Admin UI + Search CTAs:**
-- [ ] Update admin UI (rejection reason dropdown, pending_review status)
+- [x] Update admin UI (rejection reason dropdown, pending_review status)
 - [ ] Add suggest-a-cafe CTAs to search page
 
 **Chunk 5 — Verification:**
