@@ -299,9 +299,9 @@ class TestAdminApproveSubmission:
         app.dependency_overrides[get_current_user] = _admin_user
         try:
             mock_db = MagicMock()
-            # First call: select to fetch submission status
+            # First call: select to fetch submission status + shop_id
             mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value = (
-                MagicMock(data=[{"id": _SUB_1_ID, "status": "pending"}])
+                MagicMock(data=[{"id": _SUB_1_ID, "status": "pending", "shop_id": _SHOP_1_ID, "submitted_by": None}])
             )
             # Second call: conditional update
             mock_db.table.return_value.update.return_value.eq.return_value.in_.return_value.execute.return_value = MagicMock(
