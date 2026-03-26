@@ -1697,9 +1697,9 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 - [x] Config settings (TTL, threshold, provider)
 
 **Chunk 2 — Adapters (Wave 2):**
-- [ ] NullSearchCacheAdapter + factory tests
-- [ ] SupabaseSearchCacheAdapter (TDD)
-- [ ] RPC functions: `search_cache_similar`, `increment_search_cache_hit`
+- [x] NullSearchCacheAdapter + factory tests
+- [x] SupabaseSearchCacheAdapter (TDD)
+- [x] RPC functions: `search_cache_similar`, `increment_search_cache_hit`
 
 **Chunk 3 — Integration (Wave 3-4):**
 - [ ] Integrate cache into SearchService (TDD)
