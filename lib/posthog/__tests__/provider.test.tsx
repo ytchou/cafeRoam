@@ -55,7 +55,6 @@ describe('PostHogProvider', () => {
         </PostHogProvider>
       </ConsentProvider>
     );
-    // Wait a tick for the useEffect
     await new Promise((r) => setTimeout(r, 50));
     expect(mockInit).not.toHaveBeenCalled();
   });
@@ -73,12 +72,12 @@ describe('PostHogProvider', () => {
         </PostHogProvider>
       </ConsentProvider>
     );
-    // Wait for dynamic import + init
-    await new Promise((r) => setTimeout(r, 100));
-    expect(mockInit).toHaveBeenCalledWith('phc_test123', expect.objectContaining({
-      api_host: 'https://app.posthog.com',
-      capture_pageview: true,
-    }));
+    await waitFor(() =>
+      expect(mockInit).toHaveBeenCalledWith('phc_test123', expect.objectContaining({
+        api_host: 'https://app.posthog.com',
+        capture_pageview: true,
+      }))
+    );
   });
 
   it('does not initialize PostHog when consent is denied', async () => {

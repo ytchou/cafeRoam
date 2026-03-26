@@ -1,9 +1,3 @@
-declare global {
-  interface Window {
-    gtag?: (...args: unknown[]) => void;
-  }
-}
-
 function isEnabled(): boolean {
   return !!process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
 }
