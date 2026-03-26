@@ -1623,5 +1623,5 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 - [x] Update .env.example and doctor.sh
 
 **Chunk 4 — Instrumentation + Verification:**
-- [ ] Instrument GA4 events on shop detail and search pages
+- [x] Instrument GA4 events on shop detail and search pages
 - [ ] Full test suite, lint, and type-check pass

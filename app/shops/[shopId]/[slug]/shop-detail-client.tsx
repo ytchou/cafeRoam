@@ -19,6 +19,7 @@ import { useUser } from '@/lib/hooks/use-user';
 import { useGeolocation } from '@/lib/hooks/use-geolocation';
 import { useSearchParams } from 'next/navigation';
 import { useAnalytics } from '@/lib/posthog/use-analytics';
+import { trackShopDetailView } from '@/lib/analytics/ga4-events';
 
 interface ShopData {
   id: string;
@@ -73,6 +74,7 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
       referrer: searchParams.get('ref') ?? 'direct',
       session_search_query: searchParams.get('q') ?? null,
     });
+    trackShopDetailView(shop.id);
   }, [capture, shop.id, searchParams]);
 
   const shareUrl =
