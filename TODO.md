@@ -12,7 +12,7 @@
 > **Plan:** [docs/plans/2026-03-26-shop-claim-flow-plan.md](docs/plans/2026-03-26-shop-claim-flow-plan.md)
 
 **Chunk 1 — DB + Backend Types (Wave 1):**
-- [ ] Task 1: user_roles migration (paid_user→member, add shop_owner)
+- [x] Task 1: user_roles migration (paid_user→member, add shop_owner)
 - [ ] Task 2: shop_claims table migration + Storage bucket
 - [ ] Task 3: Audit and replace paid_user in backend code
 - [ ] Task 4: Add Claim Pydantic types to models/types.py
