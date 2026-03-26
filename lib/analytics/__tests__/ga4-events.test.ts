@@ -4,6 +4,7 @@ const gtagCalls: unknown[][] = [];
 
 describe('GA4 event helpers', () => {
   beforeEach(() => {
+    vi.resetModules();
     gtagCalls.length = 0;
     Object.defineProperty(window, 'gtag', {
       value: (...args: unknown[]) => gtagCalls.push(args),
@@ -15,7 +16,6 @@ describe('GA4 event helpers', () => {
 
   afterEach(() => {
     vi.unstubAllEnvs();
-    vi.resetModules();
   });
 
   it('trackSearch sends a search event with the search term', async () => {
@@ -55,7 +55,7 @@ describe('GA4 event helpers', () => {
     vi.stubEnv('NEXT_PUBLIC_GA_MEASUREMENT_ID', '');
     vi.resetModules();
     const { trackSearch } = await import('../ga4-events');
-    trackSearch('test query');
+    trackSearch('specialty coffee Zhongshan');
 
     expect(gtagCalls).toHaveLength(0);
   });
