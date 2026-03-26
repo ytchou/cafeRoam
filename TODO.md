@@ -1600,3 +1600,28 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 **Phase 3 — Authority (future):**
 
 - [ ] Blog outreach to Taipei lifestyle/food blogs
+
+---
+
+### GA4 + Shared Cookie Consent Banner (DEV-30)
+
+> **Design Doc:** [docs/designs/2026-03-26-ga4-consent-banner-design.md](docs/designs/2026-03-26-ga4-consent-banner-design.md)
+> **Plan:** [docs/plans/2026-03-26-ga4-consent-banner-plan.md](docs/plans/2026-03-26-ga4-consent-banner-plan.md)
+
+**Chunk 1 — Foundations:**
+- [ ] Install `@next/third-parties`
+- [ ] Create ConsentProvider + useConsent hook with tests
+
+**Chunk 2 — Analytics Providers:**
+- [ ] Create CookieConsentBanner with tests
+- [ ] Create GA4Provider with consent mode v2 and tests
+- [ ] Gate PostHogProvider behind consent with updated tests
+
+**Chunk 3 — Wiring + Events:**
+- [ ] Wire ConsentProvider, GA4, and banner into root layout
+- [ ] Create GA4 event helpers with tests
+- [ ] Update .env.example and doctor.sh
+
+**Chunk 4 — Instrumentation + Verification:**
+- [ ] Instrument GA4 events on shop detail and search pages
+- [ ] Full test suite, lint, and type-check pass
