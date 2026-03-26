@@ -1620,7 +1620,7 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 **Chunk 3 — Wiring + Events:**
 - [x] Wire ConsentProvider, GA4, and banner into root layout
 - [x] Create GA4 event helpers with tests
-- [ ] Update .env.example and doctor.sh
+- [x] Update .env.example and doctor.sh
 
 **Chunk 4 — Instrumentation + Verification:**
 - [ ] Instrument GA4 events on shop detail and search pages
