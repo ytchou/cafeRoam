@@ -1609,7 +1609,7 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 > **Plan:** [docs/plans/2026-03-26-ga4-consent-banner-plan.md](docs/plans/2026-03-26-ga4-consent-banner-plan.md)
 
 **Chunk 1 — Foundations:**
-- [ ] Install `@next/third-parties`
+- [x] Install `@next/third-parties`
 - [ ] Create ConsentProvider + useConsent hook with tests
 
 **Chunk 2 — Analytics Providers:**
