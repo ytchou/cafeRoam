@@ -33,7 +33,7 @@
 - [x] Task 15: Admin Claims tab in /admin panel
 
 **Chunk 4 — E2E (Wave 8):**
-- [ ] Task 16: E2E claim flow journey (J15)
+- [x] Task 16: E2E claim flow journey (J15)
 
 ---
 
