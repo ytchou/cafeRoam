@@ -1617,7 +1617,7 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 **Chunk 2 — Frontend Components (Wave 2-3):**
 
 - [x] Create `CommunitySummary` component (sparkle icon + tooltip)
-- [ ] Add community snippet to `ShopCardCompact` (80-char truncation)
+- [x] Add community snippet to `ShopCardCompact` (80-char truncation)
 - [ ] Integrate `CommunitySummary` into shop detail page (above Reviews)
 
 **Chunk 3 — Verification (Wave 4):**
