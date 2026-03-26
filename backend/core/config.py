@@ -59,6 +59,11 @@ class Settings(BaseSettings):
     worker_concurrency_scrape: int = 1
     worker_concurrency_default: int = 1
 
+    # Search cache
+    search_cache_provider: str = "supabase"
+    search_cache_ttl_seconds: int = 14400  # 4 hours
+    search_cache_similarity_threshold: float = 0.85
+
     @model_validator(mode="after")
     def check_production_salt(self) -> "Settings":
         if self.environment != "development" and self.anon_salt == "caferoam-dev-salt":

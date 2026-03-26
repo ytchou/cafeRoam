@@ -1694,7 +1694,7 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 - [x] Migration: `cache_hit` column on `search_events`
 - [x] Query normalizer + cache key hashing (TDD)
 - [x] SearchCacheProvider protocol + factory
-- [ ] Config settings (TTL, threshold, provider)
+- [x] Config settings (TTL, threshold, provider)
 
 **Chunk 2 — Adapters (Wave 2):**
 - [ ] NullSearchCacheAdapter + factory tests
