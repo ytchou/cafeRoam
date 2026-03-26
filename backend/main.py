@@ -16,6 +16,7 @@ from api.analytics import router as analytics_router
 from api.auth import router as auth_router
 from api.checkins import router as checkins_router
 from api.explore import router as explore_router
+from api.followers import router as followers_router
 from api.feed import router as feed_router
 from api.lists import router as lists_router
 from api.maps import router as maps_router
@@ -119,6 +120,7 @@ app.include_router(lists_router)
 app.include_router(stamps_router)
 app.include_router(feed_router)
 app.include_router(explore_router)
+app.include_router(followers_router)
 app.include_router(submissions_router)
 app.include_router(admin_router)
 app.include_router(admin_roles_router)
