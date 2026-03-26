@@ -183,9 +183,8 @@ async def approve_submission(
         .select("name")
         .execute()
     )
-    shop_name = first(
-        cast("list[dict[str, Any]]", shop_update.data or []), "update shop"
-    ).get("name", "Unknown")
+    shop_rows = cast("list[dict[str, Any]]", shop_update.data or [])
+    shop_name = shop_rows[0].get("name", "Unknown") if shop_rows else "Unknown"
 
     # Emit activity feed event for user-submitted shops
     if submitted_by:

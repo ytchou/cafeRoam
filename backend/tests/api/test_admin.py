@@ -303,9 +303,13 @@ class TestAdminApproveSubmission:
             mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value = (
                 MagicMock(data=[{"id": _SUB_1_ID, "status": "pending", "shop_id": _SHOP_1_ID, "submitted_by": None}])
             )
-            # Second call: conditional update
+            # Second call: submission conditional update (TOCTOU guard via .in_())
             mock_db.table.return_value.update.return_value.eq.return_value.in_.return_value.execute.return_value = MagicMock(
                 data=[{"id": _SUB_1_ID, "status": "live"}]
+            )
+            # Third call: shop update with .select("name") to fetch name in same round-trip
+            mock_db.table.return_value.update.return_value.eq.return_value.select.return_value.execute.return_value = MagicMock(
+                data=[{"name": "Test Café"}]
             )
             with (
                 patch("api.admin.get_service_role_client", return_value=mock_db),
