@@ -14,9 +14,7 @@ describe('a user viewing the community summary section', () => {
     render(
       <CommunitySummary summary="顧客推薦拿鐵和巴斯克蛋糕，環境安靜適合工作。" />
     );
-    expect(
-      screen.getByText(/顧客推薦拿鐵和巴斯克蛋糕/)
-    ).toBeInTheDocument();
+    expect(screen.getByText(/顧客推薦拿鐵和巴斯克蛋糕/)).toBeInTheDocument();
   });
 
   it('sees a sparkle icon with tooltip explaining AI generation', () => {

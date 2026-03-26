@@ -19,6 +19,7 @@ When designing the free-to-paid user tier boundary, two gating models were consi
 ## Rationale
 
 Feature caps are the simplest model that achieves the goal:
+
 - **Easy to communicate**: "5 AI searches per day" is instantly understood.
 - **Easy to implement**: A counter per user per day/feature. No credit ledger, no transaction tracking.
 - **Easy to tune**: Adjust the cap number without changing the model.

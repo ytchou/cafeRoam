@@ -15,6 +15,7 @@
 **Tech Stack:** PostgreSQL (migration), FastAPI/Pydantic (model + columns), React/TypeScript (components), lucide-react (Sparkles icon), Vitest/Testing Library (frontend tests), pytest (backend tests)
 
 **Acceptance Criteria:**
+
 - [ ] A user viewing a shop detail page sees a "What visitors say" section with the community summary above the reviews section (hidden if no summary exists)
 - [ ] A user browsing search results sees a truncated community snippet on each shop card (hidden if no summary exists)
 - [ ] The community summary sparkle icon shows a tooltip explaining it's AI-generated from visitor check-ins
@@ -24,6 +25,7 @@
 ### Task 1: Add `community_summary` to `search_shops` RPC
 
 **Files:**
+
 - Create: `supabase/migrations/20260326000001_add_community_summary_to_search_shops_rpc.sql`
 
 **Step 1: Write the migration**
@@ -137,6 +139,7 @@ git commit -m "feat(DEV-34): add community_summary to search_shops RPC"
 ### Task 2: Add `community_summary` field to backend `Shop` model
 
 **Files:**
+
 - Modify: `backend/models/types.py:28-50` (Shop class)
 - Test: `backend/tests/api/test_shops.py`
 
@@ -223,6 +226,7 @@ git commit -m "feat(DEV-34): add community_summary to Shop model and API columns
 ### Task 3: Add `communitySummary` to frontend `Shop` TypeScript interface
 
 **Files:**
+
 - Modify: `lib/types/index.ts:1-26` (Shop interface)
 
 **Step 1: Add field to Shop interface**
@@ -247,6 +251,7 @@ git commit -m "feat(DEV-34): add communitySummary to Shop TypeScript interface"
 ### Task 4: Create `CommunitySummary` component
 
 **Files:**
+
 - Create: `components/shops/community-summary.tsx`
 - Create: `components/shops/community-summary.test.tsx`
 
@@ -271,9 +276,7 @@ describe('a user viewing the community summary section', () => {
     render(
       <CommunitySummary summary="顧客推薦拿鐵和巴斯克蛋糕，環境安靜適合工作。" />
     );
-    expect(
-      screen.getByText(/顧客推薦拿鐵和巴斯克蛋糕/)
-    ).toBeInTheDocument();
+    expect(screen.getByText(/顧客推薦拿鐵和巴斯克蛋糕/)).toBeInTheDocument();
   });
 
   it('sees a sparkle icon with tooltip explaining AI generation', () => {
@@ -350,6 +353,7 @@ git commit -m "feat(DEV-34): create CommunitySummary component with sparkle tool
 ### Task 5: Integrate `CommunitySummary` into shop detail page
 
 **Files:**
+
 - Modify: `app/shops/[shopId]/[slug]/shop-detail-client.tsx:23-50,152-162`
 - Modify: `app/shops/[shopId]/[slug]/shop-detail-client.test.tsx`
 
@@ -407,16 +411,19 @@ Expected: FAIL — `communitySummary` not on ShopData, CommunitySummary not rend
 In `app/shops/[shopId]/[slug]/shop-detail-client.tsx`:
 
 1. Add import (after line 15, with other component imports):
+
 ```typescript
 import { CommunitySummary } from '@/components/shops/community-summary';
 ```
 
 2. Add `communitySummary` to `ShopData` interface (after `address` on line 42):
+
 ```typescript
 communitySummary?: string | null;
 ```
 
 3. Add CommunitySummary rendering above `<ShopReviews>` (before line 155, after the border div on line 153):
+
 ```tsx
 <CommunitySummary summary={shop.communitySummary ?? null} />
 ```
@@ -438,6 +445,7 @@ git commit -m "feat(DEV-34): render CommunitySummary above reviews on shop detai
 ### Task 6: Add community snippet to `ShopCardCompact`
 
 **Files:**
+
 - Modify: `components/shops/shop-card-compact.tsx:5-14,70-76`
 - Modify: `components/shops/shop-card-compact.test.tsx`
 
@@ -473,12 +481,14 @@ Expected: FAIL — no community snippet rendered
 In `components/shops/shop-card-compact.tsx`:
 
 1. Add `community_summary` to `CompactShop` interface (after line 13):
+
 ```typescript
 community_summary?: string | null;
 communitySummary?: string | null;
 ```
 
 2. Add a truncation helper (after `formatMeta` function, ~line 34):
+
 ```typescript
 function truncateSnippet(text: string, maxLen = 80): string {
   if (text.length <= maxLen) return `「${text}」`;
@@ -487,24 +497,30 @@ function truncateSnippet(text: string, maxLen = 80): string {
 ```
 
 3. Inside the component, after the meta `<span>` (line 74-76), add:
+
 ```tsx
-{(() => {
-  const summary = shop.community_summary ?? shop.communitySummary;
-  return summary ? (
-    <span className="text-text-tertiary truncate font-[family-name:var(--font-body)] text-[12px]">
-      {truncateSnippet(summary)}
-    </span>
-  ) : null;
-})()}
+{
+  (() => {
+    const summary = shop.community_summary ?? shop.communitySummary;
+    return summary ? (
+      <span className="text-text-tertiary truncate font-[family-name:var(--font-body)] text-[12px]">
+        {truncateSnippet(summary)}
+      </span>
+    ) : null;
+  })();
+}
 ```
 
 4. Increase the card height from `h-20` to `h-auto min-h-[5rem]` on line 49 to accommodate the extra line:
 
 Replace:
+
 ```
 className={`flex h-20 cursor-pointer items-center gap-3 px-5 py-0 transition-colors ${
 ```
+
 With:
+
 ```
 className={`flex min-h-[5rem] cursor-pointer items-center gap-3 px-5 py-2 transition-colors ${
 ```
@@ -586,16 +602,20 @@ graph TD
 ```
 
 **Wave 1** (parallel — no dependencies):
+
 - Task 1: `search_shops` RPC migration
 - Task 2: Backend `Shop` model + API columns
 - Task 3: Frontend `Shop` TypeScript interface
 
 **Wave 2** (parallel — depends on Wave 1):
+
 - Task 4: `CommunitySummary` component ← Task 3
 - Task 6: `ShopCardCompact` snippet ← Task 3
 
 **Wave 3** (sequential — depends on Wave 2):
+
 - Task 5: Shop detail page integration ← Task 4
 
 **Wave 4** (sequential — depends on all):
+
 - Task 7: Final verification ← all tasks

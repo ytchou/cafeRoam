@@ -136,11 +136,7 @@ class TestSearchAPI:
         }
         mock_db = MagicMock()
         mock_db.rpc = MagicMock(
-            return_value=MagicMock(
-                execute=MagicMock(
-                    return_value=MagicMock(data=[mock_rpc_row])
-                )
-            )
+            return_value=MagicMock(execute=MagicMock(return_value=MagicMock(data=[mock_rpc_row])))
         )
         app.dependency_overrides[get_current_user] = lambda: {"id": "usr_d4e5f6a1b2c3"}
         app.dependency_overrides[get_user_db] = lambda: mock_db

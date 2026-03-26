@@ -54,7 +54,8 @@ describe('a user interacting with the ShopCardCompact', () => {
   it('a user browsing search results sees a community snippet on the card', () => {
     const shopWithSummary = {
       ...shop,
-      community_summary: '顧客推薦拿鐵和巴斯克蛋糕，環境安靜適合工作。咖啡豆選用衣索比亞日曬，果香明顯，適合喜歡手沖的朋友。窗邊座位採光好，插座充足，店員親切有耐心，適合長時間駐足工作或讀書。',
+      community_summary:
+        '顧客推薦拿鐵和巴斯克蛋糕，環境安靜適合工作。咖啡豆選用衣索比亞日曬，果香明顯，適合喜歡手沖的朋友。窗邊座位採光好，插座充足，店員親切有耐心，適合長時間駐足工作或讀書。',
     };
     render(<ShopCardCompact shop={shopWithSummary} onClick={() => {}} />);
     // Should be truncated to ~80 chars with ellipsis

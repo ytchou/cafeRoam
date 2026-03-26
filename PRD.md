@@ -96,28 +96,28 @@ These will NOT be built in V1. Any scope change requires an explicit decision an
 
 **Model:** Phased marketplace monetization — build demand first, then monetize both user and supply sides.
 
-| Phase | Timeline | Trigger | Revenue source |
-| ----- | --------- | ------- | -------------- |
-| Phase 1: Free | Launch → month 2-3 | N/A | NT$0 |
-| Phase 2: User membership | Month 2-3+ | 100+ WAU AND 20%+ of free users hitting feature caps | User subscriptions |
-| Phase 3: Supply-side | Month 3-6+ | Inbound "Claim this page" signal + shop traffic is demonstrable | Shop sponsorships |
+| Phase                    | Timeline           | Trigger                                                         | Revenue source     |
+| ------------------------ | ------------------ | --------------------------------------------------------------- | ------------------ |
+| Phase 1: Free            | Launch → month 2-3 | N/A                                                             | NT$0               |
+| Phase 2: User membership | Month 2-3+         | 100+ WAU AND 20%+ of free users hitting feature caps            | User subscriptions |
+| Phase 3: Supply-side     | Month 3-6+         | Inbound "Claim this page" signal + shop traffic is demonstrable | Shop sponsorships  |
 
 **User pricing tiers:**
 
-| Tier | Price | What's included |
-| ---- | ----- | --------------- |
-| Unauthenticated | Free | Directory, map, shop detail (aggregate data only — no reviews/check-in depth) |
-| Free (auth-user) | $0 | Full directory + shop detail, 5 AI searches/day, 3 lists, unlimited check-ins, 10-15 community feed/day |
-| Member | NT$59/mo or NT$449/yr | Unlimited AI search, unlimited lists, full community feed, list export, personalized recs, member badge |
+| Tier             | Price                 | What's included                                                                                         |
+| ---------------- | --------------------- | ------------------------------------------------------------------------------------------------------- |
+| Unauthenticated  | Free                  | Directory, map, shop detail (aggregate data only — no reviews/check-in depth)                           |
+| Free (auth-user) | $0                    | Full directory + shop detail, 5 AI searches/day, 3 lists, unlimited check-ins, 10-15 community feed/day |
+| Member           | NT$59/mo or NT$449/yr | Unlimited AI search, unlimited lists, full community feed, list export, personalized recs, member badge |
 
 **Shop tiers:**
 
-| Tier | Price | What's included |
-| ---- | ----- | --------------- |
-| Unclaimed | Free | Auto-listed from data pipeline. "Claim this page" badge visible. |
-| Claimed | Free | Owner-verified: update info, basic analytics, review responses, Verified badge |
-| Sponsored | NT$500-1,000/mo | Featured in search results, highlighted in directory *(Phase 3, details: DEV-35)* |
-| Premium | NT$300-1,000/mo | Full analytics, menu management, event posts *(Phase 3, details: DEV-35)* |
+| Tier      | Price           | What's included                                                                   |
+| --------- | --------------- | --------------------------------------------------------------------------------- |
+| Unclaimed | Free            | Auto-listed from data pipeline. "Claim this page" badge visible.                  |
+| Claimed   | Free            | Owner-verified: update info, basic analytics, review responses, Verified badge    |
+| Sponsored | NT$500-1,000/mo | Featured in search results, highlighted in directory _(Phase 3, details: DEV-35)_ |
+| Premium   | NT$300-1,000/mo | Full analytics, menu management, event posts _(Phase 3, details: DEV-35)_         |
 
 **Cost structure (rough):** Railway ~$5/mo, Supabase Free → Pro $25/mo, Apify ~$10-30/mo (scraping), Claude Haiku ~$5-20/mo (enrichment), OpenAI embeddings ~$2-5/mo. Total: ~NT$1,500-2,400/month at launch.
 
