@@ -1744,3 +1744,17 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 **Chunk 4 — Docs:**
 
 - [x] Update `.env.example` and doctor script
+
+### E2E: Shop Follow/Unfollow Journey (DEV-61)
+
+> **Design Doc:** [docs/designs/2026-03-26-e2e-follow-unfollow-design.md](docs/designs/2026-03-26-e2e-follow-unfollow-design.md)
+> **Plan:** [docs/plans/2026-03-26-e2e-follow-unfollow-plan.md](docs/plans/2026-03-26-e2e-follow-unfollow-plan.md)
+
+**Chunk 1 — E2E Spec:**
+
+- [ ] J40: Follow/unfollow button state toggle (serial)
+- [ ] J41: Follow auth wall redirect to /login
+
+**Chunk 2 — Docs:**
+
+- [ ] Update E2E journey inventory (J40, J41)
