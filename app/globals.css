@@ -2,6 +2,12 @@
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
 
+/* Exclude docs/ and test artifacts from Tailwind class scanning — they contain
+   illustrative class strings (e.g. bg-[var(--...)]) that generate invalid CSS. */
+@source not "../docs/**";
+@source not "../playwright-report/**";
+@source not "../test-results/**";
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
