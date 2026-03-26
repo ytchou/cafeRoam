@@ -1697,7 +1697,7 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 - [x] Update admin reject endpoint (canned reasons, keep shop row)
 
 **Chunk 3 — Frontend API + Submit Page:**
-- [ ] Add GET /submissions endpoint + Next.js proxy
+- [x] Add GET /submissions endpoint + Next.js proxy
 - [ ] Build /submit page (form + submission history)
 
 **Chunk 4 — Admin UI + Search CTAs:**

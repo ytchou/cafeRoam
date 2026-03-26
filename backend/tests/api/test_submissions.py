@@ -134,3 +134,24 @@ def test_submit_shop_rate_limited_at_5_per_day():
         assert "5" in response.json()["detail"]
     finally:
         app.dependency_overrides.clear()
+
+
+def test_get_submissions_returns_user_history():
+    """GET /submissions returns the current user's submissions."""
+    mock_user_db = MagicMock()
+    mock_user_db.table.return_value.select.return_value.eq.return_value.order.return_value.limit.return_value.execute.return_value = MagicMock(
+        data=[
+            {"id": "sub-1", "google_maps_url": "https://maps.google.com/?cid=1", "status": "live"},
+            {"id": "sub-2", "google_maps_url": "https://maps.google.com/?cid=2", "status": "pending"},
+        ]
+    )
+
+    app.dependency_overrides[get_current_user] = lambda: {"id": "user-1"}
+    app.dependency_overrides[get_user_db] = lambda: mock_user_db
+    try:
+        response = client.get("/submissions")
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data) == 2
+    finally:
+        app.dependency_overrides.clear()

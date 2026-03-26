@@ -144,3 +144,20 @@ async def submit_shop(
         submission_id=submission_id,
         message="Thanks! We're adding this shop to CafeRoam.",
     )
+
+
+@router.get("/submissions", response_model=list[dict[str, Any]])
+async def list_user_submissions(
+    user: dict[str, Any] = Depends(get_current_user),  # noqa: B008
+    db: Client = Depends(get_user_db),  # noqa: B008
+) -> list[dict[str, Any]]:
+    """Return the current user's submissions (RLS-filtered)."""
+    response = (
+        db.table("shop_submissions")
+        .select("id, google_maps_url, status, rejection_reason, created_at, updated_at")
+        .eq("submitted_by", user["id"])
+        .order("created_at", desc=True)
+        .limit(50)
+        .execute()
+    )
+    return cast("list[dict[str, Any]]", response.data)
