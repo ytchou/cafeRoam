@@ -1668,7 +1668,7 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 - [ ] Write follower API routes with TDD (POST/DELETE follow, GET count, GET following)
 
 **Chunk 3 — Frontend:**
-- [ ] Add TypeScript types + `useShopFollow` hook
+- [x] Add TypeScript types + `useShopFollow` hook
 - [ ] Create Next.js proxy routes
 - [ ] Build FollowButton component with TDD (heart toggle)
 - [ ] Integrate FollowButton into shop actions row

@@ -149,3 +149,29 @@ export interface SearchQuery {
   };
   limit?: number;
 }
+
+export interface FollowResponse {
+  following: boolean;
+  followerCount: number;
+}
+
+export interface FollowerCountResponse {
+  count: number;
+  visible: boolean;
+  isFollowing: boolean | null;
+}
+
+export interface FollowedShop {
+  id: string;
+  name: string;
+  address: string;
+  slug: string | null;
+  mrt: string | null;
+  followedAt: string;
+}
+
+export interface FollowingListResponse {
+  shops: FollowedShop[];
+  total: number;
+  page: number;
+}
