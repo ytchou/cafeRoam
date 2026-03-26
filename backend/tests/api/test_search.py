@@ -1,3 +1,4 @@
+import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from fastapi.testclient import TestClient
@@ -5,6 +6,7 @@ from fastapi.testclient import TestClient
 from api.deps import get_admin_db, get_current_user, get_user_db
 from main import app
 from providers.analytics import get_analytics_provider
+from providers.cache.null_adapter import NullSearchCacheAdapter
 
 client = TestClient(app)
 
@@ -16,6 +18,12 @@ def _mock_admin_db():
 
 
 class TestSearchAPI:
+    @pytest.fixture(autouse=True)
+    def patch_cache(self):
+        """Patch cache provider to null so existing tests are unaffected."""
+        with patch("api.search.get_search_cache_provider") as mock:
+            mock.return_value = NullSearchCacheAdapter()
+            yield mock
     def test_search_requires_auth(self):
         """GET /search should require auth."""
         response = client.get("/search?text=good+wifi")
@@ -162,6 +170,31 @@ class TestSearchAPI:
         finally:
             app.dependency_overrides.clear()
 
+    def test_search_response_includes_cache_hit_field(self):
+        """Search response always includes cache_hit boolean for frontend observability."""
+        mock_db = MagicMock()
+        mock_db.rpc = MagicMock(
+            return_value=MagicMock(execute=MagicMock(return_value=MagicMock(data=[])))
+        )
+        app.dependency_overrides[get_current_user] = lambda: {"id": "usr_e5f6a1b2c3d4"}
+        app.dependency_overrides[get_user_db] = lambda: mock_db
+        app.dependency_overrides[get_admin_db] = lambda: _mock_admin_db()
+        try:
+            with patch("api.search.get_embeddings_provider") as mock_emb_factory:
+                mock_emb = AsyncMock()
+                mock_emb.embed = AsyncMock(return_value=[0.1] * 1536)
+                mock_emb_factory.return_value = mock_emb
+                response = client.get(
+                    "/search?text=test+cache",
+                    headers={"Authorization": "Bearer valid-jwt"},
+                )
+                assert response.status_code == 200
+                body = response.json()
+                assert "cache_hit" in body
+                assert body["cache_hit"] is False
+        finally:
+            app.dependency_overrides.clear()
+
     def test_search_no_longer_fires_posthog_directly(self):
         """After migration, GET /search should NOT call analytics.track()."""
         mock_db = MagicMock()
@@ -183,5 +216,43 @@ class TestSearchAPI:
                     headers={"Authorization": "Bearer valid-jwt"},
                 )
                 mock_analytics.track.assert_not_called()
+        finally:
+            app.dependency_overrides.clear()
+
+
+class TestSearchCacheAPI:
+    def test_search_response_indicates_cache_hit(self):
+        """When cache returns results, the response includes cache_hit=True."""
+        mock_db = MagicMock()
+        mock_admin = _mock_admin_db()
+
+        app.dependency_overrides[get_current_user] = lambda: {"id": "usr_f6a1b2c3d4e5"}
+        app.dependency_overrides[get_user_db] = lambda: mock_db
+        app.dependency_overrides[get_admin_db] = lambda: mock_admin
+        try:
+            with (
+                patch("api.search.get_embeddings_provider") as mock_emb_factory,
+                patch("api.search.get_search_cache_provider") as mock_cache_factory,
+            ):
+                mock_emb = AsyncMock()
+                mock_emb.embed = AsyncMock(return_value=[0.1] * 1536)
+                mock_emb_factory.return_value = mock_emb
+
+                cached_entry = MagicMock()
+                cached_entry.is_expired = False
+                cached_entry.id = "cached-1"
+                cached_entry.results = [{"shop": {"name": "CachedShop"}, "similarityScore": 0.9, "taxonomyBoost": 0.0, "totalScore": 0.63}]
+                mock_cache = AsyncMock()
+                mock_cache.get_by_hash = AsyncMock(return_value=cached_entry)
+                mock_cache.increment_hit = AsyncMock()
+                mock_cache_factory.return_value = mock_cache
+
+                response = client.get(
+                    "/search?text=cached+query",
+                    headers={"Authorization": "Bearer valid-jwt"},
+                )
+                assert response.status_code == 200
+                body = response.json()
+                assert body["cache_hit"] is True
         finally:
             app.dependency_overrides.clear()

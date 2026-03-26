@@ -1703,7 +1703,7 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 
 **Chunk 3 — Integration (Wave 3-4):**
 - [x] Integrate cache into SearchService (TDD)
-- [ ] Wire cache into search API endpoint
+- [x] Wire cache into search API endpoint
 - [ ] Lint + type check + full test pass
 
 **Chunk 4 — Docs:**
