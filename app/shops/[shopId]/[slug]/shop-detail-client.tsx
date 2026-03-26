@@ -8,6 +8,7 @@ import { ShopIdentity } from '@/components/shops/shop-identity';
 import { AttributeChips } from '@/components/shops/attribute-chips';
 import { ShopActionsRow } from '@/components/shops/shop-actions-row';
 import { ClaimBanner } from '@/components/shops/claim-banner';
+import { VerifiedBadge } from '@/components/shops/verified-badge';
 import { ShopDescription } from '@/components/shops/shop-description';
 import { MenuHighlights } from '@/components/shops/menu-highlights';
 import { RecentCheckinsStrip } from '@/components/shops/recent-checkins-strip';
@@ -50,6 +51,7 @@ interface ShopData {
     photoUrl: string;
     createdAt: string;
   }>;
+  claimStatus?: 'pending' | 'approved' | 'rejected' | null;
 }
 
 interface ShopDetailClientProps {
@@ -122,6 +124,7 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
         distance={shop.distance}
         address={shop.address}
       />
+      {shop.claimStatus === 'approved' && <VerifiedBadge />}
       <ShopActionsRow
         shopId={shop.id}
         shopName={shop.name}
@@ -176,7 +179,7 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
         />
       )}
 
-      <ClaimBanner shopId={shop.id} shopName={shop.name} />
+      <ClaimBanner shopId={shop.id} shopName={shop.name} claimStatus={shop.claimStatus ?? null} />
 
       {hasMap && directionsShop && (
         <DirectionsSheet
