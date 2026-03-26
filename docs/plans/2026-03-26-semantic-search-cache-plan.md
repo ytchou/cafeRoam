@@ -15,6 +15,7 @@
 **Tech Stack:** Supabase (Postgres + pgvector), Python (Pydantic, hashlib), FastAPI Depends
 
 **Acceptance Criteria:**
+
 - [ ] A user searching for "good wifi coffee" gets cached results on a second identical search without hitting OpenAI or pgvector
 - [ ] A user searching "nice wifi café" (semantically similar, cosine ≥ 0.85) also gets cached results without running full search pipeline
 - [ ] Cache entries expire after 4 hours and are cleaned up hourly
@@ -26,6 +27,7 @@
 ### Task 1: Database Migration — `search_cache` Table
 
 **Files:**
+
 - Create: `supabase/migrations/20260327000001_create_search_cache.sql`
 
 No test needed — this is a SQL migration with no application logic.
@@ -79,6 +81,7 @@ git commit -m "feat(DEV-36): add search_cache table with pgvector HNSW index"
 ### Task 2: Database Migration — Add `cache_hit` to `search_events`
 
 **Files:**
+
 - Create: `supabase/migrations/20260327000002_add_cache_hit_to_search_events.sql`
 
 No test needed — SQL migration only.
@@ -104,6 +107,7 @@ git commit -m "feat(DEV-36): add cache_hit column to search_events"
 ### Task 3: Query Normalization Utility
 
 **Files:**
+
 - Create: `backend/services/query_normalizer.py`
 - Test: `backend/tests/services/test_query_normalizer.py`
 
@@ -213,6 +217,7 @@ git commit -m "feat(DEV-36): add query normalization and cache key hashing"
 ### Task 4: Cache Provider Interface (Protocol)
 
 **Files:**
+
 - Create: `backend/providers/cache/__init__.py`
 - Create: `backend/providers/cache/interface.py`
 
@@ -308,6 +313,7 @@ git commit -m "feat(DEV-36): add SearchCacheProvider protocol and factory"
 ### Task 5: Configuration — Add Cache Settings
 
 **Files:**
+
 - Modify: `backend/core/config.py`
 
 No test needed — configuration-only change with defaults.
@@ -335,6 +341,7 @@ git commit -m "feat(DEV-36): add search cache config (TTL, threshold, provider)"
 ### Task 6: Null Cache Adapter (for testing / opt-out)
 
 **Files:**
+
 - Create: `backend/providers/cache/null_adapter.py`
 - Test: `backend/tests/providers/test_cache_factory.py`
 
@@ -429,6 +436,7 @@ git commit -m "feat(DEV-36): add NullSearchCacheAdapter and factory tests"
 ### Task 7: Supabase Cache Adapter
 
 **Files:**
+
 - Create: `backend/providers/cache/supabase_adapter.py`
 - Test: `backend/tests/providers/test_supabase_cache_adapter.py`
 
@@ -691,6 +699,7 @@ git commit -m "feat(DEV-36): add SupabaseSearchCacheAdapter with pgvector simila
 ### Task 8: Database RPC Functions for Cache
 
 **Files:**
+
 - Create: `supabase/migrations/20260327000003_create_search_cache_rpcs.sql`
 
 No test needed — SQL-only. These RPCs are called by the Supabase adapter.
@@ -767,6 +776,7 @@ git commit -m "feat(DEV-36): add search_cache_similar and increment_hit RPC func
 ### Task 9: Integrate Cache into SearchService
 
 **Files:**
+
 - Modify: `backend/services/search_service.py`
 - Test: `backend/tests/services/test_search_service.py` (add new tests)
 
@@ -884,6 +894,7 @@ Expected: FAIL — `SearchService` doesn't accept `cache` parameter yet.
 Update `backend/services/search_service.py`:
 
 1. Add import at top:
+
 ```python
 from providers.cache.interface import SearchCacheProvider
 from services.query_normalizer import hash_cache_key, normalize_query
@@ -891,6 +902,7 @@ from core.config import settings
 ```
 
 2. Update `__init__` to accept optional cache:
+
 ```python
 def __init__(
     self,
@@ -904,6 +916,7 @@ def __init__(
 ```
 
 3. Replace `search()` method body with cache-aware flow:
+
 ```python
 async def search(
     self,
@@ -944,6 +957,7 @@ async def search(
 ```
 
 4. Extract existing search logic into `_full_search()`:
+
 ```python
 async def _full_search(
     self,
@@ -1015,6 +1029,7 @@ git commit -m "feat(DEV-36): integrate two-tier cache into SearchService"
 ### Task 10: Wire Cache into Search API Endpoint
 
 **Files:**
+
 - Modify: `backend/api/search.py`
 - Test: `backend/tests/api/test_search.py` (add new tests)
 
@@ -1107,11 +1122,13 @@ Expected: FAIL — `get_search_cache_provider` not found
 Modify `backend/api/search.py`:
 
 1. Add import:
+
 ```python
 from providers.cache import get_search_cache_provider
 ```
 
 2. Update the `search()` function to wire cache and track cache_hit:
+
 ```python
 @router.get("/search")
 async def search(
@@ -1159,6 +1176,7 @@ async def search(
 ```
 
 3. Update `_log_search_event` to accept and insert `cache_hit`:
+
 ```python
 def _log_search_event(
     admin_db: Client,
@@ -1234,6 +1252,7 @@ git commit -m "chore(DEV-36): lint and formatting fixes"
 ### Task 12: Update `.env.example` and Doctor Script
 
 **Files:**
+
 - Modify: `backend/.env.example` (if it exists) or `backend/.env` template
 - Modify: `scripts/doctor.sh` (add cache config check)
 
@@ -1300,6 +1319,7 @@ graph TD
 ```
 
 **Wave 1** (parallel — no dependencies):
+
 - Task 1: `search_cache` table migration
 - Task 2: `cache_hit` column migration
 - Task 3: Query normalizer with TDD
@@ -1307,16 +1327,20 @@ graph TD
 - Task 5: Config settings
 
 **Wave 2** (parallel — depends on Wave 1):
+
 - Task 6: Null adapter + factory tests ← Task 4, 5
 - Task 7: Supabase adapter ← Task 4, 5
 - Task 8: RPC functions ← Task 1
 
 **Wave 3** (sequential — depends on Wave 2):
+
 - Task 9: SearchService integration ← Task 3, 6, 7, 8
 
 **Wave 4** (sequential — depends on Wave 3):
+
 - Task 10: API endpoint wiring ← Task 2, 9
 - Task 11: Full lint + test verification ← Task 10
 
 **Wave 5** (sequential — depends on Wave 4):
+
 - Task 12: Env documentation ← Task 11

@@ -40,14 +40,14 @@ User query
 
 ## Key Design Decisions
 
-| Decision | Choice | Rationale |
-|----------|--------|-----------|
-| Cache backend | pgvector table in Supabase | No new infra. Already have pgvector. Scale is low (~164 shops, growing). Redis can be added later behind provider abstraction. |
-| Similarity threshold | 0.85 (cosine) | Industry balanced default (Redis guide). GPTCache paper optimal is 0.80, but mixed Chinese/English queries add noise. Configurable via env var. |
-| Result TTL | 4 hours | Shop data changes infrequently. New shops are batch operations. Balances freshness with hit rate. |
-| Cache key components | Normalized query text + mode filter | Mode filter (work/rest/social) affects results significantly. Geo filters excluded — too granular (every lat/lng would be unique). |
-| Cache population | Lazy / on-demand only | Cache fills as users search. Pre-warming from search_events deferred to V2 if hit rates are low. |
-| Single table | Embedding + results co-located | Simpler than separate embedding cache + result cache. One row, one TTL, two index paths (hash + HNSW). |
+| Decision             | Choice                              | Rationale                                                                                                                                       |
+| -------------------- | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| Cache backend        | pgvector table in Supabase          | No new infra. Already have pgvector. Scale is low (~164 shops, growing). Redis can be added later behind provider abstraction.                  |
+| Similarity threshold | 0.85 (cosine)                       | Industry balanced default (Redis guide). GPTCache paper optimal is 0.80, but mixed Chinese/English queries add noise. Configurable via env var. |
+| Result TTL           | 4 hours                             | Shop data changes infrequently. New shops are batch operations. Balances freshness with hit rate.                                               |
+| Cache key components | Normalized query text + mode filter | Mode filter (work/rest/social) affects results significantly. Geo filters excluded — too granular (every lat/lng would be unique).              |
+| Cache population     | Lazy / on-demand only               | Cache fills as users search. Pre-warming from search_events deferred to V2 if hit rates are low.                                                |
+| Single table         | Embedding + results co-located      | Simpler than separate embedding cache + result cache. One row, one TTL, two index paths (hash + HNSW).                                          |
 
 ## Cache Table Schema
 
@@ -156,6 +156,7 @@ Runs hourly. Deletes expired entries.
 ## V1 Scope Boundaries
 
 **In scope:**
+
 - Two-tier cache (exact + semantic)
 - pgvector cache table with HNSW index
 - Configurable TTL and similarity threshold via env vars
@@ -163,6 +164,7 @@ Runs hourly. Deletes expired entries.
 - Provider abstraction for future Redis migration
 
 **Out of scope (V2+):**
+
 - Pre-warming from search_events analytics
 - Invalidation on shop publish/re-enrichment
 - Per-query learned thresholds (vCache paper approach)
@@ -172,6 +174,7 @@ Runs hourly. Deletes expired entries.
 ## Industry Research
 
 Design informed by:
+
 - **GPTCache** (Zilliz): Two-tier architecture, 0.80 optimal threshold via F1 maximization
 - **vCache** (2025 paper): Global thresholds are fundamentally limited; per-query thresholds achieve 2x hits with 6x fewer errors
 - **Redis Semantic Cache guide**: Start at 0.85-0.95, tune down with monitoring
@@ -181,7 +184,9 @@ Design informed by:
 ## Testing Classification
 
 **(a) New e2e journey?**
+
 - [ ] No — search is an existing critical path. Cache is transparent to the user.
 
 **(b) Coverage gate impact?**
+
 - [x] Yes — touches `search_service.py` (critical path). Verify 80% coverage gate for search service.

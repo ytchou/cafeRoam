@@ -16,7 +16,7 @@ from services.query_normalizer import hash_cache_key, normalize_query
 class SearchResponse:
     """Return value from SearchService.search() — carries results and cache provenance."""
 
-    results: list
+    results: list[Any]
     cache_hit: bool
 
 
