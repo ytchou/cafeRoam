@@ -4,6 +4,7 @@ from typing import Any, cast
 
 import structlog
 from fastapi import APIRouter, Depends, HTTPException
+from postgrest import CountMethod
 from postgrest.exceptions import APIError
 from pydantic import BaseModel, field_validator
 from supabase import Client
@@ -52,7 +53,7 @@ async def submit_shop(
     today_start = datetime.combine(datetime.now(UTC).date(), time.min, tzinfo=UTC).isoformat()
     rate_check = (
         db.table("shop_submissions")
-        .select("id", count="exact")
+        .select("id", count=CountMethod.exact)
         .eq("submitted_by", user_id)
         .gte("created_at", today_start)
         .not_.in_("status", ["rejected", "failed"])
