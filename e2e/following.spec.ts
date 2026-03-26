@@ -1,25 +1,69 @@
 import { test, expect } from './fixtures/auth';
-import { test as unauthTest, expect as unauthExpect } from '@playwright/test';
+import { test as unauthTest } from '@playwright/test';
 import { first } from './fixtures/helpers';
+
+const authStorage = new URL('.auth/user.json', import.meta.url).pathname;
 
 test.describe.serial(
   '@critical J40 — Follow/unfollow toggle',
   () => {
     let shopUrl: string;
+    let shopId: string;
 
     test.beforeAll(async ({ browser }) => {
       const ctx = await browser.newContext();
       const page = await ctx.newPage();
-      const response = await page.request.get(
-        '/api/shops?featured=true&limit=1'
-      );
-      const shops = await response.json();
-      const shop = first(shops);
-      if (shop) {
-        shopUrl = `/shops/${shop.id}/${shop.slug || shop.id}`;
+      try {
+        const response = await page.request.get(
+          '/api/shops?featured=true&limit=1'
+        );
+        const shops = await response.json();
+        const shop = first(shops);
+        if (shop) {
+          shopId = shop.id;
+          shopUrl = `/shops/${shop.id}/${shop.slug || shop.id}`;
+        }
+      } finally {
+        await page.close();
+        await ctx.close();
       }
-      await page.close();
-      await ctx.close();
+
+      // Ensure clean "not following" baseline before the suite runs so serial
+      // tests don't fail if the test account followed this shop in a prior run.
+      if (shopId) {
+        let authCtx;
+        try {
+          authCtx = await browser.newContext({ storageState: authStorage });
+          const authPage = await authCtx.newPage();
+          try {
+            await authPage.request.delete(`/api/shops/${shopId}/follow`);
+          } finally {
+            await authPage.close();
+          }
+        } catch {
+          // Auth state not yet written (.auth/user.json missing on first run) — tests will skip
+        } finally {
+          await authCtx?.close();
+        }
+      }
+    });
+
+    test.afterAll(async ({ browser }) => {
+      if (!shopId) return;
+      let authCtx;
+      try {
+        authCtx = await browser.newContext({ storageState: authStorage });
+        const authPage = await authCtx.newPage();
+        try {
+          await authPage.request.delete(`/api/shops/${shopId}/follow`);
+        } finally {
+          await authPage.close();
+        }
+      } catch {
+        // Best-effort cleanup
+      } finally {
+        await authCtx?.close();
+      }
     });
 
     test('following a shop toggles button to "Unfollow this shop"', async ({
@@ -37,7 +81,6 @@ test.describe.serial(
 
       await followBtn.click();
 
-      // After click, button label should change to "Unfollow this shop"
       await expect(
         page.getByRole('button', { name: 'Unfollow this shop' })
       ).toBeVisible({ timeout: 10_000 });
@@ -59,7 +102,6 @@ test.describe.serial(
 
       await unfollowBtn.click();
 
-      // After click, button label should revert to "Follow this shop"
       await expect(
         page.getByRole('button', { name: 'Follow this shop' })
       ).toBeVisible({ timeout: 10_000 });
@@ -79,6 +121,7 @@ unauthTest.describe(
         const shops = await response.json();
         const shop = first(shops);
         unauthTest.skip(!shop, 'No seeded shops available');
+        if (!shop) return;
 
         await page.goto(`/shops/${shop.id}/${shop.slug || shop.id}`);
         await page.waitForLoadState('networkidle');
@@ -86,11 +129,10 @@ unauthTest.describe(
         const followBtn = page.getByRole('button', {
           name: 'Follow this shop',
         });
-        await unauthExpect(followBtn).toBeVisible({ timeout: 10_000 });
+        await expect(followBtn).toBeVisible({ timeout: 10_000 });
 
         await followBtn.click();
 
-        // Auth wall redirects to /login
         await page.waitForURL(/\/login/, { timeout: 10_000 });
       }
     );
