@@ -8,6 +8,7 @@ Fixed an N+1 by chaining `.select("name")` on the shop UPDATE to get the shop na
 
 **Root cause:**
 Two different "no row found" patterns:
+
 - `.single().execute()` → raises `APIError` if no row matched (catchable, surfaced as 404/500)
 - `.update().select().execute()` → returns `data=[]` silently if no row matched (must check manually)
 
@@ -15,8 +16,10 @@ Using `first()` — which raises on empty — was appropriate for selects but no
 
 **Prevention:**
 When reading data from an UPDATE result (`.update().select().execute()`), always guard against empty `data` explicitly before indexing. Never use `first()` on update `.data` — use `rows[0].get(...)` with a falsy check:
+
 ```python
 rows = cast("list[dict]", update_result.data or [])
 value = rows[0].get("field", "fallback") if rows else "fallback"
 ```
+
 Reserve `first()` for SELECT queries where an empty result is a programming error.

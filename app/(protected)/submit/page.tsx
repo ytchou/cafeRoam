@@ -30,7 +30,8 @@ function statusLabel(status: string): string {
 
 function statusColor(status: string): string {
   if (status === 'live') return 'bg-green-100 text-green-700';
-  if (status === 'rejected' || status === 'failed') return 'bg-red-100 text-red-700';
+  if (status === 'rejected' || status === 'failed')
+    return 'bg-red-100 text-red-700';
   return 'bg-yellow-100 text-yellow-700';
 }
 
@@ -94,13 +95,11 @@ export default function SubmitPage() {
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             placeholder="貼上 Google Maps 連結"
-            className="w-full rounded-lg border border-gray-200 px-4 py-3 text-sm focus:border-terracotta-400 focus:outline-none"
+            className="focus:border-terracotta-400 w-full rounded-lg border border-gray-200 px-4 py-3 text-sm focus:outline-none"
           />
           {error && <p className="text-sm text-red-600">{error}</p>}
           {success && (
-            <p className="text-sm text-green-600">
-              感謝推薦！我們正在處理中。
-            </p>
+            <p className="text-sm text-green-600">感謝推薦！我們正在處理中。</p>
           )}
           <button
             type="submit"
@@ -135,7 +134,8 @@ export default function SubmitPage() {
                   </div>
                   {sub.status === 'rejected' && sub.rejection_reason && (
                     <p className="mt-1 text-xs text-red-500">
-                      {REJECTION_REASONS[sub.rejection_reason] ?? sub.rejection_reason}
+                      {REJECTION_REASONS[sub.rejection_reason] ??
+                        sub.rejection_reason}
                     </p>
                   )}
                 </div>

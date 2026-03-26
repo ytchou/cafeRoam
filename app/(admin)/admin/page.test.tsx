@@ -203,13 +203,21 @@ describe('AdminDashboard', () => {
 
     await waitFor(() => {
       expect(screen.getByRole('combobox')).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /confirm/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: /confirm/i })
+      ).toBeInTheDocument();
     });
   });
 
   it('shows approve/reject buttons and pending_review badge for a pending_review submission', async () => {
     const overviewData = {
-      job_counts: { pending: 0, claimed: 0, completed: 0, failed: 0, dead_letter: 0 },
+      job_counts: {
+        pending: 0,
+        claimed: 0,
+        completed: 0,
+        failed: 0,
+        dead_letter: 0,
+      },
       recent_submissions: [
         {
           id: 'sub-review-001',
@@ -232,13 +240,21 @@ describe('AdminDashboard', () => {
       expect(screen.getByText('pending_review')).toBeInTheDocument();
     });
 
-    expect(screen.getByRole('button', { name: /approve/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /approve/i })
+    ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /reject/i })).toBeInTheDocument();
   });
 
   it('shows rejection reason dropdown when admin clicks Reject on a pending_review submission', async () => {
     const overviewData = {
-      job_counts: { pending: 0, claimed: 0, completed: 0, failed: 0, dead_letter: 0 },
+      job_counts: {
+        pending: 0,
+        claimed: 0,
+        completed: 0,
+        failed: 0,
+        dead_letter: 0,
+      },
       recent_submissions: [
         {
           id: 'sub-review-002',
@@ -259,15 +275,21 @@ describe('AdminDashboard', () => {
     render(<AdminDashboard />);
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /reject/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: /reject/i })
+      ).toBeInTheDocument();
     });
 
     await user.click(screen.getByRole('button', { name: /reject/i }));
 
     await waitFor(() => {
       expect(screen.getByRole('combobox')).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /confirm/i })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: /confirm/i })
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: /cancel/i })
+      ).toBeInTheDocument();
     });
 
     await user.click(screen.getByRole('button', { name: /confirm/i }));

@@ -49,9 +49,7 @@ async def submit_shop(
     user_id = user["id"]
 
     # Rate limit: 5 active submissions per day per user (excludes rejected/failed)
-    today_start = datetime.combine(
-        datetime.now(UTC).date(), time.min, tzinfo=UTC
-    ).isoformat()
+    today_start = datetime.combine(datetime.now(UTC).date(), time.min, tzinfo=UTC).isoformat()
     rate_check = (
         db.table("shop_submissions")
         .select("id", count="exact")

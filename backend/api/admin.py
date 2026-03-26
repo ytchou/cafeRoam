@@ -12,13 +12,18 @@ from middleware.admin_audit import log_admin_action
 from models.types import JobType
 
 RejectionReasonType = Literal[
-    "permanently_closed", "not_a_cafe", "duplicate",
-    "outside_coverage", "invalid_url", "other",
+    "permanently_closed",
+    "not_a_cafe",
+    "duplicate",
+    "outside_coverage",
+    "invalid_url",
+    "other",
 ]
 
 
 class RejectSubmissionRequest(BaseModel):
     rejection_reason: RejectionReasonType
+
 
 logger = structlog.get_logger()
 
@@ -263,9 +268,9 @@ async def reject_submission(
             },
         ).execute()
         # Set shop to rejected instead of deleting
-        db.table("shops").update(
-            {"processing_status": "rejected", "updated_at": now}
-        ).eq("id", shop_id).execute()
+        db.table("shops").update({"processing_status": "rejected", "updated_at": now}).eq(
+            "id", shop_id
+        ).execute()
 
     log_admin_action(
         admin_user_id=user["id"],

@@ -24,11 +24,7 @@ async def handle_publish_shop(
     # Check shop source to decide whether to auto-publish or hold for review
     try:
         shop_response = (
-            db.table("shops")
-            .select("name, source")
-            .eq("id", shop_id)
-            .single()
-            .execute()
+            db.table("shops").select("name, source").eq("id", shop_id).single().execute()
         )
     except APIError as e:
         logger.error(
@@ -43,14 +39,14 @@ async def handle_publish_shop(
 
     if source == "user_submission":
         # User submissions require admin review before going live
-        db.table("shops").update(
-            {"processing_status": "pending_review", "updated_at": now}
-        ).eq("id", shop_id).execute()
+        db.table("shops").update({"processing_status": "pending_review", "updated_at": now}).eq(
+            "id", shop_id
+        ).execute()
 
         if submission_id:
-            db.table("shop_submissions").update(
-                {"status": "pending_review", "updated_at": now}
-            ).eq("id", submission_id).execute()
+            db.table("shop_submissions").update({"status": "pending_review", "updated_at": now}).eq(
+                "id", submission_id
+            ).execute()
 
         logger.info(
             "Shop routed to pending_review",
@@ -59,9 +55,9 @@ async def handle_publish_shop(
         )
     else:
         # Non-user sources (cafe_nomad, manual, etc.) go live immediately
-        db.table("shops").update(
-            {"processing_status": "live", "updated_at": now}
-        ).eq("id", shop_id).execute()
+        db.table("shops").update({"processing_status": "live", "updated_at": now}).eq(
+            "id", shop_id
+        ).execute()
 
         # Insert activity feed event only for user-submitted shops
         if submitted_by:
@@ -76,8 +72,8 @@ async def handle_publish_shop(
 
         # Update submission if exists
         if submission_id:
-            db.table("shop_submissions").update(
-                {"status": "live", "updated_at": now}
-            ).eq("id", submission_id).execute()
+            db.table("shop_submissions").update({"status": "live", "updated_at": now}).eq(
+                "id", submission_id
+            ).execute()
 
         logger.info("Shop published", shop_id=shop_id, shop_name=shop_name)

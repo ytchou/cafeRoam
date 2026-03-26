@@ -8,7 +8,9 @@ from workers.handlers.publish_shop import handle_publish_shop
 @pytest.fixture()
 def mock_db():
     db = MagicMock()
-    db.table.return_value.update.return_value.eq.return_value.execute.return_value = MagicMock(data=[{}])
+    db.table.return_value.update.return_value.eq.return_value.execute.return_value = MagicMock(
+        data=[{}]
+    )
     db.table.return_value.select.return_value.eq.return_value.single.return_value.execute.return_value = MagicMock(
         data={"name": "Test Café", "source": "cafe_nomad"}
     )
@@ -26,7 +28,9 @@ async def test_non_submission_shop_goes_live(mock_db):
 
     # Check that shops table was updated to 'live'
     update_calls = mock_db.table.return_value.update.call_args_list
-    statuses = [c.args[0].get("processing_status") for c in update_calls if "processing_status" in c.args[0]]
+    statuses = [
+        c.args[0].get("processing_status") for c in update_calls if "processing_status" in c.args[0]
+    ]
     assert "live" in statuses
 
 
@@ -43,7 +47,9 @@ async def test_user_submission_routes_to_pending_review(mock_db):
 
     # Check that shops table was updated to 'pending_review' (NOT 'live')
     update_calls = mock_db.table.return_value.update.call_args_list
-    statuses = [c.args[0].get("processing_status") for c in update_calls if "processing_status" in c.args[0]]
+    statuses = [
+        c.args[0].get("processing_status") for c in update_calls if "processing_status" in c.args[0]
+    ]
     assert "pending_review" in statuses
     assert "live" not in statuses
 

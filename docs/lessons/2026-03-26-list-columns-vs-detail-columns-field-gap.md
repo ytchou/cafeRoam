@@ -1,4 +1,5 @@
-# Missing field in _SHOP_LIST_COLUMNS when adding to _SHOP_DETAIL_COLUMNS
+# Missing field in \_SHOP_LIST_COLUMNS when adding to \_SHOP_DETAIL_COLUMNS
+
 **Date:** 2026-03-26
 **Context:** DEV-34 community_summary display feature
 **What happened:** `community_summary` was added only to `_SHOP_DETAIL_COLUMNS` because the tests

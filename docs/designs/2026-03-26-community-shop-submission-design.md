@@ -57,23 +57,23 @@ User sees status update on /submit page + activity feed (on approval)
 
 ### Backend Changes
 
-| File | Change |
-|------|--------|
-| `backend/workers/handlers/publish_shop.py` | Route `user_submission` source to `pending_review` instead of `live` |
-| `backend/api/submissions.py` | Add 5/day rate limit check (count today's submissions for user) |
-| `backend/api/admin.py` (new or extend) | `POST /admin/submissions/:id/approve` and `POST /admin/submissions/:id/reject` |
-| DB migration | Add `rejection_reason` column, expand status CHECK constraint, add `'pending_review'` status |
+| File                                       | Change                                                                                       |
+| ------------------------------------------ | -------------------------------------------------------------------------------------------- |
+| `backend/workers/handlers/publish_shop.py` | Route `user_submission` source to `pending_review` instead of `live`                         |
+| `backend/api/submissions.py`               | Add 5/day rate limit check (count today's submissions for user)                              |
+| `backend/api/admin.py` (new or extend)     | `POST /admin/submissions/:id/approve` and `POST /admin/submissions/:id/reject`               |
+| DB migration                               | Add `rejection_reason` column, expand status CHECK constraint, add `'pending_review'` status |
 
 ### Frontend Changes
 
-| File | Description |
-|------|-------------|
-| `app/(protected)/submit/page.tsx` | New page: Google Maps URL input form + user's submission history list |
-| `app/(admin)/admin/` section | New "Pending Submissions" section: table with shop name, address, tags, Google Maps link, approve/reject buttons, canned reason dropdown with auto-suggestions |
-| `app/api/submissions/` | Next.js proxy routes to backend |
-| `app/api/admin/submissions/` | Next.js proxy routes for admin endpoints |
-| Search results component | "Know a café we're missing?" card at bottom of results |
-| Search no-results state | "Can't find it? Submit a café" CTA |
+| File                              | Description                                                                                                                                                    |
+| --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `app/(protected)/submit/page.tsx` | New page: Google Maps URL input form + user's submission history list                                                                                          |
+| `app/(admin)/admin/` section      | New "Pending Submissions" section: table with shop name, address, tags, Google Maps link, approve/reject buttons, canned reason dropdown with auto-suggestions |
+| `app/api/submissions/`            | Next.js proxy routes to backend                                                                                                                                |
+| `app/api/admin/submissions/`      | Next.js proxy routes for admin endpoints                                                                                                                       |
+| Search results component          | "Know a café we're missing?" card at bottom of results                                                                                                         |
+| Search no-results state           | "Can't find it? Submit a café" CTA                                                                                                                             |
 
 ---
 
@@ -92,14 +92,14 @@ ALTER TABLE shop_submissions ADD COLUMN rejection_reason TEXT;
 
 ### Canned Rejection Reasons (frontend constant)
 
-| Key | Display |
-|-----|---------|
-| `permanently_closed` | Permanently closed |
-| `not_a_cafe` | Not a café |
-| `duplicate` | Duplicate of existing shop |
-| `outside_coverage` | Outside coverage area |
-| `invalid_url` | Invalid URL |
-| `other` | Other |
+| Key                  | Display                    |
+| -------------------- | -------------------------- |
+| `permanently_closed` | Permanently closed         |
+| `not_a_cafe`         | Not a café                 |
+| `duplicate`          | Duplicate of existing shop |
+| `outside_coverage`   | Outside coverage area      |
+| `invalid_url`        | Invalid URL                |
+| `other`              | Other                      |
 
 ### Auto-Suggestion Logic
 
@@ -115,6 +115,7 @@ ALTER TABLE shop_submissions ADD COLUMN rejection_reason TEXT;
 ### Existing (modified)
 
 **`POST /submissions`** — Add rate limit check:
+
 ```python
 # Count submissions by user today
 today_count = db.table("shop_submissions") \
@@ -129,18 +130,21 @@ if today_count.count >= 5:
 ### New
 
 **`POST /admin/submissions/:id/approve`**
+
 - Auth: admin role required
 - Sets shop `processing_status` = `live`
 - Updates submission `status` = `live`, `reviewed_at` = now
 - Emits activity feed event (same as current publish_shop behavior)
 
 **`POST /admin/submissions/:id/reject`**
+
 - Auth: admin role required
 - Body: `{ rejection_reason: string }`
 - Sets shop `processing_status` = `rejected`
 - Updates submission `status` = `rejected`, `rejection_reason`, `reviewed_at` = now
 
 **`GET /admin/submissions?status=pending_review`**
+
 - Auth: admin role required
 - Returns submissions with joined shop data (name, address, tags, processing_status, source)
 - Sorted by created_at ASC (oldest first)
@@ -149,14 +153,14 @@ if today_count.count >= 5:
 
 ## Error Handling
 
-| Scenario | Response |
-|----------|----------|
-| Rate limit exceeded (5/day) | 429 — "You can submit up to 5 cafés per day" |
-| Duplicate URL | 409 — existing handling |
-| Pipeline failure (scrape/enrich) | Submission status = `failed`, existing retry + dead letter |
-| Admin approve on already-live shop | Idempotent no-op |
-| Admin reject on already-rejected shop | Idempotent no-op |
-| Invalid Google Maps URL format | 422 — existing Pydantic validation |
+| Scenario                              | Response                                                   |
+| ------------------------------------- | ---------------------------------------------------------- |
+| Rate limit exceeded (5/day)           | 429 — "You can submit up to 5 cafés per day"               |
+| Duplicate URL                         | 409 — existing handling                                    |
+| Pipeline failure (scrape/enrich)      | Submission status = `failed`, existing retry + dead letter |
+| Admin approve on already-live shop    | Idempotent no-op                                           |
+| Admin reject on already-rejected shop | Idempotent no-op                                           |
+| Invalid Google Maps URL format        | 422 — existing Pydantic validation                         |
 
 ---
 
@@ -177,7 +181,9 @@ if today_count.count >= 5:
 ### Testing Classification
 
 **(a) New e2e journey?**
+
 - [ ] No — shop submission is a growth feature, not a critical user path at launch
 
 **(b) Coverage gate impact?**
+
 - [ ] No — does not touch critical-path services (search, check-in, lists). The `publish_shop` change is a minor conditional branch.

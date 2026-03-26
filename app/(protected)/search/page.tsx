@@ -78,7 +78,9 @@ function SearchPageContent() {
 
         {!isLoading && results.length > 0 && (
           <div className="mt-6 rounded-lg border border-gray-100 bg-white p-4 text-center">
-            <p className="mb-2 text-sm text-gray-500">知道我們沒收錄的咖啡廳嗎？</p>
+            <p className="mb-2 text-sm text-gray-500">
+              知道我們沒收錄的咖啡廳嗎？
+            </p>
             <Link
               href="/submit"
               className="text-terracotta-500 text-sm font-medium hover:underline"

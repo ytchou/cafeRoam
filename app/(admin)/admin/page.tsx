@@ -54,7 +54,10 @@ export default function AdminDashboard() {
     load();
   }, [fetchOverview]);
 
-  async function handleSubmissionAction(submissionId: string, action: 'approve' | 'reject') {
+  async function handleSubmissionAction(
+    submissionId: string,
+    action: 'approve' | 'reject'
+  ) {
     if (!tokenRef.current) return;
     if (action === 'reject') {
       setRejectionReason('not_a_cafe');
@@ -210,7 +213,9 @@ export default function AdminDashboard() {
                           <div className="mt-2 flex items-center gap-2">
                             <select
                               value={rejectionReason}
-                              onChange={(e) => setRejectionReason(e.target.value)}
+                              onChange={(e) =>
+                                setRejectionReason(e.target.value)
+                              }
                               className="rounded border px-2 py-1 text-xs"
                             >
                               {ADMIN_REJECTION_REASONS.map((r) => (

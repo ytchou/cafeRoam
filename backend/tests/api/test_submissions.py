@@ -38,8 +38,8 @@ def test_failed_enqueue_triggers_cleanup_and_returns_500():
     """If queue.enqueue raises, the shop should be deleted and submission marked failed."""
     mock_user_db = MagicMock()
     # Rate limit check: 0 active submissions today
-    mock_user_db.table.return_value.select.return_value.eq.return_value.gte.return_value.not_.in_.return_value.execute.return_value = (
-        MagicMock(data=[], count=0)
+    mock_user_db.table.return_value.select.return_value.eq.return_value.gte.return_value.not_.in_.return_value.execute.return_value = MagicMock(
+        data=[], count=0
     )
     # Duplicate check: URL not seen before
     mock_user_db.table.return_value.select.return_value.eq.return_value.execute.return_value = (
@@ -76,8 +76,8 @@ def test_failed_enqueue_triggers_cleanup_and_returns_500():
 def test_user_can_submit_a_valid_google_maps_url():
     mock_user_db = MagicMock()
     # Rate limit check: 0 active submissions today
-    mock_user_db.table.return_value.select.return_value.eq.return_value.gte.return_value.not_.in_.return_value.execute.return_value = (
-        MagicMock(data=[], count=0)
+    mock_user_db.table.return_value.select.return_value.eq.return_value.gte.return_value.not_.in_.return_value.execute.return_value = MagicMock(
+        data=[], count=0
     )
     # Duplicate check: URL not seen before
     mock_user_db.table.return_value.select.return_value.eq.return_value.execute.return_value = (
@@ -115,8 +115,8 @@ def test_user_is_rate_limited_after_5_active_submissions_in_a_day():
     """A user who has 5 non-rejected/failed submissions today gets a 429."""
     mock_user_db = MagicMock()
     # Rate limit check: 5 active submissions today
-    mock_user_db.table.return_value.select.return_value.eq.return_value.gte.return_value.not_.in_.return_value.execute.return_value = (
-        MagicMock(data=[], count=5)
+    mock_user_db.table.return_value.select.return_value.eq.return_value.gte.return_value.not_.in_.return_value.execute.return_value = MagicMock(
+        data=[], count=5
     )
 
     app.dependency_overrides[get_current_user] = lambda: {"id": _USER_ID}

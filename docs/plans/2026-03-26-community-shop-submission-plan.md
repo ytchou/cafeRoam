@@ -15,6 +15,7 @@
 **Tech Stack:** FastAPI (Python), Next.js 16, Supabase (Postgres), Vitest + Testing Library, pytest
 
 **Acceptance Criteria:**
+
 - [ ] An authenticated user can submit a Google Maps URL and see it appear in their submission history
 - [ ] A user who submits a 6th URL in the same day receives a 429 rate limit error
 - [ ] User-submitted shops land in `pending_review` after enrichment, not `live`
@@ -26,6 +27,7 @@
 ### Task 1: DB Migration — Expand `shop_submissions` Table
 
 **Files:**
+
 - Create: `supabase/migrations/YYYYMMDDHHMMSS_expand_shop_submissions.sql`
 - Modify: `backend/models/types.py:456-463` (add `rejection_reason` field to `ShopSubmission`)
 
@@ -77,6 +79,7 @@ git commit -m "feat(DEV-38): expand shop_submissions — pending_review status +
 ### Task 2: Rate Limit on Submissions API
 
 **Files:**
+
 - Modify: `backend/api/submissions.py:41-48`
 - Test: `backend/tests/api/test_submissions.py`
 
@@ -157,6 +160,7 @@ git commit -m "feat(DEV-38): add 5/day rate limit on shop submissions"
 ### Task 3: Route User Submissions to `pending_review` in `publish_shop`
 
 **Files:**
+
 - Modify: `backend/workers/handlers/publish_shop.py`
 - Test: `backend/tests/workers/handlers/test_publish_shop.py` (create if not exists)
 
@@ -352,6 +356,7 @@ git commit -m "feat(DEV-38): route user submissions to pending_review in publish
 The existing `POST /admin/pipeline/approve/{submission_id}` (in `backend/api/admin.py:113-156`) only updates the submission status. It needs to also: set the shop's `processing_status` to `live`, emit an activity feed event, and accept `pending_review` in the status allowlist.
 
 **Files:**
+
 - Modify: `backend/api/admin.py:113-156`
 - Test: `backend/tests/api/test_admin_submissions.py` (create)
 
@@ -538,6 +543,7 @@ git commit -m "feat(DEV-38): update admin approve to set shop live + emit activi
 The existing `POST /admin/pipeline/reject/{submission_id}` (in `backend/api/admin.py:159-201`) uses hardcoded "Rejected by admin", deletes the shop, and uses `failed` status. It needs to: accept a canned `rejection_reason` from the request body, use `rejected` status, and set the shop to `rejected` instead of deleting it.
 
 **Files:**
+
 - Modify: `backend/api/admin.py:159-201`
 - Test: `backend/tests/api/test_admin_submissions.py` (append)
 
@@ -722,6 +728,7 @@ git commit -m "feat(DEV-38): update admin reject with canned reasons, keep shop 
 The user needs to see their own submission history on the `/submit` page. Currently there's only `POST /submissions` — no GET. Add a GET endpoint and the Next.js proxy routes.
 
 **Files:**
+
 - Modify: `backend/api/submissions.py` (add GET handler)
 - Create: `app/api/submissions/route.ts`
 - Test: `backend/tests/api/test_submissions.py` (append)
@@ -812,6 +819,7 @@ git commit -m "feat(DEV-38): add GET /submissions for user history + Next.js pro
 ### Task 7: Frontend `/submit` Page
 
 **Files:**
+
 - Create: `app/(protected)/submit/page.tsx`
 - Create: `lib/constants/rejection-reasons.ts`
 - Test: `app/(protected)/submit/page.test.tsx`
@@ -883,9 +891,25 @@ describe('SubmitPage', () => {
 
   it('renders submission history with statuses', async () => {
     mockFetchWithAuth.mockResolvedValue([
-      { id: '1', google_maps_url: 'https://maps.google.com/?cid=1', status: 'live', created_at: '2026-03-26T00:00:00Z' },
-      { id: '2', google_maps_url: 'https://maps.google.com/?cid=2', status: 'pending_review', created_at: '2026-03-25T00:00:00Z' },
-      { id: '3', google_maps_url: 'https://maps.google.com/?cid=3', status: 'rejected', rejection_reason: 'permanently_closed', created_at: '2026-03-24T00:00:00Z' },
+      {
+        id: '1',
+        google_maps_url: 'https://maps.google.com/?cid=1',
+        status: 'live',
+        created_at: '2026-03-26T00:00:00Z',
+      },
+      {
+        id: '2',
+        google_maps_url: 'https://maps.google.com/?cid=2',
+        status: 'pending_review',
+        created_at: '2026-03-25T00:00:00Z',
+      },
+      {
+        id: '3',
+        google_maps_url: 'https://maps.google.com/?cid=3',
+        status: 'rejected',
+        rejection_reason: 'permanently_closed',
+        created_at: '2026-03-24T00:00:00Z',
+      },
     ]);
 
     render(<SubmitPage />);
@@ -940,7 +964,8 @@ function statusLabel(status: string): string {
 
 function statusColor(status: string): string {
   if (status === 'live') return 'bg-green-100 text-green-700';
-  if (status === 'rejected' || status === 'failed') return 'bg-red-100 text-red-700';
+  if (status === 'rejected' || status === 'failed')
+    return 'bg-red-100 text-red-700';
   return 'bg-yellow-100 text-yellow-700';
 }
 
@@ -1004,13 +1029,11 @@ export default function SubmitPage() {
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             placeholder="貼上 Google Maps 連結"
-            className="w-full rounded-lg border border-gray-200 px-4 py-3 text-sm focus:border-terracotta-400 focus:outline-none"
+            className="focus:border-terracotta-400 w-full rounded-lg border border-gray-200 px-4 py-3 text-sm focus:outline-none"
           />
           {error && <p className="text-sm text-red-600">{error}</p>}
           {success && (
-            <p className="text-sm text-green-600">
-              感謝推薦！我們正在處理中。
-            </p>
+            <p className="text-sm text-green-600">感謝推薦！我們正在處理中。</p>
           )}
           <button
             type="submit"
@@ -1045,7 +1068,8 @@ export default function SubmitPage() {
                   </div>
                   {sub.status === 'rejected' && sub.rejection_reason && (
                     <p className="mt-1 text-xs text-red-500">
-                      {REJECTION_REASONS[sub.rejection_reason] ?? sub.rejection_reason}
+                      {REJECTION_REASONS[sub.rejection_reason] ??
+                        sub.rejection_reason}
                     </p>
                   )}
                 </div>
@@ -1076,6 +1100,7 @@ git commit -m "feat(DEV-38): add /submit page with form + submission history"
 ### Task 8: Update Admin UI — Rejection Reason Dropdown + `pending_review` Status
 
 **Files:**
+
 - Modify: `app/(admin)/admin/page.tsx`
 - Test: `app/(admin)/admin/page.test.tsx` (create or append)
 
@@ -1153,12 +1178,14 @@ Expected: FAIL (admin page only shows approve/reject for `pending` and `processi
 In `app/(admin)/admin/page.tsx`, modify the condition for showing approve/reject buttons (line 161-162):
 
 Change:
+
 ```tsx
 {(sub.status === 'pending' ||
   sub.status === 'processing') && (
 ```
 
 To:
+
 ```tsx
 {(sub.status === 'pending' ||
   sub.status === 'processing' ||
@@ -1235,35 +1262,37 @@ async function confirmReject() {
 Add the rejection reason picker inline, inside the submissions table, after the existing action buttons:
 
 ```tsx
-{rejectingId === sub.id && (
-  <div className="mt-2 flex items-center gap-2">
-    <select
-      value={rejectionReason}
-      onChange={(e) => setRejectionReason(e.target.value)}
-      className="rounded border px-2 py-1 text-xs"
-    >
-      {REJECTION_REASONS.map((r) => (
-        <option key={r.value} value={r.value}>
-          {r.label}
-        </option>
-      ))}
-    </select>
-    <button
-      type="button"
-      onClick={confirmReject}
-      className="rounded bg-red-600 px-2 py-1 text-xs text-white"
-    >
-      Confirm
-    </button>
-    <button
-      type="button"
-      onClick={() => setRejectingId(null)}
-      className="text-xs text-gray-500"
-    >
-      Cancel
-    </button>
-  </div>
-)}
+{
+  rejectingId === sub.id && (
+    <div className="mt-2 flex items-center gap-2">
+      <select
+        value={rejectionReason}
+        onChange={(e) => setRejectionReason(e.target.value)}
+        className="rounded border px-2 py-1 text-xs"
+      >
+        {REJECTION_REASONS.map((r) => (
+          <option key={r.value} value={r.value}>
+            {r.label}
+          </option>
+        ))}
+      </select>
+      <button
+        type="button"
+        onClick={confirmReject}
+        className="rounded bg-red-600 px-2 py-1 text-xs text-white"
+      >
+        Confirm
+      </button>
+      <button
+        type="button"
+        onClick={() => setRejectingId(null)}
+        className="text-xs text-gray-500"
+      >
+        Cancel
+      </button>
+    </div>
+  );
+}
 ```
 
 Also update the status badge color mapping to handle `pending_review`:
@@ -1293,6 +1322,7 @@ git commit -m "feat(DEV-38): admin UI — rejection reason dropdown + pending_re
 ### Task 9: Search CTAs — "Know a Café We're Missing?"
 
 **Files:**
+
 - Modify: `app/(protected)/search/page.tsx`
 - Test: `app/(protected)/search/page.test.tsx` (modify existing)
 
@@ -1338,38 +1368,42 @@ Add `import Link from 'next/link';` at the top.
 In the no-results block (around line 49-56), add a CTA:
 
 ```tsx
-{!isLoading && !error && results.length === 0 && (
-  <div className="py-8 text-center">
-    <p className="mb-4 text-gray-500">
-      {query ? `沒有找到結果「${query}」` : '輸入關鍵字開始搜尋'}
-    </p>
-    <SuggestionChips onSelect={setQuery} />
-    {query && (
-      <Link
-        href="/submit"
-        className="text-terracotta-500 mt-4 inline-block text-sm hover:underline"
-      >
-        找不到？推薦咖啡廳給我們
-      </Link>
-    )}
-  </div>
-)}
+{
+  !isLoading && !error && results.length === 0 && (
+    <div className="py-8 text-center">
+      <p className="mb-4 text-gray-500">
+        {query ? `沒有找到結果「${query}」` : '輸入關鍵字開始搜尋'}
+      </p>
+      <SuggestionChips onSelect={setQuery} />
+      {query && (
+        <Link
+          href="/submit"
+          className="text-terracotta-500 mt-4 inline-block text-sm hover:underline"
+        >
+          找不到？推薦咖啡廳給我們
+        </Link>
+      )}
+    </div>
+  );
+}
 ```
 
 After the results list (around line 67, after the closing `</div>` of the results map), add:
 
 ```tsx
-{!isLoading && results.length > 0 && (
-  <div className="mt-6 rounded-lg border border-gray-100 bg-white p-4 text-center">
-    <p className="mb-2 text-sm text-gray-500">知道我們沒收錄的咖啡廳嗎？</p>
-    <Link
-      href="/submit"
-      className="text-terracotta-500 text-sm font-medium hover:underline"
-    >
-      推薦咖啡廳
-    </Link>
-  </div>
-)}
+{
+  !isLoading && results.length > 0 && (
+    <div className="mt-6 rounded-lg border border-gray-100 bg-white p-4 text-center">
+      <p className="mb-2 text-sm text-gray-500">知道我們沒收錄的咖啡廳嗎？</p>
+      <Link
+        href="/submit"
+        className="text-terracotta-500 text-sm font-medium hover:underline"
+      >
+        推薦咖啡廳
+      </Link>
+    </div>
+  );
+}
 ```
 
 **Step 4: Run test to verify it passes**
@@ -1465,23 +1499,29 @@ graph TD
 ```
 
 **Wave 1** (sequential — foundation):
+
 - Task 1: DB Migration — expand `shop_submissions` table
 
 **Wave 2** (parallel — all depend on Wave 1 only):
+
 - Task 2: Rate limit on submissions API ← Task 1
 - Task 3: Route user submissions to `pending_review` ← Task 1
 - Task 4: Update admin approve endpoint ← Task 1
 - Task 5: Update admin reject endpoint ← Task 1
 
 **Wave 3** (parallel — depends on Wave 2):
+
 - Task 6: GET /submissions + Next.js proxy ← Tasks 2, 3
 - Task 8: Admin UI updates ← Tasks 4, 5
 
 **Wave 4** (sequential — depends on Wave 3):
+
 - Task 7: Frontend `/submit` page ← Task 6
 
 **Wave 5** (sequential — depends on Wave 4):
+
 - Task 9: Search CTAs ← Task 7
 
 **Wave 6** (sequential — final):
+
 - Task 10: Integration verification ← Tasks 8, 9

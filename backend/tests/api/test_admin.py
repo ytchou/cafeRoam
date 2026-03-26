@@ -301,7 +301,16 @@ class TestAdminApproveSubmission:
             mock_db = MagicMock()
             # First call: select to fetch submission status + shop_id
             mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value = (
-                MagicMock(data=[{"id": _SUB_1_ID, "status": "pending", "shop_id": _SHOP_1_ID, "submitted_by": None}])
+                MagicMock(
+                    data=[
+                        {
+                            "id": _SUB_1_ID,
+                            "status": "pending",
+                            "shop_id": _SHOP_1_ID,
+                            "submitted_by": None,
+                        }
+                    ]
+                )
             )
             # Second call: submission conditional update (TOCTOU guard via .in_())
             mock_db.table.return_value.update.return_value.eq.return_value.in_.return_value.execute.return_value = MagicMock(

@@ -22,8 +22,17 @@ def test_approve_sets_shop_live_and_emits_feed():
     try:
         mock_db = MagicMock()
         # Fetch submission: pending_review with shop_id and submitted_by
-        mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(
-            data=[{"id": "sub-1", "status": "pending_review", "shop_id": "shop-1", "submitted_by": "user-1"}]
+        mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value = (
+            MagicMock(
+                data=[
+                    {
+                        "id": "sub-1",
+                        "status": "pending_review",
+                        "shop_id": "shop-1",
+                        "submitted_by": "user-1",
+                    }
+                ]
+            )
         )
         # Conditional update succeeds
         mock_db.table.return_value.update.return_value.eq.return_value.in_.return_value.execute.return_value = MagicMock(
@@ -53,8 +62,17 @@ def test_approve_accepts_pending_review_status():
     _override_admin()
     try:
         mock_db = MagicMock()
-        mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(
-            data=[{"id": "sub-1", "status": "pending_review", "shop_id": "shop-1", "submitted_by": "user-1"}]
+        mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value = (
+            MagicMock(
+                data=[
+                    {
+                        "id": "sub-1",
+                        "status": "pending_review",
+                        "shop_id": "shop-1",
+                        "submitted_by": "user-1",
+                    }
+                ]
+            )
         )
         mock_db.table.return_value.update.return_value.eq.return_value.in_.return_value.execute.return_value = MagicMock(
             data=[{"id": "sub-1"}]
@@ -77,10 +95,12 @@ def test_reject_stores_canned_reason():
     _override_admin()
     try:
         mock_db = MagicMock()
-        mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(
-            data=[{"id": "sub-1", "status": "pending_review", "shop_id": "shop-1"}]
+        mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value = (
+            MagicMock(data=[{"id": "sub-1", "status": "pending_review", "shop_id": "shop-1"}])
         )
-        mock_db.table.return_value.update.return_value.eq.return_value.execute.return_value = MagicMock(data=[{}])
+        mock_db.table.return_value.update.return_value.eq.return_value.execute.return_value = (
+            MagicMock(data=[{}])
+        )
         mock_db.rpc.return_value.execute.return_value = MagicMock(data=[])
 
         with patch("api.admin.get_service_role_client", return_value=mock_db):
@@ -92,7 +112,11 @@ def test_reject_stores_canned_reason():
         assert response.status_code == 200
         # Verify update was called with rejection_reason
         update_calls = mock_db.table.return_value.update.call_args_list
-        reasons = [c.args[0].get("rejection_reason") for c in update_calls if "rejection_reason" in c.args[0]]
+        reasons = [
+            c.args[0].get("rejection_reason")
+            for c in update_calls
+            if "rejection_reason" in c.args[0]
+        ]
         assert "permanently_closed" in reasons
     finally:
         _clear()
@@ -103,10 +127,12 @@ def test_reject_sets_shop_rejected_not_deleted():
     _override_admin()
     try:
         mock_db = MagicMock()
-        mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(
-            data=[{"id": "sub-1", "status": "pending_review", "shop_id": "shop-1"}]
+        mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value = (
+            MagicMock(data=[{"id": "sub-1", "status": "pending_review", "shop_id": "shop-1"}])
         )
-        mock_db.table.return_value.update.return_value.eq.return_value.execute.return_value = MagicMock(data=[{}])
+        mock_db.table.return_value.update.return_value.eq.return_value.execute.return_value = (
+            MagicMock(data=[{}])
+        )
         mock_db.rpc.return_value.execute.return_value = MagicMock(data=[])
 
         with patch("api.admin.get_service_role_client", return_value=mock_db):
@@ -130,10 +156,12 @@ def test_reject_accepts_pending_review_status():
     _override_admin()
     try:
         mock_db = MagicMock()
-        mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(
-            data=[{"id": "sub-1", "status": "pending_review", "shop_id": "shop-1"}]
+        mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value = (
+            MagicMock(data=[{"id": "sub-1", "status": "pending_review", "shop_id": "shop-1"}])
         )
-        mock_db.table.return_value.update.return_value.eq.return_value.execute.return_value = MagicMock(data=[{}])
+        mock_db.table.return_value.update.return_value.eq.return_value.execute.return_value = (
+            MagicMock(data=[{}])
+        )
         mock_db.rpc.return_value.execute.return_value = MagicMock(data=[])
 
         with patch("api.admin.get_service_role_client", return_value=mock_db):

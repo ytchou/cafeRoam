@@ -43,9 +43,25 @@ describe('SubmitPage', () => {
 
   it('renders submission history with statuses', async () => {
     mockFetchWithAuth.mockResolvedValue([
-      { id: '1', google_maps_url: 'https://maps.google.com/?cid=1', status: 'live', created_at: '2026-03-26T00:00:00Z' },
-      { id: '2', google_maps_url: 'https://maps.google.com/?cid=2', status: 'pending_review', created_at: '2026-03-25T00:00:00Z' },
-      { id: '3', google_maps_url: 'https://maps.google.com/?cid=3', status: 'rejected', rejection_reason: 'permanently_closed', created_at: '2026-03-24T00:00:00Z' },
+      {
+        id: '1',
+        google_maps_url: 'https://maps.google.com/?cid=1',
+        status: 'live',
+        created_at: '2026-03-26T00:00:00Z',
+      },
+      {
+        id: '2',
+        google_maps_url: 'https://maps.google.com/?cid=2',
+        status: 'pending_review',
+        created_at: '2026-03-25T00:00:00Z',
+      },
+      {
+        id: '3',
+        google_maps_url: 'https://maps.google.com/?cid=3',
+        status: 'rejected',
+        rejection_reason: 'permanently_closed',
+        created_at: '2026-03-24T00:00:00Z',
+      },
     ]);
 
     render(<SubmitPage />);
