@@ -1,4 +1,5 @@
 import re
+from datetime import UTC, datetime, time
 from typing import Any, cast
 
 import structlog
@@ -57,6 +58,21 @@ async def submit_shop(
     if existing.data:
         raise HTTPException(status_code=409, detail="This URL has already been submitted")
     # Note: unique constraint on google_maps_url handles the TOCTOU case
+
+    # Rate limit: 5 submissions per day per user
+    today_start = datetime.combine(datetime.now(UTC).date(), time.min).isoformat()
+    rate_check = (
+        db.table("shop_submissions")
+        .select("id", count="exact")
+        .eq("submitted_by", user_id)
+        .gte("created_at", today_start)
+        .execute()
+    )
+    if (rate_check.count or 0) >= 5:
+        raise HTTPException(
+            status_code=429,
+            detail="You can submit up to 5 cafés per day",
+        )
 
     # Create submission record (via user's RLS context)
     # Unique constraint on google_maps_url catches any TOCTOU race

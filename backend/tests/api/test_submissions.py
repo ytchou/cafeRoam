@@ -101,3 +101,28 @@ def test_submit_shop_success():
         assert "submission_id" in data
     finally:
         app.dependency_overrides.clear()
+
+
+def test_submit_shop_rate_limited_at_5_per_day():
+    """A user who has already submitted 5 shops today gets a 429."""
+    mock_user_db = MagicMock()
+    # Duplicate check returns no existing submission
+    mock_user_db.table.return_value.select.return_value.eq.return_value.execute.return_value = (
+        MagicMock(data=[])
+    )
+    # Rate limit check: 5 submissions today
+    mock_user_db.table.return_value.select.return_value.eq.return_value.gte.return_value.execute.return_value = (
+        MagicMock(data=[], count=5)
+    )
+
+    app.dependency_overrides[get_current_user] = lambda: {"id": "user-1"}
+    app.dependency_overrides[get_user_db] = lambda: mock_user_db
+    try:
+        response = client.post(
+            "/submissions",
+            json={"google_maps_url": "https://maps.google.com/?cid=999"},
+        )
+        assert response.status_code == 429
+        assert "5" in response.json()["detail"]
+    finally:
+        app.dependency_overrides.clear()
