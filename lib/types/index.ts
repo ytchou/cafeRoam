@@ -20,6 +20,7 @@ export interface Shop {
   createdAt: string;
   updatedAt?: string;
   slug?: string;
+  communitySummary?: string | null;
   modeWork?: number | null;
   modeRest?: number | null;
   modeSocial?: number | null;
