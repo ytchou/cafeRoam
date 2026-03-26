@@ -38,6 +38,10 @@ def test_submit_shop_cleans_up_on_enqueue_failure():
     mock_user_db.table.return_value.select.return_value.eq.return_value.execute.return_value = (
         MagicMock(data=[])
     )
+    # Rate limit check: 0 submissions today
+    mock_user_db.table.return_value.select.return_value.eq.return_value.gte.return_value.execute.return_value = (
+        MagicMock(data=[], count=0)
+    )
     mock_user_db.table.return_value.insert.return_value.execute.return_value = MagicMock(
         data=[{"id": "sub-1"}]
     )
@@ -73,6 +77,10 @@ def test_submit_shop_success():
     # Duplicate check returns no existing submission
     mock_user_db.table.return_value.select.return_value.eq.return_value.execute.return_value = (
         MagicMock(data=[])
+    )
+    # Rate limit check: 0 submissions today
+    mock_user_db.table.return_value.select.return_value.eq.return_value.gte.return_value.execute.return_value = (
+        MagicMock(data=[], count=0)
     )
     # Submission insert
     mock_user_db.table.return_value.insert.return_value.execute.return_value = MagicMock(
