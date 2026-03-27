@@ -29,7 +29,8 @@ _SHOP_LIST_COLUMNS = (
     "rating, review_count, description, processing_status, "
     "mode_work, mode_rest, mode_social, "
     "community_summary, "
-    "created_at"
+    "created_at, "
+    "shop_claims(status)"
 )
 
 _SHOP_DETAIL_COLUMNS = (
@@ -56,8 +57,11 @@ async def list_shops(
     result = []
     for row in rows:
         photo_urls = [p["url"] for p in (row.pop("shop_photos", None) or [])]
+        raw_claims = row.pop("shop_claims", None) or []
+        claim_status = first(raw_claims, "shop_claims")["status"] if raw_claims else None
         camel = {to_camel(k): v for k, v in row.items()}
         camel["photoUrls"] = photo_urls
+        camel["claimStatus"] = claim_status
         result.append(camel)
     return result
 

@@ -1,6 +1,7 @@
 'use client';
 import Image from 'next/image';
 import { ChevronRight } from 'lucide-react';
+import { VerifiedBadge } from './verified-badge';
 
 interface CompactShop {
   id: string;
@@ -13,6 +14,7 @@ interface CompactShop {
   taxonomyTags?: Array<{ id: string; label: string; labelZh: string }>;
   community_summary?: string | null;
   communitySummary?: string | null;
+  claimStatus?: string | null;
 }
 
 interface ShopCardCompactProps {
@@ -76,9 +78,12 @@ export function ShopCardCompact({
         </div>
       )}
       <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <span className="text-foreground truncate font-[family-name:var(--font-body)] text-[15px] font-semibold">
-          {shop.name}
-        </span>
+        <div className="flex items-center gap-1">
+          <span className="text-foreground truncate font-[family-name:var(--font-body)] text-[15px] font-semibold">
+            {shop.name}
+          </span>
+          {shop.claimStatus === 'approved' && <VerifiedBadge size="sm" />}
+        </div>
         <span className="text-text-secondary font-[family-name:var(--font-body)] text-[13px]">
           {formatMeta(shop)}
         </span>

@@ -2,12 +2,14 @@
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import type { Shop } from '@/lib/types';
+import { VerifiedBadge } from './verified-badge';
 
 type ShopCardData = Pick<Shop, 'id' | 'name' | 'rating'> & {
   slug?: string;
   mrt?: string | null;
   photoUrls?: string[];
   photo_urls?: string[];
+  claimStatus?: string | null;
 };
 
 interface ShopCardProps {
@@ -66,6 +68,7 @@ export function ShopCard({ shop, searchQuery }: ShopCardProps) {
               </span>
             </>
           )}
+          {shop.claimStatus === 'approved' && <VerifiedBadge size="sm" />}
         </div>
       </div>
     </article>
