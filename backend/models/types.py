@@ -51,6 +51,34 @@ class Shop(CamelModel):
     community_summary: str | None = None
 
 
+ClaimRole = Literal["owner", "manager", "staff"]
+ClaimStatus = Literal["pending", "approved", "rejected"]
+
+
+class ShopClaimResponse(CamelModel):
+    id: str
+    shop_id: str
+    user_id: str
+    status: ClaimStatus
+    contact_name: str
+    contact_email: str
+    role: ClaimRole
+    created_at: datetime
+
+
+class SubmitClaimRequest(CamelModel):
+    shop_id: str
+    contact_name: str
+    contact_email: str
+    role: ClaimRole
+    proof_photo_path: str  # Supabase Storage path after upload
+
+
+class ClaimUploadUrlResponse(CamelModel):
+    upload_url: str
+    storage_path: str
+
+
 class User(CamelModel):
     id: str
     email: str

@@ -6,6 +6,41 @@
 
 ---
 
+## Shop Claim Flow + Verified Badge (DEV-45)
+
+> **Design Doc:** [docs/designs/2026-03-26-shop-claim-flow-design.md](docs/designs/2026-03-26-shop-claim-flow-design.md)
+> **Plan:** [docs/plans/2026-03-26-shop-claim-flow-plan.md](docs/plans/2026-03-26-shop-claim-flow-plan.md)
+
+**Chunk 1 — DB + Backend Types (Wave 1):**
+
+- [x] Task 1: user_roles migration (paid_user→member, add shop_owner)
+- [x] Task 2: shop_claims table migration + Storage bucket
+- [x] Task 3: Audit and replace paid_user in backend code
+- [x] Task 4: Add Claim Pydantic types to models/types.py
+
+**Chunk 2 — Backend Services + API (Waves 2–4):**
+
+- [x] Task 5: ClaimsService with TDD (submit, approve, reject)
+- [x] Task 6: Add claimStatus to GET /shops/:id response
+- [x] Task 7: Claims API router (upload-url, submit, me)
+- [x] Task 8: Admin Claims API (list, proof-url, approve, reject)
+- [x] Task 9: Register routers in main.py
+
+**Chunk 3 — Frontend Proxies + Components (Waves 5–7):**
+
+- [x] Task 10: Next.js proxy routes for claims
+- [x] Task 11: Next.js proxy routes for admin claims
+- [x] Task 12: VerifiedBadge component
+- [x] Task 13: Update ClaimBanner + ShopData type
+- [x] Task 14: Claim form page (/shops/[shopId]/claim)
+- [x] Task 15: Admin Claims tab in /admin panel
+
+**Chunk 4 — E2E (Wave 8):**
+
+- [x] Task 16: E2E claim flow journey (J15)
+
+---
+
 ## Pre-Build: Validate Fatal Assumptions (Week 0)
 
 Must complete BEFORE starting Phase 1. These are FATAL risks from VALIDATION.md — if they fail, stop and reassess before writing product code.

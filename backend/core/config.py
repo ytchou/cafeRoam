@@ -24,6 +24,7 @@ class Settings(BaseSettings):
     email_provider: str = "resend"
     resend_api_key: str = ""
     email_from: str = "CafeRoam <noreply@caferoam.tw>"
+    admin_email: str = "hello@caferoam.tw"
 
     # Analytics
     analytics_provider: str = "posthog"
@@ -44,6 +45,7 @@ class Settings(BaseSettings):
     # App
     environment: str = "development"
     log_level: str = "INFO"
+    site_url: str = "http://localhost:3000"
 
     # Admin
     admin_user_ids: list[str] = []

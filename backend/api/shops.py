@@ -29,7 +29,8 @@ _SHOP_LIST_COLUMNS = (
     "rating, review_count, description, processing_status, "
     "mode_work, mode_rest, mode_social, "
     "community_summary, "
-    "created_at"
+    "created_at, "
+    "shop_claims(status)"
 )
 
 _SHOP_DETAIL_COLUMNS = (
@@ -56,8 +57,11 @@ async def list_shops(
     result = []
     for row in rows:
         photo_urls = [p["url"] for p in (row.pop("shop_photos", None) or [])]
+        raw_claims = row.pop("shop_claims", None) or []
+        claim_status = first(raw_claims, "shop_claims")["status"] if raw_claims else None
         camel = {to_camel(k): v for k, v in row.items()}
         camel["photoUrls"] = photo_urls
+        camel["claimStatus"] = claim_status
         result.append(camel)
     return result
 
@@ -70,7 +74,8 @@ async def get_shop(shop_id: str) -> Any:
         db.table("shops")
         .select(
             f"{_SHOP_DETAIL_COLUMNS}, shop_photos(url), "
-            "shop_tags(tag_id, taxonomy_tags(id, dimension, label, label_zh))"
+            "shop_tags(tag_id, taxonomy_tags(id, dimension, label, label_zh)), "
+            "shop_claims(status)"
         )
         .eq("id", shop_id)
         .limit(1)
@@ -84,6 +89,8 @@ async def get_shop(shop_id: str) -> Any:
 
     photo_urls = [row["url"] for row in (shop.pop("shop_photos", None) or [])]
     raw_tags = shop.pop("shop_tags", None) or []
+    raw_claims = shop.pop("shop_claims", None) or []
+    claim_status = first(raw_claims, "shop_claims")["status"] if raw_claims else None
     taxonomy_tags = [
         TaxonomyTag(**row["taxonomy_tags"]).model_dump(by_alias=True)
         for row in raw_tags
@@ -99,6 +106,7 @@ async def get_shop(shop_id: str) -> Any:
     response_data["photoUrls"] = photo_urls
     response_data["modeScores"] = mode_scores
     response_data["taxonomyTags"] = taxonomy_tags
+    response_data["claimStatus"] = claim_status
     return response_data
 
 

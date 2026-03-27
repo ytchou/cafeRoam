@@ -1,6 +1,7 @@
 'use client';
 import Image from 'next/image';
 import { Star, ChevronRight } from 'lucide-react';
+import { VerifiedBadge } from './verified-badge';
 
 interface GridShop {
   id: string;
@@ -13,6 +14,7 @@ interface GridShop {
   distance_m?: number | null;
   is_open?: boolean | null;
   taxonomyTags?: Array<{ id: string; label: string; labelZh: string }>;
+  claimStatus?: string | null;
 }
 
 interface ShopCardGridProps {
@@ -47,9 +49,12 @@ export function ShopCardGrid({ shop, onClick }: ShopCardGridProps) {
       )}
       <div className="flex flex-col gap-1 p-3">
         <div className="flex items-center justify-between">
-          <span className="truncate font-[family-name:var(--font-body)] text-sm font-semibold text-[var(--foreground)]">
-            {shop.name}
-          </span>
+          <div className="flex min-w-0 items-center gap-1">
+            <span className="truncate font-[family-name:var(--font-body)] text-sm font-semibold text-[var(--foreground)]">
+              {shop.name}
+            </span>
+            {shop.claimStatus === 'approved' && <VerifiedBadge size="sm" />}
+          </div>
           <ChevronRight className="h-4 w-4 shrink-0 text-[var(--text-tertiary)]" />
         </div>
         <div className="flex items-center gap-1 text-xs text-[var(--muted-foreground)]">
