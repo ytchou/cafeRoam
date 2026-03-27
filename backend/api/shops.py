@@ -75,7 +75,8 @@ async def get_shop(shop_id: str) -> Any:
         .select(
             f"{_SHOP_DETAIL_COLUMNS}, shop_photos(url), "
             "shop_tags(tag_id, taxonomy_tags(id, dimension, label, label_zh)), "
-            "shop_claims(status)"
+            "shop_claims(status), "
+            "shop_content(id, title, body, photo_url, is_published, updated_at, content_type)"
         )
         .eq("id", shop_id)
         .limit(1)
@@ -90,6 +91,7 @@ async def get_shop(shop_id: str) -> Any:
     photo_urls = [row["url"] for row in (shop.pop("shop_photos", None) or [])]
     raw_tags = shop.pop("shop_tags", None) or []
     raw_claims = shop.pop("shop_claims", None) or []
+    raw_content = shop.pop("shop_content", None) or []
     claim_status = first(raw_claims, "shop_claims")["status"] if raw_claims else None
     taxonomy_tags = [
         TaxonomyTag(**row["taxonomy_tags"]).model_dump(by_alias=True)
@@ -102,11 +104,18 @@ async def get_shop(shop_id: str) -> Any:
         "social": shop.pop("mode_social", None),
     }
 
+    owner_story = None
+    for row in raw_content:
+        if row.get("content_type") == "story" and row.get("is_published"):
+            owner_story = {to_camel(k): v for k, v in row.items() if k != "content_type"}
+            break
+
     response_data: dict[str, Any] = {to_camel(k): v for k, v in shop.items()}
     response_data["photoUrls"] = photo_urls
     response_data["modeScores"] = mode_scores
     response_data["taxonomyTags"] = taxonomy_tags
     response_data["claimStatus"] = claim_status
+    response_data["ownerStory"] = owner_story
     return response_data
 
 

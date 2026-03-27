@@ -26,7 +26,7 @@
 - [x] Task 6: Service — stats + analytics (PostHog HogQL)
 - [x] Task 7: Service — story CRUD + shop info + tags
 - [x] Task 8: Service — reviews + responses
-- [ ] Task 10: Extend `/shops/{id}` with ownerStory
+- [x] Task 10: Extend `/shops/{id}` with ownerStory
 
 **Chunk 3 — API + Proxies (Wave 3):**
 
