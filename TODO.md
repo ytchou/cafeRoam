@@ -21,7 +21,7 @@
 - [x] Task 3: Write failing test for onCardClick on MapDesktopLayout
 - [x] Task 4: Implement onCardClick on MapDesktopLayout
 - [x] Task 5: Add onCardClick to ShopCarousel + MapMobileLayout
-- [ ] Task 6: Wire onCardClick in page.tsx
+- [x] Task 6: Wire onCardClick in page.tsx
 
 ---
 
