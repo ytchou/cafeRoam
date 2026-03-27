@@ -2,12 +2,14 @@ import asyncio
 from typing import Any, Literal
 
 import structlog
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 
 from api.deps import get_claims_service, require_admin
 from core.db import first
 from db.supabase_client import get_service_role_client
 from models.types import CamelModel
+from providers.analytics import get_analytics_provider
+from providers.analytics.interface import AnalyticsProvider
 from services.claims_service import ClaimsService
 
 logger = structlog.get_logger()
@@ -54,10 +56,18 @@ async def get_proof_url(
 @router.post("/{claim_id}/approve")
 async def approve_claim(
     claim_id: str,
+    background_tasks: BackgroundTasks,
     user: dict[str, Any] = Depends(require_admin),  # noqa: B008
     svc: ClaimsService = Depends(get_claims_service),  # noqa: B008
+    analytics: AnalyticsProvider = Depends(get_analytics_provider),  # noqa: B008
 ) -> dict[str, str]:
     await svc.approve_claim(claim_id=claim_id, admin_user_id=user["id"])
+    background_tasks.add_task(
+        analytics.track,
+        "claim_approved",
+        {"claim_id": claim_id},
+        distinct_id=user["id"],
+    )
     return {"message": "Claim approved"}
 
 
@@ -65,12 +75,20 @@ async def approve_claim(
 async def reject_claim(
     claim_id: str,
     body: RejectClaimBody,
+    background_tasks: BackgroundTasks,
     user: dict[str, Any] = Depends(require_admin),  # noqa: B008
     svc: ClaimsService = Depends(get_claims_service),  # noqa: B008
+    analytics: AnalyticsProvider = Depends(get_analytics_provider),  # noqa: B008
 ) -> dict[str, str]:
     await svc.reject_claim(
         claim_id=claim_id,
         reason=body.rejection_reason,
         admin_user_id=user["id"],
+    )
+    background_tasks.add_task(
+        analytics.track,
+        "claim_rejected",
+        {"claim_id": claim_id, "reason": body.rejection_reason},
+        distinct_id=user["id"],
     )
     return {"message": "Claim rejected"}

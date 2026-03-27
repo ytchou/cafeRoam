@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { useAnalytics } from '@/lib/posthog/use-analytics';
 
 type ClaimRole = 'owner' | 'manager' | 'staff';
 
@@ -20,14 +21,17 @@ export default function ClaimPage() {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { capture } = useAnalytics();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) {
         router.replace(`/auth/login?returnTo=/shops/${shopId}/claim`);
+        return;
       }
+      capture('claim_form_viewed', { shop_id: shopId });
     });
-  }, [shopId, router, supabase]);
+  }, [shopId, router, supabase, capture]);
 
   const isValid = name.trim() && email.trim() && proofFile;
 
@@ -84,6 +88,7 @@ export default function ClaimPage() {
         throw new Error(body.detail || '送出失敗，請稍後再試');
       }
 
+      capture('claim_form_submitted', { shop_id: shopId, role });
       setSubmitted(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : '送出失敗');
