@@ -79,6 +79,13 @@ import {
   POST as shopFollowPOST,
 } from '../shops/[shopId]/follow/route';
 import { GET as shopFollowerCountGET } from '../shops/[shopId]/followers/count/route';
+import { POST as claimsPOST } from '../claims/route';
+import { GET as claimsMeGET } from '../claims/me/route';
+import { GET as claimsUploadUrlGET } from '../claims/upload-url/route';
+import { GET as adminClaimsGET } from '../admin/claims/route';
+import { POST as adminClaimApprovePOST } from '../admin/claims/[id]/approve/route';
+import { POST as adminClaimRejectPOST } from '../admin/claims/[id]/reject/route';
+import { GET as adminClaimProofUrlGET } from '../admin/claims/[id]/proof-url/route';
 
 const mockProxy = vi.mocked(proxyToBackend);
 const mockResponse = new Response('{}', { status: 200 });
@@ -706,5 +713,78 @@ describe('admin/shops/import/google-takeout route', () => {
 
     const res = await importGoogleTakeoutPOST(req);
     expect(res.status).toBe(413);
+  });
+});
+
+describe('claims route', () => {
+  it('POST submits a shop claim and forwards to backend', async () => {
+    await claimsPOST(makeRequest());
+    expect(mockProxy).toHaveBeenCalledWith(expect.any(NextRequest), '/claims');
+  });
+});
+
+describe('claims/me route', () => {
+  it('GET returns the current user claim status from backend', async () => {
+    await claimsMeGET(makeRequest());
+    expect(mockProxy).toHaveBeenCalledWith(
+      expect.any(NextRequest),
+      '/claims/me'
+    );
+  });
+});
+
+describe('claims/upload-url route', () => {
+  it('GET returns a signed upload URL for proof photo from backend', async () => {
+    await claimsUploadUrlGET(makeRequest());
+    expect(mockProxy).toHaveBeenCalledWith(
+      expect.any(NextRequest),
+      '/claims/upload-url'
+    );
+  });
+});
+
+describe('admin/claims route', () => {
+  it('GET returns list of pending claims for admin review', async () => {
+    await adminClaimsGET(makeRequest());
+    expect(mockProxy).toHaveBeenCalledWith(
+      expect.any(NextRequest),
+      '/admin/claims'
+    );
+  });
+});
+
+describe('admin/claims/[id]/approve route', () => {
+  it('POST approves the claim and forwards to backend', async () => {
+    await adminClaimApprovePOST(makeRequest(), {
+      params: Promise.resolve({ id: 'claim-1' }),
+    });
+    expect(mockProxy).toHaveBeenCalledWith(
+      expect.any(NextRequest),
+      '/admin/claims/claim-1/approve'
+    );
+  });
+});
+
+describe('admin/claims/[id]/reject route', () => {
+  it('POST rejects the claim with a reason and forwards to backend', async () => {
+    await adminClaimRejectPOST(makeRequest(), {
+      params: Promise.resolve({ id: 'claim-1' }),
+    });
+    expect(mockProxy).toHaveBeenCalledWith(
+      expect.any(NextRequest),
+      '/admin/claims/claim-1/reject'
+    );
+  });
+});
+
+describe('admin/claims/[id]/proof-url route', () => {
+  it('GET returns a signed proof photo URL for the given claim', async () => {
+    await adminClaimProofUrlGET(makeRequest(), {
+      params: Promise.resolve({ id: 'claim-1' }),
+    });
+    expect(mockProxy).toHaveBeenCalledWith(
+      expect.any(NextRequest),
+      '/admin/claims/claim-1/proof-url'
+    );
   });
 });
