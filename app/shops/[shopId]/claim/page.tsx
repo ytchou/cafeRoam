@@ -1,13 +1,18 @@
 'use client';
 
-import { useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 
 type ClaimRole = 'owner' | 'manager' | 'staff';
 
+const MAX_PROOF_SIZE = 10 * 1024 * 1024; // 10 MB
+
 export default function ClaimPage() {
   const { shopId } = useParams<{ shopId: string }>();
+  const router = useRouter();
+  const supabase = useMemo(() => createClient(), []);
+
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [role, setRole] = useState<ClaimRole>('owner');
@@ -16,9 +21,26 @@ export default function ClaimPage() {
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const supabase = createClient();
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) {
+        router.replace(`/auth/login?returnTo=/shops/${shopId}/claim`);
+      }
+    });
+  }, [shopId, router, supabase]);
 
   const isValid = name.trim() && email.trim() && proofFile;
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0] ?? null;
+    if (file && file.size > MAX_PROOF_SIZE) {
+      setError('照片檔案不能超過 10MB');
+      e.target.value = '';
+      return;
+    }
+    setError(null);
+    setProofFile(file);
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -29,9 +51,11 @@ export default function ClaimPage() {
     try {
       const session = (await supabase.auth.getSession()).data.session;
       const token = session?.access_token;
-      const urlRes = await fetch(`/api/claims/upload-url?shop_id=${shopId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const mimeType = encodeURIComponent(proofFile.type || 'image/jpeg');
+      const urlRes = await fetch(
+        `/api/claims/upload-url?shop_id=${shopId}&mime_type=${mimeType}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
       if (!urlRes.ok) throw new Error('Failed to get upload URL');
       const { uploadUrl, storagePath } = await urlRes.json();
 
@@ -144,7 +168,7 @@ export default function ClaimPage() {
             id="claim-proof"
             type="file"
             accept="image/*"
-            onChange={(e) => setProofFile(e.target.files?.[0] ?? null)}
+            onChange={handleFileChange}
             required
             className="w-full text-sm"
           />

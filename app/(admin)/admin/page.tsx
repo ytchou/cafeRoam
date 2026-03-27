@@ -40,19 +40,30 @@ export default function AdminDashboard() {
   const [rejectionReason, setRejectionReason] = useState<string>('not_a_cafe');
   const [claims, setClaims] = useState<Claim[]>([]);
   const [claimsLoading, setClaimsLoading] = useState(false);
+  const [claimsError, setClaimsError] = useState<string | null>(null);
   const [claimRejectingId, setClaimRejectingId] = useState<string | null>(null);
   const [claimRejectionReason, setClaimRejectionReason] = useState<string>('invalid_proof');
+  const [approvingClaimId, setApprovingClaimId] = useState<string | null>(null);
   const tokenRef = useRef<string | null>(null);
 
   const fetchClaims = useCallback(async (token: string) => {
     setClaimsLoading(true);
-    const res = await fetch('/api/admin/claims?status=pending', {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (res.ok) {
-      setClaims(await res.json());
+    setClaimsError(null);
+    try {
+      const res = await fetch('/api/admin/claims?status=pending', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        setClaims(await res.json());
+      } else {
+        const body = await res.json().catch(() => ({}));
+        setClaimsError(body.detail || 'Failed to load claims');
+      }
+    } catch {
+      setClaimsError('Network error loading claims');
+    } finally {
+      setClaimsLoading(false);
     }
-    setClaimsLoading(false);
   }, []);
 
   const fetchOverview = useCallback(async (token: string) => {
@@ -302,6 +313,8 @@ export default function AdminDashboard() {
           <h2 className="mb-4 text-lg font-semibold">Pending Claims</h2>
           {claimsLoading ? (
             <p>Loading claims...</p>
+          ) : claimsError ? (
+            <p role="alert" className="text-red-600">{claimsError}</p>
           ) : claims.length === 0 ? (
             <p className="text-gray-500">No pending claims.</p>
           ) : (
@@ -347,21 +360,28 @@ export default function AdminDashboard() {
                           </button>
                           <button
                             type="button"
+                            disabled={approvingClaimId === claim.id}
                             onClick={async () => {
-                              const res = await fetch(`/api/admin/claims/${claim.id}/approve`, {
-                                method: 'POST',
-                                headers: { Authorization: `Bearer ${tokenRef.current}` },
-                              });
-                              if (res.ok) {
-                                toast.success('Claim approved');
-                                if (tokenRef.current) fetchClaims(tokenRef.current);
-                              } else {
-                                toast.error('Failed to approve');
+                              if (approvingClaimId) return;
+                              setApprovingClaimId(claim.id);
+                              try {
+                                const res = await fetch(`/api/admin/claims/${claim.id}/approve`, {
+                                  method: 'POST',
+                                  headers: { Authorization: `Bearer ${tokenRef.current}` },
+                                });
+                                if (res.ok) {
+                                  toast.success('Claim approved');
+                                  if (tokenRef.current) fetchClaims(tokenRef.current);
+                                } else {
+                                  toast.error('Failed to approve');
+                                }
+                              } finally {
+                                setApprovingClaimId(null);
                               }
                             }}
-                            className="rounded bg-green-50 px-2 py-1 text-xs text-green-700 hover:bg-green-100"
+                            className="rounded bg-green-50 px-2 py-1 text-xs text-green-700 hover:bg-green-100 disabled:opacity-50"
                           >
-                            Approve
+                            {approvingClaimId === claim.id ? '…' : 'Approve'}
                           </button>
                           <button
                             type="button"
