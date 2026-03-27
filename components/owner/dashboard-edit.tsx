@@ -25,12 +25,14 @@ export function DashboardEdit({
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (story) {
       setBody(story.body ?? '');
       setIsPublished(story.is_published ?? false);
     }
-  }, [story?.id]);
+  // Intentional: sync only when story identity changes (first load), not on every SWR revalidation
+  }, [story?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSave = async () => {
     setSaving(true);
