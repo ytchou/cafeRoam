@@ -6,6 +6,45 @@
 
 ---
 
+## Owner Dashboard + Shop Story (DEV-21)
+
+> **Design Doc:** [docs/designs/2026-03-27-owner-dashboard-design.md](docs/designs/2026-03-27-owner-dashboard-design.md)
+> **Plan:** [docs/plans/2026-03-27-owner-dashboard-plan.md](docs/plans/2026-03-27-owner-dashboard-plan.md)
+> **Depends on:** DEV-45 (merged ✓)
+
+**Chunk 1 — Migrations + Foundation (Wave 1):**
+
+- [ ] Task 1: `shop_content` migration
+- [ ] Task 2: `shop_owner_tags` migration
+- [ ] Task 3: `review_responses` migration
+- [ ] Task 4: `require_shop_owner` dependency
+- [ ] Task 5: Pydantic models
+- [ ] Task 16: Config + doctor + PDPA cascade
+
+**Chunk 2 — Backend Service (Wave 2):**
+
+- [ ] Task 6: Service — stats + analytics (PostHog HogQL)
+- [ ] Task 7: Service — story CRUD + shop info + tags
+- [ ] Task 8: Service — reviews + responses
+- [ ] Task 10: Extend `/shops/{id}` with ownerStory
+
+**Chunk 3 — API + Proxies (Wave 3):**
+
+- [ ] Task 9: API router (9 endpoints, owner-scoped)
+- [ ] Task 11: Next.js proxy routes
+
+**Chunk 4 — Frontend (Waves 4–5):**
+
+- [ ] Task 12: SWR hooks (useOwnerDashboard, useOwnerContent, useOwnerReviews)
+- [ ] Task 13: OwnerStory component on shop detail page
+- [ ] Task 14: Dashboard page + section components
+
+**Chunk 5 — E2E (Wave 6):**
+
+- [ ] Task 15: E2E owner dashboard journey
+
+---
+
 ## Shop Claim Flow + Verified Badge (DEV-45)
 
 > **Design Doc:** [docs/designs/2026-03-26-shop-claim-flow-design.md](docs/designs/2026-03-26-shop-claim-flow-design.md)
