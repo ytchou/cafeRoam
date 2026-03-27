@@ -21,8 +21,10 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  // workers: 1 in CI to prevent shared auth state race conditions across tests
-  workers: process.env.CI ? 1 : undefined,
+  // workers: 1 in CI to prevent shared auth state race conditions across tests.
+  // Cap at 4 locally — fullyParallel with uncapped workers overloads the Next.js
+  // dev server (ECONNRESET / socket hang up on rapid-fire concurrent requests).
+  workers: process.env.CI ? 1 : 2,
   reporter: process.env.CI ? 'github' : 'html',
   timeout: 30_000,
   use: {

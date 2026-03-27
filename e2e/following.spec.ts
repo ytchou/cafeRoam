@@ -26,15 +26,59 @@ test.describe.serial('@critical J40 — Follow/unfollow toggle', () => {
       await ctx.close();
     }
 
-    // Ensure clean "not following" baseline before the suite runs so serial
-    // tests don't fail if the test account followed this shop in a prior run.
+    // Cancel any pending account deletion from a concurrent J38 test.
+    // When J38 marks the account for deletion, the follow API returns 4xx and
+    // the optimistic update is immediately rolled back — the toggle never sticks.
+    {
+      let authCtx;
+      try {
+        authCtx = await browser.newContext({ storageState: authStorage });
+        const authPage = await authCtx.newPage();
+        try {
+          await authPage.goto('/account/recover');
+          await authPage.waitForLoadState('networkidle');
+          const cancelBtn = authPage.getByRole('button', {
+            name: /Cancel Deletion|取消刪除/i,
+          });
+          if (await cancelBtn.isVisible({ timeout: 2_000 }).catch(() => false)) {
+            await cancelBtn.click();
+            await authPage
+              .waitForURL((url) => url.pathname === '/', { timeout: 10_000 })
+              .catch(() => null);
+          }
+        } finally {
+          await authPage.close();
+        }
+      } catch {
+        // Best-effort — if auth state is absent (first run), skip silently
+      } finally {
+        await authCtx?.close();
+      }
+    }
+
+    // Ensure clean "not following" baseline. The proxy only forwards the Authorization
+    // header (not cookies), so we must extract the JWT from the Supabase session cookie
+    // and add it explicitly to the DELETE request.
     if (shopId) {
       let authCtx;
       try {
         authCtx = await browser.newContext({ storageState: authStorage });
         const authPage = await authCtx.newPage();
         try {
-          await authPage.request.delete(`/api/shops/${shopId}/follow`);
+          const cookies = await authPage.context().cookies('http://localhost:3000');
+          const authCookie = cookies.find(
+            (c) => c.name.startsWith('sb-') && c.name.endsWith('-auth-token')
+          );
+          if (authCookie) {
+            const base64Val = authCookie.value.replace(/^base64-/, '');
+            const decoded = Buffer.from(base64Val, 'base64').toString('utf-8');
+            const token = (JSON.parse(decoded) as { access_token?: string }).access_token;
+            if (token) {
+              await authPage.request.delete(`/api/shops/${shopId}/follow`, {
+                headers: { Authorization: `Bearer ${token}` },
+              }).catch(() => null);
+            }
+          }
         } finally {
           await authPage.close();
         }
@@ -53,7 +97,20 @@ test.describe.serial('@critical J40 — Follow/unfollow toggle', () => {
       authCtx = await browser.newContext({ storageState: authStorage });
       const authPage = await authCtx.newPage();
       try {
-        await authPage.request.delete(`/api/shops/${shopId}/follow`);
+        const cookies = await authPage.context().cookies('http://localhost:3000');
+        const authCookie = cookies.find(
+          (c) => c.name.startsWith('sb-') && c.name.endsWith('-auth-token')
+        );
+        const base64Val = authCookie?.value.replace(/^base64-/, '') ?? '';
+        const decoded = Buffer.from(base64Val, 'base64').toString('utf-8');
+        const token = base64Val
+          ? ((JSON.parse(decoded) as { access_token?: string }).access_token ?? null)
+          : null;
+        if (token) {
+          await authPage.request.delete(`/api/shops/${shopId}/follow`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }).catch(() => null);
+        }
       } finally {
         await authPage.close();
       }
@@ -69,19 +126,30 @@ test.describe.serial('@critical J40 — Follow/unfollow toggle', () => {
   }) => {
     test.skip(!shopUrl, 'No seeded shops available');
 
+    // J38 (profile.spec.ts) may start account deletion concurrently; the follow API
+    // returns 4xx while the account is in pending-deletion state and the optimistic
+    // update rolls back. Cancel any pending deletion first.
+    await page.goto('/account/recover');
+    await page.waitForLoadState('networkidle');
+    const cancelBtn = page.getByRole('button', { name: /Cancel Deletion|取消刪除/i });
+    if (await cancelBtn.isVisible({ timeout: 2_000 }).catch(() => false)) {
+      await cancelBtn.click();
+      await page.waitForURL((url) => url.pathname === '/', { timeout: 10_000 }).catch(() => null);
+    }
+
     await page.goto(shopUrl);
     await page.waitForLoadState('networkidle');
 
-    const followBtn = page.getByRole('button', {
-      name: 'Follow this shop',
-    });
-    await expect(followBtn).toBeVisible({ timeout: 10_000 });
+    const followBtn = page.getByRole('button', { name: 'Follow this shop' });
+    const unfollowBtn = page.getByRole('button', { name: 'Unfollow this shop' });
 
-    await followBtn.click();
-
-    await expect(
-      page.getByRole('button', { name: 'Unfollow this shop' })
-    ).toBeVisible({ timeout: 10_000 });
+    // Use toPass to retry in case J38 triggers another deletion between the
+    // cancel step above and the follow click.
+    await expect(async () => {
+      await expect(followBtn).toBeEnabled({ timeout: 5_000 });
+      await followBtn.click();
+      await expect(unfollowBtn).toBeVisible({ timeout: 8_000 });
+    }).toPass({ timeout: 30_000 });
   });
 
   test('unfollowing the shop reverts button to "Follow this shop"', async ({
@@ -89,20 +157,36 @@ test.describe.serial('@critical J40 — Follow/unfollow toggle', () => {
   }) => {
     test.skip(!shopUrl, 'No seeded shops available');
 
+    // Re-follow via API before navigating: mobile and desktop serial suites run
+    // in parallel using the same test account, so the mobile unfollow test may
+    // have already unfollowed by the time this desktop test runs.
+    await page.request.post(`/api/shops/${shopId}/follow`).catch(() => null);
+
     await page.goto(shopUrl);
     await page.waitForLoadState('networkidle');
 
-    // Should be in "following" state from previous test
-    const unfollowBtn = page.getByRole('button', {
-      name: 'Unfollow this shop',
-    });
-    await expect(unfollowBtn).toBeVisible({ timeout: 10_000 });
+    const followBtn = page.getByRole('button', { name: 'Follow this shop' });
+    const unfollowBtn = page.getByRole('button', { name: 'Unfollow this shop' });
 
-    await unfollowBtn.click();
+    // Mobile and desktop serial suites run in parallel with a shared test account.
+    // Use toPass() to retry the follow-then-unfollow flow until it completes
+    // without interference from the concurrent project.
+    await expect(async () => {
+      // Step 1: Ensure we are in "following" state (follow if not already)
+      const following = await unfollowBtn.isVisible({ timeout: 1_000 }).catch(() => false);
+      if (!following) {
+        // Wait for button to be enabled (SWR initial fetch may still be loading)
+        await expect(followBtn).toBeEnabled({ timeout: 5_000 });
+        await followBtn.click();
+        await expect(unfollowBtn).toBeVisible({ timeout: 8_000 });
+      }
 
-    await expect(
-      page.getByRole('button', { name: 'Follow this shop' })
-    ).toBeVisible({ timeout: 10_000 });
+      // Step 2: Unfollow the shop
+      await unfollowBtn.click();
+
+      // Step 3: Verify reverted to "Follow" state
+      await expect(followBtn).toBeVisible({ timeout: 8_000 });
+    }).toPass({ timeout: 30_000 });
   });
 });
 
