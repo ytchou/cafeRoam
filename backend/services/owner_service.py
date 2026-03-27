@@ -75,14 +75,18 @@ class OwnerService:
     # ── Analytics ──────────────────────────────────────────────────────────
 
     def get_search_insights(self, shop_id: str) -> list[SearchInsight]:
-        rows = self._query_posthog(
-            f"SELECT properties.query as query, count() as impressions "
-            f"FROM events "
-            f"WHERE event = 'search_result_shown' "
-            f"AND JSONExtractArrayRaw(properties.shop_ids, 0) LIKE '%{shop_id}%' "
-            f"AND timestamp >= now() - interval 30 day "
-            f"GROUP BY query ORDER BY impressions DESC LIMIT 10"
-        )
+        try:
+            rows = self._query_posthog(
+                f"SELECT properties.query as query, count() as impressions "
+                f"FROM events "
+                f"WHERE event = 'search_result_shown' "
+                f"AND JSONExtractArrayRaw(properties.shop_ids, 0) LIKE '%{shop_id}%' "
+                f"AND timestamp >= now() - interval 30 day "
+                f"GROUP BY query ORDER BY impressions DESC LIMIT 10"
+            )
+        except Exception:
+            logger.warning("PostHog search insights unavailable for shop %s", shop_id)
+            return []
         return [SearchInsight(query=r["query"], impressions=int(r["impressions"])) for r in rows]
 
     def get_community_pulse(self, shop_id: str) -> list[CommunityPulseTag]:
@@ -148,7 +152,7 @@ class OwnerService:
     def get_shop_story(self, shop_id: str) -> OwnerStoryOut | None:
         result = (
             self._db.table("shop_content")
-            .select("*")
+            .select("id, shop_id, title, body, photo_url, is_published, created_at, updated_at")
             .eq("shop_id", shop_id)
             .eq("content_type", "story")
             .maybe_single()
@@ -184,6 +188,8 @@ class OwnerService:
 
     def update_shop_info(self, shop_id: str, owner_id: str, data: ShopInfoIn) -> dict:
         updates = {k: v for k, v in data.model_dump().items() if v is not None}
+        if not updates:
+            return {}
         result = (
             self._db.table("shops")
             .update(updates)
@@ -210,17 +216,22 @@ class OwnerService:
         if len(tags) > 10:
             raise ValueError(f"Shop owners may set a maximum 10 tags; got {len(tags)}")
 
-        # Replace entire set atomically: delete then insert
-        self._db.table("shop_owner_tags").delete().eq("shop_id", shop_id).execute()
-
         if not tags:
+            self._db.table("shop_owner_tags").delete().eq("shop_id", shop_id).execute()
             return []
 
-        rows = [
-            {"shop_id": shop_id, "owner_id": owner_id, "tag": tag}
-            for tag in tags
-        ]
-        self._db.table("shop_owner_tags").insert(rows).execute()
+        # Fetch existing tags to compute diff (avoids delete-all-then-insert data loss on failure)
+        existing = set(self.get_owner_tags(shop_id))
+        new_set = set(tags)
+
+        to_add = new_set - existing
+        to_remove = existing - new_set
+
+        if to_remove:
+            self._db.table("shop_owner_tags").delete().eq("shop_id", shop_id).in_("tag", list(to_remove)).execute()
+        if to_add:
+            rows = [{"shop_id": shop_id, "owner_id": owner_id, "tag": tag} for tag in to_add]
+            self._db.table("shop_owner_tags").insert(rows).execute()
         return tags
 
     # ── Reviews ────────────────────────────────────────────────────────────
@@ -242,6 +253,17 @@ class OwnerService:
     def upsert_review_response(
         self, checkin_id: str, shop_id: str, owner_id: str, body: str
     ) -> ReviewResponseOut:
+        from fastapi import HTTPException
+        checkin = (
+            self._db.table("check_ins")
+            .select("shop_id")
+            .eq("id", checkin_id)
+            .maybe_single()
+            .execute()
+        )
+        if not checkin.data or checkin.data["shop_id"] != shop_id:
+            raise HTTPException(status_code=404, detail="Check-in not found for this shop")
+
         row = {
             "checkin_id": checkin_id,
             "shop_id": shop_id,
@@ -273,5 +295,9 @@ class OwnerService:
         )
         resp.raise_for_status()
         data = resp.json()
-        columns = data["columns"]
-        return [dict(zip(columns, row)) for row in data["results"]]
+        columns = data.get("columns")
+        results = data.get("results")
+        if columns is None or results is None:
+            logger.warning("Unexpected PostHog response shape: %s", list(data.keys()))
+            return []
+        return [dict(zip(columns, row)) for row in results]
