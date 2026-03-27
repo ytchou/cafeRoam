@@ -69,7 +69,11 @@ export default function SettingsPage() {
 
       // Refresh session so the JWT reflects deletion_requested: true,
       // then let the middleware redirect subsequent protected-route visits to /account/recover.
-      await supabase.auth.refreshSession();
+      const { error: refreshError } = await supabase.auth.refreshSession();
+      if (refreshError) {
+        // Non-fatal: DB update already succeeded. Log for diagnostics and continue.
+        console.warn('Session refresh after deletion request failed:', refreshError.message);
+      }
       router.push('/account/recover');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
