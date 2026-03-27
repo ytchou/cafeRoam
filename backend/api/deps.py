@@ -107,6 +107,34 @@ def require_admin(user: dict[str, Any] = Depends(get_current_user)) -> dict[str,
     return user
 
 
+def require_shop_owner(
+    shop_id: str,
+    user: dict[str, Any] = Depends(get_current_user),
+    db: Client = Depends(get_admin_db),
+) -> dict[str, Any]:
+    """Verify user has an approved claim for this specific shop.
+
+    Checks shop_claims directly — the claim is the canonical authorization
+    record. Role-only checks are insufficient as one shop_owner could
+    access another shop's dashboard. See ADR: 2026-03-27-owner-dashboard-dual-claim-check.md
+    """
+    result = (
+        db.table("shop_claims")
+        .select("id")
+        .eq("shop_id", shop_id)
+        .eq("user_id", user["id"])
+        .eq("status", "approved")
+        .maybe_single()
+        .execute()
+    )
+    if not result.data:
+        raise HTTPException(
+            status_code=403,
+            detail="Not the verified owner of this shop",
+        )
+    return user
+
+
 def get_claims_service() -> ClaimsService:
     return ClaimsService(db=get_service_role_client(), email=get_email_provider())
 
