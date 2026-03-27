@@ -37,8 +37,18 @@ export default function RecoverPage() {
         throw new Error(body.detail || 'Failed to cancel deletion');
       }
 
-      await supabase.auth.refreshSession();
-      router.push('/');
+      const { data: refreshData } = await supabase.auth.refreshSession();
+      // Guard against stale JWT: if the backend's admin SDK sync failed silently,
+      // app_metadata.deletion_requested may still be true even though the DB was cleared.
+      // Navigating away in that state would trigger the middleware deletion guard and
+      // trap the user in a redirect loop. Surface the issue instead.
+      if (refreshData?.session?.user.app_metadata?.deletion_requested === true) {
+        setError(
+          'Your account has been restored. If you cannot navigate away, please sign out and sign back in.'
+        );
+        return;
+      }
+      window.location.assign('/');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
