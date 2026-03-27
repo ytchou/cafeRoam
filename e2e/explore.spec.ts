@@ -42,27 +42,27 @@ authedTest.describe(
         const dailyDrawHeader = page.getByText(/your daily draw/i);
         await expect(dailyDrawHeader).toBeVisible({ timeout: 15_000 });
 
-        // Skip if no shops available in draw radius
+        // Wait for skeleton loaders to disappear before checking for content or empty state
+        await expect(page.locator('.animate-pulse').first()).toBeHidden({
+          timeout: 15_000,
+        });
+
+        // Check for empty state after loading completes — skip if no shops in radius
         const emptyState = page.getByText(
           /enable location|expand radius|no caf/i
         );
-        if (await emptyState.isVisible({ timeout: 2_000 }).catch(() => false)) {
-          test.skip(true, 'No shops available in tarot draw radius');
+        if (await emptyState.isVisible({ timeout: 3_000 }).catch(() => false)) {
+          authedTest.skip(true, 'No shops available in tarot draw radius');
         }
 
         // Skip if the tarot draw API returned an error (e.g. Python backend not running)
         const apiError = page.getByText(/couldn't load your draw/i);
         if (await apiError.isVisible({ timeout: 2_000 }).catch(() => false)) {
-          test.skip(
+          authedTest.skip(
             true,
             'Tarot draw API unavailable — Python backend may not be running'
           );
         }
-
-        // Wait for skeleton loaders to disappear (skeletons have animate-pulse)
-        await expect(page.locator('.animate-pulse').first()).toBeHidden({
-          timeout: 15_000,
-        });
 
         // Tarot card buttons have data-testid="tarot-card" or are scoped inside the daily-draw section
         const tarotCards = page
