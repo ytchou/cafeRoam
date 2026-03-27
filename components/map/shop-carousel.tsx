@@ -5,7 +5,7 @@ import type { LayoutShop } from '@/lib/types';
 
 interface ShopCarouselProps {
   shops: LayoutShop[];
-  onShopClick: (shopId: string) => void;
+  onShopClick?: (shopId: string) => void;
   onCardClick?: (shopId: string) => void;
   selectedShopId?: string | null;
 }
