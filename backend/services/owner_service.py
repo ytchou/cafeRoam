@@ -238,7 +238,7 @@ class OwnerService:
             return {}
         result = self._db.table("shops").update(updates).eq("id", shop_id).execute()
         rows = cast("list[dict[str, Any]]", result.data)
-        return cast("dict[str, Any]", first(rows, "update shop info"))
+        return first(rows, "update shop info")
 
     # ── Owner Tags ─────────────────────────────────────────────────────────
 
