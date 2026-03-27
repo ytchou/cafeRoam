@@ -29,7 +29,13 @@ async def record_consent(
     )
     # Always sync app_metadata so getUser() reflects consent state immediately,
     # regardless of whether this was a new consent or a repeat call.
-    admin_db.auth.admin.update_user_by_id(user["id"], {"app_metadata": {"pdpa_consented": True}})
+    try:
+        admin_db.auth.admin.update_user_by_id(user["id"], {"app_metadata": {"pdpa_consented": True}})
+    except Exception:
+        logger.warning(
+            "Failed to sync pdpa_consented metadata",
+            action="record_consent",
+        )
 
     if not response.data:
         existing = (
