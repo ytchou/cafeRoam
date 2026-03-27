@@ -45,10 +45,12 @@ Two-layer: Next.js frontend (thin proxy + UI) → FastAPI backend (all business 
 ### Migration 1: `user_roles` — align with 6-level role hierarchy
 
 The existing `user_roles` table stores special/elevated roles. The constraint is updated to:
+
 - Rename `paid_user` → `member` (aligns with SPEC.md §9 terminology)
 - Add `shop_owner` (new role for DEV-45)
 
 Role hierarchy (SPEC.md §9):
+
 - **Implicit/Supabase Auth:** `user` (anonymous), `auth-user` (signed in, free tier)
 - **Stored in `user_roles`:** `member` (paid subscription), `blogger`, `partner`, `shop_owner`, `admin`
 
@@ -111,30 +113,30 @@ CREATE POLICY "users insert own claim" ON shop_claims
 
 ### New service: `backend/services/claims_service.py`
 
-| Method | Responsibility |
-|--------|---------------|
-| `get_presigned_upload_url(shop_id, user_id)` | Returns signed Supabase Storage upload URL for proof photo |
+| Method                                                        | Responsibility                                                                                    |
+| ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `get_presigned_upload_url(shop_id, user_id)`                  | Returns signed Supabase Storage upload URL for proof photo                                        |
 | `submit_claim(user_id, shop_id, form_data, proof_photo_path)` | Inserts `shop_claims` record (status=pending), sends confirmation email, sends admin notification |
-| `get_claim_by_shop(shop_id)` | Returns claim record for a shop (used by shop API to include claim_status) |
-| `approve_claim(claim_id, admin_user_id)` | Updates status=approved, inserts `shop_owner` role, sends approval email with dashboard link |
-| `reject_claim(claim_id, reason, admin_user_id)` | Updates status=rejected, sets rejection_reason, sends rejection email |
+| `get_claim_by_shop(shop_id)`                                  | Returns claim record for a shop (used by shop API to include claim_status)                        |
+| `approve_claim(claim_id, admin_user_id)`                      | Updates status=approved, inserts `shop_owner` role, sends approval email with dashboard link      |
+| `reject_claim(claim_id, reason, admin_user_id)`               | Updates status=rejected, sets rejection_reason, sends rejection email                             |
 
 ### New API: `backend/api/claims.py`
 
-| Route | Auth | Description |
-|-------|------|-------------|
-| `GET /claims/upload-url?shop_id=` | Required | Returns presigned Supabase Storage upload URL |
-| `POST /claims` | Required | Submit claim (validates no existing pending/approved claim for shop) |
-| `GET /claims/me?shop_id=` | Required | Get user's own claim status for a shop |
+| Route                             | Auth     | Description                                                          |
+| --------------------------------- | -------- | -------------------------------------------------------------------- |
+| `GET /claims/upload-url?shop_id=` | Required | Returns presigned Supabase Storage upload URL                        |
+| `POST /claims`                    | Required | Submit claim (validates no existing pending/approved claim for shop) |
+| `GET /claims/me?shop_id=`         | Required | Get user's own claim status for a shop                               |
 
 ### Admin extensions: `backend/api/admin.py`
 
-| Route | Auth | Description |
-|-------|------|-------------|
-| `GET /admin/claims` | Admin | List claims (filter: status, default=pending) |
-| `GET /admin/claims/:id/proof-url` | Admin | Get signed URL for proof photo |
-| `POST /admin/claims/:id/approve` | Admin | Approve claim |
-| `POST /admin/claims/:id/reject` | Admin | Reject claim with required reason |
+| Route                             | Auth  | Description                                   |
+| --------------------------------- | ----- | --------------------------------------------- |
+| `GET /admin/claims`               | Admin | List claims (filter: status, default=pending) |
+| `GET /admin/claims/:id/proof-url` | Admin | Get signed URL for proof photo                |
+| `POST /admin/claims/:id/approve`  | Admin | Approve claim                                 |
+| `POST /admin/claims/:id/reject`   | Admin | Reject claim with required reason             |
 
 ### Shop API change: `backend/api/shops.py`
 
@@ -150,15 +152,17 @@ CREATE POLICY "users insert own claim" ON shop_claims
 Full-page form (consistent with `/submit` pattern). Redirects to login with return URL if unauthenticated.
 
 **Fields:**
+
 - Contact name (text, required)
 - Email (email, required)
 - Role (select: 店主/Owner, 店長/Manager, 員工/Staff)
-- Proof photo upload (file, required, max 10MB, accepts image/*)
+- Proof photo upload (file, required, max 10MB, accepts image/\*)
   - Helper text: 在店內拍的照片、名片、有店名的菜單、或 Google 商家截圖
 
 **On submit:** Show "已送出認領申請 — 48小時內回覆" confirmation state.
 
 **PostHog events:**
+
 - `claim_form_viewed` (shop_id)
 - `claim_form_submitted` (shop_id)
 
@@ -186,12 +190,12 @@ Full-page form (consistent with `/submit` pattern). Redirects to login with retu
 
 ## Email Templates (via Resend, existing provider)
 
-| Trigger | To | Subject |
-|---|---|---|
-| Claim submitted | Owner | 認領申請已收到 — 48小時內回覆 |
+| Trigger         | To    | Subject                           |
+| --------------- | ----- | --------------------------------- |
+| Claim submitted | Owner | 認領申請已收到 — 48小時內回覆     |
 | Claim submitted | Admin | [CafeRoam] New claim: {shop_name} |
-| Claim approved | Owner | 已通過認領 — 前往您的管理後台 |
-| Claim rejected | Owner | 認領申請未通過 |
+| Claim approved  | Owner | 已通過認領 — 前往您的管理後台     |
+| Claim rejected  | Owner | 認領申請未通過                    |
 
 Approval email includes direct link to `/owner/{shopId}/dashboard` (DEV-63, not built yet — link goes to a "coming soon" placeholder in the interim).
 
@@ -199,34 +203,36 @@ Approval email includes direct link to `/owner/{shopId}/dashboard` (DEV-63, not 
 
 ## Error Handling
 
-| Scenario | Handling |
-|----------|----------|
-| Shop already has pending/approved claim | 409 from backend → frontend shows "此咖啡廳已有待審核或已通過的申請" |
-| Unauthenticated user clicks claim badge | Redirect to login with `?next=/shops/[shopId]/claim` return URL |
-| Proof photo > 10MB | Validate on frontend before upload; backend rejects at presigned URL generation |
-| Admin rejects without reason | Required field in reject modal — cannot submit empty |
-| Claim approved for a shop with existing `shop_owner` role row | `INSERT ... ON CONFLICT DO NOTHING` on user_roles |
+| Scenario                                                      | Handling                                                                        |
+| ------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| Shop already has pending/approved claim                       | 409 from backend → frontend shows "此咖啡廳已有待審核或已通過的申請"            |
+| Unauthenticated user clicks claim badge                       | Redirect to login with `?next=/shops/[shopId]/claim` return URL                 |
+| Proof photo > 10MB                                            | Validate on frontend before upload; backend rejects at presigned URL generation |
+| Admin rejects without reason                                  | Required field in reject modal — cannot submit empty                            |
+| Claim approved for a shop with existing `shop_owner` role row | `INSERT ... ON CONFLICT DO NOTHING` on user_roles                               |
 
 ---
 
 ## PostHog Events
 
-| Event | Properties | Fired by |
-|-------|-----------|----------|
-| `claim_badge_clicked` | shop_id, shop_name | Frontend |
-| `claim_form_viewed` | shop_id | Frontend |
-| `claim_form_submitted` | shop_id | Frontend |
-| `claim_approved` | shop_id, claim_id | Backend |
-| `claim_rejected` | shop_id, claim_id, reason | Backend |
+| Event                  | Properties                | Fired by |
+| ---------------------- | ------------------------- | -------- |
+| `claim_badge_clicked`  | shop_id, shop_name        | Frontend |
+| `claim_form_viewed`    | shop_id                   | Frontend |
+| `claim_form_submitted` | shop_id                   | Frontend |
+| `claim_approved`       | shop_id, claim_id         | Backend  |
+| `claim_rejected`       | shop_id, claim_id, reason | Backend  |
 
 ---
 
 ## Testing Classification
 
 **(a) New e2e journey?**
+
 - [x] Yes — add e2e journey: shop owner claim flow (badge visible → click → form → submit → confirmation state). Add to `/e2e-smoke`.
 
 **(b) Coverage gate impact?**
+
 - [x] Yes — `claims_service.py` is a new critical-path service. Verify 80% coverage gate for submit, approve, reject paths.
 
 ---
@@ -244,11 +250,11 @@ Approval email includes direct link to `/owner/{shopId}/dashboard` (DEV-63, not 
 
 ## Key Decisions
 
-| Decision | Choice | Rationale |
-|----------|--------|-----------|
-| Proof photo storage | Private Supabase Storage bucket (`claim-proofs`) | PDPA — business cards and personal photos must not be publicly accessible |
-| Proof photo upload | Direct from browser (presigned URL) | Consistent with check-in photo pattern; no double bandwidth |
-| Ownership authorization | `shop_claims` JOIN (not a cached boolean on `shops`) | Avoids sync issues if claim ever revoked; negligible cost at <500 shops |
-| Admin UI | Extend existing `/admin` panel with Claims tab | Reuse established approval/rejection UX patterns |
-| Claim form UX | Full page `/shops/[shopId]/claim` | Consistent with `/submit` pattern; better mobile space for photo upload |
-| Role model | `shop_owner` role in `user_roles` + `shop_claims` as per-shop ownership record | JWT-accessible role for global check; claims table for per-shop authorization |
+| Decision                | Choice                                                                         | Rationale                                                                     |
+| ----------------------- | ------------------------------------------------------------------------------ | ----------------------------------------------------------------------------- |
+| Proof photo storage     | Private Supabase Storage bucket (`claim-proofs`)                               | PDPA — business cards and personal photos must not be publicly accessible     |
+| Proof photo upload      | Direct from browser (presigned URL)                                            | Consistent with check-in photo pattern; no double bandwidth                   |
+| Ownership authorization | `shop_claims` JOIN (not a cached boolean on `shops`)                           | Avoids sync issues if claim ever revoked; negligible cost at <500 shops       |
+| Admin UI                | Extend existing `/admin` panel with Claims tab                                 | Reuse established approval/rejection UX patterns                              |
+| Claim form UX           | Full page `/shops/[shopId]/claim`                                              | Consistent with `/submit` pattern; better mobile space for photo upload       |
+| Role model              | `shop_owner` role in `user_roles` + `shop_claims` as per-shop ownership record | JWT-accessible role for global check; claims table for per-shop authorization |

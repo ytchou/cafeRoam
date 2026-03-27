@@ -15,6 +15,7 @@
 **Tech Stack:** Next.js 16 (frontend), FastAPI + Supabase (backend), Resend (email via existing `EmailProvider` protocol), Supabase Storage (proof photos, private bucket), pytest + TestClient (backend tests), Vitest + Testing Library (frontend tests), Playwright (e2e)
 
 **Acceptance Criteria:**
+
 - [ ] A shop owner can click the "Claim this page" badge on any unclaimed shop and submit a claim form with a proof photo
 - [ ] After submitting, the owner receives a confirmation email and the admin receives a notification email
 - [ ] The admin can approve or reject the claim from the admin panel; the owner receives the corresponding email
@@ -26,6 +27,7 @@
 ## Task 1: DB Migration — user_roles (rename paid_user → member, add shop_owner)
 
 **Files:**
+
 - Create: `supabase/migrations/20260326000010_user_roles_member_shop_owner.sql`
 
 **No test needed — DB migration with no business logic.**
@@ -52,6 +54,7 @@ ALTER TABLE public.user_roles
 ```bash
 supabase db push
 ```
+
 Expected: migration applied without error.
 
 **Step 3: Commit**
@@ -66,6 +69,7 @@ git commit -m "feat(DEV-45): migrate user_roles — rename paid_user→member, a
 ## Task 2: DB Migration — shop_claims table + Supabase Storage bucket
 
 **Files:**
+
 - Create: `supabase/migrations/20260326000011_create_shop_claims.sql`
 
 **No test needed — DB migration.**
@@ -126,6 +130,7 @@ CREATE POLICY "users insert own claim"
 **Step 2: Create Supabase Storage bucket manually**
 
 In the Supabase dashboard (local: http://127.0.0.1:54323):
+
 - Storage → New bucket
 - Name: `claim-proofs`
 - Public: OFF
@@ -150,6 +155,7 @@ git commit -m "feat(DEV-45): add shop_claims table + notes for claim-proofs stor
 ## Task 3: Backend audit — replace 'paid_user' with 'member'
 
 **Files:**
+
 - Modify: any Python file referencing `'paid_user'` string
 
 **No test needed — no logic change, just rename to match DB.**
@@ -167,6 +173,7 @@ grep -rn "paid_user" backend/
 ```bash
 cd backend && pytest -x -q
 ```
+
 Expected: all existing tests pass.
 
 **Step 4: Commit**
@@ -181,6 +188,7 @@ git commit -m "refactor(DEV-45): rename paid_user → member in backend code"
 ## Task 4: Backend — add Claim types to models/types.py
 
 **Files:**
+
 - Modify: `backend/models/types.py`
 
 **No dedicated test — Pydantic models are validated by the API tests that use them.**
@@ -230,6 +238,7 @@ git commit -m "feat(DEV-45): add Claim Pydantic types to models/types.py"
 ## Task 5: Backend — ClaimsService (TDD)
 
 **Files:**
+
 - Create: `backend/services/claims_service.py`
 - Create: `backend/tests/test_claims_service.py`
 
@@ -398,6 +407,7 @@ class TestApproveClaim:
 ```bash
 cd backend && pytest tests/test_claims_service.py -v
 ```
+
 Expected: FAIL (ClaimsService not found)
 
 **Step 3: Write minimal implementation**
@@ -611,6 +621,7 @@ class ClaimsService:
 ```bash
 cd backend && pytest tests/test_claims_service.py -v
 ```
+
 Expected: all tests PASS
 
 **Step 5: Commit**
@@ -625,6 +636,7 @@ git commit -m "feat(DEV-45): ClaimsService with submit, approve, reject + tests"
 ## Task 6: Backend — add claim_status to GET /shops/:id
 
 **Files:**
+
 - Modify: `backend/api/shops.py`
 - Create: `backend/tests/test_shops_claim_status.py`
 
@@ -695,6 +707,7 @@ class TestShopDetailClaimStatus:
 ```bash
 cd backend && pytest tests/test_shops_claim_status.py -v
 ```
+
 Expected: FAIL
 
 **Step 3: Modify `backend/api/shops.py` — extend `get_shop`**
@@ -732,6 +745,7 @@ response_data["claimStatus"] = claim_status
 ```bash
 cd backend && pytest tests/test_shops_claim_status.py -v
 ```
+
 Expected: PASS
 
 **Step 5: Commit**
@@ -746,6 +760,7 @@ git commit -m "feat(DEV-45): add claimStatus to shop detail API response"
 ## Task 7: Backend — Claims API router (TDD)
 
 **Files:**
+
 - Create: `backend/api/claims.py`
 - Create: `backend/tests/test_claims_api.py`
 
@@ -872,6 +887,7 @@ class TestSubmitClaim:
 ```bash
 cd backend && pytest tests/test_claims_api.py -v
 ```
+
 Expected: FAIL (no `/claims` route)
 
 **Step 3: Write implementation**
@@ -987,6 +1003,7 @@ admin_email: str = "hello@caferoam.tw"
 ```bash
 cd backend && pytest tests/test_claims_api.py -v
 ```
+
 Expected: all PASS
 
 **Step 5: Commit**
@@ -1001,6 +1018,7 @@ git commit -m "feat(DEV-45): claims API router (upload URL, submit, get status)"
 ## Task 8: Backend — Admin Claims API (TDD)
 
 **Files:**
+
 - Create: `backend/api/admin_claims.py`
 - Create: `backend/tests/test_admin_claims_api.py`
 
@@ -1106,6 +1124,7 @@ class TestRejectClaim:
 ```bash
 cd backend && pytest tests/test_admin_claims_api.py -v
 ```
+
 Expected: FAIL
 
 **Step 3: Write implementation**
@@ -1207,6 +1226,7 @@ async def reject_claim(
 ```bash
 cd backend && pytest tests/test_admin_claims_api.py -v
 ```
+
 Expected: all PASS
 
 **Step 5: Commit**
@@ -1221,6 +1241,7 @@ git commit -m "feat(DEV-45): admin claims API (list, proof-url, approve, reject)
 ## Task 9: Backend — register routers in main.py
 
 **Files:**
+
 - Modify: `backend/main.py`
 
 **No test needed — router registration is verified by the API tests above.**
@@ -1242,6 +1263,7 @@ app.include_router(admin_claims_router)
 ```bash
 cd backend && pytest -x -q
 ```
+
 Expected: all tests still pass (no 404 on routes).
 
 **Step 3: Commit**
@@ -1256,6 +1278,7 @@ git commit -m "feat(DEV-45): register claims and admin claims routers in main.py
 ## Task 10: Frontend — Next.js API proxy routes for claims
 
 **Files:**
+
 - Create: `app/api/claims/route.ts`
 - Create: `app/api/claims/upload-url/route.ts`
 - Create: `app/api/claims/me/route.ts`
@@ -1306,6 +1329,7 @@ git commit -m "feat(DEV-45): Next.js proxy routes for claims API"
 ## Task 11: Frontend — Next.js API proxy routes for admin claims
 
 **Files:**
+
 - Create: `app/api/admin/claims/route.ts`
 - Create: `app/api/admin/claims/[id]/approve/route.ts`
 - Create: `app/api/admin/claims/[id]/reject/route.ts`
@@ -1379,6 +1403,7 @@ git commit -m "feat(DEV-45): Next.js proxy routes for admin claims API"
 ## Task 12: Frontend — VerifiedBadge component (TDD)
 
 **Files:**
+
 - Create: `components/shops/verified-badge.tsx`
 - Create: `components/shops/verified-badge.test.tsx`
 
@@ -1406,6 +1431,7 @@ describe('VerifiedBadge', () => {
 ```bash
 pnpm test components/shops/verified-badge.test.tsx
 ```
+
 Expected: FAIL
 
 **Step 3: Write minimal implementation**
@@ -1437,6 +1463,7 @@ export function VerifiedBadge({ size = 'sm' }: VerifiedBadgeProps) {
 ```bash
 pnpm test components/shops/verified-badge.test.tsx
 ```
+
 Expected: PASS
 
 **Step 5: Commit**
@@ -1451,6 +1478,7 @@ git commit -m "feat(DEV-45): VerifiedBadge component with test"
 ## Task 13: Frontend — update ShopData + ClaimBanner (TDD)
 
 **Files:**
+
 - Modify: `app/shops/[shopId]/[slug]/shop-detail-client.tsx`
 - Modify: `components/shops/claim-banner.tsx`
 - Create: `components/shops/claim-banner.test.tsx`
@@ -1489,6 +1517,7 @@ describe('ClaimBanner', () => {
 ```bash
 pnpm test components/shops/claim-banner.test.tsx
 ```
+
 Expected: FAIL
 
 **Step 3: Update ClaimBanner**
@@ -1533,11 +1562,13 @@ export function ClaimBanner({ shopId, shopName: _shopName, claimStatus }: ClaimB
 **Step 4: Update ShopData interface and ClaimBanner usage in shop-detail-client.tsx**
 
 In `ShopData` interface, add:
+
 ```typescript
 claimStatus?: 'pending' | 'approved' | 'rejected' | null;
 ```
 
 In the JSX where `<ClaimBanner>` is rendered, pass `claimStatus`:
+
 ```typescript
 <ClaimBanner
   shopId={shop.id}
@@ -1547,6 +1578,7 @@ In the JSX where `<ClaimBanner>` is rendered, pass `claimStatus`:
 ```
 
 Also add `<VerifiedBadge>` in the shop identity area when `claimStatus === 'approved'`:
+
 ```typescript
 import { VerifiedBadge } from '@/components/shops/verified-badge';
 // ...inside ShopIdentity or adjacent:
@@ -1558,6 +1590,7 @@ import { VerifiedBadge } from '@/components/shops/verified-badge';
 ```bash
 pnpm test components/shops/claim-banner.test.tsx
 ```
+
 Expected: PASS
 
 **Step 6: Run full lint**
@@ -1565,6 +1598,7 @@ Expected: PASS
 ```bash
 pnpm lint
 ```
+
 Fix any issues.
 
 **Step 7: Commit**
@@ -1580,6 +1614,7 @@ git commit -m "feat(DEV-45): ClaimBanner navigates to claim page; hide when appr
 ## Task 14: Frontend — Claim form page (TDD)
 
 **Files:**
+
 - Create: `app/shops/[shopId]/claim/page.tsx`
 - Create: `app/shops/[shopId]/claim/page.test.tsx`
 
@@ -1647,6 +1682,7 @@ describe('ClaimPage', () => {
 ```bash
 pnpm test app/shops/\\[shopId\\]/claim/page.test.tsx
 ```
+
 Expected: FAIL
 
 **Step 3: Write the page**
@@ -1832,6 +1868,7 @@ export default function ClaimPage() {
 ```bash
 pnpm test app/shops/\\[shopId\\]/claim/page.test.tsx
 ```
+
 Expected: PASS
 
 **Step 5: Run lint**
@@ -1852,6 +1889,7 @@ git commit -m "feat(DEV-45): shop claim form page with photo upload"
 ## Task 15: Frontend — Admin Claims tab
 
 **Files:**
+
 - Modify: `app/(admin)/admin/page.tsx`
 
 **Step 1: Write test for new tab**
@@ -1872,8 +1910,9 @@ The admin page currently has no tabs — it's a single-section component. Add a 
 
 1. Add tab state: `const [tab, setTab] = useState<'submissions' | 'claims'>('submissions')`
 2. Render tab buttons:
+
 ```tsx
-<div className="flex gap-2 border-b pb-2 mb-6">
+<div className="mb-6 flex gap-2 border-b pb-2">
   <button
     type="button"
     onClick={() => setTab('submissions')}
@@ -1890,9 +1929,11 @@ The admin page currently has no tabs — it's a single-section component. Add a 
   </button>
 </div>
 ```
+
 3. Conditionally render the existing submissions section (`tab === 'submissions'`) or a new `<AdminClaimsSection token={tokenRef.current} />` component (`tab === 'claims'`)
 
 **AdminClaimsSection** (inline or extracted):
+
 - Fetches `GET /api/admin/claims?status=pending` on mount
 - Renders a table: contact_name, contact_email, role, shop name, date, [View Proof] button, [Approve] button, [Reject w/ dropdown] button
 - Proof URL: calls `GET /api/admin/claims/:id/proof-url` → opens signed URL in new tab
@@ -1905,6 +1946,7 @@ The admin page currently has no tabs — it's a single-section component. Add a 
 ```bash
 pnpm dev
 ```
+
 Navigate to `/admin` → verify Claims tab appears and loads data.
 
 **Step 4: Run lint**
@@ -1925,6 +1967,7 @@ git commit -m "feat(DEV-45): add Claims tab to admin panel"
 ## Task 16: E2E — Claim flow journey
 
 **Files:**
+
 - Create: `e2e/claim.spec.ts`
 
 **Step 1: Write the e2e test**
@@ -1955,7 +1998,9 @@ test.describe('@critical J15 — Shop claim: badge click → form → confirmati
 
     await claimLink.click();
     await expect(page).toHaveURL(/\/shops\/.+\/claim/);
-    await expect(page.getByRole('heading', { name: /認領|Claim/i })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: /認領|Claim/i })
+    ).toBeVisible();
 
     // Fill in form
     await page.getByLabel(/姓名|Name/i).fill('Test Owner');
@@ -1975,7 +2020,9 @@ test.describe('@critical J15 — Shop claim: badge click → form → confirmati
     await submitBtn.click();
 
     // Confirmation
-    await expect(page.getByText(/已送出|submitted/i)).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText(/已送出|submitted/i)).toBeVisible({
+      timeout: 10_000,
+    });
   });
 });
 ```
@@ -1986,6 +2033,7 @@ test.describe('@critical J15 — Shop claim: badge click → form → confirmati
 pnpm dev &  # ensure server is running
 npx playwright test e2e/claim.spec.ts
 ```
+
 Expected: PASS (or SKIP if shop already claimed)
 
 **Step 3: Commit**
@@ -2078,35 +2126,43 @@ graph TD
 ```
 
 **Wave 1** (parallel — no dependencies):
+
 - Task 1: user_roles DB migration
 - Task 2: shop_claims DB migration
 - Task 3: Audit paid_user references
 - Task 4: Pydantic types
 
 **Wave 2** (depends on Wave 1):
+
 - Task 5: ClaimsService (TDD)
 
 **Wave 3** (parallel — depends on Wave 2):
+
 - Task 6: Shop API claim_status
 - Task 7: Claims API router
 - Task 8: Admin Claims API
 
 **Wave 4** (depends on Wave 3):
+
 - Task 9: Register routers in main.py
 
 **Wave 5** (parallel — depends on Wave 4):
+
 - Task 10: Next.js claims API proxies
 - Task 11: Next.js admin claims API proxies
 
 **Wave 6** (parallel — depends on Wave 5):
+
 - Task 12: VerifiedBadge component
 - Task 13: ClaimBanner update + ShopData type
 
 **Wave 7** (parallel — depends on Wave 6):
+
 - Task 14: Claim form page
 - Task 15: Admin Claims tab
 
 **Wave 8** (depends on Wave 7):
+
 - Task 16: E2E claim flow journey
 
 ---
