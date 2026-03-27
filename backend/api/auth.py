@@ -1,13 +1,15 @@
 from datetime import UTC, datetime
 from typing import Any, cast
 
+import structlog
 from fastapi import APIRouter, Depends, HTTPException, status
 from supabase import Client
 
-from api.deps import get_admin_db, get_current_user, get_user_db
+from api.deps import get_admin_db, get_current_user, get_current_user_allow_pending, get_user_db
 from core.db import first
 from services.profile_service import ProfileService
 
+logger = structlog.get_logger()
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
@@ -68,15 +70,22 @@ async def delete_account(
             .execute()
         )
         return cast("dict[str, Any]", existing.data)
-    admin_db.auth.admin.update_user_by_id(
-        user["id"], {"app_metadata": {"deletion_requested": True}}
-    )
+    try:
+        admin_db.auth.admin.update_user_by_id(
+            user["id"], {"app_metadata": {"deletion_requested": True}}
+        )
+    except Exception:
+        logger.warning(
+            "Failed to sync deletion_requested metadata",
+            user_id=user["id"],
+            action="delete_account",
+        )
     return first(cast("list[dict[str, Any]]", response.data), "delete account")
 
 
 @router.post("/cancel-deletion")
 async def cancel_deletion(
-    user: dict[str, Any] = Depends(get_current_user),  # noqa: B008
+    user: dict[str, Any] = Depends(get_current_user_allow_pending),  # noqa: B008
     db: Client = Depends(get_user_db),  # noqa: B008
     admin_db: Client = Depends(get_admin_db),  # noqa: B008
 ) -> dict[str, Any]:
@@ -103,9 +112,16 @@ async def cancel_deletion(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to cancel deletion",
         )
-    admin_db.auth.admin.update_user_by_id(
-        user["id"], {"app_metadata": {"deletion_requested": False}}
-    )
+    try:
+        admin_db.auth.admin.update_user_by_id(
+            user["id"], {"app_metadata": {"deletion_requested": False}}
+        )
+    except Exception:
+        logger.warning(
+            "Failed to sync deletion_requested metadata",
+            user_id=user["id"],
+            action="cancel_deletion",
+        )
     return first(cast("list[dict[str, Any]]", response.data), "cancel deletion")
 
 
