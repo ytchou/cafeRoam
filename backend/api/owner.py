@@ -11,8 +11,8 @@ router = APIRouter(prefix="/owner", tags=["owner"])
 
 
 def get_owner_service(
-    db: Client = Depends(get_admin_db),
-    analytics: AnalyticsProvider = Depends(get_analytics_provider),
+    db: Client = Depends(get_admin_db),  # noqa: B008
+    analytics: AnalyticsProvider = Depends(get_analytics_provider),  # noqa: B008
 ) -> OwnerService:
     return OwnerService(db=db, analytics=analytics)
 
@@ -20,8 +20,8 @@ def get_owner_service(
 @router.get("/{shop_id}/dashboard")
 async def get_dashboard(
     shop_id: str,
-    user: dict = Depends(require_shop_owner),
-    svc: OwnerService = Depends(get_owner_service),
+    user: dict = Depends(require_shop_owner),  # noqa: B008
+    svc: OwnerService = Depends(get_owner_service),  # noqa: B008
 ):
     """Return 30-day KPI stats for the owner's shop dashboard."""
     return svc.get_dashboard_stats(shop_id).model_dump()
@@ -30,8 +30,8 @@ async def get_dashboard(
 @router.get("/{shop_id}/analytics")
 async def get_analytics(
     shop_id: str,
-    user: dict = Depends(require_shop_owner),
-    svc: OwnerService = Depends(get_owner_service),
+    user: dict = Depends(require_shop_owner),  # noqa: B008
+    svc: OwnerService = Depends(get_owner_service),  # noqa: B008
 ):
     """Return search insights, community pulse tags, and district rankings."""
     return {
@@ -44,8 +44,8 @@ async def get_analytics(
 @router.get("/{shop_id}/story")
 async def get_story(
     shop_id: str,
-    user: dict = Depends(require_shop_owner),
-    svc: OwnerService = Depends(get_owner_service),
+    user: dict = Depends(require_shop_owner),  # noqa: B008
+    svc: OwnerService = Depends(get_owner_service),  # noqa: B008
 ):
     """Return the owner's published shop story, or null if none exists."""
     story = svc.get_shop_story(shop_id)
@@ -56,8 +56,8 @@ async def get_story(
 async def upsert_story(
     shop_id: str,
     body: OwnerStoryIn,
-    user: dict = Depends(require_shop_owner),
-    svc: OwnerService = Depends(get_owner_service),
+    user: dict = Depends(require_shop_owner),  # noqa: B008
+    svc: OwnerService = Depends(get_owner_service),  # noqa: B008
 ):
     """Create or replace the owner's shop story."""
     return svc.upsert_shop_story(shop_id, user["id"], body).model_dump()
@@ -67,8 +67,8 @@ async def upsert_story(
 async def update_info(
     shop_id: str,
     body: ShopInfoIn,
-    user: dict = Depends(require_shop_owner),
-    svc: OwnerService = Depends(get_owner_service),
+    user: dict = Depends(require_shop_owner),  # noqa: B008
+    svc: OwnerService = Depends(get_owner_service),  # noqa: B008
 ):
     """Patch mutable shop info fields (description, hours, phone, website)."""
     return svc.update_shop_info(shop_id, user["id"], body)
@@ -77,8 +77,8 @@ async def update_info(
 @router.get("/{shop_id}/tags")
 async def get_tags(
     shop_id: str,
-    user: dict = Depends(require_shop_owner),
-    svc: OwnerService = Depends(get_owner_service),
+    user: dict = Depends(require_shop_owner),  # noqa: B008
+    svc: OwnerService = Depends(get_owner_service),  # noqa: B008
 ):
     """Return the current owner-managed tags for the shop."""
     return {"tags": svc.get_owner_tags(shop_id)}
@@ -88,8 +88,8 @@ async def get_tags(
 async def update_tags(
     shop_id: str,
     body: OwnerTagsIn,
-    user: dict = Depends(require_shop_owner),
-    svc: OwnerService = Depends(get_owner_service),
+    user: dict = Depends(require_shop_owner),  # noqa: B008
+    svc: OwnerService = Depends(get_owner_service),  # noqa: B008
 ):
     """Replace owner-managed tags for the shop."""
     return {"tags": svc.update_owner_tags(shop_id, user["id"], body.tags)}
@@ -99,8 +99,8 @@ async def update_tags(
 async def get_reviews(
     shop_id: str,
     page: int = Query(default=1, ge=1),
-    user: dict = Depends(require_shop_owner),
-    svc: OwnerService = Depends(get_owner_service),
+    user: dict = Depends(require_shop_owner),  # noqa: B008
+    svc: OwnerService = Depends(get_owner_service),  # noqa: B008
 ):
     """Return paginated check-in reviews for the shop."""
     return {"reviews": svc.get_reviews(shop_id, page=page)}
@@ -111,8 +111,8 @@ async def upsert_response(
     shop_id: str,
     checkin_id: str,
     body: ReviewResponseIn,
-    user: dict = Depends(require_shop_owner),
-    svc: OwnerService = Depends(get_owner_service),
+    user: dict = Depends(require_shop_owner),  # noqa: B008
+    svc: OwnerService = Depends(get_owner_service),  # noqa: B008
 ):
     """Create or replace the owner's reply to a specific check-in review."""
     return svc.upsert_review_response(

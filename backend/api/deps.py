@@ -109,8 +109,8 @@ def require_admin(user: dict[str, Any] = Depends(get_current_user)) -> dict[str,
 
 def require_shop_owner(
     shop_id: str,
-    user: dict[str, Any] = Depends(get_current_user),
-    db: Client = Depends(get_admin_db),
+    user: dict[str, Any] = Depends(get_current_user),  # noqa: B008
+    db: Client = Depends(get_admin_db),  # noqa: B008
 ) -> dict[str, Any]:
     """Verify user has an approved claim for this specific shop.
 
