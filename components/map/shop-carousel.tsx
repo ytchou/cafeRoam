@@ -49,7 +49,7 @@ export function ShopCarousel({
           <div key={shop.id} data-shop-id={shop.id}>
             <ShopCardCarousel
               shop={shop}
-              onClick={() => (onCardClick ?? onShopClick)(shop.id)}
+              onClick={() => (onCardClick ?? onShopClick)?.(shop.id)}
             />
           </div>
         ))}
