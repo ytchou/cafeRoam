@@ -53,8 +53,10 @@ class TestDashboardEndpoints:
 
     def test_get_dashboard_with_wrong_shop_returns_403(self):
         """Non-owner cannot access another shop's dashboard"""
+
         def _raise_403(shop_id: str):
             from fastapi import HTTPException
+
             raise HTTPException(status_code=403, detail="Not the verified owner of this shop")
 
         app.dependency_overrides[get_current_user] = lambda: OWNER
@@ -81,7 +83,11 @@ class TestAnalyticsEndpoints:
         mock_pulse = MagicMock()
         mock_pulse.model_dump.return_value = {"tag": "安靜", "count": 18}
         mock_ranking = MagicMock()
-        mock_ranking.model_dump.return_value = {"attribute": "work_score", "rank": 3, "total_in_district": 24}
+        mock_ranking.model_dump.return_value = {
+            "attribute": "work_score",
+            "rank": 3,
+            "total_in_district": 24,
+        }
 
         with patch("api.owner.OwnerService") as mock_svc:
             svc_instance = mock_svc.return_value

@@ -90,19 +90,22 @@ class TestShopStory:
     def test_upsert_creates_new_story(self):
         """Owner publishes a shop story for the first time"""
         mock_db = MagicMock()
-        mock_db.table.return_value.upsert.return_value.execute.return_value.data = [{
-            "id": "content-uuid",
-            "shop_id": SHOP_ID,
-            "owner_id": "owner-uuid",
-            "content_type": "story",
-            "title": "Our Story",
-            "body": "我們的咖啡館誕生於2019年的大稻埕老街。",
-            "photo_url": None,
-            "is_published": True,
-            "created_at": "2026-03-27T00:00:00Z",
-            "updated_at": "2026-03-27T00:00:00Z",
-        }]
+        mock_db.table.return_value.upsert.return_value.execute.return_value.data = [
+            {
+                "id": "content-uuid",
+                "shop_id": SHOP_ID,
+                "owner_id": "owner-uuid",
+                "content_type": "story",
+                "title": "Our Story",
+                "body": "我們的咖啡館誕生於2019年的大稻埕老街。",
+                "photo_url": None,
+                "is_published": True,
+                "created_at": "2026-03-27T00:00:00Z",
+                "updated_at": "2026-03-27T00:00:00Z",
+            }
+        ]
         from models.owner import OwnerStoryIn
+
         svc = OwnerService(db=mock_db)
         story_in = OwnerStoryIn(
             title="Our Story",
@@ -128,9 +131,17 @@ class TestOwnerTags:
     def test_update_tags_replaces_entire_set(self):
         """Updating owner tags replaces the full set — no partial updates"""
         mock_db = MagicMock()
-        mock_db.table.return_value.delete.return_value.eq.return_value.execute.return_value = MagicMock()
+        mock_db.table.return_value.delete.return_value.eq.return_value.execute.return_value = (
+            MagicMock()
+        )
         mock_db.table.return_value.insert.return_value.execute.return_value.data = [
-            {"id": "t1", "shop_id": SHOP_ID, "owner_id": "owner-uuid", "tag": "安靜工作空間", "created_at": "2026-03-27T00:00:00Z"},
+            {
+                "id": "t1",
+                "shop_id": SHOP_ID,
+                "owner_id": "owner-uuid",
+                "tag": "安靜工作空間",
+                "created_at": "2026-03-27T00:00:00Z",
+            },
         ]
         svc = OwnerService(db=mock_db)
         result = svc.update_owner_tags(SHOP_ID, "owner-uuid", ["安靜工作空間"])
@@ -153,8 +164,12 @@ class TestReviews:
         """Owner sees all check-in reviews for their shop, paginated"""
         mock_db = MagicMock()
         mock_db.table.return_value.select.return_value.eq.return_value.not_.is_.return_value.order.return_value.range.return_value.execute.return_value.data = [
-            {"id": "ci-1", "note": "超棒的咖啡！", "created_at": "2026-03-27T10:00:00Z",
-             "review_responses": []},
+            {
+                "id": "ci-1",
+                "note": "超棒的咖啡！",
+                "created_at": "2026-03-27T10:00:00Z",
+                "review_responses": [],
+            },
         ]
         svc = OwnerService(db=mock_db)
         result = svc.get_reviews(SHOP_ID, page=1)
@@ -169,12 +184,14 @@ class TestReviews:
         mock_db.table.return_value.select.return_value.eq.return_value.maybe_single.return_value.execute.return_value.data = {
             "shop_id": SHOP_ID
         }
-        mock_db.table.return_value.upsert.return_value.execute.return_value.data = [{
-            "id": "rr-1",
-            "checkin_id": "ci-1",
-            "body": "感謝您的到來！",
-            "created_at": "2026-03-27T11:00:00Z",
-        }]
+        mock_db.table.return_value.upsert.return_value.execute.return_value.data = [
+            {
+                "id": "rr-1",
+                "checkin_id": "ci-1",
+                "body": "感謝您的到來！",
+                "created_at": "2026-03-27T11:00:00Z",
+            }
+        ]
         svc = OwnerService(db=mock_db)
         result = svc.upsert_review_response(
             checkin_id="ci-1",

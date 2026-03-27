@@ -37,6 +37,7 @@ class OwnerService:
         """Aggregate check-ins, followers, saves, page views for last 30 days."""
         from concurrent.futures import ThreadPoolExecutor
         from datetime import datetime, timedelta
+
         cutoff = (datetime.now(UTC) - timedelta(days=30)).isoformat()
 
         def _count_checkins() -> int:
@@ -46,7 +47,8 @@ class OwnerService:
                 .eq("shop_id", shop_id)
                 .gte("created_at", cutoff)
                 .execute()
-                .count or 0
+                .count
+                or 0
             )
 
         def _count_followers() -> int:
@@ -55,7 +57,8 @@ class OwnerService:
                 .select("id", count="exact")
                 .eq("shop_id", shop_id)
                 .execute()
-                .count or 0
+                .count
+                or 0
             )
 
         def _count_saves() -> int:
@@ -65,7 +68,8 @@ class OwnerService:
                 .eq("shop_id", shop_id)
                 .gte("created_at", cutoff)
                 .execute()
-                .count or 0
+                .count
+                or 0
             )
 
         with ThreadPoolExecutor(max_workers=3) as executor:
@@ -131,6 +135,7 @@ class OwnerService:
 
     def get_community_pulse(self, shop_id: str) -> list[CommunityPulseTag]:
         from datetime import datetime, timedelta
+
         cutoff = (datetime.now(UTC) - timedelta(days=30)).isoformat()
 
         result = (
@@ -141,14 +146,11 @@ class OwnerService:
             .execute()
         )
         all_tags: list[str] = []
-        for row in (result.data or []):
+        for row in result.data or []:
             all_tags.extend(row.get("tags") or [])
 
         counter = Counter(all_tags)
-        return [
-            CommunityPulseTag(tag=tag, count=count)
-            for tag, count in counter.most_common(10)
-        ]
+        return [CommunityPulseTag(tag=tag, count=count) for tag, count in counter.most_common(10)]
 
     def get_ranking(self, shop_id: str) -> list[DistrictRanking]:
         """Compute relative rank in district by top 3 attributes."""
@@ -180,11 +182,13 @@ class OwnerService:
             )
             rank = next((i + 1 for i, (sid, _) in enumerate(scores) if sid == shop_id), None)
             if rank:
-                rankings.append(DistrictRanking(
-                    attribute=labels[attr],
-                    rank=rank,
-                    total_in_district=len(scores),
-                ))
+                rankings.append(
+                    DistrictRanking(
+                        attribute=labels[attr],
+                        rank=rank,
+                        total_in_district=len(scores),
+                    )
+                )
         return sorted(rankings, key=lambda r: r.rank)[:3]
 
     # ── Shop Story ─────────────────────────────────────────────────────────
@@ -202,10 +206,9 @@ class OwnerService:
             return None
         return OwnerStoryOut(**result.data)
 
-    def upsert_shop_story(
-        self, shop_id: str, owner_id: str, data: OwnerStoryIn
-    ) -> OwnerStoryOut:
+    def upsert_shop_story(self, shop_id: str, owner_id: str, data: OwnerStoryIn) -> OwnerStoryOut:
         from datetime import datetime
+
         now = datetime.now(UTC).isoformat()
         row = {
             "shop_id": shop_id,
@@ -218,9 +221,7 @@ class OwnerService:
             "updated_at": now,
         }
         result = (
-            self._db.table("shop_content")
-            .upsert(row, on_conflict="shop_id,content_type")
-            .execute()
+            self._db.table("shop_content").upsert(row, on_conflict="shop_id,content_type").execute()
         )
         return OwnerStoryOut(**first(result.data, "upsert shop_content"))
 
@@ -230,12 +231,7 @@ class OwnerService:
         updates = {k: v for k, v in data.model_dump().items() if v is not None}
         if not updates:
             return {}
-        result = (
-            self._db.table("shops")
-            .update(updates)
-            .eq("id", shop_id)
-            .execute()
-        )
+        result = self._db.table("shops").update(updates).eq("id", shop_id).execute()
         return first(result.data, "update shop info")
 
     # ── Owner Tags ─────────────────────────────────────────────────────────
@@ -250,9 +246,7 @@ class OwnerService:
         )
         return [row["tag"] for row in (result.data or [])]
 
-    def update_owner_tags(
-        self, shop_id: str, owner_id: str, tags: list[str]
-    ) -> list[str]:
+    def update_owner_tags(self, shop_id: str, owner_id: str, tags: list[str]) -> list[str]:
         if len(tags) > 10:
             raise ValueError(f"Shop owners may set a maximum 10 tags; got {len(tags)}")
 
@@ -300,6 +294,7 @@ class OwnerService:
         self, checkin_id: str, shop_id: str, owner_id: str, body: str
     ) -> ReviewResponseOut:
         from fastapi import HTTPException
+
         checkin = (
             self._db.table("check_ins")
             .select("shop_id")
@@ -316,11 +311,6 @@ class OwnerService:
             "owner_id": owner_id,
             "body": body,
         }
-        result = (
-            self._db.table("review_responses")
-            .upsert(row, on_conflict="checkin_id")
-            .execute()
-        )
+        result = self._db.table("review_responses").upsert(row, on_conflict="checkin_id").execute()
         data = first(result.data, "upsert review_response")
         return ReviewResponseOut(**data)
-

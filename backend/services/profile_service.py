@@ -85,16 +85,12 @@ class ProfileService:
                 lambda: self._db.table("shop_content").delete().eq("owner_id", user_id).execute()
             ),
             asyncio.to_thread(
-                lambda: self._db.table("shop_owner_tags")
-                .delete()
-                .eq("owner_id", user_id)
-                .execute()
+                lambda: self._db.table("shop_owner_tags").delete().eq("owner_id", user_id).execute()
             ),
             asyncio.to_thread(
-                lambda: self._db.table("review_responses")
-                .delete()
-                .eq("owner_id", user_id)
-                .execute()
+                lambda: (
+                    self._db.table("review_responses").delete().eq("owner_id", user_id).execute()
+                )
             ),
             asyncio.to_thread(
                 # Release the shop claim so the shop can be re-claimed after deletion
