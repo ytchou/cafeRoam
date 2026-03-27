@@ -16,7 +16,7 @@
 
 - [x] Task 1: `shop_content` migration
 - [x] Task 2: `shop_owner_tags` migration
-- [ ] Task 3: `review_responses` migration
+- [x] Task 3: `review_responses` migration
 - [ ] Task 4: `require_shop_owner` dependency
 - [ ] Task 5: Pydantic models
 - [ ] Task 16: Config + doctor + PDPA cascade
