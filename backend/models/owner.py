@@ -1,31 +1,33 @@
 from __future__ import annotations
-from typing import Annotated, Optional
+
+from typing import Annotated
+
 from pydantic import BaseModel, Field
 
 
 class OwnerStoryIn(BaseModel):
-    title: Optional[str] = None
+    title: str | None = None
     body: str = Field(..., min_length=10, max_length=5000)
-    photo_url: Optional[str] = None
+    photo_url: str | None = None
     is_published: bool = False
 
 
 class OwnerStoryOut(BaseModel):
     id: str
     shop_id: str
-    title: Optional[str]
+    title: str | None
     body: str
-    photo_url: Optional[str]
+    photo_url: str | None
     is_published: bool
     created_at: str
     updated_at: str
 
 
 class ShopInfoIn(BaseModel):
-    description: Optional[str] = Field(None, max_length=1000)
-    opening_hours: Optional[dict] = None
-    phone: Optional[str] = None
-    website: Optional[str] = None
+    description: str | None = Field(None, max_length=1000)
+    opening_hours: dict | None = None
+    phone: str | None = None
+    website: str | None = None
 
 
 class OwnerTagsIn(BaseModel):

@@ -1,7 +1,8 @@
-import pytest
 from unittest.mock import MagicMock
-from services.owner_service import OwnerService
 
+import pytest
+
+from services.owner_service import OwnerService
 
 SHOP_ID = "550e8400-e29b-41d4-a716-446655440000"
 

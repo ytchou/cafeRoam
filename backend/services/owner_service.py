@@ -1,14 +1,27 @@
 from __future__ import annotations
+
 import logging
 import uuid
 from collections import Counter
-from supabase import Client
-from models.owner import (
-    DashboardStats, SearchInsight, CommunityPulseTag, DistrictRanking,
-    OwnerStoryOut, OwnerStoryIn, ShopInfoIn, ReviewResponseOut, ReviewResponseIn,
-)
+from datetime import UTC
+from typing import TYPE_CHECKING
+
 from core.db import first
-from providers.analytics.interface import AnalyticsProvider
+from models.owner import (
+    CommunityPulseTag,
+    DashboardStats,
+    DistrictRanking,
+    OwnerStoryIn,
+    OwnerStoryOut,
+    ReviewResponseOut,
+    SearchInsight,
+    ShopInfoIn,
+)
+
+if TYPE_CHECKING:
+    from supabase import Client
+
+    from providers.analytics.interface import AnalyticsProvider
 
 logger = logging.getLogger(__name__)
 
@@ -23,8 +36,8 @@ class OwnerService:
     def get_dashboard_stats(self, shop_id: str) -> DashboardStats:
         """Aggregate check-ins, followers, saves, page views for last 30 days."""
         from concurrent.futures import ThreadPoolExecutor
-        from datetime import datetime, timedelta, timezone
-        cutoff = (datetime.now(timezone.utc) - timedelta(days=30)).isoformat()
+        from datetime import datetime, timedelta
+        cutoff = (datetime.now(UTC) - timedelta(days=30)).isoformat()
 
         def _count_checkins() -> int:
             return (
@@ -117,8 +130,8 @@ class OwnerService:
         return [SearchInsight(query=r["query"], impressions=int(r["impressions"])) for r in rows]
 
     def get_community_pulse(self, shop_id: str) -> list[CommunityPulseTag]:
-        from datetime import datetime, timedelta, timezone
-        cutoff = (datetime.now(timezone.utc) - timedelta(days=30)).isoformat()
+        from datetime import datetime, timedelta
+        cutoff = (datetime.now(UTC) - timedelta(days=30)).isoformat()
 
         result = (
             self._db.table("check_ins")
@@ -192,8 +205,8 @@ class OwnerService:
     def upsert_shop_story(
         self, shop_id: str, owner_id: str, data: OwnerStoryIn
     ) -> OwnerStoryOut:
-        from datetime import datetime, timezone
-        now = datetime.now(timezone.utc).isoformat()
+        from datetime import datetime
+        now = datetime.now(UTC).isoformat()
         row = {
             "shop_id": shop_id,
             "owner_id": owner_id,
@@ -255,7 +268,13 @@ class OwnerService:
         to_remove = existing - new_set
 
         if to_remove:
-            self._db.table("shop_owner_tags").delete().eq("shop_id", shop_id).in_("tag", list(to_remove)).execute()
+            (
+                self._db.table("shop_owner_tags")
+                .delete()
+                .eq("shop_id", shop_id)
+                .in_("tag", list(to_remove))
+                .execute()
+            )
         if to_add:
             rows = [{"shop_id": shop_id, "owner_id": owner_id, "tag": tag} for tag in to_add]
             self._db.table("shop_owner_tags").insert(rows).execute()

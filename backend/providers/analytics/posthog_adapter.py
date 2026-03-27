@@ -85,7 +85,7 @@ class PostHogAnalyticsAdapter:
             if columns is None or results is None:
                 logger.warning("Unexpected PostHog response shape: %s", list(data.keys()))
                 return []
-            return [dict(zip(columns, row)) for row in results]
+            return [dict(zip(columns, row, strict=True)) for row in results]
         except Exception:
             logger.warning("PostHog HogQL query failed", exc_info=True)
             return []
