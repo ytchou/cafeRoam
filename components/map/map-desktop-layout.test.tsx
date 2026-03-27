@@ -177,9 +177,7 @@ describe('a user on the desktop map view', () => {
 
   it('a user clicking a shop card falls back to onShopClick when onCardClick is not provided', async () => {
     const onShopClick = vi.fn();
-    render(
-      <MapDesktopLayout {...defaultProps} onShopClick={onShopClick} />
-    );
+    render(<MapDesktopLayout {...defaultProps} onShopClick={onShopClick} />);
     await userEvent.click(screen.getByText('晨光咖啡 Morning Glow'));
     expect(onShopClick).toHaveBeenCalledWith('shop-aa11bb');
   });

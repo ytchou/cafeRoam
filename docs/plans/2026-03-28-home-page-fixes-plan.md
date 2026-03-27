@@ -15,6 +15,7 @@
 **Tech Stack:** React, TypeScript, Tailwind CSS, Vitest + Testing Library
 
 **Acceptance Criteria:**
+
 - [ ] Clicking a shop card in desktop map view navigates to `/shops/[id]`
 - [ ] Clicking a shop card in mobile map carousel navigates to `/shops/[id]`
 - [ ] Clicking a map pin still only highlights/selects (does not navigate)
@@ -26,6 +27,7 @@
 ### Task 1: Write failing tests for taxonomy tag pills on ShopCardCompact
 
 **Files:**
+
 - Modify: `components/shops/shop-card-compact.test.tsx`
 
 **Step 1: Write the failing tests**
@@ -85,6 +87,7 @@ Expected: 3 new tests FAIL (tags not rendered)
 ### Task 2: Implement taxonomy tag pills on ShopCardCompact
 
 **Files:**
+
 - Modify: `components/shops/shop-card-compact.tsx`
 
 **Step 1: Add tag pills between meta and community summary**
@@ -92,18 +95,20 @@ Expected: 3 new tests FAIL (tags not rendered)
 In `components/shops/shop-card-compact.tsx`, inside the `<div className="flex min-w-0 flex-1 flex-col gap-1">` container, add between the `formatMeta` span and the `summary` span:
 
 ```tsx
-{shop.taxonomyTags && shop.taxonomyTags.length > 0 && (
-  <div data-testid="tag-pills" className="flex flex-wrap gap-1">
-    {shop.taxonomyTags.slice(0, 5).map((tag) => (
-      <span
-        key={tag.id}
-        className="bg-muted text-text-secondary rounded-full px-2 py-0.5 font-[family-name:var(--font-body)] text-[11px]"
-      >
-        {tag.labelZh}
-      </span>
-    ))}
-  </div>
-)}
+{
+  shop.taxonomyTags && shop.taxonomyTags.length > 0 && (
+    <div data-testid="tag-pills" className="flex flex-wrap gap-1">
+      {shop.taxonomyTags.slice(0, 5).map((tag) => (
+        <span
+          key={tag.id}
+          className="bg-muted text-text-secondary rounded-full px-2 py-0.5 font-[family-name:var(--font-body)] text-[11px]"
+        >
+          {tag.labelZh}
+        </span>
+      ))}
+    </div>
+  );
+}
 ```
 
 **Step 2: Run tests to verify they pass**
@@ -124,6 +129,7 @@ git commit -m "feat: render taxonomy tag pills on ShopCardCompact (max 5, Chines
 ### Task 3: Write failing test for onCardClick on MapDesktopLayout
 
 **Files:**
+
 - Modify: `components/map/map-desktop-layout.test.tsx`
 
 **Step 1: Write the failing test**
@@ -181,11 +187,13 @@ Expected: First test FAILS (onCardClick prop doesn't exist / not wired), second 
 ### Task 4: Implement onCardClick on MapDesktopLayout
 
 **Files:**
+
 - Modify: `components/map/map-desktop-layout.tsx`
 
 **Step 1: Add onCardClick to the interface and destructure**
 
 In `MapDesktopLayoutProps`, add:
+
 ```typescript
 onCardClick?: (id: string) => void;
 ```
@@ -195,10 +203,13 @@ In the destructured props, add `onCardClick`.
 **Step 2: Wire onCardClick to ShopCardCompact**
 
 Change the `ShopCardCompact` `onClick` from:
+
 ```tsx
 onClick={() => onShopClick(shop.id)}
 ```
+
 to:
+
 ```tsx
 onClick={() => (onCardClick ?? onShopClick)(shop.id)}
 ```
@@ -221,6 +232,7 @@ git commit -m "feat: add onCardClick prop to MapDesktopLayout — card navigates
 ### Task 5: Add onCardClick to ShopCarousel and MapMobileLayout
 
 **Files:**
+
 - Modify: `components/map/shop-carousel.tsx`
 - Modify: `components/map/map-mobile-layout.tsx`
 
@@ -242,10 +254,13 @@ interface ShopCarouselProps {
 Destructure `onCardClick` in the component params.
 
 Change the `ShopCardCarousel` `onClick` from:
+
 ```tsx
 onClick={() => onShopClick(shop.id)}
 ```
+
 to:
+
 ```tsx
 onClick={() => (onCardClick ?? onShopClick)(shop.id)}
 ```
@@ -253,6 +268,7 @@ onClick={() => (onCardClick ?? onShopClick)(shop.id)}
 **Step 2: Update MapMobileLayout**
 
 In `components/map/map-mobile-layout.tsx`, add to `MapMobileLayoutProps`:
+
 ```typescript
 onCardClick?: (id: string) => void;
 ```
@@ -260,6 +276,7 @@ onCardClick?: (id: string) => void;
 Destructure `onCardClick` in the component params.
 
 Pass it through to `ShopCarousel`:
+
 ```tsx
 <ShopCarousel
   shops={shops}
@@ -282,6 +299,7 @@ git commit -m "feat: add onCardClick prop to ShopCarousel and MapMobileLayout"
 ### Task 6: Wire onCardClick in page.tsx
 
 **Files:**
+
 - Modify: `app/page.tsx`
 
 No test needed — `app/page.tsx` has no test file and this is wiring only. The behavior is covered by the MapDesktopLayout test (Task 3).
@@ -289,19 +307,25 @@ No test needed — `app/page.tsx` has no test file and this is wiring only. The 
 **Step 1: Pass onCardClick to map layouts**
 
 In `app/page.tsx`, change the desktop map rendering from:
+
 ```tsx
 <MapDesktopLayout {...layoutProps} />
 ```
+
 to:
+
 ```tsx
 <MapDesktopLayout {...layoutProps} onCardClick={handleShopNavigate} />
 ```
 
 Change the mobile map rendering from:
+
 ```tsx
 <MapMobileLayout {...layoutProps} />
 ```
+
 to:
+
 ```tsx
 <MapMobileLayout {...layoutProps} onCardClick={handleShopNavigate} />
 ```
@@ -348,15 +372,19 @@ graph TD
 ```
 
 **Wave 1** (parallel — no dependencies):
+
 - Task 1: Write failing tests for taxonomy tag pills
 - Task 3: Write failing test for onCardClick on MapDesktopLayout
 
 **Wave 2** (parallel — depends on Wave 1):
+
 - Task 2: Implement taxonomy tag pills ← Task 1
 - Task 4: Implement onCardClick on MapDesktopLayout ← Task 3
 
 **Wave 3** (sequential — depends on Wave 2):
+
 - Task 5: Add onCardClick to ShopCarousel + MapMobileLayout ← Task 4
 
 **Wave 4** (sequential — depends on Wave 2 + 3):
+
 - Task 6: Wire onCardClick in page.tsx ← Task 2, Task 5

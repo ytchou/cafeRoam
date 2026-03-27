@@ -21,6 +21,7 @@ In `app/page.tsx`, `layoutProps` sets `onShopClick: setSelectedShopId`. The list
 ### Solution
 
 Split `onShopClick` into two concerns:
+
 - **`onShopClick`** (existing) — used by map pins → `setSelectedShopId` (highlight card, scroll carousel)
 - **`onCardClick`** (new, optional) — used by shop cards → `router.push('/shops/[id]')` (navigate)
 
@@ -28,23 +29,23 @@ Falls back: `onCardClick ?? onShopClick`, so existing callers without `onCardCli
 
 ### Files
 
-| File | Change |
-|------|--------|
+| File                                    | Change                                                                                                       |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
 | `components/map/map-desktop-layout.tsx` | Add optional `onCardClick?: (id: string) => void` prop. `ShopCardCompact` uses `onCardClick ?? onShopClick`. |
-| `components/map/map-mobile-layout.tsx` | Add optional `onCardClick?: (id: string) => void` prop. Pass through to `ShopCarousel`. |
-| `components/map/shop-carousel.tsx` | Add optional `onCardClick?: (id: string) => void` prop. Card tap uses `onCardClick ?? onShopClick`. |
-| `app/page.tsx` | Pass `onCardClick={handleShopNavigate}` to both `MapDesktopLayout` and `MapMobileLayout`. |
+| `components/map/map-mobile-layout.tsx`  | Add optional `onCardClick?: (id: string) => void` prop. Pass through to `ShopCarousel`.                      |
+| `components/map/shop-carousel.tsx`      | Add optional `onCardClick?: (id: string) => void` prop. Card tap uses `onCardClick ?? onShopClick`.          |
+| `app/page.tsx`                          | Pass `onCardClick={handleShopNavigate}` to both `MapDesktopLayout` and `MapMobileLayout`.                    |
 
 ### Behavior Matrix
 
-| View | Element | Action |
-|------|---------|--------|
-| Desktop map | Left panel card | Navigate to `/shops/[id]` |
-| Desktop map | Map pin | Select/highlight card in panel |
-| Mobile map | Carousel card | Navigate to `/shops/[id]` |
-| Mobile map | Map pin | Scroll to card in carousel |
-| Desktop list | Card | Navigate (already works) |
-| Mobile list | Card | Navigate (already works) |
+| View         | Element         | Action                         |
+| ------------ | --------------- | ------------------------------ |
+| Desktop map  | Left panel card | Navigate to `/shops/[id]`      |
+| Desktop map  | Map pin         | Select/highlight card in panel |
+| Mobile map   | Carousel card   | Navigate to `/shops/[id]`      |
+| Mobile map   | Map pin         | Scroll to card in carousel     |
+| Desktop list | Card            | Navigate (already works)       |
+| Mobile list  | Card            | Navigate (already works)       |
 
 ## Fix 2: Taxonomy Tag Pills on ShopCardCompact
 
@@ -75,8 +76,8 @@ Render up to 5 tags as small pill chips between the meta line (rating/distance/o
 
 ### File
 
-| File | Change |
-|------|--------|
+| File                                     | Change                                                               |
+| ---------------------------------------- | -------------------------------------------------------------------- |
 | `components/shops/shop-card-compact.tsx` | Add tag pills row after `formatMeta` span, before community summary. |
 
 ## Testing Classification

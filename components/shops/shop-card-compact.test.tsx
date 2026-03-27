@@ -92,7 +92,11 @@ describe('a user interacting with the ShopCardCompact', () => {
         { id: 'late-night', label: 'Late night hours', labelZh: '深夜營業' },
         { id: 'no-time-limit', label: 'No time limit', labelZh: '無限時' },
         { id: 'dog-friendly', label: 'Dog friendly', labelZh: '寵物友善' },
-        { id: 'outdoor-seating', label: 'Outdoor seating', labelZh: '戶外座位' },
+        {
+          id: 'outdoor-seating',
+          label: 'Outdoor seating',
+          labelZh: '戶外座位',
+        },
         { id: 'cash-only', label: 'Cash only', labelZh: '僅收現金' },
       ],
     };
