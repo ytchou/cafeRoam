@@ -22,6 +22,13 @@ test.describe('@critical J05 — Auth wall: protected routes redirect to login',
     await page.waitForURL(/\/login/, { timeout: 10_000 });
   });
 
+  test('unauthenticated user accessing /submit is redirected to /login', async ({
+    page,
+  }) => {
+    await page.goto('/submit');
+    await page.waitForURL(/\/login/, { timeout: 10_000 });
+  });
+
   test('unauthenticated user can access /map without redirect', async ({
     page,
   }) => {

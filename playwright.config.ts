@@ -1,4 +1,20 @@
 import { defineConfig, devices } from '@playwright/test';
+import { readFileSync } from 'node:fs';
+
+// Playwright auto-loads .env but not .env.local — load it explicitly for local dev.
+// In CI, these vars are injected directly into process.env so the file won't exist.
+try {
+  for (const line of readFileSync('.env.local', 'utf-8').split('\n')) {
+    const match = line.match(/^([^#=]+)=(.*)$/);
+    if (match && !(match[1].trim() in process.env)) {
+      process.env[match[1].trim()] = match[2]
+        .trim()
+        .replace(/^(['"])(.*)\1$/, '$2');
+    }
+  }
+} catch {
+  // .env.local absent in CI — no-op
+}
 
 export default defineConfig({
   testDir: './e2e',
