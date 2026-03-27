@@ -67,4 +67,47 @@ describe('a user interacting with the ShopCardCompact', () => {
     render(<ShopCardCompact shop={shop} onClick={() => {}} />);
     expect(screen.queryByText(/「/)).not.toBeInTheDocument();
   });
+
+  it('a user browsing sees taxonomy tags as pill chips to understand the shop vibe', () => {
+    const shopWithTags = {
+      ...shop,
+      taxonomyTags: [
+        { id: 'outlet', label: 'Has outlets', labelZh: '有插座' },
+        { id: 'quiet', label: 'Quiet', labelZh: '安靜' },
+        { id: 'late-night', label: 'Late night', labelZh: '深夜營業' },
+      ],
+    };
+    render(<ShopCardCompact shop={shopWithTags} onClick={() => {}} />);
+    expect(screen.getByText('有插座')).toBeInTheDocument();
+    expect(screen.getByText('安靜')).toBeInTheDocument();
+    expect(screen.getByText('深夜營業')).toBeInTheDocument();
+  });
+
+  it('a user sees at most 5 tags even when the shop has more', () => {
+    const shopWithManyTags = {
+      ...shop,
+      taxonomyTags: [
+        { id: 't1', label: 'Tag 1', labelZh: '標籤一' },
+        { id: 't2', label: 'Tag 2', labelZh: '標籤二' },
+        { id: 't3', label: 'Tag 3', labelZh: '標籤三' },
+        { id: 't4', label: 'Tag 4', labelZh: '標籤四' },
+        { id: 't5', label: 'Tag 5', labelZh: '標籤五' },
+        { id: 't6', label: 'Tag 6', labelZh: '標籤六' },
+        { id: 't7', label: 'Tag 7', labelZh: '標籤七' },
+      ],
+    };
+    render(<ShopCardCompact shop={shopWithManyTags} onClick={() => {}} />);
+    expect(screen.getByText('標籤五')).toBeInTheDocument();
+    expect(screen.queryByText('標籤六')).not.toBeInTheDocument();
+    expect(screen.queryByText('標籤七')).not.toBeInTheDocument();
+  });
+
+  it('a user sees no tag row when the shop has no taxonomy tags', () => {
+    const { container } = render(
+      <ShopCardCompact shop={shop} onClick={() => {}} />
+    );
+    expect(
+      container.querySelector('[data-testid="tag-pills"]')
+    ).not.toBeInTheDocument();
+  });
 });

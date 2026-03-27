@@ -13,7 +13,7 @@
 
 **Chunk 1 — Taxonomy Tag Pills (Waves 1-2):**
 
-- [ ] Task 1: Write failing tests for taxonomy tag pills
+- [x] Task 1: Write failing tests for taxonomy tag pills
 - [ ] Task 2: Implement taxonomy tag pills on ShopCardCompact
 
 **Chunk 2 — Card Navigation Fix (Waves 1-4):**
