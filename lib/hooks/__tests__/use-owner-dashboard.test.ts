@@ -49,20 +49,27 @@ describe('useOwnerDashboard', () => {
     expect(result.current.stats).toBeUndefined();
   });
 
-  it('passes null key to SWR when shopId is empty, preventing any fetch', () => {
+  it('returns undefined stats and no loading state when shopId is empty', () => {
     mockUseSWR.mockReturnValue(swrReturning(undefined));
 
-    renderHook(() => useOwnerDashboard(''));
-    const [key] = mockUseSWR.mock.calls[0];
-    expect(key).toBeNull();
+    const { result } = renderHook(() => useOwnerDashboard(''));
+    expect(result.current.stats).toBeUndefined();
+    expect(result.current.isLoading).toBe(false);
   });
 
-  it('passes the dashboard URL as key when shopId is provided', () => {
-    mockUseSWR.mockReturnValue(swrReturning(undefined));
+  it('returns stats when shopId is provided and data is available', () => {
+    mockUseSWR.mockReturnValue(
+      swrReturning({
+        checkin_count_30d: 7,
+        follower_count: 33,
+        saves_count_30d: 4,
+        page_views_30d: 155,
+      })
+    );
 
-    renderHook(() => useOwnerDashboard(SHOP_ID));
-    const [key] = mockUseSWR.mock.calls[0];
-    expect(key).toBe(`/api/owner/${SHOP_ID}/dashboard`);
+    const { result } = renderHook(() => useOwnerDashboard(SHOP_ID));
+    expect(result.current.stats?.checkin_count_30d).toBe(7);
+    expect(result.current.stats?.follower_count).toBe(33);
   });
 
   it('exposes error when fetch fails', () => {

@@ -1,6 +1,6 @@
 from __future__ import annotations
+from typing import Annotated, Optional
 from pydantic import BaseModel, Field
-from typing import Optional
 
 
 class OwnerStoryIn(BaseModel):
@@ -29,7 +29,7 @@ class ShopInfoIn(BaseModel):
 
 
 class OwnerTagsIn(BaseModel):
-    tags: list[str] = Field(..., max_length=10)
+    tags: Annotated[list[str], Field(min_length=0, max_length=10)]
 
 
 class ReviewResponseIn(BaseModel):
