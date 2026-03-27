@@ -62,7 +62,7 @@ class TestGetStamps:
             app.dependency_overrides.pop(get_current_user, None)
             app.dependency_overrides.pop(get_user_db, None)
 
-    def test_authenticated_user_sees_photo_and_district_on_their_stamp(
+    def test_authenticated_user_sees_photo_on_their_stamp(
         self, client: TestClient, auth_headers: dict
     ):
         db = make_db_mock(
@@ -74,7 +74,7 @@ class TestGetStamps:
                     "check_in_id": "ci-1",
                     "design_url": "/stamps/shop-a.svg",
                     "earned_at": "2026-03-01T00:00:00Z",
-                    "shops": {"name": "Fika Coffee", "district": "大安"},
+                    "shops": {"name": "Fika Coffee"},
                     "check_ins": {
                         "photo_urls": ["https://storage.example.com/photo1.jpg"],
                         "note": None,
@@ -91,7 +91,8 @@ class TestGetStamps:
             assert resp.status_code == 200
             data = resp.json()
             assert data[0]["photo_url"] == "https://storage.example.com/photo1.jpg"
-            assert data[0]["district"] == "大安"
+            # district removed: shops.district column does not exist in DB schema
+            assert "district" not in data[0]
             assert data[0]["diary_note"] is None
         finally:
             app.dependency_overrides.pop(get_current_user, None)

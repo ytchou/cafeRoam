@@ -8,8 +8,6 @@ from tests.factories import make_community_note_row
 
 # ── Helpers ─────────────────────────────────────────────
 
-_ROLE_LABEL_MAP = {"blogger": "Coffee blogger", "partner": "Partner"}
-
 
 def _make_db_mock(
     note_rows: list[dict] | None = None,
@@ -62,7 +60,7 @@ def _make_db_mock(
 class TestCommunityServiceGetPreview:
     """When the Explore page loads, the preview section shows up to 3 recent partner reviews."""
 
-    def test_returns_only_blogger_reviews_as_community_notes(self):
+    def test_returns_reviews_as_community_notes(self):
         rows = [
             make_community_note_row(checkin_id="ci-1", display_name="Mei-Ling ☕"),
             make_community_note_row(checkin_id="ci-2", display_name="Jason 🌿"),
@@ -76,7 +74,8 @@ class TestCommunityServiceGetPreview:
         assert isinstance(result[0], CommunityNoteCard)
         assert result[0].checkin_id == "ci-1"
         assert result[0].author.display_name == "Mei-Ling ☕"
-        assert result[0].author.role_label == "Coffee blogger"
+        # role_label is "Contributor" for all users — user_roles has no FK from check_ins
+        assert result[0].author.role_label == "Contributor"
 
     def test_returns_empty_list_when_no_partner_reviews_exist(self):
         db = _make_db_mock(note_rows=[])
