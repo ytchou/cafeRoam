@@ -1,24 +1,22 @@
 from __future__ import annotations
 import logging
-import httpx
+import uuid
 from collections import Counter
-from typing import Any
 from supabase import Client
-from core.config import settings
 from models.owner import (
     DashboardStats, SearchInsight, CommunityPulseTag, DistrictRanking,
     OwnerStoryOut, OwnerStoryIn, ShopInfoIn, ReviewResponseOut, ReviewResponseIn,
 )
 from core.db import first
+from providers.analytics.interface import AnalyticsProvider
 
 logger = logging.getLogger(__name__)
 
-_POSTHOG_QUERY_URL = "https://us.posthog.com/api/projects/{project_id}/query/"
-
 
 class OwnerService:
-    def __init__(self, db: Client) -> None:
+    def __init__(self, db: Client, analytics: AnalyticsProvider | None = None) -> None:
         self._db = db
+        self._analytics = analytics
 
     # ── Stats ──────────────────────────────────────────────────────────────
 
@@ -64,7 +62,14 @@ class OwnerService:
         )
 
     def _get_page_views(self, shop_id: str) -> int:
-        rows = self._query_posthog(
+        try:
+            uuid.UUID(shop_id)
+        except ValueError:
+            logger.warning("Invalid shop_id format: %s", shop_id)
+            return 0
+        if not self._analytics:
+            return 0
+        rows = self._analytics.query_hogql(
             f"SELECT count() as views FROM events "
             f"WHERE event = '$pageview' "
             f"AND properties.$current_url LIKE '%/shops/{shop_id}%' "
@@ -76,7 +81,14 @@ class OwnerService:
 
     def get_search_insights(self, shop_id: str) -> list[SearchInsight]:
         try:
-            rows = self._query_posthog(
+            uuid.UUID(shop_id)
+        except ValueError:
+            logger.warning("Invalid shop_id format: %s", shop_id)
+            return []
+        if not self._analytics:
+            return []
+        try:
+            rows = self._analytics.query_hogql(
                 f"SELECT properties.query as query, count() as impressions "
                 f"FROM events "
                 f"WHERE event = 'search_result_shown' "
@@ -278,26 +290,3 @@ class OwnerService:
         data = first(result.data, "upsert review_response")
         return ReviewResponseOut(**data)
 
-    # ── PostHog HogQL helper ───────────────────────────────────────────────
-
-    def _query_posthog(self, hogql: str) -> list[dict[str, Any]]:
-        """Execute a HogQL query against PostHog Query API."""
-        if not settings.posthog_api_key or not settings.posthog_project_id:
-            logger.warning("PostHog not configured — skipping query")
-            return []
-
-        url = _POSTHOG_QUERY_URL.format(project_id=settings.posthog_project_id)
-        resp = httpx.post(
-            url,
-            headers={"Authorization": f"Bearer {settings.posthog_api_key}"},
-            json={"query": {"kind": "HogQLQuery", "query": hogql}},
-            timeout=10.0,
-        )
-        resp.raise_for_status()
-        data = resp.json()
-        columns = data.get("columns")
-        results = data.get("results")
-        if columns is None or results is None:
-            logger.warning("Unexpected PostHog response shape: %s", list(data.keys()))
-            return []
-        return [dict(zip(columns, row)) for row in results]

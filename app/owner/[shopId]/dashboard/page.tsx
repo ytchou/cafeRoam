@@ -6,9 +6,11 @@ import { useUser } from '@/lib/hooks/use-user';
 import { useOwnerDashboard } from '@/lib/hooks/use-owner-dashboard';
 import { useOwnerContent } from '@/lib/hooks/use-owner-content';
 import { useOwnerReviews } from '@/lib/hooks/use-owner-reviews';
+import { useOwnerAnalytics } from '@/lib/hooks/use-owner-analytics';
 import { DashboardOverview } from '@/components/owner/dashboard-overview';
 import { DashboardEdit } from '@/components/owner/dashboard-edit';
 import { DashboardReviews } from '@/components/owner/dashboard-reviews';
+import { DashboardAnalytics } from '@/components/owner/dashboard-analytics';
 
 export default function OwnerDashboardPage() {
   const { shopId } = useParams<{ shopId: string }>();
@@ -17,6 +19,7 @@ export default function OwnerDashboardPage() {
   const { stats, isLoading: statsLoading } = useOwnerDashboard(shopId);
   const { story, tags, saveStory, saveTags } = useOwnerContent(shopId);
   const { reviews, isLoading: reviewsLoading, postResponse } = useOwnerReviews(shopId);
+  const { data: analyticsData, isLoading: analyticsLoading } = useOwnerAnalytics(shopId);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -38,6 +41,10 @@ export default function OwnerDashboardPage() {
     <main className="max-w-2xl mx-auto px-4 py-6 space-y-6">
       <h1 className="text-xl font-bold">店家管理</h1>
       <DashboardOverview stats={stats} isLoading={statsLoading} />
+      <section>
+        <h2 className="text-base font-semibold mb-3">搜尋與社群洞察</h2>
+        <DashboardAnalytics data={analyticsData} isLoading={analyticsLoading} />
+      </section>
       <section>
         <h2 className="text-base font-semibold mb-3">編輯店家資訊</h2>
         <DashboardEdit

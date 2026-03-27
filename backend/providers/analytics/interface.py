@@ -1,4 +1,4 @@
-from typing import Protocol
+from typing import Any, Protocol
 
 
 class AnalyticsProvider(Protocol):
@@ -19,3 +19,5 @@ class AnalyticsProvider(Protocol):
         name: str | None = None,
         properties: dict[str, str | int | bool | None] | None = None,
     ) -> None: ...
+
+    def query_hogql(self, hogql: str) -> list[dict[str, Any]]: ...

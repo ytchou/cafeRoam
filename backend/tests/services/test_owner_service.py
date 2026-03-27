@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock
 from services.owner_service import OwnerService
 
 
@@ -15,20 +15,18 @@ class TestGetDashboardStats:
         """Given an active shop, dashboard stats aggregate from Supabase tables"""
         # Mock check-in count
         mock_db.table.return_value.select.return_value.eq.return_value.gte.return_value.execute.return_value.count = 42
-        svc = OwnerService(db=mock_db)
-
-        with patch.object(svc, "_get_page_views", return_value=150):
-            stats = svc.get_dashboard_stats(SHOP_ID)
+        mock_analytics = MagicMock()
+        mock_analytics.query_hogql.return_value = [{"views": 150}]
+        svc = OwnerService(db=mock_db, analytics=mock_analytics)
+        stats = svc.get_dashboard_stats(SHOP_ID)
 
         assert stats.checkin_count_30d == 42
         assert stats.page_views_30d == 150
 
-    def test_page_views_defaults_to_zero_on_posthog_error(self, mock_db):
-        """Given PostHog is unavailable, page views gracefully returns 0"""
+    def test_page_views_defaults_to_zero_when_no_analytics(self, mock_db):
+        """Given no analytics provider, page views returns 0"""
         svc = OwnerService(db=mock_db)
-
-        with patch.object(svc, "_get_page_views", side_effect=Exception("PostHog timeout")):
-            stats = svc.get_dashboard_stats(SHOP_ID)
+        stats = svc.get_dashboard_stats(SHOP_ID)
 
         assert stats.page_views_30d == 0
 
@@ -37,14 +35,13 @@ class TestGetSearchInsights:
     def test_returns_top_queries(self):
         """Owner sees which search terms surfaced their shop in last 30 days"""
         mock_db = MagicMock()
-        svc = OwnerService(db=mock_db)
-
-        mock_insights = [
+        mock_analytics = MagicMock()
+        mock_analytics.query_hogql.return_value = [
             {"query": "安靜工作空間", "impressions": 28},
             {"query": "寵物友善咖啡", "impressions": 15},
         ]
-        with patch.object(svc, "_query_posthog", return_value=mock_insights):
-            result = svc.get_search_insights(SHOP_ID)
+        svc = OwnerService(db=mock_db, analytics=mock_analytics)
+        result = svc.get_search_insights(SHOP_ID)
 
         assert len(result) == 2
         assert result[0].query == "安靜工作空間"
@@ -53,10 +50,18 @@ class TestGetSearchInsights:
     def test_returns_empty_list_when_no_data(self):
         """If no search impressions yet, returns empty list (not error)"""
         mock_db = MagicMock()
-        svc = OwnerService(db=mock_db)
+        mock_analytics = MagicMock()
+        mock_analytics.query_hogql.return_value = []
+        svc = OwnerService(db=mock_db, analytics=mock_analytics)
+        result = svc.get_search_insights(SHOP_ID)
 
-        with patch.object(svc, "_query_posthog", return_value=[]):
-            result = svc.get_search_insights(SHOP_ID)
+        assert result == []
+
+    def test_returns_empty_list_when_no_analytics_provider(self):
+        """If analytics provider is not configured, returns empty list"""
+        mock_db = MagicMock()
+        svc = OwnerService(db=mock_db)
+        result = svc.get_search_insights(SHOP_ID)
 
         assert result == []
 
@@ -159,6 +164,10 @@ class TestReviews:
     def test_upsert_review_response_prevents_duplicate(self):
         """One response per review — upsert replaces rather than duplicates"""
         mock_db = MagicMock()
+        # Mock checkin ownership verification
+        mock_db.table.return_value.select.return_value.eq.return_value.maybe_single.return_value.execute.return_value.data = {
+            "shop_id": SHOP_ID
+        }
         mock_db.table.return_value.upsert.return_value.execute.return_value.data = [{
             "id": "rr-1",
             "checkin_id": "ci-1",

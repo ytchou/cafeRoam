@@ -3,6 +3,8 @@ from supabase import Client
 
 from api.deps import get_admin_db, get_current_user, require_shop_owner
 from models.owner import OwnerStoryIn, OwnerTagsIn, ReviewResponseIn, ShopInfoIn
+from providers.analytics import get_analytics_provider
+from providers.analytics.interface import AnalyticsProvider
 from services.owner_service import OwnerService
 
 router = APIRouter(prefix="/owner", tags=["owner"])
@@ -13,9 +15,10 @@ async def get_dashboard(
     shop_id: str,
     user: dict = Depends(require_shop_owner),
     db: Client = Depends(get_admin_db),
+    analytics: AnalyticsProvider = Depends(get_analytics_provider),
 ):
     """Return 30-day KPI stats for the owner's shop dashboard."""
-    return OwnerService(db=db).get_dashboard_stats(shop_id).model_dump()
+    return OwnerService(db=db, analytics=analytics).get_dashboard_stats(shop_id).model_dump()
 
 
 @router.get("/{shop_id}/analytics")
@@ -23,9 +26,10 @@ async def get_analytics(
     shop_id: str,
     user: dict = Depends(require_shop_owner),
     db: Client = Depends(get_admin_db),
+    analytics: AnalyticsProvider = Depends(get_analytics_provider),
 ):
     """Return search insights, community pulse tags, and district rankings."""
-    svc = OwnerService(db=db)
+    svc = OwnerService(db=db, analytics=analytics)
     return {
         "search_insights": [i.model_dump() for i in svc.get_search_insights(shop_id)],
         "community_pulse": [p.model_dump() for p in svc.get_community_pulse(shop_id)],

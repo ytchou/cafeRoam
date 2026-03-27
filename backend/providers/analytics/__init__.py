@@ -10,6 +10,7 @@ def get_analytics_provider() -> AnalyticsProvider:
             return PostHogAnalyticsAdapter(
                 api_key=settings.posthog_api_key,
                 host=settings.posthog_host,
+                project_id=settings.posthog_project_id or "",
             )
         case _:
             raise ValueError(f"Unknown analytics provider: {settings.analytics_provider}")
