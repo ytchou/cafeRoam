@@ -6,6 +6,23 @@
 
 ---
 
+## Cancel-Deletion 500 Fix (DEV-64)
+
+> **Plan:** [docs/plans/2026-03-27-cancel-deletion-500-plan.md](docs/plans/2026-03-27-cancel-deletion-500-plan.md)
+
+**Chunk 1 — Backend Fix (Waves 1-3):**
+
+- [x] Task 1: Update test overrides for `get_current_user_allow_pending`
+- [ ] Task 2: Write failing tests for admin SDK error resilience
+- [ ] Task 3: Add error handling around admin SDK calls
+
+**Chunk 2 — Frontend + E2E + Auth Dep (Waves 1, 4):**
+
+- [ ] Task 4: Commit frontend + E2E fixture changes
+- [ ] Task 5: Commit auth dependency change + full test suite pass
+
+---
+
 ## Shop Claim Flow + Verified Badge (DEV-45)
 
 > **Design Doc:** [docs/designs/2026-03-26-shop-claim-flow-design.md](docs/designs/2026-03-26-shop-claim-flow-design.md)

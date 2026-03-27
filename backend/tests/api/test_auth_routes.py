@@ -2,7 +2,7 @@ from unittest.mock import MagicMock, patch
 
 from fastapi.testclient import TestClient
 
-from api.deps import get_admin_db, get_current_user, get_user_db
+from api.deps import get_admin_db, get_current_user, get_current_user_allow_pending, get_user_db
 from main import app
 
 client = TestClient(app)
@@ -21,6 +21,7 @@ def _auth_overrides(user_id: str = "user-1") -> MagicMock:
     mock_db.single.return_value = mock_db
     mock_admin_db = MagicMock()
     app.dependency_overrides[get_current_user] = lambda: {"id": user_id}
+    app.dependency_overrides[get_current_user_allow_pending] = lambda: {"id": user_id}
     app.dependency_overrides[get_user_db] = lambda: mock_db
     app.dependency_overrides[get_admin_db] = lambda: mock_admin_db
     return mock_db
