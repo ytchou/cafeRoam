@@ -161,9 +161,9 @@ test.describe('@critical J39 — Check-in with review text → review visible on
     await page.goto(`/checkin/${shop!.id}`);
     // Use heading role to avoid strict-mode ambiguity with the submit button
     // which also contains "Check In" text.
-    await expect(
-      page.getByRole('heading', { name: 'Check In' })
-    ).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole('heading', { name: 'Check In' })).toBeVisible({
+      timeout: 10_000,
+    });
 
     const fileInput = page.locator('[data-testid="photo-input"]');
     await fileInput.setInputFiles(TEST_PHOTO);
