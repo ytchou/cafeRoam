@@ -346,6 +346,13 @@ test.describe('@critical J36 — Shop detail: tap Get Directions → DirectionsS
       'Shop has no coordinates — Get There button not rendered'
     );
 
+    // Dismiss cookie consent banner if present — the fixed bottom banner (z-50)
+    // intercepts pointer events and prevents the Get There button from being clicked.
+    const rejectBtn = page.getByRole('button', { name: 'Reject' });
+    if (await rejectBtn.isVisible({ timeout: 2_000 }).catch(() => false)) {
+      await rejectBtn.click();
+    }
+
     // Tap "Get There"
     await getThereBtn.click();
 

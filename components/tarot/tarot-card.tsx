@@ -10,6 +10,7 @@ export function TarotCard({ title, isRevealed, onTap }: TarotCardProps) {
   return (
     <button
       type="button"
+      data-testid="tarot-card"
       onClick={onTap}
       className={`border-tarot-gold bg-espresso relative flex w-full items-center justify-center rounded-lg border-2 px-6 py-0 transition-all duration-300 ${
         isRevealed
