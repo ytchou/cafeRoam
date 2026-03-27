@@ -22,32 +22,47 @@ class OwnerService:
 
     def get_dashboard_stats(self, shop_id: str) -> DashboardStats:
         """Aggregate check-ins, followers, saves, page views for last 30 days."""
+        from concurrent.futures import ThreadPoolExecutor
         from datetime import datetime, timedelta, timezone
         cutoff = (datetime.now(timezone.utc) - timedelta(days=30)).isoformat()
 
-        checkin_count = (
-            self._db.table("check_ins")
-            .select("id", count="exact")
-            .eq("shop_id", shop_id)
-            .gte("created_at", cutoff)
-            .execute()
-            .count or 0
-        )
-        follower_count = (
-            self._db.table("shop_followers")
-            .select("id", count="exact")
-            .eq("shop_id", shop_id)
-            .execute()
-            .count or 0
-        )
-        saves_count = (
-            self._db.table("list_items")
-            .select("id", count="exact")
-            .eq("shop_id", shop_id)
-            .gte("created_at", cutoff)
-            .execute()
-            .count or 0
-        )
+        def _count_checkins() -> int:
+            return (
+                self._db.table("check_ins")
+                .select("id", count="exact")
+                .eq("shop_id", shop_id)
+                .gte("created_at", cutoff)
+                .execute()
+                .count or 0
+            )
+
+        def _count_followers() -> int:
+            return (
+                self._db.table("shop_followers")
+                .select("id", count="exact")
+                .eq("shop_id", shop_id)
+                .execute()
+                .count or 0
+            )
+
+        def _count_saves() -> int:
+            return (
+                self._db.table("list_items")
+                .select("id", count="exact")
+                .eq("shop_id", shop_id)
+                .gte("created_at", cutoff)
+                .execute()
+                .count or 0
+            )
+
+        with ThreadPoolExecutor(max_workers=3) as executor:
+            checkin_future = executor.submit(_count_checkins)
+            follower_future = executor.submit(_count_followers)
+            saves_future = executor.submit(_count_saves)
+            checkin_count = checkin_future.result()
+            follower_count = follower_future.result()
+            saves_count = saves_future.result()
+
         try:
             page_views = self._get_page_views(shop_id)
         except Exception:
