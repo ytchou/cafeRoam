@@ -76,7 +76,7 @@ test.describe('@critical J32 — Community feed: like toggle increments count', 
 
 test.describe('@critical J33 — Community feed: MRT filter scopes results', () => {
   test('selecting a MRT station from the dropdown shows only check-ins near that station', async ({
-    page,
+    authedPage: page,
   }) => {
     await page.goto('/explore/community');
     await page.waitForLoadState('networkidle');
@@ -104,8 +104,11 @@ test.describe('@critical J33 — Community feed: MRT filter scopes results', () 
     const stationValue = await options.nth(1).getAttribute('value');
     await mrtSelect.selectOption(stationValue!);
 
-    // Wait for feed to reload (URL or network)
+    // Wait for feed to reload — networkidle covers the API request, but React's
+    // isLoading state update may render "Loading..." briefly after networkidle.
+    // Waiting for the loading indicator to disappear ensures we assert on the final state.
     await page.waitForLoadState('networkidle');
+    await expect(page.getByText('Loading...')).toBeHidden({ timeout: 10_000 });
 
     // Assert: either card count changed OR empty state appeared
     const afterCount = await feedCards.count();

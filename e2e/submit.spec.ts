@@ -4,7 +4,7 @@ import { test, expect } from './fixtures/auth';
 // Module-scope Date.now() would evaluate at ~same millisecond across two worker processes.
 let uniqueUrl: string;
 
-test.describe.serial('@critical J40 — Community shop submission', () => {
+test.describe.serial('@critical J43 — Community shop submission', () => {
   test.beforeAll(async ({}, workerInfo) => {
     uniqueUrl = `https://maps.app.goo.gl/e2eTest${workerInfo.project.name}-${Date.now()}`;
   });
