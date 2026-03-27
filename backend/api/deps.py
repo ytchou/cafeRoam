@@ -127,7 +127,7 @@ def require_shop_owner(
         .maybe_single()
         .execute()
     )
-    if not result.data:
+    if not result or not result.data:
         raise HTTPException(
             status_code=403,
             detail="Not the verified owner of this shop",

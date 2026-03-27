@@ -1,3 +1,5 @@
+from typing import Any
+
 from fastapi import APIRouter, Depends, Query
 from supabase import Client
 
@@ -20,9 +22,9 @@ def get_owner_service(
 @router.get("/{shop_id}/dashboard")
 async def get_dashboard(
     shop_id: str,
-    user: dict = Depends(require_shop_owner),  # noqa: B008
+    user: dict[str, Any] = Depends(require_shop_owner),  # noqa: B008
     svc: OwnerService = Depends(get_owner_service),  # noqa: B008
-):
+) -> dict[str, Any]:
     """Return 30-day KPI stats for the owner's shop dashboard."""
     return svc.get_dashboard_stats(shop_id).model_dump()
 
@@ -30,9 +32,9 @@ async def get_dashboard(
 @router.get("/{shop_id}/analytics")
 async def get_analytics(
     shop_id: str,
-    user: dict = Depends(require_shop_owner),  # noqa: B008
+    user: dict[str, Any] = Depends(require_shop_owner),  # noqa: B008
     svc: OwnerService = Depends(get_owner_service),  # noqa: B008
-):
+) -> dict[str, Any]:
     """Return search insights, community pulse tags, and district rankings."""
     return {
         "search_insights": [i.model_dump() for i in svc.get_search_insights(shop_id)],
@@ -44,9 +46,9 @@ async def get_analytics(
 @router.get("/{shop_id}/story")
 async def get_story(
     shop_id: str,
-    user: dict = Depends(require_shop_owner),  # noqa: B008
+    user: dict[str, Any] = Depends(require_shop_owner),  # noqa: B008
     svc: OwnerService = Depends(get_owner_service),  # noqa: B008
-):
+) -> dict[str, Any] | None:
     """Return the owner's published shop story, or null if none exists."""
     story = svc.get_shop_story(shop_id)
     return story.model_dump() if story else None
@@ -56,9 +58,9 @@ async def get_story(
 async def upsert_story(
     shop_id: str,
     body: OwnerStoryIn,
-    user: dict = Depends(require_shop_owner),  # noqa: B008
+    user: dict[str, Any] = Depends(require_shop_owner),  # noqa: B008
     svc: OwnerService = Depends(get_owner_service),  # noqa: B008
-):
+) -> dict[str, Any]:
     """Create or replace the owner's shop story."""
     return svc.upsert_shop_story(shop_id, user["id"], body).model_dump()
 
@@ -67,9 +69,9 @@ async def upsert_story(
 async def update_info(
     shop_id: str,
     body: ShopInfoIn,
-    user: dict = Depends(require_shop_owner),  # noqa: B008
+    user: dict[str, Any] = Depends(require_shop_owner),  # noqa: B008
     svc: OwnerService = Depends(get_owner_service),  # noqa: B008
-):
+) -> dict[str, Any]:
     """Patch mutable shop info fields (description, hours, phone, website)."""
     return svc.update_shop_info(shop_id, user["id"], body)
 
@@ -77,9 +79,9 @@ async def update_info(
 @router.get("/{shop_id}/tags")
 async def get_tags(
     shop_id: str,
-    user: dict = Depends(require_shop_owner),  # noqa: B008
+    user: dict[str, Any] = Depends(require_shop_owner),  # noqa: B008
     svc: OwnerService = Depends(get_owner_service),  # noqa: B008
-):
+) -> dict[str, Any]:
     """Return the current owner-managed tags for the shop."""
     return {"tags": svc.get_owner_tags(shop_id)}
 
@@ -88,9 +90,9 @@ async def get_tags(
 async def update_tags(
     shop_id: str,
     body: OwnerTagsIn,
-    user: dict = Depends(require_shop_owner),  # noqa: B008
+    user: dict[str, Any] = Depends(require_shop_owner),  # noqa: B008
     svc: OwnerService = Depends(get_owner_service),  # noqa: B008
-):
+) -> dict[str, Any]:
     """Replace owner-managed tags for the shop."""
     return {"tags": svc.update_owner_tags(shop_id, user["id"], body.tags)}
 
@@ -99,9 +101,9 @@ async def update_tags(
 async def get_reviews(
     shop_id: str,
     page: int = Query(default=1, ge=1),
-    user: dict = Depends(require_shop_owner),  # noqa: B008
+    user: dict[str, Any] = Depends(require_shop_owner),  # noqa: B008
     svc: OwnerService = Depends(get_owner_service),  # noqa: B008
-):
+) -> dict[str, Any]:
     """Return paginated check-in reviews for the shop."""
     return {"reviews": svc.get_reviews(shop_id, page=page)}
 
@@ -111,9 +113,9 @@ async def upsert_response(
     shop_id: str,
     checkin_id: str,
     body: ReviewResponseIn,
-    user: dict = Depends(require_shop_owner),  # noqa: B008
+    user: dict[str, Any] = Depends(require_shop_owner),  # noqa: B008
     svc: OwnerService = Depends(get_owner_service),  # noqa: B008
-):
+) -> dict[str, Any]:
     """Create or replace the owner's reply to a specific check-in review."""
     return svc.upsert_review_response(
         checkin_id=checkin_id,

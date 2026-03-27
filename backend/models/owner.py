@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Annotated
+from typing import Annotated, Any
 
 from pydantic import BaseModel, Field
 
@@ -25,7 +25,7 @@ class OwnerStoryOut(BaseModel):
 
 class ShopInfoIn(BaseModel):
     description: str | None = Field(None, max_length=1000)
-    opening_hours: dict | None = None
+    opening_hours: dict[str, Any] | None = None
     phone: str | None = None
     website: str | None = None
 

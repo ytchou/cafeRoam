@@ -4,7 +4,7 @@ import logging
 import uuid
 from collections import Counter
 from datetime import UTC
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, cast
 
 from core.db import first
 from models.owner import (
@@ -43,7 +43,7 @@ class OwnerService:
         def _count_checkins() -> int:
             return (
                 self._db.table("check_ins")
-                .select("id", count="exact")
+                .select("id", count="exact")  # type: ignore[arg-type]
                 .eq("shop_id", shop_id)
                 .gte("created_at", cutoff)
                 .execute()
@@ -54,7 +54,7 @@ class OwnerService:
         def _count_followers() -> int:
             return (
                 self._db.table("shop_followers")
-                .select("id", count="exact")
+                .select("id", count="exact")  # type: ignore[arg-type]
                 .eq("shop_id", shop_id)
                 .execute()
                 .count
@@ -64,7 +64,7 @@ class OwnerService:
         def _count_saves() -> int:
             return (
                 self._db.table("list_items")
-                .select("id", count="exact")
+                .select("id", count="exact")  # type: ignore[arg-type]
                 .eq("shop_id", shop_id)
                 .gte("created_at", cutoff)
                 .execute()
@@ -145,8 +145,9 @@ class OwnerService:
             .gte("created_at", cutoff)
             .execute()
         )
+        rows = cast("list[dict[str, Any]]", result.data or [])
         all_tags: list[str] = []
-        for row in result.data or []:
+        for row in rows:
             all_tags.extend(row.get("tags") or [])
 
         counter = Counter(all_tags)
@@ -164,19 +165,21 @@ class OwnerService:
         if not shop.data:
             return []
 
-        district = shop.data["district"]
+        shop_data = cast("dict[str, Any]", shop.data)
+        district = shop_data["district"]
         peers = (
             self._db.table("shops")
             .select("id, mode_work, mode_rest, mode_social")
             .eq("district", district)
             .execute()
         )
+        peer_rows = cast("list[dict[str, Any]]", peers.data or [])
         attrs = ["mode_work", "mode_rest", "mode_social"]
         labels = {"mode_work": "工作", "mode_rest": "休息", "mode_social": "社交"}
         rankings = []
         for attr in attrs:
-            scores = sorted(
-                [(r["id"], r.get(attr) or 0) for r in (peers.data or [])],
+            scores: list[tuple[str, int]] = sorted(
+                [(r["id"], r.get(attr) or 0) for r in peer_rows],
                 key=lambda x: x[1],
                 reverse=True,
             )
@@ -202,9 +205,10 @@ class OwnerService:
             .maybe_single()
             .execute()
         )
-        if not result.data:
+        if not result or not result.data:
             return None
-        return OwnerStoryOut(**result.data)
+        data = cast("dict[str, Any]", result.data)
+        return OwnerStoryOut(**data)
 
     def upsert_shop_story(self, shop_id: str, owner_id: str, data: OwnerStoryIn) -> OwnerStoryOut:
         from datetime import datetime
@@ -223,16 +227,18 @@ class OwnerService:
         result = (
             self._db.table("shop_content").upsert(row, on_conflict="shop_id,content_type").execute()
         )
-        return OwnerStoryOut(**first(result.data, "upsert shop_content"))
+        rows = cast("list[dict[str, Any]]", result.data)
+        return OwnerStoryOut(**first(rows, "upsert shop_content"))
 
     # ── Shop Info ──────────────────────────────────────────────────────────
 
-    def update_shop_info(self, shop_id: str, owner_id: str, data: ShopInfoIn) -> dict:
+    def update_shop_info(self, shop_id: str, owner_id: str, data: ShopInfoIn) -> dict[str, Any]:
         updates = {k: v for k, v in data.model_dump().items() if v is not None}
         if not updates:
             return {}
         result = self._db.table("shops").update(updates).eq("id", shop_id).execute()
-        return first(result.data, "update shop info")
+        rows = cast("list[dict[str, Any]]", result.data)
+        return cast("dict[str, Any]", first(rows, "update shop info"))
 
     # ── Owner Tags ─────────────────────────────────────────────────────────
 
@@ -244,7 +250,8 @@ class OwnerService:
             .order("created_at")
             .execute()
         )
-        return [row["tag"] for row in (result.data or [])]
+        rows = cast("list[dict[str, Any]]", result.data or [])
+        return [row["tag"] for row in rows]
 
     def update_owner_tags(self, shop_id: str, owner_id: str, tags: list[str]) -> list[str]:
         if len(tags) > 10:
@@ -276,7 +283,7 @@ class OwnerService:
 
     # ── Reviews ────────────────────────────────────────────────────────────
 
-    def get_reviews(self, shop_id: str, page: int = 1) -> list[dict]:
+    def get_reviews(self, shop_id: str, page: int = 1) -> list[dict[str, Any]]:
         limit = 20
         offset = (page - 1) * limit
         result = (
@@ -288,7 +295,7 @@ class OwnerService:
             .range(offset, offset + limit - 1)
             .execute()
         )
-        return result.data or []
+        return cast("list[dict[str, Any]]", result.data or [])
 
     def upsert_review_response(
         self, checkin_id: str, shop_id: str, owner_id: str, body: str
@@ -302,7 +309,10 @@ class OwnerService:
             .maybe_single()
             .execute()
         )
-        if not checkin.data or checkin.data["shop_id"] != shop_id:
+        if not checkin or not checkin.data:
+            raise HTTPException(status_code=404, detail="Check-in not found for this shop")
+        checkin_data = cast("dict[str, Any]", checkin.data)
+        if checkin_data["shop_id"] != shop_id:
             raise HTTPException(status_code=404, detail="Check-in not found for this shop")
 
         row = {
@@ -312,5 +322,5 @@ class OwnerService:
             "body": body,
         }
         result = self._db.table("review_responses").upsert(row, on_conflict="checkin_id").execute()
-        data = first(result.data, "upsert review_response")
+        data = first(cast("list[dict[str, Any]]", result.data), "upsert review_response")
         return ReviewResponseOut(**data)
