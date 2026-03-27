@@ -36,8 +36,8 @@
 **Chunk 4 — Frontend (Waves 4–5):**
 
 - [x] Task 12: SWR hooks (useOwnerDashboard, useOwnerContent, useOwnerReviews)
-- [ ] Task 13: OwnerStory component on shop detail page
-- [ ] Task 14: Dashboard page + section components
+- [x] Task 13: OwnerStory component on shop detail page
+- [x] Task 14: Dashboard page + section components
 
 **Chunk 5 — E2E (Wave 6):**
 
