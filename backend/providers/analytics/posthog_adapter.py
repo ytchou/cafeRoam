@@ -1,8 +1,12 @@
 import logging
+from typing import Any
 
+import httpx
 import posthog as posthog_module
 
 logger = logging.getLogger(__name__)
+
+_HOGQL_QUERY_URL = "https://us.posthog.com/api/projects/{project_id}/query/"
 
 
 def _on_error(error: Exception, items: list) -> None:
@@ -10,7 +14,9 @@ def _on_error(error: Exception, items: list) -> None:
 
 
 class PostHogAnalyticsAdapter:
-    def __init__(self, api_key: str, host: str):
+    def __init__(self, api_key: str, host: str, project_id: str = ""):
+        self._api_key = api_key
+        self._project_id = project_id
         self._client = posthog_module.Client(
             project_api_key=api_key,
             host=host,
@@ -58,3 +64,28 @@ class PostHogAnalyticsAdapter:
             )
         except Exception:
             logger.warning("PostHog page failed for: %s", name, exc_info=True)
+
+    def query_hogql(self, hogql: str) -> list[dict[str, Any]]:
+        """Execute a HogQL query against the PostHog Query API."""
+        if not self._project_id:
+            logger.warning("PostHog project_id not configured — skipping HogQL query")
+            return []
+        try:
+            url = _HOGQL_QUERY_URL.format(project_id=self._project_id)
+            resp = httpx.post(
+                url,
+                headers={"Authorization": f"Bearer {self._api_key}"},
+                json={"query": {"kind": "HogQLQuery", "query": hogql}},
+                timeout=10.0,
+            )
+            resp.raise_for_status()
+            data = resp.json()
+            columns = data.get("columns")
+            results = data.get("results")
+            if columns is None or results is None:
+                logger.warning("Unexpected PostHog response shape: %s", list(data.keys()))
+                return []
+            return [dict(zip(columns, row, strict=True)) for row in results]
+        except Exception:
+            logger.warning("PostHog HogQL query failed", exc_info=True)
+            return []
