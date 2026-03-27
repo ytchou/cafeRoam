@@ -6,6 +6,25 @@
 
 ---
 
+## Home Page Fixes — Card Navigation + Taxonomy Tags
+
+> **Design Doc:** [docs/designs/2026-03-28-home-page-fixes-design.md](docs/designs/2026-03-28-home-page-fixes-design.md)
+> **Plan:** [docs/plans/2026-03-28-home-page-fixes-plan.md](docs/plans/2026-03-28-home-page-fixes-plan.md)
+
+**Chunk 1 — Taxonomy Tag Pills (Waves 1-2):**
+
+- [ ] Task 1: Write failing tests for taxonomy tag pills
+- [ ] Task 2: Implement taxonomy tag pills on ShopCardCompact
+
+**Chunk 2 — Card Navigation Fix (Waves 1-4):**
+
+- [ ] Task 3: Write failing test for onCardClick on MapDesktopLayout
+- [ ] Task 4: Implement onCardClick on MapDesktopLayout
+- [ ] Task 5: Add onCardClick to ShopCarousel + MapMobileLayout
+- [ ] Task 6: Wire onCardClick in page.tsx
+
+---
+
 ## Cancel-Deletion 500 Fix (DEV-64)
 
 > **Plan:** [docs/plans/2026-03-27-cancel-deletion-500-plan.md](docs/plans/2026-03-27-cancel-deletion-500-plan.md)
