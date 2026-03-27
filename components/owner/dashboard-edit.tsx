@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface Story {
   id?: string;
@@ -24,6 +24,13 @@ export function DashboardEdit({
   const [isPublished, setIsPublished] = useState(story?.is_published ?? false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    if (story) {
+      setBody(story.body ?? '');
+      setIsPublished(story.is_published ?? false);
+    }
+  }, [story?.id]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -66,7 +73,7 @@ export function DashboardEdit({
         disabled={saving}
         className="w-full rounded-lg bg-primary text-primary-foreground py-2 text-sm font-medium disabled:opacity-50"
       >
-        {saving ? '儲存中...' : saved ? 'Saved' : 'Publish'}
+        {saving ? '儲存中...' : saved ? '已儲存' : '發布'}
       </button>
     </div>
   );
