@@ -41,7 +41,7 @@
 
 **Chunk 5 — E2E (Wave 6):**
 
-- [ ] Task 15: E2E owner dashboard journey
+- [x] Task 15: E2E owner dashboard journey
 
 ---
 
