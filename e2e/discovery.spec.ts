@@ -6,47 +6,45 @@ import {
 } from './fixtures/geolocation';
 import { first } from './fixtures/helpers';
 
-test.describe('@critical J01 — Near Me: grant geolocation → map with shop pins', () => {
-  test('tapping 我附近 with granted geolocation navigates to /map with lat/lng params', async ({
+test.describe('@critical J01 — Near Me: grant geolocation → shops sorted by distance', () => {
+  test('clicking My location with granted geolocation sorts shops by distance in list view', async ({
     page,
     context,
   }) => {
     await grantGeolocation(context, TAIPEI_COORDS);
     await page.goto('/');
 
-    // Tap the "我附近" suggestion chip
-    await page.getByRole('button', { name: '我附近' }).click();
+    // Switch to list view so distance sort is visible
+    await page.getByRole('button', { name: /list view/i }).click();
 
-    // Should navigate to /map with lat/lng query params
-    await page.waitForURL(/\/map\?.*lat=/, { timeout: 10_000 });
-    const url = new URL(page.url());
-    expect(url.pathname).toBe('/map');
-    expect(url.searchParams.get('lat')).toBeTruthy();
-    expect(url.searchParams.get('lng')).toBeTruthy();
-    expect(url.searchParams.get('radius')).toBe('5');
+    // Click the My location button
+    await page.getByRole('button', { name: 'My location' }).click();
+
+    // Shops should now be visible (170 shops loaded)
+    await expect(
+      page.locator('article').first()
+    ).toBeVisible({ timeout: 10_000 });
+
+    // URL stays on / (no /map redirect) — map and list are on the same page
+    expect(new URL(page.url()).pathname).toBe('/');
   });
 });
 
-test.describe('@critical J02 — Near Me: deny geolocation → fallback toast + text search', () => {
-  test('tapping 我附近 with denied geolocation shows toast and searches by text', async ({
+test.describe('@critical J02 — Near Me: deny geolocation → error toast', () => {
+  test('clicking My location with denied geolocation shows an error toast', async ({
     page,
     context,
   }) => {
     await denyGeolocation(context);
     await page.goto('/');
 
-    // Tap the "我附近" suggestion chip
-    await page.getByRole('button', { name: '我附近' }).click();
+    // Click the My location button
+    await page.getByRole('button', { name: 'My location' }).click();
 
-    // Should show toast fallback message
-    await expect(page.getByText('無法取得位置，改用文字搜尋')).toBeVisible({
-      timeout: 10_000,
-    });
-
-    // Should navigate to /map with text search query
-    await page.waitForURL(/\/map\?.*q=/, { timeout: 10_000 });
-    const url = new URL(page.url());
-    expect(url.searchParams.get('q')).toBe('我附近');
+    // Should show error toast
+    await expect(
+      page.getByText('無法取得位置，請確認定位權限')
+    ).toBeVisible({ timeout: 10_000 });
   });
 });
 

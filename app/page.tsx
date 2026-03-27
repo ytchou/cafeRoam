@@ -1,5 +1,6 @@
 'use client';
 import { useMemo, useState, Suspense, useCallback } from 'react';
+import { toast } from 'sonner';
 import { WebsiteJsonLd } from '@/components/seo/WebsiteJsonLd';
 import { useRouter } from 'next/navigation';
 import { useIsDesktop } from '@/lib/hooks/use-media-query';
@@ -10,6 +11,7 @@ import { useSearchState } from '@/lib/hooks/use-search-state';
 import { useUser } from '@/lib/hooks/use-user';
 import { useAnalytics } from '@/lib/posthog/use-analytics';
 import { trackSearch, trackSignupCtaClick } from '@/lib/analytics/ga4-events';
+import { haversineKm } from '@/lib/utils';
 import { MapMobileLayout } from '@/components/map/map-mobile-layout';
 import { ListMobileLayout } from '@/components/map/list-mobile-layout';
 import { MapDesktopLayout } from '@/components/map/map-desktop-layout';
@@ -39,7 +41,14 @@ function FindPageContent() {
     mode
   );
   const isDesktop = useIsDesktop();
-  const { requestLocation } = useGeolocation();
+  const { latitude, longitude, requestLocation } = useGeolocation();
+
+  const handleLocationRequest = useCallback(async () => {
+    const coords = await requestLocation();
+    if (!coords) {
+      toast.error('無法取得位置，請確認定位權限');
+    }
+  }, [requestLocation]);
 
   const shops = useMemo(() => {
     const base = query
@@ -52,8 +61,21 @@ function FindPageContent() {
     if (filters.includes('rating')) {
       return [...base].sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
     }
+    if (latitude != null && longitude != null) {
+      return [...base].sort((a, b) => {
+        const dA =
+          a.latitude != null && a.longitude != null
+            ? haversineKm(latitude, longitude, a.latitude, a.longitude)
+            : Infinity;
+        const dB =
+          b.latitude != null && b.longitude != null
+            ? haversineKm(latitude, longitude, b.latitude, b.longitude)
+            : Infinity;
+        return dA - dB;
+      });
+    }
     return base;
-  }, [query, searchLoading, searchResults, featuredShops, filters]);
+  }, [query, searchLoading, searchResults, featuredShops, filters, latitude, longitude]);
 
   const handleSearch = useCallback(
     (q: string) => {
@@ -109,7 +131,7 @@ function FindPageContent() {
     onFilterOpen: handleFilterOpen,
     onFilterClose: handleFilterClose,
     onFilterApply: handleFilterApply,
-    onLocationRequest: requestLocation,
+    onLocationRequest: handleLocationRequest,
   };
 
   if (isDesktop) {
