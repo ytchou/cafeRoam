@@ -30,8 +30,8 @@
 
 **Chunk 3 — API + Proxies (Wave 3):**
 
-- [ ] Task 9: API router (9 endpoints, owner-scoped)
-- [ ] Task 11: Next.js proxy routes
+- [x] Task 9: API router (9 endpoints, owner-scoped)
+- [x] Task 11: Next.js proxy routes
 
 **Chunk 4 — Frontend (Waves 4–5):**
 

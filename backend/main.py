@@ -9,6 +9,7 @@ from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 
 from api.admin import router as admin_router
+from api.owner import router as owner_router
 from api.admin_claims import router as admin_claims_router
 from api.admin_roles import router as admin_roles_router
 from api.admin_shops import router as admin_shops_router
@@ -132,3 +133,4 @@ app.include_router(admin_shops_router)
 app.include_router(admin_taxonomy_router)
 app.include_router(maps_router)
 app.include_router(analytics_router)
+app.include_router(owner_router)
