@@ -68,7 +68,7 @@ describe('/account/recover page', () => {
     });
   });
 
-  it('shows guidance when JWT is stale after cancel deletion', async () => {
+  it('shows recovery guidance if account still appears pending after cancellation', async () => {
     mockFetch.mockResolvedValue({ ok: true });
     mockAuth.refreshSession.mockResolvedValue({
       data: {

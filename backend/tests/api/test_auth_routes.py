@@ -87,7 +87,7 @@ class TestDeleteAccountRoute:
         response = client.delete("/auth/account")
         assert response.status_code == 401
 
-    def test_delete_account_succeeds_when_metadata_service_is_unavailable(self):
+    def test_delete_account_still_returns_200_when_admin_metadata_sync_fails(self):
         """If admin_db.auth.admin.update_user_by_id raises, the profile DB update
         is still the source of truth and the request should return 200."""
         mock_db = _auth_overrides()
@@ -185,7 +185,7 @@ class TestCancelDeletionRoute:
         finally:
             _clear_overrides()
 
-    def test_cancel_deletion_succeeds_when_metadata_service_is_unavailable(self):
+    def test_cancel_deletion_still_returns_200_when_admin_metadata_sync_fails(self):
         """If admin_db.auth.admin.update_user_by_id raises, the profile DB update
         is still the source of truth and the request should return 200."""
         mock_db = _auth_overrides()

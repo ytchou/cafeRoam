@@ -48,6 +48,9 @@ export default function RecoverPage() {
         );
         return;
       }
+      // Hard navigation (not router.push) forces a full page reload so the
+      // middleware re-reads the refreshed JWT. router.push could serve a cached
+      // response that still carries the stale deletion_requested flag.
       window.location.assign('/');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
