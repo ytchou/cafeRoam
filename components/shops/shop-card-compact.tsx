@@ -87,6 +87,18 @@ export function ShopCardCompact({
         <span className="text-text-secondary font-[family-name:var(--font-body)] text-[13px]">
           {formatMeta(shop)}
         </span>
+        {shop.taxonomyTags && shop.taxonomyTags.length > 0 && (
+          <div data-testid="tag-pills" className="flex flex-wrap gap-1">
+            {shop.taxonomyTags.slice(0, 5).map((tag) => (
+              <span
+                key={tag.id}
+                className="bg-muted text-text-secondary rounded-full px-2 py-0.5 font-[family-name:var(--font-body)] text-[11px]"
+              >
+                {tag.labelZh}
+              </span>
+            ))}
+          </div>
+        )}
         {summary && (
           <span className="text-text-tertiary font-[family-name:var(--font-body)] text-[12px]">
             {truncateSnippet(summary)}
