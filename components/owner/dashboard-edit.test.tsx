@@ -27,9 +27,9 @@ describe('DashboardEdit', () => {
       />
     );
     expect(screen.getByLabelText('Story')).toBeTruthy();
-    expect(
-      (screen.getByLabelText('Story') as HTMLTextAreaElement).value
-    ).toBe('這裡是店家的故事內容。');
+    expect((screen.getByLabelText('Story') as HTMLTextAreaElement).value).toBe(
+      '這裡是店家的故事內容。'
+    );
     expect(
       (screen.getByLabelText('公開發布') as HTMLInputElement).checked
     ).toBe(true);
@@ -88,9 +88,9 @@ describe('DashboardEdit', () => {
         onSaveTags={onSaveTags}
       />
     );
-    expect(
-      (screen.getByLabelText('Story') as HTMLTextAreaElement).value
-    ).toBe('');
+    expect((screen.getByLabelText('Story') as HTMLTextAreaElement).value).toBe(
+      ''
+    );
   });
 
   it('owner can uncheck publish toggle', async () => {

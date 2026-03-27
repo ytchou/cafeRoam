@@ -66,5 +66,4 @@ describe('useOwnerReviews', () => {
     );
     expect(mockMutate).toHaveBeenCalled();
   });
-
 });
