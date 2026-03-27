@@ -11,9 +11,9 @@ interface Story {
 
 export function DashboardEdit({
   story,
-  tags,
+  tags: _tags,
   onSaveStory,
-  onSaveTags,
+  onSaveTags: _onSaveTags,
 }: {
   story: Story | null;
   tags: string[];
@@ -25,7 +25,6 @@ export function DashboardEdit({
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (story) {
       setBody(story.body ?? '');
