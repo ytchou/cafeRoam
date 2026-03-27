@@ -94,6 +94,17 @@ test.describe
       name: /delete account|刪除帳號/i,
     });
     await expect(deleteButton).toBeVisible({ timeout: 10_000 });
+
+    // Dismiss cookie consent banner if present — the fixed bottom banner (z-50)
+    // intercepts pointer events and blocks the delete button click.
+    // Wait for the banner to unmount after clicking Reject; React re-renders async
+    // so the next action must not race the unmount.
+    const rejectBtn = page.getByRole('button', { name: 'Reject' });
+    if (await rejectBtn.isVisible({ timeout: 2_000 }).catch(() => false)) {
+      await rejectBtn.click();
+      await expect(rejectBtn).toBeHidden({ timeout: 3_000 });
+    }
+
     await deleteButton.click();
 
     // Step 2: Type "DELETE" in the confirmation input

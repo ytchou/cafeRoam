@@ -159,6 +159,8 @@ test.describe('@critical J39 — Check-in with review text → review visible on
     test.skip(!shop, 'No seeded shops available');
 
     await page.goto(`/checkin/${shop!.id}`);
+    // Use heading role to avoid strict-mode ambiguity with the submit button
+    // which also contains "Check In" text.
     await expect(page.getByRole('heading', { name: 'Check In' })).toBeVisible({
       timeout: 10_000,
     });
@@ -178,18 +180,27 @@ test.describe('@critical J39 — Check-in with review text → review visible on
     await reviewTextarea.fill(reviewText);
 
     const submitButton = page.getByRole('button', { name: /打卡|Check In/i });
+
+    // Dismiss cookie consent banner if present — the fixed bottom banner (z-50)
+    // intercepts pointer events and blocks the submit button click.
+    const rejectBtn = page.getByRole('button', { name: 'Reject' });
+    if (await rejectBtn.isVisible({ timeout: 2_000 }).catch(() => false)) {
+      await rejectBtn.click();
+      await expect(rejectBtn).toBeHidden({ timeout: 3_000 });
+    }
+
     await submitButton.click();
 
     await page.waitForURL((url) => !url.pathname.startsWith('/checkin'), {
       timeout: 15_000,
     });
 
-    await page.goto(`/shops/${shop!.id}/${shop!.slug || shop!.id}`);
-    await page.waitForLoadState('networkidle');
-
-    const reviewsHeading = page.getByRole('heading', { name: '打卡評價' });
-    await expect(reviewsHeading).toBeVisible({ timeout: 10_000 });
-
-    await expect(page.getByText(reviewText)).toBeVisible({ timeout: 10_000 });
+    // The review write is async — reload the shop page until it appears.
+    await expect(async () => {
+      await page.goto(`/shops/${shop!.id}/${shop!.slug || shop!.id}`);
+      await page.waitForLoadState('networkidle');
+      await expect(page.getByRole('heading', { name: '打卡評價' })).toBeVisible();
+      await expect(page.getByText(reviewText)).toBeVisible();
+    }).toPass({ timeout: 30_000, intervals: [2_000] });
   });
 });

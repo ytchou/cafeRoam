@@ -133,3 +133,82 @@ class TestPostHogInit:
 
             call_kwargs = mock_module.Client.call_args.kwargs
             assert callable(call_kwargs["on_error"])
+
+
+class TestPostHogQueryHogQL:
+    def _make_adapter(self, project_id: str = "12345") -> PostHogAnalyticsAdapter:
+        with patch("providers.analytics.posthog_adapter.posthog_module") as mock_module:
+            mock_module.Client.return_value = MagicMock()
+            return PostHogAnalyticsAdapter(
+                api_key="test-api-key",
+                host="https://ph.test.com",
+                project_id=project_id,
+            )
+
+    def test_query_hogql_returns_column_mapped_rows(self):
+        """PostHog adapter maps HogQL response columns to row dicts"""
+        adapter = self._make_adapter(project_id="99887")
+        mock_response = MagicMock()
+        mock_response.raise_for_status = MagicMock()
+        mock_response.json.return_value = {
+            "columns": ["query", "impressions"],
+            "results": [
+                ["安靜工作空間", 28],
+                ["寵物友善咖啡", 15],
+            ],
+        }
+
+        with patch("providers.analytics.posthog_adapter.httpx") as mock_httpx:
+            mock_httpx.post.return_value = mock_response
+            rows = adapter.query_hogql(
+                "SELECT properties.query, count() FROM events GROUP BY query"
+            )
+
+        assert len(rows) == 2
+        assert rows[0] == {"query": "安靜工作空間", "impressions": 28}
+        assert rows[1] == {"query": "寵物友善咖啡", "impressions": 15}
+
+    def test_query_hogql_returns_empty_list_on_posthog_error_response(self):
+        """PostHog adapter returns empty list when response lacks expected columns/results keys"""
+        adapter = self._make_adapter(project_id="99887")
+        mock_response = MagicMock()
+        mock_response.raise_for_status = MagicMock()
+        mock_response.json.return_value = {"error": "syntax error in query"}
+
+        with patch("providers.analytics.posthog_adapter.httpx") as mock_httpx:
+            mock_httpx.post.return_value = mock_response
+            rows = adapter.query_hogql("SELECT broken query FROM")
+
+        assert rows == []
+
+    def test_query_hogql_returns_empty_list_on_http_error(self):
+        """PostHog adapter returns empty list when HTTP request fails"""
+        adapter = self._make_adapter(project_id="99887")
+
+        with patch("providers.analytics.posthog_adapter.httpx") as mock_httpx:
+            mock_httpx.post.side_effect = Exception("Connection refused")
+            rows = adapter.query_hogql("SELECT count() FROM events")
+
+        assert rows == []
+
+    def test_query_hogql_posts_to_correct_url(self):
+        """PostHog adapter posts HogQL query to the project-scoped query endpoint"""
+        adapter = self._make_adapter(project_id="42")
+        mock_response = MagicMock()
+        mock_response.raise_for_status = MagicMock()
+        mock_response.json.return_value = {"columns": ["views"], "results": [[100]]}
+
+        with patch("providers.analytics.posthog_adapter.httpx") as mock_httpx:
+            mock_httpx.post.return_value = mock_response
+            adapter.query_hogql("SELECT count() as views FROM events")
+
+        call_args = mock_httpx.post.call_args
+        assert "42" in call_args.args[0]
+        assert "json" in call_args.kwargs
+        assert "query" in call_args.kwargs["json"]
+
+    def test_query_hogql_returns_empty_list_when_project_id_missing(self):
+        """PostHog adapter returns empty list when no project_id is configured"""
+        adapter = self._make_adapter(project_id="")
+        rows = adapter.query_hogql("SELECT count() FROM events")
+        assert rows == []

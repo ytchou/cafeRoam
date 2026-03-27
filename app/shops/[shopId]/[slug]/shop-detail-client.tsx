@@ -8,6 +8,7 @@ import { ShopIdentity } from '@/components/shops/shop-identity';
 import { AttributeChips } from '@/components/shops/attribute-chips';
 import { ShopActionsRow } from '@/components/shops/shop-actions-row';
 import { ClaimBanner } from '@/components/shops/claim-banner';
+import { OwnerStory } from '@/components/shops/owner-story';
 import { VerifiedBadge } from '@/components/shops/verified-badge';
 import { ShopDescription } from '@/components/shops/shop-description';
 import { MenuHighlights } from '@/components/shops/menu-highlights';
@@ -52,6 +53,15 @@ interface ShopData {
     createdAt: string;
   }>;
   claimStatus?: 'pending' | 'approved' | 'rejected' | null;
+  ownerId?: string | null;
+  ownerStory?: {
+    id: string;
+    title: string | null;
+    body: string;
+    photo_url: string | null;
+    is_published: boolean;
+    updated_at: string;
+  } | null;
 }
 
 interface ShopDetailClientProps {
@@ -134,6 +144,11 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
       <div className="border-border-warm mx-5 border-t" />
 
       {shop.description && <ShopDescription text={shop.description} />}
+      <OwnerStory
+        story={shop.ownerStory ?? null}
+        shopId={shop.id}
+        isOwner={user?.id === shop.ownerId}
+      />
       {tags.length > 0 && <AttributeChips tags={tags as TaxonomyTag[]} />}
       {shop.menuHighlights && <MenuHighlights items={shop.menuHighlights} />}
 

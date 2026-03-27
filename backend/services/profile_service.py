@@ -70,6 +70,34 @@ class ProfileService:
             lambda: self._db.table("profiles").update(update_data).eq("id", user_id).execute()
         )
 
+    async def delete_owner_data(self, user_id: str) -> None:
+        """Cascade-delete all owner-specific content before account hard-deletion.
+
+        Called by the account deletion worker prior to auth.admin.delete_user().
+        Standard user data (profiles, check_ins, lists, stamps) is handled by DB
+        CASCADE on the auth user row — this covers the owner-specific tables that
+        do not share that FK cascade path.
+
+        PDPA: account deletion must remove all personal data. Non-negotiable.
+        """
+        await asyncio.gather(
+            asyncio.to_thread(
+                lambda: self._db.table("shop_content").delete().eq("owner_id", user_id).execute()
+            ),
+            asyncio.to_thread(
+                lambda: self._db.table("shop_owner_tags").delete().eq("owner_id", user_id).execute()
+            ),
+            asyncio.to_thread(
+                lambda: (
+                    self._db.table("review_responses").delete().eq("owner_id", user_id).execute()
+                )
+            ),
+            asyncio.to_thread(
+                # Release the shop claim so the shop can be re-claimed after deletion
+                lambda: self._db.table("shop_claims").delete().eq("user_id", user_id).execute()
+            ),
+        )
+
     async def session_heartbeat(self, user_id: str) -> dict[str, int]:
         """Track session start for analytics. Deduplicates within 30 min.
 

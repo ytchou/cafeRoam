@@ -7,7 +7,6 @@ import { useConsent } from '@/lib/consent/use-consent';
 declare global {
   interface Window {
     gtag?: (...args: unknown[]) => void;
-    dataLayer?: unknown[];
   }
 }
 

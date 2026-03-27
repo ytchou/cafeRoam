@@ -4,8 +4,14 @@ import { fetchWithAuth } from '@/lib/api/fetch';
 import type { Shop } from '@/lib/types';
 import type { SearchMode } from './use-search-state';
 
+interface SearchResult {
+  shop: Shop;
+  similarity_score: number;
+  total_score: number;
+}
+
 interface SearchResponse {
-  results: Shop[];
+  results: SearchResult[];
   query_type: string;
   result_count: number;
 }
@@ -22,7 +28,7 @@ export function useSearch(query: string | null, mode: SearchMode) {
   );
 
   return {
-    results: data?.results ?? [],
+    results: data?.results.map((r) => r.shop) ?? [],
     queryType: data?.query_type ?? null,
     resultCount: data?.result_count ?? 0,
     isLoading,

@@ -22,6 +22,7 @@ from api.feed import router as feed_router
 from api.followers import router as followers_router
 from api.lists import router as lists_router
 from api.maps import router as maps_router
+from api.owner import router as owner_router
 from api.profile import router as profile_router
 from api.search import router as search_router
 from api.shops import router as shops_router
@@ -132,3 +133,4 @@ app.include_router(admin_shops_router)
 app.include_router(admin_taxonomy_router)
 app.include_router(maps_router)
 app.include_router(analytics_router)
+app.include_router(owner_router)

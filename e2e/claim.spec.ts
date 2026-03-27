@@ -1,7 +1,7 @@
 import { test, expect } from './fixtures/auth';
 import { first } from './fixtures/helpers';
 
-test.describe('@critical J15 — Shop claim: badge click → form → confirmation', () => {
+test.describe('@critical J42 — Shop claim: badge click → form → confirmation', () => {
   test('claim badge links to claim page, form submits successfully', async ({
     authedPage: page,
   }) => {

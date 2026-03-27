@@ -1,6 +1,7 @@
 import { test as base, type Page } from '@playwright/test';
 import { fileURLToPath } from 'node:url';
 import { renameSync, mkdirSync } from 'node:fs';
+import { randomBytes } from 'node:crypto'; // used for per-worker tmp file uniqueness
 import path from 'node:path';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -15,6 +16,7 @@ async function loginFresh(
   password: string
 ): Promise<import('@playwright/test').BrowserContext> {
   const ctx = await browser.newContext();
+
   const pg = await ctx.newPage();
   await pg.goto('/login');
   await pg.fill('#email', email);
@@ -22,10 +24,19 @@ async function loginFresh(
   await pg.click('button[type="submit"]');
   await pg.waitForURL('/', { timeout: 15_000 });
 
-  // Write to a temp file then rename atomically — prevents concurrent workers from
-  // reading a partially-written JSON file if two sessions refresh at the same time.
+  // Set the consent cookie via JavaScript so it's scoped to the correct origin
+  // and captured by storageState(). This prevents the fixed-bottom cookie banner
+  // (z-50) from intercepting pointer events in tests that reuse this stored session.
+  await pg.evaluate(() => {
+    document.cookie =
+      'caferoam_consent=denied; max-age=31536000; path=/; SameSite=Lax';
+  });
+
+  // Write to a per-worker temp file then rename atomically. Using a random suffix
+  // prevents multiple parallel workers from overwriting each other's .tmp file,
+  // which would cause ENOENT on the rename when two workers race to write the same path.
   mkdirSync(AUTH_DIR, { recursive: true });
-  const tmpPath = `${STORAGE_STATE_PATH}.tmp`;
+  const tmpPath = `${STORAGE_STATE_PATH}.${randomBytes(4).toString('hex')}.tmp`;
   await ctx.storageState({ path: tmpPath });
   renameSync(tmpPath, STORAGE_STATE_PATH);
 
@@ -52,9 +63,12 @@ export const test = base.extend<{ authedPage: Page }>({
       context = await loginFresh(browser, email, password);
     }
 
-    // Validate session is still active (stored token may have expired)
+    // Validate session is still active by probing a protected route.
+    // NOTE: '/' is in PUBLIC_ROUTES and never redirects to /login, so it cannot
+    // detect expired sessions. '/profile' requires auth and correctly redirects
+    // expired sessions to /login.
     const probe = await context.newPage();
-    await probe.goto('/', { waitUntil: 'commit' });
+    await probe.goto('/profile', { waitUntil: 'commit' });
     const isExpired = probe.url().includes('/login');
     await probe.close();
 
@@ -63,13 +77,20 @@ export const test = base.extend<{ authedPage: Page }>({
       context = await loginFresh(browser, email, password);
     }
 
-    // Suppress the cookie-consent banner in all E2E tests by injecting the
-    // consent cookie before any page script runs. This prevents the fixed
-    // z-50 banner from intercepting pointer events during test actions.
-    await context.addInitScript(() => {
-      document.cookie =
-        'caferoam_consent=denied; max-age=31536000; path=/; SameSite=Lax';
-    });
+    // Always inject the consent cookie into the context so the cookie banner
+    // never appears during tests. We do this here (not just in loginFresh) because
+    // cached sessions loaded from user.json may predate this cookie being set.
+    await context.addCookies([
+      {
+        name: 'caferoam_consent',
+        value: 'denied',
+        url: 'http://localhost:3000',
+        expires: Math.floor(Date.now() / 1000) + 31_536_000,
+        httpOnly: false,
+        secure: false,
+        sameSite: 'Lax',
+      },
+    ]);
 
     const page = await context.newPage();
     await use(page);
