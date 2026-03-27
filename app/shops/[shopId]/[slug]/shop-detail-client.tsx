@@ -179,7 +179,11 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
         />
       )}
 
-      <ClaimBanner shopId={shop.id} shopName={shop.name} claimStatus={shop.claimStatus ?? null} />
+      <ClaimBanner
+        shopId={shop.id}
+        shopName={shop.name}
+        claimStatus={shop.claimStatus ?? null}
+      />
 
       {hasMap && directionsShop && (
         <DirectionsSheet

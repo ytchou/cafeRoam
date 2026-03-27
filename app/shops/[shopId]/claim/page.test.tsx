@@ -45,7 +45,10 @@ describe('ClaimPage', () => {
     mockFetch
       .mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ uploadUrl: 'https://storage/upload', storagePath: 'path/to/file' }),
+        json: async () => ({
+          uploadUrl: 'https://storage/upload',
+          storagePath: 'path/to/file',
+        }),
       })
       .mockResolvedValueOnce({ ok: true })
       .mockResolvedValueOnce({
@@ -57,7 +60,10 @@ describe('ClaimPage', () => {
 
     await userEvent.type(screen.getByLabelText(/姓名/i), 'Alice Chen');
     await userEvent.type(screen.getByLabelText(/Email/i), 'alice@test.com');
-    await userEvent.upload(screen.getByLabelText(/證明照片/i), new File(['photo'], 'proof.jpg', { type: 'image/jpeg' }));
+    await userEvent.upload(
+      screen.getByLabelText(/證明照片/i),
+      new File(['photo'], 'proof.jpg', { type: 'image/jpeg' })
+    );
 
     await userEvent.click(screen.getByRole('button', { name: /送出/i }));
 

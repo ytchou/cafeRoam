@@ -1,6 +1,6 @@
 import asyncio
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, cast
 
 import structlog
 from fastapi import HTTPException
@@ -34,7 +34,8 @@ class ClaimsService:
         )
         if not shop_resp.data:
             raise HTTPException(status_code=404, detail="Shop not found")
-        shop_name = first(shop_resp.data, "shop name lookup")["name"] or "your shop"
+        shop_rows = cast("list[dict[str, Any]]", shop_resp.data)
+        shop_name = first(shop_rows, "shop name lookup")["name"] or "your shop"
 
         existing = await asyncio.to_thread(
             lambda: (
@@ -68,7 +69,7 @@ class ClaimsService:
             )
         )
 
-        claim = first(result.data, "insert claim")
+        claim = first(cast("list[dict[str, Any]]", result.data), "insert claim")
 
         # Confirmation email to owner
         await self._email.send(
@@ -113,7 +114,7 @@ class ClaimsService:
                 .execute()
             )
         )
-        claim = result.data
+        claim: dict[str, Any] = cast("dict[str, Any]", result.data)
         if not claim:
             raise HTTPException(status_code=404, detail="Claim not found")
 
@@ -176,7 +177,7 @@ class ClaimsService:
                 .execute()
             )
         )
-        claim = result.data
+        claim: dict[str, Any] = cast("dict[str, Any]", result.data)
         if not claim:
             raise HTTPException(status_code=404, detail="Claim not found")
 
@@ -232,4 +233,4 @@ class ClaimsService:
         if status:
             query = query.eq("status", status)
         result = await asyncio.to_thread(lambda: query.execute())
-        return result.data or []
+        return cast("list[dict[str, Any]]", result.data or [])

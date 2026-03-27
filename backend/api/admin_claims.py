@@ -1,5 +1,5 @@
 import asyncio
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
 import structlog
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
@@ -44,7 +44,9 @@ async def get_proof_url(
     )
     if not result.data:
         raise HTTPException(status_code=404, detail="Claim not found")
-    storage_path = first(result.data, "proof photo")["proof_photo_url"]
+    storage_path = first(cast("list[dict[str, Any]]", result.data), "proof photo")[
+        "proof_photo_url"
+    ]
     signed = await asyncio.to_thread(
         lambda: db.storage.from_("claim-proofs").create_signed_url(storage_path, 3600)
     )

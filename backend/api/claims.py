@@ -1,5 +1,5 @@
 import asyncio
-from typing import Any
+from typing import Any, cast
 
 import structlog
 from fastapi import APIRouter, Depends, Query
@@ -86,6 +86,6 @@ async def get_my_claim(
         )
     )
     if result.data:
-        row = first(result.data, "get my claim")
+        row = first(cast("list[dict[str, Any]]", result.data), "get my claim")
         return {"id": row["id"], "status": row["status"]}
     return {"id": None, "status": None}

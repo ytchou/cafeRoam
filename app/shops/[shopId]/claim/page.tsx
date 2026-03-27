@@ -117,7 +117,10 @@ export default function ClaimPage() {
 
       <form onSubmit={handleSubmit} className="space-y-6" noValidate>
         <div>
-          <label htmlFor="claim-name" className="mb-1 block text-sm font-medium">
+          <label
+            htmlFor="claim-name"
+            className="mb-1 block text-sm font-medium"
+          >
             姓名 (Name)
           </label>
           <input
@@ -132,7 +135,10 @@ export default function ClaimPage() {
         </div>
 
         <div>
-          <label htmlFor="claim-email" className="mb-1 block text-sm font-medium">
+          <label
+            htmlFor="claim-email"
+            className="mb-1 block text-sm font-medium"
+          >
             Email
           </label>
           <input
@@ -147,7 +153,10 @@ export default function ClaimPage() {
         </div>
 
         <div>
-          <label htmlFor="claim-role" className="mb-1 block text-sm font-medium">
+          <label
+            htmlFor="claim-role"
+            className="mb-1 block text-sm font-medium"
+          >
             身份 (Role)
           </label>
           <select
@@ -163,7 +172,10 @@ export default function ClaimPage() {
         </div>
 
         <div>
-          <label htmlFor="claim-proof" className="mb-1 block text-sm font-medium">
+          <label
+            htmlFor="claim-proof"
+            className="mb-1 block text-sm font-medium"
+          >
             證明照片 (Proof Photo)
           </label>
           <p className="text-text-secondary mb-2 text-xs">
