@@ -37,11 +37,13 @@ class ClaimsService:
         shop_name = first(shop_resp.data, "shop name lookup")["name"] or "your shop"
 
         existing = await asyncio.to_thread(
-            lambda: self._db.table("shop_claims")
-            .select("id")
-            .eq("shop_id", shop_id)
-            .in_("status", ["pending", "approved"])
-            .execute()
+            lambda: (
+                self._db.table("shop_claims")
+                .select("id")
+                .eq("shop_id", shop_id)
+                .in_("status", ["pending", "approved"])
+                .execute()
+            )
         )
         if existing.data:
             raise HTTPException(
@@ -50,18 +52,20 @@ class ClaimsService:
             )
 
         result = await asyncio.to_thread(
-            lambda: self._db.table("shop_claims")
-            .insert(
-                {
-                    "shop_id": shop_id,
-                    "user_id": user_id,
-                    "contact_name": contact_name,
-                    "contact_email": contact_email,
-                    "role": role,
-                    "proof_photo_url": proof_photo_path,
-                }
+            lambda: (
+                self._db.table("shop_claims")
+                .insert(
+                    {
+                        "shop_id": shop_id,
+                        "user_id": user_id,
+                        "contact_name": contact_name,
+                        "contact_email": contact_email,
+                        "role": role,
+                        "proof_photo_url": proof_photo_path,
+                    }
+                )
+                .execute()
             )
-            .execute()
         )
 
         claim = first(result.data, "insert claim")
@@ -101,42 +105,48 @@ class ClaimsService:
     async def approve_claim(self, claim_id: str, admin_user_id: str) -> None:
         """Approve a claim: update status, assign shop_owner role, email owner."""
         result = await asyncio.to_thread(
-            lambda: self._db.table("shop_claims")
-            .select("id, shop_id, user_id, contact_email, contact_name")
-            .eq("id", claim_id)
-            .single()
-            .execute()
+            lambda: (
+                self._db.table("shop_claims")
+                .select("id, shop_id, user_id, contact_email, contact_name")
+                .eq("id", claim_id)
+                .single()
+                .execute()
+            )
         )
         claim = result.data
         if not claim:
             raise HTTPException(status_code=404, detail="Claim not found")
 
         await asyncio.to_thread(
-            lambda: self._db.table("shop_claims")
-            .update(
-                {
-                    "status": "approved",
-                    "reviewed_at": datetime.now(UTC).isoformat(),
-                    "reviewed_by": admin_user_id,
-                }
+            lambda: (
+                self._db.table("shop_claims")
+                .update(
+                    {
+                        "status": "approved",
+                        "reviewed_at": datetime.now(UTC).isoformat(),
+                        "reviewed_by": admin_user_id,
+                    }
+                )
+                .eq("id", claim_id)
+                .execute()
             )
-            .eq("id", claim_id)
-            .execute()
         )
 
         # Assign shop_owner role. upsert with ignore_duplicates=True maps to
         # INSERT ... ON CONFLICT DO NOTHING, so re-approvals are safe.
         await asyncio.to_thread(
-            lambda: self._db.table("user_roles")
-            .upsert(
-                {
-                    "user_id": claim["user_id"],
-                    "role": "shop_owner",
-                    "granted_by": admin_user_id,
-                },
-                ignore_duplicates=True,
+            lambda: (
+                self._db.table("user_roles")
+                .upsert(
+                    {
+                        "user_id": claim["user_id"],
+                        "role": "shop_owner",
+                        "granted_by": admin_user_id,
+                    },
+                    ignore_duplicates=True,
+                )
+                .execute()
             )
-            .execute()
         )
 
         shop_id = claim["shop_id"]
@@ -158,28 +168,32 @@ class ClaimsService:
     async def reject_claim(self, claim_id: str, reason: str, admin_user_id: str) -> None:
         """Reject a claim: update status, email owner."""
         result = await asyncio.to_thread(
-            lambda: self._db.table("shop_claims")
-            .select("id, contact_email, contact_name")
-            .eq("id", claim_id)
-            .single()
-            .execute()
+            lambda: (
+                self._db.table("shop_claims")
+                .select("id, contact_email, contact_name")
+                .eq("id", claim_id)
+                .single()
+                .execute()
+            )
         )
         claim = result.data
         if not claim:
             raise HTTPException(status_code=404, detail="Claim not found")
 
         await asyncio.to_thread(
-            lambda: self._db.table("shop_claims")
-            .update(
-                {
-                    "status": "rejected",
-                    "rejection_reason": reason,
-                    "reviewed_at": datetime.now(UTC).isoformat(),
-                    "reviewed_by": admin_user_id,
-                }
+            lambda: (
+                self._db.table("shop_claims")
+                .update(
+                    {
+                        "status": "rejected",
+                        "rejection_reason": reason,
+                        "reviewed_at": datetime.now(UTC).isoformat(),
+                        "reviewed_by": admin_user_id,
+                    }
+                )
+                .eq("id", claim_id)
+                .execute()
             )
-            .eq("id", claim_id)
-            .execute()
         )
 
         reason_labels = {
@@ -204,9 +218,7 @@ class ClaimsService:
         )
         logger.info("Claim rejected", claim_id=claim_id, reason=reason)
 
-    async def list_claims(
-        self, status: str | None = "pending"
-    ) -> list[dict[str, Any]]:
+    async def list_claims(self, status: str | None = "pending") -> list[dict[str, Any]]:
         """List claims, optionally filtered by status. For admin use."""
         query = (
             self._db.table("shop_claims")

@@ -76,12 +76,14 @@ async def get_my_claim(
     """Return the current user's claim status for a given shop."""
     db = get_service_role_client()
     result = await asyncio.to_thread(
-        lambda: db.table("shop_claims")
-        .select("id, status")
-        .eq("shop_id", shop_id)
-        .eq("user_id", user["id"])
-        .limit(1)
-        .execute()
+        lambda: (
+            db.table("shop_claims")
+            .select("id, status")
+            .eq("shop_id", shop_id)
+            .eq("user_id", user["id"])
+            .limit(1)
+            .execute()
+        )
     )
     if result.data:
         row = first(result.data, "get my claim")

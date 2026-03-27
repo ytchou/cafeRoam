@@ -38,11 +38,9 @@ async def get_proof_url(
 ) -> dict[str, str]:
     db = get_service_role_client()
     result = await asyncio.to_thread(
-        lambda: db.table("shop_claims")
-        .select("proof_photo_url")
-        .eq("id", claim_id)
-        .limit(1)
-        .execute()
+        lambda: (
+            db.table("shop_claims").select("proof_photo_url").eq("id", claim_id).limit(1).execute()
+        )
     )
     if not result.data:
         raise HTTPException(status_code=404, detail="Claim not found")

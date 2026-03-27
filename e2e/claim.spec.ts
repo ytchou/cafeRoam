@@ -22,7 +22,9 @@ test.describe('@critical J15 — Shop claim: badge click → form → confirmati
 
     await claimLink.click();
     await expect(page).toHaveURL(/\/shops\/.+\/claim/);
-    await expect(page.getByRole('heading', { name: /認領|Claim/i })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: /認領|Claim/i })
+    ).toBeVisible();
 
     // Fill in form
     await page.getByLabel(/姓名|Name/i).fill('Test Owner');
@@ -42,6 +44,8 @@ test.describe('@critical J15 — Shop claim: badge click → form → confirmati
     await submitBtn.click();
 
     // Confirmation
-    await expect(page.getByText(/已送出|submitted/i)).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText(/已送出|submitted/i)).toBeVisible({
+      timeout: 10_000,
+    });
   });
 });

@@ -95,9 +95,7 @@ class TestGetMyClaim:
 
     def test_returns_null_when_no_claim(self, client):
         mock_db = MagicMock()
-        mock_db.table.return_value.select.return_value.eq.return_value.eq.return_value.limit.return_value.execute.return_value.data = (
-            []
-        )
+        mock_db.table.return_value.select.return_value.eq.return_value.eq.return_value.limit.return_value.execute.return_value.data = []
 
         with patch("api.claims.get_service_role_client", return_value=mock_db):
             resp = client.get("/claims/me?shop_id=shop-1")

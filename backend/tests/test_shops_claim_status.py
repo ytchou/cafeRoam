@@ -45,11 +45,7 @@ def _make_shop_row(claim_status: str | None = None) -> dict[str, Any]:
 def _mock_anon_client(shop_row: dict[str, Any]) -> MagicMock:
     db = MagicMock()
     (
-        db.table.return_value
-        .select.return_value
-        .eq.return_value
-        .limit.return_value
-        .execute.return_value
+        db.table.return_value.select.return_value.eq.return_value.limit.return_value.execute.return_value
     ).data = [shop_row]
     return db
 

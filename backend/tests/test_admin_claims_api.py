@@ -51,9 +51,7 @@ class TestApproveClaim:
         finally:
             app.dependency_overrides.pop(get_claims_service, None)
         assert resp.status_code == 200
-        mock_svc.approve_claim.assert_called_once_with(
-            claim_id="claim-1", admin_user_id="admin-1"
-        )
+        mock_svc.approve_claim.assert_called_once_with(claim_id="claim-1", admin_user_id="admin-1")
 
 
 class TestRejectClaim:

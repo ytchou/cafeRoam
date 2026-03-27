@@ -12,7 +12,9 @@ export function ClaimBanner({ shopId, claimStatus }: ClaimBannerProps) {
   if (claimStatus === 'pending') {
     return (
       <div className="border-border-warm bg-surface-warm border-t px-5 py-4">
-        <p className="text-text-secondary text-sm">認領申請審核中，我們會在 48 小時內回覆。</p>
+        <p className="text-text-secondary text-sm">
+          認領申請審核中，我們會在 48 小時內回覆。
+        </p>
       </div>
     );
   }
