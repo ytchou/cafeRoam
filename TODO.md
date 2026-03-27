@@ -19,7 +19,7 @@
 **Chunk 2 — Frontend + E2E + Auth Dep (Waves 1, 4):**
 
 - [x] Task 4: Commit frontend + E2E fixture changes
-- [ ] Task 5: Commit auth dependency change + full test suite pass
+- [x] Task 5: Commit auth dependency change + full test suite pass
 
 ---
 

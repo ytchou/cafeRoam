@@ -100,6 +100,43 @@ def get_current_user(token: str = Depends(_get_bearer_token)) -> dict[str, Any]:
         ) from None
 
 
+def get_current_user_allow_pending(token: str = Depends(_get_bearer_token)) -> dict[str, Any]:  # noqa: B008
+    """Like get_current_user but allows accounts pending deletion.
+
+    Use only for the cancel-deletion endpoint, which must be reachable precisely
+    when the account is in the deletion grace period.
+    """
+    try:
+        signing_key = _jwks_client.get_signing_key_from_jwt(token)
+        payload = pyjwt.decode(
+            token,
+            signing_key.key,
+            algorithms=["ES256", "RS256", "HS256"],
+            options={"verify_aud": False},
+        )
+        user_id: str | None = payload.get("sub")
+        if not user_id:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token: missing user ID",
+            )
+        return {"id": user_id}
+    except HTTPException:
+        raise
+    except pyjwt.InvalidTokenError as exc:
+        logger.warning("JWT validation failed", error_type=type(exc).__name__, detail=str(exc))
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+        ) from None
+    except Exception as exc:
+        logger.warning("JWT validation error", error_type=type(exc).__name__, detail=str(exc))
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+        ) from None
+
+
 def require_admin(user: dict[str, Any] = Depends(get_current_user)) -> dict[str, Any]:  # noqa: B008
     """Raise 403 if the authenticated user is not in the admin allowlist."""
     if user["id"] not in settings.admin_user_ids:

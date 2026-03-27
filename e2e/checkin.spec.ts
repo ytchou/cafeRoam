@@ -159,7 +159,7 @@ test.describe('@critical J39 — Check-in with review text → review visible on
     test.skip(!shop, 'No seeded shops available');
 
     await page.goto(`/checkin/${shop!.id}`);
-    await expect(page.getByText('Check In')).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole('heading', { name: 'Check In' })).toBeVisible({ timeout: 10_000 });
 
     const fileInput = page.locator('[data-testid="photo-input"]');
     await fileInput.setInputFiles(TEST_PHOTO);
