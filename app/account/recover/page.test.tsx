@@ -84,7 +84,9 @@ describe('/account/recover page', () => {
     await user.click(screen.getByRole('button', { name: /cancel deletion/i }));
 
     await waitFor(() => {
-      expect(screen.getByRole('alert')).toHaveTextContent(/sign out and sign back in/i);
+      expect(screen.getByRole('alert')).toHaveTextContent(
+        /sign out and sign back in/i
+      );
     });
     expect(mockRouter.push).not.toHaveBeenCalled();
   });

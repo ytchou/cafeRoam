@@ -84,7 +84,10 @@ describe('SettingsPage', () => {
 
   it('user can request account deletion and is redirected to recovery page', async () => {
     mockFetch.mockResolvedValue({ ok: true });
-    mockAuth.refreshSession.mockResolvedValue({ data: { session: {} }, error: null });
+    mockAuth.refreshSession.mockResolvedValue({
+      data: { session: {} },
+      error: null,
+    });
     render(<SettingsPage />);
 
     await userEvent.click(
