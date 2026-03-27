@@ -77,7 +77,6 @@ async def delete_account(
     except Exception:
         logger.warning(
             "Failed to sync deletion_requested metadata",
-            user_id=user["id"],
             action="delete_account",
         )
     return first(cast("list[dict[str, Any]]", response.data), "delete account")
@@ -119,7 +118,6 @@ async def cancel_deletion(
     except Exception:
         logger.warning(
             "Failed to sync deletion_requested metadata",
-            user_id=user["id"],
             action="cancel_deletion",
         )
     return first(cast("list[dict[str, Any]]", response.data), "cancel deletion")
