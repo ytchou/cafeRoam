@@ -74,7 +74,7 @@ class SearchService:
 
         # Cache the result
         if self._cache is not None:
-            serialized = [r.model_dump(by_alias=True) for r in results]
+            serialized = [r.model_dump(by_alias=True, mode="json") for r in results]
             await self._cache.store(cache_key, normalized, mode, query_embedding, serialized)
 
         return SearchResponse(results=results, cache_hit=False)

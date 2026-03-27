@@ -81,7 +81,7 @@ class FollowerService:
 
         rows_resp = (
             self._db.table("shop_followers")
-            .select("created_at, shops(id, name, address, slug, mrt, primary_tag)", count="exact")  # type: ignore[arg-type]
+            .select("created_at, shops(id, name, address, slug, mrt)", count="exact")  # type: ignore[arg-type]
             .eq("user_id", user_id)
             .order("created_at", desc=True)
             .range(offset, offset + limit - 1)

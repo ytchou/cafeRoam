@@ -9,7 +9,7 @@ RETURNS TABLE (
   query_hash TEXT,
   query_text TEXT,
   mode_filter TEXT,
-  query_embedding vector(1536),
+  cache_embedding vector(1536),
   results JSONB,
   hit_count INT,
   expires_at TIMESTAMPTZ,
@@ -17,7 +17,7 @@ RETURNS TABLE (
 )
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public
+SET search_path = public, extensions
 AS $$
 BEGIN
   -- Bound the HNSW ANN candidate set to limit scan cost.
@@ -30,7 +30,7 @@ BEGIN
     sc.query_hash,
     sc.query_text,
     sc.mode_filter,
-    sc.query_embedding,
+    sc.query_embedding AS cache_embedding,
     sc.results,
     sc.hit_count,
     sc.expires_at,

@@ -137,10 +137,13 @@ class TestProviderFactories:
             provider = get_analytics_provider()
             assert provider is not None
 
-    def test_analytics_factory_unknown_provider_raises(self):
+    def test_analytics_factory_unknown_provider_returns_null_adapter(self):
+        """Unknown provider degrades gracefully to NullAnalyticsAdapter instead of raising"""
+        from providers.analytics.null_adapter import NullAnalyticsAdapter
+
         with patch("providers.analytics.settings") as mock:
             mock.analytics_provider = "unknown"
             from providers.analytics import get_analytics_provider
 
-            with pytest.raises(ValueError, match="Unknown analytics provider"):
-                get_analytics_provider()
+            adapter = get_analytics_provider()
+        assert isinstance(adapter, NullAnalyticsAdapter)

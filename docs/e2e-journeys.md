@@ -1,7 +1,7 @@
 # CafeRoam — E2E Journey Inventory
 
 > Generated: 2026-03-05
-> Last updated: 2026-03-25
+> Last updated: 2026-03-27 (run 2)
 > Source: docs/designs/2026-03-16-e2e-testing-infrastructure-design.md
 > Format: Playwright spec files in `e2e/` directory
 
@@ -44,6 +44,8 @@ This is the **source of truth** for all e2e test journeys. Each journey has:
 | J35 | Explore: vibe tag → navigates to filtered shops page     | `explore.spec.ts`   | Implemented |
 | J40 | Follow/unfollow: button state toggle                     | `following.spec.ts` | Implemented |
 | J41 | Follow: auth wall redirects to login                     | `following.spec.ts` | Implemented |
+| J42 | Shop claim: badge → form → confirmation                  | `claim.spec.ts`     | Implemented |
+| J43 | Community submission: URL → confirmed + queue shown      | `submit.spec.ts`    | Implemented |
 
 ## Full Suite (nightly)
 
