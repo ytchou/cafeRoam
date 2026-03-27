@@ -3,7 +3,11 @@
 interface AnalyticsData {
   search_insights: Array<{ query: string; impressions: number }>;
   community_pulse: Array<{ tag: string; count: number }>;
-  district_rankings: Array<{ attribute: string; rank: number; total_in_district: number }>;
+  district_rankings: Array<{
+    attribute: string;
+    rank: number;
+    total_in_district: number;
+  }>;
 }
 
 export function DashboardAnalytics({
@@ -13,14 +17,15 @@ export function DashboardAnalytics({
   data: AnalyticsData | undefined;
   isLoading: boolean;
 }) {
-  if (isLoading) return <div className="h-32 bg-muted animate-pulse rounded-xl" />;
+  if (isLoading)
+    return <div className="bg-muted h-32 animate-pulse rounded-xl" />;
   if (!data) return null;
 
   return (
     <div className="space-y-4">
       {data.search_insights.length > 0 && (
         <div>
-          <h3 className="text-sm font-semibold mb-2">搜尋曝光</h3>
+          <h3 className="mb-2 text-sm font-semibold">搜尋曝光</h3>
           <ul className="space-y-1">
             {data.search_insights.map((item) => (
               <li key={item.query} className="flex justify-between text-sm">
@@ -33,10 +38,13 @@ export function DashboardAnalytics({
       )}
       {data.community_pulse.length > 0 && (
         <div>
-          <h3 className="text-sm font-semibold mb-2">社群反饋</h3>
+          <h3 className="mb-2 text-sm font-semibold">社群反饋</h3>
           <div className="flex flex-wrap gap-2">
             {data.community_pulse.map((item) => (
-              <span key={item.tag} className="text-xs bg-muted px-2 py-1 rounded-full">
+              <span
+                key={item.tag}
+                className="bg-muted rounded-full px-2 py-1 text-xs"
+              >
                 {item.tag} · {item.count}
               </span>
             ))}

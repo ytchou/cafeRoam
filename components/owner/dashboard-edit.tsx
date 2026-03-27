@@ -32,7 +32,7 @@ export function DashboardEdit({
       setBody(story.body ?? '');
       setIsPublished(story.is_published ?? false);
     }
-  // Intentional: sync only when story identity changes (first load), not on every SWR revalidation
+    // Intentional: sync only when story identity changes (first load), not on every SWR revalidation
   }, [story?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSave = async () => {
@@ -49,7 +49,7 @@ export function DashboardEdit({
   return (
     <div className="space-y-4">
       <div>
-        <label className="text-sm font-medium block mb-1" htmlFor="story-body">
+        <label className="mb-1 block text-sm font-medium" htmlFor="story-body">
           店家故事
         </label>
         <textarea
@@ -58,7 +58,7 @@ export function DashboardEdit({
           value={body}
           onChange={(e) => setBody(e.target.value)}
           rows={6}
-          className="w-full rounded-lg border bg-background px-3 py-2 text-sm resize-none"
+          className="bg-background w-full resize-none rounded-lg border px-3 py-2 text-sm"
           placeholder="分享你的故事..."
         />
       </div>
@@ -69,12 +69,14 @@ export function DashboardEdit({
           checked={isPublished}
           onChange={(e) => setIsPublished(e.target.checked)}
         />
-        <label htmlFor="is-published" className="text-sm">公開發布</label>
+        <label htmlFor="is-published" className="text-sm">
+          公開發布
+        </label>
       </div>
       <button
         onClick={handleSave}
         disabled={saving}
-        className="w-full rounded-lg bg-primary text-primary-foreground py-2 text-sm font-medium disabled:opacity-50"
+        className="bg-primary text-primary-foreground w-full rounded-lg py-2 text-sm font-medium disabled:opacity-50"
       >
         {saving ? '儲存中...' : saved ? '已儲存' : '發布'}
       </button>

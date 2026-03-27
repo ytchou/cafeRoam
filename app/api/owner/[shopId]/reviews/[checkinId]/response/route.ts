@@ -6,5 +6,8 @@ export async function POST(
   { params }: { params: Promise<{ shopId: string; checkinId: string }> }
 ) {
   const { shopId, checkinId } = await params;
-  return proxyToBackend(request, `/owner/${shopId}/reviews/${checkinId}/response`);
+  return proxyToBackend(
+    request,
+    `/owner/${shopId}/reviews/${checkinId}/response`
+  );
 }

@@ -15,19 +15,19 @@ Give verified shop owners a dedicated dashboard to view analytics, edit their sh
 
 ## Scope (V1 — free claimed tier only)
 
-| Feature | In scope |
-|---------|----------|
-| Owner dashboard route `/owner/[shopId]/dashboard` | Yes |
-| Overview stats (check-ins, followers, saves, page views) | Yes |
-| Search insights via PostHog Query API | Yes |
-| Community pulse (anonymized visitor tags) | Yes |
-| Relative ranking in district | Yes |
-| Edit shop info (hours, description, photos) | Yes |
-| Owner-curated tags (max 10) | Yes |
-| Review responses | Yes |
-| Public shop story on shop detail page | Yes |
-| Events, announcements, featured menu items | No — DEV-35 (premium) |
-| Follower messaging / broadcast | No — DEV-41 (premium) |
+| Feature                                                  | In scope              |
+| -------------------------------------------------------- | --------------------- |
+| Owner dashboard route `/owner/[shopId]/dashboard`        | Yes                   |
+| Overview stats (check-ins, followers, saves, page views) | Yes                   |
+| Search insights via PostHog Query API                    | Yes                   |
+| Community pulse (anonymized visitor tags)                | Yes                   |
+| Relative ranking in district                             | Yes                   |
+| Edit shop info (hours, description, photos)              | Yes                   |
+| Owner-curated tags (max 10)                              | Yes                   |
+| Review responses                                         | Yes                   |
+| Public shop story on shop detail page                    | Yes                   |
+| Events, announcements, featured menu items               | No — DEV-35 (premium) |
+| Follower messaging / broadcast                           | No — DEV-41 (premium) |
 
 ---
 
@@ -136,37 +136,38 @@ async def require_shop_owner(
 
 ### New Service: `owner_service.py`
 
-| Method | Description |
-|--------|-------------|
-| `get_dashboard_stats(shop_id)` | Returns check-in count, follower count, saves-to-list, page views (PostHog HogQL) |
-| `get_search_insights(shop_id)` | PostHog HogQL: top 5-10 queries that surfaced this shop (rolling 30d) |
-| `get_community_pulse(shop_id)` | Anonymized: recent check-in taxonomy tags + activity counts |
-| `get_ranking(shop_id)` | Relative rank by attribute within district (top 3) |
-| `get_shop_story(shop_id)` | Fetch published `shop_content` row with `content_type = 'story'` |
-| `upsert_shop_story(shop_id, owner_id, data)` | Create or update story |
-| `update_shop_info(shop_id, owner_id, data)` | Update shops table: hours, description, photos |
-| `get_owner_tags(shop_id)` | Fetch `shop_owner_tags` for this shop |
-| `update_owner_tags(shop_id, owner_id, tags)` | Replace tag set (max 10, must be in taxonomy) |
-| `get_reviews(shop_id, page)` | Paginated check-ins with notes for this shop |
-| `upsert_review_response(checkin_id, shop_id, owner_id, body)` | Create or update response |
+| Method                                                        | Description                                                                       |
+| ------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| `get_dashboard_stats(shop_id)`                                | Returns check-in count, follower count, saves-to-list, page views (PostHog HogQL) |
+| `get_search_insights(shop_id)`                                | PostHog HogQL: top 5-10 queries that surfaced this shop (rolling 30d)             |
+| `get_community_pulse(shop_id)`                                | Anonymized: recent check-in taxonomy tags + activity counts                       |
+| `get_ranking(shop_id)`                                        | Relative rank by attribute within district (top 3)                                |
+| `get_shop_story(shop_id)`                                     | Fetch published `shop_content` row with `content_type = 'story'`                  |
+| `upsert_shop_story(shop_id, owner_id, data)`                  | Create or update story                                                            |
+| `update_shop_info(shop_id, owner_id, data)`                   | Update shops table: hours, description, photos                                    |
+| `get_owner_tags(shop_id)`                                     | Fetch `shop_owner_tags` for this shop                                             |
+| `update_owner_tags(shop_id, owner_id, tags)`                  | Replace tag set (max 10, must be in taxonomy)                                     |
+| `get_reviews(shop_id, page)`                                  | Paginated check-ins with notes for this shop                                      |
+| `upsert_review_response(checkin_id, shop_id, owner_id, body)` | Create or update response                                                         |
 
 ### New Router: `backend/api/owner.py`
 
-| Method | Endpoint | Auth |
-|--------|----------|------|
-| `GET` | `/owner/{shop_id}/dashboard` | `require_shop_owner` |
-| `GET` | `/owner/{shop_id}/analytics` | `require_shop_owner` |
-| `GET` | `/owner/{shop_id}/story` | `require_shop_owner` |
-| `PUT` | `/owner/{shop_id}/story` | `require_shop_owner` |
-| `PATCH` | `/owner/{shop_id}/info` | `require_shop_owner` |
-| `GET` | `/owner/{shop_id}/tags` | `require_shop_owner` |
-| `PUT` | `/owner/{shop_id}/tags` | `require_shop_owner` |
-| `GET` | `/owner/{shop_id}/reviews` | `require_shop_owner` |
-| `POST` | `/owner/{shop_id}/reviews/{checkin_id}/response` | `require_shop_owner` |
+| Method  | Endpoint                                         | Auth                 |
+| ------- | ------------------------------------------------ | -------------------- |
+| `GET`   | `/owner/{shop_id}/dashboard`                     | `require_shop_owner` |
+| `GET`   | `/owner/{shop_id}/analytics`                     | `require_shop_owner` |
+| `GET`   | `/owner/{shop_id}/story`                         | `require_shop_owner` |
+| `PUT`   | `/owner/{shop_id}/story`                         | `require_shop_owner` |
+| `PATCH` | `/owner/{shop_id}/info`                          | `require_shop_owner` |
+| `GET`   | `/owner/{shop_id}/tags`                          | `require_shop_owner` |
+| `PUT`   | `/owner/{shop_id}/tags`                          | `require_shop_owner` |
+| `GET`   | `/owner/{shop_id}/reviews`                       | `require_shop_owner` |
+| `POST`  | `/owner/{shop_id}/reviews/{checkin_id}/response` | `require_shop_owner` |
 
 ### PostHog Query API (HogQL)
 
 Page views query:
+
 ```sql
 SELECT count() as views
 FROM events
@@ -176,6 +177,7 @@ WHERE event = '$pageview'
 ```
 
 Search terms query:
+
 ```sql
 SELECT properties.query as query, count() as impressions
 FROM events
@@ -202,15 +204,15 @@ Privacy: queries are aggregate counts only — no user IDs, no emails.
 
 ### Dashboard Sections (in order)
 
-| # | Section | Data source |
-|---|---------|-------------|
-| 1 | Overview | Supabase (check-ins, followers, saves) + PostHog (page views) |
-| 2 | Search Insights | PostHog HogQL (top queries) |
-| 3 | Community Pulse | Supabase check-in tags (anonymized) |
-| 4 | Your Ranking | Computed: search frequency + check-in volume by district |
-| 5 | Shop Info | Editable form — hours, description, photos |
-| 6 | Tags | Curated taxonomy tags with "Shop owner confirmed" badge |
-| 7 | Reviews | Paginated check-in notes with response composer |
+| #   | Section         | Data source                                                   |
+| --- | --------------- | ------------------------------------------------------------- |
+| 1   | Overview        | Supabase (check-ins, followers, saves) + PostHog (page views) |
+| 2   | Search Insights | PostHog HogQL (top queries)                                   |
+| 3   | Community Pulse | Supabase check-in tags (anonymized)                           |
+| 4   | Your Ranking    | Computed: search frequency + check-in volume by district      |
+| 5   | Shop Info       | Editable form — hours, description, photos                    |
+| 6   | Tags            | Curated taxonomy tags with "Shop owner confirmed" badge       |
+| 7   | Reviews         | Paginated check-in notes with response composer               |
 
 Empty state rule: every empty section must include a concrete action (share link, add tags, update info, etc.) — never "nothing here yet."
 
@@ -233,12 +235,12 @@ New component inserted between `ShopDescription` and `AttributeChips` in `shop-d
 
 ## Auth & Access Control
 
-| Context | Behavior |
-|---------|---------|
-| Unauthenticated user visits `/owner/[shopId]/dashboard` | Redirect to `/login?next=/owner/{shopId}/dashboard` |
-| Authenticated user with no claim | 403 → redirect to `/` with toast: "This dashboard belongs to the shop owner" |
-| Owner visits their own shop detail page | Show inline "Edit your story →" CTA |
-| Unclaimed shop | `ClaimBanner` stays (DEV-45 component, no changes needed) |
+| Context                                                 | Behavior                                                                     |
+| ------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| Unauthenticated user visits `/owner/[shopId]/dashboard` | Redirect to `/login?next=/owner/{shopId}/dashboard`                          |
+| Authenticated user with no claim                        | 403 → redirect to `/` with toast: "This dashboard belongs to the shop owner" |
+| Owner visits their own shop detail page                 | Show inline "Edit your story →" CTA                                          |
+| Unclaimed shop                                          | `ClaimBanner` stays (DEV-45 component, no changes needed)                    |
 
 ---
 
@@ -254,9 +256,11 @@ New component inserted between `ShopDescription` and `AttributeChips` in `shop-d
 ## Testing Classification
 
 **(a) New e2e journey?**
+
 - [x] Yes — add e2e journey: verified owner visits `/owner/{shopId}/dashboard`, views stats, edits shop story, story appears on public shop page
 
 **(b) Coverage gate impact?**
+
 - [x] Yes — `owner_service.py` is a new critical-path service. Verify 80% coverage gate.
 
 ---

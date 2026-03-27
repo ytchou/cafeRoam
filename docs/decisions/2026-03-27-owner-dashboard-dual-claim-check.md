@@ -8,7 +8,7 @@ Date: 2026-03-27
 
 ## Context
 
-A user could have the `shop_owner` role (assigned when any claim is approved) while attempting to access the dashboard for a *different* shop they don't own. Role-only checks would allow horizontal privilege escalation across shops.
+A user could have the `shop_owner` role (assigned when any claim is approved) while attempting to access the dashboard for a _different_ shop they don't own. Role-only checks would allow horizontal privilege escalation across shops.
 
 ## Alternatives Considered
 
@@ -17,7 +17,7 @@ A user could have the `shop_owner` role (assigned when any claim is approved) wh
 
 ## Rationale
 
-Dual-check (role + claim) is the minimal, correct guard: the role establishes *that* the user is a shop owner in the system; the claim establishes *which* shop they own. Both must pass. This mirrors how `require_admin` checks `settings.admin_user_ids` rather than a role table — access is always scoped to a specific resource.
+Dual-check (role + claim) is the minimal, correct guard: the role establishes _that_ the user is a shop owner in the system; the claim establishes _which_ shop they own. Both must pass. This mirrors how `require_admin` checks `settings.admin_user_ids` rather than a role table — access is always scoped to a specific resource.
 
 ## Consequences
 

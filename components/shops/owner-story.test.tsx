@@ -14,7 +14,9 @@ describe('OwnerStory', () => {
 
   it('renders story body when story is published', () => {
     render(<OwnerStory story={story} shopId="shop-1" isOwner={false} />);
-    expect(screen.getByText('我們從2019年在大稻埕開始這段旅程。')).toBeInTheDocument();
+    expect(
+      screen.getByText('我們從2019年在大稻埕開始這段旅程。')
+    ).toBeInTheDocument();
     expect(screen.getByText('From the Owner')).toBeInTheDocument();
   });
 

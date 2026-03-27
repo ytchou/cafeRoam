@@ -40,9 +40,7 @@ describe('useOwnerDashboard', () => {
   });
 
   it('exposes isLoading while fetching', () => {
-    mockUseSWR.mockReturnValue(
-      swrReturning(undefined, { isLoading: true })
-    );
+    mockUseSWR.mockReturnValue(swrReturning(undefined, { isLoading: true }));
 
     const { result } = renderHook(() => useOwnerDashboard(SHOP_ID));
     expect(result.current.isLoading).toBe(true);
@@ -74,9 +72,7 @@ describe('useOwnerDashboard', () => {
 
   it('exposes error when fetch fails', () => {
     const fetchError = new Error('Request failed: 403');
-    mockUseSWR.mockReturnValue(
-      swrReturning(undefined, { error: fetchError })
-    );
+    mockUseSWR.mockReturnValue(swrReturning(undefined, { error: fetchError }));
 
     const { result } = renderHook(() => useOwnerDashboard(SHOP_ID));
     expect(result.current.error).toBe(fetchError);

@@ -16,13 +16,17 @@ interface OwnerStory {
 const fetcher = (url: string) => fetchWithAuth(url);
 
 export function useOwnerContent(shopId: string) {
-  const { data: story, isLoading, mutate } = useSWR<OwnerStory | null>(
+  const {
+    data: story,
+    isLoading,
+    mutate,
+  } = useSWR<OwnerStory | null>(
     shopId ? `/api/owner/${shopId}/story` : null,
-    fetcher,
+    fetcher
   );
   const { data: tagsData, mutate: mutateTags } = useSWR<{ tags: string[] }>(
     shopId ? `/api/owner/${shopId}/tags` : null,
-    fetcher,
+    fetcher
   );
 
   const saveStory = useCallback(
@@ -40,7 +44,7 @@ export function useOwnerContent(shopId: string) {
         throw err;
       }
     },
-    [shopId, story, mutate],
+    [shopId, story, mutate]
   );
 
   const saveTags = useCallback(
@@ -51,7 +55,7 @@ export function useOwnerContent(shopId: string) {
       });
       mutateTags();
     },
-    [shopId, mutateTags],
+    [shopId, mutateTags]
   );
 
   return {

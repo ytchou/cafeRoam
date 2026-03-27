@@ -26,7 +26,7 @@ const fetcher = (url: string) => fetchWithAuth(url);
 export function useOwnerReviews(shopId: string, page = 1) {
   const { data, isLoading, mutate } = useSWR<ReviewsResponse>(
     shopId ? `/api/owner/${shopId}/reviews?page=${page}` : null,
-    fetcher,
+    fetcher
   );
 
   const postResponse = useCallback(
@@ -36,11 +36,11 @@ export function useOwnerReviews(shopId: string, page = 1) {
         {
           method: 'POST',
           body: JSON.stringify({ body }),
-        },
+        }
       );
       mutate();
     },
-    [shopId, mutate],
+    [shopId, mutate]
   );
 
   return {

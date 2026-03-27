@@ -15,6 +15,7 @@
 **Tech Stack:** FastAPI, Pydantic, Supabase (postgres + RLS), PostHog Query API (HogQL), Next.js App Router, SWR, Vitest, pytest
 
 **Acceptance Criteria:**
+
 - [ ] A verified shop owner can visit `/owner/[shopId]/dashboard` and see check-in count, follower count, saves-to-list, and page views for the last 30 days
 - [ ] A verified shop owner can write and publish a shop story; the story appears publicly in the "From the Owner" section on the shop detail page
 - [ ] A verified shop owner can edit their shop's hours, description, and curate up to 10 taxonomy tags
@@ -42,6 +43,7 @@ Expected: `shop_claims` table exists, `user_roles` CHECK constraint includes `sh
 ## Task 1: Migration — `shop_content` table
 
 **Files:**
+
 - Create: `supabase/migrations/20260327000010_create_shop_content.sql`
 
 **Step 1: Write migration**
@@ -96,6 +98,7 @@ git commit -m "feat(DEV-21): add shop_content migration"
 ## Task 2: Migration — `shop_owner_tags` table
 
 **Files:**
+
 - Create: `supabase/migrations/20260327000011_create_shop_owner_tags.sql`
 
 **Step 1: Write migration**
@@ -138,6 +141,7 @@ git commit -m "feat(DEV-21): add shop_owner_tags migration"
 ## Task 3: Migration — `review_responses` table
 
 **Files:**
+
 - Create: `supabase/migrations/20260327000012_create_review_responses.sql`
 
 **Step 1: Write migration**
@@ -182,6 +186,7 @@ git commit -m "feat(DEV-21): add review_responses migration"
 ## Task 4: Backend — `require_shop_owner` dependency
 
 **Files:**
+
 - Modify: `backend/api/deps.py`
 - Test: `backend/tests/test_deps.py` (create if missing)
 
@@ -301,6 +306,7 @@ git commit -m "feat(DEV-21): add require_shop_owner dependency"
 ## Task 5: Backend — Pydantic models
 
 **Files:**
+
 - Create: `backend/models/owner.py`
 
 **Step 1: No test needed** — data models have no logic to test independently. Tests in Tasks 6-8 will catch any model issues.
@@ -395,6 +401,7 @@ git commit -m "feat(DEV-21): add owner dashboard Pydantic models"
 ## Task 6: Backend service — stats + analytics
 
 **Files:**
+
 - Create: `backend/services/owner_service.py` (partial — stats + analytics methods only)
 - Test: `backend/tests/test_owner_service.py`
 
@@ -684,6 +691,7 @@ git commit -m "feat(DEV-21): owner service — stats and analytics"
 ## Task 7: Backend service — content CRUD (story, info, tags)
 
 **Files:**
+
 - Modify: `backend/services/owner_service.py` (add content methods)
 - Modify: `backend/tests/test_owner_service.py` (add content tests)
 
@@ -865,6 +873,7 @@ git commit -m "feat(DEV-21): owner service — content CRUD and tags"
 ## Task 8: Backend service — reviews + responses
 
 **Files:**
+
 - Modify: `backend/services/owner_service.py` (add review methods)
 - Modify: `backend/tests/test_owner_service.py` (add review tests)
 
@@ -980,6 +989,7 @@ git commit -m "feat(DEV-21): owner service — reviews and responses"
 ## Task 9: Backend API router
 
 **Files:**
+
 - Create: `backend/api/owner.py`
 - Modify: `backend/main.py` (register router)
 - Test: `backend/tests/test_owner_api.py`
@@ -1217,6 +1227,7 @@ git commit -m "feat(DEV-21): owner API router with 9 endpoints"
 ## Task 10: Extend `/shops/{id}` with `ownerStory`
 
 **Files:**
+
 - Modify: `backend/api/shops.py` (add ownerStory to shop detail response)
 - Modify: `backend/tests/test_shops_api.py` (add ownerStory assertion)
 
@@ -1266,6 +1277,7 @@ git commit -m "feat(DEV-21): include ownerStory in shop detail response"
 ## Task 11: Next.js proxy routes for owner endpoints
 
 **Files:**
+
 - Create: `app/api/owner/[shopId]/dashboard/route.ts`
 - Create: `app/api/owner/[shopId]/analytics/route.ts`
 - Create: `app/api/owner/[shopId]/story/route.ts`
@@ -1294,6 +1306,7 @@ export async function GET(
 ```
 
 For story (GET + PUT):
+
 ```typescript
 // app/api/owner/[shopId]/story/route.ts
 export async function GET(req: NextRequest, { params }: ...) {
@@ -1318,6 +1331,7 @@ git commit -m "feat(DEV-21): Next.js proxy routes for owner API"
 ## Task 12: Frontend hooks
 
 **Files:**
+
 - Create: `lib/hooks/use-owner-dashboard.ts`
 - Create: `lib/hooks/use-owner-content.ts`
 - Create: `lib/hooks/use-owner-reviews.ts`
@@ -1344,7 +1358,12 @@ describe('useOwnerDashboard', () => {
 
   it('returns stats when data is available', () => {
     mockUseSWR.mockReturnValue({
-      data: { checkin_count_30d: 15, follower_count: 47, saves_count_30d: 8, page_views_30d: 230 },
+      data: {
+        checkin_count_30d: 15,
+        follower_count: 47,
+        saves_count_30d: 8,
+        page_views_30d: 230,
+      },
       isLoading: false,
       error: undefined,
       mutate: vi.fn(),
@@ -1359,7 +1378,10 @@ describe('useOwnerDashboard', () => {
 
   it('exposes isLoading while fetching', () => {
     mockUseSWR.mockReturnValue({
-      data: undefined, isLoading: true, error: undefined, mutate: vi.fn(),
+      data: undefined,
+      isLoading: true,
+      error: undefined,
+      mutate: vi.fn(),
     } as any);
 
     const { result } = renderHook(() => useOwnerDashboard('shop-id'));
@@ -1393,9 +1415,14 @@ interface DashboardStats {
 }
 
 export function useOwnerDashboard(shopId: string) {
-  const { data: stats, isLoading, error, mutate } = useSWR<DashboardStats>(
+  const {
+    data: stats,
+    isLoading,
+    error,
+    mutate,
+  } = useSWR<DashboardStats>(
     shopId ? `/api/owner/${shopId}/dashboard` : null,
-    fetchWithAuth,
+    fetchWithAuth
   );
   return { stats, isLoading, error, mutate };
 }
@@ -1417,37 +1444,47 @@ interface OwnerStory {
 }
 
 export function useOwnerContent(shopId: string) {
-  const { data: story, isLoading, mutate } = useSWR<OwnerStory | null>(
+  const {
+    data: story,
+    isLoading,
+    mutate,
+  } = useSWR<OwnerStory | null>(
     shopId ? `/api/owner/${shopId}/story` : null,
-    fetchWithAuth,
+    fetchWithAuth
   );
   const { data: tagsData, mutate: mutateTags } = useSWR<{ tags: string[] }>(
     shopId ? `/api/owner/${shopId}/tags` : null,
-    fetchWithAuth,
+    fetchWithAuth
   );
 
-  const saveStory = useCallback(async (data: Partial<OwnerStory>) => {
-    const prev = story;
-    mutate({ ...prev, ...data } as OwnerStory, false);
-    try {
-      await fetchWithAuth(`/api/owner/${shopId}/story`, {
-        method: 'PUT',
-        body: JSON.stringify(data),
-      });
-      mutate();
-    } catch (err) {
-      mutate(prev, false);
-      throw err;
-    }
-  }, [shopId, story, mutate]);
+  const saveStory = useCallback(
+    async (data: Partial<OwnerStory>) => {
+      const prev = story;
+      mutate({ ...prev, ...data } as OwnerStory, false);
+      try {
+        await fetchWithAuth(`/api/owner/${shopId}/story`, {
+          method: 'PUT',
+          body: JSON.stringify(data),
+        });
+        mutate();
+      } catch (err) {
+        mutate(prev, false);
+        throw err;
+      }
+    },
+    [shopId, story, mutate]
+  );
 
-  const saveTags = useCallback(async (tags: string[]) => {
-    await fetchWithAuth(`/api/owner/${shopId}/tags`, {
-      method: 'PUT',
-      body: JSON.stringify({ tags }),
-    });
-    mutateTags();
-  }, [shopId, mutateTags]);
+  const saveTags = useCallback(
+    async (tags: string[]) => {
+      await fetchWithAuth(`/api/owner/${shopId}/tags`, {
+        method: 'PUT',
+        body: JSON.stringify({ tags }),
+      });
+      mutateTags();
+    },
+    [shopId, mutateTags]
+  );
 
   return {
     story: story ?? null,
@@ -1468,16 +1505,22 @@ import { fetchWithAuth } from '@/lib/api/fetcher';
 export function useOwnerReviews(shopId: string, page = 1) {
   const { data, isLoading, mutate } = useSWR<{ reviews: unknown[] }>(
     shopId ? `/api/owner/${shopId}/reviews?page=${page}` : null,
-    fetchWithAuth,
+    fetchWithAuth
   );
 
-  const postResponse = useCallback(async (checkinId: string, body: string) => {
-    await fetchWithAuth(`/api/owner/${shopId}/reviews/${checkinId}/response`, {
-      method: 'POST',
-      body: JSON.stringify({ body }),
-    });
-    mutate();
-  }, [shopId, mutate]);
+  const postResponse = useCallback(
+    async (checkinId: string, body: string) => {
+      await fetchWithAuth(
+        `/api/owner/${shopId}/reviews/${checkinId}/response`,
+        {
+          method: 'POST',
+          body: JSON.stringify({ body }),
+        }
+      );
+      mutate();
+    },
+    [shopId, mutate]
+  );
 
   return {
     reviews: data?.reviews ?? [],
@@ -1507,6 +1550,7 @@ git commit -m "feat(DEV-21): owner dashboard SWR hooks"
 ## Task 13: `OwnerStory` component (shop detail page)
 
 **Files:**
+
 - Create: `components/shops/owner-story.tsx`
 - Modify: `app/shops/[shopId]/[slug]/shop-detail-client.tsx`
 - Test: `components/shops/__tests__/owner-story.test.tsx`
@@ -1653,6 +1697,7 @@ git commit -m "feat(DEV-21): OwnerStory component on shop detail page"
 ## Task 14: Owner dashboard page + sections
 
 **Files:**
+
 - Create: `app/owner/[shopId]/dashboard/page.tsx`
 - Create: `components/owner/dashboard-overview.tsx`
 - Create: `components/owner/dashboard-analytics.tsx`
@@ -1795,6 +1840,7 @@ git commit -m "feat(DEV-21): owner dashboard page and section components"
 ## Task 15: E2E journey — owner dashboard
 
 **Files:**
+
 - Create: `e2e/owner-dashboard.spec.ts`
 - Modify: `e2e/fixtures/auth.ts` (add `verifiedOwner` fixture if not present)
 
@@ -1807,7 +1853,9 @@ import { test, expect } from './fixtures/auth';
 const SHOP_ID = process.env.E2E_CLAIMED_SHOP_ID!;
 
 test.describe('Owner dashboard journey', () => {
-  test('verified owner can view dashboard and edit shop story', async ({ ownerPage }) => {
+  test('verified owner can view dashboard and edit shop story', async ({
+    ownerPage,
+  }) => {
     // Navigate to dashboard
     await ownerPage.goto(`/owner/${SHOP_ID}/dashboard`);
     await ownerPage.waitForURL(`/owner/${SHOP_ID}/dashboard`);
@@ -1818,14 +1866,18 @@ test.describe('Owner dashboard journey', () => {
 
     // Edit shop story
     await ownerPage.getByRole('button', { name: /story/i }).click();
-    await ownerPage.getByLabel(/story/i).fill('我們從台北大稻埕出發，只賣一杯好咖啡。');
+    await ownerPage
+      .getByLabel(/story/i)
+      .fill('我們從台北大稻埕出發，只賣一杯好咖啡。');
     await ownerPage.getByRole('button', { name: /publish/i }).click();
     await expect(ownerPage.getByText('Saved')).toBeVisible();
 
     // Story appears on public shop page
     await ownerPage.goto(`/shops/${SHOP_ID}`);
     await expect(ownerPage.getByText('From the Owner')).toBeVisible();
-    await expect(ownerPage.getByText('我們從台北大稻埕出發，只賣一杯好咖啡。')).toBeVisible();
+    await expect(
+      ownerPage.getByText('我們從台北大稻埕出發，只賣一杯好咖啡。')
+    ).toBeVisible();
   });
 
   test('unauthenticated user is redirected to login', async ({ page }) => {
@@ -1861,6 +1913,7 @@ git commit -m "test(DEV-21): E2E journey for owner dashboard"
 ## Task 16: Config + doctor + PDPA cascade
 
 **Files:**
+
 - Modify: `backend/config.py` (add PostHog fields if missing)
 - Modify: `scripts/doctor.sh` (add owner dashboard health check)
 - Modify: `backend/services/profile_service.py` (PDPA: cascade `shop_content`, `shop_owner_tags`, `review_responses` on account deletion)
@@ -1879,6 +1932,7 @@ posthog_project_id: str | None = None
 ```
 
 Add to `.env.example`:
+
 ```
 POSTHOG_API_KEY=phx_...           # PostHog project API key (for HogQL queries)
 POSTHOG_PROJECT_ID=12345          # PostHog project ID (numeric)
@@ -1887,6 +1941,7 @@ POSTHOG_PROJECT_ID=12345          # PostHog project ID (numeric)
 **Step 2: Update `scripts/doctor.sh`**
 
 Add check for PostHog config (non-blocking warning):
+
 ```bash
 # PostHog (optional — owner analytics degrades gracefully without it)
 if [ -z "$POSTHOG_API_KEY" ]; then
@@ -2002,6 +2057,7 @@ graph TD
 ```
 
 **Wave 1** (parallel):
+
 - Task 1: `shop_content` migration
 - Task 2: `shop_owner_tags` migration
 - Task 3: `review_responses` migration
@@ -2010,21 +2066,26 @@ graph TD
 - Task 16: Config + doctor + PDPA cascade
 
 **Wave 2** (parallel — depends on Wave 1):
+
 - Task 6: Service — stats + analytics ← T5
 - Task 7: Service — content CRUD ← T5
 - Task 8: Service — reviews ← T5
 - Task 10: Extend `/shops/{id}` response ← T1 (migration)
 
 **Wave 3** (parallel — depends on Wave 2):
+
 - Task 9: API router ← T4, T6, T7, T8
 - Task 11: Next.js proxy routes ← T9 (schema known)
 
 **Wave 4** (depends on Wave 3):
+
 - Task 12: Frontend hooks ← T11
 
 **Wave 5** (parallel — depends on Wave 4):
+
 - Task 13: `OwnerStory` component ← T10, T12
 - Task 14: Dashboard page + sections ← T12
 
 **Wave 6** (depends on Wave 5):
+
 - Task 15: E2E journey ← T13, T14

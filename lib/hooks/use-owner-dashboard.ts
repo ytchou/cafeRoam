@@ -13,9 +13,14 @@ interface DashboardStats {
 const fetcher = (url: string) => fetchWithAuth(url);
 
 export function useOwnerDashboard(shopId: string) {
-  const { data: stats, isLoading, error, mutate } = useSWR<DashboardStats>(
+  const {
+    data: stats,
+    isLoading,
+    error,
+    mutate,
+  } = useSWR<DashboardStats>(
     shopId ? `/api/owner/${shopId}/dashboard` : null,
-    fetcher,
+    fetcher
   );
   return { stats, isLoading, error, mutate };
 }

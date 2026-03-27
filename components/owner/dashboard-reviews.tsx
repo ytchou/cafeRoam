@@ -19,19 +19,23 @@ export function DashboardReviews({
   const [responding, setResponding] = useState<string | null>(null);
   const [responseText, setResponseText] = useState('');
 
-  if (isLoading) return <div className="h-32 bg-muted animate-pulse rounded-xl" />;
-  if (reviews.length === 0) return (
-    <p className="text-sm text-muted-foreground text-center py-8">尚無評論</p>
-  );
+  if (isLoading)
+    return <div className="bg-muted h-32 animate-pulse rounded-xl" />;
+  if (reviews.length === 0)
+    return (
+      <p className="text-muted-foreground py-8 text-center text-sm">尚無評論</p>
+    );
 
   return (
     <div className="space-y-4">
       {reviews.map((review) => (
-        <div key={review.id} className="border rounded-xl p-4 space-y-2">
-          {review.review_text && <p className="text-sm">{review.review_text}</p>}
+        <div key={review.id} className="space-y-2 rounded-xl border p-4">
+          {review.review_text && (
+            <p className="text-sm">{review.review_text}</p>
+          )}
           {review.owner_response ? (
             <div className="bg-muted rounded-lg p-3">
-              <p className="text-xs text-muted-foreground mb-1">店家回覆</p>
+              <p className="text-muted-foreground mb-1 text-xs">店家回覆</p>
               <p className="text-sm">{review.owner_response}</p>
             </div>
           ) : responding === review.id ? (
@@ -40,7 +44,7 @@ export function DashboardReviews({
                 value={responseText}
                 onChange={(e) => setResponseText(e.target.value)}
                 rows={3}
-                className="w-full rounded-lg border bg-background px-3 py-2 text-sm resize-none"
+                className="bg-background w-full resize-none rounded-lg border px-3 py-2 text-sm"
                 placeholder="回覆顧客..."
               />
               <div className="flex gap-2">
@@ -50,13 +54,16 @@ export function DashboardReviews({
                     setResponding(null);
                     setResponseText('');
                   }}
-                  className="text-xs bg-primary text-primary-foreground px-3 py-1.5 rounded-lg"
+                  className="bg-primary text-primary-foreground rounded-lg px-3 py-1.5 text-xs"
                 >
                   送出回覆
                 </button>
                 <button
-                  onClick={() => { setResponding(null); setResponseText(''); }}
-                  className="text-xs text-muted-foreground"
+                  onClick={() => {
+                    setResponding(null);
+                    setResponseText('');
+                  }}
+                  className="text-muted-foreground text-xs"
                 >
                   取消
                 </button>
@@ -65,7 +72,7 @@ export function DashboardReviews({
           ) : (
             <button
               onClick={() => setResponding(review.id)}
-              className="text-xs text-primary hover:underline"
+              className="text-primary text-xs hover:underline"
             >
               回覆
             </button>

@@ -19,14 +19,14 @@ export function OwnerStory({ story, shopId, isOwner }: Props) {
 
   return (
     <section className="px-4 py-5">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+      <div className="mb-3 flex items-center justify-between">
+        <h3 className="text-muted-foreground text-sm font-semibold tracking-wide uppercase">
           From the Owner
         </h3>
         {isOwner && (
           <Link
             href={`/owner/${shopId}/dashboard`}
-            className="text-xs text-primary hover:underline"
+            className="text-primary text-xs hover:underline"
           >
             Edit your story →
           </Link>
@@ -36,13 +36,11 @@ export function OwnerStory({ story, shopId, isOwner }: Props) {
         <img
           src={story.photo_url}
           alt="shop owner photo"
-          className="w-full rounded-lg object-cover aspect-video mb-3"
+          className="mb-3 aspect-video w-full rounded-lg object-cover"
         />
       )}
-      {story.title && (
-        <h4 className="font-medium mb-1">{story.title}</h4>
-      )}
-      <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">
+      {story.title && <h4 className="mb-1 font-medium">{story.title}</h4>}
+      <p className="text-foreground text-sm leading-relaxed whitespace-pre-wrap">
         {story.body}
       </p>
     </section>
