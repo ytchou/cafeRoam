@@ -14,7 +14,7 @@
 
 **Chunk 1 — Migrations + Foundation (Wave 1):**
 
-- [ ] Task 1: `shop_content` migration
+- [x] Task 1: `shop_content` migration
 - [ ] Task 2: `shop_owner_tags` migration
 - [ ] Task 3: `review_responses` migration
 - [ ] Task 4: `require_shop_owner` dependency
