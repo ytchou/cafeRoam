@@ -11,9 +11,11 @@ interface Story {
 
 export function DashboardEdit({
   story,
-  tags: _tags,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  tags,
   onSaveStory,
-  onSaveTags: _onSaveTags,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  onSaveTags,
 }: {
   story: Story | null;
   tags: string[];
