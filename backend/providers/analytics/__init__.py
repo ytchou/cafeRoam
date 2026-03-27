@@ -13,4 +13,6 @@ def get_analytics_provider() -> AnalyticsProvider:
                 project_id=settings.posthog_project_id or "",
             )
         case _:
-            raise ValueError(f"Unknown analytics provider: {settings.analytics_provider}")
+            from providers.analytics.null_adapter import NullAnalyticsAdapter
+
+            return NullAnalyticsAdapter()
