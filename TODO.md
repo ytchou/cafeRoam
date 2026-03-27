@@ -18,7 +18,7 @@
 - [x] Task 2: `shop_owner_tags` migration
 - [x] Task 3: `review_responses` migration
 - [x] Task 4: `require_shop_owner` dependency
-- [ ] Task 5: Pydantic models
+- [x] Task 5: Pydantic models
 - [ ] Task 16: Config + doctor + PDPA cascade
 
 **Chunk 2 — Backend Service (Wave 2):**
