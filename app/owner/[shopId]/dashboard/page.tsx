@@ -18,8 +18,13 @@ export default function OwnerDashboardPage() {
   const { user, isLoading: authLoading } = useUser();
   const { stats, isLoading: statsLoading } = useOwnerDashboard(shopId);
   const { story, tags, saveStory, saveTags } = useOwnerContent(shopId);
-  const { reviews, isLoading: reviewsLoading, postResponse } = useOwnerReviews(shopId);
-  const { data: analyticsData, isLoading: analyticsLoading } = useOwnerAnalytics(shopId);
+  const {
+    reviews,
+    isLoading: reviewsLoading,
+    postResponse,
+  } = useOwnerReviews(shopId);
+  const { data: analyticsData, isLoading: analyticsLoading } =
+    useOwnerAnalytics(shopId);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -38,15 +43,15 @@ export default function OwnerDashboardPage() {
   if (!user) return null;
 
   return (
-    <main className="max-w-2xl mx-auto px-4 py-6 space-y-6">
+    <main className="mx-auto max-w-2xl space-y-6 px-4 py-6">
       <h1 className="text-xl font-bold">店家管理</h1>
       <DashboardOverview stats={stats} isLoading={statsLoading} />
       <section>
-        <h2 className="text-base font-semibold mb-3">搜尋與社群洞察</h2>
+        <h2 className="mb-3 text-base font-semibold">搜尋與社群洞察</h2>
         <DashboardAnalytics data={analyticsData} isLoading={analyticsLoading} />
       </section>
       <section>
-        <h2 className="text-base font-semibold mb-3">編輯店家資訊</h2>
+        <h2 className="mb-3 text-base font-semibold">編輯店家資訊</h2>
         <DashboardEdit
           story={story}
           tags={tags}
@@ -55,7 +60,7 @@ export default function OwnerDashboardPage() {
         />
       </section>
       <section>
-        <h2 className="text-base font-semibold mb-3">顧客評論</h2>
+        <h2 className="mb-3 text-base font-semibold">顧客評論</h2>
         <DashboardReviews
           reviews={reviews}
           isLoading={reviewsLoading}
@@ -65,4 +70,3 @@ export default function OwnerDashboardPage() {
     </main>
   );
 }
-
