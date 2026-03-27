@@ -1,4 +1,5 @@
-import { test, expect } from '@playwright/test';
+import { expect } from '@playwright/test';
+import { test } from './fixtures/auth';
 import { grantGeolocation, TAIPEI_COORDS } from './fixtures/geolocation';
 
 test.describe('@critical J35 — Explore: Vibe tag → filtered shop results', () => {
@@ -29,10 +30,9 @@ test.describe('@critical J35 — Explore: Vibe tag → filtered shop results', (
 
 test.describe('@critical J34 — Explore: Tarot draw → 3 café cards revealed', () => {
   test('with geolocation granted, the Daily Draw section shows 3 café cards after loading', async ({
-    page,
-    context,
+    authedPage: page,
   }) => {
-    await grantGeolocation(context, TAIPEI_COORDS);
+    await grantGeolocation(page.context(), TAIPEI_COORDS);
     await page.goto('/explore');
     await page.waitForLoadState('networkidle');
 
@@ -40,16 +40,16 @@ test.describe('@critical J34 — Explore: Tarot draw → 3 café cards revealed'
     const dailyDrawHeader = page.getByText(/your daily draw/i);
     await expect(dailyDrawHeader).toBeVisible({ timeout: 15_000 });
 
-    // Check for empty state — skip if no shops in radius
-    const emptyState = page.getByText(/enable location|expand radius|no caf/i);
-    if (await emptyState.isVisible({ timeout: 2_000 }).catch(() => false)) {
-      test.skip(true, 'No shops available in tarot draw radius');
-    }
-
-    // Wait for skeleton loaders to disappear (skeletons have animate-pulse)
+    // Wait for skeleton loaders to disappear before checking for content or empty state
     await expect(page.locator('.animate-pulse').first()).toBeHidden({
       timeout: 15_000,
     });
+
+    // Check for empty state after loading completes — skip if no shops in radius
+    const emptyState = page.getByText(/enable location|expand radius|no caf/i);
+    if (await emptyState.isVisible({ timeout: 3_000 }).catch(() => false)) {
+      test.skip(true, 'No shops available in tarot draw radius');
+    }
 
     // Tarot card buttons have data-testid="tarot-card" or are scoped inside the daily-draw section
     const tarotCards = page
