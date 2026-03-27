@@ -4,16 +4,21 @@ from typing import Any
 import structlog
 from fastapi import APIRouter, Depends, Query
 
-from api.deps import get_current_user
-from core.config import settings
+from api.deps import get_claims_service, get_current_user
 from core.db import first
 from db.supabase_client import get_service_role_client
 from models.types import CamelModel
-from providers.email import get_email_provider
 from services.claims_service import ClaimsService
 
 logger = structlog.get_logger()
 router = APIRouter(prefix="/claims", tags=["claims"])
+
+_MIME_EXT = {
+    "image/jpeg": "jpg",
+    "image/png": "png",
+    "image/webp": "webp",
+    "image/heic": "heic",
+}
 
 
 class SubmitClaimBody(CamelModel):
@@ -29,17 +34,15 @@ class SubmitClaimResponse(CamelModel):
     message: str
 
 
-def get_claims_service() -> ClaimsService:
-    return ClaimsService(db=get_service_role_client(), email=get_email_provider())
-
-
 @router.get("/upload-url")
 async def get_upload_url(
     shop_id: str = Query(...),
+    mime_type: str = Query(default="image/jpeg"),
     user: dict[str, Any] = Depends(get_current_user),  # noqa: B008
 ) -> dict[str, str]:
     """Return a presigned Supabase Storage upload URL for proof photo."""
-    storage_path = f"{shop_id}/{user['id']}/proof.jpg"
+    ext = _MIME_EXT.get(mime_type, "jpg")
+    storage_path = f"{shop_id}/{user['id']}/proof.{ext}"
     db = get_service_role_client()
     result = await asyncio.to_thread(
         lambda: db.storage.from_("claim-proofs").create_signed_upload_url(storage_path)
@@ -54,12 +57,6 @@ async def submit_claim(
     svc: ClaimsService = Depends(get_claims_service),  # noqa: B008
 ) -> SubmitClaimResponse:
     """Submit a shop ownership claim."""
-    db = get_service_role_client()
-    shop_resp = await asyncio.to_thread(
-        lambda: db.table("shops").select("name").eq("id", body.shop_id).single().execute()
-    )
-    shop_name = shop_resp.data.get("name", "your shop") if shop_resp.data else "your shop"
-
     claim = await svc.submit_claim(
         user_id=user["id"],
         shop_id=body.shop_id,
@@ -67,8 +64,6 @@ async def submit_claim(
         contact_email=body.contact_email,
         role=body.role,
         proof_photo_path=body.proof_photo_path,
-        shop_name=shop_name,
-        admin_email=settings.admin_email,
     )
     return SubmitClaimResponse(claim_id=claim["id"], message="認領申請已送出")
 

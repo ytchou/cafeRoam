@@ -4,11 +4,10 @@ from typing import Any, Literal
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from api.deps import require_admin
+from api.deps import get_claims_service, require_admin
 from core.db import first
 from db.supabase_client import get_service_role_client
 from models.types import CamelModel
-from providers.email import get_email_provider
 from services.claims_service import ClaimsService
 
 logger = structlog.get_logger()
@@ -21,26 +20,13 @@ class RejectClaimBody(CamelModel):
     rejection_reason: ClaimRejectionReason
 
 
-def get_claims_service() -> ClaimsService:
-    return ClaimsService(db=get_service_role_client(), email=get_email_provider())
-
-
 @router.get("")
 async def list_claims(
-    status: str | None = Query(default="pending"),
+    status: Literal["pending", "approved", "rejected"] | None = Query(default="pending"),
     user: dict[str, Any] = Depends(require_admin),  # noqa: B008
+    svc: ClaimsService = Depends(get_claims_service),  # noqa: B008
 ) -> list[dict[str, Any]]:
-    db = get_service_role_client()
-    query = (
-        db.table("shop_claims")
-        .select("*, shops(name, address)")
-        .order("created_at", desc=True)
-        .limit(50)
-    )
-    if status:
-        query = query.eq("status", status)
-    result = await asyncio.to_thread(lambda: query.execute())
-    return result.data or []
+    return await svc.list_claims(status=status)
 
 
 @router.get("/{claim_id}/proof-url")

@@ -15,25 +15,30 @@ def _make_service(*, existing_claims=None, insert_row=None):
     db = MagicMock()
     email = AsyncMock()
 
-    # Mock for duplicate check: .table("shop_claims").select().eq().in_().execute()
-    dup_chain = MagicMock()
-    dup_chain.execute.return_value.data = existing_claims or []
-
-    # Mock for insert: .table("shop_claims").insert().execute()
-    ins_chain = MagicMock()
-    ins_chain.execute.return_value.data = [insert_row or {"id": CLAIM_ID}]
-
-    call_count = {"n": 0}
+    # Track per-table call counts separately to avoid fragile global ordering.
+    shop_claims_calls = {"n": 0}
 
     def table_side(name):
-        call_count["n"] += 1
         mock = MagicMock()
-        if name == "shop_claims" and call_count["n"] == 1:
-            mock.select.return_value.eq.return_value.in_.return_value = dup_chain
-        elif name == "shop_claims" and call_count["n"] == 2:
-            mock.insert.return_value = ins_chain
+        if name == "shops":
+            # Shop name lookup in submit_claim
+            mock.select.return_value.eq.return_value.limit.return_value.execute.return_value.data = [
+                {"name": "Fika Fika Cafe"}
+            ]
+        elif name == "shop_claims":
+            shop_claims_calls["n"] += 1
+            if shop_claims_calls["n"] == 1:
+                # Duplicate check
+                dup_chain = MagicMock()
+                dup_chain.execute.return_value.data = existing_claims or []
+                mock.select.return_value.eq.return_value.in_.return_value = dup_chain
+            else:
+                # Insert
+                ins_chain = MagicMock()
+                ins_chain.execute.return_value.data = [insert_row or {"id": CLAIM_ID}]
+                mock.insert.return_value = ins_chain
         elif name == "user_roles":
-            mock.insert.return_value.execute.return_value.data = [{"id": "role-1"}]
+            mock.upsert.return_value.execute.return_value.data = [{"id": "role-1"}]
         return mock
 
     db.table.side_effect = table_side
@@ -53,8 +58,6 @@ class TestSubmitClaim:
             contact_email="alice@caferoam.tw",
             role="owner",
             proof_photo_path="claim-proofs/shop-abc/proof.jpg",
-            shop_name="Fika Fika Cafe",
-            admin_email="admin@caferoam.tw",
         )
         assert result["id"] == CLAIM_ID
 
@@ -72,8 +75,6 @@ class TestSubmitClaim:
                 contact_email="bob@example.com",
                 role="manager",
                 proof_photo_path="claim-proofs/shop-abc/proof.jpg",
-                shop_name="Fika Fika Cafe",
-                admin_email="admin@caferoam.tw",
             )
         assert exc.value.status_code == 409
 
@@ -88,8 +89,6 @@ class TestSubmitClaim:
             contact_email="alice@caferoam.tw",
             role="owner",
             proof_photo_path="claim-proofs/shop-abc/proof.jpg",
-            shop_name="Fika Fika Cafe",
-            admin_email="admin@caferoam.tw",
         )
         assert email.send.call_count == 2
 
@@ -128,7 +127,7 @@ class TestApproveClaim:
             elif name == "shop_claims" and call_count["n"] == 2:
                 mock.update.return_value.eq.return_value = update_chain
             elif name == "user_roles":
-                mock.insert.return_value = role_chain
+                mock.upsert.return_value = role_chain
             return mock
 
         db.table.side_effect = table_side

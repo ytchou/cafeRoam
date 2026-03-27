@@ -86,7 +86,7 @@ async def get_shop(shop_id: str) -> Any:
     photo_urls = [row["url"] for row in (shop.pop("shop_photos", None) or [])]
     raw_tags = shop.pop("shop_tags", None) or []
     raw_claims = shop.pop("shop_claims", None) or []
-    claim_status = raw_claims[0]["status"] if raw_claims else None
+    claim_status = first(raw_claims, "shop_claims")["status"] if raw_claims else None
     taxonomy_tags = [
         TaxonomyTag(**row["taxonomy_tags"]).model_dump(by_alias=True)
         for row in raw_tags

@@ -1,10 +1,9 @@
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock
 
 import pytest
 from fastapi.testclient import TestClient
 
-from api.admin_claims import get_claims_service
-from api.deps import require_admin
+from api.deps import get_claims_service, require_admin
 from main import app
 
 
@@ -22,9 +21,8 @@ def _override_admin():
 
 class TestListClaims:
     def test_returns_list_of_pending_claims(self, client):
-        mock_db = MagicMock()
-        chain = mock_db.table.return_value.select.return_value.order.return_value.limit.return_value
-        chain.eq.return_value.execute.return_value.data = [
+        mock_svc = AsyncMock()
+        mock_svc.list_claims.return_value = [
             {
                 "id": "claim-1",
                 "status": "pending",
@@ -32,12 +30,16 @@ class TestListClaims:
                 "shops": {"name": "Fika Fika Cafe"},
             }
         ]
-        with patch("api.admin_claims.get_service_role_client", return_value=mock_db):
+        app.dependency_overrides[get_claims_service] = lambda: mock_svc
+        try:
             resp = client.get("/admin/claims")
+        finally:
+            app.dependency_overrides.pop(get_claims_service, None)
         assert resp.status_code == 200
         data = resp.json()
         assert len(data) == 1
         assert data[0]["id"] == "claim-1"
+        mock_svc.list_claims.assert_called_once_with(status="pending")
 
 
 class TestApproveClaim:

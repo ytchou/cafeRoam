@@ -45,6 +45,7 @@ class Settings(BaseSettings):
     # App
     environment: str = "development"
     log_level: str = "INFO"
+    site_url: str = "http://localhost:3000"
 
     # Admin
     admin_user_ids: list[str] = []

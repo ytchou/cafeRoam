@@ -8,6 +8,8 @@ from supabase import Client
 
 from core.config import settings
 from db.supabase_client import get_service_role_client, get_user_client
+from providers.email import get_email_provider
+from services.claims_service import ClaimsService
 
 logger = structlog.get_logger()
 
@@ -103,6 +105,10 @@ def require_admin(user: dict[str, Any] = Depends(get_current_user)) -> dict[str,
     if user["id"] not in settings.admin_user_ids:
         raise HTTPException(status_code=403, detail="Admin access required")
     return user
+
+
+def get_claims_service() -> ClaimsService:
+    return ClaimsService(db=get_service_role_client(), email=get_email_provider())
 
 
 def get_optional_user(request: Request) -> dict[str, Any] | None:

@@ -6,6 +6,7 @@ import structlog
 from fastapi import HTTPException
 from supabase import Client
 
+from core.config import settings
 from core.db import first
 from models.types import EmailMessage
 from providers.email.interface import EmailProvider
@@ -26,10 +27,15 @@ class ClaimsService:
         contact_email: str,
         role: str,
         proof_photo_path: str,
-        shop_name: str,
-        admin_email: str,
     ) -> dict[str, Any]:
-        """Insert a shop claim. Raises 409 if the shop already has a pending/approved claim."""
+        """Insert a shop claim. Raises 404 if shop not found, 409 if already has active claim."""
+        shop_resp = await asyncio.to_thread(
+            lambda: self._db.table("shops").select("name").eq("id", shop_id).limit(1).execute()
+        )
+        if not shop_resp.data:
+            raise HTTPException(status_code=404, detail="Shop not found")
+        shop_name = first(shop_resp.data, "shop name lookup")["name"] or "your shop"
+
         existing = await asyncio.to_thread(
             lambda: self._db.table("shop_claims")
             .select("id")
@@ -77,7 +83,7 @@ class ClaimsService:
         # Notification to admin
         await self._email.send(
             EmailMessage(
-                to=admin_email,
+                to=settings.admin_email,
                 subject=f"[CafeRoam] New claim: {shop_name}",
                 html=(
                     f"<p>New claim submitted for <strong>{shop_name}</strong> "
@@ -141,7 +147,7 @@ class ClaimsService:
                 html=(
                     f"<p>您好 {claim['contact_name']}，</p>"
                     "<p>恭喜！您的認領申請已通過審核。"
-                    f"您的管理後台：<a href='https://caferoam.tw/owner/{shop_id}/dashboard'>"
+                    f"您的管理後台：<a href='{settings.site_url}/owner/{shop_id}/dashboard'>"
                     "前往後台</a></p>"
                     "<p>CafeRoam 團隊</p>"
                 ),
@@ -191,9 +197,27 @@ class ClaimsService:
                 html=(
                     f"<p>您好 {claim['contact_name']}，</p>"
                     f"<p>很抱歉，您的認領申請未通過審核。原因：{reason_label}。</p>"
-                    "<p>如有疑問，請聯絡 hello@caferoam.tw。</p>"
+                    f"<p>如有疑問，請聯絡 {settings.admin_email}。</p>"
                     "<p>CafeRoam 團隊</p>"
                 ),
             )
         )
         logger.info("Claim rejected", claim_id=claim_id, reason=reason)
+
+    async def list_claims(
+        self, status: str | None = "pending"
+    ) -> list[dict[str, Any]]:
+        """List claims, optionally filtered by status. For admin use."""
+        query = (
+            self._db.table("shop_claims")
+            .select(
+                "id, shop_id, user_id, status, contact_name, contact_email, "
+                "role, created_at, shops(name, address)"
+            )
+            .order("created_at", desc=True)
+            .limit(50)
+        )
+        if status:
+            query = query.eq("status", status)
+        result = await asyncio.to_thread(lambda: query.execute())
+        return result.data or []
