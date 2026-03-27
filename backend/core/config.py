@@ -30,6 +30,7 @@ class Settings(BaseSettings):
     analytics_provider: str = "posthog"
     posthog_api_key: str = ""
     posthog_host: str = "https://app.posthog.com"
+    posthog_project_id: str | None = None
 
     # Maps
     maps_provider: str = "mapbox"

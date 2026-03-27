@@ -178,6 +178,11 @@ check "Migrations in sync" \
   "cd '${PROJECT_ROOT}' && test -z \"\$(supabase db diff 2>/dev/null)\"" \
   "Run: supabase db push"
 
+# PostHog (optional — owner analytics degrades gracefully without it)
+if [ -z "${POSTHOG_API_KEY:-}" ]; then
+  printf "${YELLOW}[WARN]${NC} POSTHOG_API_KEY not set — owner analytics will show 0 page views\n"
+fi
+
 # ─── Summary ──────────────────────────────────────────────────────────────────
 printf "\n────────────────────────────────\n"
 if [ "$FAIL" -eq 0 ]; then
