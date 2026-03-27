@@ -67,8 +67,12 @@ export default function SettingsPage() {
         throw new Error(body.detail || 'Failed to request account deletion');
       }
 
-      await supabase.auth.signOut();
-      router.push('/');
+      // Refresh session so the JWT reflects deletion_requested: true,
+      // then let the middleware redirect subsequent protected-route visits to /account/recover.
+      // Non-fatal: DB update already succeeded. Refresh may fail if the session
+      // is already expired, but the middleware will redirect on the next request.
+      await supabase.auth.refreshSession();
+      router.push('/account/recover');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {

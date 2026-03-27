@@ -2,7 +2,7 @@ from unittest.mock import MagicMock, patch
 
 from fastapi.testclient import TestClient
 
-from api.deps import get_admin_db, get_current_user, get_user_db
+from api.deps import get_admin_db, get_current_user, get_current_user_allow_pending, get_user_db
 from main import app
 
 client = TestClient(app)
@@ -21,6 +21,7 @@ def _auth_overrides(user_id: str = "user-1") -> MagicMock:
     mock_db.single.return_value = mock_db
     mock_admin_db = MagicMock()
     app.dependency_overrides[get_current_user] = lambda: {"id": user_id}
+    app.dependency_overrides[get_current_user_allow_pending] = lambda: {"id": user_id}
     app.dependency_overrides[get_user_db] = lambda: mock_db
     app.dependency_overrides[get_admin_db] = lambda: mock_admin_db
     return mock_db
@@ -85,6 +86,25 @@ class TestDeleteAccountRoute:
     def test_delete_account_rejects_unauthenticated(self):
         response = client.delete("/auth/account")
         assert response.status_code == 401
+
+    def test_delete_account_still_returns_200_when_admin_metadata_sync_fails(self):
+        """If admin_db.auth.admin.update_user_by_id raises, the profile DB update
+        is still the source of truth and the request should return 200."""
+        mock_db = _auth_overrides()
+        mock_db.execute.return_value = MagicMock(
+            data=[{"id": "user-1", "deletion_requested_at": "2026-02-25T00:00:00+00:00"}]
+        )
+        mock_admin_db = app.dependency_overrides[get_admin_db]()
+        mock_admin_db.auth.admin.update_user_by_id.side_effect = Exception(
+            "Supabase admin API unavailable"
+        )
+        try:
+            response = client.delete("/auth/account")
+            assert response.status_code == 200
+            data = response.json()
+            assert "deletion_requested_at" in data
+        finally:
+            _clear_overrides()
 
     def test_delete_account_no_op_when_already_pending(self):
         """Calling DELETE /account again does not reset the grace period timer."""
@@ -164,6 +184,63 @@ class TestCancelDeletionRoute:
             assert response.status_code == 200
             data = response.json()
             assert data["deletion_requested_at"] is None
+        finally:
+            _clear_overrides()
+
+    def test_cancel_deletion_still_returns_200_when_admin_metadata_sync_fails(self):
+        """If admin_db.auth.admin.update_user_by_id raises, the profile DB update
+        is still the source of truth and the request should return 200."""
+        mock_db = _auth_overrides()
+        mock_db.execute.side_effect = [
+            MagicMock(data={"id": "user-1", "deletion_requested_at": "2026-02-25T00:00:00+00:00"}),
+            MagicMock(data=[{"id": "user-1", "deletion_requested_at": None}]),
+        ]
+        mock_admin_db = app.dependency_overrides[get_admin_db]()
+        mock_admin_db.auth.admin.update_user_by_id.side_effect = Exception(
+            "Supabase admin API unavailable"
+        )
+        try:
+            response = client.post("/auth/cancel-deletion")
+            assert response.status_code == 200
+            data = response.json()
+            assert data["deletion_requested_at"] is None
+        finally:
+            _clear_overrides()
+
+    def test_user_pending_deletion_can_reach_cancel_deletion_endpoint(self):
+        """A user whose account is pending deletion must be able to reach POST /auth/cancel-deletion.
+        Exercises the real get_current_user_allow_pending dependency (not mocked) to confirm it
+        bypasses the deletion gate that would block get_current_user with a 403."""
+        user_id = "a1b2c3d4-0001-4000-8000-000000000001"
+        mock_db = MagicMock()
+        mock_db.table.return_value = mock_db
+        mock_db.update.return_value = mock_db
+        mock_db.select.return_value = mock_db
+        mock_db.eq.return_value = mock_db
+        mock_db.single.return_value = mock_db
+        mock_db.execute.side_effect = [
+            MagicMock(data={"id": user_id, "deletion_requested_at": "2026-02-25T00:00:00+00:00"}),
+            MagicMock(data=[{"id": user_id, "deletion_requested_at": None}]),
+        ]
+        mock_admin_db = MagicMock()
+        # Override DB deps but NOT get_current_user_allow_pending — the real
+        # dependency must run to prove pending-deletion users can reach the endpoint.
+        app.dependency_overrides[get_user_db] = lambda: mock_db
+        app.dependency_overrides[get_admin_db] = lambda: mock_admin_db
+
+        try:
+            with (
+                patch("api.deps.pyjwt.decode", return_value={"sub": user_id}),
+                patch("api.deps._jwks_client") as mock_jwks,
+            ):
+                mock_jwks.get_signing_key_from_jwt.return_value = MagicMock()
+                response = client.post(
+                    "/auth/cancel-deletion",
+                    headers={"Authorization": "Bearer fake-pending-deletion-jwt"},
+                )
+
+            assert response.status_code == 200
+            assert response.json()["deletion_requested_at"] is None
         finally:
             _clear_overrides()
 

@@ -45,6 +45,9 @@ describe('/account/recover page', () => {
 
   it('user can cancel deletion and is redirected to home', async () => {
     mockFetch.mockResolvedValue({ ok: true });
+    const mockAssign = vi.fn();
+    vi.stubGlobal('location', { assign: mockAssign });
+
     const user = userEvent.setup();
     render(<RecoverPage />);
 
@@ -61,8 +64,31 @@ describe('/account/recover page', () => {
         })
       );
       expect(mockAuth.refreshSession).toHaveBeenCalled();
-      expect(mockRouter.push).toHaveBeenCalledWith('/');
+      expect(mockAssign).toHaveBeenCalledWith('/');
     });
+  });
+
+  it('shows recovery guidance if account still appears pending after cancellation', async () => {
+    mockFetch.mockResolvedValue({ ok: true });
+    mockAuth.refreshSession.mockResolvedValue({
+      data: {
+        session: {
+          user: { app_metadata: { deletion_requested: true } },
+        },
+      },
+      error: null,
+    });
+    const user = userEvent.setup();
+    render(<RecoverPage />);
+
+    await user.click(screen.getByRole('button', { name: /cancel deletion/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent(
+        /sign out and sign back in/i
+      );
+    });
+    expect(mockRouter.push).not.toHaveBeenCalled();
   });
 
   it('shows error message when cancel-deletion API fails', async () => {

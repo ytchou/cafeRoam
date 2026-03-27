@@ -47,11 +47,10 @@ async def get_user_db(token: str = Depends(_get_bearer_token)) -> Client:  # noq
     return get_user_client(token)
 
 
-def get_current_user(token: str = Depends(_get_bearer_token)) -> dict[str, Any]:  # noqa: B008
-    """Validate JWT and return the authenticated user. Raises 401 if invalid.
+def _decode_jwt_user_id(token: str) -> str:
+    """Decode and verify a Supabase JWT, returning the user_id (sub claim).
 
-    Verifies the signature via Supabase's JWKS endpoint (cached). Supports
-    ES256, RS256, and HS256 — whichever algorithm the Supabase instance uses.
+    Raises HTTP 401 on any validation failure.
     """
     try:
         signing_key = _jwks_client.get_signing_key_from_jwt(token)
@@ -67,23 +66,7 @@ def get_current_user(token: str = Depends(_get_bearer_token)) -> dict[str, Any]:
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid token: missing user ID",
             )
-        # Check deletion status from DB — JWT app_metadata.deletion_requested is
-        # unreliable (local Supabase injects False defaults; prod claims can be stale).
-        # DB check also blocks mid-session access, not just new logins.
-        service_db = get_service_role_client()
-        profile = (
-            service_db.table("profiles")
-            .select("deletion_requested_at")
-            .eq("id", user_id)
-            .single()
-            .execute()
-        )
-        if isinstance(profile.data, dict) and profile.data.get("deletion_requested_at") is not None:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Account is pending deletion",
-            )
-        return {"id": user_id}
+        return user_id
     except HTTPException:
         raise
     except pyjwt.InvalidTokenError as exc:
@@ -98,6 +81,41 @@ def get_current_user(token: str = Depends(_get_bearer_token)) -> dict[str, Any]:
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired token",
         ) from None
+
+
+def get_current_user(token: str = Depends(_get_bearer_token)) -> dict[str, Any]:  # noqa: B008
+    """Validate JWT and return the authenticated user. Raises 401 if invalid.
+
+    Verifies the signature via Supabase's JWKS endpoint (cached). Supports
+    ES256, RS256, and HS256 — whichever algorithm the Supabase instance uses.
+    """
+    user_id = _decode_jwt_user_id(token)
+    # Check deletion status from DB — JWT app_metadata.deletion_requested is
+    # unreliable (local Supabase injects False defaults; prod claims can be stale).
+    # DB check also blocks mid-session access, not just new logins.
+    service_db = get_service_role_client()
+    profile = (
+        service_db.table("profiles")
+        .select("deletion_requested_at")
+        .eq("id", user_id)
+        .single()
+        .execute()
+    )
+    if isinstance(profile.data, dict) and profile.data.get("deletion_requested_at") is not None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Account is pending deletion",
+        )
+    return {"id": user_id}
+
+
+def get_current_user_allow_pending(token: str = Depends(_get_bearer_token)) -> dict[str, Any]:  # noqa: B008
+    """Like get_current_user but allows accounts pending deletion.
+
+    Use only for the cancel-deletion endpoint, which must be reachable precisely
+    when the account is in the deletion grace period.
+    """
+    return {"id": _decode_jwt_user_id(token)}
 
 
 def require_admin(user: dict[str, Any] = Depends(get_current_user)) -> dict[str, Any]:  # noqa: B008
@@ -144,17 +162,7 @@ def get_optional_user(request: Request) -> dict[str, Any] | None:
     auth_header = request.headers.get("Authorization")
     if not auth_header or not auth_header.startswith("Bearer "):
         return None
-
-    token = auth_header.removeprefix("Bearer ")
     try:
-        signing_key = _jwks_client.get_signing_key_from_jwt(token)
-        payload = pyjwt.decode(
-            token,
-            signing_key.key,
-            algorithms=["ES256", "RS256", "HS256"],
-            options={"verify_aud": False},
-        )
-        user_id: str | None = payload.get("sub")
-        return {"id": user_id} if user_id else None
+        return {"id": _decode_jwt_user_id(auth_header.removeprefix("Bearer "))}
     except Exception:
         return None

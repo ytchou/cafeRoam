@@ -82,8 +82,12 @@ describe('SettingsPage', () => {
     expect(confirmBtn).not.toBeDisabled();
   });
 
-  it('user can request account deletion and is signed out', async () => {
+  it('user can request account deletion and is redirected to recovery page', async () => {
     mockFetch.mockResolvedValue({ ok: true });
+    mockAuth.refreshSession.mockResolvedValue({
+      data: { session: {} },
+      error: null,
+    });
     render(<SettingsPage />);
 
     await userEvent.click(
@@ -104,8 +108,8 @@ describe('SettingsPage', () => {
           }),
         })
       );
-      expect(mockAuth.signOut).toHaveBeenCalledOnce();
-      expect(mockRouter.push).toHaveBeenCalledWith('/');
+      expect(mockAuth.refreshSession).toHaveBeenCalledOnce();
+      expect(mockRouter.push).toHaveBeenCalledWith('/account/recover');
     });
   });
 

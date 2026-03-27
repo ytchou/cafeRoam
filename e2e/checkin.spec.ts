@@ -199,7 +199,9 @@ test.describe('@critical J39 — Check-in with review text → review visible on
     await expect(async () => {
       await page.goto(`/shops/${shop!.id}/${shop!.slug || shop!.id}`);
       await page.waitForLoadState('networkidle');
-      await expect(page.getByRole('heading', { name: '打卡評價' })).toBeVisible();
+      await expect(
+        page.getByRole('heading', { name: '打卡評價' })
+      ).toBeVisible();
       await expect(page.getByText(reviewText)).toBeVisible();
     }).toPass({ timeout: 30_000, intervals: [2_000] });
   });
