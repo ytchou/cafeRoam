@@ -31,7 +31,6 @@ dev = [
     "pytest-cov>=6.0",
     "ruff>=0.8",
     "mypy>=1.13",
-    "mutmut>=3.0",
 ]
 
 [tool.pytest.ini_options]
@@ -120,8 +119,3 @@ omit = ["tests/*", ".venv/*", "conftest.py"]
 
 [tool.coverage.report]
 show_missing = true
-
-[tool.mutmut]
-paths_to_mutate = "api/,services/,providers/"
-tests_dir = "tests/"
-runner = "python -m pytest -x --tb=no -q"
