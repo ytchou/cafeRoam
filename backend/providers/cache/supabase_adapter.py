@@ -27,7 +27,7 @@ def _parse_entry(row: dict[str, Any]) -> CacheEntry:
         query_hash=row["query_hash"],
         query_text=row["query_text"],
         mode_filter=row.get("mode_filter"),
-        query_embedding=row.get("query_embedding", []),
+        query_embedding=row.get("cache_embedding", []),
         results=row.get("results", []),
         hit_count=row.get("hit_count", 0),
         expires_at=expires_str,
