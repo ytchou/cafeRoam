@@ -63,6 +63,14 @@ export const test = base.extend<{ authedPage: Page }>({
       context = await loginFresh(browser, email, password);
     }
 
+    // Suppress the cookie-consent banner in all E2E tests by injecting the
+    // consent cookie before any page script runs. This prevents the fixed
+    // z-50 banner from intercepting pointer events during test actions.
+    await context.addInitScript(() => {
+      document.cookie =
+        'caferoam_consent=denied; max-age=31536000; path=/; SameSite=Lax';
+    });
+
     const page = await context.newPage();
     await use(page);
     await context.close();
