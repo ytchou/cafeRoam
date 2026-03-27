@@ -87,6 +87,23 @@ class TestDeleteAccountRoute:
         response = client.delete("/auth/account")
         assert response.status_code == 401
 
+    def test_delete_account_succeeds_even_if_admin_metadata_sync_fails(self):
+        """If admin_db.auth.admin.update_user_by_id raises, the profile DB update
+        is still the source of truth and the request should return 200."""
+        mock_db = _auth_overrides()
+        mock_db.execute.return_value = MagicMock(
+            data=[{"id": "user-1", "deletion_requested_at": "2026-02-25T00:00:00+00:00"}]
+        )
+        mock_admin_db = app.dependency_overrides[get_admin_db]()
+        mock_admin_db.auth.admin.update_user_by_id.side_effect = Exception("Supabase admin API unavailable")
+        try:
+            response = client.delete("/auth/account")
+            assert response.status_code == 200
+            data = response.json()
+            assert "deletion_requested_at" in data
+        finally:
+            _clear_overrides()
+
     def test_delete_account_no_op_when_already_pending(self):
         """Calling DELETE /account again does not reset the grace period timer."""
         mock_db = _auth_overrides()
@@ -160,6 +177,24 @@ class TestCancelDeletionRoute:
             MagicMock(data={"id": "user-1", "deletion_requested_at": "2026-02-25T00:00:00+00:00"}),
             MagicMock(data=[{"id": "user-1", "deletion_requested_at": None}]),
         ]
+        try:
+            response = client.post("/auth/cancel-deletion")
+            assert response.status_code == 200
+            data = response.json()
+            assert data["deletion_requested_at"] is None
+        finally:
+            _clear_overrides()
+
+    def test_cancel_deletion_succeeds_even_if_admin_metadata_sync_fails(self):
+        """If admin_db.auth.admin.update_user_by_id raises, the profile DB update
+        is still the source of truth and the request should return 200."""
+        mock_db = _auth_overrides()
+        mock_db.execute.side_effect = [
+            MagicMock(data={"id": "user-1", "deletion_requested_at": "2026-02-25T00:00:00+00:00"}),
+            MagicMock(data=[{"id": "user-1", "deletion_requested_at": None}]),
+        ]
+        mock_admin_db = app.dependency_overrides[get_admin_db]()
+        mock_admin_db.auth.admin.update_user_by_id.side_effect = Exception("Supabase admin API unavailable")
         try:
             response = client.post("/auth/cancel-deletion")
             assert response.status_code == 200

@@ -13,7 +13,7 @@
 **Chunk 1 — Backend Fix (Waves 1-3):**
 
 - [x] Task 1: Update test overrides for `get_current_user_allow_pending`
-- [ ] Task 2: Write failing tests for admin SDK error resilience
+- [x] Task 2: Write failing tests for admin SDK error resilience
 - [ ] Task 3: Add error handling around admin SDK calls
 
 **Chunk 2 — Frontend + E2E + Auth Dep (Waves 1, 4):**
