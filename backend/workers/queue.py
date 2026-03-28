@@ -75,6 +75,29 @@ class JobQueue:
         rows = cast("list[dict[str, Any]]", response.data)
         return Job(**first(rows, "claim job"))
 
+    async def get_pending_job_types(self) -> list[JobType]:
+        """Single query to discover which job types have pending work ready to run."""
+        now = datetime.now(UTC).isoformat()
+        response = (
+            self._db.table("job_queue")
+            .select("job_type")
+            .eq("status", JobStatus.PENDING.value)
+            .lte("scheduled_at", now)
+            .execute()
+        )
+        rows = cast("list[dict[str, Any]]", response.data)
+        seen: set[str] = set()
+        result: list[JobType] = []
+        for row in rows:
+            jt_val = row["job_type"]
+            if jt_val not in seen:
+                seen.add(jt_val)
+                try:
+                    result.append(JobType(jt_val))
+                except ValueError:
+                    pass
+        return result
+
     async def claim_batch(self, job_type: JobType, limit: int = 1) -> list[Job]:
         response = self._db.rpc(
             "claim_jobs_batch", {"p_job_type": job_type.value, "p_limit": limit}

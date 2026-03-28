@@ -226,6 +226,15 @@ async def run_reembed_reviewed_shops() -> None:
     await queue.enqueue(job_type=JobType.REEMBED_REVIEWED_SHOPS, payload={})
 
 
+async def poll_pending_job_types() -> None:
+    """Single-poll loop: one DB query to find pending types, then dispatch each."""
+    db = get_service_role_client()
+    queue = JobQueue(db=db)
+    pending_types = await queue.get_pending_job_types()
+    for job_type in pending_types:
+        await process_job_type(job_type)
+
+
 def create_scheduler() -> AsyncIOScheduler:
     scheduler = AsyncIOScheduler(timezone="Asia/Taipei")
 
@@ -256,14 +265,14 @@ def create_scheduler() -> AsyncIOScheduler:
         id="reembed_reviewed_shops",
     )
 
-    for job_type in JobType:
-        scheduler.add_job(
-            process_job_type,
-            "interval",
-            seconds=settings.worker_poll_interval_seconds,
-            args=[job_type],
-            id=f"process_{job_type.value}",
-            max_instances=1,
-        )
+    scheduler.add_job(
+        poll_pending_job_types,
+        "interval",
+        seconds=settings.worker_poll_interval_seconds,
+        id="poll_pending_jobs",
+        max_instances=1,
+        coalesce=True,
+        misfire_grace_time=settings.worker_poll_interval_seconds,
+    )
 
     return scheduler
