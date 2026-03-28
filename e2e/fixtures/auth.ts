@@ -18,8 +18,10 @@ function storageStatePath(testInfo: TestInfo): string {
 
 function credentials(testInfo: TestInfo): { email: string; password: string } {
   if (testInfo.project.name === 'desktop') {
-    const email = process.env.E2E_DESKTOP_USER_EMAIL ?? process.env.E2E_USER_EMAIL;
-    const password = process.env.E2E_DESKTOP_USER_PASSWORD ?? process.env.E2E_USER_PASSWORD;
+    const email =
+      process.env.E2E_DESKTOP_USER_EMAIL ?? process.env.E2E_USER_EMAIL;
+    const password =
+      process.env.E2E_DESKTOP_USER_PASSWORD ?? process.env.E2E_USER_PASSWORD;
     if (!email || !password) {
       throw new Error(
         'E2E_DESKTOP_USER_EMAIL / E2E_DESKTOP_USER_PASSWORD (or fallback E2E_USER_EMAIL) must be set'

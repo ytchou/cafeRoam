@@ -6,7 +6,9 @@ test.describe('@critical J07 — Semantic search returns ranked results', () => 
   }) => {
     // Navigate directly with query param — bypasses mobile form submit quirks
     // (press('Enter') in mobile viewport doesn't always trigger form onSubmit)
-    await page.goto('/search?q=' + encodeURIComponent('想找安靜可以工作的地方'));
+    await page.goto(
+      '/search?q=' + encodeURIComponent('想找安靜可以工作的地方')
+    );
 
     // Wait for results to load (not "搜尋中…" loading state)
     await expect(page.getByText('搜尋中…')).toBeHidden({ timeout: 15_000 });
@@ -95,7 +97,9 @@ test.describe('J21 — Filter pills: toggle WiFi → results update', () => {
 
     // WiFi filter pill — skip if not yet shipped in search UI
     const wifiFilter = page.getByRole('button', { name: /WiFi/i });
-    const hasWifi = await wifiFilter.isVisible({ timeout: 5_000 }).catch(() => false);
+    const hasWifi = await wifiFilter
+      .isVisible({ timeout: 5_000 })
+      .catch(() => false);
     test.skip(!hasWifi, 'WiFi filter pill not present in current search UI');
 
     // Toggle WiFi filter on

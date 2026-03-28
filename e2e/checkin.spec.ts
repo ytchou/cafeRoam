@@ -21,7 +21,9 @@ test.describe('@critical J10 — Check-in: upload photo → submit → stamp awa
     // detail page opens an inline popover/sheet (not a page navigation), so to test
     // the dedicated check-in flow we go there directly.
     await page.goto(`/checkin/${shop!.id}`);
-    await expect(page.getByRole('heading', { name: 'Check In' })).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole('heading', { name: 'Check In' })).toBeVisible({
+      timeout: 10_000,
+    });
 
     // Dismiss cookie consent banner if it would block the submit button
     const rejectBtn = page.getByRole('button', { name: 'Reject' });
@@ -63,7 +65,9 @@ test.describe('@critical J11 — Check-in: no photo → validation error', () =>
     test.skip(!shopId, 'No seeded shops available');
 
     await page.goto(`/checkin/${shopId}`);
-    await expect(page.getByRole('heading', { name: 'Check In' })).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole('heading', { name: 'Check In' })).toBeVisible({
+      timeout: 10_000,
+    });
 
     const submitButton = page.getByRole('button', { name: /打卡|Check In/i });
     await expect(submitButton).toBeDisabled();
@@ -87,7 +91,9 @@ test.describe('J24 — Duplicate stamp at same shop (intended)', () => {
     async function doCheckin() {
       await page.goto(`/checkin/${shopId}`);
       await page.waitForLoadState('networkidle');
-      await expect(page.getByRole('heading', { name: 'Check In' })).toBeVisible({ timeout: 10_000 });
+      await expect(page.getByRole('heading', { name: 'Check In' })).toBeVisible(
+        { timeout: 10_000 }
+      );
       // Wait for the Take Photo button — proves React has fully hydrated the PhotoUploader
       await expect(
         page.getByRole('button', { name: /Take Photo|Add Photo/i })
@@ -104,7 +110,9 @@ test.describe('J24 — Duplicate stamp at same shop (intended)', () => {
       // is gone by the time router.back() completes; waitForResponse is reliable.
       const [apiResponse] = await Promise.all([
         page.waitForResponse(
-          (r) => r.url().includes('/api/checkins') && r.request().method() === 'POST',
+          (r) =>
+            r.url().includes('/api/checkins') &&
+            r.request().method() === 'POST',
           { timeout: 15_000 }
         ),
         submitBtn.click(),
@@ -158,7 +166,9 @@ test.describe('J30 — Check-in with optional menu photo + text note', () => {
     // Navigate directly to the check-in page (the "Check In" button on shop detail opens
     // an inline popover/sheet; the dedicated page has menu photo + text note fields).
     await page.goto(`/checkin/${shop!.id}`);
-    await expect(page.getByRole('heading', { name: 'Check In' })).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole('heading', { name: 'Check In' })).toBeVisible({
+      timeout: 10_000,
+    });
 
     const rejectBtn = page.getByRole('button', { name: 'Reject' });
     if (await rejectBtn.isVisible({ timeout: 2_000 }).catch(() => false)) {

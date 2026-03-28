@@ -51,11 +51,17 @@ test.describe('@critical J42 — Shop claim: badge click → form → confirmati
     const confirmation = page.getByText(/已送出|submitted/i);
 
     await Promise.race([
-      storageError.waitFor({ state: 'visible', timeout: 15_000 }).catch(() => null),
-      confirmation.waitFor({ state: 'visible', timeout: 15_000 }).catch(() => null),
+      storageError
+        .waitFor({ state: 'visible', timeout: 15_000 })
+        .catch(() => null),
+      confirmation
+        .waitFor({ state: 'visible', timeout: 15_000 })
+        .catch(() => null),
     ]);
 
-    const hasStorageError = await storageError.isVisible({ timeout: 500 }).catch(() => false);
+    const hasStorageError = await storageError
+      .isVisible({ timeout: 500 })
+      .catch(() => false);
     test.skip(
       hasStorageError,
       'Claim storage bucket (claim-proofs) not configured in this environment'

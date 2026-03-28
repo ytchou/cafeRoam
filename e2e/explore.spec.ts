@@ -4,32 +4,36 @@ import { grantGeolocation } from './fixtures/geolocation';
 
 // Coordinates centred between the three seeded tarot shops (all within ~2km).
 // TAIPEI_COORDS (25.033, 121.565) only covers Cozy Cowork; the other two are ~4km west.
-const TAROT_TEST_COORDS = { latitude: 25.040, longitude: 121.537 };
+const TAROT_TEST_COORDS = { latitude: 25.04, longitude: 121.537 };
 
 // /explore is auth-gated — unauthenticated users are redirected to /login
-authedTest.describe('@critical J35 — Explore: Vibe tag → filtered shop results', () => {
-  authedTest('tapping a vibe tag on the Explore page navigates to the vibe results page with shops', async ({
-    authedPage: page,
-  }) => {
-    await page.goto('/explore');
-    await page.waitForLoadState('networkidle');
+authedTest.describe(
+  '@critical J35 — Explore: Vibe tag → filtered shop results',
+  () => {
+    authedTest(
+      'tapping a vibe tag on the Explore page navigates to the vibe results page with shops',
+      async ({ authedPage: page }) => {
+        await page.goto('/explore');
+        await page.waitForLoadState('networkidle');
 
-    // Vibe grid should be visible — tap the first vibe card link
-    const vibeLink = page.locator('a[href^="/explore/vibes/"]').first();
-    await expect(vibeLink).toBeVisible({ timeout: 10_000 });
+        // Vibe grid should be visible — tap the first vibe card link
+        const vibeLink = page.locator('a[href^="/explore/vibes/"]').first();
+        await expect(vibeLink).toBeVisible({ timeout: 10_000 });
 
-    await vibeLink.click();
+        await vibeLink.click();
 
-    // Should navigate to the vibe detail page
-    await page.waitForURL(/\/explore\/vibes\//, { timeout: 10_000 });
-    expect(page.url()).toContain('/explore/vibes/');
+        // Should navigate to the vibe detail page
+        await page.waitForURL(/\/explore\/vibes\//, { timeout: 10_000 });
+        expect(page.url()).toContain('/explore/vibes/');
 
-    // Shop count badge and at least one shop row should appear
-    await expect(page.getByText(/shops? nearby/i)).toBeVisible({
-      timeout: 15_000,
-    });
-  });
-});
+        // Shop count badge and at least one shop row should appear
+        await expect(page.getByText(/shops? nearby/i)).toBeVisible({
+          timeout: 15_000,
+        });
+      }
+    );
+  }
+);
 
 // --- Phase 2 stubs ---
 
@@ -108,14 +112,18 @@ authedTest.describe(
         // Scope to the dialog/drawer to avoid matching the page-level h2s
         // (Browse by Vibe, From the Community). The sr-only "Tarot Card Reveal"
         // h2 is also present but hidden — filter it out by not-text.
-        const dialog = page.locator('[role="dialog"], [data-vaul-drawer-direction]').last();
+        const dialog = page
+          .locator('[role="dialog"], [data-vaul-drawer-direction]')
+          .last();
         const drawerHeading = dialog.locator('h2').filter({
           hasNotText: /Tarot Card Reveal/i,
         });
         await expect(drawerHeading).toBeVisible({ timeout: 5_000 });
 
         // Verify drawer has a "Let's Go" link (navigates to shop detail)
-        await expect(dialog.getByText(/Let's Go/i)).toBeVisible({ timeout: 5_000 });
+        await expect(dialog.getByText(/Let's Go/i)).toBeVisible({
+          timeout: 5_000,
+        });
       }
     );
   }

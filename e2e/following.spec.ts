@@ -36,7 +36,9 @@ test.describe.serial('@critical J40 — Follow/unfollow toggle', () => {
     {
       let authCtx;
       try {
-        authCtx = await browser.newContext({ storageState: authStorage(workerInfo.project.name) });
+        authCtx = await browser.newContext({
+          storageState: authStorage(workerInfo.project.name),
+        });
         const authPage = await authCtx.newPage();
         try {
           await authPage.goto('/account/recover');
@@ -44,7 +46,9 @@ test.describe.serial('@critical J40 — Follow/unfollow toggle', () => {
           const cancelBtn = authPage.getByRole('button', {
             name: /Cancel Deletion|取消刪除/i,
           });
-          if (await cancelBtn.isVisible({ timeout: 2_000 }).catch(() => false)) {
+          if (
+            await cancelBtn.isVisible({ timeout: 2_000 }).catch(() => false)
+          ) {
             await cancelBtn.click();
             await authPage
               .waitForURL((url) => url.pathname === '/', { timeout: 10_000 })
@@ -66,21 +70,28 @@ test.describe.serial('@critical J40 — Follow/unfollow toggle', () => {
     if (shopId) {
       let authCtx;
       try {
-        authCtx = await browser.newContext({ storageState: authStorage(workerInfo.project.name) });
+        authCtx = await browser.newContext({
+          storageState: authStorage(workerInfo.project.name),
+        });
         const authPage = await authCtx.newPage();
         try {
-          const cookies = await authPage.context().cookies('http://localhost:3000');
+          const cookies = await authPage
+            .context()
+            .cookies('http://localhost:3000');
           const authCookie = cookies.find(
             (c) => c.name.startsWith('sb-') && c.name.endsWith('-auth-token')
           );
           if (authCookie) {
             const base64Val = authCookie.value.replace(/^base64-/, '');
             const decoded = Buffer.from(base64Val, 'base64').toString('utf-8');
-            const token = (JSON.parse(decoded) as { access_token?: string }).access_token;
+            const token = (JSON.parse(decoded) as { access_token?: string })
+              .access_token;
             if (token) {
-              await authPage.request.delete(`/api/shops/${shopId}/follow`, {
-                headers: { Authorization: `Bearer ${token}` },
-              }).catch(() => null);
+              await authPage.request
+                .delete(`/api/shops/${shopId}/follow`, {
+                  headers: { Authorization: `Bearer ${token}` },
+                })
+                .catch(() => null);
             }
           }
         } finally {
@@ -98,22 +109,29 @@ test.describe.serial('@critical J40 — Follow/unfollow toggle', () => {
     if (!shopId) return;
     let authCtx;
     try {
-      authCtx = await browser.newContext({ storageState: authStorage(workerInfo.project.name) });
+      authCtx = await browser.newContext({
+        storageState: authStorage(workerInfo.project.name),
+      });
       const authPage = await authCtx.newPage();
       try {
-        const cookies = await authPage.context().cookies('http://localhost:3000');
+        const cookies = await authPage
+          .context()
+          .cookies('http://localhost:3000');
         const authCookie = cookies.find(
           (c) => c.name.startsWith('sb-') && c.name.endsWith('-auth-token')
         );
         const base64Val = authCookie?.value.replace(/^base64-/, '') ?? '';
         const decoded = Buffer.from(base64Val, 'base64').toString('utf-8');
         const token = base64Val
-          ? ((JSON.parse(decoded) as { access_token?: string }).access_token ?? null)
+          ? ((JSON.parse(decoded) as { access_token?: string }).access_token ??
+            null)
           : null;
         if (token) {
-          await authPage.request.delete(`/api/shops/${shopId}/follow`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }).catch(() => null);
+          await authPage.request
+            .delete(`/api/shops/${shopId}/follow`, {
+              headers: { Authorization: `Bearer ${token}` },
+            })
+            .catch(() => null);
         }
       } finally {
         await authPage.close();
@@ -135,17 +153,23 @@ test.describe.serial('@critical J40 — Follow/unfollow toggle', () => {
     // update rolls back. Cancel any pending deletion first.
     await page.goto('/account/recover');
     await page.waitForLoadState('networkidle');
-    const cancelBtn = page.getByRole('button', { name: /Cancel Deletion|取消刪除/i });
+    const cancelBtn = page.getByRole('button', {
+      name: /Cancel Deletion|取消刪除/i,
+    });
     if (await cancelBtn.isVisible({ timeout: 2_000 }).catch(() => false)) {
       await cancelBtn.click();
-      await page.waitForURL((url) => url.pathname === '/', { timeout: 10_000 }).catch(() => null);
+      await page
+        .waitForURL((url) => url.pathname === '/', { timeout: 10_000 })
+        .catch(() => null);
     }
 
     await page.goto(shopUrl);
     await page.waitForLoadState('networkidle');
 
     const followBtn = page.getByRole('button', { name: 'Follow this shop' });
-    const unfollowBtn = page.getByRole('button', { name: 'Unfollow this shop' });
+    const unfollowBtn = page.getByRole('button', {
+      name: 'Unfollow this shop',
+    });
 
     // Use toPass to retry in case J38 triggers another deletion between the
     // cancel step above and the follow click.
@@ -170,14 +194,18 @@ test.describe.serial('@critical J40 — Follow/unfollow toggle', () => {
     await page.waitForLoadState('networkidle');
 
     const followBtn = page.getByRole('button', { name: 'Follow this shop' });
-    const unfollowBtn = page.getByRole('button', { name: 'Unfollow this shop' });
+    const unfollowBtn = page.getByRole('button', {
+      name: 'Unfollow this shop',
+    });
 
     // Mobile and desktop serial suites run in parallel with a shared test account.
     // Use toPass() to retry the follow-then-unfollow flow until it completes
     // without interference from the concurrent project.
     await expect(async () => {
       // Step 1: Ensure we are in "following" state (follow if not already)
-      const following = await unfollowBtn.isVisible({ timeout: 1_000 }).catch(() => false);
+      const following = await unfollowBtn
+        .isVisible({ timeout: 1_000 })
+        .catch(() => false);
       if (!following) {
         // Wait for button to be enabled (SWR initial fetch may still be loading)
         await expect(followBtn).toBeEnabled({ timeout: 5_000 });

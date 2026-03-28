@@ -40,9 +40,9 @@ test.describe('@critical J01 — Near Me: grant geolocation → shops sorted by 
     await listViewBtn.click();
 
     // Shops should now be visible
-    await expect(
-      page.locator('article').first()
-    ).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('article').first()).toBeVisible({
+      timeout: 10_000,
+    });
 
     // URL stays on /
     expect(new URL(page.url()).pathname).toBe('/');
@@ -78,10 +78,19 @@ test.describe('@critical J02 — Near Me: deny geolocation → error toast', () 
     // any timing window where the mock might not be in place.
     const clickResult = await page.evaluate(() => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (navigator.geolocation as any).getCurrentPosition = function (_: any, error: any) {
-        if (error) setTimeout(() => error({ code: 2, message: 'Position unavailable' }), 100);
+      (navigator.geolocation as any).getCurrentPosition = function (
+        _: any,
+        error: any
+      ) {
+        if (error)
+          setTimeout(
+            () => error({ code: 2, message: 'Position unavailable' }),
+            100
+          );
       };
-      const btn = document.querySelector<HTMLElement>('button[aria-label="My location"]');
+      const btn = document.querySelector<HTMLElement>(
+        'button[aria-label="My location"]'
+      );
       if (!btn) return 'button not found';
       btn.click();
       return 'clicked';
@@ -91,9 +100,9 @@ test.describe('@critical J02 — Near Me: deny geolocation → error toast', () 
     }
 
     // Mock fires after 100ms → toast should appear quickly.
-    await expect(
-      page.getByText('無法取得位置，請確認定位權限')
-    ).toBeVisible({ timeout: 5_000 });
+    await expect(page.getByText('無法取得位置，請確認定位權限')).toBeVisible({
+      timeout: 5_000,
+    });
   });
 });
 
@@ -154,7 +163,10 @@ test.describe('J04 — Browse map → tap pin → shop detail sheet', () => {
     // Dispatch the click directly via JavaScript to bypass coverage detection.
     await page.evaluate((sel) => {
       const btn = document.querySelector(sel) as HTMLButtonElement | null;
-      if (btn) btn.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+      if (btn)
+        btn.dispatchEvent(
+          new MouseEvent('click', { bubbles: true, cancelable: true })
+        );
     }, '[role="img"][aria-label="Map marker"] button[aria-label]');
 
     // Mobile: ShopCarousel appears at bottom (data-testid="carousel-scroll")
@@ -389,7 +401,10 @@ test.describe('J29 — Mobile: mini card on pin tap', () => {
     // CSS stack, so Playwright's hit-test finds the canvas and times out.
     await page.evaluate((sel) => {
       const btn = document.querySelector(sel) as HTMLButtonElement | null;
-      if (btn) btn.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+      if (btn)
+        btn.dispatchEvent(
+          new MouseEvent('click', { bubbles: true, cancelable: true })
+        );
     }, '[role="img"][aria-label="Map marker"] button[aria-label]');
 
     // On mobile, ShopCarousel appears at the bottom of the map (data-testid="carousel-scroll")
@@ -439,7 +454,9 @@ test.describe('@critical J36 — Shop detail: tap Get Directions → DirectionsS
     // At least one route info row should appear.
     // Walking/Driving rows load from the directions API (Mapbox); if unavailable locally
     // the component falls back to "Route times unavailable. Try again later."
-    const routeRow = page.getByText(/Walking|Driving|Route times unavailable/i).first();
+    const routeRow = page
+      .getByText(/Walking|Driving|Route times unavailable/i)
+      .first();
     await expect(routeRow).toBeVisible({ timeout: 15_000 });
 
     // Google Maps and Apple Maps deep links should be present
