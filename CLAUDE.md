@@ -180,4 +180,4 @@ Before finishing any test, verify:
 - **PDPA compliance:** Never log or track user PII in analytics events. Use anonymized user IDs only. Account deletion must cascade all personal data.
 - **Check-in photos:** Stored in Supabase Storage with RLS. Only the owning user can access their photos. Disclose at check-in time that menu photos may be used for data enrichment.
 - **Sensitive context:** Use `PRIVATE_CONTEXT.md` (gitignored) for business-sensitive notes.
-- **CI scanning:** `security.yml` runs TruffleHog + Semgrep + pnpm audit on every push. Check GitHub Security tab for SARIF results.
+- **CI scanning:** `security.yml` runs TruffleHog + Semgrep + pnpm audit nightly (10am Taiwan time). Check GitHub Security tab for SARIF results. `backend-ci.yml` runs on PRs to main only, with path-based job skipping (frontend jobs skip on backend-only PRs and vice versa).

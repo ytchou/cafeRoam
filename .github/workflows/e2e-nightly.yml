@@ -2,7 +2,7 @@ name: E2E Nightly Full Suite
 
 on:
   schedule:
-    - cron: '0 18 * * 0'  # 2am Taiwan time Sunday (UTC+8), weekly
+    - cron: '0 18 * * 0' # 2am Taiwan time Sunday (UTC+8), weekly
   workflow_dispatch: {}
 
 concurrency:
