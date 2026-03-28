@@ -17,7 +17,8 @@ def _make_db_mock(rows: list[dict]) -> MagicMock:
     mock.table.return_value = mock
     mock.select.return_value = mock
     mock.eq.return_value = mock
-    mock.not_.return_value = mock
+    mock.not_ = mock  # property access, not call — mirrors supabase-py chaining
+    mock.is_.return_value = mock
     mock.gte.return_value = mock
     mock.lte.return_value = mock
     mock.limit.return_value = mock

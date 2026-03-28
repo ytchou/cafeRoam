@@ -29,12 +29,14 @@ test.describe('@critical J05 — Auth wall: protected routes redirect to login',
     await page.waitForURL(/\/login/, { timeout: 10_000 });
   });
 
-  test('unauthenticated user can access /map without redirect', async ({
+  test('unauthenticated user can access the map/discovery page without redirect', async ({
     page,
   }) => {
+    // /map redirects to / — map is embedded in the home page
     await page.goto('/map');
     await page.waitForLoadState('networkidle');
-    expect(page.url()).toContain('/map');
+    // Should land on / (not /login)
+    expect(page.url()).not.toContain('/login');
   });
 });
 

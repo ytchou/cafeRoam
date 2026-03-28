@@ -1,17 +1,23 @@
 import { test, expect } from './fixtures/auth';
 import { test as unauthTest } from '@playwright/test';
 
-// TODO: requires E2E_CLAIMED_SHOP_ID seeded shop — a shop with an approved claim
-// owned by the E2E_USER_EMAIL account. Seed this in the test environment before running.
+// E2E_CLAIMED_SHOP_ID: a live shop with an approved claim owned by E2E_USER_EMAIL.
+// Seeded in local Supabase as part of the e2e fixture setup (shop_claims table).
+// J50 only runs on the mobile project — the mobile E2E account owns the claim;
+// the desktop E2E account uses a separate identity with no shop ownership.
 const SHOP_ID = process.env.E2E_CLAIMED_SHOP_ID!;
 
 test.describe('@critical J50 — Owner dashboard: verified owner views stats and edits story', () => {
   test('verified owner can view stat tiles and publish a shop story', async ({
     authedPage: page,
-  }) => {
+  }, testInfo) => {
     test.skip(
       !SHOP_ID,
       'E2E_CLAIMED_SHOP_ID not set — skipping owner dashboard tests'
+    );
+    test.skip(
+      testInfo.project.name === 'desktop',
+      'Owner dashboard runs on mobile project only — the approved claim belongs to the mobile E2E account'
     );
 
     await page.goto(`/owner/${SHOP_ID}/dashboard`);

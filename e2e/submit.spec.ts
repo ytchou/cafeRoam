@@ -4,9 +4,51 @@ import { test, expect } from './fixtures/auth';
 // Module-scope Date.now() would evaluate at ~same millisecond across two worker processes.
 let uniqueUrl: string;
 
+// Per-project auth storage — mirrors the per-project split in fixtures/auth.ts
+function authStoragePath(projectName: string): string {
+  const project = projectName === 'desktop' ? 'desktop' : 'mobile';
+  return new URL(`.auth/user-${project}.json`, import.meta.url).pathname;
+}
+
+async function cancelPendingDeletion(
+  browser: import('@playwright/test').Browser,
+  projectName: string
+) {
+  // J38 (profile.spec.ts) marks the account for deletion as part of its test flow.
+  // If J38 runs concurrently or a prior run left the account in deletion state,
+  // submissions are rejected with "Account is pending deletion". Cancel it proactively.
+  let authCtx;
+  try {
+    authCtx = await browser.newContext({
+      storageState: authStoragePath(projectName),
+    });
+    const authPage = await authCtx.newPage();
+    try {
+      await authPage.goto('/account/recover');
+      await authPage.waitForLoadState('networkidle');
+      const cancelBtn = authPage.getByRole('button', {
+        name: /Cancel Deletion|取消刪除/i,
+      });
+      if (await cancelBtn.isVisible({ timeout: 2_000 }).catch(() => false)) {
+        await cancelBtn.click();
+        await authPage
+          .waitForURL((url) => url.pathname === '/', { timeout: 10_000 })
+          .catch(() => null);
+      }
+    } finally {
+      await authPage.close();
+    }
+  } catch {
+    // Best-effort — if auth state is absent (first run), skip silently
+  } finally {
+    await authCtx?.close();
+  }
+}
+
 test.describe.serial('@critical J43 — Community shop submission', () => {
-  test.beforeAll(async ({}, workerInfo) => {
+  test.beforeAll(async ({ browser }, workerInfo) => {
     uniqueUrl = `https://maps.app.goo.gl/e2eTest${workerInfo.project.name}-${Date.now()}`;
+    await cancelPendingDeletion(browser, workerInfo.project.name);
   });
 
   test('authenticated user submits a shop URL and sees confirmation', async ({
@@ -40,6 +82,20 @@ test.describe.serial('@critical J43 — Community shop submission', () => {
   test('submitting a duplicate URL shows error', async ({
     authedPage: page,
   }) => {
+    // If a concurrent test (J38) left the account in pending-deletion state, cancel it
+    // before proceeding — otherwise submissions are rejected with "Account is pending deletion"
+    await page.goto('/account/recover');
+    await page.waitForLoadState('networkidle');
+    const cancelBtn = page.getByRole('button', {
+      name: /Cancel Deletion|取消刪除/i,
+    });
+    if (await cancelBtn.isVisible({ timeout: 2_000 }).catch(() => false)) {
+      await cancelBtn.click();
+      await page
+        .waitForURL((url) => url.pathname === '/', { timeout: 10_000 })
+        .catch(() => null);
+    }
+
     await page.goto('/submit');
 
     // Submit the same URL that was submitted in the happy path test

@@ -61,14 +61,14 @@ class TarotService:
 
         def _query() -> list[dict[str, Any]]:
             response = (
-                self._db.table("shops")  # type: ignore[operator]  # supabase-py stubs after not_()
+                self._db.table("shops")
                 .select(
                     "id, name, slug, address, city, latitude, longitude, "
                     "rating, review_count, opening_hours, tarot_title, flavor_text, "
                     "processing_status, shop_photos(url)"
                 )
                 .eq("processing_status", "live")
-                .not_("tarot_title", "is", "null")
+                .not_.is_("tarot_title", "null")
                 .gte("latitude", lat_min)
                 .lte("latitude", lat_max)
                 .gte("longitude", lng_min)

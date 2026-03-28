@@ -6,25 +6,25 @@ test.describe('J20 — Near Me: coords outside Taiwan → boundary behavior', ()
     page,
     context,
   }) => {
+    // My location button is mobile-only
+    test.skip(
+      !!page.viewportSize() && (page.viewportSize()?.width ?? 0) >= 1024,
+      'My location button is mobile-only — skipped on desktop'
+    );
+
     await grantGeolocation(context, OUTSIDE_TAIWAN);
     await page.goto('/');
-
-    await page.getByRole('button', { name: '我附近' }).click();
-
-    // Should navigate to /map — either with Tokyo coords or with text fallback
-    await page.waitForURL(/\/map/, { timeout: 10_000 });
-    expect(page.url()).toContain('/map');
-
     await page.waitForLoadState('networkidle');
 
-    const url = new URL(page.url());
-    if (url.searchParams.get('lat')) {
-      // Map loaded with out-of-Taiwan coordinates — lat should be ~35 (Tokyo)
-      const lat = parseFloat(url.searchParams.get('lat')!);
-      expect(lat).toBeGreaterThan(30);
-    }
+    // My location button replaces the old "我附近" chip
+    const locBtn = page.locator('button[aria-label="My location"]');
+    await expect(locBtn).toBeVisible({ timeout: 10_000 });
+    await locBtn.click({ force: true });
 
-    // Page should render without crashing — body visible regardless of results
+    // /map now redirects to / — map and list are on the same page
+    await page.waitForLoadState('networkidle');
+
+    // Page should render without crashing
     await expect(page.locator('body')).toBeVisible();
   });
 });

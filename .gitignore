@@ -15,6 +15,7 @@ node_modules/
 !README.md
 !.github/*.md
 !docs/**/*.md
+!e2e/reports/*.md
 !CLAUDE.md
 !SPEC.md
 !PRD.md

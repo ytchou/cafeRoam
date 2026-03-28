@@ -120,85 +120,92 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      <ShopHero
-        photoUrls={photos}
-        shopName={shop.name}
-        onBack={() => router.back()}
-      />
-      <ShopIdentity
-        name={shop.name}
-        rating={shop.rating}
-        reviewCount={shop.reviewCount}
-        openNow={shop.openNow}
-        distance={shop.distance}
-        address={shop.address}
-      />
-      {shop.claimStatus === 'approved' && <VerifiedBadge />}
-      <ShopActionsRow
-        shopId={shop.id}
-        shopName={shop.name}
-        shareUrl={shareUrl}
-      />
-
-      <div className="border-border-warm mx-5 border-t" />
-
-      {shop.description && <ShopDescription text={shop.description} />}
-      <OwnerStory
-        story={shop.ownerStory ?? null}
-        shopId={shop.id}
-        isOwner={user?.id === shop.ownerId}
-      />
-      {tags.length > 0 && <AttributeChips tags={tags as TaxonomyTag[]} />}
-      {shop.menuHighlights && <MenuHighlights items={shop.menuHighlights} />}
-
-      <div className="border-border-warm mx-5 border-t" />
-
-      {hasMap && (
-        <div>
-          <ShopMapThumbnail
-            latitude={shop.latitude!}
-            longitude={shop.longitude!}
-            shopName={shop.name}
-          />
-          <div className="px-5 py-3">
-            <button
-              type="button"
-              onClick={openDirections}
-              className="border-border-warm text-text-body hover:bg-surface-section flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm"
-              aria-label="Get There"
-            >
-              <Navigation size={14} />
-              Get There
-            </button>
-          </div>
-        </div>
-      )}
-
-      <div className="border-border-warm mx-5 border-t" />
-
-      <CommunitySummary summary={shop.communitySummary ?? null} />
-      <ShopReviews
-        reviews={reviews}
-        total={total}
-        averageRating={averageRating}
-        isLoading={isLoading}
-        isAuthError={!isUserLoading && (!user || isAuthError)}
-        shopId={shop.id}
-      />
-
-      {shop.checkinPreview && (
-        <RecentCheckinsStrip
-          preview={shop.checkinPreview}
-          checkins={shop.recentCheckins ?? []}
+    <div className="min-h-screen bg-white lg:flex lg:items-start">
+      {/* Left column — hero photos (sticky on desktop) */}
+      <div className="lg:sticky lg:top-0 lg:h-screen lg:w-1/2 lg:shrink-0 lg:overflow-hidden">
+        <ShopHero
+          photoUrls={photos}
+          shopName={shop.name}
+          onBack={() => router.back()}
         />
-      )}
+      </div>
 
-      <ClaimBanner
-        shopId={shop.id}
-        shopName={shop.name}
-        claimStatus={shop.claimStatus ?? null}
-      />
+      {/* Right column — shop info */}
+      <div className="lg:w-1/2 lg:overflow-y-auto">
+        <ShopIdentity
+          name={shop.name}
+          rating={shop.rating}
+          reviewCount={shop.reviewCount}
+          openNow={shop.openNow}
+          distance={shop.distance}
+          address={shop.address}
+        />
+        {shop.claimStatus === 'approved' && <VerifiedBadge />}
+        <ShopActionsRow
+          shopId={shop.id}
+          shopName={shop.name}
+          shareUrl={shareUrl}
+        />
+
+        <div className="border-border-warm mx-5 border-t" />
+
+        {shop.description && <ShopDescription text={shop.description} />}
+        <OwnerStory
+          story={shop.ownerStory ?? null}
+          shopId={shop.id}
+          isOwner={user?.id === shop.ownerId}
+        />
+        {tags.length > 0 && <AttributeChips tags={tags as TaxonomyTag[]} />}
+        {shop.menuHighlights && <MenuHighlights items={shop.menuHighlights} />}
+
+        <div className="border-border-warm mx-5 border-t" />
+
+        {hasMap && (
+          <div>
+            <ShopMapThumbnail
+              latitude={shop.latitude!}
+              longitude={shop.longitude!}
+              shopName={shop.name}
+            />
+            <div className="px-5 py-3">
+              <button
+                type="button"
+                onClick={openDirections}
+                className="border-border-warm text-text-body hover:bg-surface-section flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm"
+                aria-label="Get There"
+              >
+                <Navigation size={14} />
+                Get There
+              </button>
+            </div>
+          </div>
+        )}
+
+        <div className="border-border-warm mx-5 border-t" />
+
+        <CommunitySummary summary={shop.communitySummary ?? null} />
+        <ShopReviews
+          reviews={reviews}
+          total={total}
+          averageRating={averageRating}
+          isLoading={isLoading}
+          isAuthError={!isUserLoading && (!user || isAuthError)}
+          shopId={shop.id}
+        />
+
+        {shop.checkinPreview && (
+          <RecentCheckinsStrip
+            preview={shop.checkinPreview}
+            checkins={shop.recentCheckins ?? []}
+          />
+        )}
+
+        <ClaimBanner
+          shopId={shop.id}
+          shopName={shop.name}
+          claimStatus={shop.claimStatus ?? null}
+        />
+      </div>
 
       {hasMap && directionsShop && (
         <DirectionsSheet

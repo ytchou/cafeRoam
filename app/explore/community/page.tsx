@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { CommunityCardFull } from '@/components/community/community-card-full';
 import stationsData from '@/lib/data/taipei-mrt-stations.json';
+import { fetchWithAuth } from '@/lib/api/fetch';
 import { useCommunityFeed } from '@/lib/hooks/use-community-feed';
 import { useLikeStatus } from '@/lib/hooks/use-like-status';
 import { useIsDesktop } from '@/lib/hooks/use-media-query';
@@ -96,7 +97,7 @@ export default function CommunityFeedPage() {
       setLocalToggles((prev) => new Map(prev).set(checkinId, nowLiked));
 
       try {
-        await fetch(`/api/explore/community/${checkinId}/like`, {
+        await fetchWithAuth(`/api/explore/community/${checkinId}/like`, {
           method: 'POST',
         });
         mutate();

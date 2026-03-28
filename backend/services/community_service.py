@@ -8,13 +8,6 @@ from models.types import (
     CommunityNoteCard,
 )
 
-_ROLE_LABELS: dict[str, str] = {
-    "blogger": "Coffee blogger",
-    "partner": "Partner",
-    "admin": "Admin",
-    "member": "Supporter",
-}
-
 _NOTE_SELECT = (
     "id,"
     "is_public,"
@@ -24,7 +17,6 @@ _NOTE_SELECT = (
     "created_at,"
     "profiles!check_ins_user_id_fkey(display_name, avatar_url),"
     "shops!check_ins_shop_id_fkey(name, slug, mrt),"
-    "user_roles(role),"
     "community_note_likes(count)"
 )
 
@@ -157,18 +149,12 @@ class CommunityService:
     def _row_to_card(self, row: dict[str, Any]) -> CommunityNoteCard:
         profile: dict[str, Any] = row.get("profiles") or {}
         shop: dict[str, Any] = row.get("shops") or {}
-        user_roles_data = row.get("user_roles") or []
-
         display_name: str = profile.get("display_name") or "Anonymous"
         avatar_url: str | None = profile.get("avatar_url")
 
         shop_name: str = shop.get("name") or ""
         shop_slug: str = shop.get("slug") or ""
         shop_mrt: str | None = shop.get("mrt")
-
-        roles_list = user_roles_data if isinstance(user_roles_data, list) else []
-        first_role = next((r for r in roles_list if isinstance(r, dict) and r.get("role")), None)
-        role: str | None = first_role.get("role") if first_role else None
 
         photo_urls = row.get("photo_urls") or []
         cover = photo_urls[0] if photo_urls else None
@@ -180,7 +166,7 @@ class CommunityService:
             author=CommunityNoteAuthor(
                 display_name=display_name,
                 avatar_url=avatar_url,
-                role_label=_ROLE_LABELS.get(role or "", "Contributor"),
+                role_label="Contributor",
             ),
             review_text=row["review_text"],
             star_rating=row.get("stars"),

@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import Link from 'next/link';
 
 interface Story {
@@ -33,11 +34,14 @@ export function OwnerStory({ story, shopId, isOwner }: Props) {
         )}
       </div>
       {story.photo_url && (
-        <img
-          src={story.photo_url}
-          alt="shop owner photo"
-          className="mb-3 aspect-video w-full rounded-lg object-cover"
-        />
+        <div className="relative mb-3 aspect-video w-full overflow-hidden rounded-lg">
+          <Image
+            src={story.photo_url}
+            alt="shop owner photo"
+            fill
+            className="object-cover"
+          />
+        </div>
       )}
       {story.title && <h4 className="mb-1 font-medium">{story.title}</h4>}
       <p className="text-foreground text-sm leading-relaxed whitespace-pre-wrap">
