@@ -7,8 +7,8 @@
 
 ## Pass 1 — Full Discovery
 
-*Agents: Bug Hunter (Sonnet), Standards (Sonnet), Architecture (Sonnet), Plan Alignment (Sonnet)*
-*Skipped: Test Philosophy (no spec files in diff)*
+_Agents: Bug Hunter (Sonnet), Standards (Sonnet), Architecture (Sonnet), Plan Alignment (Sonnet)_
+_Skipped: Test Philosophy (no spec files in diff)_
 
 ### Issues Found
 
@@ -27,6 +27,7 @@ No findings to validate. Clean pass.
 **Change reviewed:** `e2e/fixtures/test-photo.jpg` replaced — 251KB → 332 bytes (1×1 pixel minimal JPEG)
 
 **Why clean:**
+
 - File is a structurally valid JFIF/JPEG (confirmed magic bytes FF D8 FF E0 + JFIF marker)
 - No test in `e2e/checkin.spec.ts` asserts image dimensions, file size, EXIF data, or visual content
 - Backend API (`/api/checkins`) has no size/dimension validation — only `photo_urls: list[str]` presence check
