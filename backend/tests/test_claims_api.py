@@ -20,7 +20,7 @@ def _override_user():
 
 
 class TestSubmitClaim:
-    def test_unauthenticated_returns_401(self, client):
+    def test_unauthenticated_user_cannot_submit_claim(self, client):
         app.dependency_overrides.pop(get_current_user, None)
         resp = client.post(
             "/claims",
@@ -35,7 +35,7 @@ class TestSubmitClaim:
         assert resp.status_code == 401
         app.dependency_overrides[get_current_user] = lambda: {"id": "user-123"}
 
-    def test_successful_submission_returns_201(self, client):
+    def test_authenticated_user_can_submit_claim(self, client):
         mock_svc = AsyncMock()
         mock_svc.submit_claim.return_value = {"id": "claim-abc"}
 
@@ -56,7 +56,7 @@ class TestSubmitClaim:
         assert resp.status_code == 201
         assert resp.json()["claimId"] == "claim-abc"
 
-    def test_duplicate_claim_returns_409(self, client):
+    def test_second_claim_for_same_shop_is_rejected(self, client):
         from fastapi import HTTPException
 
         mock_svc = AsyncMock()
@@ -88,6 +88,9 @@ class TestGetUploadUrl:
             "signedUrl": "https://proj.supabase.co/storage/v1/upload/sign/claim-proofs/shop-1/user-123/proof.jpg?token=abc"
         }
 
+        # Patching the internal factory (get_service_role_client) rather than the SDK
+        # client directly — both achieve the same boundary isolation since the factory
+        # is a thin create_client wrapper with no business logic.
         with patch("api.claims.get_service_role_client", return_value=mock_db):
             resp = client.get("/claims/upload-url?shop_id=shop-1&mime_type=image/jpeg")
 
@@ -97,7 +100,7 @@ class TestGetUploadUrl:
         assert body["storagePath"] == "shop-1/user-123/proof.jpg"
         mock_db.storage.from_.assert_called_once_with("claim-proofs")
 
-    def test_unauthenticated_returns_401(self, client):
+    def test_unauthenticated_user_cannot_get_upload_url(self, client):
         app.dependency_overrides.pop(get_current_user, None)
         try:
             resp = client.get("/claims/upload-url?shop_id=shop-1")
@@ -107,7 +110,7 @@ class TestGetUploadUrl:
 
 
 class TestGetMyClaim:
-    def test_returns_claim_status_for_user(self, client):
+    def test_authenticated_user_can_check_their_claim_status(self, client):
         mock_db = MagicMock()
         mock_db.table.return_value.select.return_value.eq.return_value.eq.return_value.limit.return_value.execute.return_value.data = [
             {"id": "claim-1", "status": "pending"}
@@ -118,7 +121,7 @@ class TestGetMyClaim:
         assert resp.status_code == 200
         assert resp.json()["status"] == "pending"
 
-    def test_returns_null_when_no_claim(self, client):
+    def test_user_with_no_claim_sees_empty_status(self, client):
         mock_db = MagicMock()
         mock_db.table.return_value.select.return_value.eq.return_value.eq.return_value.limit.return_value.execute.return_value.data = []
 
