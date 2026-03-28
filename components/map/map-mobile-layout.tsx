@@ -27,6 +27,7 @@ interface MapMobileLayoutProps {
   onFilterClose: () => void;
   onFilterApply: (filters: string[]) => void;
   onLocationRequest?: () => void;
+  onCardClick?: (id: string) => void;
 }
 
 export function MapMobileLayout({
@@ -45,6 +46,7 @@ export function MapMobileLayout({
   onFilterClose,
   onFilterApply,
   onLocationRequest,
+  onCardClick,
 }: MapMobileLayoutProps) {
   const activeFilterSet = useMemo(
     () => new Set(activeFilters),
@@ -104,6 +106,7 @@ export function MapMobileLayout({
         <ShopCarousel
           shops={shops}
           onShopClick={onShopClick}
+          onCardClick={onCardClick}
           selectedShopId={selectedShopId}
         />
         <BottomNav />

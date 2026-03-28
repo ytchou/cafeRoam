@@ -67,4 +67,51 @@ describe('a user interacting with the ShopCardCompact', () => {
     render(<ShopCardCompact shop={shop} onClick={() => {}} />);
     expect(screen.queryByText(/「/)).not.toBeInTheDocument();
   });
+
+  it('a user browsing sees taxonomy tags as pill chips to understand the shop vibe', () => {
+    const shopWithTags = {
+      ...shop,
+      taxonomyTags: [
+        { id: 'outlet', label: 'Has outlets', labelZh: '有插座' },
+        { id: 'quiet', label: 'Quiet', labelZh: '安靜' },
+        { id: 'late-night', label: 'Late night', labelZh: '深夜營業' },
+      ],
+    };
+    render(<ShopCardCompact shop={shopWithTags} onClick={() => {}} />);
+    expect(screen.getByText('有插座')).toBeInTheDocument();
+    expect(screen.getByText('安靜')).toBeInTheDocument();
+    expect(screen.getByText('深夜營業')).toBeInTheDocument();
+  });
+
+  it('a user sees at most 5 tags even when the shop has more', () => {
+    const shopWithManyTags = {
+      ...shop,
+      taxonomyTags: [
+        { id: 'has-outlets', label: 'Has outlets', labelZh: '有插座' },
+        { id: 'quiet', label: 'Quiet', labelZh: '安靜' },
+        { id: 'late-night', label: 'Late night hours', labelZh: '深夜營業' },
+        { id: 'no-time-limit', label: 'No time limit', labelZh: '無限時' },
+        { id: 'dog-friendly', label: 'Dog friendly', labelZh: '寵物友善' },
+        {
+          id: 'outdoor-seating',
+          label: 'Outdoor seating',
+          labelZh: '戶外座位',
+        },
+        { id: 'cash-only', label: 'Cash only', labelZh: '僅收現金' },
+      ],
+    };
+    render(<ShopCardCompact shop={shopWithManyTags} onClick={() => {}} />);
+    expect(screen.getByText('寵物友善')).toBeInTheDocument();
+    expect(screen.queryByText('戶外座位')).not.toBeInTheDocument();
+    expect(screen.queryByText('僅收現金')).not.toBeInTheDocument();
+  });
+
+  it('a user sees no tag row when the shop has no taxonomy tags', () => {
+    const { container } = render(
+      <ShopCardCompact shop={shop} onClick={() => {}} />
+    );
+    expect(
+      container.querySelector('[data-testid="tag-pills"]')
+    ).not.toBeInTheDocument();
+  });
 });

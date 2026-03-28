@@ -116,14 +116,14 @@ function FindPageContent() {
     return view === 'list' ? (
       <ListDesktopLayout {...layoutProps} onShopClick={handleShopNavigate} />
     ) : (
-      <MapDesktopLayout {...layoutProps} />
+      <MapDesktopLayout {...layoutProps} onCardClick={handleShopNavigate} />
     );
   }
 
   return view === 'list' ? (
     <ListMobileLayout {...layoutProps} onShopClick={handleShopNavigate} />
   ) : (
-    <MapMobileLayout {...layoutProps} />
+    <MapMobileLayout {...layoutProps} onCardClick={handleShopNavigate} />
   );
 }
 

@@ -16,6 +16,7 @@ interface MapDesktopLayoutProps {
   count: number;
   selectedShopId: string | null;
   onShopClick: (id: string) => void;
+  onCardClick?: (id: string) => void;
   query: string;
   activeFilters: string[];
   onFilterToggle: (id: string) => void;
@@ -33,6 +34,7 @@ export function MapDesktopLayout({
   count,
   selectedShopId,
   onShopClick,
+  onCardClick,
   query,
   activeFilters,
   onFilterToggle,
@@ -86,7 +88,7 @@ export function MapDesktopLayout({
                 <ShopCardCompact
                   key={shop.id}
                   shop={shop}
-                  onClick={() => onShopClick(shop.id)}
+                  onClick={() => (onCardClick ?? onShopClick)(shop.id)}
                   selected={shop.id === selectedShopId}
                 />
               ))}

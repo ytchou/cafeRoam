@@ -5,13 +5,15 @@ import type { LayoutShop } from '@/lib/types';
 
 interface ShopCarouselProps {
   shops: LayoutShop[];
-  onShopClick: (shopId: string) => void;
+  onShopClick?: (shopId: string) => void;
+  onCardClick?: (shopId: string) => void;
   selectedShopId?: string | null;
 }
 
 export function ShopCarousel({
   shops,
   onShopClick,
+  onCardClick,
   selectedShopId,
 }: ShopCarouselProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -47,7 +49,7 @@ export function ShopCarousel({
           <div key={shop.id} data-shop-id={shop.id}>
             <ShopCardCarousel
               shop={shop}
-              onClick={() => onShopClick(shop.id)}
+              onClick={() => (onCardClick ?? onShopClick)?.(shop.id)}
             />
           </div>
         ))}
