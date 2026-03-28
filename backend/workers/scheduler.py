@@ -232,7 +232,14 @@ async def poll_pending_job_types() -> None:
         db = get_service_role_client()
         queue = JobQueue(db=db)
         pending_types = await queue.get_pending_job_types()
-        await asyncio.gather(*(process_job_type(jt) for jt in pending_types))
+        results = await asyncio.gather(
+            *(process_job_type(jt) for jt in pending_types),
+            return_exceptions=True,
+        )
+        for exc in results:
+            if isinstance(exc, Exception):
+                logger.error("process_job_type failed during poll", error=str(exc))
+                sentry_sdk.capture_exception(exc)
     except Exception as e:
         logger.error("Poll failed", error=str(e))
         sentry_sdk.capture_exception(e)

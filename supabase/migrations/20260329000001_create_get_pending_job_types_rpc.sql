@@ -6,4 +6,4 @@ RETURNS TABLE(job_type TEXT) AS $$
   SELECT DISTINCT job_type FROM job_queue
   WHERE status = 'pending'
     AND scheduled_at <= now()
-$$ LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public;
+$$ LANGUAGE sql VOLATILE SECURITY DEFINER SET search_path = public;
