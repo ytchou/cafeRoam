@@ -11,12 +11,13 @@ class TestScheduler:
         assert "weekly_email" in job_ids
         assert "delete_expired_accounts" in job_ids
 
-    def test_each_job_type_has_dedicated_queue_poller(self):
-        """Each JobType gets its own interval poller so a backlog in one type does not starve others."""
+    def test_single_consolidated_poller_is_registered(self):
+        """A single interval poller replaces per-type jobs, eliminating N×12 empty DB polls."""
         scheduler = create_scheduler()
         job_ids = {job.id for job in scheduler.get_jobs()}
+        assert "poll_pending_jobs" in job_ids
         for job_type in JobType:
-            assert f"process_{job_type.value}" in job_ids
+            assert f"process_{job_type.value}" not in job_ids
 
     def test_reembed_reviewed_shops_cron_is_registered(self):
         """The nightly review re-embedding cron job is registered at 03:30."""

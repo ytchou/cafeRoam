@@ -1,10 +1,13 @@
 from datetime import UTC, datetime, timedelta
 from typing import Any, cast
 
+import structlog
 from supabase import Client
 
 from core.db import first
 from models.types import Job, JobStatus, JobType
+
+logger = structlog.get_logger()
 
 
 class JobQueue:
@@ -74,6 +77,18 @@ class JobQueue:
             return None
         rows = cast("list[dict[str, Any]]", response.data)
         return Job(**first(rows, "claim job"))
+
+    async def get_pending_job_types(self) -> list[JobType]:
+        """Single-query discovery of job types with pending work via SELECT DISTINCT RPC."""
+        response = self._db.rpc("get_pending_job_types", {}).execute()
+        rows = cast("list[dict[str, Any]]", response.data or [])
+        result: list[JobType] = []
+        for row in rows:
+            try:
+                result.append(JobType(row["job_type"]))
+            except ValueError:
+                logger.warning("Unknown job_type in queue, skipping", job_type=row.get("job_type"))
+        return result
 
     async def claim_batch(self, job_type: JobType, limit: int = 1) -> list[Job]:
         response = self._db.rpc(

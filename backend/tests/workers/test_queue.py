@@ -196,6 +196,36 @@ class TestJobQueue:
         jobs = await job_queue.claim_batch(JobType.PUBLISH_SHOP, limit=5)
         assert jobs == []
 
+    async def test_get_pending_job_types_returns_ready_types(self, job_queue, mock_supabase):
+        """get_pending_job_types returns job types from the get_pending_job_types RPC."""
+        mock_supabase.rpc = MagicMock(
+            return_value=MagicMock(
+                execute=MagicMock(
+                    return_value=MagicMock(
+                        data=[
+                            {"job_type": "enrich_shop"},
+                            {"job_type": "generate_embedding"},
+                        ]
+                    )
+                )
+            )
+        )
+        result = await job_queue.get_pending_job_types()
+        assert len(result) == 2
+        assert JobType.ENRICH_SHOP in result
+        assert JobType.GENERATE_EMBEDDING in result
+        mock_supabase.rpc.assert_called_once_with("get_pending_job_types", {})
+
+    async def test_get_pending_job_types_returns_empty_when_queue_is_idle(
+        self, job_queue, mock_supabase
+    ):
+        """get_pending_job_types returns an empty list when no jobs are ready."""
+        mock_supabase.rpc = MagicMock(
+            return_value=MagicMock(execute=MagicMock(return_value=MagicMock(data=[])))
+        )
+        result = await job_queue.get_pending_job_types()
+        assert result == []
+
     async def test_fail_marks_permanently_failed_at_max_attempts(self, job_queue, mock_supabase):
         """At max_attempts: status is set to FAILED permanently."""
         select_response = MagicMock(data={"attempts": 3, "max_attempts": 3})
