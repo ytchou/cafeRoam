@@ -1,40 +1,45 @@
 name: CafeRoam CI
 
 on:
-  push:
-    branches: [main, 'dev/**']
-    paths:
-      - 'app/**'
-      - 'components/**'
-      - 'lib/**'
-      - 'workers/**'
-      - 'scripts/**'
-      - 'package.json'
-      - 'pnpm-lock.yaml'
-      - 'tsconfig.json'
-      - '.github/workflows/backend-ci.yml'
-      - 'backend/**'
   pull_request:
     branches: [main]
-    paths:
-      - 'app/**'
-      - 'components/**'
-      - 'lib/**'
-      - 'workers/**'
-      - 'scripts/**'
-      - 'package.json'
-      - 'pnpm-lock.yaml'
-      - 'tsconfig.json'
-      - '.github/workflows/backend-ci.yml'
-      - 'backend/**'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  quality:
-    name: Code Quality (eslint, prettier, tsc)
+  changes:
+    name: Detect changed paths
+    runs-on: ubuntu-latest
+    outputs:
+      frontend: ${{ steps.filter.outputs.frontend }}
+      backend: ${{ steps.filter.outputs.backend }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            frontend:
+              - 'app/**'
+              - 'components/**'
+              - 'lib/**'
+              - 'workers/**'
+              - 'scripts/**'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'tsconfig.json'
+              - '.github/workflows/backend-ci.yml'
+            backend:
+              - 'backend/**'
+              - '.github/workflows/backend-ci.yml'
+
+  frontend:
+    name: Frontend (lint, format, tsc, vitest)
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -64,7 +69,7 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Run linter
+      - name: Lint
         run: pnpm lint
 
       - name: Check formatting
@@ -73,37 +78,6 @@ jobs:
       - name: Type check
         run: pnpm type-check
         continue-on-error: true
-
-  test:
-    name: Tests (vitest)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v3
-        with:
-          version: 9
-
-      - name: Get pnpm store directory
-        id: pnpm-cache
-        run: echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
-
-      - name: Cache pnpm modules
-        uses: actions/cache@v4
-        with:
-          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
 
       - name: Run tests with coverage
         run: pnpm test:coverage
@@ -117,8 +91,10 @@ jobs:
           path: coverage/coverage-final.json
           retention-days: 1
 
-  backend-quality:
-    name: Code Quality (ruff, mypy)
+  backend:
+    name: Backend (ruff, mypy, pytest)
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -143,24 +119,7 @@ jobs:
       - name: Type check
         run: cd backend && uv run mypy .
 
-  backend-test:
-    name: Tests (pytest)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v4
-
-      - name: Install dependencies
-        run: cd backend && uv sync --all-extras
-
-      - name: Run tests with branch coverage
+      - name: Run tests with coverage
         run: cd backend && uv run pytest --cov --cov-report=xml:coverage.xml --cov-branch -v
 
       - name: Upload coverage report
