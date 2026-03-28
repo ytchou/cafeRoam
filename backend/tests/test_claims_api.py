@@ -81,6 +81,31 @@ class TestSubmitClaim:
         assert resp.status_code == 409
 
 
+class TestGetUploadUrl:
+    def test_authenticated_user_receives_presigned_url(self, client):
+        mock_db = MagicMock()
+        mock_db.storage.from_.return_value.create_signed_upload_url.return_value = {
+            "signedUrl": "https://proj.supabase.co/storage/v1/upload/sign/claim-proofs/shop-1/user-123/proof.jpg?token=abc"
+        }
+
+        with patch("api.claims.get_service_role_client", return_value=mock_db):
+            resp = client.get("/claims/upload-url?shop_id=shop-1&mime_type=image/jpeg")
+
+        assert resp.status_code == 200
+        body = resp.json()
+        assert "uploadUrl" in body
+        assert body["storagePath"] == "shop-1/user-123/proof.jpg"
+        mock_db.storage.from_.assert_called_once_with("claim-proofs")
+
+    def test_unauthenticated_returns_401(self, client):
+        app.dependency_overrides.pop(get_current_user, None)
+        try:
+            resp = client.get("/claims/upload-url?shop_id=shop-1")
+        finally:
+            app.dependency_overrides[get_current_user] = lambda: {"id": "user-123"}
+        assert resp.status_code == 401
+
+
 class TestGetMyClaim:
     def test_returns_claim_status_for_user(self, client):
         mock_db = MagicMock()

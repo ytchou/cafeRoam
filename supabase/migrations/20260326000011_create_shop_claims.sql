@@ -38,11 +38,4 @@ CREATE POLICY "users insert own claim"
   ON public.shop_claims FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
--- Storage bucket: claim-proofs (private -- service role only).
--- Run this in the Supabase dashboard or via the storage API since
--- the SQL migration cannot create storage buckets.
--- Bucket config:
---   name: claim-proofs
---   public: false
---   file_size_limit: 10485760  (10 MB)
---   allowed_mime_types: ['image/jpeg', 'image/png', 'image/webp', 'image/heic']
+-- Storage bucket: claim-proofs created in 20260328000001_create_claim_proofs_bucket.sql
