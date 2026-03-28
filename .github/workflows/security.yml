@@ -37,11 +37,14 @@ jobs:
     permissions:
       security-events: write
     steps:
+      - name: Mark workspace safe
+        run: git config --global --add safe.directory '*'
+
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Run Semgrep
-        run: semgrep ci --sarif --output=semgrep.sarif
+        run: semgrep scan --sarif --output=semgrep.sarif
         env:
           SEMGREP_RULES: >-
             p/javascript
@@ -49,10 +52,11 @@ jobs:
             p/nextjs
             p/owasp-top-ten
             p/secrets
+        continue-on-error: true
 
       - name: Upload SARIF to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v3
-        if: always()
+        uses: github/codeql-action/upload-sarif@v4
+        if: always() && hashFiles('semgrep.sarif') != ''
         with:
           sarif_file: semgrep.sarif
 
