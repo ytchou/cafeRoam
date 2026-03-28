@@ -196,9 +196,7 @@ class TestJobQueue:
         jobs = await job_queue.claim_batch(JobType.PUBLISH_SHOP, limit=5)
         assert jobs == []
 
-    async def test_get_pending_job_types_returns_ready_types(
-        self, job_queue, mock_supabase
-    ):
+    async def test_get_pending_job_types_returns_ready_types(self, job_queue, mock_supabase):
         """get_pending_job_types returns job types from the get_pending_job_types RPC."""
         mock_supabase.rpc = MagicMock(
             return_value=MagicMock(
@@ -223,9 +221,7 @@ class TestJobQueue:
     ):
         """get_pending_job_types returns an empty list when no jobs are ready."""
         mock_supabase.rpc = MagicMock(
-            return_value=MagicMock(
-                execute=MagicMock(return_value=MagicMock(data=[]))
-            )
+            return_value=MagicMock(execute=MagicMock(return_value=MagicMock(data=[])))
         )
         result = await job_queue.get_pending_job_types()
         assert result == []
