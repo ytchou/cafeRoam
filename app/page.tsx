@@ -75,7 +75,15 @@ function FindPageContent() {
       });
     }
     return base;
-  }, [query, searchLoading, searchResults, featuredShops, filters, latitude, longitude]);
+  }, [
+    query,
+    searchLoading,
+    searchResults,
+    featuredShops,
+    filters,
+    latitude,
+    longitude,
+  ]);
 
   const handleSearch = useCallback(
     (q: string) => {
