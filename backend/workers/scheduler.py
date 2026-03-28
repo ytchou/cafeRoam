@@ -228,11 +228,14 @@ async def run_reembed_reviewed_shops() -> None:
 
 async def poll_pending_job_types() -> None:
     """Single-poll loop: one DB query to find pending types, then dispatch each."""
-    db = get_service_role_client()
-    queue = JobQueue(db=db)
-    pending_types = await queue.get_pending_job_types()
-    for job_type in pending_types:
-        await process_job_type(job_type)
+    try:
+        db = get_service_role_client()
+        queue = JobQueue(db=db)
+        pending_types = await queue.get_pending_job_types()
+        await asyncio.gather(*(process_job_type(jt) for jt in pending_types))
+    except Exception as e:
+        logger.error("Poll failed", error=str(e))
+        sentry_sdk.capture_exception(e)
 
 
 def create_scheduler() -> AsyncIOScheduler:
