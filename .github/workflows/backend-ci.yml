@@ -12,6 +12,8 @@ jobs:
   changes:
     name: Detect changed paths
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
     outputs:
       frontend: ${{ steps.filter.outputs.frontend }}
       backend: ${{ steps.filter.outputs.backend }}
