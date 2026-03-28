@@ -30,3 +30,42 @@
 - F: **Incorrect** — False positive; mime_type is a real implemented param with default
 - G: **Incorrect** — False positive; established project pattern (tables before buckets)
 
+## Fix Pass 1
+
+**Pre-fix SHA:** f92ef6729d03f23ed8b550fd9f417a348602ada0
+
+**Issues fixed:**
+- [Important] `supabase/migrations/20260328000001_create_claim_proofs_bucket.sql:3-4` — Added file_size_limit (10MB) and allowed_mime_types to bucket INSERT
+- [Important] `supabase/migrations/20260328000001_create_claim_proofs_bucket.sql:1-6` — Added explicit comment documenting intentional absence of RLS policies
+- [Important] `backend/tests/test_claims_api.py` (all classes) — Renamed test methods to user-journey framing across all 3 test classes
+- [Important] `backend/tests/test_claims_api.py:91-93` — Added comment explaining get_service_role_client patch rationale
+
+**Issues skipped (false positives):**
+- `test_claims_api.py:88,92,97` — user-123 is fixture-bound; shop-1 is file-wide housekeeping
+- `test_claims_api.py:92` — mime_type IS an implemented query param with default
+- Migration ordering — established project pattern
+
+**Batch Test Run:**
+- `cd backend && uv run pytest` — PASS (708 passed)
+
+## Pass 2 — Re-Verify
+
+*Agents re-run (smart routing): Bug Hunter, Standards, Architecture, Plan Alignment, Test Philosophy*
+
+### Previously Flagged Issues — Resolution Status
+- [Important] Migration missing file_size_limit + allowed_mime_types — ✓ Resolved
+- [Important] No RLS comment — ✓ Resolved
+- [Important] Test names HTTP-code framing — ✓ Resolved (all 7 names updated)
+- [Important] Patch comment missing — ✓ Resolved
+
+### New Issues Found
+None.
+
+## Final State
+
+**Iterations completed:** 1
+**All Critical/Important resolved:** Yes
+**Remaining issues:** None
+
+**Review log:** docs/reviews/2026-03-29-fix-dev-65-claim-proofs-bucket.md
+
