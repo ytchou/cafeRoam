@@ -2,7 +2,7 @@ name: Security
 
 on:
   schedule:
-    - cron: '0 2 * * *'  # 10am Taiwan time (UTC+8)
+    - cron: '0 2 * * *' # 10am Taiwan time (UTC+8)
   workflow_dispatch: {}
 
 concurrency:
