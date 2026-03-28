@@ -14,6 +14,7 @@ import { PostHogProvider } from '@/lib/posthog/provider';
 import { SessionTracker } from '@/components/session-tracker';
 import { AppShell } from '@/components/navigation/app-shell';
 import { Agentation } from 'agentation';
+import { Toaster } from 'sonner';
 import './globals.css';
 
 const dmSans = DM_Sans({
@@ -104,6 +105,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
             <SessionTracker />
             <AppShell>{children}</AppShell>
             {process.env.NODE_ENV === 'development' && <Agentation />}
+            <Toaster position="bottom-center" />
           </PostHogProvider>
           <CookieConsentBanner />
         </ConsentProvider>

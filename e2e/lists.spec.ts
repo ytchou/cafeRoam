@@ -1,15 +1,9 @@
 import { test, expect } from './fixtures/auth';
 import { first } from './fixtures/helpers';
 
-// J12, J13, J26 and J27 share the same test account's list state.
-// Run serially AND only on the mobile project: the desktop project runs in parallel
-// with mobile against the same auth account, causing unavoidable list-cap races.
+// J12, J13, J26 and J27 share list state — run serially so list-cap tests don't race.
+// Mobile and desktop now use separate test accounts, so both projects can run these.
 test.describe.serial('List cap tests (J12 + J13)', () => {
-  test.beforeEach(async ({}, testInfo) => {
-    if (testInfo.project.name !== 'mobile') {
-      test.skip(true, 'List tests run on mobile project only — desktop shares the same test account and races on list state');
-    }
-  });
 
 test.describe('@critical J12 — Create list → add shop → shop appears in list', () => {
   test('creating a list and viewing it shows the list on the lists page', async ({

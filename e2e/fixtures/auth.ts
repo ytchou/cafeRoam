@@ -1,4 +1,4 @@
-import { test as base, type Page } from '@playwright/test';
+import { test as base, type Page, type TestInfo } from '@playwright/test';
 import { fileURLToPath } from 'node:url';
 import { renameSync, mkdirSync } from 'node:fs';
 import { randomBytes } from 'node:crypto'; // used for per-worker tmp file uniqueness
@@ -8,12 +8,40 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const AUTH_DIR = path.join(__dirname, '..', '.auth');
-const STORAGE_STATE_PATH = path.join(AUTH_DIR, 'user.json');
+
+// Per-project storage state — mobile and desktop use separate test accounts to
+// avoid concurrent list/name mutations racing on the same Supabase user.
+function storageStatePath(testInfo: TestInfo): string {
+  const project = testInfo.project.name === 'desktop' ? 'desktop' : 'mobile';
+  return path.join(AUTH_DIR, `user-${project}.json`);
+}
+
+function credentials(testInfo: TestInfo): { email: string; password: string } {
+  if (testInfo.project.name === 'desktop') {
+    const email = process.env.E2E_DESKTOP_USER_EMAIL ?? process.env.E2E_USER_EMAIL;
+    const password = process.env.E2E_DESKTOP_USER_PASSWORD ?? process.env.E2E_USER_PASSWORD;
+    if (!email || !password) {
+      throw new Error(
+        'E2E_DESKTOP_USER_EMAIL / E2E_DESKTOP_USER_PASSWORD (or fallback E2E_USER_EMAIL) must be set'
+      );
+    }
+    return { email, password };
+  }
+  const email = process.env.E2E_USER_EMAIL;
+  const password = process.env.E2E_USER_PASSWORD;
+  if (!email || !password) {
+    throw new Error(
+      'E2E_USER_EMAIL and E2E_USER_PASSWORD must be set for authenticated tests'
+    );
+  }
+  return { email, password };
+}
 
 async function loginFresh(
   browser: import('@playwright/test').Browser,
   email: string,
-  password: string
+  password: string,
+  storagePath: string
 ): Promise<import('@playwright/test').BrowserContext> {
   const ctx = await browser.newContext();
 
@@ -36,31 +64,25 @@ async function loginFresh(
   // prevents multiple parallel workers from overwriting each other's .tmp file,
   // which would cause ENOENT on the rename when two workers race to write the same path.
   mkdirSync(AUTH_DIR, { recursive: true });
-  const tmpPath = `${STORAGE_STATE_PATH}.${randomBytes(4).toString('hex')}.tmp`;
+  const tmpPath = `${storagePath}.${randomBytes(4).toString('hex')}.tmp`;
   await ctx.storageState({ path: tmpPath });
-  renameSync(tmpPath, STORAGE_STATE_PATH);
+  renameSync(tmpPath, storagePath);
 
   await pg.close();
   await ctx.close();
-  return browser.newContext({ storageState: STORAGE_STATE_PATH });
+  return browser.newContext({ storageState: storagePath });
 }
 
 export const test = base.extend<{ authedPage: Page }>({
-  authedPage: async ({ browser }, use) => {
-    const email = process.env.E2E_USER_EMAIL;
-    const password = process.env.E2E_USER_PASSWORD;
-
-    if (!email || !password) {
-      throw new Error(
-        'E2E_USER_EMAIL and E2E_USER_PASSWORD must be set for authenticated tests'
-      );
-    }
+  authedPage: async ({ browser }, use, testInfo) => {
+    const { email, password } = credentials(testInfo);
+    const storagePath = storageStatePath(testInfo);
 
     let context;
     try {
-      context = await browser.newContext({ storageState: STORAGE_STATE_PATH });
+      context = await browser.newContext({ storageState: storagePath });
     } catch {
-      context = await loginFresh(browser, email, password);
+      context = await loginFresh(browser, email, password, storagePath);
     }
 
     // Validate session is still active by probing a protected route.
@@ -74,7 +96,7 @@ export const test = base.extend<{ authedPage: Page }>({
 
     if (isExpired) {
       await context.close();
-      context = await loginFresh(browser, email, password);
+      context = await loginFresh(browser, email, password, storagePath);
     }
 
     // Always inject the consent cookie into the context so the cookie banner

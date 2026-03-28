@@ -51,13 +51,7 @@ test.describe('@critical J15 — Account deletion: request → grace period stat
 test.describe('J25 — Display name update', () => {
   test('changing display name in settings reflects on profile page', async ({
     authedPage: page,
-  }, testInfo) => {
-    // Skip on desktop — both projects share the same test account and overwrite
-    // each other's display name when run concurrently (last write wins).
-    if (testInfo.project.name !== 'mobile') {
-      test.skip(true, 'Display name test runs on mobile only — shared account race');
-    }
-
+  }) => {
     await page.goto('/settings');
     await page.waitForLoadState('networkidle');
 

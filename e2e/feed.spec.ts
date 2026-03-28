@@ -1,13 +1,13 @@
 import { test, expect } from './fixtures/auth';
 
-test.describe('@critical J16 — Community feed: public access', () => {
-  test('unauthenticated user can view the public community feed', async ({
-    page,
+test.describe('@critical J16 — Community feed: auth-gated access', () => {
+  test('authenticated user can view the community feed', async ({
+    authedPage: page,
   }) => {
     await page.goto('/explore/community');
     await page.waitForLoadState('networkidle');
 
-    // Should not redirect to login — feed is public
+    // Should stay on /explore/community — not redirect to login
     expect(page.url()).toContain('/explore/community');
 
     // Page heading should be visible
@@ -17,9 +17,10 @@ test.describe('@critical J16 — Community feed: public access', () => {
   });
 
   test('community feed renders MRT filter and vibe tag pills', async ({
-    page,
+    authedPage: page,
   }) => {
     await page.goto('/explore/community');
+    await page.waitForLoadState('networkidle');
 
     // MRT station select should be present
     await expect(

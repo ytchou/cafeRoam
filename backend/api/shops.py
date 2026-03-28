@@ -29,8 +29,7 @@ _SHOP_LIST_COLUMNS = (
     "rating, review_count, description, processing_status, "
     "mode_work, mode_rest, mode_social, "
     "community_summary, "
-    "created_at, "
-    "shop_claims(status)"
+    "created_at"
 )
 
 _SHOP_DETAIL_COLUMNS = (
@@ -46,7 +45,7 @@ async def list_shops(
 ) -> list[Any]:
     """List shops. Public — no auth required."""
     db = get_anon_client()
-    query = db.table("shops").select(f"{_SHOP_LIST_COLUMNS}, shop_photos(url)")
+    query = db.table("shops").select(f"{_SHOP_LIST_COLUMNS}, shop_photos(url), shop_claims(status)")
     if city:
         query = query.eq("city", city)
     if featured:

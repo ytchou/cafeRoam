@@ -2,13 +2,17 @@ import { test, expect } from './fixtures/auth';
 import { test as unauthTest } from '@playwright/test';
 import { first } from './fixtures/helpers';
 
-const authStorage = new URL('.auth/user.json', import.meta.url).pathname;
+// Per-project auth storage — mirrors the per-project split in fixtures/auth.ts
+function authStorage(projectName: string): string {
+  const project = projectName === 'desktop' ? 'desktop' : 'mobile';
+  return new URL(`.auth/user-${project}.json`, import.meta.url).pathname;
+}
 
 test.describe.serial('@critical J40 — Follow/unfollow toggle', () => {
   let shopUrl: string;
   let shopId: string;
 
-  test.beforeAll(async ({ browser }) => {
+  test.beforeAll(async ({ browser }, workerInfo) => {
     const ctx = await browser.newContext();
     const page = await ctx.newPage();
     try {
@@ -32,7 +36,7 @@ test.describe.serial('@critical J40 — Follow/unfollow toggle', () => {
     {
       let authCtx;
       try {
-        authCtx = await browser.newContext({ storageState: authStorage });
+        authCtx = await browser.newContext({ storageState: authStorage(workerInfo.project.name) });
         const authPage = await authCtx.newPage();
         try {
           await authPage.goto('/account/recover');
@@ -62,7 +66,7 @@ test.describe.serial('@critical J40 — Follow/unfollow toggle', () => {
     if (shopId) {
       let authCtx;
       try {
-        authCtx = await browser.newContext({ storageState: authStorage });
+        authCtx = await browser.newContext({ storageState: authStorage(workerInfo.project.name) });
         const authPage = await authCtx.newPage();
         try {
           const cookies = await authPage.context().cookies('http://localhost:3000');
@@ -90,11 +94,11 @@ test.describe.serial('@critical J40 — Follow/unfollow toggle', () => {
     }
   });
 
-  test.afterAll(async ({ browser }) => {
+  test.afterAll(async ({ browser }, workerInfo) => {
     if (!shopId) return;
     let authCtx;
     try {
-      authCtx = await browser.newContext({ storageState: authStorage });
+      authCtx = await browser.newContext({ storageState: authStorage(workerInfo.project.name) });
       const authPage = await authCtx.newPage();
       try {
         const cookies = await authPage.context().cookies('http://localhost:3000');
