@@ -13,7 +13,7 @@
 
 **Chunk 1 — BottomNav embedded prop (Waves 1-4):**
 - [x] Task 1: Write failing test for embedded BottomNav variant
-- [ ] Task 2: Implement the `embedded` prop on BottomNav
+- [x] Task 2: Implement the `embedded` prop on BottomNav
 - [ ] Task 3: Pass `embedded` in MapMobileLayout
 - [ ] Task 4: Lint and commit
 

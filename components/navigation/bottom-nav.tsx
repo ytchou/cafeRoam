@@ -11,13 +11,17 @@ const TABS: { href: string; label: string; icon: LucideIcon }[] = [
   { href: '/profile', label: '我的', icon: User },
 ];
 
-export function BottomNav() {
+export function BottomNav({ embedded }: { embedded?: boolean } = {}) {
   const pathname = usePathname();
 
   return (
     <nav
-      className="fixed right-0 bottom-0 left-0 z-40 px-4"
-      style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}
+      className={
+        embedded
+          ? 'px-4'
+          : 'fixed right-0 bottom-0 left-0 z-40 px-4'
+      }
+      style={embedded ? undefined : { paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}
     >
       <div
         data-testid="tab-bar-pill"
