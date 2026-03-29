@@ -6,6 +6,7 @@ Every change to SPEC.md must be logged here immediately after the edit is made.
 
 ---
 
+| 2026-03-29 | Security & Privacy (§5) | Changed data residency from ap-southeast-1 (Singapore) to ap-northeast-1 (Tokyo) — lower latency to Taiwan (~20ms vs ~40ms) | DEV-71 staging bootstrap — ADR: docs/decisions/2026-03-29-supabase-region-tokyo.md |
 | 2026-03-26 | Data Model (§2 System Modules), Business Rules (§9) | Added shop_followers table (user_id + shop_id unique pair, created_at, indexed FKs) and follower business rules (10+ threshold for public count, free tier access, PDPA cascade) | DEV-20 shop follower subscriptions |
 | 2026-03-26 | Business Rules (§9) | Added community shop submission business rule: auth-gated, 5/day rate limit, admin review gate (pending_review), canned rejection reasons, PDPA cascade via FK | DEV-38 community shop submission pipeline |
 
