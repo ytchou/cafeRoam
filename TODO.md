@@ -17,7 +17,7 @@
 
 **Wave 2 — Schema + Auth (parallel):**
 - [x] Task 3: Push all 78 migrations to staging (DEV-79)
-- [ ] Task 5: Configure staging Auth (DEV-81)
+- [x] Task 5: Configure staging Auth (DEV-81)
 
 **Wave 3 — Data + Wiring (parallel):**
 - [ ] Task 4: Seed staging DB with 164 shops + admin user (DEV-80)
