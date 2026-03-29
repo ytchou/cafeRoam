@@ -1,4 +1,6 @@
 -- Add community_summary to search_shops return set.
+-- DROP required because CREATE OR REPLACE cannot change return type in PostgreSQL.
+DROP FUNCTION IF EXISTS search_shops(vector(1536), int, text, float, float, float, float);
 CREATE OR REPLACE FUNCTION search_shops(
     query_embedding vector(1536),
     match_count      int     DEFAULT 20,

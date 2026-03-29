@@ -116,7 +116,7 @@ Things that must exist for this product to ship. If any of these slip, the timel
 - **Auth mechanism:** Supabase Auth (JWT-based sessions). Server-side session validation on all protected API routes.
 - **Secrets management:** Environment variables only. `.env` and `.env.local` are gitignored. `.env.example` documents all required vars with descriptions.
 - **Encryption:** In transit: TLS/HTTPS (Railway + Supabase enforce). At rest: Supabase Storage encrypts by default.
-- **Data residency:** Supabase region — `ap-southeast-1` (Singapore; closest to Taiwan).
+- **Data residency:** Supabase region — `ap-northeast-1` (Tokyo; lowest latency to Taiwan at ~20ms).
 - **RLS:** Supabase Row Level Security enabled on all user-facing tables. Users can only read/write their own data (check-ins, lists, stamps, profile).
 
 ---

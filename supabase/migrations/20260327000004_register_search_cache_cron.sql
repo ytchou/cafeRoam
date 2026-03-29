@@ -12,7 +12,7 @@ BEGIN
     PERFORM cron.schedule(
       'cleanup-search-cache',
       '0 * * * *',
-      $$DELETE FROM search_cache WHERE expires_at < now()$$
+      $cmd$DELETE FROM search_cache WHERE expires_at < now()$cmd$
     );
   END IF;
 END $$;
