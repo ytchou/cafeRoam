@@ -15,6 +15,7 @@
 **Tech Stack:** Next.js 16 App Router (server component, `redirect()`, `notFound()`)
 
 **Acceptance Criteria:**
+
 - [ ] Clicking a shop card on the mobile map view navigates to the shop detail page
 - [ ] Visiting `/shops/<shopId>` (without slug) redirects to `/shops/<shopId>/<slug>`
 - [ ] Visiting `/shops/<nonexistent-id>` returns a 404
@@ -24,6 +25,7 @@
 ### Task 1: Write failing test for shop ID redirect route
 
 **Files:**
+
 - Create: `app/shops/[shopId]/page.test.tsx`
 
 **Step 1: Write the failing test**
@@ -63,7 +65,11 @@ describe('app/shops/[shopId]/page — redirect route', () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
       status: 200,
-      json: async () => ({ id: 'shop-abc', slug: 'hoto-cafe', name: 'Hoto Cafe' }),
+      json: async () => ({
+        id: 'shop-abc',
+        slug: 'hoto-cafe',
+        name: 'Hoto Cafe',
+      }),
     });
 
     await expect(
@@ -112,6 +118,7 @@ Expected: FAIL — `./page` module not found (the redirect route doesn't exist y
 ### Task 2: Implement the redirect route
 
 **Files:**
+
 - Create: `app/shops/[shopId]/page.tsx`
 
 **Step 3: Write minimal implementation**

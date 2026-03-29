@@ -29,8 +29,8 @@ User clicks shop card
 
 ## Files Changed
 
-| File | Action |
-|------|--------|
+| File                          | Action               |
+| ----------------------------- | -------------------- |
 | `app/shops/[shopId]/page.tsx` | New — redirect route |
 
 ## Alternatives Rejected

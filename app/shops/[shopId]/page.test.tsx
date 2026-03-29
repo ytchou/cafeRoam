@@ -70,7 +70,9 @@ describe('app/shops/[shopId]/page — redirect route', () => {
       ShopRedirectPage({ params: Promise.resolve({ shopId: SLUGLESS_ID }) })
     ).rejects.toThrow('NEXT_REDIRECT');
 
-    expect(mockRedirect).toHaveBeenCalledWith(`/shops/${SLUGLESS_ID}/${SLUGLESS_ID}`);
+    expect(mockRedirect).toHaveBeenCalledWith(
+      `/shops/${SLUGLESS_ID}/${SLUGLESS_ID}`
+    );
     expect(mockNotFound).not.toHaveBeenCalled();
   });
 

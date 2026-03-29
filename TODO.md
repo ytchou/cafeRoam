@@ -12,6 +12,7 @@
 > **Plan:** [docs/plans/2026-03-29-fix-shop-card-navigation-plan.md](docs/plans/2026-03-29-fix-shop-card-navigation-plan.md)
 
 **Chunk 1 — Redirect Route (Waves 1-3):**
+
 - [x] Task 1: Write failing test for shop ID redirect route
 - [x] Task 2: Implement the redirect route
 - [x] Task 3: Lint and commit
