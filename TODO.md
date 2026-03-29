@@ -6,6 +6,19 @@
 
 ---
 
+## Fix BottomNav Overlay on Map View (DEV-85)
+
+> **Design Doc:** [docs/designs/2026-03-29-dev-85-bottomnav-overlay-fix-design.md](docs/designs/2026-03-29-dev-85-bottomnav-overlay-fix-design.md)
+> **Plan:** [docs/plans/2026-03-29-dev-85-bottomnav-overlay-fix-plan.md](docs/plans/2026-03-29-dev-85-bottomnav-overlay-fix-plan.md)
+
+**Chunk 1 — BottomNav embedded prop (Waves 1-4):**
+- [x] Task 1: Write failing test for embedded BottomNav variant
+- [ ] Task 2: Implement the `embedded` prop on BottomNav
+- [ ] Task 3: Pass `embedded` in MapMobileLayout
+- [ ] Task 4: Lint and commit
+
+---
+
 ## Home Page Fixes — Card Navigation + Taxonomy Tags
 
 > **Design Doc:** [docs/designs/2026-03-28-home-page-fixes-design.md](docs/designs/2026-03-28-home-page-fixes-design.md)

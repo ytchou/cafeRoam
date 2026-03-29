@@ -59,4 +59,13 @@ describe('a user interacting with the BottomNav', () => {
       '/profile'
     );
   });
+
+  it('when embedded in a layout, the nav renders as a static element without fixed positioning', () => {
+    const { container } = render(<BottomNav embedded />);
+    const nav = container.querySelector('nav');
+    expect(nav).toBeInTheDocument();
+    expect(nav!.className).not.toContain('fixed');
+    expect(nav!.className).not.toContain('z-40');
+    expect(nav!.style.paddingBottom).toBe('');
+  });
 });
