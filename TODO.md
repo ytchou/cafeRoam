@@ -15,7 +15,7 @@
 - [x] Task 1: Write failing test for embedded BottomNav variant
 - [x] Task 2: Implement the `embedded` prop on BottomNav
 - [x] Task 3: Pass `embedded` in MapMobileLayout
-- [ ] Task 4: Lint and commit
+- [x] Task 4: Lint and commit
 
 ---
 
