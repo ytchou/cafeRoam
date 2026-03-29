@@ -15,11 +15,11 @@
 **Tech Stack:** Supabase CLI, Railway CLI, psql, 1Password
 
 **Acceptance Criteria:**
-- [ ] All 78 migrations applied to staging Supabase without errors
-- [ ] 164 shops queryable in staging database
-- [ ] Auth endpoint responds and a test user can authenticate
-- [ ] All 4 storage buckets exist with RLS policies
-- [ ] Railway staging services have all Supabase env vars set
+- [x] All 78 migrations applied to staging Supabase without errors
+- [x] 164 shops queryable in staging database
+- [x] Auth endpoint responds and a test user can authenticate
+- [x] All 4 storage buckets exist with RLS policies
+- [x] Railway staging services have all Supabase env vars set (credentials in 1Password; pending DEV-73 service deployment)
 
 ---
 
