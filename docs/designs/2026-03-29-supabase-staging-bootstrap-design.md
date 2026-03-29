@@ -22,6 +22,7 @@ Create the Supabase staging project (`caferoam-staging`) and verify the full loc
 ## Architecture
 
 Single Supabase cloud project in Tokyo hosting:
+
 - Postgres 15 + pgvector (78 migrations, HNSW indexes)
 - 4 Storage buckets (checkin-photos, menu-photos, avatars, claim-proofs) with RLS
 - Auth (email provider, staging redirect URLs)
@@ -66,14 +67,14 @@ Railway staging services connect to this project via env vars set through Railwa
 
 Railway env vars to set (via `railway variables set`):
 
-| Variable | Source |
-|----------|--------|
-| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon key |
-| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key |
-| `SUPABASE_JWT_SECRET` | Supabase JWT secret |
-| `DATABASE_URL` | Supabase direct DB connection string |
-| `SUPABASE_DB_URL` | Same as DATABASE_URL (used by some services) |
+| Variable                        | Source                                       |
+| ------------------------------- | -------------------------------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`      | Supabase project URL                         |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon key                            |
+| `SUPABASE_SERVICE_ROLE_KEY`     | Supabase service role key                    |
+| `SUPABASE_JWT_SECRET`           | Supabase JWT secret                          |
+| `DATABASE_URL`                  | Supabase direct DB connection string         |
+| `SUPABASE_DB_URL`               | Same as DATABASE_URL (used by some services) |
 
 Plus existing non-Supabase vars (OpenAI, Claude, Resend, PostHog, Sentry, Mapbox) — those come from DEV-73 scope.
 

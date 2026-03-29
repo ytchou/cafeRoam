@@ -15,6 +15,7 @@
 **Tech Stack:** Supabase CLI, Railway CLI, psql, 1Password
 
 **Acceptance Criteria:**
+
 - [x] All 78 migrations applied to staging Supabase without errors
 - [x] 164 shops queryable in staging database
 - [x] Auth endpoint responds and a test user can authenticate
@@ -87,14 +88,14 @@ Expected: Shows the linked project name, environment, and services.
 
 From the project dashboard → Settings → API, note:
 
-| Credential | Location in dashboard |
-|---|---|
-| Project ref | Settings → General → Reference ID |
-| Project URL | Settings → API → Project URL |
-| Anon key | Settings → API → `anon` `public` |
-| Service role key | Settings → API → `service_role` (click "Reveal") |
-| JWT secret | Settings → API → JWT Settings → JWT Secret |
-| DB connection string | Settings → Database → Connection string → URI |
+| Credential           | Location in dashboard                            |
+| -------------------- | ------------------------------------------------ |
+| Project ref          | Settings → General → Reference ID                |
+| Project URL          | Settings → API → Project URL                     |
+| Anon key             | Settings → API → `anon` `public`                 |
+| Service role key     | Settings → API → `service_role` (click "Reveal") |
+| JWT secret           | Settings → API → JWT Settings → JWT Secret       |
+| DB connection string | Settings → Database → Connection string → URI    |
 
 **Step 3: Store in 1Password**
 
@@ -137,6 +138,7 @@ supabase db push
 Expected: All 78 migrations applied sequentially. Output should show each migration name with a success indicator. Zero errors.
 
 **Troubleshooting:**
+
 - If pgvector extension fails: ensure Step 4 of Task 2 was completed
 - If a migration fails mid-push: note the failing migration name, investigate the error, fix locally if needed, re-run `supabase db push` (it resumes from where it left off)
 - If storage bucket INSERT fails: proceed — Task 3 Step 4 handles manual bucket creation
@@ -171,6 +173,7 @@ SELECT id, name, public FROM storage.buckets ORDER BY name;
 ```
 
 Expected 4 rows:
+
 - `avatars` (public: true)
 - `checkin-photos` (public: false)
 - `claim-proofs` (public: false)
@@ -262,6 +265,7 @@ Save the returned user `id` — it will be needed for the `admin_user_ids` confi
 **Step 1: Configure email auth**
 
 In Supabase dashboard → Authentication → Providers:
+
 - **Email** should be enabled by default
 - **Confirm email:** Toggle OFF (disabled) — staging doesn't need email confirmation friction
 - **Enable automatic account linking:** ON
@@ -269,11 +273,13 @@ In Supabase dashboard → Authentication → Providers:
 **Step 2: Set Site URL**
 
 Authentication → URL Configuration:
+
 - **Site URL:** `https://<RAILWAY_STAGING_DOMAIN>` (get this from Railway dashboard, or use a placeholder like `https://caferoam-staging.up.railway.app` — update after DEV-73 deploys)
 
 **Step 3: Add redirect URLs**
 
 Add these redirect URLs:
+
 - `https://<RAILWAY_STAGING_DOMAIN>/**`
 - `http://localhost:3000/**` (for local dev pointing at staging)
 
@@ -460,18 +466,22 @@ graph TD
 ```
 
 **Wave 1** (parallel — no dependencies):
+
 - Task 1: Install Railway CLI (DEV-77)
 - Task 2: Create Supabase staging project (DEV-78)
 
 **Wave 2** (parallel — depends on Wave 1):
+
 - Task 3: Push migrations ← Task 2
 - Task 5: Configure Auth ← Task 2 (dashboard operations, independent of migrations)
 
 **Wave 3** (parallel — depends on Wave 2):
+
 - Task 4: Seed data ← Task 3
 - Task 6: Wire credentials to Railway ← Task 1, Task 2
 
 **Wave 4** (sequential — depends on all):
+
 - Task 7: Full verification ← Tasks 3, 4, 5, 6
 
 **Note:** This is primarily a human-driven infrastructure task. Most steps require manual dashboard interaction, CLI authentication, or credential handling. The executor assists by providing exact commands and verification queries, but the human must perform dashboard operations and handle secrets.

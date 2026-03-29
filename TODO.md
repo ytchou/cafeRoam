@@ -12,18 +12,22 @@
 > **Plan:** [docs/plans/2026-03-29-supabase-staging-bootstrap-plan.md](docs/plans/2026-03-29-supabase-staging-bootstrap-plan.md)
 
 **Wave 1 — Setup (parallel):**
+
 - [x] Task 1: Install Railway CLI and authenticate (DEV-77)
 - [x] Task 2: Create Supabase staging project via dashboard (DEV-78)
 
 **Wave 2 — Schema + Auth (parallel):**
+
 - [x] Task 3: Push all 78 migrations to staging (DEV-79)
 - [x] Task 5: Configure staging Auth (DEV-81)
 
 **Wave 3 — Data + Wiring (parallel):**
+
 - [x] Task 4: Seed staging DB with 164 shops + admin user (DEV-80)
 - [x] Task 6: Wire credentials to Railway + 1Password (DEV-82)
 
 **Wave 4 — Verify:**
+
 - [x] Task 7: Full verification — schema parity, storage, auth, seed data (DEV-83)
 
 ---
