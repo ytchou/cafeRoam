@@ -21,49 +21,70 @@ global.fetch = mockFetch;
 // Import after mocks are set up
 import ShopRedirectPage from './page';
 
+const SHOP_ID = 'f47ac10b-58cc-4372-a567-0e02b2c3d479';
+const MISSING_ID = '00000000-0000-0000-0000-000000000000';
+const SLUGLESS_ID = 'c9a4f3e1-8b7d-4c5a-9e2f-1a3b5d7c9e0f';
+
 describe('app/shops/[shopId]/page — redirect route', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('redirects to /shops/[shopId]/[slug] when shop exists', async () => {
+  it('a user navigating to a shop by ID is redirected to the full canonical URL', async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
       status: 200,
-      json: async () => ({ id: 'shop-abc', slug: 'hoto-cafe', name: 'Hoto Cafe' }),
+      json: async () => ({ id: SHOP_ID, slug: 'hoto-cafe', name: '禾多咖啡' }),
     });
 
     await expect(
-      ShopRedirectPage({ params: Promise.resolve({ shopId: 'shop-abc' }) })
+      ShopRedirectPage({ params: Promise.resolve({ shopId: SHOP_ID }) })
     ).rejects.toThrow('NEXT_REDIRECT');
 
-    expect(mockRedirect).toHaveBeenCalledWith('/shops/shop-abc/hoto-cafe');
+    expect(mockRedirect).toHaveBeenCalledWith(`/shops/${SHOP_ID}/hoto-cafe`);
+    expect(mockNotFound).not.toHaveBeenCalled();
   });
 
-  it('calls notFound when shop does not exist', async () => {
+  it('a user navigating to a non-existent shop ID sees a 404 page', async () => {
     mockFetch.mockResolvedValueOnce({
       ok: false,
       status: 404,
     });
 
     await expect(
-      ShopRedirectPage({ params: Promise.resolve({ shopId: 'nonexistent' }) })
+      ShopRedirectPage({ params: Promise.resolve({ shopId: MISSING_ID }) })
     ).rejects.toThrow('NEXT_NOT_FOUND');
 
     expect(mockNotFound).toHaveBeenCalled();
+    expect(mockRedirect).not.toHaveBeenCalled();
   });
 
-  it('falls back to shopId as slug when shop has no slug field', async () => {
+  it('a user navigating to a shop without a slug is redirected using the shop ID as the path', async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
       status: 200,
-      json: async () => ({ id: 'shop-xyz', name: 'No Slug Cafe' }),
+      json: async () => ({ id: SLUGLESS_ID, name: '無名咖啡' }),
     });
 
     await expect(
-      ShopRedirectPage({ params: Promise.resolve({ shopId: 'shop-xyz' }) })
+      ShopRedirectPage({ params: Promise.resolve({ shopId: SLUGLESS_ID }) })
     ).rejects.toThrow('NEXT_REDIRECT');
 
-    expect(mockRedirect).toHaveBeenCalledWith('/shops/shop-xyz/shop-xyz');
+    expect(mockRedirect).toHaveBeenCalledWith(`/shops/${SLUGLESS_ID}/${SLUGLESS_ID}`);
+    expect(mockNotFound).not.toHaveBeenCalled();
+  });
+
+  it('a user navigating to a shop when the backend is unavailable sees an error', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 503,
+    });
+
+    await expect(
+      ShopRedirectPage({ params: Promise.resolve({ shopId: SHOP_ID }) })
+    ).rejects.toThrow('Failed to fetch shop: 503');
+
+    expect(mockRedirect).not.toHaveBeenCalled();
+    expect(mockNotFound).not.toHaveBeenCalled();
   });
 });

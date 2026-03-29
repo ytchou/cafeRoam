@@ -1,5 +1,5 @@
 import { notFound, redirect } from 'next/navigation';
-import { BACKEND_URL } from '@/lib/api/proxy';
+import { fetchShop } from '@/lib/api/shops';
 
 interface Params {
   shopId: string;
@@ -11,19 +11,12 @@ export default async function ShopRedirectPage({
   params: Promise<Params>;
 }) {
   const { shopId } = await params;
+  const shop = await fetchShop(shopId);
 
-  const res = await fetch(`${BACKEND_URL}/shops/${shopId}`, {
-    next: { revalidate: 300 },
-  });
-
-  if (res.status === 404) {
+  if (!shop) {
     notFound();
   }
 
-  if (!res.ok) {
-    throw new Error(`Failed to fetch shop: ${res.status}`);
-  }
-
-  const shop = await res.json();
+  // When a shop has no slug, fall back to shopId to keep the URL valid.
   redirect(`/shops/${shopId}/${shop.slug ?? shopId}`);
 }
