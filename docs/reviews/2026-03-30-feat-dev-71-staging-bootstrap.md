@@ -37,4 +37,23 @@
 
 **Pre-fix SHA:** 6b4fec2dbd979d7cd6b33a9828c5dc29e3e98ee5
 
-*(Populated after fixes are applied)*
+**Issues fixed:**
+- [Minor] SPEC_CHANGELOG.md:9-11 — Moved 3 floating entries inside the Markdown table (below header row)
+- [Minor] docs/plans/...-plan.md:18-22 — Updated acceptance criteria to [x]; added note on Railway partial-block
+
+**Issues skipped (debatable, not wrong):**
+- Finding 1 (DATABASE_URL/SUPABASE_DB_URL) — Neither variable is used by backend/core/config.py; design doc inconsistency only, no functional impact
+- Finding 3 (RLS idempotency edge case) — Theoretical risk, negligible in controlled environment
+- Finding 4 (DROP FUNCTION CASCADE comment) — Existing comment is adequate
+- Finding 5 (Railway criterion scope) — Scoping preference, no functional issue
+
+**Batch Test Run:**
+- No tests run — no application code changed (migrations + documentation only)
+
+## Final State
+
+**Iterations completed:** 1
+**All Critical/Important resolved:** Yes (no Critical or Important issues found; 1 Important downgraded to Debatable after validation)
+**Remaining issues:** None blocking
+
+**Review log:** docs/reviews/2026-03-30-feat-dev-71-staging-bootstrap.md
