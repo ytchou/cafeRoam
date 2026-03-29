@@ -12,8 +12,8 @@
 > **Plan:** [docs/plans/2026-03-29-supabase-staging-bootstrap-plan.md](docs/plans/2026-03-29-supabase-staging-bootstrap-plan.md)
 
 **Wave 1 — Setup (parallel):**
-- [ ] Task 1: Install Railway CLI and authenticate (DEV-77)
-- [ ] Task 2: Create Supabase staging project via dashboard (DEV-78)
+- [x] Task 1: Install Railway CLI and authenticate (DEV-77)
+- [x] Task 2: Create Supabase staging project via dashboard (DEV-78)
 
 **Wave 2 — Schema + Auth (parallel):**
 - [ ] Task 3: Push all 78 migrations to staging (DEV-79)
