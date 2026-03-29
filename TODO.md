@@ -16,7 +16,7 @@
 - [x] Task 2: Create Supabase staging project via dashboard (DEV-78)
 
 **Wave 2 — Schema + Auth (parallel):**
-- [ ] Task 3: Push all 78 migrations to staging (DEV-79)
+- [x] Task 3: Push all 78 migrations to staging (DEV-79)
 - [ ] Task 5: Configure staging Auth (DEV-81)
 
 **Wave 3 — Data + Wiring (parallel):**
