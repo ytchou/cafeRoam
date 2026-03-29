@@ -13,6 +13,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <>
       {isDesktop && !isFindPage && <HeaderNav />}
       <main
+        // pb-16 on mobile non-find pages offsets the fixed BottomNav (h-[62px] + margin).
+        // The find page ('/') manages its own layout via MapMobileLayout with embedded BottomNav.
         className={
           isDesktop && !isFindPage ? 'pt-16' : isFindPage ? '' : 'pb-16'
         }
