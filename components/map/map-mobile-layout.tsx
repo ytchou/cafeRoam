@@ -102,7 +102,10 @@ export function MapMobileLayout({
         </button>
       )}
 
-      <div className="absolute right-0 bottom-0 left-0 z-20 flex flex-col gap-3 bg-gradient-to-t from-black/20 to-transparent pt-8 pb-2">
+      <div
+        className="absolute right-0 bottom-0 left-0 z-20 flex flex-col gap-3 bg-gradient-to-t from-black/20 to-transparent pt-8 pb-2"
+        style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
+      >
         <ShopCarousel
           shops={shops}
           onShopClick={onShopClick}
