@@ -20,11 +20,11 @@
 - [x] Task 5: Configure staging Auth (DEV-81)
 
 **Wave 3 — Data + Wiring (parallel):**
-- [ ] Task 4: Seed staging DB with 164 shops + admin user (DEV-80)
-- [ ] Task 6: Wire credentials to Railway + 1Password (DEV-82)
+- [x] Task 4: Seed staging DB with 164 shops + admin user (DEV-80)
+- [x] Task 6: Wire credentials to Railway + 1Password (DEV-82)
 
 **Wave 4 — Verify:**
-- [ ] Task 7: Full verification — schema parity, storage, auth, seed data (DEV-83)
+- [x] Task 7: Full verification — schema parity, storage, auth, seed data (DEV-83)
 
 ---
 
