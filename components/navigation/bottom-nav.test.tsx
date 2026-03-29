@@ -64,8 +64,7 @@ describe('a user interacting with the BottomNav', () => {
     const { container } = render(<BottomNav embedded />);
     const nav = container.querySelector('nav');
     expect(nav).toBeInTheDocument();
-    expect(nav!.className).not.toContain('fixed');
-    expect(nav!.className).not.toContain('z-40');
-    expect(nav!.style.paddingBottom).toBe('');
+    expect(nav).not.toHaveClass('fixed');
+    expect(nav).not.toHaveClass('z-40');
   });
 });

@@ -11,7 +11,7 @@ const TABS: { href: string; label: string; icon: LucideIcon }[] = [
   { href: '/profile', label: '我的', icon: User },
 ];
 
-export function BottomNav({ embedded }: { embedded?: boolean } = {}) {
+export function BottomNav({ embedded }: { embedded?: boolean }) {
   const pathname = usePathname();
 
   return (
