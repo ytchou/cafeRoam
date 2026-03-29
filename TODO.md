@@ -6,6 +6,19 @@
 
 ---
 
+## Fix Shop Card Navigation (DEV-84)
+
+> **Design Doc:** [docs/designs/2026-03-29-fix-shop-card-navigation-design.md](docs/designs/2026-03-29-fix-shop-card-navigation-design.md)
+> **Plan:** [docs/plans/2026-03-29-fix-shop-card-navigation-plan.md](docs/plans/2026-03-29-fix-shop-card-navigation-plan.md)
+
+**Chunk 1 — Redirect Route (Waves 1-3):**
+
+- [x] Task 1: Write failing test for shop ID redirect route
+- [x] Task 2: Implement the redirect route
+- [x] Task 3: Lint and commit
+
+---
+
 ## Home Page Fixes — Card Navigation + Taxonomy Tags
 
 > **Design Doc:** [docs/designs/2026-03-28-home-page-fixes-design.md](docs/designs/2026-03-28-home-page-fixes-design.md)

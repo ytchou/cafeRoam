@@ -3,20 +3,11 @@ import { notFound, redirect } from 'next/navigation';
 import type { Metadata } from 'next';
 import { ShopDetailClient } from './shop-detail-client';
 import { ShopJsonLd } from '@/components/seo/ShopJsonLd';
-import { BACKEND_URL } from '@/lib/api/proxy';
+import { fetchShop } from '@/lib/api/shops';
 
 interface Params {
   shopId: string;
   slug: string;
-}
-
-async function fetchShop(shopId: string) {
-  const res = await fetch(`${BACKEND_URL}/shops/${shopId}`, {
-    next: { revalidate: 300 },
-  });
-  if (res.status === 404) return null;
-  if (!res.ok) throw new Error(`Failed to fetch shop: ${res.status}`);
-  return res.json();
 }
 
 export async function generateMetadata({
