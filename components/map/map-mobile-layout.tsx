@@ -109,7 +109,7 @@ export function MapMobileLayout({
           onCardClick={onCardClick}
           selectedShopId={selectedShopId}
         />
-        <BottomNav />
+        <BottomNav embedded />
       </div>
 
       <FilterSheet
