@@ -11,6 +11,7 @@ Two-component contract: the original component owned both positioning AND safe-a
 
 **Prevention:**
 When extracting fixed/absolute positioning from a self-contained component into a parent container:
+
 1. Check if the original component handled `env(safe-area-inset-bottom)`, `env(safe-area-inset-top)`, or similar device-specific CSS
 2. If so, add the equivalent `style={{ paddingBottom: 'max(Xrem, env(safe-area-inset-bottom))' }}` to the container — not the hardcoded Tailwind class alone
 3. Test on a physical notched device or use browser DevTools → Sensors → Override screen type to test safe-area values

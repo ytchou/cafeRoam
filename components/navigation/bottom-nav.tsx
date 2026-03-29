@@ -16,12 +16,12 @@ export function BottomNav({ embedded }: { embedded?: boolean }) {
 
   return (
     <nav
-      className={
+      className={embedded ? 'px-4' : 'fixed right-0 bottom-0 left-0 z-40 px-4'}
+      style={
         embedded
-          ? 'px-4'
-          : 'fixed right-0 bottom-0 left-0 z-40 px-4'
+          ? undefined
+          : { paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }
       }
-      style={embedded ? undefined : { paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}
     >
       <div
         data-testid="tab-bar-pill"

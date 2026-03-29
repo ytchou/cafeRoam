@@ -12,6 +12,7 @@
 > **Plan:** [docs/plans/2026-03-29-dev-85-bottomnav-overlay-fix-plan.md](docs/plans/2026-03-29-dev-85-bottomnav-overlay-fix-plan.md)
 
 **Chunk 1 — BottomNav embedded prop (Waves 1-4):**
+
 - [x] Task 1: Write failing test for embedded BottomNav variant
 - [x] Task 2: Implement the `embedded` prop on BottomNav
 - [x] Task 3: Pass `embedded` in MapMobileLayout
