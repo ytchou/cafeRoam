@@ -348,9 +348,7 @@ class TestSearchCacheObservability:
         assert logs[0]["cache_tier"] == "semantic"
         assert logs[0]["mode"] == "rest"
 
-    async def test_full_miss_emits_log_event(
-        self, mock_supabase, mock_embeddings, mock_cache
-    ):
+    async def test_full_miss_emits_log_event(self, mock_supabase, mock_embeddings, mock_cache):
         """When a full cache miss occurs, a Search cache miss log event is emitted."""
         mock_supabase.rpc = MagicMock(
             return_value=MagicMock(execute=MagicMock(return_value=MagicMock(data=[])))
