@@ -9,24 +9,16 @@ vi.mock('@/lib/hooks/use-device-capability', () => ({
 
 // Mock map layouts to avoid loading Mapbox GL
 vi.mock('@/components/map/map-mobile-layout', () => ({
-  MapMobileLayout: (props: Record<string, unknown>) => (
-    <div data-testid="map-mobile-layout" data-view="map" />
-  ),
+  MapMobileLayout: () => <div data-testid="map-mobile-layout" data-view="map" />,
 }));
 vi.mock('@/components/map/map-desktop-layout', () => ({
-  MapDesktopLayout: (props: Record<string, unknown>) => (
-    <div data-testid="map-desktop-layout" data-view="map" />
-  ),
+  MapDesktopLayout: () => <div data-testid="map-desktop-layout" data-view="map" />,
 }));
 vi.mock('@/components/map/list-mobile-layout', () => ({
-  ListMobileLayout: (props: Record<string, unknown>) => (
-    <div data-testid="list-mobile-layout" data-view="list" />
-  ),
+  ListMobileLayout: () => <div data-testid="list-mobile-layout" data-view="list" />,
 }));
 vi.mock('@/components/map/list-desktop-layout', () => ({
-  ListDesktopLayout: (props: Record<string, unknown>) => (
-    <div data-testid="list-desktop-layout" data-view="list" />
-  ),
+  ListDesktopLayout: () => <div data-testid="list-desktop-layout" data-view="list" />,
 }));
 
 import { useDeviceCapability } from '@/lib/hooks/use-device-capability';
