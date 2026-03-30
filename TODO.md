@@ -6,6 +6,28 @@
 
 ---
 
+## Map Pin Progressive Disclosure (DEV-111)
+> **Design Doc:** [docs/designs/2026-03-30-map-pin-progressive-disclosure-design.md](docs/designs/2026-03-30-map-pin-progressive-disclosure-design.md)
+> **Plan:** [docs/plans/2026-03-30-map-pin-progressive-disclosure-plan.md](docs/plans/2026-03-30-map-pin-progressive-disclosure-plan.md)
+
+**Wave 1 — Foundation:**
+- [ ] Task 1: Update `onShopClick` type to `string | null` + fix `app/page.tsx` wiring (DEV-116)
+
+**Wave 2 — Failing Tests (parallel):**
+- [ ] Task 2: Write failing tests for ShopPreviewCard (DEV-118)
+- [ ] Task 4: Write failing tests for MapDesktopLayout integration (DEV-120)
+
+**Wave 3 — ShopPreviewCard:**
+- [ ] Task 3: Implement ShopPreviewCard component (DEV-118)
+
+**Wave 4 — Layout Integration:**
+- [ ] Task 5: Scroll-to-card + auto-expand + preview card wiring in MapDesktopLayout (DEV-117, DEV-119)
+
+**Wave 5 — Verification:**
+- [ ] Task 6: Final integration verification (lint, type-check, full test suite)
+
+---
+
 ## Mapbox Performance Validation + Graceful Degradation (DEV-75)
 
 > **Design Doc:** [docs/designs/2026-03-30-mapbox-performance-validation-design.md](docs/designs/2026-03-30-mapbox-performance-validation-design.md)
@@ -2049,3 +2071,28 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 **Wave 5 — Validate:**
 
 - [x] Task 8: Full backend test suite + lint (DEV-105)
+
+---
+
+## Find Page Filters (DEV-113)
+
+> **Design Doc:** [docs/designs/2026-03-30-find-page-filters-design.md](docs/designs/2026-03-30-find-page-filters-design.md)
+> **Plan:** [docs/plans/2026-03-30-find-page-filters-plan.md](docs/plans/2026-03-30-find-page-filters-plan.md)
+
+**Wave 1 — Backend test + filter map (parallel):**
+
+- [ ] Task 1: Backend failing test for list_shops expansion (DEV-114)
+- [ ] Task 3: Frontend filter-to-tag mapping test + impl (DEV-115)
+
+**Wave 2 — Backend impl:**
+
+- [ ] Task 2: Implement list_shops with taxonomyTags + isOpen (DEV-114)
+
+**Wave 3-4 — Frontend filter logic:**
+
+- [ ] Task 4: Frontend filter test (DEV-115)
+- [ ] Task 5: Implement filter logic in shops memo (DEV-115)
+
+**Wave 5 — Validate:**
+
+- [ ] Task 6: Lint and type-check (DEV-113)
