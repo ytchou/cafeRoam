@@ -52,6 +52,116 @@ vi.mock('@/lib/hooks/use-shops', () => ({
         reviewCount: 10,
         photoUrls: ['https://example.com/photo.jpg'],
         taxonomyTags: [],
+        isOpen: false,
+        cafenomadId: null,
+        googlePlaceId: null,
+        createdAt: '2026-01-01',
+        phone: null,
+        website: null,
+        openingHours: null,
+        priceRange: null,
+        description: null,
+        menuUrl: null,
+        mrt: null,
+      },
+      {
+        id: 'b2c3d4e5-f6a7-8901-bcde-f12345678901',
+        name: 'WiFi Cafe',
+        slug: 'wifi-cafe',
+        latitude: 25.04,
+        longitude: 121.57,
+        rating: 4.5,
+        address: '1 Coffee St',
+        reviewCount: 10,
+        photoUrls: [],
+        taxonomyTags: [
+          {
+            id: 'wifi_available',
+            label: 'WiFi',
+            labelZh: '有WiFi',
+            dimension: 'functionality',
+          },
+        ],
+        isOpen: true,
+        cafenomadId: null,
+        googlePlaceId: null,
+        createdAt: '2026-01-01',
+        phone: null,
+        website: null,
+        openingHours: null,
+        priceRange: null,
+        description: null,
+        menuUrl: null,
+        mrt: null,
+      },
+      {
+        id: 'c3d4e5f6-a7b8-9012-cdef-123456789012',
+        name: 'Quiet Place',
+        slug: 'quiet-place',
+        latitude: 25.05,
+        longitude: 121.58,
+        rating: 4.2,
+        address: '2 Coffee St',
+        reviewCount: 5,
+        photoUrls: [],
+        taxonomyTags: [
+          { id: 'quiet', label: 'Quiet', labelZh: '安靜', dimension: 'vibe' },
+        ],
+        isOpen: false,
+        cafenomadId: null,
+        googlePlaceId: null,
+        createdAt: '2026-01-01',
+        phone: null,
+        website: null,
+        openingHours: null,
+        priceRange: null,
+        description: null,
+        menuUrl: null,
+        mrt: null,
+      },
+      {
+        id: 'd4e5f6a7-b8c9-0123-def0-234567890123',
+        name: 'WiFi & Quiet Cafe',
+        slug: 'wifi-quiet-cafe',
+        latitude: 25.06,
+        longitude: 121.59,
+        rating: 4.8,
+        address: '3 Coffee St',
+        reviewCount: 20,
+        photoUrls: [],
+        taxonomyTags: [
+          {
+            id: 'wifi_available',
+            label: 'WiFi',
+            labelZh: '有WiFi',
+            dimension: 'functionality',
+          },
+          { id: 'quiet', label: 'Quiet', labelZh: '安靜', dimension: 'vibe' },
+        ],
+        isOpen: true,
+        cafenomadId: null,
+        googlePlaceId: null,
+        createdAt: '2026-01-01',
+        phone: null,
+        website: null,
+        openingHours: null,
+        priceRange: null,
+        description: null,
+        menuUrl: null,
+        mrt: null,
+      },
+      {
+        id: 'e5f6a7b8-c9d0-1234-ef01-345678901234',
+        name: '老派咖啡 Old School',
+        slug: 'old-school',
+        latitude: 25.07,
+        longitude: 121.6,
+        rating: 4.0,
+        address: '4 Coffee St',
+        reviewCount: 3,
+        photoUrls: [],
+        taxonomyTags: [],
+        isOpen: null, // No opening_hours data — unknown open status
         cafenomadId: null,
         googlePlaceId: null,
         createdAt: '2026-01-01',
@@ -171,5 +281,46 @@ describe('FindPage', () => {
     expect(mockCapture).toHaveBeenCalledWith('view_toggled', {
       to_view: 'list',
     });
+  });
+
+  it('shows only shops with WiFi when the wifi filter is selected', () => {
+    mockSearchParams.set('view', 'list');
+    mockSearchParams.set('filters', 'wifi');
+    render(<FindPage />);
+
+    expect(screen.getByText('WiFi Cafe')).toBeInTheDocument();
+    expect(screen.getByText('WiFi & Quiet Cafe')).toBeInTheDocument();
+    expect(screen.queryByText('Quiet Place')).not.toBeInTheDocument();
+    expect(
+      screen.queryByText('自由時光咖啡 Liberty Hour')
+    ).not.toBeInTheDocument();
+  });
+
+  it('filters shops by open_now when that filter is active — excludes isOpen: false and isOpen: null', () => {
+    mockSearchParams.set('view', 'list');
+    mockSearchParams.set('filters', 'open_now');
+    render(<FindPage />);
+
+    expect(screen.getByText('WiFi Cafe')).toBeInTheDocument();
+    expect(screen.getByText('WiFi & Quiet Cafe')).toBeInTheDocument();
+    expect(screen.queryByText('Quiet Place')).not.toBeInTheDocument();
+    expect(
+      screen.queryByText('自由時光咖啡 Liberty Hour')
+    ).not.toBeInTheDocument();
+    // isOpen: null (no opening_hours data) must also be excluded — !== true
+    expect(screen.queryByText('老派咖啡 Old School')).not.toBeInTheDocument();
+  });
+
+  it('AND-combines multiple filters to show only shops matching all selected criteria', () => {
+    mockSearchParams.set('view', 'list');
+    mockSearchParams.set('filters', 'wifi,quiet');
+    render(<FindPage />);
+
+    expect(screen.getByText('WiFi & Quiet Cafe')).toBeInTheDocument();
+    expect(screen.queryByText('WiFi Cafe')).not.toBeInTheDocument();
+    expect(screen.queryByText('Quiet Place')).not.toBeInTheDocument();
+    expect(
+      screen.queryByText('自由時光咖啡 Liberty Hour')
+    ).not.toBeInTheDocument();
   });
 });

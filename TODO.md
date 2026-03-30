@@ -2087,18 +2087,18 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 
 **Wave 1 — Backend test + filter map (parallel):**
 
-- [ ] Task 1: Backend failing test for list_shops expansion (DEV-114)
-- [ ] Task 3: Frontend filter-to-tag mapping test + impl (DEV-115)
+- [x] Task 1: Backend failing test for list_shops expansion (DEV-114)
+- [x] Task 3: Frontend filter-to-tag mapping test + impl (DEV-115)
 
 **Wave 2 — Backend impl:**
 
-- [ ] Task 2: Implement list_shops with taxonomyTags + isOpen (DEV-114)
+- [x] Task 2: Implement list_shops with taxonomyTags + isOpen (DEV-114)
 
 **Wave 3-4 — Frontend filter logic:**
 
-- [ ] Task 4: Frontend filter test (DEV-115)
-- [ ] Task 5: Implement filter logic in shops memo (DEV-115)
+- [x] Task 4: Frontend filter test (DEV-115)
+- [x] Task 5: Implement filter logic in shops memo (DEV-115)
 
 **Wave 5 — Validate:**
 
-- [ ] Task 6: Lint and type-check (DEV-113)
+- [x] Task 6: Lint and type-check (DEV-113)
