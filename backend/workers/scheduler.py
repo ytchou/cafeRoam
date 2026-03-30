@@ -1,5 +1,7 @@
 import asyncio
+from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime, timedelta
+from functools import wraps
 
 import sentry_sdk
 import structlog
@@ -39,6 +41,24 @@ _tasks: set[asyncio.Task[None]] = set()
 # Taxonomy cache: (tags, expires_at)
 _taxonomy_cache: tuple[list[TaxonomyTag], datetime] | None = None
 _TAXONOMY_TTL = timedelta(minutes=5)
+
+
+def idempotent_cron(job_name: str, window: str) -> Callable[..., Callable[..., Awaitable[None]]]:
+    """Decorator that prevents cron jobs from double-firing within the same time window."""
+
+    def decorator(func: Callable[..., Awaitable[None]]) -> Callable[..., Awaitable[None]]:
+        @wraps(func)
+        async def wrapper(*args: object, **kwargs: object) -> None:
+            db = get_service_role_client()
+            queue = JobQueue(db=db)
+            if not queue.acquire_cron_lock(job_name, window=window):
+                logger.info("Cron already ran in this window, skipping", job_name=job_name)
+                return
+            await func(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
 
 
 def _get_cached_taxonomy(db: Client) -> list[TaxonomyTag]:
@@ -208,18 +228,21 @@ async def process_job_type(job_type: JobType) -> None:
         task.add_done_callback(_tasks.discard)
 
 
+@idempotent_cron("staleness_sweep", window="day")
 async def run_staleness_sweep() -> None:
     db = get_service_role_client()
     queue = JobQueue(db=db)
     await queue.enqueue(job_type=JobType.STALENESS_SWEEP, payload={})
 
 
+@idempotent_cron("weekly_email", window="week")
 async def run_weekly_email() -> None:
     db = get_service_role_client()
     queue = JobQueue(db=db)
     await queue.enqueue(job_type=JobType.WEEKLY_EMAIL, payload={})
 
 
+@idempotent_cron("reembed_reviewed_shops", window="day")
 async def run_reembed_reviewed_shops() -> None:
     db = get_service_role_client()
     queue = JobQueue(db=db)

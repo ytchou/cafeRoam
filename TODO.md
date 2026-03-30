@@ -2014,7 +2014,7 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 
 **Wave 3 — Scheduler mechanisms (parallel):**
 
-- [ ] Task 4: @idempotent_cron decorator + apply to cron handlers (DEV-103)
+- [x] Task 4: @idempotent_cron decorator + apply to cron handlers (DEV-103)
 - [ ] Task 6: Startup verification logging + get_scheduler_status (DEV-104)
 
 **Wave 4 — Registration + endpoint (parallel):**
