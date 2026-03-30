@@ -1,3 +1,4 @@
+import contextlib
 from typing import Any, cast
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -24,10 +25,8 @@ def _extract_taxonomy_tags(raw_tags: list[dict[str, Any]]) -> list[dict[str, Any
         raw = tag_row.get("taxonomy_tags")
         if not raw:
             continue
-        try:
+        with contextlib.suppress(ValidationError):
             result.append(TaxonomyTag(**raw).model_dump(by_alias=True))
-        except ValidationError:
-            pass
     return result
 
 
@@ -80,7 +79,9 @@ async def list_shops(
         camel = {to_camel(k): v for k, v in row.items()}
         camel["photoUrls"] = photo_urls
         camel["claimStatus"] = claim_status
-        camel["taxonomyTags"] = taxonomy_tags  # taxonomy_tags is not in _SHOP_LIST_COLUMNS; no shadowing risk
+        camel["taxonomyTags"] = (
+            taxonomy_tags  # taxonomy_tags is not in _SHOP_LIST_COLUMNS; no shadowing risk
+        )
         result.append(camel)
     return result
 
