@@ -74,7 +74,14 @@ vi.mock('@/lib/hooks/use-shops', () => ({
         address: '1 Coffee St',
         reviewCount: 10,
         photoUrls: [],
-        taxonomyTags: [{ id: 'wifi_available', label: 'WiFi', labelZh: '有WiFi', dimension: 'functionality' }],
+        taxonomyTags: [
+          {
+            id: 'wifi_available',
+            label: 'WiFi',
+            labelZh: '有WiFi',
+            dimension: 'functionality',
+          },
+        ],
         isOpen: true,
         cafenomadId: null,
         googlePlaceId: null,
@@ -97,7 +104,9 @@ vi.mock('@/lib/hooks/use-shops', () => ({
         address: '2 Coffee St',
         reviewCount: 5,
         photoUrls: [],
-        taxonomyTags: [{ id: 'quiet', label: 'Quiet', labelZh: '安靜', dimension: 'vibe' }],
+        taxonomyTags: [
+          { id: 'quiet', label: 'Quiet', labelZh: '安靜', dimension: 'vibe' },
+        ],
         isOpen: false,
         cafenomadId: null,
         googlePlaceId: null,
@@ -121,7 +130,12 @@ vi.mock('@/lib/hooks/use-shops', () => ({
         reviewCount: 20,
         photoUrls: [],
         taxonomyTags: [
-          { id: 'wifi_available', label: 'WiFi', labelZh: '有WiFi', dimension: 'functionality' },
+          {
+            id: 'wifi_available',
+            label: 'WiFi',
+            labelZh: '有WiFi',
+            dimension: 'functionality',
+          },
           { id: 'quiet', label: 'Quiet', labelZh: '安靜', dimension: 'vibe' },
         ],
         isOpen: true,
@@ -141,7 +155,7 @@ vi.mock('@/lib/hooks/use-shops', () => ({
         name: '老派咖啡 Old School',
         slug: 'old-school',
         latitude: 25.07,
-        longitude: 121.60,
+        longitude: 121.6,
         rating: 4.0,
         address: '4 Coffee St',
         reviewCount: 3,
@@ -277,7 +291,9 @@ describe('FindPage', () => {
     expect(screen.getByText('WiFi Cafe')).toBeInTheDocument();
     expect(screen.getByText('WiFi & Quiet Cafe')).toBeInTheDocument();
     expect(screen.queryByText('Quiet Place')).not.toBeInTheDocument();
-    expect(screen.queryByText('自由時光咖啡 Liberty Hour')).not.toBeInTheDocument();
+    expect(
+      screen.queryByText('自由時光咖啡 Liberty Hour')
+    ).not.toBeInTheDocument();
   });
 
   it('filters shops by open_now when that filter is active — excludes isOpen: false and isOpen: null', () => {
@@ -288,7 +304,9 @@ describe('FindPage', () => {
     expect(screen.getByText('WiFi Cafe')).toBeInTheDocument();
     expect(screen.getByText('WiFi & Quiet Cafe')).toBeInTheDocument();
     expect(screen.queryByText('Quiet Place')).not.toBeInTheDocument();
-    expect(screen.queryByText('自由時光咖啡 Liberty Hour')).not.toBeInTheDocument();
+    expect(
+      screen.queryByText('自由時光咖啡 Liberty Hour')
+    ).not.toBeInTheDocument();
     // isOpen: null (no opening_hours data) must also be excluded — !== true
     expect(screen.queryByText('老派咖啡 Old School')).not.toBeInTheDocument();
   });
@@ -301,6 +319,8 @@ describe('FindPage', () => {
     expect(screen.getByText('WiFi & Quiet Cafe')).toBeInTheDocument();
     expect(screen.queryByText('WiFi Cafe')).not.toBeInTheDocument();
     expect(screen.queryByText('Quiet Place')).not.toBeInTheDocument();
-    expect(screen.queryByText('自由時光咖啡 Liberty Hour')).not.toBeInTheDocument();
+    expect(
+      screen.queryByText('自由時光咖啡 Liberty Hour')
+    ).not.toBeInTheDocument();
   });
 });

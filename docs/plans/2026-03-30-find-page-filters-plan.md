@@ -15,6 +15,7 @@
 **Tech Stack:** FastAPI (backend), React/Next.js (frontend), Vitest (frontend tests), pytest (backend tests)
 
 **Acceptance Criteria:**
+
 - [ ] Clicking "WiFi" filter shows only shops tagged with `wifi_available`
 - [ ] Clicking "Open Now" shows only shops currently open (based on backend-computed `isOpen`)
 - [ ] Selecting multiple filters (e.g., WiFi + Quiet) shows only shops matching ALL selected filters
@@ -25,6 +26,7 @@
 ### Task 1: Backend — Write failing test for `list_shops` returning `taxonomyTags` and `isOpen`
 
 **Files:**
+
 - Modify: `backend/tests/api/test_shops.py`
 
 **Step 1: Write the failing test**
@@ -78,6 +80,7 @@ Expected: FAIL — `list_shops` doesn't return `taxonomyTags` or `isOpen`
 ### Task 2: Backend — Implement `list_shops` expansion
 
 **Files:**
+
 - Modify: `backend/api/shops.py:27-65`
 
 **Step 1: Add `opening_hours` to `_SHOP_LIST_COLUMNS`**
@@ -171,6 +174,7 @@ git commit -m "feat(DEV-114): expand list_shops with taxonomyTags and isOpen"
 ### Task 3: Frontend — Write failing test for filter-to-tag mapping
 
 **Files:**
+
 - Create: `components/filters/filter-map.ts`
 - Create: `components/filters/__tests__/filter-map.test.ts`
 
@@ -249,6 +253,7 @@ git commit -m "feat(DEV-115): add filter-to-taxonomy-tag mapping"
 ### Task 4: Frontend — Write failing test for shops memo filtering
 
 **Files:**
+
 - Modify: `app/__tests__/find-page.test.tsx`
 
 **Step 1: Write the failing test**
@@ -269,7 +274,9 @@ vi.mock('@/lib/hooks/use-shops', () => ({
         address: '1 Coffee St',
         reviewCount: 10,
         photoUrls: [],
-        taxonomyTags: [{ id: 'wifi_available', label: 'WiFi', labelZh: '有WiFi' }],
+        taxonomyTags: [
+          { id: 'wifi_available', label: 'WiFi', labelZh: '有WiFi' },
+        ],
         isOpen: true,
         cafenomadId: null,
         googlePlaceId: null,
@@ -389,6 +396,7 @@ Expected: FAIL — filter logic not implemented, all shops still shown
 ### Task 5: Frontend — Implement filter logic in shops memo
 
 **Files:**
+
 - Modify: `app/page.tsx:1-2, 50-83`
 
 **Step 1: Import the filter mapping**
@@ -415,15 +423,11 @@ const shops = useMemo(() => {
 
   // Apply tag-based filters (AND-combined)
   let filtered = base;
-  const tagFilters = filters
-    .map((f) => FILTER_TO_TAG_IDS[f])
-    .filter(Boolean);
+  const tagFilters = filters.map((f) => FILTER_TO_TAG_IDS[f]).filter(Boolean);
 
   if (tagFilters.length > 0) {
     filtered = filtered.filter((shop) => {
-      const shopTagIds = new Set(
-        (shop.taxonomyTags ?? []).map((t) => t.id)
-      );
+      const shopTagIds = new Set((shop.taxonomyTags ?? []).map((t) => t.id));
       return tagFilters.every((tagId) => shopTagIds.has(tagId));
     });
   }
@@ -544,17 +548,22 @@ graph TD
 ```
 
 **Wave 1** (parallel — no dependencies):
+
 - Task 1: Backend failing test for list_shops expansion
 - Task 3: Frontend filter-map test + implementation
 
 **Wave 2** (depends on Wave 1):
+
 - Task 2: Backend list_shops implementation <- Task 1
 
 **Wave 3** (depends on Wave 2):
+
 - Task 4: Frontend filter test <- Task 2 (needs backend shape)
 
 **Wave 4** (depends on Wave 2 + Wave 3):
+
 - Task 5: Frontend filter implementation <- Task 3, Task 4
 
 **Wave 5** (depends on Wave 4):
+
 - Task 6: Lint and type-check <- Task 5

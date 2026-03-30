@@ -40,6 +40,7 @@ export const FILTER_TO_TAG_IDS: Record<string, string> = {
 ```
 
 Special filters (not tag-based):
+
 - `open_now` -> `shop.isOpen === true`
 - `rating` -> sort by `shop.rating` descending
 
@@ -61,11 +62,11 @@ Special filters (not tag-based):
 
 ## Files Changed
 
-| File | Change |
-|------|--------|
-| `backend/api/shops.py` | Add tags join + opening_hours + isOpen to list endpoint |
-| `components/filters/filter-map.ts` | New: FILTER_TO_TAG_IDS mapping |
-| `app/page.tsx` | Apply filters in shops memo |
+| File                               | Change                                                  |
+| ---------------------------------- | ------------------------------------------------------- |
+| `backend/api/shops.py`             | Add tags join + opening_hours + isOpen to list endpoint |
+| `components/filters/filter-map.ts` | New: FILTER_TO_TAG_IDS mapping                          |
+| `app/page.tsx`                     | Apply filters in shops memo                             |
 
 ## Sub-issues
 

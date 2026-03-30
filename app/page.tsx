@@ -12,7 +12,10 @@ import { useUser } from '@/lib/hooks/use-user';
 import { useAnalytics } from '@/lib/posthog/use-analytics';
 import { trackSearch, trackSignupCtaClick } from '@/lib/analytics/ga4-events';
 import { haversineKm } from '@/lib/utils';
-import { FILTER_TO_TAG_IDS, type TagFilterId } from '@/components/filters/filter-map';
+import {
+  FILTER_TO_TAG_IDS,
+  type TagFilterId,
+} from '@/components/filters/filter-map';
 import { MapWithFallback } from '@/components/map/map-with-fallback';
 
 function FindPageContent() {
@@ -67,10 +70,15 @@ function FindPageContent() {
     if (tagFilters.length > 0) {
       // Pre-compute tag ID sets per shop to avoid Set construction inside the filter loop
       const shopTagSets = new Map(
-        filtered.map((shop) => [shop.id, new Set((shop.taxonomyTags ?? []).map((t) => t.id))])
+        filtered.map((shop) => [
+          shop.id,
+          new Set((shop.taxonomyTags ?? []).map((t) => t.id)),
+        ])
       );
       filtered = filtered.filter((shop) =>
-        tagFilters.every((tagId) => shopTagSets.get(shop.id)?.has(tagId) ?? false)
+        tagFilters.every(
+          (tagId) => shopTagSets.get(shop.id)?.has(tagId) ?? false
+        )
       );
     }
 

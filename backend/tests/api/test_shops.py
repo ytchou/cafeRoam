@@ -81,7 +81,10 @@ class TestShopsAPI:
                                         return_value=MagicMock(
                                             execute=MagicMock(
                                                 return_value=MagicMock(
-                                                    data={"id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890", "name": "山小孩咖啡"}
+                                                    data={
+                                                        "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+                                                        "name": "山小孩咖啡",
+                                                    }
                                                 )
                                             )
                                         )
@@ -357,7 +360,12 @@ class TestShopsAPI:
         assert len(data) == 1
         shop = data[0]
         assert shop["taxonomyTags"] == [
-            {"id": "wifi_available", "dimension": "functionality", "label": "WiFi Available", "labelZh": "提供 WiFi"}
+            {
+                "id": "wifi_available",
+                "dimension": "functionality",
+                "label": "WiFi Available",
+                "labelZh": "提供 WiFi",
+            }
         ]
         assert shop["isOpen"] is True
 
