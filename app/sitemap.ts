@@ -2,6 +2,8 @@ import type { MetadataRoute } from 'next';
 import { createAnonClient } from '@/lib/supabase/server';
 import { BASE_URL } from '@/lib/config';
 
+export const dynamic = 'force-dynamic';
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const supabase = createAnonClient();
 
