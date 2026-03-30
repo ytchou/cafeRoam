@@ -15,6 +15,7 @@ export interface Shop {
   photoUrls: string[];
   menuUrl: string | null;
   taxonomyTags: TaxonomyTag[];
+  isOpen?: boolean | null;
   cafenomadId: string | null;
   googlePlaceId: string | null;
   createdAt: string;

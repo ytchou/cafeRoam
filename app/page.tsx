@@ -12,6 +12,7 @@ import { useUser } from '@/lib/hooks/use-user';
 import { useAnalytics } from '@/lib/posthog/use-analytics';
 import { trackSearch, trackSignupCtaClick } from '@/lib/analytics/ga4-events';
 import { haversineKm } from '@/lib/utils';
+import { FILTER_TO_TAG_IDS } from '@/components/filters/filter-map';
 import { MapWithFallback } from '@/components/map/map-with-fallback';
 
 function FindPageContent() {
@@ -55,11 +56,33 @@ function FindPageContent() {
           ? searchResults
           : featuredShops
       : featuredShops;
-    if (filters.includes('rating')) {
-      return [...base].sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
+
+    // Apply tag-based filters (AND-combined)
+    const tagFilters = filters
+      .map((f) => FILTER_TO_TAG_IDS[f])
+      .filter(Boolean);
+
+    let filtered = base;
+    if (tagFilters.length > 0) {
+      filtered = filtered.filter((shop) => {
+        const shopTagIds = new Set((shop.taxonomyTags ?? []).map((t) => t.id));
+        return tagFilters.every((tagId) => shopTagIds.has(tagId));
+      });
     }
+
+    // Apply open_now filter
+    if (filters.includes('open_now')) {
+      filtered = filtered.filter((shop) => shop.isOpen === true);
+    }
+
+    // Apply rating sort
+    if (filters.includes('rating')) {
+      return [...filtered].sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
+    }
+
+    // Apply geo-sort if location available
     if (latitude != null && longitude != null) {
-      return [...base].sort((a, b) => {
+      return [...filtered].sort((a, b) => {
         const dA =
           a.latitude != null && a.longitude != null
             ? haversineKm(latitude, longitude, a.latitude, a.longitude)
@@ -71,7 +94,8 @@ function FindPageContent() {
         return dA - dB;
       });
     }
-    return base;
+
+    return filtered;
   }, [
     query,
     searchLoading,

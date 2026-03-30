@@ -2069,7 +2069,7 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 **Wave 3-4 — Frontend filter logic:**
 
 - [x] Task 4: Frontend filter test (DEV-115)
-- [ ] Task 5: Implement filter logic in shops memo (DEV-115)
+- [x] Task 5: Implement filter logic in shops memo (DEV-115)
 
 **Wave 5 — Validate:**
 
