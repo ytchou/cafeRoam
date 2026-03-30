@@ -48,32 +48,46 @@ test.describe('Mapbox GL JS performance under throttling', () => {
       await cdp.send('Emulation.setCPUThrottlingRate', { rate: THROTTLE_CPU_RATE });
       await cdp.send('Network.emulateNetworkConditions', SLOW_4G);
 
+      // Inject a timing tracker before navigation — monkey-patches Map construction
+      // to capture the Mapbox 'load' event time (fires after initial tiles render)
+      await page.addInitScript(`
+        window.__mapLoadMs = undefined;
+        var _navStart = Date.now();
+        var _checkMapbox = setInterval(function() {
+          if (!window.mapboxgl || !window.mapboxgl.Map) return;
+          clearInterval(_checkMapbox);
+          var OrigMap = window.mapboxgl.Map;
+          window.mapboxgl.Map = new Proxy(OrigMap, {
+            construct: function(target, args) {
+              var inst = Reflect.construct(target, args);
+              inst.on('load', function() {
+                window.__mapLoadMs = Date.now() - _navStart;
+              });
+              return inst;
+            }
+          });
+        }, 50);
+      `);
+
       const startTime = Date.now();
       await page.goto('/', { waitUntil: 'domcontentloaded' });
 
-      // Wait for Mapbox `load` event — fires when initial tiles have finished rendering
-      const tileRenderMs = await page.evaluate(() => {
-        return new Promise<number>((resolve, reject) => {
-          const started = Date.now();
-          const timeout = setTimeout(() => reject(new Error('Mapbox load timeout')), 15_000);
-          // @ts-expect-error mapboxgl is loaded by the app
-          if (typeof mapboxgl === 'undefined') {
-            // Fallback: wait for canvas as map may already be loaded
-            resolve(Date.now() - started);
-            return;
-          }
-          // Listen for the first map instance to emit 'load'
-          const origMap = (mapboxgl as { Map: new (...args: unknown[]) => unknown }).Map;
-          (mapboxgl as { Map: typeof origMap & { _lastInstance?: { on: (e: string, cb: () => void) => void } } }).Map._lastInstance?.on('load', () => {
-            clearTimeout(timeout);
-            resolve(Date.now() - started);
-          });
-        }).catch(() => Date.now() - startTime);
-      });
-
-      // Simulate a pan gesture while collecting FPS — measures interactive frame rate
+      // Wait for canvas to appear, then check for Mapbox load event timing
       const canvas = page.locator('canvas.mapboxgl-canvas');
       await canvas.waitFor({ state: 'visible', timeout: 15_000 });
+
+      // Wait up to 10s for the load event timing to be set
+      await page.waitForFunction(
+        '() => window.__mapLoadMs !== undefined',
+        { timeout: 10_000 }
+      ).catch(() => {}); // If load event never fires, fall back to canvas appearance time
+
+      const tileRenderMs = await page.evaluate(
+        (fallback: number) => (window as unknown as { __mapLoadMs?: number }).__mapLoadMs ?? Date.now() - fallback,
+        startTime
+      );
+
+      // Simulate a pan gesture while collecting FPS — measures interactive frame rate
       const box = await canvas.boundingBox();
 
       let panFpsData: number[] = [];
