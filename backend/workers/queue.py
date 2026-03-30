@@ -1,9 +1,11 @@
 from datetime import UTC, datetime, timedelta
 from typing import Any, cast
 
+import sentry_sdk
 import structlog
 from supabase import Client
 
+from core.config import settings
 from core.db import first
 from models.types import Job, JobStatus, JobType
 
@@ -135,3 +137,53 @@ class JobQueue:
                     "last_error": error,
                 }
             ).eq("id", job_id).execute()
+
+    async def reclaim_stuck_jobs(self) -> tuple[int, int]:
+        """Reclaim jobs stuck in CLAIMED status beyond the configured timeout.
+        Returns (reclaimed_count, failed_count)."""
+        response = self._db.rpc(
+            "reclaim_stuck_jobs",
+            {"p_timeout_minutes": settings.worker_stuck_job_timeout_minutes},
+        ).execute()
+        empty: dict[str, int] = {"reclaimed_count": 0, "failed_count": 0}
+        rows: list[dict[str, Any]] = cast("list[dict[str, Any]]", response.data or [])
+        row: dict[str, Any] = first(rows, "reclaim_stuck_jobs") if rows else empty
+        return (int(row["reclaimed_count"]), int(row["failed_count"]))
+
+    def acquire_cron_lock(self, job_name: str, window: str) -> bool:
+        """Attempt to acquire an idempotency lock for a cron job.
+        Returns True if lock acquired (first run in this window), False if already ran."""
+        now = datetime.now(UTC)
+        if window == "week":
+            window_start = (now - timedelta(days=now.weekday())).replace(
+                hour=0, minute=0, second=0, microsecond=0
+            )
+        elif window == "day":
+            window_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        else:
+            raise ValueError(f"Unknown cron window: {window!r}")
+
+        try:
+            response = (
+                self._db.table("cron_locks")
+                .upsert(
+                    {"job_name": job_name, "window_start": window_start.isoformat()},
+                    on_conflict="job_name,window_start",
+                    ignore_duplicates=True,
+                )
+                .execute()
+            )
+            return bool(response.data)
+        except Exception as exc:
+            logger.warning(
+                "Cron lock acquisition failed, proceeding",
+                job_name=job_name,
+                error=str(exc),
+            )
+            sentry_sdk.capture_exception(exc)
+            return True
+
+    async def cleanup_old_cron_locks(self, retention_days: int = 7) -> None:
+        """Delete cron_locks older than retention period."""
+        cutoff = (datetime.now(UTC) - timedelta(days=retention_days)).isoformat()
+        self._db.table("cron_locks").delete().lt("created_at", cutoff).execute()

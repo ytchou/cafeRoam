@@ -20,6 +20,7 @@ from api.claims import router as claims_router
 from api.explore import router as explore_router
 from api.feed import router as feed_router
 from api.followers import router as followers_router
+from api.health import router as health_router
 from api.lists import router as lists_router
 from api.maps import router as maps_router
 from api.owner import router as owner_router
@@ -56,9 +57,17 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Startup and shutdown events."""
     _init_sentry()
     logger.info("Starting CafeRoam API", environment=settings.environment)
+    app.state.scheduler = scheduler
     if settings.environment != "test":
         scheduler.start()
         logger.info("Scheduler started")
+        for job in scheduler.get_jobs():
+            logger.info(
+                "Scheduler job registered",
+                job_id=job.id,
+                next_run=str(job.next_run_time),
+            )
+        logger.info("Scheduler ready", total_jobs=len(scheduler.get_jobs()))
     yield
     if settings.environment != "test":
         scheduler.shutdown()
@@ -114,6 +123,7 @@ async def deep_health_check() -> JSONResponse:
     return JSONResponse(content={"status": status, "checks": checks}, status_code=status_code)
 
 
+app.include_router(health_router)
 app.include_router(auth_router)
 app.include_router(profile_router)
 app.include_router(shops_router)

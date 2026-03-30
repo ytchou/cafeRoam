@@ -2019,3 +2019,33 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 **Wave 5 — Observability:**
 
 - [ ] Task 7: Set up Better Stack monitors + verify PostHog/Sentry (DEV-99) — deferred, see DEV-100
+
+---
+
+## Scheduler Hardening (DEV-74)
+
+> **Design Doc:** [docs/designs/2026-03-30-scheduler-hardening-design.md](docs/designs/2026-03-30-scheduler-hardening-design.md)
+> **Plan:** [docs/plans/2026-03-30-scheduler-hardening-plan.md](docs/plans/2026-03-30-scheduler-hardening-plan.md)
+
+**Wave 1 — Foundation (parallel):**
+
+- [x] Task 1: DB migration — cron_locks table + reclaim_stuck_jobs RPC (DEV-101)
+- [x] Task 2: Add worker_stuck_job_timeout_minutes config (DEV-101)
+
+**Wave 2 — Queue layer:**
+
+- [x] Task 3: Add reclaim_stuck_jobs + cron lock methods to JobQueue (DEV-101)
+
+**Wave 3 — Scheduler mechanisms (parallel):**
+
+- [x] Task 4: @idempotent_cron decorator + apply to cron handlers (DEV-103)
+- [x] Task 6: Startup verification logging + get_scheduler_status (DEV-104)
+
+**Wave 4 — Registration + endpoint (parallel):**
+
+- [x] Task 5: Register reaper + wrap delete_expired_accounts (DEV-102)
+- [x] Task 7: /health/scheduler endpoint (DEV-104)
+
+**Wave 5 — Validate:**
+
+- [x] Task 8: Full backend test suite + lint (DEV-105)

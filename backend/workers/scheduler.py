@@ -1,5 +1,7 @@
 import asyncio
+from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime, timedelta
+from functools import wraps
 
 import sentry_sdk
 import structlog
@@ -36,9 +38,33 @@ _backoff_until: dict[JobType, datetime] = {}
 # Strong references to in-flight tasks prevent premature GC
 _tasks: set[asyncio.Task[None]] = set()
 
+# Last successful poll timestamp for health checks
+_last_poll_at: datetime | None = None
+
+# Last cron-lock cleanup timestamp — runs at most once per day
+_last_cron_cleanup: datetime | None = None
+
 # Taxonomy cache: (tags, expires_at)
 _taxonomy_cache: tuple[list[TaxonomyTag], datetime] | None = None
 _TAXONOMY_TTL = timedelta(minutes=5)
+
+
+def idempotent_cron(job_name: str, window: str) -> Callable[..., Callable[..., Awaitable[None]]]:
+    """Decorator that prevents cron jobs from double-firing within the same time window."""
+
+    def decorator(func: Callable[..., Awaitable[None]]) -> Callable[..., Awaitable[None]]:
+        @wraps(func)
+        async def wrapper(*args: object, **kwargs: object) -> None:
+            db = get_service_role_client()
+            queue = JobQueue(db=db)
+            if not queue.acquire_cron_lock(job_name, window=window):
+                logger.info("Cron already ran in this window, skipping", job_name=job_name)
+                return
+            await func(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
 
 
 def _get_cached_taxonomy(db: Client) -> list[TaxonomyTag]:
@@ -208,18 +234,21 @@ async def process_job_type(job_type: JobType) -> None:
         task.add_done_callback(_tasks.discard)
 
 
+@idempotent_cron("staleness_sweep", window="day")
 async def run_staleness_sweep() -> None:
     db = get_service_role_client()
     queue = JobQueue(db=db)
     await queue.enqueue(job_type=JobType.STALENESS_SWEEP, payload={})
 
 
+@idempotent_cron("weekly_email", window="week")
 async def run_weekly_email() -> None:
     db = get_service_role_client()
     queue = JobQueue(db=db)
     await queue.enqueue(job_type=JobType.WEEKLY_EMAIL, payload={})
 
 
+@idempotent_cron("reembed_reviewed_shops", window="day")
 async def run_reembed_reviewed_shops() -> None:
     db = get_service_role_client()
     queue = JobQueue(db=db)
@@ -228,6 +257,7 @@ async def run_reembed_reviewed_shops() -> None:
 
 async def poll_pending_job_types() -> None:
     """Single-poll loop: one DB query to find pending types, then dispatch each."""
+    global _last_poll_at
     try:
         db = get_service_role_client()
         queue = JobQueue(db=db)
@@ -240,9 +270,61 @@ async def poll_pending_job_types() -> None:
             if isinstance(exc, Exception):
                 logger.error("process_job_type failed during poll", error=str(exc))
                 sentry_sdk.capture_exception(exc)
+        _last_poll_at = datetime.now(UTC)
     except Exception as e:
         logger.error("Poll failed", error=str(e))
         sentry_sdk.capture_exception(e)
+
+
+async def reclaim_stuck_jobs() -> None:
+    """Reclaim jobs stuck in CLAIMED status."""
+    try:
+        db = get_service_role_client()
+        queue = JobQueue(db=db)
+        reclaimed, failed = await queue.reclaim_stuck_jobs()
+        if reclaimed > 0 or failed > 0:
+            logger.info(
+                "Stuck jobs reclaimed",
+                reclaimed_count=reclaimed,
+                failed_count=failed,
+            )
+    except Exception as e:
+        logger.error("Stuck job reaper failed", error=str(e))
+        sentry_sdk.capture_exception(e)
+
+    global _last_cron_cleanup
+    now = datetime.now(UTC)
+    if _last_cron_cleanup is None or (now - _last_cron_cleanup).total_seconds() >= 86400:
+        try:
+            db = get_service_role_client()
+            queue = JobQueue(db=db)
+            await queue.cleanup_old_cron_locks(retention_days=7)
+            _last_cron_cleanup = now
+        except Exception as e:
+            logger.error("Cron lock cleanup failed", error=str(e))
+            sentry_sdk.capture_exception(e)
+
+
+@idempotent_cron("delete_expired_accounts", window="day")
+async def _run_delete_expired_accounts() -> None:
+    await delete_expired_accounts()
+
+
+def get_scheduler_status(scheduler: AsyncIOScheduler) -> dict[str, object]:
+    """Return scheduler health status for the /health/scheduler endpoint."""
+    jobs = scheduler.get_jobs()
+    return {
+        "status": "ok",
+        "registered_jobs": len(jobs),
+        "jobs": [
+            {
+                "id": job.id,
+                "next_run": str(job.next_run_time) if job.next_run_time else None,
+            }
+            for job in jobs
+        ],
+        "last_poll_at": _last_poll_at.isoformat() if _last_poll_at else None,
+    }
 
 
 def create_scheduler() -> AsyncIOScheduler:
@@ -262,7 +344,7 @@ def create_scheduler() -> AsyncIOScheduler:
         id="weekly_email",
     )
     scheduler.add_job(
-        delete_expired_accounts,
+        _run_delete_expired_accounts,
         "cron",
         hour=4,
         id="delete_expired_accounts",
@@ -283,6 +365,15 @@ def create_scheduler() -> AsyncIOScheduler:
         max_instances=1,
         coalesce=True,
         misfire_grace_time=settings.worker_poll_interval_seconds,
+    )
+
+    scheduler.add_job(
+        reclaim_stuck_jobs,
+        "interval",
+        minutes=5,
+        id="reclaim_stuck_jobs",
+        max_instances=1,
+        coalesce=True,
     )
 
     return scheduler
