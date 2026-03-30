@@ -230,11 +230,78 @@ class TestShopsAPI:
         data = response.json()
         assert data["communitySummary"] is None
 
+    def test_user_browsing_shop_list_sees_taxonomy_tag_badges(self):
+        """A user browsing the shop list sees tag badges — GET /shops must include taxonomyTags from shop_tags JOIN."""
+        shop_data = [
+            {
+                **SHOP_ROW,
+                "shop_photos": [],
+                "shop_claims": [],
+                "shop_tags": [
+                    {
+                        "tag_id": "quiet",
+                        "taxonomy_tags": {
+                            "id": "quiet",
+                            "dimension": "ambience",
+                            "label": "Quiet",
+                            "label_zh": "安靜",
+                        },
+                    }
+                ],
+            }
+        ]
+        chain = _simple_select_chain(shop_data)
+
+        with patch("api.shops.get_anon_client") as mock_sb:
+            mock_sb.return_value = MagicMock(table=MagicMock(return_value=chain))
+            response = client.get("/shops")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data) == 1
+        assert "taxonomyTags" in data[0]
+        assert data[0]["taxonomyTags"] == [
+            {"id": "quiet", "dimension": "ambience", "label": "Quiet", "labelZh": "安靜"}
+        ]
+
+    def test_user_browsing_shop_list_sees_empty_tags_when_shop_has_none(self):
+        """A shop with no tags returns an empty taxonomyTags array, not a missing key."""
+        shop_data = [{**SHOP_ROW, "shop_photos": [], "shop_claims": [], "shop_tags": []}]
+        chain = _simple_select_chain(shop_data)
+
+        with patch("api.shops.get_anon_client") as mock_sb:
+            mock_sb.return_value = MagicMock(table=MagicMock(return_value=chain))
+            response = client.get("/shops")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data[0]["taxonomyTags"] == []
+
+    def test_user_browsing_shop_list_sees_empty_tags_when_join_row_is_null(self):
+        """A shop with a broken shop_tags join row still shows an empty tag list, not an error."""
+        shop_data = [
+            {
+                **SHOP_ROW,
+                "shop_photos": [],
+                "shop_claims": [],
+                "shop_tags": [{"tag_id": "orphaned", "taxonomy_tags": None}],
+            }
+        ]
+        chain = _simple_select_chain(shop_data)
+
+        with patch("api.shops.get_anon_client") as mock_sb:
+            mock_sb.return_value = MagicMock(table=MagicMock(return_value=chain))
+            response = client.get("/shops")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data[0]["taxonomyTags"] == []
+
     def test_list_shops_featured_returns_live_shops_only(self):
         """GET /shops?featured=true filters to processing_status=live shops."""
         live_shops = [
-            {**SHOP_ROW, "id": "shop-001"},
-            {**SHOP_ROW, "id": "shop-002"},
+            {**SHOP_ROW, "id": "shop-001", "shop_photos": [], "shop_claims": [], "shop_tags": []},
+            {**SHOP_ROW, "id": "shop-002", "shop_photos": [], "shop_claims": [], "shop_tags": []},
         ]
 
         chain = _simple_select_chain(live_shops)
@@ -246,6 +313,7 @@ class TestShopsAPI:
         assert response.status_code == 200
         data = response.json()
         assert len(data) == 2
+        assert data[0]["taxonomyTags"] == []
         # The chain must have had .eq("processing_status", "live") applied
         chain.eq.assert_any_call("processing_status", "live")
         chain.limit.assert_called()

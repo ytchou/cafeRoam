@@ -1,6 +1,8 @@
+import contextlib
 from typing import Any, cast
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import ValidationError
 from pydantic.alias_generators import to_camel
 
 from api.deps import get_admin_db, get_current_user, get_optional_user, get_user_db
@@ -15,6 +17,17 @@ from models.types import (
 )
 
 router = APIRouter(prefix="/shops", tags=["shops"])
+
+
+def _extract_taxonomy_tags(raw_tags: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    result = []
+    for tag_row in raw_tags:
+        raw = tag_row.get("taxonomy_tags")
+        if not raw:
+            continue
+        with contextlib.suppress(ValidationError):
+            result.append(TaxonomyTag(**raw).model_dump(by_alias=True))
+    return result
 
 
 def _extract_display_name(row: dict[str, Any]) -> str | None:
@@ -45,7 +58,10 @@ async def list_shops(
 ) -> list[Any]:
     """List shops. Public — no auth required."""
     db = get_anon_client()
-    query = db.table("shops").select(f"{_SHOP_LIST_COLUMNS}, shop_photos(url), shop_claims(status)")
+    query = db.table("shops").select(
+        f"{_SHOP_LIST_COLUMNS}, shop_photos(url), shop_claims(status), "
+        "shop_tags(tag_id, taxonomy_tags(id, dimension, label, label_zh))"
+    )
     if city:
         query = query.eq("city", city)
     if featured:
@@ -58,9 +74,14 @@ async def list_shops(
         photo_urls = [p["url"] for p in (row.pop("shop_photos", None) or [])]
         raw_claims = row.pop("shop_claims", None) or []
         claim_status = first(raw_claims, "shop_claims")["status"] if raw_claims else None
+        raw_tags = row.pop("shop_tags", None) or []
+        taxonomy_tags = _extract_taxonomy_tags(raw_tags)
         camel = {to_camel(k): v for k, v in row.items()}
         camel["photoUrls"] = photo_urls
         camel["claimStatus"] = claim_status
+        camel["taxonomyTags"] = (
+            taxonomy_tags  # taxonomy_tags is not in _SHOP_LIST_COLUMNS; no shadowing risk
+        )
         result.append(camel)
     return result
 
@@ -94,11 +115,7 @@ async def get_shop(shop_id: str) -> Any:
     approved_claim = next((c for c in raw_claims if c.get("status") == "approved"), None)
     claim_status = first(raw_claims, "shop_claims")["status"] if raw_claims else None
     owner_user_id: str | None = approved_claim.get("user_id") if approved_claim else None
-    taxonomy_tags = [
-        TaxonomyTag(**row["taxonomy_tags"]).model_dump(by_alias=True)
-        for row in raw_tags
-        if row.get("taxonomy_tags")
-    ]
+    taxonomy_tags = _extract_taxonomy_tags(raw_tags)
     mode_scores = {
         "work": shop.pop("mode_work", None),
         "rest": shop.pop("mode_rest", None),
