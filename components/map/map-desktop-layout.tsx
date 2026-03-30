@@ -15,7 +15,7 @@ interface MapDesktopLayoutProps {
   shops: MappableLayoutShop[];
   count: number;
   selectedShopId: string | null;
-  onShopClick: (id: string) => void;
+  onShopClick: (id: string | null) => void;
   onCardClick?: (id: string) => void;
   query: string;
   activeFilters: string[];

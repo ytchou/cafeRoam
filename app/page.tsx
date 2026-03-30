@@ -142,7 +142,7 @@ function FindPageContent() {
   return (
     <MapWithFallback
       {...layoutProps}
-      onShopClick={isDesktop ? handleShopNavigate : setSelectedShopId}
+      onShopClick={setSelectedShopId}
       view={view}
       onCardClick={handleShopNavigate}
       isDesktop={isDesktop}

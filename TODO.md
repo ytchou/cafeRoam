@@ -11,7 +11,7 @@
 > **Plan:** [docs/plans/2026-03-30-map-pin-progressive-disclosure-plan.md](docs/plans/2026-03-30-map-pin-progressive-disclosure-plan.md)
 
 **Wave 1 — Foundation:**
-- [ ] Task 1: Update `onShopClick` type to `string | null` + fix `app/page.tsx` wiring (DEV-116)
+- [x] Task 1: Update `onShopClick` type to `string | null` + fix `app/page.tsx` wiring (DEV-116)
 
 **Wave 2 — Failing Tests (parallel):**
 - [ ] Task 2: Write failing tests for ShopPreviewCard (DEV-118)
