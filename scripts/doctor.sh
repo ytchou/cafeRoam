@@ -109,7 +109,7 @@ check_env_var_localhost "${PROJECT_ROOT}/backend/.env" "SUPABASE_URL" \
 
 check "ANON_SALT is set" \
   "grep -q '^ANON_SALT=.' '${PROJECT_ROOT}/backend/.env'" \
-  "Add ANON_SALT=<random-secret> to backend/.env"
+  "Add ANON_SALT=\$(openssl rand -hex 32) to backend/.env"
 
 check "ANTHROPIC_API_KEY is set (required for LLM enrichment and photo classification)" \
   "grep -q '^ANTHROPIC_API_KEY=.' '${PROJECT_ROOT}/backend/.env'" \
