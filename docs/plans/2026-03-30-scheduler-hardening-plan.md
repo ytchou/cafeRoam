@@ -15,6 +15,7 @@
 **Tech Stack:** Python 3.12, APScheduler, FastAPI, Supabase (Postgres), structlog, pytest
 
 **Acceptance Criteria:**
+
 - [ ] Jobs stuck in `CLAIMED` status for >10 min are automatically reclaimed and retried
 - [ ] Cron jobs (staleness_sweep, weekly_email, etc.) do not double-fire after a Railway dyno restart
 - [ ] `/health/scheduler` endpoint returns registered job count and last poll timestamp
@@ -27,6 +28,7 @@
 **Linear:** DEV-101
 
 **Files:**
+
 - Create: `supabase/migrations/20260330000001_cron_locks_and_reclaim_stuck_jobs.sql`
 
 No test needed — this is a SQL migration. Verified by `supabase db push` + subsequent tasks that call the RPC.
@@ -92,9 +94,11 @@ Expected: Migration applied successfully.
 **Step 3: Verify the objects exist**
 
 Run:
+
 ```bash
 cd /Users/ytchou/Project/caferoam && supabase db diff --use-migra 2>/dev/null || echo "No diff = clean"
 ```
+
 Expected: No diff (migration fully applied).
 
 **Step 4: Commit**
@@ -111,6 +115,7 @@ git commit -m "infra(DEV-101): cron_locks table + reclaim_stuck_jobs RPC"
 **Linear:** DEV-101 (same ticket — config is part of the foundation)
 
 **Files:**
+
 - Modify: `backend/core/config.py:63` (after `worker_concurrency_default`)
 
 No test needed — Pydantic settings field with a default value, verified by usage in subsequent tasks.
@@ -138,6 +143,7 @@ git commit -m "config(DEV-101): add worker_stuck_job_timeout_minutes setting"
 **Linear:** DEV-101 (queue layer for the foundation)
 
 **Files:**
+
 - Modify: `backend/workers/queue.py` (add two methods at end of class)
 - Test: `backend/tests/workers/test_queue_hardening.py` (new file)
 
@@ -305,6 +311,7 @@ git commit -m "feat(DEV-101): add reclaim_stuck_jobs + cron lock methods to JobQ
 **Linear:** DEV-103
 
 **Files:**
+
 - Modify: `backend/workers/scheduler.py` (add decorator, wrap cron launchers)
 - Test: `backend/tests/workers/test_idempotent_cron.py` (new file)
 
@@ -405,6 +412,7 @@ def idempotent_cron(job_name: str, window: str) -> Callable[..., Callable[..., A
 Then wrap the cron launcher functions. Replace the existing functions:
 
 **`run_staleness_sweep`** (around line 219):
+
 ```python
 @idempotent_cron("staleness_sweep", window="day")
 async def run_staleness_sweep() -> None:
@@ -414,6 +422,7 @@ async def run_staleness_sweep() -> None:
 ```
 
 **`run_weekly_email`** (around line 225):
+
 ```python
 @idempotent_cron("weekly_email", window="week")
 async def run_weekly_email() -> None:
@@ -423,6 +432,7 @@ async def run_weekly_email() -> None:
 ```
 
 **`run_reembed_reviewed_shops`** (around line 231):
+
 ```python
 @idempotent_cron("reembed_reviewed_shops", window="day")
 async def run_reembed_reviewed_shops() -> None:
@@ -452,6 +462,7 @@ git commit -m "feat(DEV-103): @idempotent_cron decorator with day/week window de
 **Linear:** DEV-102
 
 **Files:**
+
 - Modify: `backend/workers/scheduler.py` (add reaper function, register in `create_scheduler`)
 - Modify: `backend/tests/workers/test_scheduler.py` (add reaper registration test)
 
@@ -527,6 +538,7 @@ In `create_scheduler()`, add the reaper job registration (after the `poll_pendin
 And change the `delete_expired_accounts` registration to use the wrapped version:
 
 Replace:
+
 ```python
     scheduler.add_job(
         delete_expired_accounts,
@@ -537,6 +549,7 @@ Replace:
 ```
 
 With:
+
 ```python
     scheduler.add_job(
         _run_delete_expired_accounts,
@@ -565,6 +578,7 @@ git commit -m "feat(DEV-102): register stuck-job reaper + wrap delete_expired_ac
 **Linear:** DEV-104
 
 **Files:**
+
 - Modify: `backend/main.py:57-64` (lifespan — add logging after `scheduler.start()`)
 - Modify: `backend/workers/scheduler.py` (add `last_poll_at` module variable, update in `poll_pending_job_types`)
 
@@ -677,6 +691,7 @@ git commit -m "feat(DEV-104): startup verification logging + get_scheduler_statu
 **Linear:** DEV-104
 
 **Files:**
+
 - Modify: `backend/main.py` (add `/health/scheduler` route after existing health routes)
 - Test: `backend/tests/api/test_health_scheduler.py` (new file)
 
@@ -776,6 +791,7 @@ Expected: No issues.
 **Step 3: Fix any issues and commit**
 
 If lint issues found, fix and commit:
+
 ```bash
 cd /Users/ytchou/Project/caferoam/backend && ruff format .
 git add -u && git commit -m "style(DEV-74): fix lint issues from scheduler hardening"
@@ -818,19 +834,24 @@ graph TD
 ```
 
 **Wave 1** (parallel — no dependencies):
+
 - Task 1: DB Migration (cron_locks + reclaim_stuck_jobs RPC)
 - Task 2: Config setting (worker_stuck_job_timeout_minutes)
 
 **Wave 2** (depends on Wave 1):
+
 - Task 3: Queue methods (reclaim_stuck_jobs + acquire_cron_lock + cleanup) ← Task 1, 2
 
 **Wave 3** (parallel — depends on Wave 2):
+
 - Task 4: @idempotent_cron decorator + apply to cron handlers ← Task 3
 - Task 6: Startup verification logging + get_scheduler_status ← Task 3
 
 **Wave 4** (parallel — depends on Wave 3):
+
 - Task 5: Register reaper + wrap delete_expired_accounts ← Task 4
 - Task 7: /health/scheduler endpoint ← Task 6
 
 **Wave 5** (sequential — depends on Wave 4):
+
 - Task 8: Full backend test suite + lint ← Task 5, 7
