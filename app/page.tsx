@@ -57,26 +57,30 @@ function FindPageContent() {
           : featuredShops
       : featuredShops;
 
-    // Apply tag-based filters (AND-combined)
+    // Derive tag-based filters: only filters present in the mapping (excludes special filters)
+    const activeFiltersSet = new Set(filters);
     const tagFilters = filters
-      .map((f) => FILTER_TO_TAG_IDS[f])
-      .filter(Boolean);
+      .filter((f) => f in FILTER_TO_TAG_IDS)
+      .map((f) => FILTER_TO_TAG_IDS[f]);
 
     let filtered = base;
     if (tagFilters.length > 0) {
-      filtered = filtered.filter((shop) => {
-        const shopTagIds = new Set((shop.taxonomyTags ?? []).map((t) => t.id));
-        return tagFilters.every((tagId) => shopTagIds.has(tagId));
-      });
+      // Pre-compute tag ID sets per shop to avoid Set construction inside the filter loop
+      const shopTagSets = new Map(
+        filtered.map((shop) => [shop.id, new Set((shop.taxonomyTags ?? []).map((t) => t.id))])
+      );
+      filtered = filtered.filter((shop) =>
+        tagFilters.every((tagId) => shopTagSets.get(shop.id)?.has(tagId) ?? false)
+      );
     }
 
     // Apply open_now filter
-    if (filters.includes('open_now')) {
+    if (activeFiltersSet.has('open_now')) {
       filtered = filtered.filter((shop) => shop.isOpen === true);
     }
 
     // Apply rating sort
-    if (filters.includes('rating')) {
+    if (activeFiltersSet.has('rating')) {
       return [...filtered].sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
     }
 
