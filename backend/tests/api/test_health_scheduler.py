@@ -1,25 +1,34 @@
-from unittest.mock import patch
+from unittest.mock import MagicMock
 
 from fastapi.testclient import TestClient
 
+import main
+from api.deps import require_admin
+
 
 class TestHealthScheduler:
-    def test_returns_scheduler_status(self):
-        """GET /health/scheduler returns job count and last poll timestamp."""
-        mock_status = {
-            "status": "ok",
-            "registered_jobs": 6,
-            "jobs": [
-                {"id": "poll_pending_jobs", "next_run": "2026-03-30 12:00:05+08:00"},
-                {"id": "staleness_sweep", "next_run": "2026-03-31 03:00:00+08:00"},
-            ],
-            "last_poll_at": "2026-03-30T04:00:00+00:00",
-        }
-        with patch("main.get_scheduler_status", return_value=mock_status):
-            from main import app
+    def test_scheduler_health_reports_registered_jobs(self):
+        """When the scheduler has running jobs, the health endpoint reports their IDs and next run times."""
+        mock_job = MagicMock()
+        mock_job.id = "poll_pending_jobs"
+        mock_job.next_run_time = None
 
-            client = TestClient(app)
-            response = client.get("/health/scheduler")
+        # Override admin auth — test infrastructure, not auth logic
+        main.app.dependency_overrides[require_admin] = lambda: {"id": "test-admin"}
+        # Set scheduler on app state (normally set in lifespan on startup)
+        main.app.state.scheduler = main.scheduler
+
+        try:
+            # Mock at APScheduler's get_jobs boundary (third-party library)
+            original_get_jobs = main.scheduler.get_jobs
+            main.scheduler.get_jobs = lambda: [mock_job] * 6  # type: ignore[method-assign]
+            try:
+                client = TestClient(main.app)
+                response = client.get("/health/scheduler")
+            finally:
+                main.scheduler.get_jobs = original_get_jobs
+        finally:
+            main.app.dependency_overrides.pop(require_admin, None)
 
         assert response.status_code == 200
         data = response.json()

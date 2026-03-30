@@ -34,11 +34,12 @@ class TestSchedulerReaper:
         assert job is not None
 
     def test_delete_expired_accounts_has_idempotency_wrapper(self):
-        """delete_expired_accounts is wrapped with @idempotent_cron to prevent double-fire."""
+        """delete_expired_accounts cannot double-fire within a day — the idempotency wrapper is applied."""
         scheduler = create_scheduler()
         job = scheduler.get_job("delete_expired_accounts")
         assert job is not None
-        assert "delete_expired_accounts" in str(job.func)
+        # @wraps preserves __wrapped__ on the original function; its presence confirms a decorator was applied
+        assert hasattr(job.func, "__wrapped__"), "delete_expired_accounts must be wrapped by @idempotent_cron"
 
 
 class TestSchedulerStatus:
