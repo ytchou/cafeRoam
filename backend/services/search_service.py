@@ -60,7 +60,7 @@ class SearchService:
             if cached and not cached.is_expired:
                 await self._cache.increment_hit(cached.id)
                 logger.info(
-                    "search_cache",
+                    "Search cache hit",
                     cache_hit=True,
                     cache_tier="exact",
                     query_hash=cache_key[:8],
@@ -78,7 +78,7 @@ class SearchService:
             if similar and not similar.is_expired:
                 await self._cache.increment_hit(similar.id)
                 logger.info(
-                    "search_cache",
+                    "Search cache hit",
                     cache_hit=True,
                     cache_tier="semantic",
                     query_hash=cache_key[:8],
@@ -93,14 +93,14 @@ class SearchService:
         if self._cache is not None:
             serialized = [r.model_dump(by_alias=True, mode="json") for r in results]
             await self._cache.store(cache_key, normalized, mode, query_embedding, serialized)
+            logger.info(
+                "Search cache miss",
+                cache_hit=False,
+                cache_tier="miss",
+                query_hash=cache_key[:8],
+                mode=mode,
+            )
 
-        logger.info(
-            "search_cache",
-            cache_hit=False,
-            cache_tier="miss",
-            query_hash=cache_key[:8],
-            mode=mode,
-        )
         return SearchResponse(results=results, cache_hit=False)
 
     async def _full_search(
