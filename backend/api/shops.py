@@ -80,7 +80,7 @@ async def list_shops(
         camel = {to_camel(k): v for k, v in row.items()}
         camel["photoUrls"] = photo_urls
         camel["claimStatus"] = claim_status
-        camel["taxonomyTags"] = taxonomy_tags
+        camel["taxonomyTags"] = taxonomy_tags  # taxonomy_tags is not in _SHOP_LIST_COLUMNS; no shadowing risk
         result.append(camel)
     return result
 

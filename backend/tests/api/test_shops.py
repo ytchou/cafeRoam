@@ -277,8 +277,8 @@ class TestShopsAPI:
         data = response.json()
         assert data[0]["taxonomyTags"] == []
 
-    def test_user_browsing_shop_list_skips_tags_with_null_taxonomy_data(self):
-        """A shop_tags row with a null taxonomy_tags join is silently skipped."""
+    def test_user_browsing_shop_list_sees_empty_tags_when_join_row_is_null(self):
+        """A shop with a broken shop_tags join row still shows an empty tag list, not an error."""
         shop_data = [
             {
                 **SHOP_ROW,
