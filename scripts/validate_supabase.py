@@ -32,6 +32,8 @@ class CheckResult:
 
 # -- Expected schema -----------------------------------------------------------
 
+# 76 = actual .sql file count in supabase/migrations/ as of 2026-03-30.
+# (Design doc draft showed 78 but that included non-.sql files; verified with ls *.sql | wc -l.)
 EXPECTED_MIN_MIGRATIONS = 76
 
 EXPECTED_TABLES = {
@@ -62,11 +64,19 @@ EXPECTED_TRIGGERS = {
 
 EXPECTED_BUCKETS = {"checkin-photos", "menu-photos", "avatars", "claim-proofs"}
 
+# Spot-check critical columns on key tables (column name only — types vary across Postgres versions).
+CRITICAL_COLUMNS: dict[str, list[str]] = {
+    "shops": ["id", "name", "embedding"],
+    "check_ins": ["id", "user_id", "shop_id", "created_at"],
+    "lists": ["id", "user_id", "name"],
+    "search_events": ["id", "query", "created_at"],
+}
+
 
 # -- Check functions -----------------------------------------------------------
 
 def check_schema_parity(cursor) -> list[CheckResult]:
-    """Verify migration count and expected tables exist."""
+    """Verify migration count, expected tables, and critical column spot-checks."""
     results = []
 
     # 1. Migration count
@@ -93,6 +103,29 @@ def check_schema_parity(cursor) -> list[CheckResult]:
         name="Expected tables",
         passed=len(missing) == 0,
         details=f"Missing: {sorted(missing)}" if missing else f"All {len(EXPECTED_TABLES)} expected tables present",
+    ))
+
+    # 3. Critical column spot-checks
+    cursor.execute(
+        "SELECT table_name, column_name "
+        "FROM information_schema.columns "
+        "WHERE table_schema = 'public' "
+        "AND table_name = ANY(%s)",
+        (list(CRITICAL_COLUMNS.keys()),),
+    )
+    present = {(row[0], row[1]) for row in cursor.fetchall()}
+    missing_cols = [
+        f"{table}.{col}"
+        for table, cols in CRITICAL_COLUMNS.items()
+        for col in cols
+        if (table, col) not in present
+    ]
+    results.append(CheckResult(
+        category="Schema",
+        name="Critical column spot-check",
+        passed=len(missing_cols) == 0,
+        details=f"Missing critical columns: {missing_cols}" if missing_cols
+            else f"All critical columns present ({sum(len(c) for c in CRITICAL_COLUMNS.values())} checked)",
     ))
 
     return results
@@ -213,6 +246,8 @@ def check_pgvector(cursor) -> list[CheckResult]:
     ))
 
     # 3. Test cosine similarity query
+    # A successful query (even with no rows) confirms vector ops are functional.
+    # "No rows" means no embeddings loaded yet — not a configuration error.
     if has_extension:
         try:
             cursor.execute(
@@ -220,8 +255,8 @@ def check_pgvector(cursor) -> list[CheckResult]:
                 "AS similarity FROM shops WHERE embedding IS NOT NULL LIMIT 1"
             )
             row = cursor.fetchone()
-            query_works = row is not None
-            details = f"Query returned similarity={row[0]:.4f}" if query_works else "No rows with embeddings found"
+            query_works = True
+            details = f"Query returned similarity={row[0]:.4f}" if row else "Vector operations functional (no embeddings loaded yet)"
         except Exception as e:
             query_works = False
             details = f"Query failed: {e}"
@@ -243,15 +278,16 @@ def check_pgbouncer_compat(cursor) -> list[CheckResult]:
     """Check for SET LOCAL usage in user-defined functions.
 
     SET LOCAL inside PL/pgSQL function bodies is pgBouncer-safe (scoped to
-    the calling transaction). SET LOCAL as standalone SQL statements is NOT
-    safe under pgBouncer transaction mode.
+    the calling transaction). SET LOCAL in non-PL/pgSQL functions (e.g.,
+    language sql) is NOT safe under pgBouncer transaction mode.
     """
     results = []
 
     cursor.execute(
-        "SELECT p.proname, pg_get_functiondef(p.oid) "
+        "SELECT p.proname, pg_get_functiondef(p.oid), l.lanname "
         "FROM pg_proc p "
         "JOIN pg_namespace n ON n.oid = p.pronamespace "
+        "JOIN pg_language l ON l.oid = p.prolang "
         "WHERE n.nspname = 'public' "
         "AND p.prokind = 'f' "
         "AND pg_get_functiondef(p.oid) ILIKE '%SET LOCAL%'"
@@ -265,14 +301,28 @@ def check_pgbouncer_compat(cursor) -> list[CheckResult]:
             passed=True,
             details="No functions use SET LOCAL — no pgBouncer risk",
         ))
+        return results
+
+    unsafe = [f[0] for f in functions if f[2] != "plpgsql"]
+    safe = [f[0] for f in functions if f[2] == "plpgsql"]
+
+    if unsafe:
+        results.append(CheckResult(
+            category="pgBouncer",
+            name="SET LOCAL in function bodies",
+            passed=False,
+            details=(
+                f"Unsafe SET LOCAL in non-PL/pgSQL functions: {', '.join(unsafe)}. "
+                f"Move SET LOCAL inside a PL/pgSQL BEGIN...END block."
+            ),
+        ))
     else:
-        func_names = [f[0] for f in functions]
         results.append(CheckResult(
             category="pgBouncer",
             name="SET LOCAL in function bodies",
             passed=True,
             details=(
-                f"Found SET LOCAL in: {', '.join(func_names)}. "
+                f"Found SET LOCAL in: {', '.join(safe)}. "
                 f"All inside PL/pgSQL function bodies — pgBouncer-safe."
             ),
         ))
