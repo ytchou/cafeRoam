@@ -196,4 +196,50 @@ describe('a user on the desktop map view', () => {
     expect(onShopClick).toHaveBeenCalledWith('shop-aa11bb');
     expect(onCardClick).not.toHaveBeenCalled();
   });
+
+  it('a user clicking a pin sees the preview card with the shop details', () => {
+    render(
+      <MapDesktopLayout
+        {...defaultProps}
+        selectedShopId="shop-aa11bb"
+        onCardClick={vi.fn()}
+      />
+    );
+    expect(screen.getByLabelText('Close preview')).toBeInTheDocument();
+    expect(
+      screen.getAllByText('晨光咖啡 Morning Glow').length
+    ).toBeGreaterThanOrEqual(2); // panel card + preview card
+  });
+
+  it('a user does not see a preview card when no pin is selected', () => {
+    render(<MapDesktopLayout {...defaultProps} selectedShopId={null} />);
+    expect(screen.queryByLabelText('Close preview')).not.toBeInTheDocument();
+  });
+
+  it('a user clicking the X button on the preview card calls onShopClick(null)', async () => {
+    const onShopClick = vi.fn();
+    render(
+      <MapDesktopLayout
+        {...defaultProps}
+        selectedShopId="shop-aa11bb"
+        onShopClick={onShopClick}
+        onCardClick={vi.fn()}
+      />
+    );
+    await userEvent.click(screen.getByLabelText('Close preview'));
+    expect(onShopClick).toHaveBeenCalledWith(null);
+  });
+
+  it('a user clicking View Details on the preview card triggers navigation via onCardClick', async () => {
+    const onCardClick = vi.fn();
+    render(
+      <MapDesktopLayout
+        {...defaultProps}
+        selectedShopId="shop-aa11bb"
+        onCardClick={onCardClick}
+      />
+    );
+    await userEvent.click(screen.getByRole('button', { name: /view details/i }));
+    expect(onCardClick).toHaveBeenCalledWith('shop-aa11bb');
+  });
 });
