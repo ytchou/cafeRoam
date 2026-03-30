@@ -2010,7 +2010,7 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 
 **Wave 2 — Queue layer:**
 
-- [ ] Task 3: Add reclaim_stuck_jobs + cron lock methods to JobQueue (DEV-101)
+- [x] Task 3: Add reclaim_stuck_jobs + cron lock methods to JobQueue (DEV-101)
 
 **Wave 3 — Scheduler mechanisms (parallel):**
 
