@@ -2064,7 +2064,7 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 
 **Wave 2 — Backend impl:**
 
-- [ ] Task 2: Implement list_shops with taxonomyTags + isOpen (DEV-114)
+- [x] Task 2: Implement list_shops with taxonomyTags + isOpen (DEV-114)
 
 **Wave 3-4 — Frontend filter logic:**
 

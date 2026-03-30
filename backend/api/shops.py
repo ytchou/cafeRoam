@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta, timezone
 from typing import Any, cast
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -5,6 +6,7 @@ from pydantic.alias_generators import to_camel
 
 from api.deps import get_admin_db, get_current_user, get_optional_user, get_user_db
 from core.db import first
+from core.opening_hours import is_open_now
 from db.supabase_client import get_anon_client
 from models.types import (
     ShopCheckInPreview,
@@ -13,6 +15,8 @@ from models.types import (
     ShopReviewsResponse,
     TaxonomyTag,
 )
+
+TW = timezone(timedelta(hours=8))
 
 router = APIRouter(prefix="/shops", tags=["shops"])
 
@@ -29,11 +33,12 @@ _SHOP_LIST_COLUMNS = (
     "rating, review_count, description, processing_status, "
     "mode_work, mode_rest, mode_social, "
     "community_summary, "
+    "opening_hours, "
     "created_at"
 )
 
 _SHOP_DETAIL_COLUMNS = (
-    f"{_SHOP_LIST_COLUMNS}, phone, website, opening_hours, price_range, updated_at"
+    f"{_SHOP_LIST_COLUMNS}, phone, website, price_range, updated_at"
 )
 
 
@@ -45,7 +50,10 @@ async def list_shops(
 ) -> list[Any]:
     """List shops. Public — no auth required."""
     db = get_anon_client()
-    query = db.table("shops").select(f"{_SHOP_LIST_COLUMNS}, shop_photos(url), shop_claims(status)")
+    query = db.table("shops").select(
+        f"{_SHOP_LIST_COLUMNS}, shop_photos(url), shop_claims(status), "
+        "shop_tags(tag_id, taxonomy_tags(id, dimension, label, label_zh))"
+    )
     if city:
         query = query.eq("city", city)
     if featured:
@@ -53,14 +61,25 @@ async def list_shops(
     query = query.limit(limit)
     response = query.execute()
     rows = cast("list[dict[str, Any]]", response.data or [])
+    now = datetime.now(TW)
     result = []
     for row in rows:
         photo_urls = [p["url"] for p in (row.pop("shop_photos", None) or [])]
         raw_claims = row.pop("shop_claims", None) or []
+        raw_tags = row.pop("shop_tags", None) or []
         claim_status = first(raw_claims, "shop_claims")["status"] if raw_claims else None
+        taxonomy_tags = [
+            TaxonomyTag(**t["taxonomy_tags"]).model_dump(by_alias=True)
+            for t in raw_tags
+            if t.get("taxonomy_tags")
+        ]
+        opening_hours = row.pop("opening_hours", None)
+        open_status = is_open_now(opening_hours, now)
         camel = {to_camel(k): v for k, v in row.items()}
         camel["photoUrls"] = photo_urls
         camel["claimStatus"] = claim_status
+        camel["taxonomyTags"] = taxonomy_tags
+        camel["isOpen"] = open_status
         result.append(camel)
     return result
 
