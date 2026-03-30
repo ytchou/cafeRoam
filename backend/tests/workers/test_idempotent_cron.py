@@ -12,7 +12,7 @@ class TestIdempotentCron:
         mock_handler = AsyncMock()
         mock_db = MagicMock()
         # Simulate successful lock insert — new row returned
-        mock_db.table.return_value.insert.return_value.execute.return_value.data = [
+        mock_db.table.return_value.upsert.return_value.execute.return_value.data = [
             {"job_name": "test_job", "window_start": "2026-03-30T00:00:00+00:00"}
         ]
 
@@ -29,7 +29,7 @@ class TestIdempotentCron:
         mock_handler = AsyncMock()
         mock_db = MagicMock()
         # Simulate lock already held — empty data (duplicate insert ignored)
-        mock_db.table.return_value.insert.return_value.execute.return_value.data = []
+        mock_db.table.return_value.upsert.return_value.execute.return_value.data = []
 
         wrapped = idempotent_cron("test_job", window="day")(mock_handler)
 
@@ -43,7 +43,7 @@ class TestIdempotentCron:
         """Decorator passes the configured window to acquire_cron_lock."""
         mock_handler = AsyncMock()
         mock_db = MagicMock()
-        mock_db.table.return_value.insert.return_value.execute.return_value.data = [
+        mock_db.table.return_value.upsert.return_value.execute.return_value.data = [
             {"job_name": "weekly_email", "window_start": "2026-03-24T00:00:00+00:00"}
         ]
 
@@ -52,7 +52,7 @@ class TestIdempotentCron:
         with patch("workers.scheduler.get_service_role_client", return_value=mock_db):
             await wrapped()
 
-        # Verify the insert was called with the cron_locks table
+        # Verify the upsert was called with the cron_locks table
         mock_db.table.assert_called_with("cron_locks")
-        insert_call = mock_db.table.return_value.insert.call_args
-        assert insert_call[0][0]["job_name"] == "weekly_email"
+        upsert_call = mock_db.table.return_value.upsert.call_args
+        assert upsert_call[0][0]["job_name"] == "weekly_email"

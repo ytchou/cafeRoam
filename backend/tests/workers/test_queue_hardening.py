@@ -42,7 +42,7 @@ class TestAcquireCronLock:
     def test_returns_true_when_lock_acquired(self):
         """First call in a time window acquires the lock and returns True."""
         mock_db = MagicMock()
-        mock_db.table.return_value.insert.return_value.execute.return_value.data = [
+        mock_db.table.return_value.upsert.return_value.execute.return_value.data = [
             {"job_name": "weekly_email", "window_start": "2026-03-30T00:00:00+00:00"}
         ]
         queue = JobQueue(db=mock_db)
@@ -53,7 +53,7 @@ class TestAcquireCronLock:
     def test_returns_false_when_lock_already_held(self):
         """Second call in the same window returns False (lock already taken)."""
         mock_db = MagicMock()
-        mock_db.table.return_value.insert.return_value.execute.return_value.data = []
+        mock_db.table.return_value.upsert.return_value.execute.return_value.data = []
         queue = JobQueue(db=mock_db)
 
         result = queue.acquire_cron_lock("weekly_email", window="week")
