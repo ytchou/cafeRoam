@@ -1,6 +1,4 @@
-from datetime import datetime
 from unittest.mock import MagicMock, patch
-from zoneinfo import ZoneInfo
 
 import pytest
 from fastapi.testclient import TestClient
