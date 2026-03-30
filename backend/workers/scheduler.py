@@ -273,6 +273,29 @@ async def poll_pending_job_types() -> None:
         sentry_sdk.capture_exception(e)
 
 
+async def reclaim_stuck_jobs() -> None:
+    """Reclaim jobs stuck in CLAIMED status and clean up old cron locks."""
+    try:
+        db = get_service_role_client()
+        queue = JobQueue(db=db)
+        reclaimed, failed = queue.reclaim_stuck_jobs()
+        if reclaimed > 0 or failed > 0:
+            logger.info(
+                "Stuck jobs reclaimed",
+                reclaimed_count=reclaimed,
+                failed_count=failed,
+            )
+        queue.cleanup_old_cron_locks(retention_days=7)
+    except Exception as e:
+        logger.error("Stuck job reaper failed", error=str(e))
+        sentry_sdk.capture_exception(e)
+
+
+@idempotent_cron("delete_expired_accounts", window="day")
+async def _run_delete_expired_accounts() -> None:
+    await delete_expired_accounts()
+
+
 def get_scheduler_status(scheduler: AsyncIOScheduler) -> dict[str, object]:
     """Return scheduler health status for the /health/scheduler endpoint."""
     jobs = scheduler.get_jobs()
@@ -307,7 +330,7 @@ def create_scheduler() -> AsyncIOScheduler:
         id="weekly_email",
     )
     scheduler.add_job(
-        delete_expired_accounts,
+        _run_delete_expired_accounts,
         "cron",
         hour=4,
         id="delete_expired_accounts",
@@ -328,6 +351,15 @@ def create_scheduler() -> AsyncIOScheduler:
         max_instances=1,
         coalesce=True,
         misfire_grace_time=settings.worker_poll_interval_seconds,
+    )
+
+    scheduler.add_job(
+        reclaim_stuck_jobs,
+        "interval",
+        minutes=5,
+        id="reclaim_stuck_jobs",
+        max_instances=1,
+        coalesce=True,
     )
 
     return scheduler

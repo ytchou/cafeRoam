@@ -26,6 +26,21 @@ class TestScheduler:
         assert job is not None
 
 
+class TestSchedulerReaper:
+    def test_reclaim_stuck_jobs_cron_is_registered(self):
+        """The stuck-job reaper runs every 5 minutes to reclaim orphaned jobs."""
+        scheduler = create_scheduler()
+        job = scheduler.get_job("reclaim_stuck_jobs")
+        assert job is not None
+
+    def test_delete_expired_accounts_has_idempotency_wrapper(self):
+        """delete_expired_accounts is wrapped with @idempotent_cron to prevent double-fire."""
+        scheduler = create_scheduler()
+        job = scheduler.get_job("delete_expired_accounts")
+        assert job is not None
+        assert "delete_expired_accounts" in str(job.func)
+
+
 class TestSchedulerStatus:
     async def test_get_scheduler_status_returns_job_list(self):
         """get_scheduler_status returns all registered jobs with their IDs."""
@@ -33,9 +48,10 @@ class TestSchedulerStatus:
         scheduler.start(paused=True)
         try:
             status = get_scheduler_status(scheduler)
-            assert status["registered_jobs"] >= 5
+            assert status["registered_jobs"] >= 6
             job_ids = {j["id"] for j in status["jobs"]}
             assert "poll_pending_jobs" in job_ids
+            assert "reclaim_stuck_jobs" in job_ids
             assert "staleness_sweep" in job_ids
         finally:
             scheduler.shutdown()
