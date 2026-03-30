@@ -1,4 +1,4 @@
-.PHONY: help doctor setup dev dev-all migrate seed-shops restore-seed-user reset-db workers-enrich workers-embed test lint
+.PHONY: help doctor setup dev dev-all migrate seed-shops restore-seed-user reset-db workers-enrich workers-embed test validate-supabase lint
 
 help:
 	@echo "CafeRoam — Available commands:"
@@ -13,6 +13,7 @@ help:
 	@echo "  make workers-embed       Run embedding generation worker locally"
 	@echo "  make test                Run Vitest tests"
 	@echo "  make doctor              Run environment preflight check (run before starting work)"
+	@echo "  make validate-supabase   Validate Supabase instance for schema parity (requires DATABASE_URL)"
 	@echo "  make lint                Run ESLint + Prettier check + TypeScript check"
 
 doctor:
@@ -79,6 +80,14 @@ workers-embed:
 
 test:
 	pnpm test
+
+validate-supabase:
+	@if [ -z "$$DATABASE_URL" ]; then \
+		echo "Usage: DATABASE_URL=postgresql://... make validate-supabase"; \
+		echo "Local: DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres make validate-supabase"; \
+		exit 1; \
+	fi
+	uv run scripts/validate_supabase.py
 
 lint:
 	pnpm lint && pnpm format:check && pnpm type-check

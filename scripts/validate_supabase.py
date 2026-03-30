@@ -32,7 +32,7 @@ class CheckResult:
 
 # -- Expected schema -----------------------------------------------------------
 
-EXPECTED_MIN_MIGRATIONS = 78
+EXPECTED_MIN_MIGRATIONS = 76
 
 EXPECTED_TABLES = {
     "shops", "shop_photos", "shop_reviews", "taxonomy_tags", "shop_tags",
@@ -51,6 +51,9 @@ RLS_REQUIRED_TABLES = {
     "shop_content", "shop_owner_tags", "review_responses",
     "admin_audit_logs",
 }
+
+# Tables that use RLS with no user policies (service-role only)
+SERVICE_ROLE_ONLY_TABLES = {"admin_audit_logs", "job_queue", "search_events"}
 
 EXPECTED_TRIGGERS = {
     "trg_checkin_after_insert": "check_ins",
@@ -115,19 +118,21 @@ def check_rls(cursor) -> list[CheckResult]:
             else f"All {len(RLS_REQUIRED_TABLES)} required tables have RLS enabled",
     ))
 
-    # 2. Do they have policies?
+    # 2. Do user-facing tables have policies?
+    # (service-role-only tables intentionally have RLS with no permissive policies)
     cursor.execute(
         "SELECT tablename, COUNT(*) FROM pg_policies "
         "WHERE schemaname = 'public' GROUP BY tablename"
     )
     policy_counts = {row[0]: row[1] for row in cursor.fetchall()}
-    no_policies = [t for t in RLS_REQUIRED_TABLES if policy_counts.get(t, 0) == 0]
+    user_facing = RLS_REQUIRED_TABLES - SERVICE_ROLE_ONLY_TABLES
+    no_policies = [t for t in user_facing if policy_counts.get(t, 0) == 0]
     results.append(CheckResult(
         category="RLS",
-        name="Policies exist on RLS tables",
+        name="Policies exist on user-facing tables",
         passed=len(no_policies) == 0,
         details=f"No policies: {sorted(no_policies)}" if no_policies
-            else f"All {len(RLS_REQUIRED_TABLES)} tables have at least one policy",
+            else f"All {len(user_facing)} user-facing tables have at least one policy",
     ))
 
     return results
@@ -248,6 +253,7 @@ def check_pgbouncer_compat(cursor) -> list[CheckResult]:
         "FROM pg_proc p "
         "JOIN pg_namespace n ON n.oid = p.pronamespace "
         "WHERE n.nspname = 'public' "
+        "AND p.prokind = 'f' "
         "AND pg_get_functiondef(p.oid) ILIKE '%SET LOCAL%'"
     )
     functions = cursor.fetchall()

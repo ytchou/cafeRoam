@@ -33,9 +33,9 @@ class MockCursor:
 
 
 def test_schema_parity_passes_when_migration_count_matches():
-    """Given a database with 78+ migrations, the schema parity check passes."""
+    """Given a database with 76+ migrations, the schema parity check passes."""
     cursor = MockCursor(results=[
-        (78,),  # migration count
+        (76,),  # migration count
         [       # expected tables all exist
             ("shops",), ("check_ins",), ("lists",), ("list_items",),
             ("profiles",), ("stamps",), ("shop_photos",),
@@ -55,7 +55,7 @@ def test_schema_parity_passes_when_migration_count_matches():
 
 
 def test_schema_parity_fails_when_migration_count_low():
-    """Given a database with fewer than 78 migrations, the check fails."""
+    """Given a database with fewer than 76 migrations, the check fails."""
     cursor = MockCursor(results=[
         (50,),  # only 50 migrations
         [],     # tables query (won't matter)

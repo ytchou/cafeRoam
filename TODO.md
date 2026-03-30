@@ -54,7 +54,7 @@
 
 **Wave 4 — Integration:**
 
-- [ ] Task 7: Integration test against local + Makefile target (DEV-86)
+- [x] Task 7: Integration test against local + Makefile target (DEV-86)
 
 **Wave 5 — Operational:**
 
