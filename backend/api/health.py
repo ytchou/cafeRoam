@@ -1,3 +1,5 @@
+from typing import Any
+
 from fastapi import APIRouter, Depends, Request
 
 from api.deps import require_admin
@@ -9,7 +11,7 @@ router = APIRouter()
 @router.get("/health/scheduler")
 async def scheduler_health(
     request: Request,
-    _: dict = Depends(require_admin),  # noqa: B008
+    _: dict[str, Any] = Depends(require_admin),  # noqa: B008
 ) -> dict[str, object]:
     """Scheduler health — registered jobs, next run times, last poll timestamp.
     Requires admin auth; not used by Railway's liveness checker (which hits /health)."""

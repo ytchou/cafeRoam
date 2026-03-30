@@ -146,7 +146,8 @@ class JobQueue:
             {"p_timeout_minutes": settings.worker_stuck_job_timeout_minutes},
         ).execute()
         empty: dict[str, int] = {"reclaimed_count": 0, "failed_count": 0}
-        row = first(response.data, "reclaim_stuck_jobs") or empty
+        rows: list[dict[str, Any]] = cast("list[dict[str, Any]]", response.data or [])
+        row: dict[str, Any] = first(rows, "reclaim_stuck_jobs") if rows else empty
         return (int(row["reclaimed_count"]), int(row["failed_count"]))
 
     def acquire_cron_lock(self, job_name: str, window: str) -> bool:
@@ -165,10 +166,10 @@ class JobQueue:
         try:
             response = (
                 self._db.table("cron_locks")
-                .insert(
+                .upsert(
                     {"job_name": job_name, "window_start": window_start.isoformat()},
-                    ignore_duplicates=True,
                     on_conflict="job_name,window_start",
+                    ignore_duplicates=True,
                 )
                 .execute()
             )
