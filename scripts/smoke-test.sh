@@ -50,7 +50,7 @@ check_http() {
   local response
   local actual_status
 
-  response=$(curl -s --max-time 15 -w "\n%{http_code}" "$url" 2>/dev/null || { _fail "$description" "curl failed — connection error or timeout ($url)"; return; })
+  response=$(curl -s --max-time 15 -w "\n%{http_code}" "$url" 2>/dev/null) || { _fail "$description" "curl failed — connection error or timeout ($url)"; return; }
   actual_status=$(echo "$response" | tail -1)
   local body
   body=$(echo "$response" | sed '$d')
