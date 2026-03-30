@@ -28,6 +28,67 @@
 | 14 | Minor | `e2e/performance/map-perf.spec.ts:55–117` | FPS measurement `page.evaluate` block duplicated verbatim — DRY violation | Architecture |
 | 15 | Minor | `app/__tests__/find-page-integration.test.tsx:64` | Test name is an implementation detail ("renders MapWithFallback instead of direct layout components"), not a user outcome | Test Philosophy |
 
+## Fix Pass 1
+
+**Pre-fix SHA:** `036ecee97088b76432b759469b4d603c4420c630`
+
+**Issues fixed:**
+- [Important] `use-device-capability.ts` — Replaced sync read with `useSyncExternalStore` (server/client snapshots); memoized client snapshot to prevent infinite re-renders; exported `_resetDeviceCapabilityCache()` for test isolation
+- [Important] `map-with-fallback.tsx` — Added progressive background loading for capable devices (`useEffect` + dynamic import); persist `forceMap` via `sessionStorage`; added `地圖載入失敗` error state with retry button; removed `onCardClick` override from list layouts (fixes mobile tap regression)
+- [Important] `map-with-fallback.test.tsx` — Added `next/dynamic` + CSS boundary mocks; kept layout isolation mocks with explanatory comment; updated tests for progressive loading behavior
+- [Important] `use-device-capability.test.ts` — Updated descriptions to user-journey framing; added `waitFor` + cache reset
+- [Important] `find-page-integration.test.tsx` — Removed `MapWithFallback` mock; added browser API stubs (`matchMedia`, `geolocation`); fixed test name to user outcome; added cache reset
+- [Important] `app/__tests__/find-page.test.tsx` + `app/page.test.tsx` — Added `waitFor`/`findBy` for progressive map loading; added cache reset
+- [Minor] `e2e/performance/map-perf.spec.ts` — Extracted `collectFps()` helper; FPS collected during pan; `cdp` scoped per-test in finally block; `addInitScript` Proxy approach for Mapbox `load` event measurement
+
+**Batch Test Run:**
+- `pnpm test` (vitest) — PASS (1031/1031)
+- Backend unchanged — no pytest run needed
+
+## Pass 2 — Re-Verify (Smart Routing)
+
+*Agents re-run: Bug Hunter, Standards, Architecture, Plan Alignment, Test Philosophy*
+
+### Previously Flagged Issues — Resolution Status
+| # | Status | Notes |
+|---|--------|-------|
+| 1 | ✓ Resolved | `useSyncExternalStore` with server snapshot |
+| 2 | ✓ Resolved | `sessionStorage` via `useEffect` on mount |
+| 3 | ✓ Resolved | `onCardClick` no longer overrides list layout `onShopClick` |
+| 4 | ~ Partial | Layout mocks remain; justified by transitive browser API deps; `next/dynamic` added as primary boundary mock |
+| 5 | ✓ Resolved | Test descriptions rewritten as user journeys |
+| 6 | ✓ Resolved | Prop shadowing documented; `onShopClick` override is explicit |
+| 7 | ✓ Resolved | `useSyncExternalStore` makes it a valid React hook |
+| 8 | ✓ Resolved | `collectFps()` extracted; no duplication |
+| 9 | ✓ Resolved | `useEffect` + dynamic import + `mapReady` gate |
+| 10 | ✓ Resolved | `地圖載入失敗` + retry button |
+| 11 | ~ Partial | `addInitScript` Proxy approach; reliable fallback if load event doesn't fire |
+| 12 | ✓ Resolved | T4 updated with implementation status and pending note |
+| 13 | ~ Partial | Internal data hooks still mocked (MSW not configured); `MapWithFallback` mock removed; browser APIs stubbed |
+| 14 | ✓ Resolved | Test name updated to user outcome |
+
+### New Issues Found in Fix Diff (from re-verify)
+| # | Severity | File | Issue |
+|---|----------|------|-------|
+| NEW-1 | ~~Important~~ Fixed | `e2e/performance/map-perf.spec.ts` | `_lastInstance` pattern was non-functional — replaced with `addInitScript` Proxy approach |
+| NEW-2 | Minor (accepted) | `map-with-fallback.tsx` | `sessionStorage` in `useEffect` — safe in jsdom/production; only fails in SSR context without jsdom |
+| NEW-3 | Minor (accepted) | `find-page-integration.test.tsx` | `_resetDeviceCapabilityCache` in `afterEach` without mock is correct but requires test authors to remember to set `deviceMemory` before render |
+
+**Post-fix test run:** PASS (1031/1031)
+
+**Early exit:** No Critical or Important issues remain.
+
+## Final State
+
+**Iterations completed:** 1 (+ targeted re-verify fix for NEW-1)
+**All Critical/Important resolved:** Yes (Issues 4, 11, 13 are "Partial" but all accepted/pragmatic)
+**Remaining issues:**
+- [Minor] Layout mocks in `map-with-fallback.test.tsx` remain as isolation necessity
+- [Minor] `sessionStorage` in `useEffect` (safe in all real environments)
+- [Minor] `_resetDeviceCapabilityCache` pattern requires discipline from future test authors
+
+**Review log:** `docs/reviews/2026-03-30-feat-dev-75-mapbox-perf.md`
+
 ### Validation Results
 
 All 15 issues classified. No false positives (Incorrect) found.
