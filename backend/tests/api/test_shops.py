@@ -255,9 +255,7 @@ class TestShopsAPI:
         # Monday 10:00 AM Taiwan time — shop is open (9 AM – 6 PM Monday)
         fixed_now = datetime(2026, 3, 30, 10, 0, tzinfo=ZoneInfo("Asia/Taipei"))
 
-        with patch("api.shops.get_anon_client") as mock_sb, patch(
-            "api.shops.datetime"
-        ) as mock_dt:
+        with patch("api.shops.get_anon_client") as mock_sb, patch("api.shops.datetime") as mock_dt:
             mock_sb.return_value = MagicMock(table=MagicMock(return_value=chain))
             mock_dt.now.return_value = fixed_now
             response = client.get("/shops")
@@ -293,8 +291,20 @@ class TestShopsAPI:
     def test_list_shops_featured_returns_live_shops_only(self):
         """GET /shops?featured=true filters to processing_status=live shops."""
         live_shops = [
-            {**SHOP_ROW, "id": "cafe-shan-taipei-001", "shop_photos": [], "shop_claims": [], "shop_tags": []},
-            {**SHOP_ROW, "id": "cafe-shan-taipei-002", "shop_photos": [], "shop_claims": [], "shop_tags": []},
+            {
+                **SHOP_ROW,
+                "id": "cafe-shan-taipei-001",
+                "shop_photos": [],
+                "shop_claims": [],
+                "shop_tags": [],
+            },
+            {
+                **SHOP_ROW,
+                "id": "cafe-shan-taipei-002",
+                "shop_photos": [],
+                "shop_claims": [],
+                "shop_tags": [],
+            },
         ]
 
         chain = _simple_select_chain(live_shops)

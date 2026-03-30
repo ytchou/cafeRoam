@@ -45,9 +45,7 @@ _SHOP_LIST_COLUMNS = (
     "created_at"
 )
 
-_SHOP_DETAIL_COLUMNS = (
-    f"{_SHOP_LIST_COLUMNS}, phone, website, price_range, updated_at"
-)
+_SHOP_DETAIL_COLUMNS = f"{_SHOP_LIST_COLUMNS}, phone, website, price_range, updated_at"
 
 
 @router.get("/")
