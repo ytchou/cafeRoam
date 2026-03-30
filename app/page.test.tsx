@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
+import { _resetDeviceCapabilityCache } from '@/lib/hooks/use-device-capability';
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn() }),
@@ -105,9 +106,14 @@ vi.mock('next/dynamic', () => ({
 import FindPage from './page';
 
 describe('Find page (map)', () => {
-  it('When a user opens the Find tab, they see the map', () => {
+  afterEach(() => {
+    _resetDeviceCapabilityCache();
+  });
+
+  it('When a user opens the Find tab, they see the map', async () => {
     render(<FindPage />);
-    expect(screen.getByTestId('map-view')).toBeInTheDocument();
+    // Map loads progressively — wait for it to appear after dynamic import
+    expect(await screen.findByTestId('map-view')).toBeInTheDocument();
   });
 
   it('When a user opens the Find tab, the map/list toggle buttons are present', () => {

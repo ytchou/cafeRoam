@@ -81,9 +81,39 @@ vi.mock('@/components/seo/WebsiteJsonLd', () => ({
   WebsiteJsonLd: () => null,
 }));
 
+// Stub browser APIs at the boundary
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  configurable: true,
+  value: vi.fn((query: string) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  })),
+});
+Object.defineProperty(navigator, 'geolocation', {
+  writable: true,
+  configurable: true,
+  value: {
+    getCurrentPosition: vi.fn(),
+    watchPosition: vi.fn(),
+    clearWatch: vi.fn(),
+  },
+});
+
 import FindPage from '../page';
+import { _resetDeviceCapabilityCache } from '@/lib/hooks/use-device-capability';
 
 describe('FindPage map degradation integration', () => {
+  afterEach(() => {
+    _resetDeviceCapabilityCache();
+  });
+
   it('on a low-end device, shows list view instead of loading the map', () => {
     Object.defineProperty(navigator, 'deviceMemory', {
       value: 1,

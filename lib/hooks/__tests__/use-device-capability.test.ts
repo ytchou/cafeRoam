@@ -1,10 +1,11 @@
 import { renderHook, waitFor } from '@testing-library/react';
-import { useDeviceCapability } from '../use-device-capability';
+import { useDeviceCapability, _resetDeviceCapabilityCache } from '../use-device-capability';
 
 describe('useDeviceCapability', () => {
   const originalNavigator = globalThis.navigator;
 
   afterEach(() => {
+    _resetDeviceCapabilityCache();
     Object.defineProperty(globalThis, 'navigator', {
       value: originalNavigator,
       writable: true,
