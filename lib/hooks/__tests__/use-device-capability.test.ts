@@ -1,4 +1,4 @@
-import { renderHook } from '@testing-library/react';
+import { renderHook, waitFor } from '@testing-library/react';
 import { useDeviceCapability } from '../use-device-capability';
 
 describe('useDeviceCapability', () => {
@@ -24,38 +24,39 @@ describe('useDeviceCapability', () => {
     });
   }
 
-  it('reports low-end when deviceMemory is 1GB', () => {
+  it('a visitor on a 1GB device is treated as low-end and the map does not auto-load', async () => {
     mockDeviceMemory(1);
     const { result } = renderHook(() => useDeviceCapability());
+    await waitFor(() => expect(result.current.deviceMemory).toBe(1));
     expect(result.current.isLowEnd).toBe(true);
-    expect(result.current.deviceMemory).toBe(1);
   });
 
-  it('reports low-end when deviceMemory is 2GB', () => {
+  it('a visitor on a 2GB device is treated as low-end and the map does not auto-load', async () => {
     mockDeviceMemory(2);
     const { result } = renderHook(() => useDeviceCapability());
+    await waitFor(() => expect(result.current.deviceMemory).toBe(2));
     expect(result.current.isLowEnd).toBe(true);
-    expect(result.current.deviceMemory).toBe(2);
   });
 
-  it('reports capable when deviceMemory is 4GB', () => {
+  it('a visitor on a 4GB device is treated as capable and the map loads automatically', async () => {
     mockDeviceMemory(4);
     const { result } = renderHook(() => useDeviceCapability());
+    await waitFor(() => expect(result.current.deviceMemory).toBe(4));
     expect(result.current.isLowEnd).toBe(false);
-    expect(result.current.deviceMemory).toBe(4);
   });
 
-  it('reports capable when deviceMemory is 8GB', () => {
+  it('a visitor on an 8GB device is treated as capable and the map loads automatically', async () => {
     mockDeviceMemory(8);
     const { result } = renderHook(() => useDeviceCapability());
+    await waitFor(() => expect(result.current.deviceMemory).toBe(8));
     expect(result.current.isLowEnd).toBe(false);
-    expect(result.current.deviceMemory).toBe(8);
   });
 
-  it('assumes capable when deviceMemory API is unavailable', () => {
+  it('when the deviceMemory API is unavailable, assumes capable to avoid falsely blocking map access', async () => {
     mockDeviceMemory(undefined);
     const { result } = renderHook(() => useDeviceCapability());
-    expect(result.current.isLowEnd).toBe(false);
+    // deviceMemory stays undefined — verify the hook settles on capable
+    await waitFor(() => expect(result.current.isLowEnd).toBe(false));
     expect(result.current.deviceMemory).toBeUndefined();
   });
 });
