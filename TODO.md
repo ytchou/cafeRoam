@@ -32,6 +32,36 @@
 
 ---
 
+## Validate Supabase Cloud Migration Parity (DEV-72)
+
+> **Design Doc:** [docs/designs/2026-03-30-supabase-cloud-migration-parity-design.md](docs/designs/2026-03-30-supabase-cloud-migration-parity-design.md)
+> **Plan:** [docs/plans/2026-03-30-supabase-cloud-migration-parity-plan.md](docs/plans/2026-03-30-supabase-cloud-migration-parity-plan.md)
+
+**Wave 1 — Foundation:**
+
+- [ ] Task 1: Script skeleton + schema parity check (DEV-86)
+
+**Wave 2 — Core checks (parallel):**
+
+- [ ] Task 2: RLS validation check (DEV-86)
+- [ ] Task 3: Trigger validation check (DEV-86)
+
+**Wave 3 — Additional checks (parallel):**
+
+- [ ] Task 4: pgvector validation check (DEV-86)
+- [ ] Task 5: pgBouncer compatibility check (DEV-86)
+- [ ] Task 6: Storage bucket check (DEV-86)
+
+**Wave 4 — Integration:**
+
+- [ ] Task 7: Integration test against local + Makefile target (DEV-86)
+
+**Wave 5 — Operational:**
+
+- [ ] Task 8: Close DEV-87 (pgBouncer verified safe) + run against staging (DEV-88)
+
+---
+
 ## Fix BottomNav Overlay on Map View (DEV-85)
 
 > **Design Doc:** [docs/designs/2026-03-29-dev-85-bottomnav-overlay-fix-design.md](docs/designs/2026-03-29-dev-85-bottomnav-overlay-fix-design.md)
