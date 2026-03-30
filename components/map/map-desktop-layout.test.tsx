@@ -50,6 +50,7 @@ vi.mock('next/image', () => ({
 }));
 
 beforeAll(() => {
+  window.HTMLElement.prototype.scrollIntoView = vi.fn();
   Object.defineProperty(window, 'matchMedia', {
     writable: true,
     configurable: true,
