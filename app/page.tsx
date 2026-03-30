@@ -12,10 +12,7 @@ import { useUser } from '@/lib/hooks/use-user';
 import { useAnalytics } from '@/lib/posthog/use-analytics';
 import { trackSearch, trackSignupCtaClick } from '@/lib/analytics/ga4-events';
 import { haversineKm } from '@/lib/utils';
-import { MapMobileLayout } from '@/components/map/map-mobile-layout';
-import { ListMobileLayout } from '@/components/map/list-mobile-layout';
-import { MapDesktopLayout } from '@/components/map/map-desktop-layout';
-import { ListDesktopLayout } from '@/components/map/list-desktop-layout';
+import { MapWithFallback } from '@/components/map/map-with-fallback';
 
 function FindPageContent() {
   const router = useRouter();
@@ -142,18 +139,14 @@ function FindPageContent() {
     onLocationRequest: handleLocationRequest,
   };
 
-  if (isDesktop) {
-    return view === 'list' ? (
-      <ListDesktopLayout {...layoutProps} onShopClick={handleShopNavigate} />
-    ) : (
-      <MapDesktopLayout {...layoutProps} onCardClick={handleShopNavigate} />
-    );
-  }
-
-  return view === 'list' ? (
-    <ListMobileLayout {...layoutProps} onShopClick={handleShopNavigate} />
-  ) : (
-    <MapMobileLayout {...layoutProps} onCardClick={handleShopNavigate} />
+  return (
+    <MapWithFallback
+      {...layoutProps}
+      onShopClick={isDesktop ? handleShopNavigate : setSelectedShopId}
+      view={view}
+      onCardClick={handleShopNavigate}
+      isDesktop={isDesktop}
+    />
   );
 }
 
