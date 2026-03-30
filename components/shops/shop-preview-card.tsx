@@ -41,14 +41,17 @@ export function ShopPreviewCard({
 
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') {
+        e.stopImmediatePropagation();
+        onClose();
+      }
     };
     document.addEventListener('keydown', handleEsc);
     return () => document.removeEventListener('keydown', handleEsc);
   }, [onClose]);
 
   return (
-    <div className="w-[340px] overflow-hidden rounded-2xl bg-white/80 shadow-xl backdrop-blur-md">
+    <div className="w-[340px] overflow-hidden rounded-2xl bg-white/80 shadow-xl backdrop-blur-md transition-all duration-200">
       <div className="flex gap-3 p-3">
         {photoUrl ? (
           <div className="relative h-[60px] w-[60px] shrink-0 overflow-hidden rounded-lg">

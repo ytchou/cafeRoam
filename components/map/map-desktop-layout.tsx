@@ -7,6 +7,8 @@ import {
   useCallback,
   Suspense,
 } from 'react';
+
+const PANEL_EXPAND_DELAY_MS = 200;
 import { SearchBar } from '@/components/filters/search-bar';
 import { FilterTag } from '@/components/filters/filter-tag';
 import { QUICK_FILTERS } from '@/components/filters/quick-filters';
@@ -61,6 +63,7 @@ export function MapDesktopLayout({
   );
 
   const scrollRef = useRef<HTMLDivElement>(null);
+  const scrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const selectedShop = useMemo(
     () => shops.find((s) => s.id === selectedShopId) ?? null,
@@ -85,12 +88,17 @@ export function MapDesktopLayout({
 
     setPanelCollapsed((prev) => {
       if (prev) {
-        setTimeout(scroll, 200);
+        if (scrollTimerRef.current) clearTimeout(scrollTimerRef.current);
+        scrollTimerRef.current = setTimeout(scroll, PANEL_EXPAND_DELAY_MS);
         return false;
       }
       scroll();
       return false;
     });
+
+    return () => {
+      if (scrollTimerRef.current) clearTimeout(scrollTimerRef.current);
+    };
   }, [selectedShopId]);
 
   return (
@@ -156,7 +164,7 @@ export function MapDesktopLayout({
           >
             <MapView
               shops={shops}
-              onPinClick={onShopClick}
+              onPinClick={(id) => onShopClick(id)}
               selectedShopId={selectedShopId}
             />
           </Suspense>
