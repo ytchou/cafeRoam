@@ -1,4 +1,6 @@
+from datetime import datetime
 from unittest.mock import MagicMock, patch
+from zoneinfo import ZoneInfo
 
 import pytest
 from fastapi.testclient import TestClient
@@ -231,7 +233,7 @@ class TestShopsAPI:
         assert data["communitySummary"] is None
 
     def test_list_shops_includes_taxonomy_tags_and_is_open(self):
-        """GET /shops returns taxonomyTags array and isOpen field per shop."""
+        """GET /shops returns taxonomyTags array and isOpen: true for a shop open on Monday at 10 AM."""
         shop_row = {
             **SHOP_ROW,
             "opening_hours": ["Monday: 9:00 AM - 6:00 PM"],
@@ -250,9 +252,14 @@ class TestShopsAPI:
             ],
         }
         chain = _simple_select_chain([shop_row])
+        # Monday 10:00 AM Taiwan time — shop is open (9 AM – 6 PM Monday)
+        fixed_now = datetime(2026, 3, 30, 10, 0, tzinfo=ZoneInfo("Asia/Taipei"))
 
-        with patch("api.shops.get_anon_client") as mock_sb:
+        with patch("api.shops.get_anon_client") as mock_sb, patch(
+            "api.shops.datetime"
+        ) as mock_dt:
             mock_sb.return_value = MagicMock(table=MagicMock(return_value=chain))
+            mock_dt.now.return_value = fixed_now
             response = client.get("/shops")
 
         assert response.status_code == 200
@@ -263,7 +270,7 @@ class TestShopsAPI:
         assert shop["taxonomyTags"] == [
             {"id": "quiet", "dimension": "ambience", "label": "Quiet", "labelZh": "安靜"}
         ]
-        assert "isOpen" in shop
+        assert shop["isOpen"] is True
 
     def test_list_shops_is_open_null_when_no_hours(self):
         """GET /shops returns isOpen: null when opening_hours is absent."""
@@ -286,8 +293,8 @@ class TestShopsAPI:
     def test_list_shops_featured_returns_live_shops_only(self):
         """GET /shops?featured=true filters to processing_status=live shops."""
         live_shops = [
-            {**SHOP_ROW, "id": "shop-001"},
-            {**SHOP_ROW, "id": "shop-002"},
+            {**SHOP_ROW, "id": "cafe-shan-taipei-001", "shop_photos": [], "shop_claims": [], "shop_tags": []},
+            {**SHOP_ROW, "id": "cafe-shan-taipei-002", "shop_photos": [], "shop_claims": [], "shop_tags": []},
         ]
 
         chain = _simple_select_chain(live_shops)

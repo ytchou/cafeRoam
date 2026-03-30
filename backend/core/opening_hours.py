@@ -54,6 +54,7 @@ def is_open_now(opening_hours: list[str] | None, now: datetime) -> bool | None:
 
     current_weekday = now.weekday()  # 0=Monday
     current_minutes = now.hour * 60 + now.minute
+    today_seen = False
 
     for entry in opening_hours:
         entry = entry.strip()
@@ -68,6 +69,9 @@ def is_open_now(opening_hours: list[str] | None, now: datetime) -> bool | None:
         day_num = _DAY_MAP.get(day_name)
         if day_num is None:
             continue
+
+        if day_num == current_weekday:
+            today_seen = True
 
         # Handle special cases
         if "closed" in time_part.lower():
@@ -102,7 +106,9 @@ def is_open_now(opening_hours: list[str] | None, now: datetime) -> bool | None:
                 return True
             # Check next day: from midnight to close_min
             prev_day = (current_weekday - 1) % 7
-            if day_num == prev_day and current_minutes < close_min:
-                return True
+            if day_num == prev_day:
+                today_seen = True  # prev_day midnight entry covers today's early hours
+                if current_minutes < close_min:
+                    return True
 
-    return False
+    return False if today_seen else None

@@ -9,8 +9,6 @@ from api.deps import get_admin_db, get_current_user, get_optional_user, get_user
 from core.db import first
 from core.opening_hours import is_open_now
 from db.supabase_client import get_anon_client
-
-_TW = ZoneInfo("Asia/Taipei")
 from models.types import (
     ShopCheckInPreview,
     ShopCheckInSummary,
@@ -19,7 +17,17 @@ from models.types import (
     TaxonomyTag,
 )
 
+_TW = ZoneInfo("Asia/Taipei")
+
 router = APIRouter(prefix="/shops", tags=["shops"])
+
+
+def _transform_taxonomy_tags(raw_tags: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    return [
+        TaxonomyTag(**t["taxonomy_tags"]).model_dump(by_alias=True)
+        for t in raw_tags
+        if t.get("taxonomy_tags")
+    ]
 
 
 def _extract_display_name(row: dict[str, Any]) -> str | None:
@@ -38,7 +46,7 @@ _SHOP_LIST_COLUMNS = (
 )
 
 _SHOP_DETAIL_COLUMNS = (
-    f"{_SHOP_LIST_COLUMNS}, phone, website, opening_hours, price_range, updated_at"
+    f"{_SHOP_LIST_COLUMNS}, phone, website, price_range, updated_at"
 )
 
 
@@ -67,17 +75,13 @@ async def list_shops(
         photo_urls = [p["url"] for p in (row.pop("shop_photos", None) or [])]
         raw_claims = row.pop("shop_claims", None) or []
         raw_tags = row.pop("shop_tags", None) or []
+        opening_hours = row.pop("opening_hours", None)
         claim_status = first(raw_claims, "shop_claims")["status"] if raw_claims else None
-        taxonomy_tags = [
-            TaxonomyTag(**t["taxonomy_tags"]).model_dump(by_alias=True)
-            for t in raw_tags
-            if t.get("taxonomy_tags")
-        ]
         camel = {to_camel(k): v for k, v in row.items()}
         camel["photoUrls"] = photo_urls
         camel["claimStatus"] = claim_status
-        camel["taxonomyTags"] = taxonomy_tags
-        camel["isOpen"] = is_open_now(row.get("opening_hours"), now)
+        camel["taxonomyTags"] = _transform_taxonomy_tags(raw_tags)
+        camel["isOpen"] = is_open_now(opening_hours, now)
         result.append(camel)
     return result
 
@@ -111,11 +115,7 @@ async def get_shop(shop_id: str) -> Any:
     approved_claim = next((c for c in raw_claims if c.get("status") == "approved"), None)
     claim_status = first(raw_claims, "shop_claims")["status"] if raw_claims else None
     owner_user_id: str | None = approved_claim.get("user_id") if approved_claim else None
-    taxonomy_tags = [
-        TaxonomyTag(**row["taxonomy_tags"]).model_dump(by_alias=True)
-        for row in raw_tags
-        if row.get("taxonomy_tags")
-    ]
+    taxonomy_tags = _transform_taxonomy_tags(raw_tags)
     mode_scores = {
         "work": shop.pop("mode_work", None),
         "rest": shop.pop("mode_rest", None),
