@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const REALISTIC_DSN = 'https://a1b2c3d4e5f678901234567890abcdef@o123456.ingest.sentry.io/1234567';
+const REALISTIC_DSN =
+  'https://a1b2c3d4e5f678901234567890abcdef@o123456.ingest.sentry.io/1234567';
 
 describe('Sentry environment configuration', () => {
   beforeEach(() => {

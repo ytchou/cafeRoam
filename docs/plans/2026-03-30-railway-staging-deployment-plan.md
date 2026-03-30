@@ -15,6 +15,7 @@
 **Tech Stack:** Railway (hosting), Next.js 16 (frontend), FastAPI (backend), Sentry (errors), PostHog (analytics), Better Stack (uptime)
 
 **Acceptance Criteria:**
+
 - [ ] Both services deployed and responding to health checks (`/` and `/health`)
 - [ ] Frontend loads the shop directory with 164 shops from staging Supabase
 - [ ] Frontend can proxy requests to backend via Railway internal network
@@ -38,6 +39,7 @@ During plan research, these gaps were found in the design doc's 32-var table:
 ### Task 1: Fix frontend Sentry environment tagging (DEV-97)
 
 **Files:**
+
 - Modify: `sentry.client.config.ts:5`
 - Modify: `sentry.server.config.ts:5`
 - Modify: `sentry.edge.config.ts:5`
@@ -92,15 +94,19 @@ Expected: FAIL — current code always uses `NODE_ENV`, not `NEXT_PUBLIC_SENTRY_
 **Step 3: Write minimal implementation**
 
 Update all 3 files identically. Change:
+
 ```typescript
 environment: process.env.NODE_ENV,
 ```
+
 To:
+
 ```typescript
 environment: process.env.NEXT_PUBLIC_SENTRY_ENVIRONMENT || process.env.NODE_ENV,
 ```
 
 Files to change:
+
 - `sentry.client.config.ts`
 - `sentry.server.config.ts`
 - `sentry.edge.config.ts`
@@ -125,6 +131,7 @@ allowing staging deploys (NODE_ENV=production) to tag errors as 'staging'."
 ### Task 2: Add missing env vars to .env.example
 
 **Files:**
+
 - Modify: `.env.example:43-44` (Sentry section) and `:47-48` (App section)
 
 No test needed — documentation-only change.
@@ -132,6 +139,7 @@ No test needed — documentation-only change.
 **Step 1: Add `NEXT_PUBLIC_SENTRY_ENVIRONMENT` to Sentry section**
 
 After `SENTRY_PROJECT=`, add:
+
 ```
 NEXT_PUBLIC_SENTRY_ENVIRONMENT=  # Override Sentry environment tag (e.g. "staging"). Falls back to NODE_ENV.
 ```
@@ -139,6 +147,7 @@ NEXT_PUBLIC_SENTRY_ENVIRONMENT=  # Override Sentry environment tag (e.g. "stagin
 **Step 2: Add `ENVIRONMENT` and `ANON_SALT` to App section**
 
 After `NODE_ENV=development`, add:
+
 ```
 ENVIRONMENT=development            # Backend environment: development | staging | production
 ANON_SALT=caferoam-dev-salt        # MUST change in non-development environments (analytics anonymization)
@@ -163,6 +172,7 @@ non-dev environments, and frontend Sentry needs a dedicated environment var."
 ### Task 3: Update doctor.sh with Railway staging checks
 
 **Files:**
+
 - Modify: `scripts/doctor.sh` (append new section)
 
 No test needed — shell script enhancement.
@@ -219,6 +229,7 @@ Railway should auto-detect `railway.json` and create both services. If not:
 **Step 3: Link GitHub repo**
 
 In Railway dashboard:
+
 1. Go to project settings → Connect GitHub repo → select `caferoam`
 2. Set auto-deploy branch to `main`
 3. Confirm both services are configured
@@ -226,6 +237,7 @@ In Railway dashboard:
 **Step 4: Enable internal networking**
 
 In Railway dashboard:
+
 1. Go to `api` service → Settings → Networking
 2. Enable "Private Networking" — note the internal hostname (should be `api.railway.internal`)
 3. Confirm `web` service can reach it (verified in Task 6)
@@ -361,6 +373,7 @@ railway logs --service api
 ```
 
 Watch for:
+
 - `web`: Nixpacks build succeeds, `pnpm start` runs, health check at `/` returns 200
 - `api`: Docker build succeeds, uvicorn starts, health check at `/health` returns 200
 
@@ -375,6 +388,7 @@ curl -s http://api.railway.internal:8000/health # Internal only — verify via r
 **Step 4: Verify frontend renders**
 
 Open `https://<web-url>/` in a browser:
+
 - [ ] Page loads without errors
 - [ ] Shop directory renders 164 shops
 - [ ] Map loads with Mapbox tiles
@@ -383,6 +397,7 @@ Open `https://<web-url>/` in a browser:
 **Step 5: Verify frontend→backend proxy**
 
 Open browser DevTools Network tab:
+
 - Navigate to the app
 - Trigger an API call (e.g., search, load shops)
 - Verify requests to `/api/*` return 200 (not 503 "Backend unavailable")
@@ -401,6 +416,7 @@ curl -s https://<web-url>/api/health/deep | python3 -m json.tool
 ```
 
 Expected:
+
 ```json
 {
     "status": "healthy",
@@ -422,6 +438,7 @@ No test needed — manual dashboard configuration.
 **Step 1: Add Better Stack staging monitors**
 
 In Better Stack dashboard:
+
 1. Create monitor `[staging] web` → URL: `https://<web-url>/` → Check interval: 3 min → Expected status: 200
 2. Create monitor `[staging] api` → URL: `https://<web-url>/api/health` → Check interval: 3 min → Expected status: 200
 
@@ -430,6 +447,7 @@ Note: `api` is not publicly accessible, so monitor it through the web proxy at `
 **Step 2: Configure PostHog staging environment**
 
 In PostHog dashboard:
+
 1. Go to Project Settings → Environments
 2. Create "Staging" environment
 3. Map it to the staging app URL
@@ -480,18 +498,23 @@ graph TD
 ```
 
 **Wave 1** (parallel — code changes, no dependencies):
+
 - Task 1: Frontend Sentry environment tagging (TDD)
 - Task 2: Add missing env vars to .env.example
 - Task 3: Update doctor.sh with Railway check
 
 **Wave 2** (parallel with Wave 1 — manual, no file overlap):
+
 - Task 4: Create Railway project + link GitHub repo
 
 **Wave 3** (depends on Wave 1 + 2):
+
 - Task 5: Wire all 34 env vars to Railway services
 
 **Wave 4** (depends on Wave 3):
+
 - Task 6: Trigger first deploy + verify health checks
 
 **Wave 5** (depends on Wave 4):
+
 - Task 7: Set up Better Stack monitors + verify PostHog/Sentry

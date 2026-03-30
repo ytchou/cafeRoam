@@ -30,13 +30,13 @@ GitHub (main) --> Railway auto-deploy
 
 ## Decisions
 
-| Decision | Choice | Rationale |
-|----------|--------|-----------|
-| Observability | Shared projects + `environment=staging` tags | $0 cost — Sentry (unlimited free projects, env filter built-in), PostHog (native Environments feature, free tier = 1 project), Better Stack (naming convention, 10 free monitors) |
-| Staging URL | Railway auto-generated | Free, sufficient for dev/QA. Custom subdomain deferred. |
-| Deploy trigger | Auto-deploy from `main` | Fast feedback loop, standard staging workflow |
-| Paid API services | Real keys, low traffic | Validates real integrations; staging traffic negligible |
-| Env vars | Set all 32 from scratch | No assumptions about prior DEV-71 partial setup |
+| Decision          | Choice                                       | Rationale                                                                                                                                                                         |
+| ----------------- | -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Observability     | Shared projects + `environment=staging` tags | $0 cost — Sentry (unlimited free projects, env filter built-in), PostHog (native Environments feature, free tier = 1 project), Better Stack (naming convention, 10 free monitors) |
+| Staging URL       | Railway auto-generated                       | Free, sufficient for dev/QA. Custom subdomain deferred.                                                                                                                           |
+| Deploy trigger    | Auto-deploy from `main`                      | Fast feedback loop, standard staging workflow                                                                                                                                     |
+| Paid API services | Real keys, low traffic                       | Validates real integrations; staging traffic negligible                                                                                                                           |
+| Env vars          | Set all 32 from scratch                      | No assumptions about prior DEV-71 partial setup                                                                                                                                   |
 
 ### Alternatives rejected
 
@@ -56,44 +56,45 @@ GitHub (main) --> Railway auto-deploy
 
 32 variables across two services. Full mapping:
 
-| Category | Variable | Service | Staging value |
-|----------|----------|---------|---------------|
-| Supabase | `NEXT_PUBLIC_SUPABASE_URL` | web | Staging Supabase URL (Tokyo) |
-| Supabase | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | web | Staging anon key |
-| Supabase | `SUPABASE_SERVICE_ROLE_KEY` | api | Staging service role key |
-| LLM | `LLM_PROVIDER` | api | `anthropic` |
-| LLM | `ANTHROPIC_API_KEY` | api | Real key (1Password) |
-| Embeddings | `EMBEDDINGS_PROVIDER` | api | `openai` |
-| Embeddings | `OPENAI_API_KEY` | api | Real key (1Password) |
-| Email | `EMAIL_PROVIDER` | api | `resend` |
-| Email | `RESEND_API_KEY` | api | Real key (1Password) |
-| Email | `EMAIL_FROM` | api | `noreply@caferoam.tw` |
-| Maps | `MAPS_PROVIDER` | web | `mapbox` |
-| Maps | `NEXT_PUBLIC_MAPBOX_TOKEN` | web | Real token (1Password) |
-| Analytics | `ANALYTICS_PROVIDER` | web | `posthog` |
-| Analytics | `NEXT_PUBLIC_POSTHOG_KEY` | web | Same as prod (shared project) |
-| Analytics | `NEXT_PUBLIC_POSTHOG_HOST` | web | Same as prod |
-| Analytics | `POSTHOG_API_KEY` | api | Same as prod |
-| Analytics | `POSTHOG_PROJECT_ID` | api | Same as prod |
-| Analytics | `NEXT_PUBLIC_GA_MEASUREMENT_ID` | web | Same as prod (or empty) |
-| Error tracking | `NEXT_PUBLIC_SENTRY_DSN` | web | Same DSN (shared project) |
-| Error tracking | `SENTRY_DSN` | api | Same DSN (shared project) |
-| Error tracking | `SENTRY_AUTH_TOKEN` | web | Same token |
-| Error tracking | `SENTRY_ORG` | web | Same org |
-| Error tracking | `SENTRY_PROJECT` | web | Same project |
-| Error tracking | `SENTRY_ENVIRONMENT` | both | `staging` |
-| Scraping | `APIFY_API_TOKEN` | api | Real token (1Password) |
-| Backend routing | `BACKEND_INTERNAL_URL` | web | `http://api.railway.internal:8000` |
-| App config | `NEXT_PUBLIC_APP_URL` | web | Railway auto-generated URL |
-| App config | `NODE_ENV` | both | `production` |
-| Search cache | `SEARCH_CACHE_PROVIDER` | api | `supabase` |
-| Search cache | `SEARCH_CACHE_TTL_SECONDS` | api | `14400` |
-| Search cache | `SEARCH_CACHE_SIMILARITY_THRESHOLD` | api | `0.85` |
-| E2E fixture | `E2E_CLAIMED_SHOP_ID` | web | A real shop ID from 164 seeded shops |
+| Category        | Variable                            | Service | Staging value                        |
+| --------------- | ----------------------------------- | ------- | ------------------------------------ |
+| Supabase        | `NEXT_PUBLIC_SUPABASE_URL`          | web     | Staging Supabase URL (Tokyo)         |
+| Supabase        | `NEXT_PUBLIC_SUPABASE_ANON_KEY`     | web     | Staging anon key                     |
+| Supabase        | `SUPABASE_SERVICE_ROLE_KEY`         | api     | Staging service role key             |
+| LLM             | `LLM_PROVIDER`                      | api     | `anthropic`                          |
+| LLM             | `ANTHROPIC_API_KEY`                 | api     | Real key (1Password)                 |
+| Embeddings      | `EMBEDDINGS_PROVIDER`               | api     | `openai`                             |
+| Embeddings      | `OPENAI_API_KEY`                    | api     | Real key (1Password)                 |
+| Email           | `EMAIL_PROVIDER`                    | api     | `resend`                             |
+| Email           | `RESEND_API_KEY`                    | api     | Real key (1Password)                 |
+| Email           | `EMAIL_FROM`                        | api     | `noreply@caferoam.tw`                |
+| Maps            | `MAPS_PROVIDER`                     | web     | `mapbox`                             |
+| Maps            | `NEXT_PUBLIC_MAPBOX_TOKEN`          | web     | Real token (1Password)               |
+| Analytics       | `ANALYTICS_PROVIDER`                | web     | `posthog`                            |
+| Analytics       | `NEXT_PUBLIC_POSTHOG_KEY`           | web     | Same as prod (shared project)        |
+| Analytics       | `NEXT_PUBLIC_POSTHOG_HOST`          | web     | Same as prod                         |
+| Analytics       | `POSTHOG_API_KEY`                   | api     | Same as prod                         |
+| Analytics       | `POSTHOG_PROJECT_ID`                | api     | Same as prod                         |
+| Analytics       | `NEXT_PUBLIC_GA_MEASUREMENT_ID`     | web     | Same as prod (or empty)              |
+| Error tracking  | `NEXT_PUBLIC_SENTRY_DSN`            | web     | Same DSN (shared project)            |
+| Error tracking  | `SENTRY_DSN`                        | api     | Same DSN (shared project)            |
+| Error tracking  | `SENTRY_AUTH_TOKEN`                 | web     | Same token                           |
+| Error tracking  | `SENTRY_ORG`                        | web     | Same org                             |
+| Error tracking  | `SENTRY_PROJECT`                    | web     | Same project                         |
+| Error tracking  | `SENTRY_ENVIRONMENT`                | both    | `staging`                            |
+| Scraping        | `APIFY_API_TOKEN`                   | api     | Real token (1Password)               |
+| Backend routing | `BACKEND_INTERNAL_URL`              | web     | `http://api.railway.internal:8000`   |
+| App config      | `NEXT_PUBLIC_APP_URL`               | web     | Railway auto-generated URL           |
+| App config      | `NODE_ENV`                          | both    | `production`                         |
+| Search cache    | `SEARCH_CACHE_PROVIDER`             | api     | `supabase`                           |
+| Search cache    | `SEARCH_CACHE_TTL_SECONDS`          | api     | `14400`                              |
+| Search cache    | `SEARCH_CACHE_SIMILARITY_THRESHOLD` | api     | `0.85`                               |
+| E2E fixture     | `E2E_CLAIMED_SHOP_ID`               | web     | A real shop ID from 164 seeded shops |
 
 ### 3. Sentry Environment Tagging (DEV-97)
 
 Verify both frontend and backend Sentry SDK init reads `SENTRY_ENVIRONMENT`:
+
 - Frontend: `sentry.client.config.ts` / `sentry.server.config.ts`
 - Backend: Sentry init in FastAPI app
 
@@ -137,10 +138,10 @@ User --> Railway public URL (web)
 
 ## Sub-issues
 
-| Order | Ticket | Title | Size | Blocked by |
-|-------|--------|-------|------|------------|
-| 1 | DEV-95 | Create Railway project + link GitHub repo + configure services | S | -- |
-| 2 | DEV-96 | Wire all 32 env vars to Railway staging services | M | DEV-95 |
-| 3 | DEV-97 | Ensure Sentry SDK reads SENTRY_ENVIRONMENT for staging tagging | S | -- |
-| 4 | DEV-98 | Trigger first deploy + verify health checks (web + api) | M | DEV-95, DEV-96, DEV-97 |
-| 5 | DEV-99 | Set up Better Stack staging monitors + verify PostHog environment | S | DEV-98 |
+| Order | Ticket | Title                                                             | Size | Blocked by             |
+| ----- | ------ | ----------------------------------------------------------------- | ---- | ---------------------- |
+| 1     | DEV-95 | Create Railway project + link GitHub repo + configure services    | S    | --                     |
+| 2     | DEV-96 | Wire all 32 env vars to Railway staging services                  | M    | DEV-95                 |
+| 3     | DEV-97 | Ensure Sentry SDK reads SENTRY_ENVIRONMENT for staging tagging    | S    | --                     |
+| 4     | DEV-98 | Trigger first deploy + verify health checks (web + api)           | M    | DEV-95, DEV-96, DEV-97 |
+| 5     | DEV-99 | Set up Better Stack staging monitors + verify PostHog environment | S    | DEV-98                 |
