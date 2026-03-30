@@ -1976,7 +1976,7 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 
 **Wave 1 — Code changes (parallel):**
 
-- [ ] Task 1: Fix frontend Sentry environment tagging (DEV-97)
+- [x] Task 1: Fix frontend Sentry environment tagging (DEV-97)
 - [ ] Task 2: Add missing env vars to .env.example
 - [ ] Task 3: Update doctor.sh with Railway check
 
