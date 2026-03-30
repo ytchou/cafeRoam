@@ -1,11 +1,16 @@
+from datetime import datetime
 from typing import Any, cast
+from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic.alias_generators import to_camel
 
 from api.deps import get_admin_db, get_current_user, get_optional_user, get_user_db
 from core.db import first
+from core.opening_hours import is_open_now
 from db.supabase_client import get_anon_client
+
+_TW = ZoneInfo("Asia/Taipei")
 from models.types import (
     ShopCheckInPreview,
     ShopCheckInSummary,
@@ -28,7 +33,7 @@ _SHOP_LIST_COLUMNS = (
     "id, name, slug, address, city, mrt, latitude, longitude, "
     "rating, review_count, description, processing_status, "
     "mode_work, mode_rest, mode_social, "
-    "community_summary, "
+    "community_summary, opening_hours, "
     "created_at"
 )
 
@@ -45,7 +50,10 @@ async def list_shops(
 ) -> list[Any]:
     """List shops. Public — no auth required."""
     db = get_anon_client()
-    query = db.table("shops").select(f"{_SHOP_LIST_COLUMNS}, shop_photos(url), shop_claims(status)")
+    query = db.table("shops").select(
+        f"{_SHOP_LIST_COLUMNS}, shop_photos(url), shop_claims(status), "
+        "shop_tags(tag_id, taxonomy_tags(id, dimension, label, label_zh))"
+    )
     if city:
         query = query.eq("city", city)
     if featured:
@@ -53,14 +61,23 @@ async def list_shops(
     query = query.limit(limit)
     response = query.execute()
     rows = cast("list[dict[str, Any]]", response.data or [])
+    now = datetime.now(_TW)
     result = []
     for row in rows:
         photo_urls = [p["url"] for p in (row.pop("shop_photos", None) or [])]
         raw_claims = row.pop("shop_claims", None) or []
+        raw_tags = row.pop("shop_tags", None) or []
         claim_status = first(raw_claims, "shop_claims")["status"] if raw_claims else None
+        taxonomy_tags = [
+            TaxonomyTag(**t["taxonomy_tags"]).model_dump(by_alias=True)
+            for t in raw_tags
+            if t.get("taxonomy_tags")
+        ]
         camel = {to_camel(k): v for k, v in row.items()}
         camel["photoUrls"] = photo_urls
         camel["claimStatus"] = claim_status
+        camel["taxonomyTags"] = taxonomy_tags
+        camel["isOpen"] = is_open_now(row.get("opening_hours"), now)
         result.append(camel)
     return result
 

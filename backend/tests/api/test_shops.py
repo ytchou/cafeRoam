@@ -230,6 +230,59 @@ class TestShopsAPI:
         data = response.json()
         assert data["communitySummary"] is None
 
+    def test_list_shops_includes_taxonomy_tags_and_is_open(self):
+        """GET /shops returns taxonomyTags array and isOpen field per shop."""
+        shop_row = {
+            **SHOP_ROW,
+            "opening_hours": ["Monday: 9:00 AM - 6:00 PM"],
+            "shop_photos": [],
+            "shop_claims": [],
+            "shop_tags": [
+                {
+                    "tag_id": "quiet",
+                    "taxonomy_tags": {
+                        "id": "quiet",
+                        "dimension": "ambience",
+                        "label": "Quiet",
+                        "label_zh": "安靜",
+                    },
+                }
+            ],
+        }
+        chain = _simple_select_chain([shop_row])
+
+        with patch("api.shops.get_anon_client") as mock_sb:
+            mock_sb.return_value = MagicMock(table=MagicMock(return_value=chain))
+            response = client.get("/shops")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data) == 1
+        shop = data[0]
+        assert "taxonomyTags" in shop
+        assert shop["taxonomyTags"] == [
+            {"id": "quiet", "dimension": "ambience", "label": "Quiet", "labelZh": "安靜"}
+        ]
+        assert "isOpen" in shop
+
+    def test_list_shops_is_open_null_when_no_hours(self):
+        """GET /shops returns isOpen: null when opening_hours is absent."""
+        shop_row = {
+            **SHOP_ROW,
+            "shop_photos": [],
+            "shop_claims": [],
+            "shop_tags": [],
+        }
+        chain = _simple_select_chain([shop_row])
+
+        with patch("api.shops.get_anon_client") as mock_sb:
+            mock_sb.return_value = MagicMock(table=MagicMock(return_value=chain))
+            response = client.get("/shops")
+
+        assert response.status_code == 200
+        shop = response.json()[0]
+        assert shop["isOpen"] is None
+
     def test_list_shops_featured_returns_live_shops_only(self):
         """GET /shops?featured=true filters to processing_status=live shops."""
         live_shops = [
