@@ -31,7 +31,7 @@ from api.submissions import router as submissions_router
 from core.config import settings
 from db.supabase_client import get_service_role_client
 from middleware.request_id import RequestIDMiddleware
-from workers.scheduler import create_scheduler
+from workers.scheduler import create_scheduler, get_scheduler_status
 
 logger = structlog.get_logger()
 
@@ -119,6 +119,11 @@ async def deep_health_check() -> JSONResponse:
     status = "healthy" if all_healthy else "unhealthy"
     status_code = 200 if all_healthy else 503
     return JSONResponse(content={"status": status, "checks": checks}, status_code=status_code)
+
+
+@app.get("/health/scheduler")
+async def scheduler_health() -> dict[str, object]:
+    return get_scheduler_status(scheduler)
 
 
 app.include_router(auth_router)

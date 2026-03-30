@@ -2020,7 +2020,7 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 **Wave 4 — Registration + endpoint (parallel):**
 
 - [x] Task 5: Register reaper + wrap delete_expired_accounts (DEV-102)
-- [ ] Task 7: /health/scheduler endpoint (DEV-104)
+- [x] Task 7: /health/scheduler endpoint (DEV-104)
 
 **Wave 5 — Validate:**
 
