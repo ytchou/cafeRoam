@@ -1,7 +1,4 @@
-from datetime import UTC, datetime, timedelta
 from unittest.mock import MagicMock, patch
-
-import pytest
 
 from workers.queue import JobQueue
 
@@ -19,9 +16,7 @@ class TestReclaimStuckJobs:
             mock_settings.worker_stuck_job_timeout_minutes = 15
             result = queue.reclaim_stuck_jobs()
 
-        mock_db.rpc.assert_called_once_with(
-            "reclaim_stuck_jobs", {"p_timeout_minutes": 15}
-        )
+        mock_db.rpc.assert_called_once_with("reclaim_stuck_jobs", {"p_timeout_minutes": 15})
         assert result == (2, 1)
 
     def test_returns_zero_counts_when_no_stuck_jobs(self):

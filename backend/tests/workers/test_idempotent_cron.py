@@ -15,8 +15,10 @@ class TestIdempotentCron:
 
         wrapped = idempotent_cron("test_job", window="day")(mock_handler)
 
-        with patch("workers.scheduler.get_service_role_client"), \
-             patch("workers.scheduler.JobQueue", return_value=mock_queue):
+        with (
+            patch("workers.scheduler.get_service_role_client"),
+            patch("workers.scheduler.JobQueue", return_value=mock_queue),
+        ):
             await wrapped()
 
         mock_handler.assert_awaited_once()
@@ -30,8 +32,10 @@ class TestIdempotentCron:
 
         wrapped = idempotent_cron("test_job", window="day")(mock_handler)
 
-        with patch("workers.scheduler.get_service_role_client"), \
-             patch("workers.scheduler.JobQueue", return_value=mock_queue):
+        with (
+            patch("workers.scheduler.get_service_role_client"),
+            patch("workers.scheduler.JobQueue", return_value=mock_queue),
+        ):
             await wrapped()
 
         mock_handler.assert_not_awaited()
@@ -45,8 +49,10 @@ class TestIdempotentCron:
 
         wrapped = idempotent_cron("weekly_email", window="week")(mock_handler)
 
-        with patch("workers.scheduler.get_service_role_client"), \
-             patch("workers.scheduler.JobQueue", return_value=mock_queue):
+        with (
+            patch("workers.scheduler.get_service_role_client"),
+            patch("workers.scheduler.JobQueue", return_value=mock_queue),
+        ):
             await wrapped()
 
         mock_queue.acquire_cron_lock.assert_called_once_with("weekly_email", window="week")

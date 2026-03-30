@@ -144,7 +144,8 @@ class JobQueue:
             "reclaim_stuck_jobs",
             {"p_timeout_minutes": settings.worker_stuck_job_timeout_minutes},
         ).execute()
-        row = first(response.data, "reclaim_stuck_jobs") or {"reclaimed_count": 0, "failed_count": 0}
+        empty: dict[str, int] = {"reclaimed_count": 0, "failed_count": 0}
+        row = first(response.data, "reclaim_stuck_jobs") or empty
         return (int(row["reclaimed_count"]), int(row["failed_count"]))
 
     def acquire_cron_lock(self, job_name: str, window: str) -> bool:

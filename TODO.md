@@ -2024,4 +2024,4 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 
 **Wave 5 — Validate:**
 
-- [ ] Task 8: Full backend test suite + lint (DEV-105)
+- [x] Task 8: Full backend test suite + lint (DEV-105)
