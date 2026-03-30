@@ -36,4 +36,58 @@
 
 ## Fix Pass 1
 
-*(Populated after fixes)*
+**Pre-fix SHA:** d5c95a8f23dbe3fa9c4d463f16df732f5f5b3895
+
+**Issues fixed:**
+- [Critical] smoke-test.sh:50 — Removed `-f` from curl; status extraction now works on 4xx/5xx
+- [Critical] runbook.md — Added JWT inspection step to verify custom_access_token_hook fires
+- [Important] smoke-test.sh:53 — Replaced `head -n -1` with `sed '$d'` (macOS portability)
+- [Important] smoke-test.sh:60 — Added hard `jq`/`curl` prerequisite guards at script top; removed conditional jq check
+- [Important] runbook.md Ph2 — Added `EMAIL_FROM`, `SEARCH_CACHE_PROVIDER`, `SEARCH_CACHE_TTL_SECONDS`, `SEARCH_CACHE_SIMILARITY_THRESHOLD`
+- [Important] runbook.md Ph3/4 — Renamed to "Custom Domains", added `api.caferoam.com` Railway setup, domain strategy note, fixed Web Health monitor to `caferoam.tw`
+- [Important] runbook.md Ph1 — Fixed misleading `db diff` comment (was "no diff after push" on pre-push step)
+- [Important] runbook.md — Added auth email misconfiguration row to rollback table
+- [Important] smoke-test.sh:81 — Added `.status "ok"` JSON assertion to `/api/health` proxy check
+- [Minor] smoke-test.sh:21 — Removed unused `YELLOW` variable
+- [Minor] runbook.md Ph0 — Added `jq`, `curl`, `caferoam.com` DNS to prerequisites
+- [Minor] runbook.md Ph1 — Added Supabase Storage bucket verification step
+
+**False positives skipped:**
+- Finding 5 (Critical → Incorrect) — `APP_URL` vs `NEXT_PUBLIC_APP_URL`: grep confirms only `NEXT_PUBLIC_APP_URL` used in codebase
+
+**Batch Test Run:**
+- No TypeScript or Python files changed — test suites skipped (docs + shell scripts only)
+
+---
+
+## Pass 2 — Re-Verify
+
+*Agents re-run: Bug Hunter (new Critical found), Architecture (all resolved)*
+*Agents skipped (clean in discovery): Standards*
+
+### New Issue Found in Re-Verify
+
+| Severity | File | Description | Flagged By |
+|----------|------|-------------|------------|
+| Critical | smoke-test.sh:53 | `_fail + return` inside `$(...)` — failure swallowed into subshell, FAIL not incremented | Bug Hunter |
+
+### Fix Pass 2
+
+**Issue fixed:**
+- [Critical] smoke-test.sh:53 — Moved `||` handler outside `$(...)` so `_fail` runs in parent shell
+
+### Pass 2 Re-Verify Results
+
+All previously flagged issues: ✓ Resolved
+New Critical from pass 1: ✓ Resolved
+Architecture Issue 9 (/api/health JSON): ✓ Resolved in smoke-test.sh (re-verify agent checked wrong file)
+
+---
+
+## Final State
+
+**Iterations completed:** 2
+**All Critical/Important resolved:** Yes
+**Remaining issues:** None
+
+**Review log:** docs/reviews/2026-03-30-feat-dev-76-prod-promotion.md
