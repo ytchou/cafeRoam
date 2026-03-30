@@ -6,8 +6,13 @@
 #
 # Defaults to production URLs if env vars are not set.
 # Exit code 0 = all checks passed. Non-zero = one or more checks failed.
+#
+# Prerequisites: curl, jq
 
 set -euo pipefail
+
+command -v jq &>/dev/null || { printf "ERROR: jq is required. Install with: brew install jq\n" >&2; exit 1; }
+command -v curl &>/dev/null || { printf "ERROR: curl is required.\n" >&2; exit 1; }
 
 BASE_URL="${BASE_URL:-https://caferoam.tw}"
 API_URL="${API_URL:-https://api.caferoam.com}"
@@ -18,13 +23,11 @@ FAIL=0
 if [ -t 1 ]; then
   GREEN='\033[0;32m'
   RED='\033[0;31m'
-  YELLOW='\033[0;33m'
   BOLD='\033[1m'
   NC='\033[0m'
 else
   GREEN=''
   RED=''
-  YELLOW=''
   BOLD=''
   NC=''
 fi
@@ -47,17 +50,17 @@ check_http() {
   local response
   local actual_status
 
-  response=$(curl -sf --max-time 15 -w "\n%{http_code}" "$url" 2>/dev/null || true)
+  response=$(curl -s --max-time 15 -w "\n%{http_code}" "$url" 2>/dev/null || { _fail "$description" "curl failed — connection error or timeout ($url)"; return; })
   actual_status=$(echo "$response" | tail -1)
   local body
-  body=$(echo "$response" | head -n -1)
+  body=$(echo "$response" | sed '$d')
 
   if [ "$actual_status" != "$expected_status" ]; then
     _fail "$description" "HTTP $actual_status (expected $expected_status) — $url"
     return
   fi
 
-  if [ -n "$jq_filter" ] && command -v jq &>/dev/null; then
+  if [ -n "$jq_filter" ]; then
     local actual_value
     actual_value=$(echo "$body" | jq -r "$jq_filter" 2>/dev/null || echo "")
     if [ "$actual_value" != "$expected_value" ]; then
@@ -78,7 +81,7 @@ printf "────────────────────────
 # ─── Frontend ─────────────────────────────────────────────────────────────────
 printf "${BOLD}Frontend${NC}\n"
 check_http "Homepage reachable" "$BASE_URL/" "200"
-check_http "Next.js health proxy" "$BASE_URL/api/health" "200"
+check_http "Next.js health proxy (backend connectivity)" "$BASE_URL/api/health" "200" ".status" "ok"
 printf "\n"
 
 # ─── API Health ───────────────────────────────────────────────────────────────

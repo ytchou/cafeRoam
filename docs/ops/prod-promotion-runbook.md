@@ -16,7 +16,9 @@ Check off each item as you complete it. Do not proceed to the next phase if any 
 - [ ] DEV-75 (Mapbox perf validation) is merged and deployed to staging ✓
 - [ ] Railway CLI installed and logged in: `railway whoami`
 - [ ] Supabase CLI installed and logged in: `supabase projects list`
-- [ ] You have access to DNS for `caferoam.tw`
+- [ ] `curl` installed: `curl --version`
+- [ ] `jq` installed: `jq --version` (required by smoke-test.sh — install with `brew install jq`)
+- [ ] You have access to DNS for `caferoam.tw` and `caferoam.com`
 
 ---
 
@@ -34,11 +36,13 @@ Check off each item as you complete it. Do not proceed to the next phase if any 
   - Redirect URL → `https://caferoam.tw/auth/callback`
 - [ ] Enable the **Custom Access Token hook** (Authentication → Hooks):
   - URI: `pg-functions://postgres/public/custom_access_token_hook`
+- [ ] Verify the hook fires by signing in via the Supabase dashboard **Authentication → Users**, clicking a test user → **Send magic link** → sign in → inspect the JWT at [jwt.io](https://jwt.io). Confirm custom claims (e.g. `user_role`) are present. If missing, role-based auth checks will fail silently.
 - [ ] Configure custom SMTP via Resend (Authentication → Email Templates → SMTP Settings)
+- [ ] Verify Supabase Storage buckets exist (Dashboard → Storage). Create any missing buckets and apply the same RLS policies as staging. Required for check-in photo uploads in Phase 7.
 - [ ] Apply all migrations to prod:
   ```bash
   supabase link --project-ref <prod-project-ref>
-  supabase db diff --linked   # verify — should show no diff after push
+  supabase db diff --linked   # preview pending migrations — expect to see them listed
   supabase db push
   ```
 - [ ] Run parity check — confirm migration history matches staging:
@@ -77,29 +81,33 @@ Check off each item as you complete it. Do not proceed to the next phase if any 
   - `ANTHROPIC_API_KEY`
   - `OPENAI_API_KEY`
   - `RESEND_API_KEY`
+  - `EMAIL_FROM=hello@caferoam.tw`
   - `NEXT_PUBLIC_MAPBOX_TOKEN`
   - `NEXT_PUBLIC_POSTHOG_KEY`, `POSTHOG_API_KEY`, `POSTHOG_PROJECT_ID`
   - `NEXT_PUBLIC_GA_MEASUREMENT_ID`
   - `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_DSN`, `SENTRY_ORG`, `SENTRY_PROJECT`
+  - `SEARCH_CACHE_PROVIDER=supabase`, `SEARCH_CACHE_TTL_SECONDS=14400`, `SEARCH_CACHE_SIMILARITY_THRESHOLD=0.85`
 - [ ] Trigger a deploy on both services (web + api) and wait for health checks to go green
 
 ---
 
-## Phase 3: Custom Domain
+## Phase 3: Custom Domains
 
-- [ ] In Railway → web service → **Settings → Domains**, add `caferoam.tw`
-- [ ] Railway will show a CNAME target — add it to your DNS provider:
+**Domain strategy:** `caferoam.tw` is the primary user-facing app domain. `caferoam.com` is reserved for API and monitoring infrastructure (`api.caferoam.com`, `status.caferoam.com`). Both need DNS configured.
+
+- [ ] In Railway → **web** service → **Settings → Domains**, add `caferoam.tw`
+- [ ] In Railway → **api** service → **Settings → Domains**, add `api.caferoam.com`
+- [ ] Add DNS records for both:
   ```
-  Type:  CNAME
-  Name:  @  (or caferoam.tw)
-  Value: <railway-provided-hostname>
-  TTL:   3600
+  Type:  CNAME   Name: @  (caferoam.tw)         Value: <railway-web-hostname>    TTL: 3600
+  Type:  CNAME   Name: api (api.caferoam.com)    Value: <railway-api-hostname>    TTL: 3600
   ```
-- [ ] Wait for SSL cert provisioning (typically 2–5 minutes)
-- [ ] Verify HTTPS:
+- [ ] Wait for SSL cert provisioning on both (typically 2–5 minutes each)
+- [ ] Verify HTTPS on both:
   ```bash
   curl -I https://caferoam.tw
-  # Expect: HTTP/2 200
+  curl -I https://api.caferoam.com/health
+  # Expect: HTTP/2 200 on both
   ```
 
 ---
@@ -109,7 +117,7 @@ Check off each item as you complete it. Do not proceed to the next phase if any 
 Follow `docs/ops/better-stack-setup.md` — summary:
 
 - [ ] Create **API Health** monitor: `https://api.caferoam.com/health` — interval 60s
-- [ ] Create **Web Health** monitor: `https://caferoam.com` — interval 60s
+- [ ] Create **Web Health** monitor: `https://caferoam.tw` — interval 60s
 - [ ] Create **API Deep Health** monitor: `https://api.caferoam.com/health/deep` — interval 300s
 - [ ] Create alert escalation policy (Slack/Discord + email, escalate after 15 min)
 - [ ] Assign alert policy to all 3 monitors
@@ -120,7 +128,7 @@ Follow `docs/ops/better-stack-setup.md` — summary:
 
 ## Phase 5: Verify Observability
 
-- [ ] **Sentry:** Open prod URL in browser, trigger a forced error (or check Sentry's "Send Test Event" button) — confirm event appears in Sentry with `environment: production`
+- [ ] **Sentry:** Visit `https://caferoam.tw/api/sentry-example-api` (Next.js Sentry example route). For the Python API: `curl -X GET https://api.caferoam.com/debug/sentry-test` — confirm events appear in Sentry dashboard with `environment: production` within 30 seconds
 - [ ] **PostHog:** Visit prod URL — confirm pageview events appear in PostHog Live Events within 30 seconds
 - [ ] **GA4:** Visit prod URL — confirm hit appears in GA4 Realtime report
 
@@ -168,5 +176,6 @@ These flows cannot be automated — verify each manually in an incognito window:
 | Custom domain / SSL stuck | Temporarily point users to Railway's default `.up.railway.app` URL while investigating |
 | Observability not receiving events | Check `ENVIRONMENT=production` is set; Sentry/PostHog keys are prod keys (not staging) |
 | Smoke test fails on deep health | Check `SUPABASE_SERVICE_ROLE_KEY` is the prod key; run `supabase db diff --linked` to confirm migrations applied |
+| Auth email links broken / users can't confirm accounts | Supabase Dashboard → **Authentication → URL Configuration** → verify Site URL is `https://caferoam.tw`; for users with broken tokens, go to **Authentication → Users** and manually confirm them |
 
 **Never tear down staging** — it remains the fallback environment and the reference for parity checks.
