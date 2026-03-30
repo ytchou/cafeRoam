@@ -18,6 +18,8 @@ COPY . .
 EXPOSE 8000
 
 # Run as non-root for security
+# Set UV_CACHE_DIR to a writable path — `nobody` has HOME=/nonexistent on slim images
+ENV UV_CACHE_DIR=/tmp/uv-cache
 USER nobody
 
 # Run with uvicorn
