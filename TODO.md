@@ -1968,3 +1968,30 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 **Chunk 2 — Docs:**
 
 - [x] Update E2E journey inventory (J40, J41)
+
+## Railway Staging Deployment (DEV-73)
+
+> **Design Doc:** [docs/designs/2026-03-30-railway-staging-deployment-design.md](docs/designs/2026-03-30-railway-staging-deployment-design.md)
+> **Plan:** [docs/plans/2026-03-30-railway-staging-deployment-plan.md](docs/plans/2026-03-30-railway-staging-deployment-plan.md)
+
+**Wave 1 — Code changes (parallel):**
+
+- [x] Task 1: Fix frontend Sentry environment tagging (DEV-97)
+- [x] Task 2: Add missing env vars to .env.example
+- [x] Task 3: Update doctor.sh with Railway check
+
+**Wave 2 — Railway setup:**
+
+- [x] Task 4: Create Railway project + link GitHub repo (DEV-95)
+
+**Wave 3 — Wire env vars:**
+
+- [x] Task 5: Wire all 34 env vars to Railway services (DEV-96)
+
+**Wave 4 — Deploy + verify:**
+
+- [x] Task 6: Trigger first deploy + verify health checks (DEV-98)
+
+**Wave 5 — Observability:**
+
+- [ ] Task 7: Set up Better Stack monitors + verify PostHog/Sentry (DEV-99) — deferred, see DEV-100

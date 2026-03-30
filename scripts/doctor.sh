@@ -183,6 +183,16 @@ if [ -z "${POSTHOG_API_KEY:-}" ]; then
   printf "${YELLOW}[WARN]${NC} POSTHOG_API_KEY not set — owner analytics will show 0 page views\n"
 fi
 
+# ─── Railway (optional) ───────────────────────────────────────────────────────
+printf "\n${BOLD}Railway${NC}\n"
+
+if command -v railway &> /dev/null; then
+  RAILWAY_VERSION=$(railway --version 2>/dev/null | head -1 || echo "unknown")
+  _pass "Railway CLI installed: ${RAILWAY_VERSION}"
+else
+  printf "${YELLOW}[WARN]${NC} Railway CLI not installed — needed for staging/prod deploys\n"
+fi
+
 # ─── Summary ──────────────────────────────────────────────────────────────────
 printf "\n────────────────────────────────\n"
 if [ "$FAIL" -eq 0 ]; then
