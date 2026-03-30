@@ -58,7 +58,7 @@
 
 **Wave 5 — Operational:**
 
-- [ ] Task 8: Close DEV-87 (pgBouncer verified safe) + run against staging (DEV-88)
+- [x] Task 8: Close DEV-87 (pgBouncer verified safe) + run against staging (DEV-88)
 
 ---
 
