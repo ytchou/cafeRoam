@@ -240,7 +240,9 @@ describe('a user on the desktop map view', () => {
         onCardClick={onCardClick}
       />
     );
-    await userEvent.click(screen.getByRole('button', { name: /view details/i }));
+    await userEvent.click(
+      screen.getByRole('button', { name: /view details/i })
+    );
     expect(onCardClick).toHaveBeenCalledWith('shop-aa11bb');
   });
 });

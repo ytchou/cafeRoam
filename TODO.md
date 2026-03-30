@@ -24,7 +24,7 @@
 - [x] Task 5: Scroll-to-card + auto-expand + preview card wiring in MapDesktopLayout (DEV-117, DEV-119)
 
 **Wave 5 — Verification:**
-- [ ] Task 6: Final integration verification (lint, type-check, full test suite)
+- [x] Task 6: Final integration verification (lint, type-check, full test suite)
 
 ---
 

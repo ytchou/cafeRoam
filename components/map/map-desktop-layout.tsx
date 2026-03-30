@@ -1,5 +1,12 @@
 'use client';
-import { useState, useMemo, useRef, useEffect, useCallback, Suspense } from 'react';
+import {
+  useState,
+  useMemo,
+  useRef,
+  useEffect,
+  useCallback,
+  Suspense,
+} from 'react';
 import { SearchBar } from '@/components/filters/search-bar';
 import { FilterTag } from '@/components/filters/filter-tag';
 import { QUICK_FILTERS } from '@/components/filters/quick-filters';
@@ -117,7 +124,10 @@ export function MapDesktopLayout({
               />
             </div>
 
-            <div ref={scrollRef} className="flex-1 divide-y divide-[var(--border)] overflow-y-auto">
+            <div
+              ref={scrollRef}
+              className="flex-1 divide-y divide-[var(--border)] overflow-y-auto"
+            >
               {shops.map((shop) => (
                 <div key={shop.id} data-shop-id={shop.id}>
                   <ShopCardCompact

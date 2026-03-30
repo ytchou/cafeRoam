@@ -62,9 +62,15 @@ describe('a user seeing a shop preview card on the map', () => {
   it('calls onNavigate when the user clicks View Details', async () => {
     const onNavigate = vi.fn();
     render(
-      <ShopPreviewCard shop={mockShop} onClose={vi.fn()} onNavigate={onNavigate} />
+      <ShopPreviewCard
+        shop={mockShop}
+        onClose={vi.fn()}
+        onNavigate={onNavigate}
+      />
     );
-    await userEvent.click(screen.getByRole('button', { name: /view details/i }));
+    await userEvent.click(
+      screen.getByRole('button', { name: /view details/i })
+    );
     expect(onNavigate).toHaveBeenCalledOnce();
   });
 
@@ -97,7 +103,11 @@ describe('a user seeing a shop preview card on the map', () => {
   it('shows a placeholder when the shop has no photos', () => {
     const noPhotoShop = { ...mockShop, photo_urls: [] };
     render(
-      <ShopPreviewCard shop={noPhotoShop} onClose={vi.fn()} onNavigate={vi.fn()} />
+      <ShopPreviewCard
+        shop={noPhotoShop}
+        onClose={vi.fn()}
+        onNavigate={vi.fn()}
+      />
     );
     expect(screen.getByText('No photo')).toBeInTheDocument();
   });
