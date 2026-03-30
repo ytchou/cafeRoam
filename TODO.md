@@ -6,6 +6,30 @@
 
 ---
 
+## Mapbox Performance Validation + Graceful Degradation (DEV-75)
+
+> **Design Doc:** [docs/designs/2026-03-30-mapbox-performance-validation-design.md](docs/designs/2026-03-30-mapbox-performance-validation-design.md)
+> **Plan:** [docs/plans/2026-03-30-mapbox-performance-validation-plan.md](docs/plans/2026-03-30-mapbox-performance-validation-plan.md)
+
+**Wave 1 — Hook + Perf Script (parallel):**
+
+- [ ] Task 1: Write `useDeviceCapability` hook failing test (DEV-107)
+- [ ] Task 2: Implement `useDeviceCapability` hook (DEV-107)
+- [ ] Task 7: Create Playwright map performance test script (DEV-109)
+
+**Wave 2 — MapWithFallback Component:**
+
+- [ ] Task 3: Write `MapWithFallback` failing test (DEV-108)
+- [ ] Task 4: Implement `MapWithFallback` component (DEV-108)
+
+**Wave 3 — Integration + Validation:**
+
+- [ ] Task 5: Write Find page integration failing test (DEV-108)
+- [ ] Task 6: Integrate `MapWithFallback` into `app/page.tsx` (DEV-108)
+- [ ] Task 8: Run performance validation + update ASSUMPTION T4 (DEV-110)
+
+---
+
 ## Bootstrap Supabase Staging (DEV-71)
 
 > **Design Doc:** [docs/designs/2026-03-29-supabase-staging-bootstrap-design.md](docs/designs/2026-03-29-supabase-staging-bootstrap-design.md)

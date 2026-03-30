@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { _resetDeviceCapabilityCache } from '@/lib/hooks/use-device-capability';
 
 // Mock dynamic imports (MapView is dynamically imported with ssr: false)
 vi.mock('next/dynamic', () => ({
@@ -137,9 +138,14 @@ describe('FindPage', () => {
     mockSearchParams.delete('mode');
   });
 
-  it('shows the map view by default (no ?view param)', () => {
+  afterEach(() => {
+    _resetDeviceCapabilityCache();
+  });
+
+  it('shows the map view by default (no ?view param)', async () => {
     render(<FindPage />);
-    expect(screen.getByTestId('map-view')).toBeInTheDocument();
+    // Map loads progressively — wait for it to appear after dynamic import resolves
+    expect(await screen.findByTestId('map-view')).toBeInTheDocument();
   });
 
   it('shows the list view when ?view=list', () => {
@@ -152,12 +158,15 @@ describe('FindPage', () => {
 
   it('tapping the list toggle updates URL to ?view=list', async () => {
     render(<FindPage />);
+    // Wait for map to load before clicking the toggle (toggle is inside the map layout)
+    await screen.findByTestId('map-view');
     await userEvent.click(screen.getByRole('button', { name: /list view/i }));
     expect(mockPush).toHaveBeenCalledWith(expect.stringContaining('view=list'));
   });
 
   it('switching views records a view_toggle analytics event so product can track the feature', async () => {
     render(<FindPage />);
+    await screen.findByTestId('map-view');
     await userEvent.click(screen.getByRole('button', { name: /list view/i }));
     expect(mockCapture).toHaveBeenCalledWith('view_toggled', {
       to_view: 'list',
