@@ -7,6 +7,7 @@ sys.path.insert(0, os.path.dirname(__file__))
 
 from validate_supabase import (
     CheckResult,
+    check_pgbouncer_compat,
     check_pgvector,
     check_rls,
     check_schema_parity,
@@ -139,3 +140,22 @@ def test_pgvector_fails_without_extension():
     ])
     results = check_pgvector(cursor)
     assert not results[0].passed
+
+
+def test_pgbouncer_compat_passes_when_set_local_inside_function():
+    """Given SET LOCAL is inside a PL/pgSQL function body, it's pgBouncer-safe."""
+    cursor = MockCursor(results=[
+        [("search_cache_similar", "BEGIN\n  SET LOCAL hnsw.ef_search = 40;\n  RETURN QUERY SELECT ...\nEND;")],
+    ])
+    results = check_pgbouncer_compat(cursor)
+    assert all(r.passed for r in results)
+
+
+def test_pgbouncer_compat_reports_functions_with_set_local():
+    """Given functions with SET LOCAL, report details about each one."""
+    cursor = MockCursor(results=[
+        [("search_cache_similar", "BEGIN\n  SET LOCAL hnsw.ef_search = 40;\nEND;")],
+    ])
+    results = check_pgbouncer_compat(cursor)
+    assert len(results) >= 1
+    assert "search_cache_similar" in results[0].details

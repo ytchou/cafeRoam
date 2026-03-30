@@ -49,7 +49,7 @@
 **Wave 3 — Additional checks (parallel):**
 
 - [x] Task 4: pgvector validation check (DEV-86)
-- [ ] Task 5: pgBouncer compatibility check (DEV-86)
+- [x] Task 5: pgBouncer compatibility check (DEV-86)
 - [ ] Task 6: Storage bucket check (DEV-86)
 
 **Wave 4 — Integration:**

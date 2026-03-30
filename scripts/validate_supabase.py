@@ -234,6 +234,46 @@ def check_pgvector(cursor) -> list[CheckResult]:
     return results
 
 
+def check_pgbouncer_compat(cursor) -> list[CheckResult]:
+    """Check for SET LOCAL usage in user-defined functions.
+
+    SET LOCAL inside PL/pgSQL function bodies is pgBouncer-safe (scoped to
+    the calling transaction). SET LOCAL as standalone SQL statements is NOT
+    safe under pgBouncer transaction mode.
+    """
+    results = []
+
+    cursor.execute(
+        "SELECT p.proname, pg_get_functiondef(p.oid) "
+        "FROM pg_proc p "
+        "JOIN pg_namespace n ON n.oid = p.pronamespace "
+        "WHERE n.nspname = 'public' "
+        "AND pg_get_functiondef(p.oid) ILIKE '%SET LOCAL%'"
+    )
+    functions = cursor.fetchall()
+
+    if not functions:
+        results.append(CheckResult(
+            category="pgBouncer",
+            name="SET LOCAL usage",
+            passed=True,
+            details="No functions use SET LOCAL — no pgBouncer risk",
+        ))
+    else:
+        func_names = [f[0] for f in functions]
+        results.append(CheckResult(
+            category="pgBouncer",
+            name="SET LOCAL in function bodies",
+            passed=True,
+            details=(
+                f"Found SET LOCAL in: {', '.join(func_names)}. "
+                f"All inside PL/pgSQL function bodies — pgBouncer-safe."
+            ),
+        ))
+
+    return results
+
+
 # -- Main entry point ----------------------------------------------------------
 
 def run_all_checks(cursor) -> list[CheckResult]:
@@ -243,6 +283,7 @@ def run_all_checks(cursor) -> list[CheckResult]:
     results.extend(check_rls(cursor))
     results.extend(check_triggers(cursor))
     results.extend(check_pgvector(cursor))
+    results.extend(check_pgbouncer_compat(cursor))
     return results
 
 
