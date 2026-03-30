@@ -3,6 +3,7 @@ import time
 from dataclasses import dataclass
 from typing import Any, cast
 
+import structlog
 from supabase import Client
 
 from core.config import settings
@@ -19,6 +20,8 @@ class SearchResponse:
     results: list[Any]
     cache_hit: bool
 
+
+logger = structlog.get_logger()
 
 _SHOP_FIELDS_HANDLED_SEPARATELY = {"photo_urls", "taxonomy_tags", "mode_scores"}
 
@@ -56,6 +59,13 @@ class SearchService:
             cached = await self._cache.get_by_hash(cache_key)
             if cached and not cached.is_expired:
                 await self._cache.increment_hit(cached.id)
+                logger.info(
+                    "search_cache",
+                    cache_hit=True,
+                    cache_tier="exact",
+                    query_hash=cache_key[:8],
+                    mode=mode,
+                )
                 return SearchResponse(results=cached.results, cache_hit=True)
 
         # Generate embedding (needed for Tier 2 + full search)
@@ -67,6 +77,13 @@ class SearchService:
             similar = await self._cache.find_similar(query_embedding, mode, threshold)
             if similar and not similar.is_expired:
                 await self._cache.increment_hit(similar.id)
+                logger.info(
+                    "search_cache",
+                    cache_hit=True,
+                    cache_tier="semantic",
+                    query_hash=cache_key[:8],
+                    mode=mode,
+                )
                 return SearchResponse(results=similar.results, cache_hit=True)
 
         # Full search pipeline
@@ -77,6 +94,13 @@ class SearchService:
             serialized = [r.model_dump(by_alias=True, mode="json") for r in results]
             await self._cache.store(cache_key, normalized, mode, query_embedding, serialized)
 
+        logger.info(
+            "search_cache",
+            cache_hit=False,
+            cache_tier="miss",
+            query_hash=cache_key[:8],
+            mode=mode,
+        )
         return SearchResponse(results=results, cache_hit=False)
 
     async def _full_search(
