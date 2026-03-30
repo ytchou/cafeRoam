@@ -15,6 +15,7 @@
 **Tech Stack:** Python 3.12+, psycopg2-binary, uv (script runner)
 
 **Acceptance Criteria:**
+
 - [ ] Running `uv run scripts/validate_supabase.py` against local Supabase reports all checks PASS
 - [ ] Running against staging Supabase reports all checks PASS (or documents actionable FAIL items)
 - [ ] Script exits 1 when any check fails, exit 0 when all pass
@@ -25,6 +26,7 @@
 ### Task 1: Script skeleton + CheckResult model + schema parity check
 
 **Files:**
+
 - Create: `scripts/validate_supabase.py`
 - Create: `scripts/test_validate_supabase.py`
 
@@ -290,6 +292,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 ### Task 2: RLS validation check
 
 **Files:**
+
 - Modify: `scripts/validate_supabase.py`
 - Modify: `scripts/test_validate_supabase.py`
 
@@ -411,6 +414,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 ### Task 3: Trigger validation check
 
 **Files:**
+
 - Modify: `scripts/validate_supabase.py`
 - Modify: `scripts/test_validate_supabase.py`
 
@@ -514,6 +518,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 ### Task 4: pgvector validation check
 
 **Files:**
+
 - Modify: `scripts/validate_supabase.py`
 - Modify: `scripts/test_validate_supabase.py`
 
@@ -632,6 +637,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 ### Task 5: pgBouncer compatibility check
 
 **Files:**
+
 - Modify: `scripts/validate_supabase.py`
 - Modify: `scripts/test_validate_supabase.py`
 
@@ -742,6 +748,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 ### Task 6: Storage bucket validation check
 
 **Files:**
+
 - Modify: `scripts/validate_supabase.py`
 - Modify: `scripts/test_validate_supabase.py`
 
@@ -817,6 +824,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 ### Task 7: Integration test against local Supabase + Makefile target
 
 **Files:**
+
 - Modify: `Makefile`
 
 **Prerequisite:** Local Supabase must be running (`make doctor` first).
@@ -894,6 +902,7 @@ DATABASE_URL="postgresql://postgres.<project-ref>:<password>@aws-0-ap-northeast-
 ```
 
 Expected: All checks PASS. If any fail:
+
 - Schema: re-push migrations with `supabase db push --db-url <staging-url>`
 - RLS: check if Supabase cloud strips custom RLS on certain system tables
 - Triggers: verify triggers aren't disabled by Supabase cloud defaults
@@ -951,21 +960,26 @@ graph TD
 ```
 
 **Wave 1** (foundation):
+
 - Task 1: Script skeleton + schema parity check
 
 **Wave 2** (parallel — both add independent check functions):
+
 - Task 2: RLS validation check
 - Task 3: Trigger validation check
 
 **Wave 3** (parallel — three independent check functions, depend on skeleton):
+
 - Task 4: pgvector validation check
 - Task 5: pgBouncer compatibility check
 - Task 6: Storage bucket check
 
 **Wave 4** (integration — depends on all checks):
+
 - Task 7: Integration test against local + Makefile target
 
 **Wave 5** (operational — depends on working script):
+
 - Task 8: Close DEV-87 + run against staging (DEV-88)
 
 > **Note on parallelism:** Wave 2 and Wave 3 tasks all modify the same file (`scripts/validate_supabase.py`), so true parallel execution would cause merge conflicts. In practice, execute sequentially within each wave but commit independently. The wave grouping shows logical independence.

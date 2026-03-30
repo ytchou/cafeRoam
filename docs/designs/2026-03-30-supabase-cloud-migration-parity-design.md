@@ -27,6 +27,7 @@ A standalone Python script (`scripts/validate-supabase.py`) connects to any Supa
 ### 2. RLS Validation
 
 For each user-facing table (`check_ins`, `lists`, `list_items`, `user_profiles`, `shop_followers`, `claims`):
+
 - Verify `rowsecurity` is enabled in `pg_class`
 - Verify at least one policy exists in `pg_policies`
 - Report: table name, RLS enabled (bool), policy count
