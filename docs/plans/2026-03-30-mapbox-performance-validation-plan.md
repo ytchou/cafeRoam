@@ -15,6 +15,7 @@
 **Tech Stack:** React hooks, Next.js dynamic imports, Playwright CDP protocol (CPU/network throttling), `navigator.deviceMemory` API
 
 **Acceptance Criteria:**
+
 - [ ] On a capable device, the Find page shows list view briefly then transitions to the interactive map automatically
 - [ ] On a low-end device (≤2GB RAM), the Find page stays on list view and shows a "載入地圖" button that loads the map on demand
 - [ ] If the map dynamic import fails, the user sees an inline error with a retry button and the list view remains functional
@@ -28,6 +29,7 @@
 **Linear:** DEV-107
 
 **Files:**
+
 - Create: `lib/hooks/__tests__/use-device-capability.test.ts`
 
 **Step 1: Write the failing tests**
@@ -108,6 +110,7 @@ Expected: FAIL — module `../use-device-capability` not found
 **Linear:** DEV-107
 
 **Files:**
+
 - Create: `lib/hooks/use-device-capability.ts`
 
 **Step 1: Write minimal implementation**
@@ -152,9 +155,11 @@ git commit -m "feat(DEV-107): add useDeviceCapability hook — navigator.deviceM
 **Linear:** DEV-108
 
 **Files:**
+
 - Create: `components/map/__tests__/map-with-fallback.test.tsx`
 
 **Context for the implementer:**
+
 - The current `app/page.tsx` (lines 145-157) conditionally renders `MapMobileLayout` / `ListMobileLayout` / `MapDesktopLayout` / `ListDesktopLayout` based on `isDesktop` and `view` state.
 - `view` defaults to `'map'` in `useSearchState` (`lib/hooks/use-search-state.ts` line 34: `rawView === 'list' ? 'list' : 'map'`).
 - `MapWithFallback` wraps this logic: it always renders the list layout first, then upgrades to map if the device is capable.
@@ -222,34 +227,55 @@ const defaultProps = {
 
 describe('MapWithFallback', () => {
   it('shows list view with "載入地圖" button on low-end devices', () => {
-    mockUseDeviceCapability.mockReturnValue({ isLowEnd: true, deviceMemory: 2 });
+    mockUseDeviceCapability.mockReturnValue({
+      isLowEnd: true,
+      deviceMemory: 2,
+    });
     render(<MapWithFallback {...defaultProps} />);
     expect(screen.getByTestId('list-mobile-layout')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /載入地圖/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /載入地圖/i })
+    ).toBeInTheDocument();
   });
 
   it('shows list view with "載入地圖" button on low-end desktop', () => {
-    mockUseDeviceCapability.mockReturnValue({ isLowEnd: true, deviceMemory: 1 });
+    mockUseDeviceCapability.mockReturnValue({
+      isLowEnd: true,
+      deviceMemory: 1,
+    });
     render(<MapWithFallback {...defaultProps} isDesktop={true} />);
     expect(screen.getByTestId('list-desktop-layout')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /載入地圖/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /載入地圖/i })
+    ).toBeInTheDocument();
   });
 
   it('renders map layout on capable mobile device when view is map', () => {
-    mockUseDeviceCapability.mockReturnValue({ isLowEnd: false, deviceMemory: 8 });
+    mockUseDeviceCapability.mockReturnValue({
+      isLowEnd: false,
+      deviceMemory: 8,
+    });
     render(<MapWithFallback {...defaultProps} />);
     expect(screen.getByTestId('map-mobile-layout')).toBeInTheDocument();
   });
 
   it('renders list layout on capable device when view is list', () => {
-    mockUseDeviceCapability.mockReturnValue({ isLowEnd: false, deviceMemory: 8 });
+    mockUseDeviceCapability.mockReturnValue({
+      isLowEnd: false,
+      deviceMemory: 8,
+    });
     render(<MapWithFallback {...defaultProps} view="list" />);
     expect(screen.getByTestId('list-mobile-layout')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /載入地圖/i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /載入地圖/i })
+    ).not.toBeInTheDocument();
   });
 
   it('loads map when low-end user taps "載入地圖"', async () => {
-    mockUseDeviceCapability.mockReturnValue({ isLowEnd: true, deviceMemory: 2 });
+    mockUseDeviceCapability.mockReturnValue({
+      isLowEnd: true,
+      deviceMemory: 2,
+    });
     const user = userEvent.setup();
     render(<MapWithFallback {...defaultProps} />);
 
@@ -258,7 +284,9 @@ describe('MapWithFallback', () => {
 
     // After clicking, should show map layout (or loading state transitioning to map)
     expect(screen.getByTestId('map-mobile-layout')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /載入地圖/i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /載入地圖/i })
+    ).not.toBeInTheDocument();
   });
 });
 ```
@@ -275,9 +303,11 @@ Expected: FAIL — module `../map-with-fallback` not found
 **Linear:** DEV-108
 
 **Files:**
+
 - Create: `components/map/map-with-fallback.tsx`
 
 **Context for the implementer:**
+
 - Read `components/map/map-mobile-layout.tsx` for the `MapMobileLayoutProps` interface (lines 14-31)
 - Read `components/map/list-mobile-layout.tsx` for the `ListMobileLayoutProps` interface (lines 12-28)
 - Both mobile layouts share the same core props. Desktop layouts follow the same pattern.
@@ -415,10 +445,12 @@ git commit -m "feat(DEV-108): add MapWithFallback progressive loading component"
 **Linear:** DEV-108
 
 **Files:**
+
 - Create: `app/__tests__/page.test.tsx` (if not exists, or add to existing)
 - Modify: `app/page.tsx`
 
 **Context for the implementer:**
+
 - Current `app/page.tsx` (lines 145-157) has a conditional: `isDesktop` → desktop layouts, else mobile layouts, each branched by `view`.
 - Replace this with `<MapWithFallback isDesktop={isDesktop} view={view} ... />`.
 - The `MapWithFallback` component handles the low-end device gating internally.
@@ -511,6 +543,7 @@ Expected: FAIL — `MapWithFallback` not imported in `app/page.tsx` yet (it stil
 **Linear:** DEV-108
 
 **Files:**
+
 - Modify: `app/page.tsx:1-157`
 
 **Step 1: Modify `app/page.tsx`**
@@ -518,6 +551,7 @@ Expected: FAIL — `MapWithFallback` not imported in `app/page.tsx` yet (it stil
 Replace the direct layout imports and conditional rendering (lines 15-18, 145-157) with `MapWithFallback`.
 
 **Imports to remove:**
+
 ```typescript
 // Remove these 4 imports:
 import { MapMobileLayout } from '@/components/map/map-mobile-layout';
@@ -527,33 +561,35 @@ import { ListDesktopLayout } from '@/components/map/list-desktop-layout';
 ```
 
 **Import to add:**
+
 ```typescript
 import { MapWithFallback } from '@/components/map/map-with-fallback';
 ```
 
 **Replace the return block (lines 145-157) with:**
+
 ```tsx
-  return (
-    <MapWithFallback
-      shops={shops}
-      count={shops.length}
-      selectedShopId={selectedShopId}
-      onShopClick={isDesktop ? handleShopNavigate : setSelectedShopId}
-      query={query}
-      activeFilters={filters}
-      onFilterToggle={toggleFilter}
-      view={view}
-      onViewChange={handleViewChange}
-      onSearch={handleSearch}
-      filterSheetOpen={filterSheetOpen}
-      onFilterOpen={handleFilterOpen}
-      onFilterClose={handleFilterClose}
-      onFilterApply={handleFilterApply}
-      onLocationRequest={handleLocationRequest}
-      onCardClick={handleShopNavigate}
-      isDesktop={isDesktop}
-    />
-  );
+return (
+  <MapWithFallback
+    shops={shops}
+    count={shops.length}
+    selectedShopId={selectedShopId}
+    onShopClick={isDesktop ? handleShopNavigate : setSelectedShopId}
+    query={query}
+    activeFilters={filters}
+    onFilterToggle={toggleFilter}
+    view={view}
+    onViewChange={handleViewChange}
+    onSearch={handleSearch}
+    filterSheetOpen={filterSheetOpen}
+    onFilterOpen={handleFilterOpen}
+    onFilterClose={handleFilterClose}
+    onFilterApply={handleFilterApply}
+    onLocationRequest={handleLocationRequest}
+    onCardClick={handleShopNavigate}
+    isDesktop={isDesktop}
+  />
+);
 ```
 
 **Step 2: Run tests to verify they pass**
@@ -580,6 +616,7 @@ git commit -m "refactor(DEV-108): integrate MapWithFallback into Find page"
 **Linear:** DEV-109
 
 **Files:**
+
 - Create: `e2e/performance/map-perf.spec.ts`
 
 No unit test needed — this IS the test. It's an e2e performance measurement script.
@@ -734,13 +771,11 @@ test.describe('Mapbox GL JS performance under throttling', () => {
         frameSamples: allFps.length,
       },
       acceptance: {
-        tileRender:
-          tileRenderMs <= ACCEPTANCE.tileRenderMs ? 'PASS' : 'FAIL',
+        tileRender: tileRenderMs <= ACCEPTANCE.tileRenderMs ? 'PASS' : 'FAIL',
         fps: avgFps >= ACCEPTANCE.minFps ? 'PASS' : 'FAIL',
       },
       pass:
-        tileRenderMs <= ACCEPTANCE.tileRenderMs &&
-        avgFps >= ACCEPTANCE.minFps,
+        tileRenderMs <= ACCEPTANCE.tileRenderMs && avgFps >= ACCEPTANCE.minFps,
     };
 
     // Write results to file
@@ -751,8 +786,12 @@ test.describe('Mapbox GL JS performance under throttling', () => {
     fs.writeFileSync(reportPath, JSON.stringify(results, null, 2));
 
     console.log('=== Map Performance Results ===');
-    console.log(`Tile render: ${tileRenderMs}ms (limit: ${ACCEPTANCE.tileRenderMs}ms) — ${results.acceptance.tileRender}`);
-    console.log(`Avg FPS: ${avgFps} (limit: ${ACCEPTANCE.minFps}) — ${results.acceptance.fps}`);
+    console.log(
+      `Tile render: ${tileRenderMs}ms (limit: ${ACCEPTANCE.tileRenderMs}ms) — ${results.acceptance.tileRender}`
+    );
+    console.log(
+      `Avg FPS: ${avgFps} (limit: ${ACCEPTANCE.minFps}) — ${results.acceptance.fps}`
+    );
     console.log(`Min FPS: ${minFps}`);
     console.log(`Memory: ${memoryMb ?? 'N/A'}MB`);
     console.log(`Report: ${reportPath}`);
@@ -784,6 +823,7 @@ git commit -m "test(DEV-109): add reusable Playwright map performance test scrip
 **Linear:** DEV-110
 
 **Files:**
+
 - Modify: `ASSUMPTIONS.md` (T4 entry)
 
 No test needed — this is a validation step that produces documentation.
@@ -798,6 +838,7 @@ Expected: Test runs, report saved to `e2e/reports/map-perf-2026-03-30.json`
 Open `e2e/reports/map-perf-2026-03-30.json` and read the metrics.
 
 Update the T4 entry in `ASSUMPTIONS.md`:
+
 - If all metrics pass: change status to "Validated ✅" with date and metrics
 - If any metric fails: change status to "Validated — FAILED ⚠️" with metrics, add note that graceful degradation is in place
 
@@ -844,21 +885,27 @@ graph TD
 ```
 
 **Wave 1** (parallel — no dependencies):
+
 - Task 1: `useDeviceCapability` hook — failing test
 - Task 7: Playwright map performance test script
 
 **Wave 2** (depends on Wave 1):
+
 - Task 2: Implement `useDeviceCapability` hook ← Task 1
 
 **Wave 3** (depends on Wave 2):
+
 - Task 3: `MapWithFallback` component — failing test ← Task 2
 
 **Wave 4** (depends on Wave 3):
+
 - Task 4: Implement `MapWithFallback` component ← Task 3
 
 **Wave 5** (depends on Wave 4):
+
 - Task 5: Find page integration — failing test ← Task 4
 
 **Wave 6** (parallel — depends on Wave 5 and Wave 1):
+
 - Task 6: Integrate `MapWithFallback` into `app/page.tsx` ← Task 5
 - Task 8: Run performance validation + update T4 ← Task 7

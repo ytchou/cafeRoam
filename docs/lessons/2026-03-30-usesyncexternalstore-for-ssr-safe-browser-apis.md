@@ -1,4 +1,5 @@
 # useSyncExternalStore for SSR-Safe Browser API Reads
+
 **Date:** 2026-03-30
 **Context:** DEV-75 Mapbox performance — `useDeviceCapability` hook reading `navigator.deviceMemory`
 
@@ -10,6 +11,7 @@ The SSR guard prevents the server crash but doesn't prevent the client/server mi
 
 **Prevention:**
 For any hook that reads a browser-only API (`navigator.*`, `window.*`, `localStorage`, etc.) and returns a value that could differ between server and client:
+
 1. Use `useSyncExternalStore` with an explicit `getServerSnapshot` that returns the safe default
 2. The client snapshot is called after hydration, eliminating the mismatch
 3. Memoize the client snapshot if the value never changes (e.g., `navigator.deviceMemory`) to prevent infinite re-renders
@@ -29,11 +31,13 @@ function getSnapshot(): T {
 
 export function useMyHook(): T {
   return useSyncExternalStore(
-    () => () => {},  // no subscription if value is static
+    () => () => {}, // no subscription if value is static
     getSnapshot,
     () => SERVER_SAFE_DEFAULT
   );
 }
 
-export function _resetCache(): void { clientSnapshot = null; }
+export function _resetCache(): void {
+  clientSnapshot = null;
+}
 ```

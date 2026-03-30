@@ -122,6 +122,8 @@ describe('FindPage map degradation integration', () => {
     });
     render(<FindPage />);
     expect(screen.getByTestId('list-container')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /載入地圖/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /載入地圖/i })
+    ).toBeInTheDocument();
   });
 });

@@ -1,5 +1,8 @@
 import { renderHook, waitFor } from '@testing-library/react';
-import { useDeviceCapability, _resetDeviceCapabilityCache } from '../use-device-capability';
+import {
+  useDeviceCapability,
+  _resetDeviceCapabilityCache,
+} from '../use-device-capability';
 
 describe('useDeviceCapability', () => {
   const originalNavigator = globalThis.navigator;

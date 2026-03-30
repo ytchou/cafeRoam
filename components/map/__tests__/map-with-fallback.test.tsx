@@ -61,37 +61,60 @@ const defaultProps = {
 
 describe('MapWithFallback', () => {
   it('on a low-end device, shows list view with "載入地圖" button instead of loading the map', () => {
-    mockUseDeviceCapability.mockReturnValue({ isLowEnd: true, deviceMemory: 2 });
+    mockUseDeviceCapability.mockReturnValue({
+      isLowEnd: true,
+      deviceMemory: 2,
+    });
     render(<MapWithFallback {...defaultProps} />);
     expect(screen.getByTestId('list-container')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /載入地圖/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /載入地圖/i })
+    ).toBeInTheDocument();
   });
 
   it('on a low-end desktop, shows list view with "載入地圖" button', () => {
-    mockUseDeviceCapability.mockReturnValue({ isLowEnd: true, deviceMemory: 1 });
+    mockUseDeviceCapability.mockReturnValue({
+      isLowEnd: true,
+      deviceMemory: 1,
+    });
     render(<MapWithFallback {...defaultProps} isDesktop={true} />);
     expect(screen.getByTestId('list-container')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /載入地圖/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /載入地圖/i })
+    ).toBeInTheDocument();
   });
 
   it('on a capable device, initially shows list then transitions to map once loaded', async () => {
-    mockUseDeviceCapability.mockReturnValue({ isLowEnd: false, deviceMemory: 8 });
+    mockUseDeviceCapability.mockReturnValue({
+      isLowEnd: false,
+      deviceMemory: 8,
+    });
     render(<MapWithFallback {...defaultProps} />);
     // List shows first (progressive loading)
     expect(screen.getByTestId('list-container')).toBeInTheDocument();
     // Map appears after dynamic import resolves
-    await waitFor(() => expect(screen.getByTestId('map-container')).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByTestId('map-container')).toBeInTheDocument()
+    );
   });
 
   it('on a capable device, shows list when view is list', () => {
-    mockUseDeviceCapability.mockReturnValue({ isLowEnd: false, deviceMemory: 8 });
+    mockUseDeviceCapability.mockReturnValue({
+      isLowEnd: false,
+      deviceMemory: 8,
+    });
     render(<MapWithFallback {...defaultProps} view="list" />);
     expect(screen.getByTestId('list-container')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /載入地圖/i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /載入地圖/i })
+    ).not.toBeInTheDocument();
   });
 
   it('low-end user can force map to load by tapping "載入地圖"', async () => {
-    mockUseDeviceCapability.mockReturnValue({ isLowEnd: true, deviceMemory: 2 });
+    mockUseDeviceCapability.mockReturnValue({
+      isLowEnd: true,
+      deviceMemory: 2,
+    });
     const user = userEvent.setup();
     render(<MapWithFallback {...defaultProps} />);
 
@@ -99,6 +122,8 @@ describe('MapWithFallback', () => {
     await user.click(loadBtn);
 
     expect(screen.getByTestId('map-container')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /載入地圖/i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /載入地圖/i })
+    ).not.toBeInTheDocument();
   });
 });

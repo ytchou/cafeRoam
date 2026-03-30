@@ -45,7 +45,9 @@ test.describe('Mapbox GL JS performance under throttling', () => {
     const cdp: CDPSession = await page.context().newCDPSession(page);
 
     try {
-      await cdp.send('Emulation.setCPUThrottlingRate', { rate: THROTTLE_CPU_RATE });
+      await cdp.send('Emulation.setCPUThrottlingRate', {
+        rate: THROTTLE_CPU_RATE,
+      });
       await cdp.send('Network.emulateNetworkConditions', SLOW_4G);
 
       // Inject a timing tracker before navigation — monkey-patches Map construction
@@ -77,13 +79,16 @@ test.describe('Mapbox GL JS performance under throttling', () => {
       await canvas.waitFor({ state: 'visible', timeout: 15_000 });
 
       // Wait up to 10s for the load event timing to be set
-      await page.waitForFunction(
-        '() => window.__mapLoadMs !== undefined',
-        { timeout: 10_000 }
-      ).catch(() => {}); // If load event never fires, fall back to canvas appearance time
+      await page
+        .waitForFunction('() => window.__mapLoadMs !== undefined', {
+          timeout: 10_000,
+        })
+        .catch(() => {}); // If load event never fires, fall back to canvas appearance time
 
       const tileRenderMs = await page.evaluate(
-        (fallback: number) => (window as unknown as { __mapLoadMs?: number }).__mapLoadMs ?? Date.now() - fallback,
+        (fallback: number) =>
+          (window as unknown as { __mapLoadMs?: number }).__mapLoadMs ??
+          Date.now() - fallback,
         startTime
       );
 
@@ -122,7 +127,8 @@ test.describe('Mapbox GL JS performance under throttling', () => {
         validFps.length > 0
           ? Math.round(validFps.reduce((a, b) => a + b, 0) / validFps.length)
           : 0;
-      const minFps = validFps.length > 0 ? Math.round(Math.min(...validFps)) : 0;
+      const minFps =
+        validFps.length > 0 ? Math.round(Math.min(...validFps)) : 0;
 
       const results = {
         date: new Date().toISOString(),
@@ -150,8 +156,12 @@ test.describe('Mapbox GL JS performance under throttling', () => {
       fs.writeFileSync(reportPath, JSON.stringify(results, null, 2));
 
       console.log('=== Map Performance Results ===');
-      console.log(`Tile render: ${tileRenderMs}ms (limit: ${ACCEPTANCE.tileRenderMs}ms) — ${results.acceptance.tileRender}`);
-      console.log(`Avg FPS: ${avgFps} (limit: ${ACCEPTANCE.minFps}) — ${results.acceptance.fps}`);
+      console.log(
+        `Tile render: ${tileRenderMs}ms (limit: ${ACCEPTANCE.tileRenderMs}ms) — ${results.acceptance.tileRender}`
+      );
+      console.log(
+        `Avg FPS: ${avgFps} (limit: ${ACCEPTANCE.minFps}) — ${results.acceptance.fps}`
+      );
       console.log(`Min FPS: ${minFps}`);
       console.log(`Memory: ${memoryMb ?? 'N/A'}MB`);
       console.log(`Report: ${reportPath}`);

@@ -85,7 +85,8 @@ export function MapWithFallback({
   }
 
   // Effective map visibility: capable devices wait for mapReady, low-end need explicit forceMap
-  const showMap = view === 'map' && ((!isLowEnd && mapReady) || (isLowEnd && forceMap));
+  const showMap =
+    view === 'map' && ((!isLowEnd && mapReady) || (isLowEnd && forceMap));
   const showLoadMapButton = isLowEnd && view === 'map' && !forceMap;
 
   if (isDesktop) {
@@ -101,10 +102,7 @@ export function MapWithFallback({
           </div>
         ) : (
           <div data-testid="list-container">
-            <ListDesktopLayout
-              {...layoutProps}
-              view={view}
-            />
+            <ListDesktopLayout {...layoutProps} view={view} />
           </div>
         )}
         {showLoadMapButton && (
@@ -135,10 +133,7 @@ export function MapWithFallback({
         </div>
       ) : (
         <div data-testid="list-container">
-          <ListMobileLayout
-            {...layoutProps}
-            view={view}
-          />
+          <ListMobileLayout {...layoutProps} view={view} />
         </div>
       )}
       {showLoadMapButton && (
