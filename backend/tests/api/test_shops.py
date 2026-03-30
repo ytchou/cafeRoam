@@ -250,6 +250,41 @@ class TestShopsAPI:
         chain.eq.assert_any_call("processing_status", "live")
         chain.limit.assert_called()
 
+    def test_list_shops_includes_taxonomy_tags_and_is_open(self):
+        """GET /shops returns taxonomyTags array and isOpen boolean for each shop."""
+        shop_data = {
+            **SHOP_ROW,
+            "opening_hours": ["Monday: 9:00 AM - 11:00 PM"],
+            "shop_photos": [],
+            "shop_claims": [],
+            "shop_tags": [
+                {
+                    "tag_id": "wifi_available",
+                    "taxonomy_tags": {
+                        "id": "wifi_available",
+                        "dimension": "functionality",
+                        "label": "WiFi Available",
+                        "label_zh": "提供 WiFi",
+                    },
+                }
+            ],
+        }
+        shop_chain = _simple_select_chain([shop_data])
+
+        with patch("api.shops.get_anon_client") as mock_sb:
+            mock_sb.return_value = MagicMock(table=MagicMock(return_value=shop_chain))
+            with patch("api.shops.is_open_now", return_value=True):
+                response = client.get("/shops?featured=true&limit=50")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data) == 1
+        shop = data[0]
+        assert shop["taxonomyTags"] == [
+            {"id": "wifi_available", "dimension": "functionality", "label": "WiFi Available", "labelZh": "提供 WiFi"}
+        ]
+        assert shop["isOpen"] is True
+
 
 @pytest.fixture
 def mock_shop_row():
