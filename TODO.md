@@ -2073,4 +2073,4 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 
 **Wave 5 — Validate:**
 
-- [ ] Task 6: Lint and type-check (DEV-113)
+- [x] Task 6: Lint and type-check (DEV-113)
