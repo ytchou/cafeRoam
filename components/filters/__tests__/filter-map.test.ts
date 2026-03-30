@@ -15,8 +15,9 @@ describe('filter-map', () => {
   });
 
   it('open_now and rating filters are not in the tag mapping — they use custom logic', () => {
-    expect(FILTER_TO_TAG_IDS['open_now' as string]).toBeUndefined();
-    expect(FILTER_TO_TAG_IDS['rating' as string]).toBeUndefined();
+    const map = FILTER_TO_TAG_IDS as Record<string, string>;
+    expect(map['open_now']).toBeUndefined();
+    expect(map['rating']).toBeUndefined();
   });
 
   it('open_now and rating are declared as special filters for custom handling', () => {
