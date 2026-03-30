@@ -41,6 +41,9 @@ _tasks: set[asyncio.Task[None]] = set()
 # Last successful poll timestamp for health checks
 _last_poll_at: datetime | None = None
 
+# Last cron-lock cleanup timestamp — runs at most once per day
+_last_cron_cleanup: datetime | None = None
+
 # Taxonomy cache: (tags, expires_at)
 _taxonomy_cache: tuple[list[TaxonomyTag], datetime] | None = None
 _TAXONOMY_TTL = timedelta(minutes=5)
@@ -274,21 +277,32 @@ async def poll_pending_job_types() -> None:
 
 
 async def reclaim_stuck_jobs() -> None:
-    """Reclaim jobs stuck in CLAIMED status and clean up old cron locks."""
+    """Reclaim jobs stuck in CLAIMED status."""
     try:
         db = get_service_role_client()
         queue = JobQueue(db=db)
-        reclaimed, failed = queue.reclaim_stuck_jobs()
+        reclaimed, failed = await queue.reclaim_stuck_jobs()
         if reclaimed > 0 or failed > 0:
             logger.info(
                 "Stuck jobs reclaimed",
                 reclaimed_count=reclaimed,
                 failed_count=failed,
             )
-        queue.cleanup_old_cron_locks(retention_days=7)
     except Exception as e:
         logger.error("Stuck job reaper failed", error=str(e))
         sentry_sdk.capture_exception(e)
+
+    global _last_cron_cleanup
+    now = datetime.now(UTC)
+    if _last_cron_cleanup is None or (now - _last_cron_cleanup).total_seconds() >= 86400:
+        try:
+            db = get_service_role_client()
+            queue = JobQueue(db=db)
+            await queue.cleanup_old_cron_locks(retention_days=7)
+            _last_cron_cleanup = now
+        except Exception as e:
+            logger.error("Cron lock cleanup failed", error=str(e))
+            sentry_sdk.capture_exception(e)
 
 
 @idempotent_cron("delete_expired_accounts", window="day")

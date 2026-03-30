@@ -1,6 +1,7 @@
 from datetime import UTC, datetime, timedelta
 from typing import Any, cast
 
+import sentry_sdk
 import structlog
 from supabase import Client
 
@@ -137,7 +138,7 @@ class JobQueue:
                 }
             ).eq("id", job_id).execute()
 
-    def reclaim_stuck_jobs(self) -> tuple[int, int]:
+    async def reclaim_stuck_jobs(self) -> tuple[int, int]:
         """Reclaim jobs stuck in CLAIMED status beyond the configured timeout.
         Returns (reclaimed_count, failed_count)."""
         response = self._db.rpc(
@@ -156,8 +157,10 @@ class JobQueue:
             window_start = (now - timedelta(days=now.weekday())).replace(
                 hour=0, minute=0, second=0, microsecond=0
             )
-        else:  # "day"
+        elif window == "day":
             window_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        else:
+            raise ValueError(f"Unknown cron window: {window!r}")
 
         try:
             response = (
@@ -170,11 +173,16 @@ class JobQueue:
                 .execute()
             )
             return bool(response.data)
-        except Exception:
-            logger.warning("Cron lock acquisition failed, proceeding", job_name=job_name)
+        except Exception as exc:
+            logger.warning(
+                "Cron lock acquisition failed, proceeding",
+                job_name=job_name,
+                error=str(exc),
+            )
+            sentry_sdk.capture_exception(exc)
             return True
 
-    def cleanup_old_cron_locks(self, retention_days: int = 7) -> None:
+    async def cleanup_old_cron_locks(self, retention_days: int = 7) -> None:
         """Delete cron_locks older than retention period."""
         cutoff = (datetime.now(UTC) - timedelta(days=retention_days)).isoformat()
         self._db.table("cron_locks").delete().lt("created_at", cutoff).execute()
