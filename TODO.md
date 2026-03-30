@@ -1982,16 +1982,16 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 
 **Wave 2 — Railway setup:**
 
-- [ ] Task 4: Create Railway project + link GitHub repo (DEV-95)
+- [x] Task 4: Create Railway project + link GitHub repo (DEV-95)
 
 **Wave 3 — Wire env vars:**
 
-- [ ] Task 5: Wire all 34 env vars to Railway services (DEV-96)
+- [x] Task 5: Wire all 34 env vars to Railway services (DEV-96)
 
 **Wave 4 — Deploy + verify:**
 
-- [ ] Task 6: Trigger first deploy + verify health checks (DEV-98)
+- [x] Task 6: Trigger first deploy + verify health checks (DEV-98)
 
 **Wave 5 — Observability:**
 
-- [ ] Task 7: Set up Better Stack monitors + verify PostHog/Sentry (DEV-99)
+- [ ] Task 7: Set up Better Stack monitors + verify PostHog/Sentry (DEV-99) — deferred, see DEV-100
