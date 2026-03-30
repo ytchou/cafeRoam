@@ -1,6 +1,7 @@
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
+from structlog.testing import capture_logs
 
 import services.search_service as _ss_module
 from models.types import SearchFilters, SearchQuery
@@ -284,3 +285,92 @@ class TestSearchCacheIntegration:
         response = await service.search(query)
         assert response.results == []
         assert response.cache_hit is False
+
+
+class TestSearchCacheObservability:
+    """Verify structured log events are emitted on cache outcomes."""
+
+    @pytest.fixture
+    def mock_cache(self):
+        cache = AsyncMock()
+        cache.get_by_hash = AsyncMock(return_value=None)
+        cache.find_similar = AsyncMock(return_value=None)
+        cache.store = AsyncMock()
+        cache.increment_hit = AsyncMock()
+        return cache
+
+    @pytest.fixture
+    def mock_embeddings(self):
+        emb = AsyncMock()
+        emb.embed = AsyncMock(return_value=[0.1] * 1536)
+        emb.dimensions = 1536
+        return emb
+
+    async def test_tier1_exact_hit_emits_log_event(
+        self, mock_supabase, mock_embeddings, mock_cache
+    ):
+        """When a Tier 1 exact cache hit occurs, a Search cache hit log event is emitted."""
+        cached_entry = MagicMock()
+        cached_entry.is_expired = False
+        cached_entry.id = "entry-log-1"
+        cached_entry.results = []
+        mock_cache.get_by_hash = AsyncMock(return_value=cached_entry)
+
+        service = SearchService(db=mock_supabase, embeddings=mock_embeddings, cache=mock_cache)
+        with capture_logs() as logs:
+            await service.search(SearchQuery(text="好的WiFi咖啡廳"), mode="work")
+
+        assert len(logs) == 1
+        assert logs[0]["event"] == "Search cache hit"
+        assert logs[0]["cache_hit"] is True
+        assert logs[0]["cache_tier"] == "exact"
+        assert logs[0]["mode"] == "work"
+        assert len(logs[0]["query_hash"]) == 8
+
+    async def test_tier2_semantic_hit_emits_log_event(
+        self, mock_supabase, mock_embeddings, mock_cache
+    ):
+        """When a Tier 2 semantic cache hit occurs, a Search cache hit log event is emitted."""
+        mock_cache.get_by_hash = AsyncMock(return_value=None)
+        similar_entry = MagicMock()
+        similar_entry.is_expired = False
+        similar_entry.id = "entry-log-2"
+        similar_entry.results = []
+        mock_cache.find_similar = AsyncMock(return_value=similar_entry)
+
+        service = SearchService(db=mock_supabase, embeddings=mock_embeddings, cache=mock_cache)
+        with capture_logs() as logs:
+            await service.search(SearchQuery(text="安靜的咖啡廳"), mode="rest")
+
+        assert len(logs) == 1
+        assert logs[0]["event"] == "Search cache hit"
+        assert logs[0]["cache_hit"] is True
+        assert logs[0]["cache_tier"] == "semantic"
+        assert logs[0]["mode"] == "rest"
+
+    async def test_full_miss_emits_log_event(self, mock_supabase, mock_embeddings, mock_cache):
+        """When a full cache miss occurs, a Search cache miss log event is emitted."""
+        mock_supabase.rpc = MagicMock(
+            return_value=MagicMock(execute=MagicMock(return_value=MagicMock(data=[])))
+        )
+
+        service = SearchService(db=mock_supabase, embeddings=mock_embeddings, cache=mock_cache)
+        with capture_logs() as logs:
+            await service.search(SearchQuery(text="獨特稀有的咖啡"))
+
+        assert len(logs) == 1
+        assert logs[0]["event"] == "Search cache miss"
+        assert logs[0]["cache_hit"] is False
+        assert logs[0]["cache_tier"] == "miss"
+
+    async def test_no_cache_emits_no_log_event(self, mock_supabase, mock_embeddings):
+        """When no cache provider is configured, no cache log event is emitted."""
+        mock_supabase.rpc = MagicMock(
+            return_value=MagicMock(execute=MagicMock(return_value=MagicMock(data=[])))
+        )
+
+        service = SearchService(db=mock_supabase, embeddings=mock_embeddings, cache=None)
+        with capture_logs() as logs:
+            await service.search(SearchQuery(text="無快取搜尋"))
+
+        assert logs == []
