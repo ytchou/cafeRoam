@@ -3,7 +3,9 @@
  * Quick filters use short IDs for cleaner URLs (?filters=wifi,quiet)
  * while taxonomy uses canonical IDs (wifi_available, power_outlets).
  */
-export const FILTER_TO_TAG_IDS: Record<string, string> = {
+export type TagFilterId = 'wifi' | 'outlet' | 'quiet';
+
+export const FILTER_TO_TAG_IDS: Record<TagFilterId, string> = {
   wifi: 'wifi_available',
   outlet: 'power_outlets',
   quiet: 'quiet',

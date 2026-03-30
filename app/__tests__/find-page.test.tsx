@@ -269,7 +269,7 @@ describe('FindPage', () => {
     });
   });
 
-  it('filters shops by WiFi tag when wifi filter is active', () => {
+  it('shows only shops with WiFi when the wifi filter is selected', () => {
     mockSearchParams.set('view', 'list');
     mockSearchParams.set('filters', 'wifi');
     render(<FindPage />);

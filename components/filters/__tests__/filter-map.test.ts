@@ -2,24 +2,24 @@ import { describe, it, expect } from 'vitest';
 import { FILTER_TO_TAG_IDS, SPECIAL_FILTERS } from '../filter-map';
 
 describe('filter-map', () => {
-  it('maps wifi filter to wifi_available taxonomy tag', () => {
+  it('a user selecting the wifi filter matches shops tagged wifi_available', () => {
     expect(FILTER_TO_TAG_IDS['wifi']).toBe('wifi_available');
   });
 
-  it('maps outlet filter to power_outlets taxonomy tag', () => {
+  it('a user selecting the outlet filter matches shops tagged power_outlets', () => {
     expect(FILTER_TO_TAG_IDS['outlet']).toBe('power_outlets');
   });
 
-  it('maps quiet filter to quiet taxonomy tag', () => {
+  it('a user selecting the quiet filter matches shops tagged quiet', () => {
     expect(FILTER_TO_TAG_IDS['quiet']).toBe('quiet');
   });
 
-  it('does not include special filters in tag mapping', () => {
-    expect(FILTER_TO_TAG_IDS['open_now']).toBeUndefined();
-    expect(FILTER_TO_TAG_IDS['rating']).toBeUndefined();
+  it('open_now and rating filters are not in the tag mapping — they use custom logic', () => {
+    expect(FILTER_TO_TAG_IDS['open_now' as string]).toBeUndefined();
+    expect(FILTER_TO_TAG_IDS['rating' as string]).toBeUndefined();
   });
 
-  it('lists open_now and rating as special filters', () => {
+  it('open_now and rating are declared as special filters for custom handling', () => {
     expect(SPECIAL_FILTERS).toContain('open_now');
     expect(SPECIAL_FILTERS).toContain('rating');
   });

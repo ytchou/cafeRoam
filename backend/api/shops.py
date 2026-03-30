@@ -16,7 +16,7 @@ from models.types import (
     TaxonomyTag,
 )
 
-TW = timezone(timedelta(hours=8))
+TW = timezone(timedelta(hours=8))  # Taiwan UTC+8, no DST — zoneinfo not required
 
 router = APIRouter(prefix="/shops", tags=["shops"])
 

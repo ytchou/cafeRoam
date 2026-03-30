@@ -12,7 +12,7 @@ import { useUser } from '@/lib/hooks/use-user';
 import { useAnalytics } from '@/lib/posthog/use-analytics';
 import { trackSearch, trackSignupCtaClick } from '@/lib/analytics/ga4-events';
 import { haversineKm } from '@/lib/utils';
-import { FILTER_TO_TAG_IDS } from '@/components/filters/filter-map';
+import { FILTER_TO_TAG_IDS, type TagFilterId } from '@/components/filters/filter-map';
 import { MapWithFallback } from '@/components/map/map-with-fallback';
 
 function FindPageContent() {
@@ -60,7 +60,7 @@ function FindPageContent() {
     // Derive tag-based filters: only filters present in the mapping (excludes special filters)
     const activeFiltersSet = new Set(filters);
     const tagFilters = filters
-      .filter((f) => f in FILTER_TO_TAG_IDS)
+      .filter((f): f is TagFilterId => f in FILTER_TO_TAG_IDS)
       .map((f) => FILTER_TO_TAG_IDS[f]);
 
     let filtered = base;
