@@ -15,6 +15,7 @@ export interface Shop {
   photoUrls: string[];
   menuUrl: string | null;
   taxonomyTags: TaxonomyTag[];
+  isOpen?: boolean | null;
   cafenomadId: string | null;
   googlePlaceId: string | null;
   createdAt: string;
@@ -120,7 +121,10 @@ export interface SearchResult {
   totalScore: number;
 }
 
-// Shared view types for map/list layout components
+// Shared view types for map/list layout components.
+// LayoutShop intentionally carries both snake_case and camelCase variants
+// (photo_urls/photoUrls, review_count/reviewCount, is_open/isOpen via Shop spread)
+// to accept either the raw API shape or the normalized Shop type.
 export interface LayoutShop {
   id: string;
   name: string;
