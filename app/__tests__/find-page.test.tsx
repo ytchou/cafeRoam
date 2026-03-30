@@ -136,6 +136,29 @@ vi.mock('@/lib/hooks/use-shops', () => ({
         menuUrl: null,
         mrt: null,
       },
+      {
+        id: 'e5f6a7b8-c9d0-1234-ef01-345678901234',
+        name: '老派咖啡 Old School',
+        slug: 'old-school',
+        latitude: 25.07,
+        longitude: 121.60,
+        rating: 4.0,
+        address: '4 Coffee St',
+        reviewCount: 3,
+        photoUrls: [],
+        taxonomyTags: [],
+        isOpen: null, // No opening_hours data — unknown open status
+        cafenomadId: null,
+        googlePlaceId: null,
+        createdAt: '2026-01-01',
+        phone: null,
+        website: null,
+        openingHours: null,
+        priceRange: null,
+        description: null,
+        menuUrl: null,
+        mrt: null,
+      },
     ],
     isLoading: false,
     error: null,
@@ -257,7 +280,7 @@ describe('FindPage', () => {
     expect(screen.queryByText('自由時光咖啡 Liberty Hour')).not.toBeInTheDocument();
   });
 
-  it('filters shops by open_now when that filter is active', () => {
+  it('filters shops by open_now when that filter is active — excludes isOpen: false and isOpen: null', () => {
     mockSearchParams.set('view', 'list');
     mockSearchParams.set('filters', 'open_now');
     render(<FindPage />);
@@ -266,6 +289,8 @@ describe('FindPage', () => {
     expect(screen.getByText('WiFi & Quiet Cafe')).toBeInTheDocument();
     expect(screen.queryByText('Quiet Place')).not.toBeInTheDocument();
     expect(screen.queryByText('自由時光咖啡 Liberty Hour')).not.toBeInTheDocument();
+    // isOpen: null (no opening_hours data) must also be excluded — !== true
+    expect(screen.queryByText('老派咖啡 Old School')).not.toBeInTheDocument();
   });
 
   it('AND-combines multiple filters to show only shops matching all selected criteria', () => {

@@ -254,7 +254,16 @@ class TestShopsAPI:
         """GET /shops returns taxonomyTags array and isOpen boolean for each shop."""
         shop_data = {
             **SHOP_ROW,
-            "opening_hours": ["Monday: 9:00 AM - 11:00 PM"],
+            # Open 24 hours every day — deterministic result without mocking is_open_now
+            "opening_hours": [
+                "Monday: Open 24 hours",
+                "Tuesday: Open 24 hours",
+                "Wednesday: Open 24 hours",
+                "Thursday: Open 24 hours",
+                "Friday: Open 24 hours",
+                "Saturday: Open 24 hours",
+                "Sunday: Open 24 hours",
+            ],
             "shop_photos": [],
             "shop_claims": [],
             "shop_tags": [
@@ -273,8 +282,7 @@ class TestShopsAPI:
 
         with patch("api.shops.get_anon_client") as mock_sb:
             mock_sb.return_value = MagicMock(table=MagicMock(return_value=shop_chain))
-            with patch("api.shops.is_open_now", return_value=True):
-                response = client.get("/shops?featured=true&limit=50")
+            response = client.get("/shops?featured=true&limit=50")
 
         assert response.status_code == 200
         data = response.json()
