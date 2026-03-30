@@ -93,12 +93,12 @@ class TestTarotServiceDraw:
         assert result == []
 
     async def test_filters_out_closed_shops(self):
-        # Sunday shop with Monday-only hours should be closed on Wednesday
+        # Shop explicitly closed Wednesday should be excluded; unlisted hours are unknown (included)
         rows = [
             make_tarot_shop_row(
                 id="s1",
                 tarot_title="The Scholar's Refuge",
-                opening_hours=["Sunday: 9:00 AM - 5:00 PM"],
+                opening_hours=["Wednesday: Closed"],
             ),
             make_tarot_shop_row(id="s2", tarot_title="The Hidden Alcove"),
         ]
@@ -109,6 +109,22 @@ class TestTarotServiceDraw:
         )
         result_ids = [c.shop_id for c in result]
         assert "s1" not in result_ids
+
+    async def test_includes_shop_with_unlisted_day_hours(self):
+        """A shop that only lists Sunday hours returns None (unknown) on Wednesday — included."""
+        rows = [
+            make_tarot_shop_row(
+                id="s1",
+                tarot_title="The Scholar's Refuge",
+                opening_hours=["Sunday: 9:00 AM - 5:00 PM"],
+            ),
+        ]
+        db = _make_db_mock(rows)
+        service = TarotService(db)
+        result = await service.draw(
+            lat=25.033, lng=121.543, radius_km=3.0, excluded_ids=[], now=FIXED_NOW
+        )
+        assert len(result) == 1  # unknown hours on this day = included
 
     async def test_includes_shops_with_null_hours_as_unknown(self):
         rows = [

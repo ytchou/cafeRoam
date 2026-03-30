@@ -233,6 +233,24 @@ class TestShopsAPI:
         data = response.json()
         assert data["communitySummary"] is None
 
+    def test_list_shops_is_open_null_when_no_hours(self):
+        """GET /shops returns isOpen: null when opening_hours is absent."""
+        shop_row = {
+            **SHOP_ROW,
+            "shop_photos": [],
+            "shop_claims": [],
+            "shop_tags": [],
+        }
+        chain = _simple_select_chain([shop_row])
+
+        with patch("api.shops.get_anon_client") as mock_sb:
+            mock_sb.return_value = MagicMock(table=MagicMock(return_value=chain))
+            response = client.get("/shops")
+
+        assert response.status_code == 200
+        shop = response.json()[0]
+        assert shop["isOpen"] is None
+
     def test_user_browsing_shop_list_sees_taxonomy_tag_badges(self):
         """A user browsing the shop list sees tag badges — GET /shops must include taxonomyTags from shop_tags JOIN."""
         shop_data = [

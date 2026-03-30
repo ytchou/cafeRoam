@@ -20,10 +20,11 @@ class TestIsOpenNow:
         now = datetime(2026, 3, 16, 20, 0, tzinfo=TW)  # Monday 8pm
         assert is_open_now(hours, now) is False
 
-    def test_closed_on_unlisted_day(self):
+    def test_none_on_unlisted_day(self):
+        """Given only Monday hours, Tuesday returns None (unknown) not False (closed)."""
         hours = ["Monday: 9:00 AM - 6:00 PM"]
         now = datetime(2026, 3, 17, 14, 0, tzinfo=TW)  # Tuesday 2pm
-        assert is_open_now(hours, now) is False
+        assert is_open_now(hours, now) is None
 
     def test_midnight_crossing_before_midnight(self):
         hours = ["Friday: 10:00 AM - 2:00 AM"]

@@ -1,6 +1,7 @@
 import contextlib
-from datetime import datetime, timedelta, timezone
+from datetime import datetime
 from typing import Any, cast
+from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import ValidationError
@@ -18,7 +19,7 @@ from models.types import (
     TaxonomyTag,
 )
 
-TW = timezone(timedelta(hours=8))  # Taiwan UTC+8, no DST — zoneinfo not required
+_TW = ZoneInfo("Asia/Taipei")
 
 router = APIRouter(prefix="/shops", tags=["shops"])
 
@@ -45,8 +46,7 @@ _SHOP_LIST_COLUMNS = (
     "id, name, slug, address, city, mrt, latitude, longitude, "
     "rating, review_count, description, processing_status, "
     "mode_work, mode_rest, mode_social, "
-    "community_summary, "
-    "opening_hours, "
+    "community_summary, opening_hours, "
     "created_at"
 )
 
@@ -72,7 +72,7 @@ async def list_shops(
     query = query.limit(limit)
     response = query.execute()
     rows = cast("list[dict[str, Any]]", response.data or [])
-    now = datetime.now(TW)
+    now = datetime.now(_TW)
     result = []
     for row in rows:
         photo_urls = [p["url"] for p in (row.pop("shop_photos", None) or [])]
