@@ -61,6 +61,8 @@ class Settings(BaseSettings):
     worker_concurrency_publish: int = 20
     worker_concurrency_scrape: int = 1
     worker_concurrency_default: int = 1
+    # Stuck job reaper
+    worker_stuck_job_timeout_minutes: int = 10
 
     # Search cache
     search_cache_provider: str = "supabase"
