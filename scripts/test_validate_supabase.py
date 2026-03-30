@@ -5,7 +5,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(__file__))
 
-from validate_supabase import CheckResult, check_rls, check_schema_parity
+from validate_supabase import CheckResult, check_rls, check_schema_parity, check_triggers
 
 
 class MockCursor:
@@ -90,3 +90,24 @@ def test_rls_fails_when_table_missing_rls():
     rls_enabled_result = results[0]
     assert not rls_enabled_result.passed
     assert "check_ins" in rls_enabled_result.details
+
+
+def test_triggers_pass_when_both_exist_and_enabled():
+    """Given both expected triggers exist and are enabled, check passes."""
+    cursor = MockCursor(results=[
+        [
+            ("trg_checkin_after_insert", "check_ins", "O"),
+            ("trg_enforce_max_lists", "lists", "O"),
+        ],
+    ])
+    results = check_triggers(cursor)
+    assert all(r.passed for r in results)
+
+
+def test_triggers_fail_when_trigger_missing():
+    """Given a missing trigger, the check fails."""
+    cursor = MockCursor(results=[
+        [("trg_checkin_after_insert", "check_ins", "O")],
+    ])
+    results = check_triggers(cursor)
+    assert not all(r.passed for r in results)

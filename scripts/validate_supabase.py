@@ -133,6 +133,49 @@ def check_rls(cursor) -> list[CheckResult]:
     return results
 
 
+def check_triggers(cursor) -> list[CheckResult]:
+    """Verify expected triggers exist and are enabled."""
+    results = []
+
+    cursor.execute(
+        "SELECT t.tgname, c.relname, t.tgenabled "
+        "FROM pg_trigger t "
+        "JOIN pg_class c ON c.oid = t.tgrelid "
+        "JOIN pg_namespace n ON n.oid = c.relnamespace "
+        "WHERE n.nspname = 'public' AND NOT t.tgisinternal"
+    )
+    triggers = {row[0]: (row[1], row[2]) for row in cursor.fetchall()}
+
+    for trigger_name, expected_table in EXPECTED_TRIGGERS.items():
+        if trigger_name not in triggers:
+            results.append(CheckResult(
+                category="Triggers",
+                name=f"{trigger_name}",
+                passed=False,
+                details=f"Trigger not found (expected on {expected_table})",
+            ))
+        else:
+            table, enabled = triggers[trigger_name]
+            is_enabled = enabled in ("O", "A")
+            on_correct_table = table == expected_table
+            passed = is_enabled and on_correct_table
+            details_parts = []
+            if not on_correct_table:
+                details_parts.append(f"on {table} (expected {expected_table})")
+            if not is_enabled:
+                details_parts.append(f"disabled (tgenabled={enabled})")
+            if passed:
+                details_parts.append(f"enabled on {table}")
+            results.append(CheckResult(
+                category="Triggers",
+                name=f"{trigger_name}",
+                passed=passed,
+                details="; ".join(details_parts),
+            ))
+
+    return results
+
+
 # -- Main entry point ----------------------------------------------------------
 
 def run_all_checks(cursor) -> list[CheckResult]:
@@ -140,6 +183,7 @@ def run_all_checks(cursor) -> list[CheckResult]:
     results = []
     results.extend(check_schema_parity(cursor))
     results.extend(check_rls(cursor))
+    results.extend(check_triggers(cursor))
     return results
 
 
