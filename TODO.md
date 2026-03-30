@@ -6,6 +6,34 @@
 
 ---
 
+## Map Pin Progressive Disclosure (DEV-111)
+
+> **Design Doc:** [docs/designs/2026-03-30-map-pin-progressive-disclosure-design.md](docs/designs/2026-03-30-map-pin-progressive-disclosure-design.md)
+> **Plan:** [docs/plans/2026-03-30-map-pin-progressive-disclosure-plan.md](docs/plans/2026-03-30-map-pin-progressive-disclosure-plan.md)
+
+**Wave 1 — Foundation:**
+
+- [x] Task 1: Update `onShopClick` type to `string | null` + fix `app/page.tsx` wiring (DEV-116)
+
+**Wave 2 — Failing Tests (parallel):**
+
+- [x] Task 2: Write failing tests for ShopPreviewCard (DEV-118)
+- [x] Task 4: Write failing tests for MapDesktopLayout integration (DEV-120)
+
+**Wave 3 — ShopPreviewCard:**
+
+- [x] Task 3: Implement ShopPreviewCard component (DEV-118)
+
+**Wave 4 — Layout Integration:**
+
+- [x] Task 5: Scroll-to-card + auto-expand + preview card wiring in MapDesktopLayout (DEV-117, DEV-119)
+
+**Wave 5 — Verification:**
+
+- [x] Task 6: Final integration verification (lint, type-check, full test suite)
+
+---
+
 ## Mapbox Performance Validation + Graceful Degradation (DEV-75)
 
 > **Design Doc:** [docs/designs/2026-03-30-mapbox-performance-validation-design.md](docs/designs/2026-03-30-mapbox-performance-validation-design.md)

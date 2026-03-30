@@ -11,7 +11,7 @@ interface MapWithFallbackProps {
   shops: MappableLayoutShop[];
   count: number;
   selectedShopId: string | null;
-  onShopClick: (id: string) => void;
+  onShopClick: (id: string | null) => void;
   query: string;
   activeFilters: string[];
   onFilterToggle: (id: string) => void;
