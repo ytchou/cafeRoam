@@ -8,19 +8,17 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 # Copy dependency files
 COPY pyproject.toml uv.lock ./
 
-# Install dependencies
-RUN uv sync --frozen --no-dev
+# Install dependencies into .venv as root, then fix ownership
+RUN uv sync --frozen --no-dev && chown -R nobody:nogroup /app
 
 # Copy application code
-COPY . .
+COPY --chown=nobody:nogroup . .
 
 # Expose port
 EXPOSE 8000
 
 # Run as non-root for security
-# Set UV_CACHE_DIR to a writable path — `nobody` has HOME=/nonexistent on slim images
-ENV UV_CACHE_DIR=/tmp/uv-cache
 USER nobody
 
-# Run with uvicorn
-CMD ["uv", "run", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Call uvicorn directly from the venv — avoids uv re-syncing at runtime
+CMD ["/app/.venv/bin/uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
