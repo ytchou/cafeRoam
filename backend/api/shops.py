@@ -45,7 +45,10 @@ async def list_shops(
 ) -> list[Any]:
     """List shops. Public — no auth required."""
     db = get_anon_client()
-    query = db.table("shops").select(f"{_SHOP_LIST_COLUMNS}, shop_photos(url), shop_claims(status)")
+    query = db.table("shops").select(
+        f"{_SHOP_LIST_COLUMNS}, shop_photos(url), shop_claims(status), "
+        "shop_tags(tag_id, taxonomy_tags(id, dimension, label, label_zh))"
+    )
     if city:
         query = query.eq("city", city)
     if featured:
@@ -58,9 +61,16 @@ async def list_shops(
         photo_urls = [p["url"] for p in (row.pop("shop_photos", None) or [])]
         raw_claims = row.pop("shop_claims", None) or []
         claim_status = first(raw_claims, "shop_claims")["status"] if raw_claims else None
+        raw_tags = row.pop("shop_tags", None) or []
+        taxonomy_tags = [
+            TaxonomyTag(**tag_row["taxonomy_tags"]).model_dump(by_alias=True)
+            for tag_row in raw_tags
+            if tag_row.get("taxonomy_tags")
+        ]
         camel = {to_camel(k): v for k, v in row.items()}
         camel["photoUrls"] = photo_urls
         camel["claimStatus"] = claim_status
+        camel["taxonomyTags"] = taxonomy_tags
         result.append(camel)
     return result
 
