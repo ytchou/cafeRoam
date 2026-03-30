@@ -18,7 +18,7 @@
 - [x] Task 4: Write failing tests for MapDesktopLayout integration (DEV-120)
 
 **Wave 3 — ShopPreviewCard:**
-- [ ] Task 3: Implement ShopPreviewCard component (DEV-118)
+- [x] Task 3: Implement ShopPreviewCard component (DEV-118)
 
 **Wave 4 — Layout Integration:**
 - [ ] Task 5: Scroll-to-card + auto-expand + preview card wiring in MapDesktopLayout (DEV-117, DEV-119)
