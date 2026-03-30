@@ -176,6 +176,64 @@ def check_triggers(cursor) -> list[CheckResult]:
     return results
 
 
+def check_pgvector(cursor) -> list[CheckResult]:
+    """Verify pgvector extension, HNSW index, and query capability."""
+    results = []
+
+    # 1. Extension enabled
+    cursor.execute(
+        "SELECT extname FROM pg_extension WHERE extname = 'vector'"
+    )
+    rows = cursor.fetchall()
+    has_extension = len(rows) > 0
+    results.append(CheckResult(
+        category="pgvector",
+        name="vector extension",
+        passed=has_extension,
+        details="Enabled" if has_extension else "Not found — run CREATE EXTENSION vector",
+    ))
+
+    # 2. HNSW index on shops.embedding
+    cursor.execute(
+        "SELECT indexname FROM pg_indexes "
+        "WHERE tablename = 'shops' AND indexdef LIKE '%hnsw%'"
+    )
+    indexes = cursor.fetchall()
+    has_hnsw = len(indexes) > 0
+    results.append(CheckResult(
+        category="pgvector",
+        name="HNSW index on shops.embedding",
+        passed=has_hnsw,
+        details=f"Found: {indexes[0][0]}" if has_hnsw else "No HNSW index found on shops table",
+    ))
+
+    # 3. Test cosine similarity query
+    if has_extension:
+        try:
+            cursor.execute(
+                "SELECT 1 - (embedding <=> ('[' || repeat('0,', 1535) || '0]')::vector) "
+                "AS similarity FROM shops WHERE embedding IS NOT NULL LIMIT 1"
+            )
+            row = cursor.fetchone()
+            query_works = row is not None
+            details = f"Query returned similarity={row[0]:.4f}" if query_works else "No rows with embeddings found"
+        except Exception as e:
+            query_works = False
+            details = f"Query failed: {e}"
+    else:
+        query_works = False
+        details = "Skipped — vector extension not available"
+
+    results.append(CheckResult(
+        category="pgvector",
+        name="Cosine similarity query",
+        passed=query_works,
+        details=details,
+    ))
+
+    return results
+
+
 # -- Main entry point ----------------------------------------------------------
 
 def run_all_checks(cursor) -> list[CheckResult]:
@@ -184,6 +242,7 @@ def run_all_checks(cursor) -> list[CheckResult]:
     results.extend(check_schema_parity(cursor))
     results.extend(check_rls(cursor))
     results.extend(check_triggers(cursor))
+    results.extend(check_pgvector(cursor))
     return results
 
 

@@ -5,7 +5,13 @@ import sys
 
 sys.path.insert(0, os.path.dirname(__file__))
 
-from validate_supabase import CheckResult, check_rls, check_schema_parity, check_triggers
+from validate_supabase import (
+    CheckResult,
+    check_pgvector,
+    check_rls,
+    check_schema_parity,
+    check_triggers,
+)
 
 
 class MockCursor:
@@ -111,3 +117,25 @@ def test_triggers_fail_when_trigger_missing():
     ])
     results = check_triggers(cursor)
     assert not all(r.passed for r in results)
+
+
+def test_pgvector_passes_with_extension_and_index():
+    """Given pgvector extension enabled and HNSW index on shops.embedding, check passes."""
+    cursor = MockCursor(results=[
+        [("vector",)],                              # pg_extension (fetchall)
+        [("shops_embedding_hnsw_idx",)],            # HNSW index (fetchall)
+        (0.0,),                                      # cosine query (fetchone)
+    ])
+    results = check_pgvector(cursor)
+    assert all(r.passed for r in results)
+
+
+def test_pgvector_fails_without_extension():
+    """Given no vector extension, the check fails."""
+    cursor = MockCursor(results=[
+        [],    # no extension
+        [],    # no index
+        None,  # query will fail
+    ])
+    results = check_pgvector(cursor)
+    assert not results[0].passed
