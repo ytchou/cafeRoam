@@ -11,6 +11,7 @@ from validate_supabase import (
     check_pgvector,
     check_rls,
     check_schema_parity,
+    check_storage_buckets,
     check_triggers,
 )
 
@@ -159,3 +160,22 @@ def test_pgbouncer_compat_reports_functions_with_set_local():
     results = check_pgbouncer_compat(cursor)
     assert len(results) >= 1
     assert "search_cache_similar" in results[0].details
+
+
+def test_storage_buckets_pass_when_all_exist():
+    """Given all 4 expected storage buckets exist, check passes."""
+    cursor = MockCursor(results=[
+        [("checkin-photos",), ("menu-photos",), ("avatars",), ("claim-proofs",)],
+    ])
+    results = check_storage_buckets(cursor)
+    assert all(r.passed for r in results)
+
+
+def test_storage_buckets_fail_when_missing():
+    """Given a missing bucket, the check fails."""
+    cursor = MockCursor(results=[
+        [("checkin-photos",), ("avatars",)],
+    ])
+    results = check_storage_buckets(cursor)
+    assert not results[0].passed
+    assert "claim-proofs" in results[0].details

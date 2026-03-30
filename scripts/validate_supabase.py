@@ -274,6 +274,24 @@ def check_pgbouncer_compat(cursor) -> list[CheckResult]:
     return results
 
 
+def check_storage_buckets(cursor) -> list[CheckResult]:
+    """Verify expected storage buckets exist."""
+    results = []
+
+    cursor.execute("SELECT id FROM storage.buckets")
+    existing = {row[0] for row in cursor.fetchall()}
+    missing = EXPECTED_BUCKETS - existing
+    results.append(CheckResult(
+        category="Storage",
+        name="Expected buckets",
+        passed=len(missing) == 0,
+        details=f"Missing: {sorted(missing)}" if missing
+            else f"All {len(EXPECTED_BUCKETS)} buckets present: {sorted(existing & EXPECTED_BUCKETS)}",
+    ))
+
+    return results
+
+
 # -- Main entry point ----------------------------------------------------------
 
 def run_all_checks(cursor) -> list[CheckResult]:
@@ -284,6 +302,7 @@ def run_all_checks(cursor) -> list[CheckResult]:
     results.extend(check_triggers(cursor))
     results.extend(check_pgvector(cursor))
     results.extend(check_pgbouncer_compat(cursor))
+    results.extend(check_storage_buckets(cursor))
     return results
 
 
