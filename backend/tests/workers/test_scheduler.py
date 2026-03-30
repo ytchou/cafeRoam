@@ -39,7 +39,9 @@ class TestSchedulerReaper:
         job = scheduler.get_job("delete_expired_accounts")
         assert job is not None
         # @wraps preserves __wrapped__ on the original function; its presence confirms a decorator was applied
-        assert hasattr(job.func, "__wrapped__"), "delete_expired_accounts must be wrapped by @idempotent_cron"
+        assert hasattr(job.func, "__wrapped__"), (
+            "delete_expired_accounts must be wrapped by @idempotent_cron"
+        )
 
 
 class TestSchedulerStatus:
