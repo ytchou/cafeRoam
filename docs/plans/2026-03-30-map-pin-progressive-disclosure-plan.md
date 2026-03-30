@@ -15,6 +15,7 @@
 **Tech Stack:** React, TypeScript, Tailwind CSS, PostHog analytics
 
 **Acceptance Criteria:**
+
 - [ ] A desktop user clicking a map pin sees the side panel highlight the corresponding shop card and scroll to it
 - [ ] A desktop user clicking a map pin sees a floating preview card with the shop's name, photo, rating, distance, tags, and a "View Details" CTA
 - [ ] A desktop user pressing ESC or clicking the X button on the preview card closes it and deselects the pin
@@ -26,6 +27,7 @@
 ### Task 1: Update `onShopClick` type to accept `null` (DEV-116)
 
 **Files:**
+
 - Modify: `components/map/map-with-fallback.tsx:14`
 - Modify: `components/map/map-desktop-layout.tsx:18`
 
@@ -36,6 +38,7 @@ This is a non-behavioral type change. No new test required. The existing tests p
 **Step 2: Update `MapWithFallbackProps` interface**
 
 In `components/map/map-with-fallback.tsx`, change:
+
 ```diff
 - onShopClick: (id: string) => void;
 + onShopClick: (id: string | null) => void;
@@ -44,6 +47,7 @@ In `components/map/map-with-fallback.tsx`, change:
 **Step 3: Update `MapDesktopLayoutProps` interface**
 
 In `components/map/map-desktop-layout.tsx`, change:
+
 ```diff
 - onShopClick: (id: string) => void;
 + onShopClick: (id: string | null) => void;
@@ -52,6 +56,7 @@ In `components/map/map-desktop-layout.tsx`, change:
 **Step 4: Fix `app/page.tsx` desktop pin click wiring**
 
 In `app/page.tsx`, change line 145:
+
 ```diff
 - onShopClick={isDesktop ? handleShopNavigate : setSelectedShopId}
 + onShopClick={setSelectedShopId}
@@ -79,6 +84,7 @@ This enables progressive disclosure: pin click selects, CTA navigates."
 ### Task 2: Write failing tests for ShopPreviewCard (DEV-118)
 
 **Files:**
+
 - Create: `components/shops/shop-preview-card.test.tsx`
 
 **Step 1: Write the failing tests**
@@ -148,9 +154,15 @@ describe('a user seeing a shop preview card on the map', () => {
   it('calls onNavigate when the user clicks View Details', async () => {
     const onNavigate = vi.fn();
     render(
-      <ShopPreviewCard shop={mockShop} onClose={vi.fn()} onNavigate={onNavigate} />
+      <ShopPreviewCard
+        shop={mockShop}
+        onClose={vi.fn()}
+        onNavigate={onNavigate}
+      />
     );
-    await userEvent.click(screen.getByRole('button', { name: /view details/i }));
+    await userEvent.click(
+      screen.getByRole('button', { name: /view details/i })
+    );
     expect(onNavigate).toHaveBeenCalledOnce();
   });
 
@@ -183,7 +195,11 @@ describe('a user seeing a shop preview card on the map', () => {
   it('shows a placeholder when the shop has no photos', () => {
     const noPhotoShop = { ...mockShop, photo_urls: [] };
     render(
-      <ShopPreviewCard shop={noPhotoShop} onClose={vi.fn()} onNavigate={vi.fn()} />
+      <ShopPreviewCard
+        shop={noPhotoShop}
+        onClose={vi.fn()}
+        onNavigate={vi.fn()}
+      />
     );
     expect(screen.getByText('No photo')).toBeInTheDocument();
   });
@@ -207,6 +223,7 @@ git commit -m "test(DEV-118): add failing tests for ShopPreviewCard component"
 ### Task 3: Implement ShopPreviewCard component (DEV-118)
 
 **Files:**
+
 - Create: `components/shops/shop-preview-card.tsx`
 
 **Step 1: Implement the component**
@@ -348,6 +365,7 @@ Closes on ESC or X button. Fires shop_preview_opened analytics event on mount."
 ### Task 4: Write failing tests for scroll-to-card + auto-expand + preview card integration (DEV-117, DEV-119, DEV-120)
 
 **Files:**
+
 - Modify: `components/map/map-desktop-layout.test.tsx`
 
 **Step 1: Add failing tests to the existing test file**
@@ -419,6 +437,7 @@ git commit -m "test(DEV-120): add failing tests for preview card + scroll-to-car
 ### Task 5: Implement scroll-to-card + auto-expand + preview card wiring in MapDesktopLayout (DEV-117, DEV-119)
 
 **Files:**
+
 - Modify: `components/map/map-desktop-layout.tsx`
 
 **Step 1: Implement the changes**
@@ -426,6 +445,7 @@ git commit -m "test(DEV-120): add failing tests for preview card + scroll-to-car
 Replace the full content of `components/map/map-desktop-layout.tsx`:
 
 Add new imports at top (after existing imports):
+
 ```tsx
 import { useRef, useEffect, useCallback } from 'react';
 // ... add to existing 'react' import — merge with existing useState, useMemo, Suspense
@@ -433,11 +453,20 @@ import { ShopPreviewCard } from '@/components/shops/shop-preview-card';
 ```
 
 The final imports line should be:
+
 ```tsx
-import { useState, useMemo, useRef, useEffect, useCallback, Suspense } from 'react';
+import {
+  useState,
+  useMemo,
+  useRef,
+  useEffect,
+  useCallback,
+  Suspense,
+} from 'react';
 ```
 
 Add inside the component body, after `activeFilterSet`:
+
 ```tsx
 const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -446,10 +475,7 @@ const selectedShop = useMemo(
   [shops, selectedShopId]
 );
 
-const handlePreviewClose = useCallback(
-  () => onShopClick(null),
-  [onShopClick]
-);
+const handlePreviewClose = useCallback(() => onShopClick(null), [onShopClick]);
 
 const handlePreviewNavigate = useCallback(() => {
   if (selectedShopId) (onCardClick ?? onShopClick)(selectedShopId);
@@ -474,12 +500,14 @@ useEffect(() => {
 ```
 
 Add `ref={scrollRef}` to the scrollable card list div:
+
 ```diff
 - <div className="flex-1 divide-y divide-[var(--border)] overflow-y-auto">
 + <div ref={scrollRef} className="flex-1 divide-y divide-[var(--border)] overflow-y-auto">
 ```
 
 Wrap each `ShopCardCompact` with a `data-shop-id` div:
+
 ```diff
 - {shops.map((shop) => (
 -   <ShopCardCompact
@@ -501,16 +529,19 @@ Wrap each `ShopCardCompact` with a `data-shop-id` div:
 ```
 
 Add `ShopPreviewCard` inside the map container div (`<div className="relative flex-1">`), after the `<Suspense>` block:
+
 ```tsx
-{selectedShop && (
-  <div className="absolute bottom-6 left-1/2 z-30 -translate-x-1/2">
-    <ShopPreviewCard
-      shop={selectedShop}
-      onClose={handlePreviewClose}
-      onNavigate={handlePreviewNavigate}
-    />
-  </div>
-)}
+{
+  selectedShop && (
+    <div className="absolute bottom-6 left-1/2 z-30 -translate-x-1/2">
+      <ShopPreviewCard
+        shop={selectedShop}
+        onClose={handlePreviewClose}
+        onNavigate={handlePreviewNavigate}
+      />
+    </div>
+  );
+}
 ```
 
 **Step 2: Run all tests to verify they pass**
@@ -604,17 +635,22 @@ graph TD
 ```
 
 **Wave 1** (foundation):
+
 - Task 1: Type change + `app/page.tsx` wiring (DEV-116)
 
 **Wave 2** (parallel — depends on Wave 1):
+
 - Task 2: ShopPreviewCard failing tests (DEV-118)
 - Task 4: MapDesktopLayout integration failing tests (DEV-120)
 
 **Wave 3** (depends on Wave 2):
+
 - Task 3: ShopPreviewCard implementation (DEV-118)
 
 **Wave 4** (depends on Waves 3 + 4):
+
 - Task 5: MapDesktopLayout scroll + auto-expand + preview card wiring (DEV-117, DEV-119)
 
 **Wave 5** (depends on Wave 4):
+
 - Task 6: Final integration verification

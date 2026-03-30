@@ -1,4 +1,5 @@
 # Internal hooks with env-var guards don't need mocks in tests
+
 **Date:** 2026-03-30
 **Context:** DEV-111 map pin progressive disclosure — ShopPreviewCard analytics mock
 

@@ -230,7 +230,9 @@ describe('a user on the desktop map view', () => {
     rerender(
       <MapDesktopLayout {...defaultProps} selectedShopId="shop-aa11bb" />
     );
-    expect(screen.getByRole('button', { name: /collapse/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /collapse/i })
+    ).toBeInTheDocument();
   });
 
   it('a user clicking the X button on the preview card calls onShopClick(null)', async () => {

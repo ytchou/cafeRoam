@@ -55,20 +55,23 @@ MapDesktopLayout
 ```
 
 **Props:**
+
 ```ts
 interface ShopPreviewCardProps {
   shop: MappableLayoutShop;
-  onClose: () => void;   // calls onShopClick(null) at page level
+  onClose: () => void; // calls onShopClick(null) at page level
   onNavigate: () => void; // calls handleShopNavigate(shop.id) at page level
 }
 ```
 
 **Styles:**
+
 - Container: `absolute bottom-6 left-1/2 -translate-x-1/2 z-30`
 - Card: `w-[340px] backdrop-blur-md bg-white/80 rounded-2xl shadow-xl overflow-hidden`
 - Animation: `transition-all duration-200`
 
 **Close mechanisms:**
+
 1. X button on card → `onClose()`
 2. ESC key → `onClose()`
 3. Clicking a different pin → card updates to new shop (no close needed)
@@ -110,7 +113,10 @@ useEffect(() => {
       ?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
   setPanelCollapsed((prev) => {
-    if (prev) { setTimeout(scroll, 200); return false; }
+    if (prev) {
+      setTimeout(scroll, 200);
+      return false;
+    }
     scroll();
     return false;
   });
@@ -125,6 +131,7 @@ useEffect(() => {
 ## Analytics
 
 Add `shop_preview_opened` PostHog event in `ShopPreviewCard` on mount:
+
 ```ts
 capture('shop_preview_opened', { shop_id: shop.id, source: 'map_pin' });
 ```
@@ -135,14 +142,14 @@ capture('shop_preview_opened', { shop_id: shop.id, source: 'map_pin' });
 
 ### Unit tests (`components/map/map-desktop-layout.test.tsx`)
 
-| Test | Description |
-|------|-------------|
-| Pin selection | Changing `selectedShopId` highlights correct `ShopCardCompact` (via `selected` prop) |
-| Auto-expand | When `selectedShopId` changes to non-null and panel is collapsed, panel auto-expands |
-| Preview renders | Preview card shows shop name, rating, tags when `selectedShopId` is set |
-| X button | X button calls `onShopClick(null)` |
-| ESC key | Pressing ESC calls `onShopClick(null)` |
-| View Details | "View Details" button calls `onCardClick(shopId)` |
+| Test            | Description                                                                          |
+| --------------- | ------------------------------------------------------------------------------------ |
+| Pin selection   | Changing `selectedShopId` highlights correct `ShopCardCompact` (via `selected` prop) |
+| Auto-expand     | When `selectedShopId` changes to non-null and panel is collapsed, panel auto-expands |
+| Preview renders | Preview card shows shop name, rating, tags when `selectedShopId` is set              |
+| X button        | X button calls `onShopClick(null)`                                                   |
+| ESC key         | Pressing ESC calls `onShopClick(null)`                                               |
+| View Details    | "View Details" button calls `onCardClick(shopId)`                                    |
 
 ### Testing Classification
 
@@ -153,10 +160,10 @@ capture('shop_preview_opened', { shop_id: shop.id, source: 'map_pin' });
 
 ## Files Changed
 
-| File | Change |
-|------|--------|
-| `app/page.tsx` | 1-line: change desktop `onShopClick` wiring |
-| `components/map/map-with-fallback.tsx` | Type update: `onShopClick` accepts `null` |
-| `components/map/map-desktop-layout.tsx` | Add scroll ref, auto-expand effect, preview card render |
-| `components/shops/shop-preview-card.tsx` | **NEW**: floating glassmorphism preview card |
-| `components/map/map-desktop-layout.test.tsx` | New tests for above behavior |
+| File                                         | Change                                                  |
+| -------------------------------------------- | ------------------------------------------------------- |
+| `app/page.tsx`                               | 1-line: change desktop `onShopClick` wiring             |
+| `components/map/map-with-fallback.tsx`       | Type update: `onShopClick` accepts `null`               |
+| `components/map/map-desktop-layout.tsx`      | Add scroll ref, auto-expand effect, preview card render |
+| `components/shops/shop-preview-card.tsx`     | **NEW**: floating glassmorphism preview card            |
+| `components/map/map-desktop-layout.test.tsx` | New tests for above behavior                            |
