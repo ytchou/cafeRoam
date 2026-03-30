@@ -1,6 +1,7 @@
 from typing import Any, cast
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import ValidationError
 from pydantic.alias_generators import to_camel
 
 from api.deps import get_admin_db, get_current_user, get_optional_user, get_user_db
@@ -15,6 +16,19 @@ from models.types import (
 )
 
 router = APIRouter(prefix="/shops", tags=["shops"])
+
+
+def _extract_taxonomy_tags(raw_tags: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    result = []
+    for tag_row in raw_tags:
+        raw = tag_row.get("taxonomy_tags")
+        if not raw:
+            continue
+        try:
+            result.append(TaxonomyTag(**raw).model_dump(by_alias=True))
+        except ValidationError:
+            pass
+    return result
 
 
 def _extract_display_name(row: dict[str, Any]) -> str | None:
@@ -62,11 +76,7 @@ async def list_shops(
         raw_claims = row.pop("shop_claims", None) or []
         claim_status = first(raw_claims, "shop_claims")["status"] if raw_claims else None
         raw_tags = row.pop("shop_tags", None) or []
-        taxonomy_tags = [
-            TaxonomyTag(**tag_row["taxonomy_tags"]).model_dump(by_alias=True)
-            for tag_row in raw_tags
-            if tag_row.get("taxonomy_tags")
-        ]
+        taxonomy_tags = _extract_taxonomy_tags(raw_tags)
         camel = {to_camel(k): v for k, v in row.items()}
         camel["photoUrls"] = photo_urls
         camel["claimStatus"] = claim_status
@@ -104,11 +114,7 @@ async def get_shop(shop_id: str) -> Any:
     approved_claim = next((c for c in raw_claims if c.get("status") == "approved"), None)
     claim_status = first(raw_claims, "shop_claims")["status"] if raw_claims else None
     owner_user_id: str | None = approved_claim.get("user_id") if approved_claim else None
-    taxonomy_tags = [
-        TaxonomyTag(**row["taxonomy_tags"]).model_dump(by_alias=True)
-        for row in raw_tags
-        if row.get("taxonomy_tags")
-    ]
+    taxonomy_tags = _extract_taxonomy_tags(raw_tags)
     mode_scores = {
         "work": shop.pop("mode_work", None),
         "rest": shop.pop("mode_rest", None),
