@@ -9,10 +9,6 @@ vi.mock('next/image', () => ({
   ),
 }));
 
-vi.mock('@/lib/posthog/use-analytics', () => ({
-  useAnalytics: () => ({ capture: vi.fn() }),
-}));
-
 import { ShopPreviewCard } from './shop-preview-card';
 
 const mockShop = {
@@ -33,7 +29,7 @@ const mockShop = {
 };
 
 describe('a user seeing a shop preview card on the map', () => {
-  it('displays the shop name and rating', () => {
+  it('a user sees the shop name and rating', () => {
     render(
       <ShopPreviewCard shop={mockShop} onClose={vi.fn()} onNavigate={vi.fn()} />
     );
@@ -41,7 +37,7 @@ describe('a user seeing a shop preview card on the map', () => {
     expect(screen.getByText(/★ 4\.7/)).toBeInTheDocument();
   });
 
-  it('displays up to 3 taxonomy tags', () => {
+  it('a user sees at most 3 taxonomy tags on the preview card', () => {
     render(
       <ShopPreviewCard shop={mockShop} onClose={vi.fn()} onNavigate={vi.fn()} />
     );
@@ -51,7 +47,7 @@ describe('a user seeing a shop preview card on the map', () => {
     expect(screen.queryByText('甜點')).not.toBeInTheDocument();
   });
 
-  it('displays distance and open status', () => {
+  it('a user sees the distance and open status of the shop', () => {
     render(
       <ShopPreviewCard shop={mockShop} onClose={vi.fn()} onNavigate={vi.fn()} />
     );
@@ -92,7 +88,7 @@ describe('a user seeing a shop preview card on the map', () => {
     expect(onClose).toHaveBeenCalledOnce();
   });
 
-  it('shows a photo thumbnail when the shop has photos', () => {
+  it('a user sees the shop photo thumbnail when one is available', () => {
     render(
       <ShopPreviewCard shop={mockShop} onClose={vi.fn()} onNavigate={vi.fn()} />
     );
@@ -100,7 +96,7 @@ describe('a user seeing a shop preview card on the map', () => {
     expect(img).toBeInTheDocument();
   });
 
-  it('shows a placeholder when the shop has no photos', () => {
+  it('a user sees a placeholder when the shop has no photos', () => {
     const noPhotoShop = { ...mockShop, photo_urls: [] };
     render(
       <ShopPreviewCard

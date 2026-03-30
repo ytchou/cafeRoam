@@ -206,7 +206,9 @@ describe('a user on the desktop map view', () => {
         onCardClick={vi.fn()}
       />
     );
-    expect(screen.getByLabelText('Close preview')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /close preview/i })
+    ).toBeInTheDocument();
     expect(
       screen.getAllByText('晨光咖啡 Morning Glow').length
     ).toBeGreaterThanOrEqual(2); // panel card + preview card
@@ -214,7 +216,21 @@ describe('a user on the desktop map view', () => {
 
   it('a user does not see a preview card when no pin is selected', () => {
     render(<MapDesktopLayout {...defaultProps} selectedShopId={null} />);
-    expect(screen.queryByLabelText('Close preview')).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /close preview/i })
+    ).not.toBeInTheDocument();
+  });
+
+  it('a user clicking a pin while the panel is collapsed sees the panel auto-expand', async () => {
+    const { rerender } = render(
+      <MapDesktopLayout {...defaultProps} selectedShopId={null} />
+    );
+    await userEvent.click(screen.getByRole('button', { name: /collapse/i }));
+    expect(screen.queryByText('晨光咖啡 Morning Glow')).not.toBeInTheDocument();
+    rerender(
+      <MapDesktopLayout {...defaultProps} selectedShopId="shop-aa11bb" />
+    );
+    expect(screen.getByRole('button', { name: /collapse/i })).toBeInTheDocument();
   });
 
   it('a user clicking the X button on the preview card calls onShopClick(null)', async () => {
