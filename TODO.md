@@ -43,7 +43,7 @@
 
 **Wave 2 — Core checks (parallel):**
 
-- [ ] Task 2: RLS validation check (DEV-86)
+- [x] Task 2: RLS validation check (DEV-86)
 - [ ] Task 3: Trigger validation check (DEV-86)
 
 **Wave 3 — Additional checks (parallel):**

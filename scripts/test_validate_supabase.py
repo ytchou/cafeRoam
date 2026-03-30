@@ -5,7 +5,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(__file__))
 
-from validate_supabase import CheckResult, check_schema_parity
+from validate_supabase import CheckResult, check_rls, check_schema_parity
 
 
 class MockCursor:
@@ -55,3 +55,38 @@ def test_schema_parity_fails_when_migration_count_low():
     results = check_schema_parity(cursor)
     assert not results[0].passed
     assert "50" in results[0].details
+
+
+def test_rls_passes_when_all_tables_have_policies():
+    """Given all user-facing tables have RLS enabled with policies, check passes."""
+    tables_with_rls = [(t,) for t in [
+        "check_ins", "lists", "list_items", "profiles", "shop_followers",
+        "shop_claims", "shops", "shop_photos", "shop_reviews", "stamps",
+        "job_queue", "user_roles", "search_events", "shop_menu_items",
+        "community_note_likes", "activity_feed", "shop_submissions",
+        "shop_content", "shop_owner_tags", "review_responses",
+        "admin_audit_logs",
+    ]]
+    policy_counts = [(t[0], 2) for t in tables_with_rls]
+
+    cursor = MockCursor(results=[
+        tables_with_rls,
+        policy_counts,
+    ])
+    results = check_rls(cursor)
+    assert all(r.passed for r in results)
+
+
+def test_rls_fails_when_table_missing_rls():
+    """Given a table without RLS enabled, the check fails."""
+    tables_with_rls = [(t,) for t in ["lists", "profiles"]]
+    policy_counts = [("lists", 1), ("profiles", 1)]
+
+    cursor = MockCursor(results=[
+        tables_with_rls,
+        policy_counts,
+    ])
+    results = check_rls(cursor)
+    rls_enabled_result = results[0]
+    assert not rls_enabled_result.passed
+    assert "check_ins" in rls_enabled_result.details

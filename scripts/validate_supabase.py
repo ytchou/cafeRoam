@@ -95,12 +95,51 @@ def check_schema_parity(cursor) -> list[CheckResult]:
     return results
 
 
+def check_rls(cursor) -> list[CheckResult]:
+    """Verify RLS is enabled and policies exist on required tables."""
+    results = []
+
+    # 1. Which tables have RLS enabled?
+    cursor.execute(
+        "SELECT c.relname FROM pg_class c "
+        "JOIN pg_namespace n ON n.oid = c.relnamespace "
+        "WHERE n.nspname = 'public' AND c.relkind = 'r' AND c.relrowsecurity = true"
+    )
+    rls_enabled = {row[0] for row in cursor.fetchall()}
+    missing_rls = RLS_REQUIRED_TABLES - rls_enabled
+    results.append(CheckResult(
+        category="RLS",
+        name="RLS enabled on required tables",
+        passed=len(missing_rls) == 0,
+        details=f"Missing RLS: {sorted(missing_rls)}" if missing_rls
+            else f"All {len(RLS_REQUIRED_TABLES)} required tables have RLS enabled",
+    ))
+
+    # 2. Do they have policies?
+    cursor.execute(
+        "SELECT tablename, COUNT(*) FROM pg_policies "
+        "WHERE schemaname = 'public' GROUP BY tablename"
+    )
+    policy_counts = {row[0]: row[1] for row in cursor.fetchall()}
+    no_policies = [t for t in RLS_REQUIRED_TABLES if policy_counts.get(t, 0) == 0]
+    results.append(CheckResult(
+        category="RLS",
+        name="Policies exist on RLS tables",
+        passed=len(no_policies) == 0,
+        details=f"No policies: {sorted(no_policies)}" if no_policies
+            else f"All {len(RLS_REQUIRED_TABLES)} tables have at least one policy",
+    ))
+
+    return results
+
+
 # -- Main entry point ----------------------------------------------------------
 
 def run_all_checks(cursor) -> list[CheckResult]:
     """Run all validation checks and return results."""
     results = []
     results.extend(check_schema_parity(cursor))
+    results.extend(check_rls(cursor))
     return results
 
 
