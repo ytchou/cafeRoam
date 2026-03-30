@@ -39,7 +39,7 @@
 
 **Wave 1 — Foundation:**
 
-- [ ] Task 1: Script skeleton + schema parity check (DEV-86)
+- [x] Task 1: Script skeleton + schema parity check (DEV-86)
 
 **Wave 2 — Core checks (parallel):**
 
