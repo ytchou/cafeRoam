@@ -38,6 +38,9 @@ _backoff_until: dict[JobType, datetime] = {}
 # Strong references to in-flight tasks prevent premature GC
 _tasks: set[asyncio.Task[None]] = set()
 
+# Last successful poll timestamp for health checks
+_last_poll_at: datetime | None = None
+
 # Taxonomy cache: (tags, expires_at)
 _taxonomy_cache: tuple[list[TaxonomyTag], datetime] | None = None
 _TAXONOMY_TTL = timedelta(minutes=5)
@@ -251,6 +254,7 @@ async def run_reembed_reviewed_shops() -> None:
 
 async def poll_pending_job_types() -> None:
     """Single-poll loop: one DB query to find pending types, then dispatch each."""
+    global _last_poll_at
     try:
         db = get_service_role_client()
         queue = JobQueue(db=db)
@@ -263,9 +267,27 @@ async def poll_pending_job_types() -> None:
             if isinstance(exc, Exception):
                 logger.error("process_job_type failed during poll", error=str(exc))
                 sentry_sdk.capture_exception(exc)
+        _last_poll_at = datetime.now(UTC)
     except Exception as e:
         logger.error("Poll failed", error=str(e))
         sentry_sdk.capture_exception(e)
+
+
+def get_scheduler_status(scheduler: AsyncIOScheduler) -> dict[str, object]:
+    """Return scheduler health status for the /health/scheduler endpoint."""
+    jobs = scheduler.get_jobs()
+    return {
+        "status": "ok",
+        "registered_jobs": len(jobs),
+        "jobs": [
+            {
+                "id": job.id,
+                "next_run": str(job.next_run_time) if job.next_run_time else None,
+            }
+            for job in jobs
+        ],
+        "last_poll_at": _last_poll_at.isoformat() if _last_poll_at else None,
+    }
 
 
 def create_scheduler() -> AsyncIOScheduler:

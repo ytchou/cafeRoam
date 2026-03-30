@@ -1,5 +1,5 @@
 from models.types import JobType
-from workers.scheduler import create_scheduler
+from workers.scheduler import create_scheduler, get_scheduler_status
 
 
 class TestScheduler:
@@ -24,3 +24,18 @@ class TestScheduler:
         scheduler = create_scheduler()
         job = scheduler.get_job("reembed_reviewed_shops")
         assert job is not None
+
+
+class TestSchedulerStatus:
+    async def test_get_scheduler_status_returns_job_list(self):
+        """get_scheduler_status returns all registered jobs with their IDs."""
+        scheduler = create_scheduler()
+        scheduler.start(paused=True)
+        try:
+            status = get_scheduler_status(scheduler)
+            assert status["registered_jobs"] >= 5
+            job_ids = {j["id"] for j in status["jobs"]}
+            assert "poll_pending_jobs" in job_ids
+            assert "staleness_sweep" in job_ids
+        finally:
+            scheduler.shutdown()

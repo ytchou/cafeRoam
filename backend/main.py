@@ -59,6 +59,13 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     if settings.environment != "test":
         scheduler.start()
         logger.info("Scheduler started")
+        for job in scheduler.get_jobs():
+            logger.info(
+                "Scheduler job registered",
+                job_id=job.id,
+                next_run=str(job.next_run_time),
+            )
+        logger.info("Scheduler ready", total_jobs=len(scheduler.get_jobs()))
     yield
     if settings.environment != "test":
         scheduler.shutdown()
