@@ -14,8 +14,8 @@
 - [x] Task 1: Update `onShopClick` type to `string | null` + fix `app/page.tsx` wiring (DEV-116)
 
 **Wave 2 — Failing Tests (parallel):**
-- [ ] Task 2: Write failing tests for ShopPreviewCard (DEV-118)
-- [ ] Task 4: Write failing tests for MapDesktopLayout integration (DEV-120)
+- [x] Task 2: Write failing tests for ShopPreviewCard (DEV-118)
+- [x] Task 4: Write failing tests for MapDesktopLayout integration (DEV-120)
 
 **Wave 3 — ShopPreviewCard:**
 - [ ] Task 3: Implement ShopPreviewCard component (DEV-118)
