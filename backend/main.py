@@ -9,6 +9,7 @@ from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 
 from api.admin import router as admin_router
+from api.health import router as health_router
 from api.admin_claims import router as admin_claims_router
 from api.admin_roles import router as admin_roles_router
 from api.admin_shops import router as admin_shops_router
@@ -31,7 +32,7 @@ from api.submissions import router as submissions_router
 from core.config import settings
 from db.supabase_client import get_service_role_client
 from middleware.request_id import RequestIDMiddleware
-from workers.scheduler import create_scheduler, get_scheduler_status
+from workers.scheduler import create_scheduler
 
 logger = structlog.get_logger()
 
@@ -56,6 +57,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Startup and shutdown events."""
     _init_sentry()
     logger.info("Starting CafeRoam API", environment=settings.environment)
+    app.state.scheduler = scheduler
     if settings.environment != "test":
         scheduler.start()
         logger.info("Scheduler started")
@@ -121,11 +123,7 @@ async def deep_health_check() -> JSONResponse:
     return JSONResponse(content={"status": status, "checks": checks}, status_code=status_code)
 
 
-@app.get("/health/scheduler")
-async def scheduler_health() -> dict[str, object]:
-    return get_scheduler_status(scheduler)
-
-
+app.include_router(health_router)
 app.include_router(auth_router)
 app.include_router(profile_router)
 app.include_router(shops_router)
