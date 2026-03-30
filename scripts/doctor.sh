@@ -187,7 +187,8 @@ fi
 printf "\n${BOLD}Railway${NC}\n"
 
 if command -v railway &> /dev/null; then
-  _pass "Railway CLI installed: $(railway --version 2>&1 | head -1)"
+  RAILWAY_VERSION=$(railway --version 2>/dev/null | head -1 || echo "unknown")
+  _pass "Railway CLI installed: ${RAILWAY_VERSION}"
 else
   printf "${YELLOW}[WARN]${NC} Railway CLI not installed — needed for staging/prod deploys\n"
 fi
