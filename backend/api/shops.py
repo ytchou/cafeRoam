@@ -1,4 +1,5 @@
 import contextlib
+from datetime import datetime, timedelta, timezone
 from typing import Any, cast
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -7,6 +8,7 @@ from pydantic.alias_generators import to_camel
 
 from api.deps import get_admin_db, get_current_user, get_optional_user, get_user_db
 from core.db import first
+from core.opening_hours import is_open_now
 from db.supabase_client import get_anon_client
 from models.types import (
     ShopCheckInPreview,
@@ -15,6 +17,8 @@ from models.types import (
     ShopReviewsResponse,
     TaxonomyTag,
 )
+
+TW = timezone(timedelta(hours=8))  # Taiwan UTC+8, no DST — zoneinfo not required
 
 router = APIRouter(prefix="/shops", tags=["shops"])
 
@@ -42,12 +46,11 @@ _SHOP_LIST_COLUMNS = (
     "rating, review_count, description, processing_status, "
     "mode_work, mode_rest, mode_social, "
     "community_summary, "
+    "opening_hours, "
     "created_at"
 )
 
-_SHOP_DETAIL_COLUMNS = (
-    f"{_SHOP_LIST_COLUMNS}, phone, website, opening_hours, price_range, updated_at"
-)
+_SHOP_DETAIL_COLUMNS = f"{_SHOP_LIST_COLUMNS}, phone, website, price_range, updated_at"
 
 
 @router.get("/")
@@ -69,19 +72,21 @@ async def list_shops(
     query = query.limit(limit)
     response = query.execute()
     rows = cast("list[dict[str, Any]]", response.data or [])
+    now = datetime.now(TW)
     result = []
     for row in rows:
         photo_urls = [p["url"] for p in (row.pop("shop_photos", None) or [])]
         raw_claims = row.pop("shop_claims", None) or []
-        claim_status = first(raw_claims, "shop_claims")["status"] if raw_claims else None
         raw_tags = row.pop("shop_tags", None) or []
+        claim_status = first(raw_claims, "shop_claims")["status"] if raw_claims else None
         taxonomy_tags = _extract_taxonomy_tags(raw_tags)
+        opening_hours = row.pop("opening_hours", None)
+        open_status = is_open_now(opening_hours, now)
         camel = {to_camel(k): v for k, v in row.items()}
         camel["photoUrls"] = photo_urls
         camel["claimStatus"] = claim_status
-        camel["taxonomyTags"] = (
-            taxonomy_tags  # taxonomy_tags is not in _SHOP_LIST_COLUMNS; no shadowing risk
-        )
+        camel["taxonomyTags"] = taxonomy_tags
+        camel["isOpen"] = open_status
         result.append(camel)
     return result
 

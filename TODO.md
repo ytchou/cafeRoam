@@ -2049,3 +2049,28 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 **Wave 5 — Validate:**
 
 - [x] Task 8: Full backend test suite + lint (DEV-105)
+
+---
+
+## Find Page Filters (DEV-113)
+
+> **Design Doc:** [docs/designs/2026-03-30-find-page-filters-design.md](docs/designs/2026-03-30-find-page-filters-design.md)
+> **Plan:** [docs/plans/2026-03-30-find-page-filters-plan.md](docs/plans/2026-03-30-find-page-filters-plan.md)
+
+**Wave 1 — Backend test + filter map (parallel):**
+
+- [x] Task 1: Backend failing test for list_shops expansion (DEV-114)
+- [x] Task 3: Frontend filter-to-tag mapping test + impl (DEV-115)
+
+**Wave 2 — Backend impl:**
+
+- [x] Task 2: Implement list_shops with taxonomyTags + isOpen (DEV-114)
+
+**Wave 3-4 — Frontend filter logic:**
+
+- [x] Task 4: Frontend filter test (DEV-115)
+- [x] Task 5: Implement filter logic in shops memo (DEV-115)
+
+**Wave 5 — Validate:**
+
+- [x] Task 6: Lint and type-check (DEV-113)

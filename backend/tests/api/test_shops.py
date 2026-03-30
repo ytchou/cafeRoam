@@ -53,7 +53,7 @@ def _simple_select_chain(data) -> MagicMock:
 
 class TestShopsAPI:
     def test_list_shops_is_public(self):
-        """GET /shops should not require auth."""
+        """A visitor browsing the directory can load shop listings without logging in."""
         with patch("api.shops.get_anon_client") as mock_sb:
             mock_client = MagicMock()
             mock_client.table = MagicMock(
@@ -68,7 +68,7 @@ class TestShopsAPI:
             assert response.status_code == 200
 
     def test_get_shop_by_id_is_public(self):
-        """GET /shops/{id} should not require auth."""
+        """A visitor can view a shop detail page without logging in."""
         with patch("api.shops.get_anon_client") as mock_sb:
             mock_client = MagicMock()
             mock_client.table = MagicMock(
@@ -81,7 +81,10 @@ class TestShopsAPI:
                                         return_value=MagicMock(
                                             execute=MagicMock(
                                                 return_value=MagicMock(
-                                                    data={"id": "shop-1", "name": "Test Cafe"}
+                                                    data={
+                                                        "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+                                                        "name": "山小孩咖啡",
+                                                    }
                                                 )
                                             )
                                         )
@@ -93,7 +96,7 @@ class TestShopsAPI:
                 )
             )
             mock_sb.return_value = mock_client
-            response = client.get("/shops/shop-1")
+            response = client.get("/shops/a1b2c3d4-e5f6-7890-abcd-ef1234567890")
             assert response.status_code == 200
 
     def test_get_shop_detail_includes_photo_urls(self):
@@ -317,6 +320,54 @@ class TestShopsAPI:
         # The chain must have had .eq("processing_status", "live") applied
         chain.eq.assert_any_call("processing_status", "live")
         chain.limit.assert_called()
+
+    def test_list_shops_includes_taxonomy_tags_and_is_open(self):
+        """A shop with WiFi and open hours shows its tags and live open status in the find page response."""
+        shop_data = {
+            **SHOP_ROW,
+            # Open 24 hours every day — deterministic result without mocking is_open_now
+            "opening_hours": [
+                "Monday: Open 24 hours",
+                "Tuesday: Open 24 hours",
+                "Wednesday: Open 24 hours",
+                "Thursday: Open 24 hours",
+                "Friday: Open 24 hours",
+                "Saturday: Open 24 hours",
+                "Sunday: Open 24 hours",
+            ],
+            "shop_photos": [],
+            "shop_claims": [],
+            "shop_tags": [
+                {
+                    "tag_id": "wifi_available",
+                    "taxonomy_tags": {
+                        "id": "wifi_available",
+                        "dimension": "functionality",
+                        "label": "WiFi Available",
+                        "label_zh": "提供 WiFi",
+                    },
+                }
+            ],
+        }
+        shop_chain = _simple_select_chain([shop_data])
+
+        with patch("api.shops.get_anon_client") as mock_sb:
+            mock_sb.return_value = MagicMock(table=MagicMock(return_value=shop_chain))
+            response = client.get("/shops?featured=true&limit=50")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data) == 1
+        shop = data[0]
+        assert shop["taxonomyTags"] == [
+            {
+                "id": "wifi_available",
+                "dimension": "functionality",
+                "label": "WiFi Available",
+                "labelZh": "提供 WiFi",
+            }
+        ]
+        assert shop["isOpen"] is True
 
 
 @pytest.fixture

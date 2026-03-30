@@ -12,6 +12,10 @@ import { useUser } from '@/lib/hooks/use-user';
 import { useAnalytics } from '@/lib/posthog/use-analytics';
 import { trackSearch, trackSignupCtaClick } from '@/lib/analytics/ga4-events';
 import { haversineKm } from '@/lib/utils';
+import {
+  FILTER_TO_TAG_IDS,
+  type TagFilterId,
+} from '@/components/filters/filter-map';
 import { MapWithFallback } from '@/components/map/map-with-fallback';
 
 function FindPageContent() {
@@ -55,11 +59,42 @@ function FindPageContent() {
           ? searchResults
           : featuredShops
       : featuredShops;
-    if (filters.includes('rating')) {
-      return [...base].sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
+
+    // Derive tag-based filters: only filters present in the mapping (excludes special filters)
+    const activeFiltersSet = new Set(filters);
+    const tagFilters = filters
+      .filter((f): f is TagFilterId => f in FILTER_TO_TAG_IDS)
+      .map((f) => FILTER_TO_TAG_IDS[f]);
+
+    let filtered = base;
+    if (tagFilters.length > 0) {
+      // Pre-compute tag ID sets per shop to avoid Set construction inside the filter loop
+      const shopTagSets = new Map(
+        filtered.map((shop) => [
+          shop.id,
+          new Set((shop.taxonomyTags ?? []).map((t) => t.id)),
+        ])
+      );
+      filtered = filtered.filter((shop) =>
+        tagFilters.every(
+          (tagId) => shopTagSets.get(shop.id)?.has(tagId) ?? false
+        )
+      );
     }
+
+    // Apply open_now filter
+    if (activeFiltersSet.has('open_now')) {
+      filtered = filtered.filter((shop) => shop.isOpen === true);
+    }
+
+    // Apply rating sort
+    if (activeFiltersSet.has('rating')) {
+      return [...filtered].sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
+    }
+
+    // Apply geo-sort if location available
     if (latitude != null && longitude != null) {
-      return [...base].sort((a, b) => {
+      return [...filtered].sort((a, b) => {
         const dA =
           a.latitude != null && a.longitude != null
             ? haversineKm(latitude, longitude, a.latitude, a.longitude)
@@ -71,7 +106,8 @@ function FindPageContent() {
         return dA - dB;
       });
     }
-    return base;
+
+    return filtered;
   }, [
     query,
     searchLoading,
