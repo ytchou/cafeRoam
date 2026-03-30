@@ -169,13 +169,13 @@ These flows cannot be automated — verify each manually in an incognito window:
 
 ## Rollback Plan
 
-| Failure | Recovery |
-|---------|----------|
-| Migration fails mid-apply | Supabase dashboard → **Database → Backups** → restore to pre-migration snapshot |
-| Railway deploy fails | Railway dashboard → service → **Deployments** → click "Rollback" on previous green deploy |
-| Custom domain / SSL stuck | Temporarily point users to Railway's default `.up.railway.app` URL while investigating |
-| Observability not receiving events | Check `ENVIRONMENT=production` is set; Sentry/PostHog keys are prod keys (not staging) |
-| Smoke test fails on deep health | Check `SUPABASE_SERVICE_ROLE_KEY` is the prod key; run `supabase db diff --linked` to confirm migrations applied |
+| Failure                                                | Recovery                                                                                                                                                                                         |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Migration fails mid-apply                              | Supabase dashboard → **Database → Backups** → restore to pre-migration snapshot                                                                                                                  |
+| Railway deploy fails                                   | Railway dashboard → service → **Deployments** → click "Rollback" on previous green deploy                                                                                                        |
+| Custom domain / SSL stuck                              | Temporarily point users to Railway's default `.up.railway.app` URL while investigating                                                                                                           |
+| Observability not receiving events                     | Check `ENVIRONMENT=production` is set; Sentry/PostHog keys are prod keys (not staging)                                                                                                           |
+| Smoke test fails on deep health                        | Check `SUPABASE_SERVICE_ROLE_KEY` is the prod key; run `supabase db diff --linked` to confirm migrations applied                                                                                 |
 | Auth email links broken / users can't confirm accounts | Supabase Dashboard → **Authentication → URL Configuration** → verify Site URL is `https://caferoam.tw`; for users with broken tokens, go to **Authentication → Users** and manually confirm them |
 
 **Never tear down staging** — it remains the fallback environment and the reference for parity checks.
