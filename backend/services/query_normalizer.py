@@ -16,6 +16,6 @@ def normalize_query(text: str) -> str:
     return text.strip()
 
 
-def hash_cache_key(normalized_text: str, mode: str | None) -> str:
-    raw = f"{normalized_text}|{mode or ''}"
+def hash_cache_key(normalized_text: str, mode: str | None, query_type: str = "generic") -> str:
+    raw = f"{normalized_text}|{mode or ''}|{query_type}"
     return hashlib.sha256(raw.encode("utf-8")).hexdigest()

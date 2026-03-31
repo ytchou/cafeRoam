@@ -53,7 +53,7 @@ class SearchService:
         query_type: str = "generic",
     ) -> SearchResponse:
         normalized = normalize_query(query.text)
-        cache_key = hash_cache_key(normalized, mode)
+        cache_key = hash_cache_key(normalized, mode, query_type)
 
         # Tier 1: exact text match
         if self._cache is not None:
