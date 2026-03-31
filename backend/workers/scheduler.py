@@ -305,9 +305,7 @@ async def reclaim_stuck_jobs() -> None:
     """Reclaim jobs stuck in CLAIMED status."""
     global _reclaim_failure_count, _reclaim_connected, _reclaim_backoff_until
     now = datetime.now(UTC)
-    if _reclaim_backoff_until is not None and now < _reclaim_backoff_until:
-        pass  # backoff applies to reclaim only; cron cleanup still runs below
-    else:
+    if _reclaim_backoff_until is None or now >= _reclaim_backoff_until:
         try:
             db = get_service_role_client()
             queue = JobQueue(db=db)
@@ -335,6 +333,7 @@ async def reclaim_stuck_jobs() -> None:
             else:
                 logger.debug("Stuck job reaper still failing during backoff", error=str(e))
             _reclaim_connected = False
+    # cron cleanup always runs regardless of reclaim backoff state
 
     global _last_cron_cleanup
     now = datetime.now(UTC)
