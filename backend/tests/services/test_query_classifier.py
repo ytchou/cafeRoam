@@ -8,15 +8,19 @@ class TestClassifyQuery:
     # --- item_specific ---
 
     def test_chinese_food_item_classified_as_item_specific(self):
+        """User searching for a specific pastry routes to item_specific scoring path."""
         assert classify("巴斯克蛋糕") == "item_specific"
 
     def test_chinese_drink_classified_as_item_specific(self):
+        """User searching for a brewing method routes to item_specific scoring path."""
         assert classify("手沖") == "item_specific"
 
     def test_english_drink_classified_as_item_specific(self):
+        """User searching for a drink type in English routes to item_specific scoring path."""
         assert classify("latte") == "item_specific"
 
     def test_english_multiword_drink_classified_as_item_specific(self):
+        """Multi-word English drink query routes to item_specific scoring path."""
         assert classify("cold brew") == "item_specific"
 
     def test_substring_match_for_chinese_item(self):
@@ -28,6 +32,7 @@ class TestClassifyQuery:
         assert classify("ｅｓｐｒｅｓｓｏ") == "item_specific"
 
     def test_mixed_case_english_item(self):
+        """Mixed-case English input is normalized and routes to item_specific scoring path."""
         assert classify("Cappuccino") == "item_specific"
 
     # --- specialty_coffee ---
@@ -52,6 +57,7 @@ class TestClassifyQuery:
         assert classify("耶加雪菲豆") == "specialty_coffee"
 
     def test_english_origin_mixed_case(self):
+        """Mixed-case English origin name routes to specialty_coffee scoring path."""
         assert classify("Ethiopia") == "specialty_coffee"
 
     # --- generic ---
