@@ -126,13 +126,13 @@ New dyno starts
 ## Testing Strategy
 
 <<<<<<< Updated upstream
-| Test                             | Type        | What it validates                          |
+| Test | Type | What it validates |
 | -------------------------------- | ----------- | ------------------------------------------ |
-| `test_reclaim_stuck_jobs`        | Unit        | Stuck rows get reset to PENDING            |
-| `test_reclaim_exhausted_retries` | Unit        | Max-attempt jobs get FAILED, not reclaimed |
-| `test_idempotent_cron_decorator` | Unit        | Lock acquisition + skip on second call     |
-| `test_startup_logging`           | Unit        | All expected jobs logged on start          |
-| `test_health_scheduler_endpoint` | Integration | Response shape, job count, last_poll       |
+| `test_reclaim_stuck_jobs` | Unit | Stuck rows get reset to PENDING |
+| `test_reclaim_exhausted_retries` | Unit | Max-attempt jobs get FAILED, not reclaimed |
+| `test_idempotent_cron_decorator` | Unit | Lock acquisition + skip on second call |
+| `test_startup_logging` | Unit | All expected jobs logged on start |
+| `test_health_scheduler_endpoint` | Integration | Response shape, job count, last_poll |
 =======
 | Test | Type | What it validates |
 |------|------|-------------------|
@@ -141,7 +141,8 @@ New dyno starts
 | `test_idempotent_cron_decorator` | Unit | Lock acquisition + skip on second call |
 | `test_startup_logging` | Unit | All expected jobs logged on start |
 | `test_health_scheduler_endpoint` | Integration | Response shape, job count, last_poll |
->>>>>>> Stashed changes
+
+> > > > > > > Stashed changes
 
 ## Testing Classification
 
@@ -151,14 +152,14 @@ New dyno starts
 ## Files Changed
 
 <<<<<<< Updated upstream
-| File                                                   | Change                                                                     |
+| File | Change |
 | ------------------------------------------------------ | -------------------------------------------------------------------------- |
-| `backend/workers/scheduler.py`                         | Reaper job, idempotent_cron decorator, startup logging, last_poll tracking |
-| `backend/workers/queue.py`                             | `reclaim_stuck_jobs()` method                                              |
-| `backend/api/health.py`                                | `/health/scheduler` endpoint                                               |
-| `backend/core/config.py`                               | `worker_stuck_job_timeout_minutes` setting                                 |
-| `supabase/migrations/XXXXXX_cron_locks_and_reaper.sql` | `cron_locks` table + `reclaim_stuck_jobs` RPC                              |
-| `backend/tests/workers/test_scheduler.py`              | Hardening tests                                                            |
+| `backend/workers/scheduler.py` | Reaper job, idempotent_cron decorator, startup logging, last_poll tracking |
+| `backend/workers/queue.py` | `reclaim_stuck_jobs()` method |
+| `backend/api/health.py` | `/health/scheduler` endpoint |
+| `backend/core/config.py` | `worker_stuck_job_timeout_minutes` setting |
+| `supabase/migrations/XXXXXX_cron_locks_and_reaper.sql` | `cron_locks` table + `reclaim_stuck_jobs` RPC |
+| `backend/tests/workers/test_scheduler.py` | Hardening tests |
 =======
 | File | Change |
 |------|--------|
@@ -168,4 +169,5 @@ New dyno starts
 | `backend/core/config.py` | `worker_stuck_job_timeout_minutes` setting |
 | `supabase/migrations/XXXXXX_cron_locks_and_reaper.sql` | `cron_locks` table + `reclaim_stuck_jobs` RPC |
 | `backend/tests/workers/test_scheduler.py` | Hardening tests |
->>>>>>> Stashed changes
+
+> > > > > > > Stashed changes
