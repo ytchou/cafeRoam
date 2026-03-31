@@ -296,6 +296,8 @@ async def poll_pending_job_types() -> None:
         if _poll_connected:
             logger.error("Poll failed, backing off", error=str(e), backoff_seconds=delay)
             sentry_sdk.capture_exception(e)
+        else:
+            logger.debug("Poll still failing during backoff", error=str(e))
         _poll_connected = False
 
 
@@ -330,6 +332,8 @@ async def reclaim_stuck_jobs() -> None:
                     "Stuck job reaper failed, backing off", error=str(e), backoff_seconds=delay
                 )
                 sentry_sdk.capture_exception(e)
+            else:
+                logger.debug("Stuck job reaper still failing during backoff", error=str(e))
             _reclaim_connected = False
 
     global _last_cron_cleanup
