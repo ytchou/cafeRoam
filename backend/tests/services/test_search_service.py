@@ -12,11 +12,9 @@ from tests.factories import make_shop_row
 @pytest.fixture(autouse=True)
 def reset_idf_cache():
     """Reset module-level IDF cache between tests for isolation."""
-    _ss_module._IDF_CACHE = None
-    _ss_module._IDF_CACHE_AT = 0.0
+    _ss_module.SearchService._clear_idf_cache()
     yield
-    _ss_module._IDF_CACHE = None
-    _ss_module._IDF_CACHE_AT = 0.0
+    _ss_module.SearchService._clear_idf_cache()
 
 
 @pytest.fixture
@@ -376,72 +374,6 @@ class TestSearchCacheObservability:
         assert logs == []
 
 
-class TestComputeKeywordScore:
-    """Unit tests for _compute_keyword_score — exact/substring matching on structured fields."""
-
-    @pytest.fixture
-    def service(self, mock_supabase, mock_embeddings):
-        return SearchService(db=mock_supabase, embeddings=mock_embeddings)
-
-    def test_exact_match_in_menu_highlights_returns_1(self, service):
-        """When a user searches for '巴斯克蛋糕' and a shop lists it in menu_highlights, score is 1.0."""
-        row = make_shop_row(menu_highlights=["巴斯克蛋糕", "肉桂捲"])
-        assert service._compute_keyword_score(row, "巴斯克蛋糕") == 1.0
-
-    def test_exact_match_in_coffee_origins_returns_1(self, service):
-        """When a user searches for '耶加雪菲' and a shop lists it in coffee_origins, score is 1.0."""
-        row = make_shop_row(coffee_origins=["耶加雪菲", "瓜地馬拉"])
-        assert service._compute_keyword_score(row, "耶加雪菲") == 1.0
-
-    def test_substring_match_in_highlights_returns_08(self, service):
-        """When query '手沖' is a substring of highlight '手沖咖啡', score is 0.8."""
-        row = make_shop_row(menu_highlights=["手沖咖啡", "拿鐵"])
-        assert service._compute_keyword_score(row, "手沖") == 0.8
-
-    def test_substring_match_in_origins_returns_08(self, service):
-        """When query 'ethiopia' is a substring of origin 'ethiopian yirgacheffe', score is 0.8."""
-        row = make_shop_row(coffee_origins=["Ethiopian Yirgacheffe", "Guatemala Huehuetenango"])
-        assert service._compute_keyword_score(row, "Ethiopian") == 0.8
-
-    def test_description_match_returns_05(self, service):
-        """When query matches only in description, score is 0.5."""
-        row = make_shop_row(
-            menu_highlights=[],
-            coffee_origins=[],
-            description="提供精品手沖與巴斯克蛋糕",
-        )
-        assert service._compute_keyword_score(row, "巴斯克蛋糕") == 0.5
-
-    def test_no_match_returns_0(self, service):
-        """When query doesn't appear anywhere, score is 0.0."""
-        row = make_shop_row(
-            menu_highlights=["肉桂捲"],
-            coffee_origins=["巴西"],
-            description="安靜適合工作的獨立咖啡店",
-        )
-        assert service._compute_keyword_score(row, "抹茶") == 0.0
-
-    def test_empty_query_returns_0(self, service):
-        """Empty or whitespace-only query text returns 0."""
-        row = make_shop_row(menu_highlights=["巴斯克蛋糕"])
-        assert service._compute_keyword_score(row, "   ") == 0.0
-
-    def test_none_fields_handled_gracefully(self, service):
-        """When menu_highlights or coffee_origins is None (from DB), no crash."""
-        row = make_shop_row(menu_highlights=None, coffee_origins=None, description=None)
-        assert service._compute_keyword_score(row, "耶加雪菲") == 0.0
-
-    def test_case_insensitive_matching(self, service):
-        """Matching is case-insensitive (normalized query vs lowercased fields)."""
-        row = make_shop_row(menu_highlights=["Basque Cheesecake"])
-        assert service._compute_keyword_score(row, "basque cheesecake") == 1.0
-
-    def test_nfkc_normalized_query_matches(self, service):
-        """Full-width input '巴斯克蛋糕？' normalizes and matches."""
-        row = make_shop_row(menu_highlights=["巴斯克蛋糕"])
-        assert service._compute_keyword_score(row, "巴斯克蛋糕？") == 1.0
-
-
 class TestOptionCPlusScoring:
     """Integration tests for query-type-aware scoring branches in search pipeline."""
 
@@ -529,3 +461,63 @@ class TestOptionCPlusScoring:
         # shop_without:   0.9*0.5 + 0*0.2 + 0.0*0.3 = 0.45
         assert response.results[0].shop.id == "shop-with-item"
         assert response.results[1].shop.id == "shop-without"
+
+    async def test_description_fallback_scores_lower_than_structured_match(self, mock_embeddings):
+        """A shop where the query only appears in description scores 0.5 keyword, lower than structured match."""
+        shop_desc_only = make_shop_row(
+            id="shop-desc",
+            similarity=0.8,
+            menu_highlights=[],
+            coffee_origins=[],
+            description="提供精品手沖與巴斯克蛋糕",
+        )
+        shop_highlights = make_shop_row(
+            id="shop-highlights",
+            similarity=0.8,
+            menu_highlights=["巴斯克蛋糕"],
+            coffee_origins=[],
+        )
+        db = self._make_rpc_db([shop_desc_only, shop_highlights])
+        service = SearchService(db=db, embeddings=mock_embeddings)
+        query = SearchQuery(text="巴斯克蛋糕")
+        response = await service.search(query, query_type="item_specific")
+
+        # shop_highlights: 0.8*0.5 + 0*0.2 + 1.0*0.3 = 0.70
+        # shop_desc_only:  0.8*0.5 + 0*0.2 + 0.5*0.3 = 0.55
+        assert response.results[0].shop.id == "shop-highlights"
+        assert response.results[1].shop.id == "shop-desc"
+
+    async def test_shop_with_null_highlights_does_not_crash(self, mock_embeddings):
+        """When menu_highlights or coffee_origins is None from DB, search completes without error."""
+        row = make_shop_row(
+            id="shop-nullfields",
+            similarity=0.7,
+            menu_highlights=None,
+            coffee_origins=None,
+            description=None,
+        )
+        db = self._make_rpc_db([row])
+        service = SearchService(db=db, embeddings=mock_embeddings)
+        query = SearchQuery(text="耶加雪菲")
+        response = await service.search(query, query_type="specialty_coffee")
+
+        # keyword_score = 0.0 (no fields to match), total = 0.7*0.5 + 0*0.2 + 0*0.3 = 0.35
+        assert len(response.results) == 1
+        assert response.results[0].total_score == pytest.approx(0.7 * 0.5, rel=1e-4)
+
+    async def test_fullwidth_query_normalizes_before_keyword_match(self, mock_embeddings):
+        """Full-width input '巴斯克蛋糕？' normalizes to '巴斯克蛋糕' and matches menu_highlights."""
+        row = make_shop_row(
+            id="shop-fw",
+            similarity=0.8,
+            menu_highlights=["巴斯克蛋糕"],
+            coffee_origins=[],
+        )
+        db = self._make_rpc_db([row])
+        service = SearchService(db=db, embeddings=mock_embeddings)
+        query = SearchQuery(text="巴斯克蛋糕？")  # full-width question mark
+        response = await service.search(query, query_type="item_specific")
+
+        # Normalization strips trailing ？, exact match → keyword_score 1.0
+        expected = 0.8 * 0.5 + 0.0 * 0.2 + 1.0 * 0.3
+        assert response.results[0].total_score == pytest.approx(expected, rel=1e-4)

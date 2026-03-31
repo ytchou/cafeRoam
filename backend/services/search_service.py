@@ -135,6 +135,7 @@ class SearchService:
             await self._load_idf_cache()
 
         use_keyword_scoring = query_type in ("item_specific", "specialty_coffee")
+        normalized_query = normalize_query(query.text)
 
         results: list[SearchResult] = []
         for row in rows:
@@ -149,7 +150,7 @@ class SearchService:
             )
 
             if use_keyword_scoring:
-                keyword_score = self._compute_keyword_score(row, query.text)
+                keyword_score = self._compute_keyword_score(row, normalized_query)
                 total = similarity * 0.5 + taxonomy_boost * 0.2 + keyword_score * 0.3
             else:
                 keyword_score = 0.0
@@ -166,6 +167,13 @@ class SearchService:
 
         results.sort(key=lambda r: r.total_score, reverse=True)
         return results
+
+    @staticmethod
+    def _clear_idf_cache() -> None:
+        """Reset module-level IDF cache. For test isolation only."""
+        global _IDF_CACHE, _IDF_CACHE_AT
+        _IDF_CACHE = None
+        _IDF_CACHE_AT = 0.0
 
     async def _load_idf_cache(self) -> None:
         """Load IDF scores from shop_tags via RPC, caching at module level."""
@@ -226,9 +234,12 @@ class SearchService:
 
         return len(matching) / max(len(shop_tags), 1)
 
-    def _compute_keyword_score(self, row: dict[str, Any], query_text: str) -> float:
-        """Score keyword match in menu_highlights, coffee_origins, or description."""
-        normalized = normalize_query(query_text)
+    def _compute_keyword_score(self, row: dict[str, Any], normalized: str) -> float:
+        """Score keyword match in menu_highlights, coffee_origins, or description.
+
+        Args:
+            normalized: Pre-normalized query string (output of normalize_query).
+        """
         if not normalized:
             return 0.0
 
