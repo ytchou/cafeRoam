@@ -51,6 +51,24 @@ CLASSIFY_SHOP_TOOL = {
                 "enum": ["work", "rest", "social", "mixed"],
                 "description": "Primary usage mode for this shop",
             },
+            "menu_highlights": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": (
+                    "Specific food or drink items mentioned in reviews "
+                    "(e.g. 巴斯克蛋糕, 司康, 手沖, 冷萃). "
+                    "Only include items explicitly mentioned by name. Max 10."
+                ),
+            },
+            "coffee_origins": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": (
+                    "Specific coffee origins or varieties mentioned "
+                    "(e.g. 耶加雪菲, 藝伎, 衣索比亞). "
+                    "Use Traditional Chinese names. Max 5."
+                ),
+            },
         },
         "required": ["tags", "summary", "mode"],
     },
@@ -147,7 +165,9 @@ SYSTEM_PROMPT = (
     "- Assign a confidence score (0.0-1.0) to each tag based on how strongly "
     "the reviews support it.\n"
     "- Write a 2-3 sentence summary describing the shop's character — "
-    "what makes it special, who it's for. Write the summary in Traditional Chinese (繁體中文).\n"
+    "what makes it special, who it's for. If reviews mention specific menu items "
+    "(foods, drinks) or coffee origins by name, include them in the summary. "
+    "Write the summary in Traditional Chinese (繁體中文).\n"
     "- Select the 3-5 most informative review excerpts that would help someone "
     "decide whether to visit.\n"
     "- Classify the primary mode: work (focused tasks), rest (relaxation/reading), "
@@ -371,4 +391,6 @@ class AnthropicLLMAdapter:
             summary=tool_input.get("summary", ""),
             confidence=overall_confidence,
             mode_scores=mode_scores,
+            menu_highlights=tool_input.get("menu_highlights", []),
+            coffee_origins=tool_input.get("coffee_origins", []),
         )
