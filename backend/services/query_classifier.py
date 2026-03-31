@@ -1,6 +1,6 @@
-"""Server-side query type classifier for search observability.
+"""Server-side query type classifier for search scoring.
 
-Classifies search queries into three categories using keyword heuristics:
+Classifies search queries using vocabulary-driven compiled regex:
 - item_specific: food, drink, or brew method queries
 - specialty_coffee: coffee origin, roast level, or processing method queries
 - generic: everything else (ambience, facilities, location)
@@ -10,31 +10,24 @@ Priority: item_specific > specialty_coffee > generic
 
 import re
 
+from core.search_vocabulary import ITEM_TERMS, SPECIALTY_TERMS
+from services.query_normalizer import normalize_query
+
 # Compiled at module level per performance standards — zero per-request cost.
-
-_ITEM_KEYWORDS = re.compile(
-    r"巴斯克蛋糕|司康|可頌|肉桂捲|戚風蛋糕|提拉米蘇|布丁|鬆餅|貝果|三明治|甜點|蛋糕"
-    r"|拿鐵|卡布奇諾|美式|摩卡|抹茶|可可|果汁|氣泡水|手沖|冰滴|冷萃|虹吸|愛樂壓"
-    r"|latte|cappuccino|espresso|americano|mocha|matcha|croissant|scone"
-    r"|pour.?over|cold.?brew|drip",
-    re.IGNORECASE,
-)
-
-_SPECIALTY_KEYWORDS = re.compile(
-    r"單品|淺焙|中焙|深焙|日曬|水洗|蜜處理|厭氧"
-    r"|衣索比亞|肯亞|哥倫比亞|巴拿馬|瓜地馬拉|耶加雪菲|藝伎|geisha"
-    r"|SCA|精品咖啡|自家烘焙|specialty",
-    re.IGNORECASE,
-)
+# re.escape() prevents terms with special characters from breaking the pattern.
+_ITEM_RE = re.compile("|".join(re.escape(t) for t in ITEM_TERMS))
+_SPECIALTY_RE = re.compile("|".join(re.escape(t) for t in SPECIALTY_TERMS))
 
 
 def classify(query: str) -> str:
     """Classify a search query into item_specific, specialty_coffee, or generic.
 
-    item_specific takes priority over specialty_coffee.
+    Normalizes the query first (NFKC + lowercase), then uses substring matching
+    via compiled regex. item_specific takes priority over specialty_coffee.
     """
-    if _ITEM_KEYWORDS.search(query):
+    normalized = normalize_query(query)
+    if _ITEM_RE.search(normalized):
         return "item_specific"
-    if _SPECIALTY_KEYWORDS.search(query):
+    if _SPECIALTY_RE.search(normalized):
         return "specialty_coffee"
     return "generic"
