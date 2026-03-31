@@ -13,7 +13,7 @@ def normalize_query(text: str) -> str:
     text = text.lower().strip()
     text = _MULTI_SPACE.sub(" ", text)
     text = _TRAILING_PUNCT.sub("", text)
-    return text
+    return text.strip()
 
 
 def hash_cache_key(normalized_text: str, mode: str | None) -> str:
