@@ -69,7 +69,9 @@ describe('MemoriesPage', () => {
     });
     render(<MemoriesPage />, { wrapper: Wrapper });
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /try again/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: /try again/i })
+      ).toBeInTheDocument();
     });
     // Restore default mock for subsequent tests
     mockFetch();
