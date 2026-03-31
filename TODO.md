@@ -29,7 +29,7 @@
 
 **Wave 4 — Verification:**
 
-- [ ] Task 8: Full test suite + lint + coverage gate verification (DEV-136)
+- [x] Task 8: Full test suite + lint + coverage gate verification (DEV-136)
 
 ---
 
