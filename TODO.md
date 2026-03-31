@@ -25,7 +25,7 @@
 
 **Wave 3 — Search Scoring:**
 
-- [ ] Task 7: Plumb query_type into SearchService + implement Option C+ scoring + tests (DEV-134)
+- [x] Task 7: Plumb query_type into SearchService + implement Option C+ scoring + tests (DEV-134)
 
 **Wave 4 — Verification:**
 

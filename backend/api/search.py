@@ -57,9 +57,8 @@ async def search(
     cache = get_search_cache_provider(admin_db)
     service = SearchService(db=db, embeddings=embeddings, cache=cache)
     query = SearchQuery(text=text, limit=limit)
-    response = await service.search(query, mode=mode)
-
     query_type = classify(text)
+    response = await service.search(query, mode=mode, query_type=query_type)
     user_id_anon = anonymize_user_id(user["id"], salt=settings.anon_salt)
     result_count = len(response.results)
 

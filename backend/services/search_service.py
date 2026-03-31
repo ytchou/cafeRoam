@@ -50,6 +50,7 @@ class SearchService:
         query: SearchQuery,
         mode: str | None = None,
         mode_threshold: float = 0.4,
+        query_type: str = "generic",
     ) -> SearchResponse:
         normalized = normalize_query(query.text)
         cache_key = hash_cache_key(normalized, mode)
@@ -87,7 +88,7 @@ class SearchService:
                 return SearchResponse(results=similar.results, cache_hit=True)
 
         # Full search pipeline
-        results = await self._full_search(query_embedding, query, mode, mode_threshold)
+        results = await self._full_search(query_embedding, query, mode, mode_threshold, query_type)
 
         # Cache the result
         if self._cache is not None:
@@ -109,6 +110,7 @@ class SearchService:
         query: SearchQuery,
         mode: str | None,
         mode_threshold: float,
+        query_type: str = "generic",
     ) -> list[SearchResult]:
         """Run the full pgvector search + taxonomy boost pipeline."""
         limit = query.limit or 20
@@ -132,6 +134,8 @@ class SearchService:
         if query.filters and query.filters.dimensions:
             await self._load_idf_cache()
 
+        use_keyword_scoring = query_type in ("item_specific", "specialty_coffee")
+
         results: list[SearchResult] = []
         for row in rows:
             similarity = row.get("similarity", 0.0)
@@ -144,7 +148,12 @@ class SearchService:
                 **{k: v for k, v in row.items() if k in eligible_keys},
             )
 
-            total = similarity * 0.7 + taxonomy_boost * 0.3
+            if use_keyword_scoring:
+                keyword_score = self._compute_keyword_score(row, query.text)
+                total = similarity * 0.5 + taxonomy_boost * 0.2 + keyword_score * 0.3
+            else:
+                keyword_score = 0.0
+                total = similarity * 0.7 + taxonomy_boost * 0.3
 
             results.append(
                 SearchResult(
@@ -216,3 +225,28 @@ class SearchService:
             return idf_sum / max(len(shop_tags), 1)
 
         return len(matching) / max(len(shop_tags), 1)
+
+    def _compute_keyword_score(self, row: dict[str, Any], query_text: str) -> float:
+        """Score keyword match in menu_highlights, coffee_origins, or description."""
+        normalized = normalize_query(query_text)
+        if not normalized:
+            return 0.0
+
+        highlights = [h.lower() for h in row.get("menu_highlights", []) or []]
+        origins = [o.lower() for o in row.get("coffee_origins", []) or []]
+        searchable = highlights + origins
+
+        # Exact match in structured fields → highest signal
+        if normalized in searchable:
+            return 1.0
+
+        # Substring match in structured fields
+        if any(normalized in item for item in searchable):
+            return 0.8
+
+        # Fallback: substring match in description
+        desc = (row.get("description") or "").lower()
+        if normalized in desc:
+            return 0.5
+
+        return 0.0
