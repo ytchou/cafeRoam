@@ -25,7 +25,10 @@ Current state: the Find page loads the full interactive Mapbox map on all mobile
 **New component:** `components/map/map-with-fallback.tsx`
 
 Rendering flow:
+<<<<<<< Updated upstream
 
+=======
+>>>>>>> Stashed changes
 1. Always renders list view first (instant, zero bundle cost)
 2. Checks `useDeviceCapability()`
 3. **If capable:** starts background `import()` of `MapViewDynamic`, swaps to map view with a subtle fade transition once loaded
@@ -58,11 +61,19 @@ User opens Find page
 
 ## Components
 
+<<<<<<< Updated upstream
 | File                                   | Change                       | Size |
 | -------------------------------------- | ---------------------------- | ---- |
 | `lib/hooks/use-device-capability.ts`   | New                          | S    |
 | `components/map/map-with-fallback.tsx` | New                          | M    |
 | `app/page.tsx`                         | Modify — use MapWithFallback | S    |
+=======
+| File | Change | Size |
+|------|--------|------|
+| `lib/hooks/use-device-capability.ts` | New | S |
+| `components/map/map-with-fallback.tsx` | New | M |
+| `app/page.tsx` | Modify — use MapWithFallback | S |
+>>>>>>> Stashed changes
 
 ## Error Handling
 
@@ -75,7 +86,10 @@ User opens Find page
 **New file:** `e2e/performance/map-perf.spec.ts`
 
 Reusable Playwright script:
+<<<<<<< Updated upstream
 
+=======
+>>>>>>> Stashed changes
 1. Creates CDPSession, throttles CPU 4x via `Emulation.setCPUThrottlingRate`
 2. Throttles network to slow 4G (1.5Mbps down, 750Kbps up, 300ms RTT)
 3. Navigates to Find page
@@ -91,18 +105,27 @@ Run: `pnpm playwright test e2e/performance/map-perf.spec.ts`
 ## ASSUMPTION T4 Update
 
 After running the performance script:
+<<<<<<< Updated upstream
 
+=======
+>>>>>>> Stashed changes
 - **If passing:** T4 → "Validated" with test date, metrics, and link to report
 - **If failing:** T4 → "Validated — FAILED" with metrics; note that graceful degradation is in place and mitigates the risk
 
 ## Alternatives Rejected
 
 ### Approach A: Hook-based gate at layout level
+<<<<<<< Updated upstream
 
 Simple `useDeviceCapability` check that prevents map import entirely on low-end devices. Rejected: abrupt — user sees list view with no transition. Approach B (progressive loading) gives a smoother UX where capable devices see the map load in naturally.
 
 ### Approach C: Server-side UA/Client Hints detection
 
+=======
+Simple `useDeviceCapability` check that prevents map import entirely on low-end devices. Rejected: abrupt — user sees list view with no transition. Approach B (progressive loading) gives a smoother UX where capable devices see the map load in naturally.
+
+### Approach C: Server-side UA/Client Hints detection
+>>>>>>> Stashed changes
 Detect low-end devices via `Sec-CH-Device-Memory` headers at the server level. Rejected: Client Hints support is limited, UA sniffing is fragile and maintenance-heavy. Overkill for a client-side rendering decision.
 
 ## Testing Classification
