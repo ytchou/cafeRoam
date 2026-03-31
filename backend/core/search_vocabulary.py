@@ -92,7 +92,8 @@ SPECIALTY_TERMS: list[str] = [
     "厭氧",
     # === Processing (en) ===
     "natural process",
-    "washed",
+    "natural",
+    "washed process",
     "honey process",
     "anaerobic",
     # === Roast & Style (zh) ===
@@ -109,6 +110,4 @@ SPECIALTY_TERMS: list[str] = [
     "dark roast",
     "self roasted",
     "specialty coffee",
-    "specialty",
-    "sca",
 ]
