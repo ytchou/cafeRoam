@@ -62,14 +62,16 @@ describe('MemoriesPage', () => {
     expect(link).toHaveAttribute('href', '/profile');
   });
 
-  it('shows error state when stamps API fails instead of crashing', async () => {
+  it('shows an error message when the stamps API is unavailable', async () => {
     global.fetch = vi.fn().mockResolvedValue({
       ok: false,
       json: async () => ({ detail: 'Backend unavailable' }),
     });
     render(<MemoriesPage />, { wrapper: Wrapper });
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: '出了點問題' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /try again/i })).toBeInTheDocument();
     });
+    // Restore default mock for subsequent tests
+    mockFetch();
   });
 });
