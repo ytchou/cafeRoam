@@ -14,7 +14,7 @@ vector-only pipeline over-generalizes on high-precision queries.
 - Specific terms like 耶加雪菲 appear in **0** descriptions, 巴斯克蛋糕 in only 5
 - Taxonomy tags are broad categories (pour_over, dessert_menu) — no item or origin tags
 - No structured menu data exists; menu specifics are incidental mentions in descriptions
-- The enrichment prompt asks for a *vibe summary* — not a factual inventory of items/origins
+- The enrichment prompt asks for a _vibe summary_ — not a factual inventory of items/origins
 - The query classifier detects item_specific/specialty_coffee but its signal is unused in scoring
 
 ## Chosen Approach: Option C+ with Enrichment Pipeline Fix
@@ -85,6 +85,7 @@ results (170 live shops; array contains in Python is fast enough).
 ### SYSTEM_PROMPT update
 
 Add one sentence to the summary instruction:
+
 > "If reviews mention specific menu items (foods, drinks) or coffee origins by name,
 > include them in the summary."
 
@@ -223,7 +224,7 @@ async def search(
 
 Pass `query_type` through to `_full_search()`.
 
-### _full_search() — scoring branches on query type
+### \_full_search() — scoring branches on query type
 
 ```python
 for row in rows:
@@ -237,7 +238,7 @@ for row in rows:
         total = similarity * 0.7 + taxonomy_boost * 0.3  # unchanged
 ```
 
-### New _compute_keyword_score()
+### New \_compute_keyword_score()
 
 ```python
 def _compute_keyword_score(self, row: dict, query_text: str) -> float:
@@ -257,11 +258,11 @@ def _compute_keyword_score(self, row: dict, query_text: str) -> float:
 
 ### Score weights summary
 
-| Query type | Vector | Taxonomy | Keyword |
-|---|---|---|---|
-| generic | 0.7 | 0.3 | — |
-| item_specific | 0.5 | 0.2 | 0.3 |
-| specialty_coffee | 0.5 | 0.2 | 0.3 |
+| Query type       | Vector | Taxonomy | Keyword |
+| ---------------- | ------ | -------- | ------- |
+| generic          | 0.7    | 0.3      | —       |
+| item_specific    | 0.5    | 0.2      | 0.3     |
+| specialty_coffee | 0.5    | 0.2      | 0.3     |
 
 ### Cache interaction
 
