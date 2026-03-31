@@ -3,177 +3,181 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('react-map-gl/mapbox', () => {
-  const MockMap = ({
+// Hoisted mocks so they can be referenced inside vi.mock factories
+const { mockQueryRenderedFeatures, mockGetClusterExpansionZoom, mockEaseTo } =
+  vi.hoisted(() => ({
+    mockQueryRenderedFeatures: vi.fn(() => []),
+    // Simulates callback-style API: getClusterExpansionZoom(id, cb) → cb(null, zoom)
+    mockGetClusterExpansionZoom: vi.fn(
+      (_id: number, cb: (err: Error | null, zoom: number) => void) => cb(null, 15)
+    ),
+    mockEaseTo: vi.fn(),
+  }));
+
+vi.mock('react-map-gl/mapbox', async () => {
+  const ReactModule = await import('react');
+
+  const MockMap = ReactModule.forwardRef(function MockMap(
+    {
+      children,
+      onClick,
+    }: { children: React.ReactNode; onClick?: (e: unknown) => void },
+    ref: React.Ref<unknown>
+  ) {
+    ReactModule.useImperativeHandle(ref, () => ({
+      getMap: () => ({
+        queryRenderedFeatures: mockQueryRenderedFeatures,
+        getSource: () => ({
+          getClusterExpansionZoom: mockGetClusterExpansionZoom,
+        }),
+        easeTo: mockEaseTo,
+      }),
+    }));
+    return (
+      <div
+        data-testid="map"
+        onClick={(e) =>
+          onClick?.({ ...e, point: { x: 50, y: 50 } })
+        }
+      >
+        {children}
+      </div>
+    );
+  });
+
+  const MockSource = ({
     children,
-    onMove,
+    id,
+    data,
   }: {
     children: React.ReactNode;
-    onMove?: (e: unknown) => void;
-  }) => {
-    if (onMove) {
-      setTimeout(() => {
-        onMove({
-          viewState: { longitude: 121.5654, latitude: 25.033, zoom: 13 },
-          target: {
-            getBounds: () => ({
-              getNorth: () => 25.06,
-              getSouth: () => 25.0,
-              getEast: () => 121.6,
-              getWest: () => 121.53,
-            }),
-          },
-        });
-      }, 0);
-    }
-    return <div data-testid="map">{children}</div>;
-  };
-  MockMap.displayName = 'MockMap';
-  const MockMarker = ({
-    children,
-    onClick,
-    ...props
-  }: {
-    children: React.ReactNode;
-    onClick?: () => void;
-    longitude: number;
-    latitude: number;
-    anchor?: string;
+    id: string;
+    data: unknown;
+    cluster?: boolean;
+    clusterMaxZoom?: number;
+    clusterRadius?: number;
   }) => (
     <div
-      data-testid="marker"
-      data-lng={props.longitude}
-      data-lat={props.latitude}
-      onClick={onClick}
+      data-testid="source"
+      data-source-id={id}
+      data-geojson={JSON.stringify(data)}
     >
       {children}
     </div>
   );
-  MockMarker.displayName = 'MockMarker';
-  return { default: MockMap, Marker: MockMarker };
+
+  const MockLayer = ({ id, paint }: { id: string; paint?: unknown }) => (
+    <div
+      data-testid={`layer-${id}`}
+      data-paint={JSON.stringify(paint ?? {})}
+    />
+  );
+
+  return { default: MockMap, Source: MockSource, Layer: MockLayer };
 });
 
 vi.mock('mapbox-gl/dist/mapbox-gl.css', () => ({}));
 
 import { MapView } from './map-view';
 
-const SHOPS = [
-  { id: '1', name: '明星咖啡館', latitude: 25.033, longitude: 121.55 },
-  { id: '2', name: '日出茶太', latitude: 26.0, longitude: 122.0 },
-  { id: '3', name: '珈琲茶館', latitude: 25.02, longitude: 121.56 },
-];
-
 const REALISTIC_SHOPS = [
-  {
-    id: 'shop-1',
-    name: '湛盧咖啡 Zhanlu Coffee',
-    latitude: 25.033,
-    longitude: 121.565,
-  },
-  {
-    id: 'shop-2',
-    name: '山頂咖啡 Summit Coffee',
-    latitude: 25.041,
-    longitude: 121.532,
-  },
+  { id: 'shop-1', name: '湛盧咖啡 Zhanlu Coffee', latitude: 25.033, longitude: 121.565 },
+  { id: 'shop-2', name: '山頂咖啡 Summit Coffee', latitude: 25.041, longitude: 121.532 },
+  { id: 'shop-3', name: '有著落咖啡 Landed Coffee', latitude: 25.051, longitude: 121.548 },
 ];
 
 describe('MapView', () => {
   beforeEach(() => {
     vi.stubEnv('NEXT_PUBLIC_MAPBOX_TOKEN', 'pk.test-token');
+    mockQueryRenderedFeatures.mockReturnValue([]);
   });
 
   afterEach(() => {
     vi.unstubAllEnvs();
-  });
-
-  it('a visitor opening the map sees all shop pins before any panning occurs', () => {
-    render(
-      <MapView shops={SHOPS} onPinClick={vi.fn()} selectedShopId={null} />
-    );
-    const markers = screen.getAllByTestId('marker');
-    expect(markers.length).toBe(3);
+    vi.clearAllMocks();
   });
 
   it('a visitor opening the map sees the map canvas', () => {
-    render(
-      <MapView shops={SHOPS} onPinClick={vi.fn()} selectedShopId={null} />
-    );
+    render(<MapView shops={REALISTIC_SHOPS} onPinClick={vi.fn()} selectedShopId={null} />);
     expect(screen.getByTestId('map')).toBeInTheDocument();
   });
 
-  it('a visitor sees a pin for each shop on the map', () => {
-    render(
-      <MapView
-        shops={REALISTIC_SHOPS}
-        onPinClick={vi.fn()}
-        selectedShopId={null}
-      />
-    );
+  it('a visitor opening the map sees all shops passed to the clustering source', () => {
+    render(<MapView shops={REALISTIC_SHOPS} onPinClick={vi.fn()} selectedShopId={null} />);
 
-    expect(screen.getByTestId('map')).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: '湛盧咖啡 Zhanlu Coffee' })
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: '山頂咖啡 Summit Coffee' })
-    ).toBeInTheDocument();
+    const source = screen.getByTestId('source');
+    const geojson = JSON.parse(source.getAttribute('data-geojson') ?? '{}');
+
+    expect(geojson.type).toBe('FeatureCollection');
+    expect(geojson.features).toHaveLength(3);
+    expect(geojson.features[0].properties.id).toBe('shop-1');
+    expect(geojson.features[0].properties.name).toBe('湛盧咖啡 Zhanlu Coffee');
+    expect(geojson.features[0].geometry.coordinates).toEqual([121.565, 25.033]);
   });
 
-  it('a visitor clicking a pin calls onPinClick with the shop ID', async () => {
+  it('a visitor sees shops with null coordinates excluded from the map source', () => {
+    const shopsWithNulls = [
+      ...REALISTIC_SHOPS,
+      { id: 'shop-null', name: '無座標咖啡', latitude: null, longitude: null },
+    ];
+
+    render(<MapView shops={shopsWithNulls} onPinClick={vi.fn()} selectedShopId={null} />);
+
+    const geojson = JSON.parse(
+      screen.getByTestId('source').getAttribute('data-geojson') ?? '{}'
+    );
+    expect(geojson.features).toHaveLength(3);
+    expect(geojson.features.find((f: { properties: { id: string } }) => f.properties.id === 'shop-null')).toBeUndefined();
+  });
+
+  it('a visitor clicking an individual pin calls onPinClick with the shop ID', async () => {
     const onPinClick = vi.fn();
-    render(
-      <MapView
-        shops={REALISTIC_SHOPS}
-        onPinClick={onPinClick}
-        selectedShopId={null}
-      />
-    );
+    mockQueryRenderedFeatures
+      .mockReturnValueOnce([]) // no cluster hit
+      .mockReturnValueOnce([{ properties: { id: 'shop-2', name: '山頂咖啡 Summit Coffee' }, geometry: { type: 'Point', coordinates: [121.532, 25.041] } }]); // pin hit
 
-    await userEvent.click(
-      screen.getByRole('button', { name: '湛盧咖啡 Zhanlu Coffee' })
-    );
+    render(<MapView shops={REALISTIC_SHOPS} onPinClick={onPinClick} selectedShopId={null} />);
 
-    expect(onPinClick).toHaveBeenCalledWith('shop-1');
+    await userEvent.click(screen.getByTestId('map'));
+
+    expect(onPinClick).toHaveBeenCalledWith('shop-2');
   });
 
-  it('a visitor tapping a pin sees the selected pin highlighted in coral', () => {
-    render(
-      <MapView
-        shops={REALISTIC_SHOPS}
-        onPinClick={vi.fn()}
-        selectedShopId="shop-1"
-      />
+  it('a visitor clicking a cluster zooms in to expand it', async () => {
+    mockQueryRenderedFeatures.mockReturnValueOnce([
+      {
+        properties: { cluster_id: 42, point_count: 5 },
+        geometry: { type: 'Point', coordinates: [121.55, 25.04] },
+      },
+    ]);
+
+    render(<MapView shops={REALISTIC_SHOPS} onPinClick={vi.fn()} selectedShopId={null} />);
+
+    await userEvent.click(screen.getByTestId('map'));
+
+    expect(mockGetClusterExpansionZoom).toHaveBeenCalledWith(42, expect.any(Function));
+    expect(mockEaseTo).toHaveBeenCalledWith(
+      expect.objectContaining({ zoom: 15, center: [121.55, 25.04] })
     );
-    const selectedPin = screen.getByRole('button', {
-      name: '湛盧咖啡 Zhanlu Coffee',
-    });
-    expect(selectedPin).toHaveAttribute('data-selected', 'true');
   });
 
-  it('a visitor sees unselected pins without the selected data attribute', () => {
+  it('a visitor sees the selected shop pin styled differently via the paint expression', () => {
     render(
-      <MapView
-        shops={REALISTIC_SHOPS}
-        onPinClick={vi.fn()}
-        selectedShopId="shop-1"
-      />
+      <MapView shops={REALISTIC_SHOPS} onPinClick={vi.fn()} selectedShopId="shop-1" />
     );
-    const unselectedPin = screen.getByRole('button', {
-      name: '山頂咖啡 Summit Coffee',
-    });
-    expect(unselectedPin).not.toHaveAttribute('data-selected');
+
+    const pinsLayer = screen.getByTestId('layer-shops-pins');
+    const paint = JSON.parse(pinsLayer.getAttribute('data-paint') ?? '{}');
+
+    // Paint expression should reference the selectedShopId
+    const paintJson = JSON.stringify(paint);
+    expect(paintJson).toContain('shop-1');
+    expect(paintJson).toContain('#E06B3F'); // Terracotta selected color
   });
 
   it('a visitor sees an error message when Mapbox token is missing', () => {
     vi.stubEnv('NEXT_PUBLIC_MAPBOX_TOKEN', '');
-    render(
-      <MapView
-        shops={REALISTIC_SHOPS}
-        onPinClick={vi.fn()}
-        selectedShopId={null}
-      />
-    );
+    render(<MapView shops={REALISTIC_SHOPS} onPinClick={vi.fn()} selectedShopId={null} />);
     expect(screen.getByText(/Mapbox token/i)).toBeInTheDocument();
   });
 });

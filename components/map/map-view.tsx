@@ -1,7 +1,8 @@
 'use client';
-import { useMemo, useState, useCallback } from 'react';
-import Map, { Marker } from 'react-map-gl/mapbox';
-import type { ViewStateChangeEvent } from 'react-map-gl/mapbox';
+import { useMemo, useRef, useCallback } from 'react';
+import Map, { Layer, Source } from 'react-map-gl/mapbox';
+import type { MapRef, MapMouseEvent } from 'react-map-gl/mapbox';
+import type { GeoJSONSource } from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
 interface Shop {
@@ -11,20 +12,6 @@ interface Shop {
   longitude: number | null;
 }
 
-interface MappableShop {
-  id: string;
-  name: string;
-  latitude: number;
-  longitude: number;
-}
-
-interface Bounds {
-  north: number;
-  south: number;
-  east: number;
-  west: number;
-}
-
 interface MapViewProps {
   shops: Shop[];
   onPinClick: (shopId: string) => void;
@@ -32,67 +19,25 @@ interface MapViewProps {
   mapStyle?: string;
 }
 
-const PIN_DEFAULT_SIZE = 40;
-const PIN_BUTTON_STYLE = { minWidth: 44, minHeight: 44 };
-const PIN_SELECTED_SIZE = 44;
-const PIN_DEFAULT_COLOR = 'var(--map-pin)';
-const PIN_SELECTED_COLOR = 'var(--pin-selected)';
-const TIP_HEIGHT = 10;
+type ShopFeatureCollection = {
+  type: 'FeatureCollection';
+  features: Array<{
+    type: 'Feature';
+    geometry: { type: 'Point'; coordinates: [number, number] };
+    properties: { id: string; name: string };
+  }>;
+};
 
-function CoffeePinIcon({ selected }: { selected: boolean }) {
-  const size = selected ? PIN_SELECTED_SIZE : PIN_DEFAULT_SIZE;
-  const color = selected ? PIN_SELECTED_COLOR : PIN_DEFAULT_COLOR;
-  const iconSize = Math.round(size * 0.5);
-  const radius = size / 2;
+const SOURCE_ID = 'shops-source';
+const LAYER_CLUSTERS = 'shops-clusters';
+const LAYER_CLUSTER_COUNT = 'shops-cluster-count';
+const LAYER_PINS = 'shops-pins';
 
-  return (
-    <svg
-      width={size}
-      height={size + TIP_HEIGHT}
-      viewBox={`0 0 ${size} ${size + TIP_HEIGHT}`}
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden="true"
-    >
-      <circle cx={radius} cy={radius} r={radius} fill={color} />
-      <polygon
-        points={`${radius - 6},${size - 2} ${radius},${size + TIP_HEIGHT} ${radius + 6},${size - 2}`}
-        fill={color}
-      />
-      {/* Lucide Coffee icon paths inlined to avoid foreignObject cross-environment issues */}
-      <g
-        transform={`translate(${(size - iconSize) / 2}, ${(size - iconSize) / 2})`}
-        stroke="white"
-        strokeWidth={2}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        fill="none"
-      >
-        <path
-          d={`M${iconSize * 0.146} ${iconSize * 0.333}h${iconSize * 0.542}a${iconSize * 0.167} ${iconSize * 0.167} 0 0 1 0 ${iconSize * 0.333}h-${iconSize * 0.542}z`}
-        />
-        <path
-          d={`M${iconSize * 0.688} ${iconSize * 0.5}a${iconSize * 0.208} ${iconSize * 0.208} 0 0 0 0-${iconSize * 0.333}`}
-        />
-        <path
-          d={`M${iconSize * 0.083} ${iconSize * 0.667}l${iconSize * 0.125} ${iconSize * 0.25}h${iconSize * 0.583}l${iconSize * 0.125}-${iconSize * 0.25}`}
-        />
-        <line
-          x1={iconSize * 0.333}
-          y1={iconSize * 0.167}
-          x2={iconSize * 0.292}
-          y2={iconSize * 0.333}
-        />
-        <line
-          x1={iconSize * 0.5}
-          y1={iconSize * 0.083}
-          x2={iconSize * 0.458}
-          y2={iconSize * 0.333}
-        />
-      </g>
-    </svg>
-  );
-}
+// DESIGN.md: Map Brown #8b5e3c (pin fill), Terracotta #E06B3F (active state)
+const COLOR_PIN = '#8b5e3c';
+const COLOR_PIN_SELECTED = '#E06B3F';
+const COLOR_CLUSTER = '#8b5e3c';
+const COLOR_LABEL = '#ffffff';
 
 export function MapView({
   shops,
@@ -101,34 +46,51 @@ export function MapView({
   mapStyle = 'mapbox://styles/mapbox/light-v11',
 }: MapViewProps) {
   const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
-  const [bounds, setBounds] = useState<Bounds | null>(null);
+  const mapRef = useRef<MapRef>(null);
 
-  const handleMove = useCallback((e: ViewStateChangeEvent) => {
-    const map = e.target;
-    const b = map.getBounds();
-    if (b) {
-      setBounds({
-        north: b.getNorth(),
-        south: b.getSouth(),
-        east: b.getEast(),
-        west: b.getWest(),
+  const geojsonData = useMemo((): ShopFeatureCollection => ({
+    type: 'FeatureCollection',
+    features: shops
+      .filter((s) => s.latitude != null && s.longitude != null)
+      .map((s) => ({
+        type: 'Feature',
+        geometry: { type: 'Point', coordinates: [s.longitude!, s.latitude!] },
+        properties: { id: s.id, name: s.name },
+      })),
+  }), [shops]);
+
+  const handleClick = useCallback(
+    (e: MapMouseEvent) => {
+      const map = mapRef.current?.getMap();
+      if (!map) return;
+
+      // Cluster click → zoom to expand
+      const clusterFeatures = map.queryRenderedFeatures(e.point, {
+        layers: [LAYER_CLUSTERS],
       });
-    }
-  }, []);
+      if (clusterFeatures.length) {
+        const feature = clusterFeatures[0];
+        const clusterId = feature.properties?.cluster_id as number;
+        const coords = (feature.geometry as { type: string; coordinates: [number, number] }).coordinates;
+        const source = map.getSource(SOURCE_ID) as GeoJSONSource;
+        source.getClusterExpansionZoom(clusterId, (err, zoom) => {
+          if (err || zoom == null) return;
+          map.easeTo({ center: coords, zoom });
+        });
+        return;
+      }
 
-  const visibleShops = useMemo((): MappableShop[] => {
-    const mappable = shops.filter(
-      (s): s is MappableShop => s.latitude != null && s.longitude != null
-    );
-    if (!bounds) return mappable;
-    return mappable.filter(
-      (s) =>
-        s.latitude >= bounds.south &&
-        s.latitude <= bounds.north &&
-        s.longitude >= bounds.west &&
-        s.longitude <= bounds.east
-    );
-  }, [shops, bounds]);
+      // Individual pin click → open shop card
+      const pinFeatures = map.queryRenderedFeatures(e.point, {
+        layers: [LAYER_PINS],
+      });
+      if (pinFeatures.length) {
+        const shopId = pinFeatures[0].properties?.id as string;
+        if (shopId) onPinClick(shopId);
+      }
+    },
+    [onPinClick]
+  );
 
   if (!mapboxToken) {
     return (
@@ -140,33 +102,74 @@ export function MapView({
 
   return (
     <Map
+      ref={mapRef}
       mapboxAccessToken={mapboxToken}
       initialViewState={{ longitude: 121.5654, latitude: 25.033, zoom: 13 }}
       style={{ width: '100%', height: '100%' }}
       mapStyle={mapStyle}
-      onMove={handleMove}
+      onClick={handleClick}
+      interactiveLayerIds={[LAYER_CLUSTERS, LAYER_PINS]}
     >
-      {visibleShops.map((shop) => {
-        const isSelected = shop.id === selectedShopId;
-        return (
-          <Marker
-            key={shop.id}
-            longitude={shop.longitude}
-            latitude={shop.latitude}
-            anchor="bottom"
-            onClick={() => onPinClick(shop.id)}
-          >
-            <button
-              data-selected={isSelected || undefined}
-              aria-label={shop.name}
-              className="cursor-pointer border-none bg-transparent p-0"
-              style={PIN_BUTTON_STYLE}
-            >
-              <CoffeePinIcon selected={isSelected} />
-            </button>
-          </Marker>
-        );
-      })}
+      <Source
+        id={SOURCE_ID}
+        type="geojson"
+        data={geojsonData}
+        cluster={true}
+        clusterMaxZoom={14}
+        clusterRadius={50}
+      >
+        {/* Cluster bubble — sized by shop count */}
+        <Layer
+          id={LAYER_CLUSTERS}
+          type="circle"
+          filter={['has', 'point_count']}
+          paint={{
+            'circle-color': COLOR_CLUSTER,
+            'circle-radius': [
+              'step',
+              ['get', 'point_count'],
+              20,
+              10, 26,
+              50, 32,
+            ],
+            'circle-opacity': 0.9,
+          }}
+        />
+        {/* Count label inside cluster */}
+        <Layer
+          id={LAYER_CLUSTER_COUNT}
+          type="symbol"
+          filter={['has', 'point_count']}
+          layout={{
+            'text-field': '{point_count_abbreviated}',
+            'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
+            'text-size': 13,
+          }}
+          paint={{ 'text-color': COLOR_LABEL }}
+        />
+        {/* Individual unclustered pin — selected state via paint expression */}
+        <Layer
+          id={LAYER_PINS}
+          type="circle"
+          filter={['!', ['has', 'point_count']]}
+          paint={{
+            'circle-color': [
+              'case',
+              ['==', ['get', 'id'], selectedShopId ?? ''],
+              COLOR_PIN_SELECTED,
+              COLOR_PIN,
+            ],
+            'circle-radius': [
+              'case',
+              ['==', ['get', 'id'], selectedShopId ?? ''],
+              10,
+              8,
+            ],
+            'circle-stroke-width': 2,
+            'circle-stroke-color': '#ffffff',
+          }}
+        />
+      </Source>
     </Map>
   );
 }
