@@ -15,7 +15,6 @@ node_modules/
 !README.md
 !.github/*.md
 !docs/**/*.md
-!e2e/reports/*.md
 !CLAUDE.md
 !SPEC.md
 !PRD.md
@@ -95,3 +94,18 @@ e2e/.auth/
 # Local design reference screenshots
 review-ref.png
 style-*.png
+
+# Design files (Pencil .pen files — local only)
+*.pen
+
+# E2E test artifacts (ephemeral — regenerated each run)
+e2e/reports/
+e2e/screenshots/
+
+# Design screenshots (local reference only)
+docs/designs/screenshots/
+
+# Working images at repo root (use public/ for production assets)
+/images/
+/favicon-*.png
+/generated-*.png
