@@ -25,6 +25,24 @@ class TestNormalizeQuery:
     def test_mixed_punctuation_only_removes_trailing(self):
         assert normalize_query("what's good?") == "what's good"
 
+    def test_converts_fullwidth_latin_to_halfwidth(self):
+        """When a user types full-width Latin characters (common on CJK keyboards), they normalize to ASCII."""
+        assert normalize_query("ｅｓｐｒｅｓｓｏ") == "espresso"
+        assert normalize_query("ＬＡＴＴＥ") == "latte"
+
+    def test_converts_fullwidth_digits_to_halfwidth(self):
+        """Full-width digits from CJK input methods normalize to standard digits."""
+        assert normalize_query("１２３") == "123"
+        assert normalize_query("店 ３樓") == "店 3樓"
+
+    def test_fullwidth_katakana_preserved(self):
+        """NFKC keeps full-width katakana as-is (they are already canonical)."""
+        assert normalize_query("カフェラテ") == "カフェラテ"
+
+    def test_nfkc_combined_with_other_normalizations(self):
+        """Full-width input still gets lowercased, trimmed, and punctuation-stripped."""
+        assert normalize_query("  Ｅｓｐｒｅｓｓｏ  ？") == "espresso"
+
 
 class TestHashCacheKey:
     def test_deterministic_for_same_input(self):

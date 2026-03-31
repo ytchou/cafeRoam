@@ -2,12 +2,14 @@
 
 import hashlib
 import re
+import unicodedata
 
 _TRAILING_PUNCT = re.compile(r"[?!.]+$")
 _MULTI_SPACE = re.compile(r"\s+")
 
 
 def normalize_query(text: str) -> str:
+    text = unicodedata.normalize("NFKC", text)
     text = text.lower().strip()
     text = _MULTI_SPACE.sub(" ", text)
     text = _TRAILING_PUNCT.sub("", text)

@@ -14,7 +14,7 @@
 **Wave 1 — Foundation (parallel):**
 
 - [x] Task 1: DB migration — add menu_highlights + coffee_origins columns + model updates (DEV-127)
-- [ ] Task 2: NFKC normalizer + tests (DEV-128)
+- [x] Task 2: NFKC normalizer + tests (DEV-128)
 - [ ] Task 3: Create search_vocabulary.py with baseline term lists (DEV-129)
 
 **Wave 2 — Enrichment + Classifier (parallel):**
