@@ -49,6 +49,8 @@ class Shop(CamelModel):
     created_at: datetime
     updated_at: datetime
     community_summary: str | None = None
+    menu_highlights: list[str] = []
+    coffee_origins: list[str] = []
 
 
 ClaimRole = Literal["owner", "manager", "staff"]
@@ -375,6 +377,8 @@ class EnrichmentResult(BaseModel):
     summary: str
     confidence: float
     mode_scores: ShopModeScores | None = None
+    menu_highlights: list[str] = []
+    coffee_origins: list[str] = []
 
 
 class MenuExtractionResult(BaseModel):

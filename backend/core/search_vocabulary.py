@@ -1,0 +1,113 @@
+"""Search vocabulary for query classification.
+
+Term lists compiled into regex patterns by query_classifier.py at module level.
+All terms must be lowercase — the normalizer handles case before matching.
+"""
+
+ITEM_TERMS: list[str] = [
+    # === Food (zh) ===
+    "巴斯克蛋糕",
+    "司康",
+    "可頌",
+    "肉桂捲",
+    "戚風蛋糕",
+    "提拉米蘇",
+    "布丁",
+    "鬆餅",
+    "貝果",
+    "三明治",
+    "甜點",
+    "蛋糕",
+    "千層蛋糕",
+    # === Food (en) ===
+    "basque cheesecake",
+    "scone",
+    "croissant",
+    "cinnamon roll",
+    "chiffon cake",
+    "tiramisu",
+    "pudding",
+    "waffle",
+    "bagel",
+    "sandwich",
+    "mille crepe",
+    # === Drinks (zh) ===
+    "拿鐵",
+    "卡布奇諾",
+    "美式",
+    "摩卡",
+    "抹茶",
+    "可可",
+    "果汁",
+    "氣泡水",
+    "手沖",
+    "冰滴",
+    "冷萃",
+    "虹吸",
+    "愛樂壓",
+    "義式濃縮",
+    # === Drinks (en) ===
+    "latte",
+    "cappuccino",
+    "espresso",
+    "americano",
+    "mocha",
+    "matcha",
+    "cold brew",
+    "cold drip",
+    "pour over",
+    "siphon",
+    "aeropress",
+    "drip coffee",
+]
+
+SPECIALTY_TERMS: list[str] = [
+    # === Origins (zh) ===
+    "耶加雪菲",
+    "藝伎",
+    "衣索比亞",
+    "肯亞",
+    "哥倫比亞",
+    "巴拿馬",
+    "瓜地馬拉",
+    "盧安達",
+    "蘇門答臘",
+    "哥斯大黎加",
+    # === Origins (en) ===
+    "yirgacheffe",
+    "geisha",
+    "gesha",
+    "ethiopia",
+    "kenya",
+    "colombia",
+    "panama",
+    "guatemala",
+    "rwanda",
+    "sumatra",
+    "costa rica",
+    # === Processing (zh) ===
+    "日曬",
+    "水洗",
+    "蜜處理",
+    "厭氧",
+    # === Processing (en) ===
+    "natural process",
+    "natural",
+    "washed process",
+    "honey process",
+    "anaerobic",
+    # === Roast & Style (zh) ===
+    "單品",
+    "淺焙",
+    "中焙",
+    "深焙",
+    "自家烘焙",
+    "精品咖啡",
+    # === Roast & Style (en) ===
+    "single origin",
+    "light roast",
+    "medium roast",
+    "dark roast",
+    "self roasted",
+    "specialty coffee",
+]

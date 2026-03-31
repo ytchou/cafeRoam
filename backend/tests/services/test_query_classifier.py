@@ -1,61 +1,78 @@
 from services.query_classifier import classify
 
 
-class TestClassify:
-    """Given a search query, classify returns the query type."""
+class TestClassifyQuery:
+    """When a user searches for a specific item or origin, the classifier routes
+    the query to the appropriate scoring path."""
 
-    def test_food_item_returns_item_specific(self):
-        """When a user searches for a specific food, it's classified as item_specific."""
+    # --- item_specific ---
+
+    def test_chinese_food_item_classified_as_item_specific(self):
+        """User searching for a specific pastry routes to item_specific scoring path."""
         assert classify("巴斯克蛋糕") == "item_specific"
 
-    def test_drink_item_returns_item_specific(self):
-        """When a user searches for a specific drink, it's classified as item_specific."""
-        assert classify("拿鐵") == "item_specific"
-
-    def test_brew_method_returns_item_specific(self):
-        """When a user searches for a brew method, it's classified as item_specific."""
+    def test_chinese_drink_classified_as_item_specific(self):
+        """User searching for a brewing method routes to item_specific scoring path."""
         assert classify("手沖") == "item_specific"
 
-    def test_pastry_returns_item_specific(self):
-        """When a user searches for a pastry, it's classified as item_specific."""
-        assert classify("司康") == "item_specific"
-
-    def test_coffee_origin_returns_specialty_coffee(self):
-        """When a user searches for a coffee origin, it's classified as specialty_coffee."""
-        assert classify("衣索比亞") == "specialty_coffee"
-
-    def test_roast_level_returns_specialty_coffee(self):
-        """When a user searches for a roast level, it's classified as specialty_coffee."""
-        assert classify("淺焙") == "specialty_coffee"
-
-    def test_single_origin_returns_specialty_coffee(self):
-        """When a user searches for single origin coffee, it's classified as specialty_coffee."""
-        assert classify("單品咖啡") == "specialty_coffee"
-
-    def test_generic_query_returns_generic(self):
-        """When a user searches for atmosphere or vibe, it's classified as generic."""
-        assert classify("安靜適合工作") == "generic"
-
-    def test_wifi_query_returns_generic(self):
-        """When a user searches for wifi, it's classified as generic."""
-        assert classify("good wifi") == "generic"
-
-    def test_mixed_query_with_food_returns_item_specific(self):
-        """When a query contains a food term mixed with generic words, item_specific wins."""
-        assert classify("有賣司康的安靜咖啡店") == "item_specific"
-
-    def test_mixed_query_specialty_over_generic(self):
-        """When a query contains a specialty term mixed with generic words, specialty_coffee wins."""
-        assert classify("有單品的咖啡店") == "specialty_coffee"
-
-    def test_empty_string_returns_generic(self):
-        """An empty query is classified as generic."""
-        assert classify("") == "generic"
-
-    def test_english_latte_returns_item_specific(self):
-        """English food/drink terms are also classified."""
+    def test_english_drink_classified_as_item_specific(self):
+        """User searching for a drink type in English routes to item_specific scoring path."""
         assert classify("latte") == "item_specific"
 
+    def test_english_multiword_drink_classified_as_item_specific(self):
+        """Multi-word English drink query routes to item_specific scoring path."""
+        assert classify("cold brew") == "item_specific"
+
+    def test_substring_match_for_chinese_item(self):
+        """User types '手沖咖啡' — classifier finds '手沖' as substring."""
+        assert classify("手沖咖啡") == "item_specific"
+
+    def test_fullwidth_input_classified_correctly(self):
+        """Full-width Latin from CJK keyboard input."""
+        assert classify("ｅｓｐｒｅｓｓｏ") == "item_specific"
+
+    def test_mixed_case_english_item(self):
+        """Mixed-case English input is normalized and routes to item_specific scoring path."""
+        assert classify("Cappuccino") == "item_specific"
+
+    # --- specialty_coffee ---
+
+    def test_chinese_origin_classified_as_specialty(self):
+        assert classify("耶加雪菲") == "specialty_coffee"
+
+    def test_english_origin_classified_as_specialty(self):
+        assert classify("yirgacheffe") == "specialty_coffee"
+
+    def test_gesha_variant_classified_as_specialty(self):
+        assert classify("gesha") == "specialty_coffee"
+
+    def test_processing_method_classified_as_specialty(self):
+        assert classify("日曬") == "specialty_coffee"
+
+    def test_roast_level_classified_as_specialty(self):
+        assert classify("淺焙") == "specialty_coffee"
+
+    def test_substring_match_for_origin(self):
+        """User types '耶加雪菲豆' — classifier finds '耶加雪菲' as substring."""
+        assert classify("耶加雪菲豆") == "specialty_coffee"
+
+    def test_english_origin_mixed_case(self):
+        """Mixed-case English origin name routes to specialty_coffee scoring path."""
+        assert classify("Ethiopia") == "specialty_coffee"
+
+    # --- generic ---
+
+    def test_ambience_query_is_generic(self):
+        assert classify("安靜的咖啡廳") == "generic"
+
+    def test_facility_query_is_generic(self):
+        assert classify("有插座") == "generic"
+
+    def test_location_query_is_generic(self):
+        assert classify("近南京復興站") == "generic"
+
+    # --- priority ---
+
     def test_item_specific_takes_priority_over_specialty(self):
-        """When a query contains both food and specialty terms, item_specific wins."""
-        assert classify("手沖 衣索比亞") == "item_specific"
+        """If both match, item_specific wins."""
+        assert classify("espresso single origin") == "item_specific"

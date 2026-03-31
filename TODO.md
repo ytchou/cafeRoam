@@ -6,6 +6,33 @@
 
 ---
 
+## Search Quality for Exact/Specific Terms (DEV-122)
+
+> **Design Doc:** [docs/designs/2026-03-31-search-quality-exact-terms-design.md](docs/designs/2026-03-31-search-quality-exact-terms-design.md)
+> **Plan:** [docs/plans/2026-03-31-search-quality-exact-terms-plan.md](docs/plans/2026-03-31-search-quality-exact-terms-plan.md)
+
+**Wave 1 — Foundation (parallel):**
+
+- [x] Task 1: DB migration — add menu_highlights + coffee_origins columns + model updates (DEV-127)
+- [x] Task 2: NFKC normalizer + tests (DEV-128)
+- [x] Task 3: Create search_vocabulary.py with baseline term lists (DEV-129)
+
+**Wave 2 — Enrichment + Classifier (parallel):**
+
+- [x] Task 4: Update classify_shop tool schema + SYSTEM_PROMPT (DEV-130)
+- [x] Task 5: Rebuild query_classifier.py with vocabulary-driven compiled regex + tests (DEV-131)
+- [x] Task 6: Update enrich_shop.py to write menu_highlights + coffee_origins (DEV-132)
+
+**Wave 3 — Search Scoring:**
+
+- [x] Task 7: Plumb query_type into SearchService + implement Option C+ scoring + tests (DEV-134)
+
+**Wave 4 — Verification:**
+
+- [x] Task 8: Full test suite + lint + coverage gate verification (DEV-136)
+
+---
+
 ## Map Pin Progressive Disclosure (DEV-111)
 
 > **Design Doc:** [docs/designs/2026-03-30-map-pin-progressive-disclosure-design.md](docs/designs/2026-03-30-map-pin-progressive-disclosure-design.md)

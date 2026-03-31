@@ -1,0 +1,77 @@
+DROP FUNCTION IF EXISTS search_shops(vector(1536), int, text, float, float, float, float);
+CREATE OR REPLACE FUNCTION search_shops(
+    query_embedding vector(1536),
+    match_count      int     DEFAULT 20,
+    filter_mode_field     text    DEFAULT NULL,
+    filter_mode_threshold float   DEFAULT 0.4,
+    filter_lat       float   DEFAULT NULL,
+    filter_lng       float   DEFAULT NULL,
+    filter_radius_km float   DEFAULT 5.0
+)
+RETURNS TABLE (
+    id              uuid,
+    name            text,
+    address         text,
+    latitude        double precision,
+    longitude       double precision,
+    mrt             text,
+    phone           text,
+    website         text,
+    opening_hours   jsonb,
+    rating          numeric,
+    review_count    integer,
+    price_range     text,
+    description     text,
+    menu_url        text,
+    cafenomad_id    text,
+    google_place_id text,
+    created_at      timestamptz,
+    updated_at      timestamptz,
+    community_summary text,
+    menu_highlights text[],
+    coffee_origins  text[],
+    photo_urls      text[],
+    tag_ids         text[],
+    similarity      float
+)
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public, extensions
+AS $$
+    SELECT
+        s.id, s.name, s.address, s.latitude, s.longitude,
+        s.mrt, s.phone, s.website, s.opening_hours,
+        s.rating, s.review_count, s.price_range, s.description,
+        s.menu_url, s.cafenomad_id, s.google_place_id,
+        s.created_at, s.updated_at, s.community_summary,
+        s.menu_highlights, s.coffee_origins,
+        COALESCE(
+            ARRAY(SELECT url FROM shop_photos WHERE shop_id = s.id ORDER BY sort_order),
+            '{}'
+        ) AS photo_urls,
+        COALESCE(
+            ARRAY(SELECT tag_id::text FROM shop_tags WHERE shop_id = s.id),
+            '{}'
+        ) AS tag_ids,
+        1 - (s.embedding <=> query_embedding) AS similarity
+    FROM shops s
+    WHERE
+        s.processing_status = 'live'
+        AND s.embedding IS NOT NULL
+        AND (
+            filter_mode_field IS NULL
+            OR CASE filter_mode_field
+                WHEN 'mode_work'   THEN s.mode_work
+                WHEN 'mode_rest'   THEN s.mode_rest
+                WHEN 'mode_social' THEN s.mode_social
+                ELSE NULL
+            END >= filter_mode_threshold
+        )
+        AND (
+            filter_lat IS NULL
+            OR (
+                ABS(s.latitude  - filter_lat) <= filter_radius_km / 111.0
+                AND ABS(s.longitude - filter_lng) <= filter_radius_km / (111.0 * COS(RADIANS(filter_lat)))
+            )
+        )
+    ORDER BY s.embedding <=> query_embedding
+    LIMIT match_count;
+$$;

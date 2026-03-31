@@ -12,11 +12,9 @@ from tests.factories import make_shop_row
 @pytest.fixture(autouse=True)
 def reset_idf_cache():
     """Reset module-level IDF cache between tests for isolation."""
-    _ss_module._IDF_CACHE = None
-    _ss_module._IDF_CACHE_AT = 0.0
+    _ss_module.SearchService._clear_idf_cache()
     yield
-    _ss_module._IDF_CACHE = None
-    _ss_module._IDF_CACHE_AT = 0.0
+    _ss_module.SearchService._clear_idf_cache()
 
 
 @pytest.fixture
@@ -374,3 +372,152 @@ class TestSearchCacheObservability:
             await service.search(SearchQuery(text="無快取搜尋"))
 
         assert logs == []
+
+
+class TestOptionCPlusScoring:
+    """Integration tests for query-type-aware scoring branches in search pipeline."""
+
+    @pytest.fixture
+    def mock_embeddings(self):
+        emb = AsyncMock()
+        emb.embed = AsyncMock(return_value=[0.1] * 1536)
+        emb.dimensions = 1536
+        return emb
+
+    def _make_rpc_db(self, rows):
+        db = MagicMock()
+        db.rpc = MagicMock(
+            return_value=MagicMock(execute=MagicMock(return_value=MagicMock(data=rows)))
+        )
+        return db
+
+    async def test_item_specific_query_uses_keyword_weights(self, mock_embeddings):
+        """When query_type is item_specific, scoring uses 0.5/0.2/0.3 weights."""
+        row = make_shop_row(
+            similarity=0.8,
+            menu_highlights=["巴斯克蛋糕"],
+            coffee_origins=[],
+        )
+        db = self._make_rpc_db([row])
+        service = SearchService(db=db, embeddings=mock_embeddings)
+        query = SearchQuery(text="巴斯克蛋糕")
+        response = await service.search(query, query_type="item_specific")
+
+        result = response.results[0]
+        # keyword_score = 1.0 (exact match), taxonomy_boost = 0.0 (no filters)
+        expected = 0.8 * 0.5 + 0.0 * 0.2 + 1.0 * 0.3
+        assert result.total_score == pytest.approx(expected, rel=1e-4)
+
+    async def test_specialty_coffee_query_uses_keyword_weights(self, mock_embeddings):
+        """When query_type is specialty_coffee, scoring uses 0.5/0.2/0.3 weights."""
+        row = make_shop_row(
+            similarity=0.75,
+            menu_highlights=[],
+            coffee_origins=["耶加雪菲"],
+        )
+        db = self._make_rpc_db([row])
+        service = SearchService(db=db, embeddings=mock_embeddings)
+        query = SearchQuery(text="耶加雪菲")
+        response = await service.search(query, query_type="specialty_coffee")
+
+        result = response.results[0]
+        expected = 0.75 * 0.5 + 0.0 * 0.2 + 1.0 * 0.3
+        assert result.total_score == pytest.approx(expected, rel=1e-4)
+
+    async def test_generic_query_uses_original_weights(self, mock_embeddings):
+        """When query_type is generic, scoring uses the original 0.7/0.3 formula."""
+        row = make_shop_row(similarity=0.85, menu_highlights=["巴斯克蛋糕"])
+        db = self._make_rpc_db([row])
+        service = SearchService(db=db, embeddings=mock_embeddings)
+        query = SearchQuery(text="安靜適合工作")
+        response = await service.search(query, query_type="generic")
+
+        result = response.results[0]
+        expected = 0.85 * 0.7 + 0.0 * 0.3
+        assert result.total_score == pytest.approx(expected, rel=1e-4)
+
+    async def test_keyword_match_reranks_results(self, mock_embeddings):
+        """A shop with lower similarity but keyword match should rank above a high-similarity shop without match."""
+        shop_with_item = make_shop_row(
+            id="shop-with-item",
+            name="蛋糕名店",
+            similarity=0.6,
+            menu_highlights=["巴斯克蛋糕"],
+        )
+        shop_without_item = make_shop_row(
+            id="shop-without",
+            name="一般咖啡店",
+            similarity=0.9,
+            menu_highlights=[],
+            coffee_origins=[],
+            description="安靜適合工作的獨立咖啡店",
+        )
+        db = self._make_rpc_db([shop_without_item, shop_with_item])
+        service = SearchService(db=db, embeddings=mock_embeddings)
+        query = SearchQuery(text="巴斯克蛋糕")
+        response = await service.search(query, query_type="item_specific")
+
+        # shop_with_item: 0.6*0.5 + 0*0.2 + 1.0*0.3 = 0.60
+        # shop_without:   0.9*0.5 + 0*0.2 + 0.0*0.3 = 0.45
+        assert response.results[0].shop.id == "shop-with-item"
+        assert response.results[1].shop.id == "shop-without"
+
+    async def test_description_fallback_scores_lower_than_structured_match(self, mock_embeddings):
+        """A shop where the query only appears in description scores 0.5 keyword, lower than structured match."""
+        shop_desc_only = make_shop_row(
+            id="shop-desc",
+            similarity=0.8,
+            menu_highlights=[],
+            coffee_origins=[],
+            description="提供精品手沖與巴斯克蛋糕",
+        )
+        shop_highlights = make_shop_row(
+            id="shop-highlights",
+            similarity=0.8,
+            menu_highlights=["巴斯克蛋糕"],
+            coffee_origins=[],
+        )
+        db = self._make_rpc_db([shop_desc_only, shop_highlights])
+        service = SearchService(db=db, embeddings=mock_embeddings)
+        query = SearchQuery(text="巴斯克蛋糕")
+        response = await service.search(query, query_type="item_specific")
+
+        # shop_highlights: 0.8*0.5 + 0*0.2 + 1.0*0.3 = 0.70
+        # shop_desc_only:  0.8*0.5 + 0*0.2 + 0.5*0.3 = 0.55
+        assert response.results[0].shop.id == "shop-highlights"
+        assert response.results[1].shop.id == "shop-desc"
+
+    async def test_shop_with_null_highlights_does_not_crash(self, mock_embeddings):
+        """When menu_highlights or coffee_origins is None from DB, search completes without error."""
+        row = make_shop_row(
+            id="shop-nullfields",
+            similarity=0.7,
+            menu_highlights=None,
+            coffee_origins=None,
+            description=None,
+        )
+        db = self._make_rpc_db([row])
+        service = SearchService(db=db, embeddings=mock_embeddings)
+        query = SearchQuery(text="耶加雪菲")
+        response = await service.search(query, query_type="specialty_coffee")
+
+        # keyword_score = 0.0 (no fields to match), total = 0.7*0.5 + 0*0.2 + 0*0.3 = 0.35
+        assert len(response.results) == 1
+        assert response.results[0].total_score == pytest.approx(0.7 * 0.5, rel=1e-4)
+
+    async def test_fullwidth_query_normalizes_before_keyword_match(self, mock_embeddings):
+        """Full-width input '巴斯克蛋糕？' normalizes to '巴斯克蛋糕' and matches menu_highlights."""
+        row = make_shop_row(
+            id="shop-fw",
+            similarity=0.8,
+            menu_highlights=["巴斯克蛋糕"],
+            coffee_origins=[],
+        )
+        db = self._make_rpc_db([row])
+        service = SearchService(db=db, embeddings=mock_embeddings)
+        query = SearchQuery(text="巴斯克蛋糕？")  # full-width question mark
+        response = await service.search(query, query_type="item_specific")
+
+        # Normalization strips trailing ？, exact match → keyword_score 1.0
+        expected = 0.8 * 0.5 + 0.0 * 0.2 + 1.0 * 0.3
+        assert response.results[0].total_score == pytest.approx(expected, rel=1e-4)

@@ -60,6 +60,8 @@ async def handle_enrich_shop(
             "mode_rest": mode.rest if mode else None,
             "mode_social": mode.social if mode else None,
             "processing_status": "embedding",
+            "menu_highlights": result.menu_highlights,
+            "coffee_origins": result.coffee_origins,
         }
     ).eq("id", shop_id).execute()
 

@@ -122,6 +122,56 @@ class TestEnrichShopHandler:
         llm.enrich_shop.assert_called_once()
         queue.enqueue.assert_called_once()  # Should queue embedding generation
 
+    async def test_menu_highlights_and_coffee_origins_written_to_db(self):
+        """When enrichment extracts menu items and origins, both are persisted to the shops table."""
+        db = MagicMock()
+        llm = AsyncMock()
+        queue = AsyncMock()
+
+        llm.enrich_shop = AsyncMock(
+            return_value=MagicMock(
+                tags=[],
+                tag_confidences={},
+                summary="精品咖啡店，提供多種手沖選擇",
+                confidence=0.9,
+                mode_scores=None,
+                menu_highlights=["巴斯克蛋糕", "手沖咖啡"],
+                coffee_origins=["耶加雪菲", "哥倫比亞"],
+            )
+        )
+        llm.assign_tarot = AsyncMock(return_value=MagicMock(tarot_title=None, flavor_text=""))
+
+        db.table.return_value.select.return_value.eq.return_value.single.return_value.execute.return_value = MagicMock(
+            data={
+                "id": "shop-精品-1",
+                "name": "晨光精品咖啡",
+                "description": None,
+                "categories": ["精品咖啡"],
+                "price_range": "$$",
+                "socket": "yes",
+                "limited_time": "no",
+                "rating": 4.8,
+                "review_count": 123,
+            }
+        )
+        db.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(
+            data=[{"text": "提供耶加雪菲和哥倫比亞豆，烘焙得恰到好處"}]
+        )
+
+        await handle_enrich_shop(
+            payload={"shop_id": "shop-精品-1"},
+            db=db,
+            llm=llm,
+            queue=queue,
+        )
+
+        update_calls = db.table.return_value.update.call_args_list
+        shop_update_payloads = [c.args[0] for c in update_calls if "menu_highlights" in c.args[0]]
+        assert len(shop_update_payloads) >= 1, "Expected shops.update to include menu_highlights"
+        written = shop_update_payloads[0]
+        assert written["menu_highlights"] == ["巴斯克蛋糕", "手沖咖啡"]
+        assert written["coffee_origins"] == ["耶加雪菲", "哥倫比亞"]
+
 
 class TestGenerateEmbeddingHandler:
     def _make_db(
