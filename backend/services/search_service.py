@@ -23,7 +23,13 @@ class SearchResponse:
 
 logger = structlog.get_logger()
 
-_SHOP_FIELDS_HANDLED_SEPARATELY = {"photo_urls", "taxonomy_tags", "mode_scores", "menu_highlights", "coffee_origins"}
+_SHOP_FIELDS_HANDLED_SEPARATELY = {
+    "photo_urls",
+    "taxonomy_tags",
+    "mode_scores",
+    "menu_highlights",
+    "coffee_origins",
+}
 
 # Module-level IDF cache — shared across all SearchService instances.
 # SearchService is instantiated per-request, so an instance-level cache never

@@ -166,9 +166,7 @@ class TestEnrichShopHandler:
         )
 
         update_calls = db.table.return_value.update.call_args_list
-        shop_update_payloads = [
-            c.args[0] for c in update_calls if "menu_highlights" in c.args[0]
-        ]
+        shop_update_payloads = [c.args[0] for c in update_calls if "menu_highlights" in c.args[0]]
         assert len(shop_update_payloads) >= 1, "Expected shops.update to include menu_highlights"
         written = shop_update_payloads[0]
         assert written["menu_highlights"] == ["巴斯克蛋糕", "手沖咖啡"]
