@@ -58,11 +58,11 @@ User opens Find page
 
 ## Components
 
-| File | Change | Size |
+| File                                   | Change                       | Size |
 | -------------------------------------- | ---------------------------- | ---- |
-| `lib/hooks/use-device-capability.ts` | New | S |
-| `components/map/map-with-fallback.tsx` | New | M |
-| `app/page.tsx` | Modify — use MapWithFallback | S |
+| `lib/hooks/use-device-capability.ts`   | New                          | S    |
+| `components/map/map-with-fallback.tsx` | New                          | M    |
+| `app/page.tsx`                         | Modify — use MapWithFallback | S    |
 
 ## Error Handling
 
