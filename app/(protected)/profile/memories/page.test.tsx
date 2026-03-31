@@ -61,4 +61,15 @@ describe('MemoriesPage', () => {
     const link = screen.getByRole('link', { name: /back/i });
     expect(link).toHaveAttribute('href', '/profile');
   });
+
+  it('shows error state when stamps API fails instead of crashing', async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      json: async () => ({ detail: 'Backend unavailable' }),
+    });
+    render(<MemoriesPage />, { wrapper: Wrapper });
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: '出了點問題' })).toBeInTheDocument();
+    });
+  });
 });

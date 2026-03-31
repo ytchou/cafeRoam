@@ -5,10 +5,11 @@ import { useState } from 'react';
 import { useUserStamps } from '@/lib/hooks/use-user-stamps';
 import { CorkBoard } from '@/components/stamps/cork-board';
 import { StampDetailSheet } from '@/components/stamps/stamp-detail-sheet';
+import { ErrorState } from '@/components/ui/error-state';
 import type { StampData } from '@/lib/hooks/use-user-stamps';
 
 export default function MemoriesPage() {
-  const { stamps, isLoading } = useUserStamps();
+  const { stamps, isLoading, error, mutate } = useUserStamps();
   const [selectedStamp, setSelectedStamp] = useState<StampData | null>(null);
 
   return (
@@ -38,6 +39,8 @@ export default function MemoriesPage() {
           <div className="flex justify-center py-12">
             <div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600" />
           </div>
+        ) : error ? (
+          <ErrorState onRetry={() => mutate()} />
         ) : (
           <CorkBoard
             stamps={stamps}
