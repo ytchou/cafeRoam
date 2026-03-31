@@ -33,7 +33,7 @@ logger = structlog.get_logger()
 
 # Per-type concurrency tracking (safe: asyncio is single-threaded)
 _in_flight: dict[JobType, int] = {jt: 0 for jt in JobType}
-_backoff_until: dict[JobType, datetime] = {}
+_rate_limit_backoff_until: dict[JobType, datetime] = {}
 
 # Strong references to in-flight tasks prevent premature GC
 _tasks: set[asyncio.Task[None]] = set()
@@ -212,7 +212,7 @@ async def _run_job(job: Job) -> None:
         logger.error("Job failed", job_id=job.id, error=str(e))
         sentry_sdk.capture_exception(e)
         if _is_rate_limit_error(e):
-            _backoff_until[job_type] = datetime.now(UTC) + timedelta(seconds=30)
+            _rate_limit_backoff_until[job_type] = datetime.now(UTC) + timedelta(seconds=30)
             logger.warning("Rate limited, backing off", job_type=job_type, seconds=30)
         if queue is not None:
             await queue.fail(job.id, error=str(e))
@@ -222,7 +222,7 @@ async def _run_job(job: Job) -> None:
 
 async def process_job_type(job_type: JobType) -> None:
     now = datetime.now(UTC)
-    backoff = _backoff_until.get(job_type)
+    backoff = _rate_limit_backoff_until.get(job_type)
     if backoff and now < backoff:
         return
 
