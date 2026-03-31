@@ -61,4 +61,19 @@ describe('MemoriesPage', () => {
     const link = screen.getByRole('link', { name: /back/i });
     expect(link).toHaveAttribute('href', '/profile');
   });
+
+  it('shows an error message when the stamps API is unavailable', async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      json: async () => ({ detail: 'Backend unavailable' }),
+    });
+    render(<MemoriesPage />, { wrapper: Wrapper });
+    await waitFor(() => {
+      expect(
+        screen.getByRole('button', { name: /try again/i })
+      ).toBeInTheDocument();
+    });
+    // Restore default mock for subsequent tests
+    mockFetch();
+  });
 });
