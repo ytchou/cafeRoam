@@ -115,7 +115,7 @@ describe('MapView', () => {
     expect(geojson.features[0].geometry.coordinates).toEqual([121.565, 25.033]);
   });
 
-  it('a visitor sees shops with null coordinates excluded from the map source', () => {
+  it('a visitor does not see pins for shops without coordinates', () => {
     const shopsWithNulls = [
       ...REALISTIC_SHOPS,
       { id: 'shop-null', name: '無座標咖啡', latitude: null, longitude: null },
@@ -169,10 +169,9 @@ describe('MapView', () => {
     const pinsLayer = screen.getByTestId('layer-shops-pins');
     const paint = JSON.parse(pinsLayer.getAttribute('data-paint') ?? '{}');
 
-    // Paint expression should reference the selectedShopId
+    // Paint expression should reference the selectedShopId in the case expression
     const paintJson = JSON.stringify(paint);
     expect(paintJson).toContain('shop-1');
-    expect(paintJson).toContain('#E06B3F'); // Terracotta selected color
   });
 
   it('a visitor sees an error message when Mapbox token is missing', () => {

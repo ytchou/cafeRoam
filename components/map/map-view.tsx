@@ -70,7 +70,8 @@ export function MapView({
       });
       if (clusterFeatures.length) {
         const feature = clusterFeatures[0];
-        const clusterId = feature.properties?.cluster_id as number;
+        const clusterId = feature.properties?.cluster_id as number | undefined;
+        if (clusterId == null) return;
         const coords = (feature.geometry as { type: string; coordinates: [number, number] }).coordinates;
         const source = map.getSource(SOURCE_ID) as GeoJSONSource;
         source.getClusterExpansionZoom(clusterId, (err, zoom) => {
@@ -85,7 +86,7 @@ export function MapView({
         layers: [LAYER_PINS],
       });
       if (pinFeatures.length) {
-        const shopId = pinFeatures[0].properties?.id as string;
+        const shopId = String(pinFeatures[0].properties?.id ?? '');
         if (shopId) onPinClick(shopId);
       }
     },
@@ -100,6 +101,9 @@ export function MapView({
     );
   }
 
+  // NOTE: GL layers do not support per-pin aria-label or keyboard focus.
+  // Keyboard users should use the list-view toggle to navigate shops.
+  // TODO(a11y): Add a visually-hidden <ul> overlay for screen readers.
   return (
     <Map
       ref={mapRef}
@@ -153,6 +157,8 @@ export function MapView({
           type="circle"
           filter={['!', ['has', 'point_count']]}
           paint={{
+            // GL expressions cannot contain null; '' is safe here because no shop
+            // has an empty-string id — do not change to null/undefined.
             'circle-color': [
               'case',
               ['==', ['get', 'id'], selectedShopId ?? ''],
