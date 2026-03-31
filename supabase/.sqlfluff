@@ -1,0 +1,14 @@
+[sqlfluff]
+dialect = postgres
+# Exclude pure cosmetic rules — focus on structural safety only.
+#
+# Excluded:
+#   LT* — layout/spacing/indent (cosmetic)
+#   RF04 — keywords as identifiers (legacy column names like "name", "type" that work fine)
+#   RF05 — special chars in identifiers (intentional: Supabase RLS policy names use spaces)
+#   RF06 — unnecessary quoting (intentional: quoted policy names)
+#   CP* — capitalisation rules (inconsistent but safe in existing migrations)
+exclude_rules = LT01,LT02,LT03,LT04,LT05,LT06,LT07,LT08,LT09,LT10,LT11,LT12,LT13,LT14,RF04,RF05,RF06,CP01,CP02,CP03,CP04,CP05
+
+[sqlfluff:rules:layout.long_lines]
+max_line_length = 120
