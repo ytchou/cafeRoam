@@ -21,7 +21,7 @@
 
 - [x] Task 4: Update classify_shop tool schema + SYSTEM_PROMPT (DEV-130)
 - [x] Task 5: Rebuild query_classifier.py with vocabulary-driven compiled regex + tests (DEV-131)
-- [ ] Task 6: Update enrich_shop.py to write menu_highlights + coffee_origins (DEV-132)
+- [x] Task 6: Update enrich_shop.py to write menu_highlights + coffee_origins (DEV-132)
 
 **Wave 3 — Search Scoring:**
 
