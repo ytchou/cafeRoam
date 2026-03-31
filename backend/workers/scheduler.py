@@ -33,7 +33,7 @@ logger = structlog.get_logger()
 
 # Per-type concurrency tracking (safe: asyncio is single-threaded)
 _in_flight: dict[JobType, int] = {jt: 0 for jt in JobType}
-_backoff_until: dict[JobType, datetime] = {}
+_rate_limit_backoff_until: dict[JobType, datetime] = {}
 
 # Strong references to in-flight tasks prevent premature GC
 _tasks: set[asyncio.Task[None]] = set()
@@ -47,6 +47,16 @@ _last_cron_cleanup: datetime | None = None
 # Taxonomy cache: (tags, expires_at)
 _taxonomy_cache: tuple[list[TaxonomyTag], datetime] | None = None
 _TAXONOMY_TTL = timedelta(minutes=5)
+
+# Exponential backoff state for DB connection failures in poll/reclaim loops.
+# Steps: 5s → 10s → 30s → 60s (capped). Logged only on state change.
+_BACKOFF_STEPS = [5, 10, 30, 60]
+_poll_failure_count: int = 0
+_poll_connected: bool = True
+_poll_backoff_until: datetime | None = None
+_reclaim_failure_count: int = 0
+_reclaim_connected: bool = True
+_reclaim_backoff_until: datetime | None = None
 
 
 def idempotent_cron(job_name: str, window: str) -> Callable[..., Callable[..., Awaitable[None]]]:
@@ -202,7 +212,7 @@ async def _run_job(job: Job) -> None:
         logger.error("Job failed", job_id=job.id, error=str(e))
         sentry_sdk.capture_exception(e)
         if _is_rate_limit_error(e):
-            _backoff_until[job_type] = datetime.now(UTC) + timedelta(seconds=30)
+            _rate_limit_backoff_until[job_type] = datetime.now(UTC) + timedelta(seconds=30)
             logger.warning("Rate limited, backing off", job_type=job_type, seconds=30)
         if queue is not None:
             await queue.fail(job.id, error=str(e))
@@ -212,7 +222,7 @@ async def _run_job(job: Job) -> None:
 
 async def process_job_type(job_type: JobType) -> None:
     now = datetime.now(UTC)
-    backoff = _backoff_until.get(job_type)
+    backoff = _rate_limit_backoff_until.get(job_type)
     if backoff and now < backoff:
         return
 
@@ -257,7 +267,10 @@ async def run_reembed_reviewed_shops() -> None:
 
 async def poll_pending_job_types() -> None:
     """Single-poll loop: one DB query to find pending types, then dispatch each."""
-    global _last_poll_at
+    global _last_poll_at, _poll_failure_count, _poll_connected, _poll_backoff_until
+    now = datetime.now(UTC)
+    if _poll_backoff_until is not None and now < _poll_backoff_until:
+        return
     try:
         db = get_service_role_client()
         queue = JobQueue(db=db)
@@ -270,27 +283,57 @@ async def poll_pending_job_types() -> None:
             if isinstance(exc, Exception):
                 logger.error("process_job_type failed during poll", error=str(exc))
                 sentry_sdk.capture_exception(exc)
+        if not _poll_connected:
+            logger.info("DB connection restored, poll resuming normally")
+        _poll_failure_count = 0
+        _poll_connected = True
+        _poll_backoff_until = None
         _last_poll_at = datetime.now(UTC)
     except Exception as e:
-        logger.error("Poll failed", error=str(e))
-        sentry_sdk.capture_exception(e)
+        _poll_failure_count += 1
+        delay = _BACKOFF_STEPS[min(_poll_failure_count - 1, len(_BACKOFF_STEPS) - 1)]
+        _poll_backoff_until = datetime.now(UTC) + timedelta(seconds=delay)
+        if _poll_connected:
+            logger.error("Poll failed, backing off", error=str(e), backoff_seconds=delay)
+            sentry_sdk.capture_exception(e)
+        else:
+            logger.debug("Poll still failing during backoff", error=str(e))
+        _poll_connected = False
 
 
 async def reclaim_stuck_jobs() -> None:
     """Reclaim jobs stuck in CLAIMED status."""
-    try:
-        db = get_service_role_client()
-        queue = JobQueue(db=db)
-        reclaimed, failed = await queue.reclaim_stuck_jobs()
-        if reclaimed > 0 or failed > 0:
-            logger.info(
-                "Stuck jobs reclaimed",
-                reclaimed_count=reclaimed,
-                failed_count=failed,
-            )
-    except Exception as e:
-        logger.error("Stuck job reaper failed", error=str(e))
-        sentry_sdk.capture_exception(e)
+    global _reclaim_failure_count, _reclaim_connected, _reclaim_backoff_until
+    now = datetime.now(UTC)
+    if _reclaim_backoff_until is None or now >= _reclaim_backoff_until:
+        try:
+            db = get_service_role_client()
+            queue = JobQueue(db=db)
+            reclaimed, failed = await queue.reclaim_stuck_jobs()
+            if reclaimed > 0 or failed > 0:
+                logger.info(
+                    "Stuck jobs reclaimed",
+                    reclaimed_count=reclaimed,
+                    failed_count=failed,
+                )
+            if not _reclaim_connected:
+                logger.info("DB connection restored, reclaim resuming normally")
+            _reclaim_failure_count = 0
+            _reclaim_connected = True
+            _reclaim_backoff_until = None
+        except Exception as e:
+            _reclaim_failure_count += 1
+            delay = _BACKOFF_STEPS[min(_reclaim_failure_count - 1, len(_BACKOFF_STEPS) - 1)]
+            _reclaim_backoff_until = datetime.now(UTC) + timedelta(seconds=delay)
+            if _reclaim_connected:
+                logger.error(
+                    "Stuck job reaper failed, backing off", error=str(e), backoff_seconds=delay
+                )
+                sentry_sdk.capture_exception(e)
+            else:
+                logger.debug("Stuck job reaper still failing during backoff", error=str(e))
+            _reclaim_connected = False
+    # cron cleanup always runs regardless of reclaim backoff state
 
     global _last_cron_cleanup
     now = datetime.now(UTC)
