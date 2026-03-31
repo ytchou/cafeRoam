@@ -48,16 +48,19 @@ export function MapView({
   const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
   const mapRef = useRef<MapRef>(null);
 
-  const geojsonData = useMemo((): ShopFeatureCollection => ({
-    type: 'FeatureCollection',
-    features: shops
-      .filter((s) => s.latitude != null && s.longitude != null)
-      .map((s) => ({
-        type: 'Feature',
-        geometry: { type: 'Point', coordinates: [s.longitude!, s.latitude!] },
-        properties: { id: s.id, name: s.name },
-      })),
-  }), [shops]);
+  const geojsonData = useMemo(
+    (): ShopFeatureCollection => ({
+      type: 'FeatureCollection',
+      features: shops
+        .filter((s) => s.latitude != null && s.longitude != null)
+        .map((s) => ({
+          type: 'Feature',
+          geometry: { type: 'Point', coordinates: [s.longitude!, s.latitude!] },
+          properties: { id: s.id, name: s.name },
+        })),
+    }),
+    [shops]
+  );
 
   const handleClick = useCallback(
     (e: MapMouseEvent) => {
@@ -72,7 +75,9 @@ export function MapView({
         const feature = clusterFeatures[0];
         const clusterId = feature.properties?.cluster_id as number | undefined;
         if (clusterId == null) return;
-        const coords = (feature.geometry as { type: string; coordinates: [number, number] }).coordinates;
+        const coords = (
+          feature.geometry as { type: string; coordinates: [number, number] }
+        ).coordinates;
         const source = map.getSource(SOURCE_ID) as GeoJSONSource;
         source.getClusterExpansionZoom(clusterId, (err, zoom) => {
           if (err || zoom == null) return;
@@ -133,8 +138,10 @@ export function MapView({
               'step',
               ['get', 'point_count'],
               20,
-              10, 26,
-              50, 32,
+              10,
+              26,
+              50,
+              32,
             ],
             'circle-opacity': 0.9,
           }}

@@ -9,7 +9,8 @@ const { mockQueryRenderedFeatures, mockGetClusterExpansionZoom, mockEaseTo } =
     mockQueryRenderedFeatures: vi.fn(() => []),
     // Simulates callback-style API: getClusterExpansionZoom(id, cb) → cb(null, zoom)
     mockGetClusterExpansionZoom: vi.fn(
-      (_id: number, cb: (err: Error | null, zoom: number) => void) => cb(null, 15)
+      (_id: number, cb: (err: Error | null, zoom: number) => void) =>
+        cb(null, 15)
     ),
     mockEaseTo: vi.fn(),
   }));
@@ -36,9 +37,7 @@ vi.mock('react-map-gl/mapbox', async () => {
     return (
       <div
         data-testid="map"
-        onClick={(e) =>
-          onClick?.({ ...e, point: { x: 50, y: 50 } })
-        }
+        onClick={(e) => onClick?.({ ...e, point: { x: 50, y: 50 } })}
       >
         {children}
       </div>
@@ -67,10 +66,7 @@ vi.mock('react-map-gl/mapbox', async () => {
   );
 
   const MockLayer = ({ id, paint }: { id: string; paint?: unknown }) => (
-    <div
-      data-testid={`layer-${id}`}
-      data-paint={JSON.stringify(paint ?? {})}
-    />
+    <div data-testid={`layer-${id}`} data-paint={JSON.stringify(paint ?? {})} />
   );
 
   return { default: MockMap, Source: MockSource, Layer: MockLayer };
@@ -81,9 +77,24 @@ vi.mock('mapbox-gl/dist/mapbox-gl.css', () => ({}));
 import { MapView } from './map-view';
 
 const REALISTIC_SHOPS = [
-  { id: 'shop-1', name: '湛盧咖啡 Zhanlu Coffee', latitude: 25.033, longitude: 121.565 },
-  { id: 'shop-2', name: '山頂咖啡 Summit Coffee', latitude: 25.041, longitude: 121.532 },
-  { id: 'shop-3', name: '有著落咖啡 Landed Coffee', latitude: 25.051, longitude: 121.548 },
+  {
+    id: 'shop-1',
+    name: '湛盧咖啡 Zhanlu Coffee',
+    latitude: 25.033,
+    longitude: 121.565,
+  },
+  {
+    id: 'shop-2',
+    name: '山頂咖啡 Summit Coffee',
+    latitude: 25.041,
+    longitude: 121.532,
+  },
+  {
+    id: 'shop-3',
+    name: '有著落咖啡 Landed Coffee',
+    latitude: 25.051,
+    longitude: 121.548,
+  },
 ];
 
 describe('MapView', () => {
@@ -98,12 +109,24 @@ describe('MapView', () => {
   });
 
   it('a visitor opening the map sees the map canvas', () => {
-    render(<MapView shops={REALISTIC_SHOPS} onPinClick={vi.fn()} selectedShopId={null} />);
+    render(
+      <MapView
+        shops={REALISTIC_SHOPS}
+        onPinClick={vi.fn()}
+        selectedShopId={null}
+      />
+    );
     expect(screen.getByTestId('map')).toBeInTheDocument();
   });
 
   it('a visitor opening the map sees all shops passed to the clustering source', () => {
-    render(<MapView shops={REALISTIC_SHOPS} onPinClick={vi.fn()} selectedShopId={null} />);
+    render(
+      <MapView
+        shops={REALISTIC_SHOPS}
+        onPinClick={vi.fn()}
+        selectedShopId={null}
+      />
+    );
 
     const source = screen.getByTestId('source');
     const geojson = JSON.parse(source.getAttribute('data-geojson') ?? '{}');
@@ -121,22 +144,43 @@ describe('MapView', () => {
       { id: 'shop-null', name: '無座標咖啡', latitude: null, longitude: null },
     ];
 
-    render(<MapView shops={shopsWithNulls} onPinClick={vi.fn()} selectedShopId={null} />);
+    render(
+      <MapView
+        shops={shopsWithNulls}
+        onPinClick={vi.fn()}
+        selectedShopId={null}
+      />
+    );
 
     const geojson = JSON.parse(
       screen.getByTestId('source').getAttribute('data-geojson') ?? '{}'
     );
     expect(geojson.features).toHaveLength(3);
-    expect(geojson.features.find((f: { properties: { id: string } }) => f.properties.id === 'shop-null')).toBeUndefined();
+    expect(
+      geojson.features.find(
+        (f: { properties: { id: string } }) => f.properties.id === 'shop-null'
+      )
+    ).toBeUndefined();
   });
 
   it('a visitor clicking an individual pin calls onPinClick with the shop ID', async () => {
     const onPinClick = vi.fn();
     mockQueryRenderedFeatures
       .mockReturnValueOnce([]) // no cluster hit
-      .mockReturnValueOnce([{ properties: { id: 'shop-2', name: '山頂咖啡 Summit Coffee' }, geometry: { type: 'Point', coordinates: [121.532, 25.041] } }]); // pin hit
+      .mockReturnValueOnce([
+        {
+          properties: { id: 'shop-2', name: '山頂咖啡 Summit Coffee' },
+          geometry: { type: 'Point', coordinates: [121.532, 25.041] },
+        },
+      ]); // pin hit
 
-    render(<MapView shops={REALISTIC_SHOPS} onPinClick={onPinClick} selectedShopId={null} />);
+    render(
+      <MapView
+        shops={REALISTIC_SHOPS}
+        onPinClick={onPinClick}
+        selectedShopId={null}
+      />
+    );
 
     await userEvent.click(screen.getByTestId('map'));
 
@@ -151,11 +195,20 @@ describe('MapView', () => {
       },
     ]);
 
-    render(<MapView shops={REALISTIC_SHOPS} onPinClick={vi.fn()} selectedShopId={null} />);
+    render(
+      <MapView
+        shops={REALISTIC_SHOPS}
+        onPinClick={vi.fn()}
+        selectedShopId={null}
+      />
+    );
 
     await userEvent.click(screen.getByTestId('map'));
 
-    expect(mockGetClusterExpansionZoom).toHaveBeenCalledWith(42, expect.any(Function));
+    expect(mockGetClusterExpansionZoom).toHaveBeenCalledWith(
+      42,
+      expect.any(Function)
+    );
     expect(mockEaseTo).toHaveBeenCalledWith(
       expect.objectContaining({ zoom: 15, center: [121.55, 25.04] })
     );
@@ -163,7 +216,11 @@ describe('MapView', () => {
 
   it('a visitor sees the selected shop pin styled differently via the paint expression', () => {
     render(
-      <MapView shops={REALISTIC_SHOPS} onPinClick={vi.fn()} selectedShopId="shop-1" />
+      <MapView
+        shops={REALISTIC_SHOPS}
+        onPinClick={vi.fn()}
+        selectedShopId="shop-1"
+      />
     );
 
     const pinsLayer = screen.getByTestId('layer-shops-pins');
@@ -176,7 +233,13 @@ describe('MapView', () => {
 
   it('a visitor sees an error message when Mapbox token is missing', () => {
     vi.stubEnv('NEXT_PUBLIC_MAPBOX_TOKEN', '');
-    render(<MapView shops={REALISTIC_SHOPS} onPinClick={vi.fn()} selectedShopId={null} />);
+    render(
+      <MapView
+        shops={REALISTIC_SHOPS}
+        onPinClick={vi.fn()}
+        selectedShopId={null}
+      />
+    );
     expect(screen.getByText(/Mapbox token/i)).toBeInTheDocument();
   });
 });
