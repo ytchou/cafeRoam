@@ -106,7 +106,7 @@ export function ShopPreviewCard({
           type="button"
           aria-label="View details"
           onClick={onNavigate}
-          className="text-foreground flex w-full items-center justify-center gap-1 rounded-lg bg-[var(--tag-active-bg)] py-2 font-[family-name:var(--font-body)] text-[14px] font-medium transition-opacity hover:opacity-90"
+          className="flex w-full items-center justify-center gap-1 rounded-lg bg-[var(--tag-active-bg)] py-2 font-[family-name:var(--font-body)] text-[14px] font-medium text-[var(--tag-active-text)] transition-opacity hover:opacity-90"
         >
           View Details
           <ChevronRight className="h-4 w-4" />
