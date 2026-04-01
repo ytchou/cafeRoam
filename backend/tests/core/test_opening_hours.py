@@ -35,15 +35,17 @@ class TestParseToStructured:
         assert result == [StructuredHours(day=0, open=0, close=1440)]
 
     def test_full_week_mixed(self):
-        result = parse_to_structured([
-            "星期一: 12:00 to 18:30",
-            "星期二: 休息",
-            "星期三: 休息",
-            "星期四: 12:00 to 18:30",
-            "星期五: 12:00 to 18:30",
-            "星期六: 11:00 to 18:30",
-            "星期日: 11:00 to 18:30",
-        ])
+        result = parse_to_structured(
+            [
+                "星期一: 12:00 to 18:30",
+                "星期二: 休息",
+                "星期三: 休息",
+                "星期四: 12:00 to 18:30",
+                "星期五: 12:00 to 18:30",
+                "星期六: 11:00 to 18:30",
+                "星期日: 11:00 to 18:30",
+            ]
+        )
         assert len(result) == 7
         assert result[0] == StructuredHours(day=0, open=720, close=1110)
         assert result[1] == StructuredHours(day=1, open=None, close=None)
