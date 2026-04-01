@@ -4,16 +4,21 @@ import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Hoisted mocks so they can be referenced inside vi.mock factories
-const { mockQueryRenderedFeatures, mockGetClusterExpansionZoom, mockEaseTo } =
-  vi.hoisted(() => ({
-    mockQueryRenderedFeatures: vi.fn(() => [] as unknown[]),
-    // Simulates callback-style API: getClusterExpansionZoom(id, cb) → cb(null, zoom)
-    mockGetClusterExpansionZoom: vi.fn(
-      (_id: number, cb: (err: Error | null, zoom: number) => void) =>
-        cb(null, 15)
-    ),
-    mockEaseTo: vi.fn(),
-  }));
+const {
+  mockQueryRenderedFeatures,
+  mockGetClusterExpansionZoom,
+  mockEaseTo,
+  mockFlyTo,
+} = vi.hoisted(() => ({
+  mockQueryRenderedFeatures: vi.fn(() => [] as unknown[]),
+  // Simulates callback-style API: getClusterExpansionZoom(id, cb) → cb(null, zoom)
+  mockGetClusterExpansionZoom: vi.fn(
+    (_id: number, cb: (err: Error | null, zoom: number) => void) =>
+      cb(null, 15)
+  ),
+  mockEaseTo: vi.fn(),
+  mockFlyTo: vi.fn(),
+}));
 
 vi.mock('react-map-gl/mapbox', async () => {
   const ReactModule = await import('react');
@@ -32,6 +37,8 @@ vi.mock('react-map-gl/mapbox', async () => {
           getClusterExpansionZoom: mockGetClusterExpansionZoom,
         }),
         easeTo: mockEaseTo,
+        flyTo: mockFlyTo,
+        getZoom: () => 13,
       }),
     }));
     return (
@@ -241,5 +248,77 @@ describe('MapView', () => {
       />
     );
     expect(screen.getByText(/Mapbox token/i)).toBeInTheDocument();
+  });
+
+  it('selecting a shop from the list flies the map to that pin', () => {
+    const { rerender } = render(
+      <MapView
+        shops={REALISTIC_SHOPS}
+        onPinClick={vi.fn()}
+        selectedShopId={null}
+      />
+    );
+
+    rerender(
+      <MapView
+        shops={REALISTIC_SHOPS}
+        onPinClick={vi.fn()}
+        selectedShopId="shop-2"
+      />
+    );
+
+    expect(mockFlyTo).toHaveBeenCalledWith(
+      expect.objectContaining({
+        center: [121.532, 25.041],
+      })
+    );
+  });
+
+  it('selecting a shop at low zoom flies to clusterMaxZoom + 1 to uncluster', () => {
+    const { rerender } = render(
+      <MapView
+        shops={REALISTIC_SHOPS}
+        onPinClick={vi.fn()}
+        selectedShopId={null}
+      />
+    );
+
+    rerender(
+      <MapView
+        shops={REALISTIC_SHOPS}
+        onPinClick={vi.fn()}
+        selectedShopId="shop-1"
+      />
+    );
+
+    // Mock getZoom returns 13 which is <= CLUSTER_MAX_ZOOM (14), so zoom should be 15
+    expect(mockFlyTo).toHaveBeenCalledWith(
+      expect.objectContaining({
+        center: [121.565, 25.033],
+        zoom: 15,
+      })
+    );
+  });
+
+  it('deselecting a shop (null) does not trigger flyTo', () => {
+    const { rerender } = render(
+      <MapView
+        shops={REALISTIC_SHOPS}
+        onPinClick={vi.fn()}
+        selectedShopId="shop-1"
+      />
+    );
+
+    mockFlyTo.mockClear();
+
+    rerender(
+      <MapView
+        shops={REALISTIC_SHOPS}
+        onPinClick={vi.fn()}
+        selectedShopId={null}
+      />
+    );
+
+    expect(mockFlyTo).not.toHaveBeenCalled();
   });
 });

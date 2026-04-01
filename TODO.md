@@ -13,7 +13,7 @@
 
 **Wave 1 — MapView enhancements (sequential):**
 
-- [ ] Task 1: flyTo on selectedShopId change (DEV-165)
+- [x] Task 1: flyTo on selectedShopId change (DEV-165)
 - [ ] Task 2: onBoundsChange callback (DEV-166)
 
 **Wave 2 — Prop threading:**

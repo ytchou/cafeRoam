@@ -1,5 +1,5 @@
 'use client';
-import { useMemo, useRef, useCallback } from 'react';
+import { useMemo, useRef, useCallback, useEffect } from 'react';
 import Map, { Layer, Source } from 'react-map-gl/mapbox';
 import type { MapRef, MapMouseEvent } from 'react-map-gl/mapbox';
 import type { GeoJSONSource } from 'mapbox-gl';
@@ -32,6 +32,9 @@ const SOURCE_ID = 'shops-source';
 const LAYER_CLUSTERS = 'shops-clusters';
 const LAYER_CLUSTER_COUNT = 'shops-cluster-count';
 const LAYER_PINS = 'shops-pins';
+
+const CLUSTER_MAX_ZOOM = 14;
+const FLY_TO_ZOOM = CLUSTER_MAX_ZOOM + 1;
 
 // DESIGN.md: Map Brown #8b5e3c (pin fill), Terracotta #E06B3F (active state)
 const COLOR_PIN = '#8b5e3c';
@@ -98,6 +101,21 @@ export function MapView({
     [onPinClick]
   );
 
+  useEffect(() => {
+    if (!selectedShopId) return;
+    const map = mapRef.current?.getMap();
+    if (!map) return;
+
+    const shop = shops.find((s) => s.id === selectedShopId);
+    if (!shop || shop.latitude == null || shop.longitude == null) return;
+
+    const center: [number, number] = [shop.longitude, shop.latitude];
+    const currentZoom = map.getZoom();
+    const zoom = currentZoom <= CLUSTER_MAX_ZOOM ? FLY_TO_ZOOM : currentZoom;
+
+    map.flyTo({ center, zoom, duration: 800 });
+  }, [selectedShopId, shops]);
+
   if (!mapboxToken) {
     return (
       <div className="text-muted-foreground flex h-full items-center justify-center text-sm">
@@ -124,7 +142,7 @@ export function MapView({
         type="geojson"
         data={geojsonData}
         cluster={true}
-        clusterMaxZoom={14}
+        clusterMaxZoom={CLUSTER_MAX_ZOOM}
         clusterRadius={50}
       >
         {/* Cluster bubble — sized by shop count */}
