@@ -109,3 +109,6 @@ docs/designs/screenshots/
 /images/
 /favicon-*.png
 /generated-*.png
+
+# Sentry Config File
+.env.sentry-build-plugin
