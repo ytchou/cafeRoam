@@ -20,9 +20,6 @@ const BRICOLAGE_STYLE = {
 const BRICOLAGE_STYLE_SM = {
   fontFamily: 'var(--font-bricolage), sans-serif',
 } as const;
-const DM_SANS_STYLE = {
-  fontFamily: 'var(--font-dm-sans), sans-serif',
-} as const;
 
 export default function ExplorePage() {
   const { capture } = useAnalytics();
@@ -64,16 +61,16 @@ export default function ExplorePage() {
   const tarotAndVibes = (
     <>
       <div className="mb-3 flex items-center justify-between">
-        <span
-          className="text-tarot-gold text-[11px] font-semibold tracking-[1px]"
-          style={DM_SANS_STYLE}
+        <h2
+          className="text-text-primary text-lg font-bold"
+          style={BRICOLAGE_STYLE_SM}
         >
-          ✦ Your Daily Draw
-        </span>
+          <span className="text-tarot-gold">✦</span> Your Daily Draw
+        </h2>
         <button
           type="button"
           onClick={() => redraw()}
-          className="text-map-pin text-sm font-medium"
+          className="text-link-green text-xs font-medium"
           aria-label="Refresh daily draw"
         >
           Refresh ↺
@@ -95,7 +92,7 @@ export default function ExplorePage() {
         </div>
       )}
 
-      {(geoLoading || isLoading) && !geoError && (
+      {(geoLoading || isLoading || (latitude == null && !geoError)) && (
         <div className="flex flex-col gap-3">
           {[0, 1, 2].map((i) => (
             <div
@@ -165,9 +162,22 @@ export default function ExplorePage() {
                 <span className="text-text-primary text-[13px] leading-tight font-semibold">
                   {vibe.name}
                 </span>
-                <span className="text-[11px] text-gray-400">
-                  {vibe.subtitle}
-                </span>
+                {vibe.subtitle && (
+                  <div className="flex flex-wrap gap-1">
+                    {vibe.subtitle
+                      .split(' · ')
+                      .filter(Boolean)
+                      .slice(0, 3)
+                      .map((tag) => (
+                        <span
+                          key={tag}
+                          className="rounded-full bg-gray-100 px-1.5 py-0.5 text-[10px] text-gray-500"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                  </div>
+                )}
               </Link>
             ))}
           </div>
@@ -180,7 +190,7 @@ export default function ExplorePage() {
     <section
       className={
         isDesktop
-          ? 'bg-surface-section w-[400px] shrink-0 rounded-2xl p-6'
+          ? 'bg-surface-section min-w-0 flex-1 rounded-2xl p-6'
           : 'mt-8 flex flex-col gap-3'
       }
     >
