@@ -40,8 +40,9 @@ class TestGetPaymentMethods:
 
         shop_resp = MagicMock(data={"payment_methods": {"cash": True, "line_pay": True}})
         confirmations_resp = MagicMock(data=[
-            {"method": "cash", "vote": True, "cnt": 5},
-            {"method": "line_pay", "vote": True, "cnt": 2},
+            {"method": "cash"}, {"method": "cash"}, {"method": "cash"},
+            {"method": "cash"}, {"method": "cash"},
+            {"method": "line_pay"}, {"method": "line_pay"},
         ])
         db.execute.side_effect = [shop_resp, confirmations_resp]
 
@@ -63,7 +64,7 @@ class TestGetPaymentMethods:
 
         shop_resp = MagicMock(data={"payment_methods": {"cash": True}})
         confirmations_resp = MagicMock(data=[
-            {"method": "cash", "vote": True, "cnt": 3},
+            {"method": "cash"}, {"method": "cash"}, {"method": "cash"},
         ])
         user_votes_resp = MagicMock(data=[
             {"method": "cash", "vote": True},
@@ -106,7 +107,9 @@ class TestUpsertConfirmation:
         db.eq.return_value = db
 
         upsert_resp = MagicMock(data=[{"id": "conf-1", "method": "cash", "vote": True}])
-        count_resp = MagicMock(data=[{"method": "cash", "vote": True, "cnt": 4}])
+        count_resp = MagicMock(data=[
+            {"id": "c1"}, {"id": "c2"}, {"id": "c3"}, {"id": "c4"},
+        ])
         db.execute.side_effect = [upsert_resp, count_resp]
 
         service = PaymentService(db=db)
