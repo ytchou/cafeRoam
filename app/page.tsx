@@ -89,44 +89,31 @@ function FindPageContent() {
       filtered = filtered.filter((shop) => shop.isOpen === true);
     }
 
-    // Apply rating sort (still attach distance_m for card labels if geo available)
+    // Attach distance_m (metres) to each shop when geolocation is available
+    const hasGeo = latitude != null && longitude != null;
+    const attachDistance = <T extends (typeof filtered)[number]>(
+      shops: T[]
+    ): (T & { distance_m: number | null })[] =>
+      shops.map((shop) => {
+        const km =
+          hasGeo && shop.latitude != null && shop.longitude != null
+            ? haversineKm(latitude!, longitude!, shop.latitude, shop.longitude)
+            : null;
+        return { ...shop, distance_m: km != null ? Math.round(km * 1000) : null };
+      });
+
+    // Apply rating sort
     if (activeFiltersSet.has('rating')) {
       const sorted = [...filtered].sort(
         (a, b) => (b.rating ?? 0) - (a.rating ?? 0)
       );
-      const withDistance =
-        latitude != null && longitude != null
-          ? sorted.map((shop) => {
-              const km =
-                shop.latitude != null && shop.longitude != null
-                  ? haversineKm(
-                      latitude,
-                      longitude,
-                      shop.latitude,
-                      shop.longitude
-                    )
-                  : null;
-              return {
-                ...shop,
-                distance_m: km != null ? Math.round(km * 1000) : null,
-              };
-            })
-          : sorted;
-      return view === 'map' ? filterByBounds(withDistance, mapBounds) : withDistance;
+      const result = attachDistance(sorted);
+      return view === 'map' ? filterByBounds(result, mapBounds) : result;
     }
 
-    // Apply geo-sort if location available, and attach distance_m for card labels
-    if (latitude != null && longitude != null) {
-      const withDistance = filtered.map((shop) => {
-        const km =
-          shop.latitude != null && shop.longitude != null
-            ? haversineKm(latitude, longitude, shop.latitude, shop.longitude)
-            : null;
-        return {
-          ...shop,
-          distance_m: km != null ? Math.round(km * 1000) : null,
-        };
-      });
+    // Apply geo-sort if location available
+    if (hasGeo) {
+      const withDistance = attachDistance(filtered);
       const sorted = withDistance.sort(
         (a, b) => (a.distance_m ?? Infinity) - (b.distance_m ?? Infinity)
       );
