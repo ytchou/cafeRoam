@@ -100,6 +100,10 @@ check "NEXT_PUBLIC_MAPBOX_TOKEN is set" \
   "grep -q '^NEXT_PUBLIC_MAPBOX_TOKEN=.' '${PROJECT_ROOT}/.env.local'" \
   "Add NEXT_PUBLIC_MAPBOX_TOKEN=pk.xxx to .env.local (get token at mapbox.com)"
 
+check "MAPBOX_ACCESS_TOKEN is set in backend/.env (required for directions + geocoding)" \
+  "grep -q '^MAPBOX_ACCESS_TOKEN=.' '${PROJECT_ROOT}/backend/.env'" \
+  "Add MAPBOX_ACCESS_TOKEN=sk.xxx to backend/.env (get token at mapbox.com)"
+
 check "backend/.env exists" \
   "test -f '${PROJECT_ROOT}/backend/.env'" \
   "Create backend/.env with SUPABASE_URL=http://127.0.0.1:54321"
