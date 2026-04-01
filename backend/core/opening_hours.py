@@ -1,19 +1,28 @@
 """Parse opening_hours strings and determine if a shop is currently open.
 
-The opening_hours field is a list[str] populated by scrapers in formats like:
-  - "Monday: 9:00 AM - 6:00 PM"
-  - "Friday: 10:00 AM - 2:00 AM"  (midnight crossing)
-  - "Monday: Open 24 hours"
-  - "Sunday: Closed"
-  - "Monday: 09:00 - 18:00"  (24h format fallback)
-  - "星期一: 09:00 to 18:00"  (Chinese day names with 'to' separator)
-  - "星期二: 休息"             (Chinese 'closed')
+Structured format: list of {day: int, open: int|null, close: int|null}
+  - day: 0=Monday … 6=Sunday
+  - open/close: minutes since midnight (null = confirmed closed)
+  - Day absent from list = unknown (scraper had no data)
 
-All shops are in Asia/Taipei timezone.
+Legacy string parsing is retained in parse_to_structured() for migration
+and ingest normalization. is_open_now() works on structured data only.
 """
 
 import re
 from datetime import datetime
+from typing import Any
+
+from pydantic import BaseModel
+
+
+class StructuredHours(BaseModel):
+    day: int
+    open: int | None = None
+    close: int | None = None
+
+
+# --- Legacy string parsing (used by parse_to_structured only) ---
 
 _DAY_MAP = {
     "monday": 0,
@@ -38,7 +47,6 @@ _RANGE_SEP_RE = re.compile(r"\s*(?:[-\u2013]|\bto\b)\s*", re.IGNORECASE)
 
 
 def _parse_time_to_minutes(time_str: str) -> int:
-    """Convert a time string like '9:00 AM' or '18:00' to minutes since midnight."""
     m = _TIME_RE.match(time_str.strip())
     if not m:
         raise ValueError(f"Cannot parse time: {time_str!r}")
@@ -53,25 +61,17 @@ def _parse_time_to_minutes(time_str: str) -> int:
     return hour * 60 + minute
 
 
-def is_open_now(opening_hours: list[str] | None, now: datetime) -> bool | None:
-    """Check if a shop is currently open.
+def parse_to_structured(opening_hours: list[str]) -> list[StructuredHours]:
+    """Convert legacy string opening_hours to structured format.
 
-    Returns True/False if opening_hours can be parsed, or None if
-    opening_hours is null/empty (unknown — caller decides how to treat).
+    Fault-tolerant: unparseable entries are silently skipped.
     """
-    if not opening_hours:
-        return None
-
-    current_weekday = now.weekday()  # 0=Monday
-    current_minutes = now.hour * 60 + now.minute
-    today_seen = False
-
+    result: list[StructuredHours] = []
     for entry in opening_hours:
         entry = entry.strip()
         if ":" not in entry:
             continue
 
-        # Split on first colon to get day name and time range
         day_part, _, time_part = entry.partition(":")
         day_name = day_part.strip().lower()
         time_part = time_part.strip()
@@ -80,21 +80,17 @@ def is_open_now(opening_hours: list[str] | None, now: datetime) -> bool | None:
         if day_num is None:
             continue
 
-        if day_num == current_weekday:
-            today_seen = True
-
-        # Handle special cases
+        # Closed sentinel
         if "closed" in time_part.lower() or "休息" in time_part:
-            if day_num == current_weekday:
-                return False
+            result.append(StructuredHours(day=day_num, open=None, close=None))
             continue
 
+        # 24-hour sentinel
         if "24 hour" in time_part.lower() or "24hour" in time_part.lower():
-            if day_num == current_weekday:
-                return True
+            result.append(StructuredHours(day=day_num, open=0, close=1440))
             continue
 
-        # Parse time range: "9:00 AM - 6:00 PM" or "09:00 - 18:00"
+        # Parse time range
         parts = _RANGE_SEP_RE.split(time_part)
         if len(parts) != 2:
             continue
@@ -105,20 +101,68 @@ def is_open_now(opening_hours: list[str] | None, now: datetime) -> bool | None:
         except ValueError:
             continue
 
-        if close_min > open_min:
-            # Normal range (e.g., 9:00 AM - 6:00 PM)
-            if day_num == current_weekday and open_min <= current_minutes < close_min:
+        result.append(StructuredHours(day=day_num, open=open_min, close=close_min))
+
+    return result
+
+
+# --- Structured is_open_now (pure arithmetic) ---
+
+
+def _coerce_entry(entry: Any) -> StructuredHours | None:
+    """Accept StructuredHours or raw dict from DB JSONB."""
+    if isinstance(entry, StructuredHours):
+        return entry
+    if isinstance(entry, dict):
+        try:
+            return StructuredHours(**entry)
+        except (TypeError, ValueError):
+            return None
+    return None
+
+
+def is_open_now(
+    opening_hours: list[StructuredHours | dict[str, Any]] | None,
+    now: datetime,
+) -> bool | None:
+    """Check if a shop is currently open using structured hours.
+
+    Returns True/False if determinable, None if unknown (null/empty or
+    current day not in the list).
+    """
+    if not opening_hours:
+        return None
+
+    current_weekday = now.weekday()
+    current_minutes = now.hour * 60 + now.minute
+    today_seen = False
+
+    for raw_entry in opening_hours:
+        entry = _coerce_entry(raw_entry)
+        if entry is None:
+            continue
+
+        if entry.day == current_weekday:
+            today_seen = True
+
+        # Closed sentinel
+        if entry.open is None or entry.close is None:
+            if entry.day == current_weekday:
+                return False
+            continue
+
+        if entry.close > entry.open:
+            # Normal range
+            if entry.day == current_weekday and entry.open <= current_minutes < entry.close:
                 return True
         else:
-            # Midnight crossing (e.g., 10:00 AM - 2:00 AM)
-            # Check same day: from open_min to midnight
-            if day_num == current_weekday and current_minutes >= open_min:
+            # Midnight crossing (close < open, e.g. open=600 close=120)
+            if entry.day == current_weekday and current_minutes >= entry.open:
                 return True
-            # Check next day: from midnight to close_min
             prev_day = (current_weekday - 1) % 7
-            if day_num == prev_day:
-                today_seen = True  # prev_day midnight entry covers today's early hours
-                if current_minutes < close_min:
+            if entry.day == prev_day:
+                today_seen = True
+                if current_minutes < entry.close:
                     return True
 
     return False if today_seen else None

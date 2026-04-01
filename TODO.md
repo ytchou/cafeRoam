@@ -13,7 +13,7 @@
 
 **Wave 1-2 — Foundation (TDD red/green):**
 - [x] Task 1: Write failing tests for parse_to_structured + is_open_now (DEV-159)
-- [ ] Task 2: Implement StructuredHours + parse_to_structured + rewrite is_open_now (DEV-159)
+- [x] Task 2: Implement StructuredHours + parse_to_structured + rewrite is_open_now (DEV-159)
 
 **Wave 3 — Type Updates (parallel):**
 - [ ] Task 3: Update ScrapedShopData type (DEV-160)
