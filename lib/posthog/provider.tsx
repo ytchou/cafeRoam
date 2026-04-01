@@ -24,6 +24,7 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
             respect_dnt: true,
             persistence: 'localStorage+cookie',
           });
+          posthog.register({ environment: process.env.NEXT_PUBLIC_APP_ENV || 'development' });
           posthogInitialized = true;
         } else {
           posthog.opt_in_capturing();
