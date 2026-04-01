@@ -27,24 +27,47 @@ vi.mock('react-map-gl/mapbox', async () => {
     {
       children,
       onClick,
-    }: { children: React.ReactNode; onClick?: (e: unknown) => void },
+      onLoad,
+      onMoveEnd,
+    }: {
+      children: React.ReactNode;
+      onClick?: (e: unknown) => void;
+      onLoad?: (e: unknown) => void;
+      onMoveEnd?: (e: unknown) => void;
+    },
     ref: React.Ref<unknown>
   ) {
-    ReactModule.useImperativeHandle(ref, () => ({
-      getMap: () => ({
-        queryRenderedFeatures: mockQueryRenderedFeatures,
-        getSource: () => ({
-          getClusterExpansionZoom: mockGetClusterExpansionZoom,
-        }),
-        easeTo: mockEaseTo,
-        flyTo: mockFlyTo,
-        getZoom: () => 13,
+    const mapInstance = {
+      queryRenderedFeatures: mockQueryRenderedFeatures,
+      getSource: () => ({
+        getClusterExpansionZoom: mockGetClusterExpansionZoom,
       }),
+      easeTo: mockEaseTo,
+      flyTo: mockFlyTo,
+      getZoom: () => 13,
+      getBounds: () => ({
+        getNorth: () => 25.06,
+        getSouth: () => 25.01,
+        getEast: () => 121.58,
+        getWest: () => 121.53,
+      }),
+    };
+
+    ReactModule.useImperativeHandle(ref, () => ({
+      getMap: () => mapInstance,
     }));
+
+    // Fire onLoad after mount to simulate map ready
+    ReactModule.useEffect(() => {
+      onLoad?.({ target: mapInstance });
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
     return (
       <div
         data-testid="map"
         onClick={(e) => onClick?.({ ...e, point: { x: 50, y: 50 } })}
+        data-onmoveend={onMoveEnd ? 'attached' : undefined}
       >
         {children}
       </div>
@@ -320,5 +343,36 @@ describe('MapView', () => {
     );
 
     expect(mockFlyTo).not.toHaveBeenCalled();
+  });
+
+  it('fires onBoundsChange with map bounds on initial load', () => {
+    const onBoundsChange = vi.fn();
+    render(
+      <MapView
+        shops={REALISTIC_SHOPS}
+        onPinClick={vi.fn()}
+        selectedShopId={null}
+        onBoundsChange={onBoundsChange}
+      />
+    );
+
+    expect(onBoundsChange).toHaveBeenCalledWith({
+      north: 25.06,
+      south: 25.01,
+      east: 121.58,
+      west: 121.53,
+    });
+  });
+
+  it('does not crash when onBoundsChange is not provided', () => {
+    expect(() =>
+      render(
+        <MapView
+          shops={REALISTIC_SHOPS}
+          onPinClick={vi.fn()}
+          selectedShopId={null}
+        />
+      )
+    ).not.toThrow();
   });
 });

@@ -12,11 +12,19 @@ interface Shop {
   longitude: number | null;
 }
 
+export interface MapBounds {
+  north: number;
+  south: number;
+  east: number;
+  west: number;
+}
+
 interface MapViewProps {
   shops: Shop[];
   onPinClick: (shopId: string) => void;
   selectedShopId: string | null;
   mapStyle?: string;
+  onBoundsChange?: (bounds: MapBounds) => void;
 }
 
 type ShopFeatureCollection = {
@@ -47,6 +55,7 @@ export function MapView({
   onPinClick,
   selectedShopId,
   mapStyle = 'mapbox://styles/mapbox/light-v11',
+  onBoundsChange,
 }: MapViewProps) {
   const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
   const mapRef = useRef<MapRef>(null);
@@ -116,6 +125,24 @@ export function MapView({
     map.flyTo({ center, zoom, duration: 800 });
   }, [selectedShopId, shops]);
 
+  const reportBounds = useCallback(() => {
+    if (!onBoundsChange) return;
+    const map = mapRef.current?.getMap();
+    if (!map) return;
+    const b = map.getBounds();
+    if (!b) return;
+    onBoundsChange({
+      north: b.getNorth(),
+      south: b.getSouth(),
+      east: b.getEast(),
+      west: b.getWest(),
+    });
+  }, [onBoundsChange]);
+
+  const handleLoad = useCallback(() => {
+    reportBounds();
+  }, [reportBounds]);
+
   if (!mapboxToken) {
     return (
       <div className="text-muted-foreground flex h-full items-center justify-center text-sm">
@@ -135,6 +162,8 @@ export function MapView({
       style={{ width: '100%', height: '100%' }}
       mapStyle={mapStyle}
       onClick={handleClick}
+      onLoad={handleLoad}
+      onMoveEnd={reportBounds}
       interactiveLayerIds={[LAYER_CLUSTERS, LAYER_PINS]}
     >
       <Source
