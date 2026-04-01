@@ -15,16 +15,10 @@ class PaymentService:
     def __init__(self, db: Client) -> None:
         self._db = db
 
-    def get_payment_methods(
-        self, *, shop_id: str, user_id: str | None
-    ) -> PaymentMethodsResponse:
+    def get_payment_methods(self, *, shop_id: str, user_id: str | None) -> PaymentMethodsResponse:
         """Get payment methods for a shop, merged with community confirmations."""
         shop_resp = (
-            self._db.table("shops")
-            .select("payment_methods")
-            .eq("id", shop_id)
-            .single()
-            .execute()
+            self._db.table("shops").select("payment_methods").eq("id", shop_id).single().execute()
         )
         shop_data = cast("dict[str, Any]", shop_resp.data)
         pm: dict[str, bool | None] = shop_data.get("payment_methods") or {}

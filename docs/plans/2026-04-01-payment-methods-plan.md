@@ -15,6 +15,7 @@
 **Tech Stack:** Supabase (Postgres), FastAPI, Next.js 16, Tailwind, shadcn/ui, vaul (mobile drawers), SWR, Vitest, pytest
 
 **Acceptance Criteria:**
+
 - [ ] A user browsing a shop detail page sees which payment methods are accepted (cash, card, LINE Pay, TWQR, Apple Pay, Google Pay)
 - [ ] An authenticated user can confirm or suggest payment methods from the shop detail page and during check-in
 - [ ] A user can filter shops by "Cash Only" or "Mobile Payment" on the Find page and see correct results
@@ -26,6 +27,7 @@
 
 **Linear:** DEV-150
 **Files:**
+
 - Create: `supabase/migrations/20260402000001_add_payment_methods_column.sql`
 
 **Step 1: Write migration**
@@ -43,17 +45,21 @@ COMMENT ON COLUMN shops.payment_methods IS
 **Step 2: Apply migration locally**
 
 Run:
+
 ```bash
 supabase db push
 ```
+
 Expected: Migration applied, no errors.
 
 **Step 3: Verify column exists**
 
 Run:
+
 ```bash
 supabase db diff
 ```
+
 Expected: No diff (migration is applied and matches local schema).
 
 **Step 4: Commit**
@@ -69,6 +75,7 @@ git commit -m "feat(DEV-150): add payment_methods JSONB column to shops table"
 
 **Linear:** DEV-150
 **Files:**
+
 - Create: `supabase/migrations/20260402000002_create_shop_payment_confirmations.sql`
 
 **Step 1: Write migration**
@@ -117,9 +124,11 @@ CREATE POLICY "Users can delete own confirmations"
 **Step 2: Apply and verify**
 
 Run:
+
 ```bash
 supabase db push && supabase db diff
 ```
+
 Expected: Applied, no diff.
 
 **Step 3: Commit**
@@ -135,6 +144,7 @@ git commit -m "feat(DEV-150): create shop_payment_confirmations table with RLS"
 
 **Linear:** DEV-150
 **Files:**
+
 - Create: `supabase/migrations/20260402000003_bootstrap_payment_methods_from_taxonomy.sql`
 
 **Step 1: Write bootstrap migration**
@@ -161,6 +171,7 @@ WHERE st.shop_id = s.id
 **Step 2: Apply and verify**
 
 Run:
+
 ```bash
 supabase db push
 ```
@@ -178,6 +189,7 @@ git commit -m "feat(DEV-150): bootstrap payment_methods from existing taxonomy t
 
 **Linear:** DEV-150
 **Files:**
+
 - Create: `supabase/migrations/20260402000004_add_payment_methods_to_search_shops_rpc.sql`
 
 **Step 1: Write RPC migration**
@@ -271,6 +283,7 @@ $$;
 **Step 2: Apply and verify**
 
 Run:
+
 ```bash
 supabase db push && supabase db diff
 ```
@@ -288,6 +301,7 @@ git commit -m "feat(DEV-150): add payment_methods to search_shops RPC return sha
 
 **Linear:** DEV-151
 **Files:**
+
 - Modify: `components/filters/filter-map.ts`
 - Modify: `components/filters/filter-sheet.tsx`
 - Modify: `components/discovery/filter-sheet.tsx`
@@ -302,7 +316,12 @@ git commit -m "feat(DEV-150): add payment_methods to search_shops RPC return sha
  * Quick filters use short IDs for cleaner URLs (?filters=wifi,quiet)
  * while taxonomy uses canonical IDs (wifi_available, power_outlets).
  */
-export type TagFilterId = 'wifi' | 'outlet' | 'quiet' | 'cash_only' | 'mobile_payment';
+export type TagFilterId =
+  | 'wifi'
+  | 'outlet'
+  | 'quiet'
+  | 'cash_only'
+  | 'mobile_payment';
 
 export const FILTER_TO_TAG_IDS: Record<TagFilterId, string> = {
   wifi: 'wifi_available',
@@ -331,9 +350,11 @@ Same change — add `{ id: 'mobile_payment', label: 'Mobile Payment' }` after `c
 **Step 4: Run existing filter integration tests**
 
 Run:
+
 ```bash
 pnpm vitest run app/__tests__/find-page-integration.test.tsx --reporter=verbose
 ```
+
 Expected: All existing tests pass. The filter logic in `page.tsx` already handles any `TagFilterId` via the `FILTER_TO_TAG_IDS` lookup — no `page.tsx` changes needed.
 
 **Step 5: Commit**
@@ -349,6 +370,7 @@ git commit -m "feat(DEV-151): wire cash_only + mobile_payment filters in filter-
 
 **Linear:** DEV-152
 **Files:**
+
 - Modify: `backend/models/types.py`
 
 **Step 1: Add response models to `backend/models/types.py`**
@@ -417,6 +439,7 @@ git commit -m "feat(DEV-152): add payment method Pydantic models"
 
 **Linear:** DEV-152
 **Files:**
+
 - Create: `backend/tests/services/test_payment_service.py`
 
 **Step 1: Write failing tests**
@@ -546,9 +569,11 @@ class TestUpsertConfirmation:
 **Step 2: Run tests to verify they fail**
 
 Run:
+
 ```bash
 cd backend && pytest tests/services/test_payment_service.py -v
 ```
+
 Expected: FAIL — `ModuleNotFoundError: No module named 'services.payment_service'`
 
 ---
@@ -557,6 +582,7 @@ Expected: FAIL — `ModuleNotFoundError: No module named 'services.payment_servi
 
 **Linear:** DEV-152
 **Files:**
+
 - Create: `backend/services/payment_service.py`
 
 **Step 1: Write implementation**
@@ -671,9 +697,11 @@ class PaymentService:
 **Step 2: Run tests to verify they pass**
 
 Run:
+
 ```bash
 cd backend && pytest tests/services/test_payment_service.py -v
 ```
+
 Expected: All 5 tests PASS.
 
 **Step 3: Commit**
@@ -689,6 +717,7 @@ git commit -m "feat(DEV-152): implement PaymentService with tests"
 
 **Linear:** DEV-152
 **Files:**
+
 - Create: `backend/api/payments.py`
 - Modify: `backend/main.py` (register router)
 
@@ -740,11 +769,13 @@ async def confirm_payment_method(
 **Step 2: Register router in `backend/main.py`**
 
 Add import after the existing router imports (around line 31):
+
 ```python
 from api.payments import router as payments_router
 ```
 
 Add `app.include_router(payments_router)` after `followers_router` (around line 137):
+
 ```python
 app.include_router(payments_router)
 ```
@@ -762,6 +793,7 @@ git commit -m "feat(DEV-152): add payment methods API endpoints"
 
 **Linear:** DEV-152
 **Files:**
+
 - Create: `app/api/shops/[shopId]/payment-methods/route.ts`
 - Create: `app/api/shops/[shopId]/payment-methods/confirm/route.ts`
 
@@ -810,6 +842,7 @@ git commit -m "feat(DEV-152): add Next.js proxy routes for payment methods"
 
 **Linear:** DEV-152
 **Files:**
+
 - Modify: `lib/types/index.ts`
 
 **Step 1: Add field**
@@ -823,9 +856,11 @@ In the `Shop` interface in `lib/types/index.ts`, add after `communitySummary`:
 **Step 2: Run type-check**
 
 Run:
+
 ```bash
 pnpm type-check
 ```
+
 Expected: No new errors.
 
 **Step 3: Commit**
@@ -841,6 +876,7 @@ git commit -m "feat(DEV-152): add paymentMethods to frontend Shop type"
 
 **Linear:** DEV-152
 **Files:**
+
 - Modify: `backend/api/shops.py`
 
 **Step 1: Check the shops column selection**
@@ -852,9 +888,11 @@ Also verify the shop detail endpoint (`GET /shops/{shop_id}`) includes `payment_
 **Step 2: Run existing tests**
 
 Run:
+
 ```bash
 cd backend && pytest -v -k "shop"
 ```
+
 Expected: All existing shop tests pass.
 
 **Step 3: Commit**
@@ -870,6 +908,7 @@ git commit -m "feat(DEV-152): include payment_methods in shop API responses"
 
 **Linear:** DEV-153
 **Files:**
+
 - Create: `components/shops/payment-method-section.test.tsx`
 
 **Step 1: Write failing tests**
@@ -898,7 +937,12 @@ describe('PaymentMethodSection', () => {
   const defaultMethods = [
     { method: 'cash', accepted: true, confirmationCount: 3, userVote: null },
     { method: 'card', accepted: false, confirmationCount: 1, userVote: null },
-    { method: 'line_pay', accepted: true, confirmationCount: 0, userVote: null },
+    {
+      method: 'line_pay',
+      accepted: true,
+      confirmationCount: 0,
+      userVote: null,
+    },
   ];
 
   it('renders accepted payment methods as positive chips', () => {
@@ -924,7 +968,9 @@ describe('PaymentMethodSection', () => {
   });
 
   it('renders nothing when methods list is empty', () => {
-    const { container } = render(<PaymentMethodSection shopId="shop-1" methods={[]} />);
+    const { container } = render(
+      <PaymentMethodSection shopId="shop-1" methods={[]} />
+    );
     expect(container.firstChild).toBeNull();
   });
 
@@ -938,9 +984,11 @@ describe('PaymentMethodSection', () => {
 **Step 2: Run to verify failure**
 
 Run:
+
 ```bash
 pnpm vitest run components/shops/payment-method-section.test.tsx --reporter=verbose
 ```
+
 Expected: FAIL — module not found.
 
 ---
@@ -949,6 +997,7 @@ Expected: FAIL — module not found.
 
 **Linear:** DEV-153
 **Files:**
+
 - Create: `components/shops/payment-method-section.tsx`
 - Modify: `app/shops/[shopId]/[slug]/shop-detail-client.tsx`
 
@@ -981,7 +1030,10 @@ const METHOD_LABELS: Record<string, string> = {
   google_pay: 'Google Pay',
 };
 
-export function PaymentMethodSection({ shopId, methods }: PaymentMethodSectionProps) {
+export function PaymentMethodSection({
+  shopId,
+  methods,
+}: PaymentMethodSectionProps) {
   const { user } = useUser();
 
   if (methods.length === 0) return null;
@@ -1036,22 +1088,24 @@ import { PaymentMethodSection } from '@/components/shops/payment-method-section'
 After the `<AttributeChips />` line (around line 165), add:
 
 ```tsx
-{shop.paymentMethods && Object.keys(shop.paymentMethods).length > 0 && (
-  <>
-    <PaymentMethodSection
-      shopId={shop.id}
-      methods={Object.entries(shop.paymentMethods)
-        .filter(([, v]) => v !== null && v !== undefined)
-        .map(([method, accepted]) => ({
-          method,
-          accepted: Boolean(accepted),
-          confirmationCount: 0,
-          userVote: null,
-        }))}
-    />
-    <div className="border-border-warm mx-5 border-t" />
-  </>
-)}
+{
+  shop.paymentMethods && Object.keys(shop.paymentMethods).length > 0 && (
+    <>
+      <PaymentMethodSection
+        shopId={shop.id}
+        methods={Object.entries(shop.paymentMethods)
+          .filter(([, v]) => v !== null && v !== undefined)
+          .map(([method, accepted]) => ({
+            method,
+            accepted: Boolean(accepted),
+            confirmationCount: 0,
+            userVote: null,
+          }))}
+      />
+      <div className="border-border-warm mx-5 border-t" />
+    </>
+  );
+}
 ```
 
 Note: This initial integration renders from the `paymentMethods` JSONB data on the shop object. The community confirmation counts will be fetched separately via the `GET /api/shops/{id}/payment-methods` endpoint and can be wired later with SWR.
@@ -1059,17 +1113,21 @@ Note: This initial integration renders from the `paymentMethods` JSONB data on t
 **Step 3: Run tests to verify they pass**
 
 Run:
+
 ```bash
 pnpm vitest run components/shops/payment-method-section.test.tsx --reporter=verbose
 ```
+
 Expected: All tests PASS.
 
 **Step 4: Run full test suite to verify no regressions**
 
 Run:
+
 ```bash
 pnpm vitest run --reporter=verbose
 ```
+
 Expected: No new failures.
 
 **Step 5: Commit**
@@ -1085,6 +1143,7 @@ git commit -m "feat(DEV-153): add PaymentMethodSection to shop detail page"
 
 **Linear:** DEV-154
 **Files:**
+
 - Modify: `app/(protected)/checkin/[shopId]/page.tsx`
 
 **Step 1: Add payment method selection state**
@@ -1092,7 +1151,9 @@ git commit -m "feat(DEV-153): add PaymentMethodSection to shop detail page"
 In the check-in page component, add state:
 
 ```typescript
-const [selectedPaymentMethods, setSelectedPaymentMethods] = useState<string[]>([]);
+const [selectedPaymentMethods, setSelectedPaymentMethods] = useState<string[]>(
+  []
+);
 ```
 
 **Step 2: Add payment method chips section**
@@ -1100,7 +1161,9 @@ const [selectedPaymentMethods, setSelectedPaymentMethods] = useState<string[]>([
 After the review section (after the public/private toggle area) and before the submit button, add:
 
 ```tsx
-{/* Payment Methods — optional */}
+{
+  /* Payment Methods — optional */
+}
 <div className="space-y-2">
   <p className="text-sm font-medium text-gray-700">
     What payment methods does this place accept? (optional)
@@ -1123,9 +1186,7 @@ After the review section (after the public/private toggle area) and before the s
             type="button"
             onClick={() =>
               setSelectedPaymentMethods((prev) =>
-                selected
-                  ? prev.filter((m) => m !== method)
-                  : [...prev, method]
+                selected ? prev.filter((m) => m !== method) : [...prev, method]
               )
             }
             className={`rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
@@ -1140,7 +1201,7 @@ After the review section (after the public/private toggle area) and before the s
       }
     )}
   </div>
-</div>
+</div>;
 ```
 
 **Step 3: Submit payment confirmations on check-in**
@@ -1165,9 +1226,11 @@ if (selectedPaymentMethods.length > 0) {
 **Step 4: Run lint and type-check**
 
 Run:
+
 ```bash
 pnpm lint && pnpm type-check
 ```
+
 Expected: No errors.
 
 **Step 5: Commit**
@@ -1182,6 +1245,7 @@ git commit -m "feat(DEV-154): add optional payment method step to check-in form"
 ## Task 16: Update SPEC.md with payment method business rules
 
 **Files:**
+
 - Modify: `SPEC.md`
 - Modify: `SPEC_CHANGELOG.md`
 
@@ -1265,31 +1329,37 @@ graph TD
 ```
 
 **Wave 1** (parallel — no dependencies):
+
 - Task 1: `payment_methods` JSONB column migration
 - Task 2: `shop_payment_confirmations` table + RLS migration
 - Task 5: Wire `cash_only` + `mobile_payment` in filter-map.ts
 
 **Wave 2** (parallel — depends on Wave 1):
+
 - Task 3: Bootstrap payment_methods from taxonomy tags ← Task 1
 - Task 4: Update `search_shops` RPC ← Task 1
 - Task 6: Pydantic models ← Task 1
 
 **Wave 3** (sequential — depends on Wave 2):
+
 - Task 7: PaymentService failing tests ← Task 2, Task 6
 - Task 8: PaymentService implementation ← Task 7
 
 **Wave 4** (parallel — depends on Wave 3):
+
 - Task 9: Backend API endpoints ← Task 8
 - Task 10: Next.js proxy routes ← Task 9
 - Task 11: Frontend Shop type ← Task 4
 - Task 12: shops API `payment_methods` ← Task 3
 
 **Wave 5** (parallel — depends on Wave 4):
+
 - Task 13: PaymentMethodSection tests ← Task 10, Task 11
 - Task 14: PaymentMethodSection implementation ← Task 13, Task 12
 - Task 15: Check-in form payment method step ← Task 10
 
 **Wave 6** (sequential — depends on Wave 5):
+
 - Task 16: SPEC.md update ← Task 14, Task 15
 
 ---
@@ -1299,15 +1369,18 @@ graph TD
 ### DEV-90: Payment Methods
 
 **Chunk 1 — Database Migrations (DEV-150):**
+
 - [ ] Task 1: `payment_methods` JSONB column
 - [ ] Task 2: `shop_payment_confirmations` table + RLS
 - [ ] Task 3: Bootstrap from taxonomy tags
 - [ ] Task 4: Update `search_shops` RPC
 
 **Chunk 2 — Filter Wiring (DEV-151):**
+
 - [ ] Task 5: Wire `cash_only` + `mobile_payment` in filter-map.ts
 
 **Chunk 3 — Backend Service + API (DEV-152):**
+
 - [ ] Task 6: Pydantic models
 - [ ] Task 7: PaymentService tests (TDD)
 - [ ] Task 8: PaymentService implementation
@@ -1317,9 +1390,11 @@ graph TD
 - [ ] Task 12: shops API `payment_methods`
 
 **Chunk 4 — Frontend Components (DEV-153/154):**
+
 - [ ] Task 13: PaymentMethodSection tests
 - [ ] Task 14: PaymentMethodSection implementation + shop detail wiring
 - [ ] Task 15: Check-in form payment method step
 
 **Chunk 5 — Documentation:**
+
 - [ ] Task 16: SPEC.md business rules update

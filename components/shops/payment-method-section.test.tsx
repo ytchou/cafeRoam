@@ -6,7 +6,12 @@ describe('a user viewing payment methods on a shop page', () => {
   const defaultMethods = [
     { method: 'cash', accepted: true, confirmationCount: 3, userVote: null },
     { method: 'card', accepted: false, confirmationCount: 1, userVote: null },
-    { method: 'line_pay', accepted: true, confirmationCount: 0, userVote: null },
+    {
+      method: 'line_pay',
+      accepted: true,
+      confirmationCount: 0,
+      userVote: null,
+    },
   ];
 
   it('renders accepted payment methods as positive chips', () => {

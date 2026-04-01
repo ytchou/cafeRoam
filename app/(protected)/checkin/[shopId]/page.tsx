@@ -13,7 +13,10 @@ import { TagConfirmation } from '@/components/reviews/tag-confirmation';
 import { fetchWithAuth } from '@/lib/api/fetch';
 import { uploadCheckInPhoto, uploadMenuPhoto } from '@/lib/supabase/storage';
 import { useAnalytics } from '@/lib/posthog/use-analytics';
-import { PAYMENT_METHODS, PAYMENT_METHOD_LABELS } from '@/lib/constants/payment-methods';
+import {
+  PAYMENT_METHODS,
+  PAYMENT_METHOD_LABELS,
+} from '@/lib/constants/payment-methods';
 
 type SubmitState = 'idle' | 'uploading' | 'submitting';
 
@@ -44,7 +47,9 @@ export default function CheckInPage() {
   const [isPublic, setIsPublic] = useState(true);
   const [submitState, setSubmitState] = useState<SubmitState>('idle');
   const [menuOpen, setMenuOpen] = useState(false);
-  const [selectedPaymentMethods, setSelectedPaymentMethods] = useState<string[]>([]);
+  const [selectedPaymentMethods, setSelectedPaymentMethods] = useState<
+    string[]
+  >([]);
 
   const shopTags = useMemo(
     () =>

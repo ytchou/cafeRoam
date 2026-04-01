@@ -543,13 +543,12 @@ class FollowingListResponse(CamelModel):
 
 # --- Payment Methods ---
 
-VALID_PAYMENT_METHODS = frozenset(
-    {"cash", "card", "line_pay", "twqr", "apple_pay", "google_pay"}
-)
+VALID_PAYMENT_METHODS = frozenset({"cash", "card", "line_pay", "twqr", "apple_pay", "google_pay"})
 
 
 class PaymentMethodView(CamelModel):
     """One payment method with its status and confirmation data."""
+
     method: str
     accepted: bool
     confirmation_count: int = 0
@@ -558,11 +557,13 @@ class PaymentMethodView(CamelModel):
 
 class PaymentMethodsResponse(CamelModel):
     """All known payment methods for a shop."""
+
     methods: list[PaymentMethodView] = []
 
 
 class PaymentConfirmRequest(CamelModel):
     """Request body for confirming a payment method."""
+
     method: str
     vote: bool
 
@@ -576,6 +577,7 @@ class PaymentConfirmRequest(CamelModel):
 
 class PaymentConfirmResponse(CamelModel):
     """Response after confirming a payment method."""
+
     method: str
     vote: bool
     confirmation_count: int

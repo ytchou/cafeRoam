@@ -31,18 +31,20 @@ ALTER TABLE shops ADD COLUMN payment_methods JSONB DEFAULT '{}';
 ```
 
 Schema convention:
+
 ```json
 {
-  "cash":       true,      // accepted
-  "card":       false,     // not accepted
-  "line_pay":   null,      // unknown (omit key or set null)
-  "twqr":       null,
-  "apple_pay":  null,
+  "cash": true, // accepted
+  "card": false, // not accepted
+  "line_pay": null, // unknown (omit key or set null)
+  "twqr": null,
+  "apple_pay": null,
   "google_pay": null
 }
 ```
 
 Values:
+
 - `true` — accepted
 - `false` — not accepted (explicitly known)
 - `null` / key absent — unknown (hidden from UI)
@@ -82,6 +84,7 @@ Backfill `payment_methods` from existing `shop_tags` for shops that have been en
 ### `backend/services/payment_service.py`
 
 Functions:
+
 - `get_payment_methods(shop_id: str, user_id: str | None)` → `PaymentMethodsView` (JSONB merged with confirmation counts + requesting user's own votes)
 - `upsert_confirmation(shop_id: str, user_id: str, method: str, vote: bool)` → upsert to `shop_payment_confirmations`
 - `get_user_confirmations(shop_id: str, user_id: str)` → dict of method → vote (for prefilling check-in form)
@@ -104,13 +107,18 @@ Update `search_shops` RPC to include `payment_methods` JSONB in the shop respons
 Extend with two new entries:
 
 ```ts
-export type TagFilterId = 'wifi' | 'outlet' | 'quiet' | 'cash_only' | 'mobile_payment';
+export type TagFilterId =
+  | 'wifi'
+  | 'outlet'
+  | 'quiet'
+  | 'cash_only'
+  | 'mobile_payment';
 
 export const FILTER_TO_TAG_IDS: Record<TagFilterId, string> = {
-  wifi:           'wifi_available',
-  outlet:         'power_outlets',
-  quiet:          'quiet',
-  cash_only:      'cash_only',
+  wifi: 'wifi_available',
+  outlet: 'power_outlets',
+  quiet: 'quiet',
+  cash_only: 'cash_only',
   mobile_payment: 'mobile_payment',
 };
 ```
@@ -120,6 +128,7 @@ Filter logic in `page.tsx` already handles new entries — the taxonomy tag matc
 ### Both filter sheets
 
 Add `{ id: 'mobile_payment', label: 'Mobile Payment' }` to the Functionality tab in:
+
 - `components/filters/filter-sheet.tsx`
 - `components/discovery/filter-sheet.tsx`
 
@@ -133,12 +142,12 @@ New component placed after `<AttributeChips>` (below the existing divider).
 
 ### Display rules
 
-| `payment_methods[method]` | Confirmations | Display |
-|--------------------------|---------------|---------|
-| `true` | 0 | chip + "reported" label |
-| `true` | ≥1 | chip + check + count |
-| `false` | any | "Not accepted" chip (muted, cash/card only — contextually useful) |
-| `null` / missing | — | hidden |
+| `payment_methods[method]` | Confirmations | Display                                                           |
+| ------------------------- | ------------- | ----------------------------------------------------------------- |
+| `true`                    | 0             | chip + "reported" label                                           |
+| `true`                    | ≥1            | chip + check + count                                              |
+| `false`                   | any           | "Not accepted" chip (muted, cash/card only — contextually useful) |
+| `null` / missing          | —             | hidden                                                            |
 
 ### Interaction
 
