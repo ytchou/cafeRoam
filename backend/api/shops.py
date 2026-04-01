@@ -46,7 +46,7 @@ _SHOP_LIST_COLUMNS = (
     "id, name, slug, address, city, mrt, latitude, longitude, "
     "rating, review_count, description, processing_status, "
     "mode_work, mode_rest, mode_social, "
-    "community_summary, opening_hours, "
+    "community_summary, opening_hours, payment_methods, "
     "created_at"
 )
 
