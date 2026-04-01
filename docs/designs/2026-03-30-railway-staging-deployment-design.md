@@ -70,6 +70,7 @@ GitHub (main) --> Railway auto-deploy
 | Email           | `EMAIL_FROM`                        | api     | `noreply@caferoam.tw`                |
 | Maps            | `MAPS_PROVIDER`                     | web     | `mapbox`                             |
 | Maps            | `NEXT_PUBLIC_MAPBOX_TOKEN`          | web     | Real token (1Password)               |
+| Maps            | `MAPBOX_ACCESS_TOKEN`               | api     | Real token (1Password)               |
 | Analytics       | `ANALYTICS_PROVIDER`                | web     | `posthog`                            |
 | Analytics       | `NEXT_PUBLIC_POSTHOG_KEY`           | web     | Same as prod (shared project)        |
 | Analytics       | `NEXT_PUBLIC_POSTHOG_HOST`          | web     | Same as prod                         |

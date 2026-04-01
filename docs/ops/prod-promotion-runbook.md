@@ -82,7 +82,8 @@ Check off each item as you complete it. Do not proceed to the next phase if any 
   - `OPENAI_API_KEY`
   - `RESEND_API_KEY`
   - `EMAIL_FROM=hello@caferoam.tw`
-  - `NEXT_PUBLIC_MAPBOX_TOKEN`
+  - `NEXT_PUBLIC_MAPBOX_TOKEN` (frontend, web service)
+  - `MAPBOX_ACCESS_TOKEN` (backend, api service — required for directions + geocoding)
   - `NEXT_PUBLIC_POSTHOG_KEY`, `POSTHOG_API_KEY`, `POSTHOG_PROJECT_ID`
   - `NEXT_PUBLIC_GA_MEASUREMENT_ID`
   - `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_DSN`, `SENTRY_ORG`, `SENTRY_PROJECT`
