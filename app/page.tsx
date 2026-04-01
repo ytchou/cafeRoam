@@ -12,10 +12,7 @@ import { useUser } from '@/lib/hooks/use-user';
 import { useAnalytics } from '@/lib/posthog/use-analytics';
 import { trackSearch, trackSignupCtaClick } from '@/lib/analytics/ga4-events';
 import { haversineKm } from '@/lib/utils';
-import {
-  filterByBounds,
-  type MapBounds,
-} from '@/lib/utils/filter-by-bounds';
+import { filterByBounds, type MapBounds } from '@/lib/utils/filter-by-bounds';
 import {
   FILTER_TO_TAG_IDS,
   type TagFilterId,

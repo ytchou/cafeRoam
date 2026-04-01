@@ -13,8 +13,7 @@ const {
   mockQueryRenderedFeatures: vi.fn(() => [] as unknown[]),
   // Simulates callback-style API: getClusterExpansionZoom(id, cb) → cb(null, zoom)
   mockGetClusterExpansionZoom: vi.fn(
-    (_id: number, cb: (err: Error | null, zoom: number) => void) =>
-      cb(null, 15)
+    (_id: number, cb: (err: Error | null, zoom: number) => void) => cb(null, 15)
   ),
   mockEaseTo: vi.fn(),
   mockFlyTo: vi.fn(),

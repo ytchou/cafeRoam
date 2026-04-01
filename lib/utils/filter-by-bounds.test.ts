@@ -2,9 +2,24 @@ import { describe, expect, it } from 'vitest';
 import { filterByBounds, type MapBounds } from '@/lib/utils/filter-by-bounds';
 
 const SHOPS = [
-  { id: 'a', name: '湛盧咖啡 Zhanlu Coffee', latitude: 25.03, longitude: 121.55 },
-  { id: 'b', name: '山頂咖啡 Summit Coffee', latitude: 25.1, longitude: 121.55 },
-  { id: 'c', name: '有著落咖啡 Landed Coffee', latitude: 25.03, longitude: 121.7 },
+  {
+    id: 'a',
+    name: '湛盧咖啡 Zhanlu Coffee',
+    latitude: 25.03,
+    longitude: 121.55,
+  },
+  {
+    id: 'b',
+    name: '山頂咖啡 Summit Coffee',
+    latitude: 25.1,
+    longitude: 121.55,
+  },
+  {
+    id: 'c',
+    name: '有著落咖啡 Landed Coffee',
+    latitude: 25.03,
+    longitude: 121.7,
+  },
   { id: 'd', name: '無座標咖啡 No Coords', latitude: null, longitude: null },
 ];
 
