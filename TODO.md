@@ -24,7 +24,7 @@
 - [x] Task 5: Update adapter test expectations (DEV-161)
 
 **Wave 5 — Migration:**
-- [ ] Task 7: Write and verify migration script (DEV-162)
+- [x] Task 7: Write and verify migration script (DEV-162)
 
 **Wave 6 — Verification:**
 - [ ] Task 8: Full test suite + coverage check
