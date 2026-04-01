@@ -15,6 +15,7 @@
 **Tech Stack:** react-map-gl/mapbox, Mapbox GL JS, React state
 
 **Acceptance Criteria:**
+
 - [ ] Clicking a shop card in the left panel (desktop) or carousel (mobile) flies the map to that pin and highlights it
 - [ ] Panning or zooming the map updates the shop list and "N places nearby" count to reflect only visible shops
 - [ ] When view is 'list' (no map visible), all shops are shown without bounds filtering
@@ -25,6 +26,7 @@
 ### Task 1: MapView flyTo on selectedShopId change (DEV-165)
 
 **Files:**
+
 - Modify: `components/map/map-view.tsx:42-188`
 - Modify: `components/map/map-view.test.tsx`
 
@@ -34,16 +36,19 @@ Add to the existing test file `components/map/map-view.test.tsx`. First, add `mo
 
 ```tsx
 // Add mockFlyTo to the vi.hoisted block (line 8):
-const { mockQueryRenderedFeatures, mockGetClusterExpansionZoom, mockEaseTo, mockFlyTo } =
-  vi.hoisted(() => ({
-    mockQueryRenderedFeatures: vi.fn(() => [] as unknown[]),
-    mockGetClusterExpansionZoom: vi.fn(
-      (_id: number, cb: (err: Error | null, zoom: number) => void) =>
-        cb(null, 15)
-    ),
-    mockEaseTo: vi.fn(),
-    mockFlyTo: vi.fn(),
-  }));
+const {
+  mockQueryRenderedFeatures,
+  mockGetClusterExpansionZoom,
+  mockEaseTo,
+  mockFlyTo,
+} = vi.hoisted(() => ({
+  mockQueryRenderedFeatures: vi.fn(() => [] as unknown[]),
+  mockGetClusterExpansionZoom: vi.fn(
+    (_id: number, cb: (err: Error | null, zoom: number) => void) => cb(null, 15)
+  ),
+  mockEaseTo: vi.fn(),
+  mockFlyTo: vi.fn(),
+}));
 
 // In MockMap's useImperativeHandle (line 29), add flyTo:
 ReactModule.useImperativeHandle(ref, () => ({
@@ -176,7 +181,7 @@ useEffect(() => {
 Also update the `clusterMaxZoom` in the `<Source>` to use the constant:
 
 ```tsx
-clusterMaxZoom={CLUSTER_MAX_ZOOM}
+clusterMaxZoom = { CLUSTER_MAX_ZOOM };
 ```
 
 **Step 4: Run test to verify it passes**
@@ -196,6 +201,7 @@ git commit -m "fix(DEV-165): flyTo selected pin on card click"
 ### Task 2: MapView onBoundsChange callback (DEV-166)
 
 **Files:**
+
 - Modify: `components/map/map-view.tsx`
 - Modify: `components/map/map-view.test.tsx`
 
@@ -350,6 +356,7 @@ git commit -m "feat(DEV-166): add onBoundsChange callback to MapView"
 ### Task 3: Thread onBoundsChange through layout components (DEV-166)
 
 **Files:**
+
 - Modify: `components/map/map-with-fallback.tsx`
 - Modify: `components/map/map-desktop-layout.tsx`
 - Modify: `components/map/map-mobile-layout.tsx`
@@ -380,15 +387,16 @@ Add to destructured props and pass to `<MapView>`:
 
 ```tsx
 // In the destructured props:
-onBoundsChange,
-
-// In the <MapView> component (around line 166):
-<MapView
-  shops={shops}
-  onPinClick={(id) => onShopClick(id)}
-  selectedShopId={selectedShopId}
-  onBoundsChange={onBoundsChange}
-/>
+(onBoundsChange,
+  (
+    // In the <MapView> component (around line 166):
+    <MapView
+      shops={shops}
+      onPinClick={(id) => onShopClick(id)}
+      selectedShopId={selectedShopId}
+      onBoundsChange={onBoundsChange}
+    />
+  ));
 ```
 
 **Step 3: Add onBoundsChange to MapMobileLayoutProps**
@@ -428,6 +436,7 @@ git commit -m "feat(DEV-166): thread onBoundsChange through layout components"
 ### Task 4: Bounds-based shop filtering in FindPageContent (DEV-166)
 
 **Files:**
+
 - Modify: `app/page.tsx`
 
 **Step 1: Write the failing test**
@@ -442,13 +451,18 @@ import { filterByBounds, type MapBounds } from '@/lib/utils/filter-by-bounds';
 
 const SHOPS = [
   { id: 'a', name: 'Inside', latitude: 25.03, longitude: 121.55 },
-  { id: 'b', name: 'Outside North', latitude: 25.10, longitude: 121.55 },
-  { id: 'c', name: 'Outside East', latitude: 25.03, longitude: 121.70 },
+  { id: 'b', name: 'Outside North', latitude: 25.1, longitude: 121.55 },
+  { id: 'c', name: 'Outside East', latitude: 25.03, longitude: 121.7 },
   { id: 'd', name: 'No coords', latitude: null, longitude: null },
 ];
 
 describe('filterByBounds', () => {
-  const bounds: MapBounds = { north: 25.06, south: 25.01, east: 121.58, west: 121.53 };
+  const bounds: MapBounds = {
+    north: 25.06,
+    south: 25.01,
+    east: 121.58,
+    west: 121.53,
+  };
 
   it('a user panning the map sees only shops inside the viewport', () => {
     const result = filterByBounds(SHOPS, bounds);
@@ -485,10 +499,9 @@ export interface MapBounds {
   west: number;
 }
 
-export function filterByBounds<T extends { latitude: number | null; longitude: number | null }>(
-  shops: T[],
-  bounds: MapBounds | null,
-): T[] {
+export function filterByBounds<
+  T extends { latitude: number | null; longitude: number | null },
+>(shops: T[], bounds: MapBounds | null): T[] {
   if (!bounds) return shops;
   return shops.filter((s) => {
     if (s.latitude == null || s.longitude == null) return false;
@@ -546,7 +559,7 @@ const handleBoundsChange = useCallback(
 onBoundsChange: handleBoundsChange,
 ```
 
-**Important:** The `shops` that get passed to `MapView` for GeoJSON rendering should be the *unfiltered* set (all shops with coordinates) so pins remain on the map even outside the viewport. But `MapView` already receives `shops` from the layout prop, which is now the filtered set. We need to keep the full set for the map.
+**Important:** The `shops` that get passed to `MapView` for GeoJSON rendering should be the _unfiltered_ set (all shops with coordinates) so pins remain on the map even outside the viewport. But `MapView` already receives `shops` from the layout prop, which is now the filtered set. We need to keep the full set for the map.
 
 **Correction — pass both filtered and full shops:**
 
@@ -594,6 +607,7 @@ Expected: PASS — all tests green.
 **Step 4: Commit any lint/type fixes**
 
 If any fixes needed:
+
 ```bash
 git add -A
 git commit -m "chore: lint and type fixes for DEV-163"
@@ -626,16 +640,20 @@ graph TD
 ```
 
 **Wave 1** (parallel — both modify `map-view.tsx` but different sections):
+
 - Task 1: flyTo on selectedShopId (DEV-165)
 - Task 2: onBoundsChange callback (DEV-166)
 
 > **Note:** Tasks 1 and 2 both modify `map-view.tsx` and `map-view.test.tsx`. Execute them sequentially within Wave 1 to avoid merge conflicts — Task 1 first, then Task 2.
 
 **Wave 2** (depends on Wave 1):
+
 - Task 3: Thread onBoundsChange through layouts ← Task 2
 
 **Wave 3** (depends on Wave 2):
+
 - Task 4: Bounds filtering in FindPageContent ← Task 3
 
 **Wave 4** (depends on Wave 3):
+
 - Task 5: Final verification ← Task 4

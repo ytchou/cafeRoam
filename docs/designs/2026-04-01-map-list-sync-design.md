@@ -16,6 +16,7 @@ Two missing map-list synchronization behaviors on the Find page:
 **Current state:** `selectedShopId` flows from FindPageContent → MapView. GL paint expressions conditionally style the selected pin. However, both flyTo and highlight are broken on card click.
 
 **Fix:** Add a `useEffect` in MapView that reacts to `selectedShopId` changes:
+
 1. Look up the selected shop's coordinates from `geojsonData`
 2. Call `map.flyTo({ center, zoom })` to pan/zoom to the pin
 3. If the pin would be inside a cluster at current zoom, zoom to `clusterMaxZoom + 1` (15)
@@ -26,6 +27,7 @@ No new props needed — `selectedShopId` and `shops` are already passed.
 ### Bug 2: Viewport-based filtering (DEV-166)
 
 **Data flow:**
+
 ```
 MapView map.on('moveend') → getBounds() → onBoundsChange(bounds)
     ↓
@@ -37,6 +39,7 @@ CountHeader & ShopCarousel auto-update via filtered count/list
 ```
 
 **Implementation:**
+
 - MapView adds `onBoundsChange?: (bounds: { north, south, east, west }) => void`
 - Fires on `moveend` + initial `load`
 - FindPageContent stores `mapBounds` state, filters shops by lat/lng containment

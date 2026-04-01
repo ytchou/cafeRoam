@@ -8,8 +8,8 @@
 
 ### Issues Found (1 total)
 
-| Severity | File:Line | Description | Flagged By |
-|----------|-----------|-------------|------------|
+| Severity  | File:Line                                   | Description                            | Flagged By   |
+| --------- | ------------------------------------------- | -------------------------------------- | ------------ |
 | Important | map-view.tsx:15-20, filter-by-bounds.ts:1-6 | MapBounds type duplicated in two files | Architecture |
 
 ### Validation Results
@@ -20,9 +20,11 @@
 
 **Pre-fix SHA:** 260b555b44d7a079bcd0b123ade96beac746ad87
 **Issues fixed:**
+
 - [Important] map-view.tsx — Re-export MapBounds from filter-by-bounds.ts instead of redefining
 
 **Batch Test Run:**
+
 - `pnpm vitest run` (43 related tests) — PASS
 
 ## Final State
