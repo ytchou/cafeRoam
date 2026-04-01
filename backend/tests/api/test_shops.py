@@ -343,15 +343,15 @@ class TestShopsAPI:
         """A shop with WiFi and open hours shows its tags and live open status in the find page response."""
         shop_data = {
             **SHOP_ROW,
-            # Open 24 hours every day — deterministic result without mocking is_open_now
+            # Open 24 hours every day — structured format (post-migration DB shape)
             "opening_hours": [
-                "Monday: Open 24 hours",
-                "Tuesday: Open 24 hours",
-                "Wednesday: Open 24 hours",
-                "Thursday: Open 24 hours",
-                "Friday: Open 24 hours",
-                "Saturday: Open 24 hours",
-                "Sunday: Open 24 hours",
+                {"day": 0, "open": 0, "close": 1440},
+                {"day": 1, "open": 0, "close": 1440},
+                {"day": 2, "open": 0, "close": 1440},
+                {"day": 3, "open": 0, "close": 1440},
+                {"day": 4, "open": 0, "close": 1440},
+                {"day": 5, "open": 0, "close": 1440},
+                {"day": 6, "open": 0, "close": 1440},
             ],
             "shop_photos": [],
             "shop_claims": [],

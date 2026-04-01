@@ -27,7 +27,7 @@
 - [x] Task 7: Write and verify migration script (DEV-162)
 
 **Wave 6 — Verification:**
-- [ ] Task 8: Full test suite + coverage check
+- [x] Task 8: Full test suite + coverage check
 
 ---
 
