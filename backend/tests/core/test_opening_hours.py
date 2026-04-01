@@ -76,3 +76,53 @@ class TestIsOpenNow:
         hours = ["Monday: 09:00 - 18:00"]
         now = datetime(2026, 3, 16, 14, 0, tzinfo=TW)
         assert is_open_now(hours, now) is True
+
+
+class TestChineseFormat:
+    """Given opening_hours scraped in Chinese format (actual DB format), determine open status."""
+
+    def test_chinese_day_open_during_hours(self):
+        hours = ["星期一: 12:00 to 23:00"]
+        now = datetime(2026, 3, 16, 15, 0, tzinfo=TW)  # Monday 3pm
+        assert is_open_now(hours, now) is True
+
+    def test_chinese_day_closed_outside_hours(self):
+        hours = ["星期一: 12:00 to 23:00"]
+        now = datetime(2026, 3, 16, 11, 0, tzinfo=TW)  # Monday 11am
+        assert is_open_now(hours, now) is False
+
+    def test_chinese_closed_marker(self):
+        hours = ["星期二: 休息"]
+        now = datetime(2026, 3, 17, 14, 0, tzinfo=TW)  # Tuesday 2pm
+        assert is_open_now(hours, now) is False
+
+    def test_chinese_full_week_open(self):
+        hours = [
+            "星期六: 12:00 to 23:00",
+            "星期日: 12:00 to 23:00",
+            "星期一: 12:00 to 23:00",
+            "星期二: 12:00 to 23:00",
+            "星期三: 12:00 to 23:00",
+            "星期四: 12:00 to 23:00",
+            "星期五: 12:00 to 23:00",
+        ]
+        now = datetime(2026, 3, 18, 13, 0, tzinfo=TW)  # Wednesday 1pm
+        assert is_open_now(hours, now) is True
+
+    def test_chinese_mixed_closed_days(self):
+        hours = [
+            "星期一: 12:00 to 18:30",
+            "星期二: 休息",
+            "星期三: 休息",
+            "星期四: 12:00 to 18:30",
+            "星期五: 12:00 to 18:30",
+            "星期六: 11:00 to 18:30",
+            "星期日: 11:00 to 18:30",
+        ]
+        now = datetime(2026, 3, 17, 14, 0, tzinfo=TW)  # Tuesday (休息)
+        assert is_open_now(hours, now) is False
+
+    def test_chinese_format_unknown_day_returns_none(self):
+        hours = ["星期一: 12:00 to 18:00"]
+        now = datetime(2026, 3, 17, 14, 0, tzinfo=TW)  # Tuesday — not listed
+        assert is_open_now(hours, now) is None
