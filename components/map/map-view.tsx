@@ -4,19 +4,15 @@ import Map, { Layer, Source } from 'react-map-gl/mapbox';
 import type { MapRef, MapMouseEvent } from 'react-map-gl/mapbox';
 import type { GeoJSONSource } from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
+import type { MapBounds } from '@/lib/utils/filter-by-bounds';
+
+export type { MapBounds };
 
 interface Shop {
   id: string;
   name: string;
   latitude: number | null;
   longitude: number | null;
-}
-
-export interface MapBounds {
-  north: number;
-  south: number;
-  east: number;
-  west: number;
 }
 
 interface MapViewProps {
