@@ -220,6 +220,26 @@ class TestSearchAPI:
         finally:
             app.dependency_overrides.clear()
 
+    def test_search_returns_503_when_embeddings_unavailable(self):
+        """When the embeddings provider is not configured, users see a 503 instead of a cryptic 500."""
+        from providers.embeddings import EmbeddingsProviderUnavailableError
+
+        app.dependency_overrides[get_current_user] = lambda: {"id": "usr_g7h8i9j0k1l2"}
+        app.dependency_overrides[get_admin_db] = lambda: _mock_admin_db()
+        try:
+            with patch("api.search.get_embeddings_provider") as mock_emb_factory:
+                mock_emb_factory.side_effect = EmbeddingsProviderUnavailableError(
+                    "OPENAI_API_KEY is not set"
+                )
+                response = client.get(
+                    "/search?text=pour+over",
+                    headers={"Authorization": "Bearer valid-jwt"},
+                )
+                assert response.status_code == 503
+                assert "embeddings provider" in response.json()["detail"].lower()
+        finally:
+            app.dependency_overrides.clear()
+
 
 class TestSearchCacheAPI:
     def test_search_response_indicates_cache_hit(self):

@@ -1,7 +1,7 @@
 from typing import Any
 
 import structlog
-from fastapi import APIRouter, BackgroundTasks, Depends, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from supabase import Client
 
 from api.deps import get_admin_db, get_current_user, get_user_db
@@ -9,7 +9,7 @@ from core.anonymize import anonymize_user_id
 from core.config import settings
 from models.types import SearchQuery
 from providers.cache import get_search_cache_provider
-from providers.embeddings import get_embeddings_provider
+from providers.embeddings import EmbeddingsProviderUnavailableError, get_embeddings_provider
 from services.query_classifier import classify
 from services.search_service import SearchService
 
@@ -53,7 +53,15 @@ async def search(
     admin_db: Client = Depends(get_admin_db),  # noqa: B008
 ) -> dict[str, Any]:
     """Semantic search with optional mode filter. Auth required."""
-    embeddings = get_embeddings_provider()
+    try:
+        embeddings = get_embeddings_provider()
+    except EmbeddingsProviderUnavailableError as exc:
+        logger.error("Embeddings provider unavailable", error=str(exc))
+        raise HTTPException(
+            status_code=503,
+            detail="Search is temporarily unavailable. The embeddings provider is not configured.",
+        ) from exc
+
     cache = get_search_cache_provider(admin_db)
     service = SearchService(db=db, embeddings=embeddings, cache=cache)
     query = SearchQuery(text=text, limit=limit)
