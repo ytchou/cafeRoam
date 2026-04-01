@@ -6,6 +6,8 @@ The opening_hours field is a list[str] populated by scrapers in formats like:
   - "Monday: Open 24 hours"
   - "Sunday: Closed"
   - "Monday: 09:00 - 18:00"  (24h format fallback)
+  - "星期一: 09:00 to 18:00"  (Chinese day names with 'to' separator)
+  - "星期二: 休息"             (Chinese 'closed')
 
 All shops are in Asia/Taipei timezone.
 """
@@ -21,10 +23,18 @@ _DAY_MAP = {
     "friday": 4,
     "saturday": 5,
     "sunday": 6,
+    # Chinese day names
+    "星期一": 0,
+    "星期二": 1,
+    "星期三": 2,
+    "星期四": 3,
+    "星期五": 4,
+    "星期六": 5,
+    "星期日": 6,
 }
 
 _TIME_RE = re.compile(r"(\d{1,2}):(\d{2})\s*(AM|PM)?", re.IGNORECASE)
-_RANGE_SEP_RE = re.compile(r"\s*[-\u2013]\s*")
+_RANGE_SEP_RE = re.compile(r"\s*(?:[-\u2013]|\bto\b)\s*", re.IGNORECASE)
 
 
 def _parse_time_to_minutes(time_str: str) -> int:
@@ -74,7 +84,7 @@ def is_open_now(opening_hours: list[str] | None, now: datetime) -> bool | None:
             today_seen = True
 
         # Handle special cases
-        if "closed" in time_part.lower():
+        if "closed" in time_part.lower() or "休息" in time_part:
             if day_num == current_weekday:
                 return False
             continue
