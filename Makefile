@@ -61,6 +61,8 @@ restore-seed-user:
 seed-shops:
 	@echo "Restoring scraped shop data from supabase/seeds/shops_data.sql..."
 	@docker exec -i supabase_db_caferoam psql -U postgres -d postgres < supabase/seeds/shops_data.sql
+	@echo "Applying payment methods seed..."
+	@docker exec -i supabase_db_caferoam psql -U postgres -d postgres < supabase/seeds/payment_methods_seed.sql
 	@echo "Done — shop data restored."
 
 reset-db:

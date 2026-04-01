@@ -89,27 +89,47 @@ function FindPageContent() {
       filtered = filtered.filter((shop) => shop.isOpen === true);
     }
 
-    // Apply rating sort
+    // Apply rating sort (still attach distance_m for card labels if geo available)
     if (activeFiltersSet.has('rating')) {
       const sorted = [...filtered].sort(
         (a, b) => (b.rating ?? 0) - (a.rating ?? 0)
       );
-      return view === 'map' ? filterByBounds(sorted, mapBounds) : sorted;
+      const withDistance =
+        latitude != null && longitude != null
+          ? sorted.map((shop) => {
+              const km =
+                shop.latitude != null && shop.longitude != null
+                  ? haversineKm(
+                      latitude,
+                      longitude,
+                      shop.latitude,
+                      shop.longitude
+                    )
+                  : null;
+              return {
+                ...shop,
+                distance_m: km != null ? Math.round(km * 1000) : null,
+              };
+            })
+          : sorted;
+      return view === 'map' ? filterByBounds(withDistance, mapBounds) : withDistance;
     }
 
-    // Apply geo-sort if location available
+    // Apply geo-sort if location available, and attach distance_m for card labels
     if (latitude != null && longitude != null) {
-      const sorted = [...filtered].sort((a, b) => {
-        const dA =
-          a.latitude != null && a.longitude != null
-            ? haversineKm(latitude, longitude, a.latitude, a.longitude)
-            : Infinity;
-        const dB =
-          b.latitude != null && b.longitude != null
-            ? haversineKm(latitude, longitude, b.latitude, b.longitude)
-            : Infinity;
-        return dA - dB;
+      const withDistance = filtered.map((shop) => {
+        const km =
+          shop.latitude != null && shop.longitude != null
+            ? haversineKm(latitude, longitude, shop.latitude, shop.longitude)
+            : null;
+        return {
+          ...shop,
+          distance_m: km != null ? Math.round(km * 1000) : null,
+        };
       });
+      const sorted = withDistance.sort(
+        (a, b) => (a.distance_m ?? Infinity) - (b.distance_m ?? Infinity)
+      );
       return view === 'map' ? filterByBounds(sorted, mapBounds) : sorted;
     }
 
