@@ -6,13 +6,13 @@
 
 ## Pass 1 — Discovery
 
-*Agents: Bug Hunter, Standards, Architecture, Design Quality (inline due to rate limit)*
+_Agents: Bug Hunter, Standards, Architecture, Design Quality (inline due to rate limit)_
 
 ### Issues Found (1 total)
 
-| Severity | File:Line | Description | Flagged By |
-|----------|-----------|-------------|------------|
-| Minor | app/page.tsx:99-128 | DRY: distance computation lambda duplicated between rating-sort and geo-sort blocks | Architecture |
+| Severity | File:Line           | Description                                                                         | Flagged By   |
+| -------- | ------------------- | ----------------------------------------------------------------------------------- | ------------ |
+| Minor    | app/page.tsx:99-128 | DRY: distance computation lambda duplicated between rating-sort and geo-sort blocks | Architecture |
 
 ### Validation Results
 
@@ -22,9 +22,11 @@
 
 **Pre-fix SHA:** 0b24ea38478f13e709fbed6a917d7c944ec34ae3
 **Issues fixed:**
+
 - [Minor] app/page.tsx:92-105 — Extracted `attachDistance` helper to deduplicate distance_m computation
 
 **Batch Test Run:**
+
 - `pnpm vitest run` (relevant files) — PASS (129 tests)
 
 ## Final State

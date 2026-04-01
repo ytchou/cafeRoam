@@ -99,7 +99,10 @@ function FindPageContent() {
           hasGeo && shop.latitude != null && shop.longitude != null
             ? haversineKm(latitude!, longitude!, shop.latitude, shop.longitude)
             : null;
-        return { ...shop, distance_m: km != null ? Math.round(km * 1000) : null };
+        return {
+          ...shop,
+          distance_m: km != null ? Math.round(km * 1000) : null,
+        };
       });
 
     // Apply rating sort
