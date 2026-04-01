@@ -6,16 +6,16 @@
 
 ## Pass 1 — Full Discovery
 
-*Agents: Bug Hunter, Standards, Architecture, Plan Alignment, Test Philosophy (all run inline due to rate limit)*
+_Agents: Bug Hunter, Standards, Architecture, Plan Alignment, Test Philosophy (all run inline due to rate limit)_
 
 ### Issues Found (4 total after validation)
 
-| # | Severity | File:Line | Description | Flagged By |
-|---|----------|-----------|-------------|------------|
-| 1 | Important | types.py:37, interface.py:24 | Type annotation uses `list[dict[str, int \| None]]` instead of `list[StructuredHours]` per design doc | Plan Alignment, Standards |
-| 2 | Minor | opening_hours.py:154 | `close == open` edge case falls into midnight-crossing branch (no real-world impact) | Bug Hunter |
-| 3 | Minor | migrate_opening_hours.py:48 | `hours[0]` array indexing (CLAUDE.md rule) but guarded by `if not hours` check | Standards |
-| 4 | Minor | test_opening_hours.py | Test names framed around function signatures (acceptable for pure utility tests) | Test Philosophy |
+| #   | Severity  | File:Line                    | Description                                                                                           | Flagged By                |
+| --- | --------- | ---------------------------- | ----------------------------------------------------------------------------------------------------- | ------------------------- |
+| 1   | Important | types.py:37, interface.py:24 | Type annotation uses `list[dict[str, int \| None]]` instead of `list[StructuredHours]` per design doc | Plan Alignment, Standards |
+| 2   | Minor     | opening_hours.py:154         | `close == open` edge case falls into midnight-crossing branch (no real-world impact)                  | Bug Hunter                |
+| 3   | Minor     | migrate_opening_hours.py:48  | `hours[0]` array indexing (CLAUDE.md rule) but guarded by `if not hours` check                        | Standards                 |
+| 4   | Minor     | test_opening_hours.py        | Test names framed around function signatures (acceptable for pure utility tests)                      | Test Philosophy           |
 
 ### Validation Results
 

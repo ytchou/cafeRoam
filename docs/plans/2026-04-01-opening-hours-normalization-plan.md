@@ -15,6 +15,7 @@
 **Tech Stack:** Python 3.12+, Pydantic, Supabase JSONB, pytest
 
 **Acceptance Criteria:**
+
 - [ ] `is_open_now` returns correct open/closed/unknown status using structured data with no string parsing
 - [ ] New shops scraped via Apify are stored in structured format automatically
 - [ ] All 164 existing shops are migrated from string to structured format
@@ -25,6 +26,7 @@
 ### Task 1: Write failing tests for `parse_to_structured()` (DEV-159)
 
 **Files:**
+
 - Modify: `backend/tests/core/test_opening_hours.py`
 
 **Step 1: Write failing tests for parse_to_structured**
@@ -188,6 +190,7 @@ Expected: FAIL — `ImportError: cannot import name 'StructuredHours' from 'core
 ### Task 2: Implement StructuredHours + parse_to_structured + rewrite is_open_now (DEV-159)
 
 **Files:**
+
 - Modify: `backend/core/opening_hours.py`
 
 **Step 1: Rewrite opening_hours.py**
@@ -381,15 +384,19 @@ git commit -m "feat(DEV-159): add StructuredHours type + parse_to_structured + r
 ### Task 3: Update ScrapedShopData type (DEV-160)
 
 **Files:**
+
 - Modify: `backend/providers/scraper/interface.py:24`
 
 **Step 1: Update ScrapedShopData.opening_hours type**
 
 Change line 24 from:
+
 ```python
     opening_hours: list[str] | None = None
 ```
+
 to:
+
 ```python
     opening_hours: list[dict[str, int | None]] | None = None
 ```
@@ -408,11 +415,13 @@ git commit -m "feat(DEV-160): update ScrapedShopData.opening_hours type to struc
 ### Task 4: Update Apify adapter to normalize at ingest (DEV-160)
 
 **Files:**
+
 - Modify: `backend/providers/scraper/apify_adapter.py:135-140`
 
-**Step 1: Update _parse_place opening_hours construction**
+**Step 1: Update \_parse_place opening_hours construction**
 
 Replace lines 135-140:
+
 ```python
             opening_hours=[
                 f"{h.get('day', '')}: {h.get('hours', '')}".strip(": ")
@@ -423,17 +432,20 @@ Replace lines 135-140:
 ```
 
 with:
+
 ```python
             opening_hours=self._normalize_opening_hours(place.get("openingHours"))
             or None,
 ```
 
 Add a new import at the top of the file:
+
 ```python
 from core.opening_hours import parse_to_structured
 ```
 
 Add a new static method to the class:
+
 ```python
     @staticmethod
     def _normalize_opening_hours(
@@ -463,15 +475,19 @@ Expected: FAIL on `test_scrape_by_url_returns_shop_data` (line 159 asserts `== [
 ### Task 5: Update adapter test expectations (DEV-161)
 
 **Files:**
+
 - Modify: `backend/tests/providers/test_apify_adapter.py:159`
 
 **Step 1: Update the assertion for opening_hours**
 
 Replace line 159:
+
 ```python
     assert result.opening_hours == ["Monday: 9:00 AM - 6:00 PM"]
 ```
+
 with:
+
 ```python
     assert result.opening_hours == [{"day": 0, "open": 540, "close": 1080}]
 ```
@@ -493,15 +509,19 @@ git commit -m "feat(DEV-160): normalize opening_hours at Apify ingest + update a
 ### Task 6: Update Shop model type (DEV-161)
 
 **Files:**
+
 - Modify: `backend/models/types.py:37`
 
 **Step 1: Update Shop.opening_hours type**
 
 Change line 37 from:
+
 ```python
     opening_hours: list[str] | None = None
 ```
+
 to:
+
 ```python
     opening_hours: list[dict[str, int | None]] | None = None
 ```
@@ -523,6 +543,7 @@ git commit -m "feat(DEV-161): update Shop.opening_hours type to structured dict"
 ### Task 7: Write migration script (DEV-162)
 
 **Files:**
+
 - Create: `scripts/migrate_opening_hours.py`
 
 **Step 1: Write the migration script**
@@ -610,6 +631,7 @@ Expected output: `Migrated: ~164, Skipped: 0, Failed: 0`
 **Step 3: Spot-check 5 shops**
 
 Run a quick query to verify structured format in DB:
+
 ```bash
 cd backend && python -c "
 import os; from dotenv import load_dotenv; load_dotenv('.env')
@@ -620,6 +642,7 @@ for r in rows:
     print(r['name'], '->', type(r['opening_hours'][0]) if r['opening_hours'] else 'null')
 "
 ```
+
 Expected: all show `<class 'dict'>` not `<class 'str'>`
 
 **Step 4: Commit**
@@ -692,21 +715,27 @@ graph TD
 ```
 
 **Wave 1** (sequential — TDD red):
+
 - Task 1: Write failing tests for parse_to_structured + is_open_now
 
 **Wave 2** (sequential — TDD green):
+
 - Task 2: Implement StructuredHours + parse_to_structured + rewrite is_open_now ← Task 1
 
 **Wave 3** (parallel — type updates):
+
 - Task 3: Update ScrapedShopData type ← Task 2
 - Task 6: Update Shop model type ← Task 2
 
 **Wave 4** (sequential — adapter update):
+
 - Task 4: Update Apify adapter ← Task 3
 - Task 5: Update adapter test expectations ← Task 4
 
 **Wave 5** (sequential — migration):
+
 - Task 7: Write migration script ← Task 5, Task 6
 
 **Wave 6** (sequential — verification):
+
 - Task 8: Full test suite + coverage check ← Task 7
