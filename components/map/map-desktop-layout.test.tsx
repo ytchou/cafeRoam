@@ -161,7 +161,7 @@ describe('a user on the desktop map view', () => {
     expect(screen.getByTestId('map-view')).toBeInTheDocument();
   });
 
-  it('a user clicking a shop card navigates via onCardClick when provided', async () => {
+  it('a user clicking a shop card opens the preview (calls onShopClick, not onCardClick)', async () => {
     const onCardClick = vi.fn();
     const onShopClick = vi.fn();
     render(
@@ -172,11 +172,11 @@ describe('a user on the desktop map view', () => {
       />
     );
     await userEvent.click(screen.getByText('晨光咖啡 Morning Glow'));
-    expect(onCardClick).toHaveBeenCalledWith('shop-aa11bb');
-    expect(onShopClick).not.toHaveBeenCalled();
+    expect(onShopClick).toHaveBeenCalledWith('shop-aa11bb');
+    expect(onCardClick).not.toHaveBeenCalled();
   });
 
-  it('a user clicking a shop card falls back to onShopClick when onCardClick is not provided', async () => {
+  it('a user clicking a shop card calls onShopClick when onCardClick is not provided', async () => {
     const onShopClick = vi.fn();
     render(<MapDesktopLayout {...defaultProps} onShopClick={onShopClick} />);
     await userEvent.click(screen.getByText('晨光咖啡 Morning Glow'));
