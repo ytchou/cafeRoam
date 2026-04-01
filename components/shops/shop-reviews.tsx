@@ -4,7 +4,7 @@ import type { ShopReview } from '@/lib/hooks/use-shop-reviews';
 
 interface ShopReviewsProps {
   reviews: ShopReview[];
-  total: number;
+  totalCount: number;
   averageRating: number;
   isLoading: boolean;
   isAuthError: boolean;
@@ -42,7 +42,7 @@ function formatDate(iso: string) {
 
 export function ShopReviews({
   reviews,
-  total,
+  totalCount,
   averageRating,
   isLoading,
   isAuthError,
@@ -81,7 +81,7 @@ export function ShopReviews({
     <section className="px-5 py-4">
       <div className="mb-3 flex items-baseline gap-2">
         <h2 className="text-text-primary text-sm font-semibold">打卡評價</h2>
-        <span className="text-text-meta text-xs">{total} 則</span>
+        <span className="text-text-meta text-xs">{totalCount} 則</span>
         {averageRating > 0 && (
           <span className="text-brand ml-auto text-sm font-semibold">
             ★ {averageRating.toFixed(1)}
@@ -113,12 +113,12 @@ export function ShopReviews({
           </div>
         ))}
       </div>
-      {total > reviews.length && (
+      {totalCount > reviews.length && (
         <Link
           href={`/shops/${shopId}/reviews`}
           className="text-link-green mt-3 block text-sm font-medium"
         >
-          See all {total} reviews →
+          See all {totalCount} reviews →
         </Link>
       )}
     </section>

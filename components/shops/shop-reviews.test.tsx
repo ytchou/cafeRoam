@@ -17,7 +17,7 @@ function renderReviews(
   return render(
     <ShopReviews
       reviews={[]}
-      total={0}
+      totalCount={0}
       averageRating={0}
       isLoading={false}
       isAuthError={false}
@@ -65,29 +65,29 @@ describe('ShopReviews', () => {
 
   describe('when reviews are available', () => {
     it('shows the section heading', () => {
-      renderReviews({ reviews: [SAMPLE_REVIEW], total: 1 });
+      renderReviews({ reviews: [SAMPLE_REVIEW], totalCount: 1 });
       expect(screen.getByText('打卡評價')).toBeInTheDocument();
     });
 
     it('shows the reviewer display name', () => {
-      renderReviews({ reviews: [SAMPLE_REVIEW], total: 1 });
+      renderReviews({ reviews: [SAMPLE_REVIEW], totalCount: 1 });
       expect(screen.getByText('王小明')).toBeInTheDocument();
     });
 
     it('shows the review text', () => {
-      renderReviews({ reviews: [SAMPLE_REVIEW], total: 1 });
+      renderReviews({ reviews: [SAMPLE_REVIEW], totalCount: 1 });
       expect(screen.getByText('環境很安靜，很適合讀書')).toBeInTheDocument();
     });
 
     it('shows the review count', () => {
-      renderReviews({ reviews: [SAMPLE_REVIEW], total: 1 });
+      renderReviews({ reviews: [SAMPLE_REVIEW], totalCount: 1 });
       expect(screen.getByText('1 則')).toBeInTheDocument();
     });
 
     it('shows the average rating when above 0', () => {
       renderReviews({
         reviews: [SAMPLE_REVIEW],
-        total: 1,
+        totalCount: 1,
         averageRating: 4.2,
       });
       expect(screen.getByText('★ 4.2')).toBeInTheDocument();
@@ -95,13 +95,13 @@ describe('ShopReviews', () => {
 
     it('falls back to 匿名 when display name is null', () => {
       const anonymous = { ...SAMPLE_REVIEW, displayName: null };
-      renderReviews({ reviews: [anonymous], total: 1 });
+      renderReviews({ reviews: [anonymous], totalCount: 1 });
       expect(screen.getByText('匿名')).toBeInTheDocument();
     });
 
     it('does not show review text when reviewText is null', () => {
       const noText = { ...SAMPLE_REVIEW, reviewText: null };
-      renderReviews({ reviews: [noText], total: 1 });
+      renderReviews({ reviews: [noText], totalCount: 1 });
       expect(
         screen.queryByText('環境很安靜，很適合讀書')
       ).not.toBeInTheDocument();
@@ -117,7 +117,7 @@ describe('ShopReviews', () => {
       }));
       renderReviews({
         reviews: manyReviews,
-        total: 12,
+        totalCount: 12,
         averageRating: 4.2,
         shopId: 'shop-123',
       });

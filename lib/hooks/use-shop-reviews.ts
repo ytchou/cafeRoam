@@ -12,7 +12,7 @@ export interface ShopReview {
 
 interface ReviewsData {
   reviews: ShopReview[];
-  total: number;
+  totalCount: number;
   averageRating: number;
 }
 
@@ -36,7 +36,7 @@ export function useShopReviews(shopId: string, enabled: boolean) {
 
   return {
     reviews: data?.reviews ?? [],
-    total: data?.total ?? 0,
+    totalCount: data?.totalCount ?? 0,
     averageRating: data?.averageRating ?? 0,
     isLoading,
     isAuthError:
