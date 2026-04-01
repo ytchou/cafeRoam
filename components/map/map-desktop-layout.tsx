@@ -20,6 +20,7 @@ import { HeaderNav } from '@/components/navigation/header-nav';
 import { MapViewDynamic as MapView } from '@/components/map/map-view-dynamic';
 import { ShopPreviewCard } from '@/components/shops/shop-preview-card';
 import type { MappableLayoutShop } from '@/lib/types';
+import type { MapBounds } from '@/components/map/map-view';
 
 interface MapDesktopLayoutProps {
   shops: MappableLayoutShop[];
@@ -37,6 +38,7 @@ interface MapDesktopLayoutProps {
   onFilterOpen: () => void;
   onFilterClose: () => void;
   onFilterApply: (filters: string[]) => void;
+  onBoundsChange?: (bounds: MapBounds) => void;
 }
 
 export function MapDesktopLayout({
@@ -55,6 +57,7 @@ export function MapDesktopLayout({
   onFilterOpen,
   onFilterClose,
   onFilterApply,
+  onBoundsChange,
 }: MapDesktopLayoutProps) {
   const [panelCollapsed, setPanelCollapsed] = useState(false);
   const activeFilterSet = useMemo(
@@ -166,6 +169,7 @@ export function MapDesktopLayout({
               shops={shops}
               onPinClick={(id) => onShopClick(id)}
               selectedShopId={selectedShopId}
+              onBoundsChange={onBoundsChange}
             />
           </Suspense>
           {selectedShop && (

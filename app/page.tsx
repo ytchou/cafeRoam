@@ -12,6 +12,7 @@ import { useUser } from '@/lib/hooks/use-user';
 import { useAnalytics } from '@/lib/posthog/use-analytics';
 import { trackSearch, trackSignupCtaClick } from '@/lib/analytics/ga4-events';
 import { haversineKm } from '@/lib/utils';
+import { filterByBounds, type MapBounds } from '@/lib/utils/filter-by-bounds';
 import {
   FILTER_TO_TAG_IDS,
   type TagFilterId,
@@ -35,6 +36,7 @@ function FindPageContent() {
 
   const [selectedShopId, setSelectedShopId] = useState<string | null>(null);
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
+  const [mapBounds, setMapBounds] = useState<MapBounds | null>(null);
 
   const { shops: featuredShops } = useShops({ featured: true, limit: 200 });
   const { results: searchResults, isLoading: searchLoading } = useSearch(
@@ -89,12 +91,15 @@ function FindPageContent() {
 
     // Apply rating sort
     if (activeFiltersSet.has('rating')) {
-      return [...filtered].sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
+      const sorted = [...filtered].sort(
+        (a, b) => (b.rating ?? 0) - (a.rating ?? 0)
+      );
+      return view === 'map' ? filterByBounds(sorted, mapBounds) : sorted;
     }
 
     // Apply geo-sort if location available
     if (latitude != null && longitude != null) {
-      return [...filtered].sort((a, b) => {
+      const sorted = [...filtered].sort((a, b) => {
         const dA =
           a.latitude != null && a.longitude != null
             ? haversineKm(latitude, longitude, a.latitude, a.longitude)
@@ -105,9 +110,10 @@ function FindPageContent() {
             : Infinity;
         return dA - dB;
       });
+      return view === 'map' ? filterByBounds(sorted, mapBounds) : sorted;
     }
 
-    return filtered;
+    return view === 'map' ? filterByBounds(filtered, mapBounds) : filtered;
   }, [
     query,
     searchLoading,
@@ -116,6 +122,8 @@ function FindPageContent() {
     filters,
     latitude,
     longitude,
+    view,
+    mapBounds,
   ]);
 
   const handleSearch = useCallback(
@@ -156,6 +164,10 @@ function FindPageContent() {
 
   const handleFilterOpen = useCallback(() => setFilterSheetOpen(true), []);
   const handleFilterClose = useCallback(() => setFilterSheetOpen(false), []);
+  const handleBoundsChange = useCallback(
+    (bounds: MapBounds) => setMapBounds(bounds),
+    []
+  );
 
   const layoutProps = {
     shops,
@@ -173,6 +185,7 @@ function FindPageContent() {
     onFilterClose: handleFilterClose,
     onFilterApply: handleFilterApply,
     onLocationRequest: handleLocationRequest,
+    onBoundsChange: handleBoundsChange,
   };
 
   return (

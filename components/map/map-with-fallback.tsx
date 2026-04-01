@@ -6,6 +6,7 @@ import { ListMobileLayout } from '@/components/map/list-mobile-layout';
 import { MapDesktopLayout } from '@/components/map/map-desktop-layout';
 import { ListDesktopLayout } from '@/components/map/list-desktop-layout';
 import type { MappableLayoutShop } from '@/lib/types';
+import type { MapBounds } from '@/components/map/map-view';
 
 interface MapWithFallbackProps {
   shops: MappableLayoutShop[];
@@ -24,6 +25,7 @@ interface MapWithFallbackProps {
   onFilterApply: (filters: string[]) => void;
   onLocationRequest?: () => void;
   onCardClick?: (id: string) => void;
+  onBoundsChange?: (bounds: MapBounds) => void;
   isDesktop: boolean;
 }
 
