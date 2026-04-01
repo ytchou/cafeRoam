@@ -42,6 +42,7 @@ const sentryOptions = {
   project: process.env.SENTRY_PROJECT,
   silent: !process.env.SENTRY_AUTH_TOKEN,
   widenClientFileUpload: true,
+  tunnelRoute: '/monitoring',
 };
 
 // withSentryConfig uses webpack plugins incompatible with Turbopack dev server.
