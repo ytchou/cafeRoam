@@ -2159,3 +2159,41 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 **Wave 5 — Validate:**
 
 - [x] Task 6: Lint and type-check (DEV-113)
+
+---
+
+## Payment Methods on Shop Detail + Find Page Filters (DEV-90)
+
+> **Design Doc:** [docs/designs/2026-04-01-payment-methods-design.md](docs/designs/2026-04-01-payment-methods-design.md)
+> **Plan:** [docs/plans/2026-04-01-payment-methods-plan.md](docs/plans/2026-04-01-payment-methods-plan.md)
+
+**Chunk 1 — Database Migrations (DEV-150):**
+
+- [ ] Task 1: `payment_methods` JSONB column
+- [ ] Task 2: `shop_payment_confirmations` table + RLS
+- [ ] Task 3: Bootstrap from taxonomy tags
+- [ ] Task 4: Update `search_shops` RPC
+
+**Chunk 2 — Filter Wiring (DEV-151):**
+
+- [ ] Task 5: Wire `cash_only` + `mobile_payment` in filter-map.ts
+
+**Chunk 3 — Backend Service + API (DEV-152):**
+
+- [ ] Task 6: Pydantic models
+- [ ] Task 7: PaymentService tests (TDD)
+- [ ] Task 8: PaymentService implementation
+- [ ] Task 9: API endpoints
+- [ ] Task 10: Next.js proxy routes
+- [ ] Task 11: Frontend Shop type
+- [ ] Task 12: shops API `payment_methods`
+
+**Chunk 4 — Frontend Components (DEV-153/154):**
+
+- [ ] Task 13: PaymentMethodSection tests
+- [ ] Task 14: PaymentMethodSection implementation + shop detail wiring
+- [ ] Task 15: Check-in form payment method step
+
+**Chunk 5 — Documentation:**
+
+- [ ] Task 16: SPEC.md business rules update

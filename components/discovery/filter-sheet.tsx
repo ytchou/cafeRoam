@@ -33,6 +33,7 @@ const FILTER_TABS: TabCategory[] = [
       { id: 'reservable', label: 'Reservable' },
       { id: 'no_laptop', label: 'No Laptop' },
       { id: 'cash_only', label: 'Cash Only' },
+      { id: 'mobile_payment', label: 'Mobile Payment' },
       { id: 'brings_own_cup', label: 'Brings Own Cup' },
     ],
   },

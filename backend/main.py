@@ -24,6 +24,7 @@ from api.health import router as health_router
 from api.lists import router as lists_router
 from api.maps import router as maps_router
 from api.owner import router as owner_router
+from api.payments import router as payments_router
 from api.profile import router as profile_router
 from api.search import router as search_router
 from api.shops import router as shops_router
@@ -135,6 +136,7 @@ app.include_router(stamps_router)
 app.include_router(feed_router)
 app.include_router(explore_router)
 app.include_router(followers_router)
+app.include_router(payments_router)
 app.include_router(submissions_router)
 app.include_router(admin_router)
 app.include_router(admin_claims_router)

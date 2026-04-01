@@ -13,6 +13,10 @@ import { TagConfirmation } from '@/components/reviews/tag-confirmation';
 import { fetchWithAuth } from '@/lib/api/fetch';
 import { uploadCheckInPhoto, uploadMenuPhoto } from '@/lib/supabase/storage';
 import { useAnalytics } from '@/lib/posthog/use-analytics';
+import {
+  PAYMENT_METHODS,
+  PAYMENT_METHOD_LABELS,
+} from '@/lib/constants/payment-methods';
 
 type SubmitState = 'idle' | 'uploading' | 'submitting';
 
@@ -43,6 +47,9 @@ export default function CheckInPage() {
   const [isPublic, setIsPublic] = useState(true);
   const [submitState, setSubmitState] = useState<SubmitState>('idle');
   const [menuOpen, setMenuOpen] = useState(false);
+  const [selectedPaymentMethods, setSelectedPaymentMethods] = useState<
+    string[]
+  >([]);
 
   const shopTags = useMemo(
     () =>
@@ -93,6 +100,17 @@ export default function CheckInPage() {
         }),
       });
 
+      if (selectedPaymentMethods.length > 0) {
+        await Promise.allSettled(
+          selectedPaymentMethods.map((method) =>
+            fetchWithAuth(`/api/shops/${shopId}/payment-methods/confirm`, {
+              method: 'POST',
+              body: JSON.stringify({ method, vote: true }),
+            })
+          )
+        );
+      }
+
       capture('checkin_completed', {
         shop_id: shopId,
         has_text_note: note.trim().length > 0,
@@ -137,6 +155,7 @@ export default function CheckInPage() {
     router,
     capture,
     isPublic,
+    selectedPaymentMethods,
   ]);
 
   return (
@@ -247,6 +266,38 @@ export default function CheckInPage() {
             onCheckedChange={setIsPublic}
             aria-label="Share publicly"
           />
+        </div>
+
+        {/* Payment Methods — optional */}
+        <div className="space-y-2">
+          <p className="text-sm font-medium text-gray-700">
+            What payment methods does this place accept? (optional)
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {PAYMENT_METHODS.map((method) => {
+              const selected = selectedPaymentMethods.includes(method);
+              return (
+                <button
+                  key={method}
+                  type="button"
+                  onClick={() =>
+                    setSelectedPaymentMethods((prev) =>
+                      selected
+                        ? prev.filter((m) => m !== method)
+                        : [...prev, method]
+                    )
+                  }
+                  className={`rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
+                    selected
+                      ? 'border-espresso bg-espresso text-white'
+                      : 'border-border-warm bg-white text-gray-700'
+                  }`}
+                >
+                  {PAYMENT_METHOD_LABELS[method]}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         <Button type="submit" disabled={!canSubmit} className="w-full">

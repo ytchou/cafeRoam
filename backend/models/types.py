@@ -51,6 +51,7 @@ class Shop(CamelModel):
     community_summary: str | None = None
     menu_highlights: list[str] = []
     coffee_origins: list[str] = []
+    payment_methods: dict[str, bool | None] = {}
 
 
 ClaimRole = Literal["owner", "manager", "staff"]
@@ -538,3 +539,45 @@ class FollowingListResponse(CamelModel):
     page: int
     limit: int
     has_more: bool
+
+
+# --- Payment Methods ---
+
+VALID_PAYMENT_METHODS = frozenset({"cash", "card", "line_pay", "twqr", "apple_pay", "google_pay"})
+
+
+class PaymentMethodView(CamelModel):
+    """One payment method with its status and confirmation data."""
+
+    method: str
+    accepted: bool
+    confirmation_count: int = 0
+    user_vote: bool | None = None
+
+
+class PaymentMethodsResponse(CamelModel):
+    """All known payment methods for a shop."""
+
+    methods: list[PaymentMethodView] = []
+
+
+class PaymentConfirmRequest(CamelModel):
+    """Request body for confirming a payment method."""
+
+    method: str
+    vote: bool
+
+    @field_validator("method")
+    @classmethod
+    def validate_method(cls, v: str) -> str:
+        if v not in VALID_PAYMENT_METHODS:
+            raise ValueError(f"Invalid payment method: {v}")
+        return v
+
+
+class PaymentConfirmResponse(CamelModel):
+    """Response after confirming a payment method."""
+
+    method: str
+    vote: bool
+    confirmation_count: int
