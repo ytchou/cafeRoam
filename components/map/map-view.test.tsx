@@ -60,7 +60,6 @@ vi.mock('react-map-gl/mapbox', async () => {
     // Fire onLoad after mount to simulate map ready
     ReactModule.useEffect(() => {
       onLoad?.({ target: mapInstance });
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     return (

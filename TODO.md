@@ -26,7 +26,7 @@
 
 **Wave 4 — Verification:**
 
-- [ ] Task 5: Final verification and lint
+- [x] Task 5: Final verification and lint
 
 ---
 
