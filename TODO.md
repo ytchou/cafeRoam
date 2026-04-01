@@ -16,8 +16,8 @@
 - [x] Task 2: Implement StructuredHours + parse_to_structured + rewrite is_open_now (DEV-159)
 
 **Wave 3 — Type Updates (parallel):**
-- [ ] Task 3: Update ScrapedShopData type (DEV-160)
-- [ ] Task 6: Update Shop model type (DEV-161)
+- [x] Task 3: Update ScrapedShopData type (DEV-160)
+- [x] Task 6: Update Shop model type (DEV-161)
 
 **Wave 4 — Adapter Update:**
 - [ ] Task 4: Update Apify adapter to normalize at ingest (DEV-160)

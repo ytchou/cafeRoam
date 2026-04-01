@@ -34,7 +34,7 @@ class Shop(CamelModel):
     mrt: str | None = None
     phone: str | None = None
     website: str | None = None
-    opening_hours: list[str] | None = None
+    opening_hours: list[dict[str, int | None]] | None = None
     rating: float | None = None
     review_count: int
     price_range: str | None = None
