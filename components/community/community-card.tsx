@@ -1,6 +1,6 @@
 'use client';
 
-import { Coffee } from 'lucide-react';
+import { Coffee, Star } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useRef } from 'react';
 
@@ -51,6 +51,17 @@ export function CommunityCard({ note }: CommunityCardProps) {
           </span>
         </div>
       </div>
+
+      {note.starRating != null && (
+        <div className="mt-2.5 flex items-center gap-0.5">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Star
+              key={i}
+              className={`h-3 w-3 ${i < note.starRating! ? 'fill-tarot-gold text-tarot-gold' : 'fill-gray-200 text-gray-200'}`}
+            />
+          ))}
+        </div>
+      )}
 
       <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-gray-500">
         {note.reviewText}
