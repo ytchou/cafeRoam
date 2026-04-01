@@ -1,6 +1,6 @@
 'use client';
 
-import { useUser } from '@/lib/hooks/use-user';
+import { PAYMENT_METHOD_LABELS } from '@/lib/constants/payment-methods';
 
 interface PaymentMethod {
   method: string;
@@ -10,22 +10,10 @@ interface PaymentMethod {
 }
 
 interface PaymentMethodSectionProps {
-  shopId: string;
   methods: PaymentMethod[];
 }
 
-const METHOD_LABELS: Record<string, string> = {
-  cash: 'Cash',
-  card: 'Card',
-  line_pay: 'LINE Pay',
-  twqr: 'TWQR',
-  apple_pay: 'Apple Pay',
-  google_pay: 'Google Pay',
-};
-
-export function PaymentMethodSection({ shopId: _shopId, methods }: PaymentMethodSectionProps) {
-  const { user } = useUser();
-
+export function PaymentMethodSection({ methods }: PaymentMethodSectionProps) {
   if (methods.length === 0) return null;
 
   return (
@@ -44,7 +32,7 @@ export function PaymentMethodSection({ shopId: _shopId, methods }: PaymentMethod
                 : 'bg-gray-100 text-gray-400 line-through'
             }`}
           >
-            {METHOD_LABELS[m.method] ?? m.method}
+            {PAYMENT_METHOD_LABELS[m.method] ?? m.method}
             {m.accepted && m.confirmationCount > 0 && (
               <span className="text-green-500">{m.confirmationCount}</span>
             )}
@@ -53,14 +41,7 @@ export function PaymentMethodSection({ shopId: _shopId, methods }: PaymentMethod
             )}
           </span>
         ))}
-        {user && (
-          <button
-            type="button"
-            className="text-espresso rounded-full border border-dashed border-current px-3 py-1 text-xs font-medium"
-          >
-            + Suggest edit
-          </button>
-        )}
+        {/* TODO: "Suggest edit" button — wire bottom-sheet/popover with confirmation toggles */}
       </div>
     </div>
   );

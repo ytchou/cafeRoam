@@ -84,6 +84,21 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
   const { reviews, total, averageRating, isLoading, isAuthError } =
     useShopReviews(shop.id, !!user);
 
+  // TODO: Wire SWR fetch to GET /api/shops/{shopId}/payment-methods for live
+  // confirmation counts and user votes instead of hardcoded 0/null.
+  const paymentMethods = useMemo(
+    () =>
+      Object.entries(shop.paymentMethods ?? {})
+        .filter(([, v]) => v !== null && v !== undefined)
+        .map(([method, accepted]) => ({
+          method,
+          accepted: Boolean(accepted),
+          confirmationCount: 0,
+          userVote: null as boolean | null,
+        })),
+    [shop.paymentMethods]
+  );
+
   useEffect(() => {
     capture('shop_detail_viewed', {
       shop_id: shop.id,
@@ -159,19 +174,9 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
         />
         {tags.length > 0 && <AttributeChips tags={tags as TaxonomyTag[]} />}
         {shop.menuHighlights && <MenuHighlights items={shop.menuHighlights} />}
-        {shop.paymentMethods && Object.keys(shop.paymentMethods).length > 0 && (
+        {paymentMethods.length > 0 && (
           <>
-            <PaymentMethodSection
-              shopId={shop.id}
-              methods={Object.entries(shop.paymentMethods)
-                .filter(([, v]) => v !== null && v !== undefined)
-                .map(([method, accepted]) => ({
-                  method,
-                  accepted: Boolean(accepted),
-                  confirmationCount: 0,
-                  userVote: null,
-                }))}
-            />
+            <PaymentMethodSection methods={paymentMethods} />
             <div className="border-border-warm mx-5 border-t" />
           </>
         )}

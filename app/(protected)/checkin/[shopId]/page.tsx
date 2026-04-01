@@ -13,6 +13,7 @@ import { TagConfirmation } from '@/components/reviews/tag-confirmation';
 import { fetchWithAuth } from '@/lib/api/fetch';
 import { uploadCheckInPhoto, uploadMenuPhoto } from '@/lib/supabase/storage';
 import { useAnalytics } from '@/lib/posthog/use-analytics';
+import { PAYMENT_METHODS, PAYMENT_METHOD_LABELS } from '@/lib/constants/payment-methods';
 
 type SubmitState = 'idle' | 'uploading' | 'submitting';
 
@@ -97,9 +98,8 @@ export default function CheckInPage() {
       if (selectedPaymentMethods.length > 0) {
         await Promise.allSettled(
           selectedPaymentMethods.map((method) =>
-            fetch(`/api/shops/${shopId}/payment-methods/confirm`, {
+            fetchWithAuth(`/api/shops/${shopId}/payment-methods/confirm`, {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ method, vote: true }),
             })
           )
@@ -269,39 +269,29 @@ export default function CheckInPage() {
             What payment methods does this place accept? (optional)
           </p>
           <div className="flex flex-wrap gap-2">
-            {(['cash', 'card', 'line_pay', 'twqr', 'apple_pay', 'google_pay'] as const).map(
-              (method) => {
-                const labels: Record<string, string> = {
-                  cash: 'Cash',
-                  card: 'Card',
-                  line_pay: 'LINE Pay',
-                  twqr: 'TWQR',
-                  apple_pay: 'Apple Pay',
-                  google_pay: 'Google Pay',
-                };
-                const selected = selectedPaymentMethods.includes(method);
-                return (
-                  <button
-                    key={method}
-                    type="button"
-                    onClick={() =>
-                      setSelectedPaymentMethods((prev) =>
-                        selected
-                          ? prev.filter((m) => m !== method)
-                          : [...prev, method]
-                      )
-                    }
-                    className={`rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
+            {PAYMENT_METHODS.map((method) => {
+              const selected = selectedPaymentMethods.includes(method);
+              return (
+                <button
+                  key={method}
+                  type="button"
+                  onClick={() =>
+                    setSelectedPaymentMethods((prev) =>
                       selected
-                        ? 'border-espresso bg-espresso text-white'
-                        : 'border-border-warm bg-white text-gray-700'
-                    }`}
-                  >
-                    {labels[method]}
-                  </button>
-                );
-              }
-            )}
+                        ? prev.filter((m) => m !== method)
+                        : [...prev, method]
+                    )
+                  }
+                  className={`rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
+                    selected
+                      ? 'border-espresso bg-espresso text-white'
+                      : 'border-border-warm bg-white text-gray-700'
+                  }`}
+                >
+                  {PAYMENT_METHOD_LABELS[method]}
+                </button>
+              );
+            })}
           </div>
         </div>
 
