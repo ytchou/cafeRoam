@@ -20,11 +20,11 @@ from api.claims import router as claims_router
 from api.explore import router as explore_router
 from api.feed import router as feed_router
 from api.followers import router as followers_router
-from api.payments import router as payments_router
 from api.health import router as health_router
 from api.lists import router as lists_router
 from api.maps import router as maps_router
 from api.owner import router as owner_router
+from api.payments import router as payments_router
 from api.profile import router as profile_router
 from api.search import router as search_router
 from api.shops import router as shops_router
