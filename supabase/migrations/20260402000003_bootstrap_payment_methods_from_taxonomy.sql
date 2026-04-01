@@ -1,0 +1,14 @@
+-- Shops with cash_only tag → {cash: true, card: false}
+UPDATE shops s
+SET payment_methods = '{"cash": true, "card": false}'::jsonb
+FROM shop_tags st
+WHERE st.shop_id = s.id
+  AND st.tag_id = 'cash_only'
+  AND (s.payment_methods IS NULL OR s.payment_methods = '{}'::jsonb);
+
+-- Shops with mobile_payment tag → {line_pay: true}
+UPDATE shops s
+SET payment_methods = s.payment_methods || '{"line_pay": true}'::jsonb
+FROM shop_tags st
+WHERE st.shop_id = s.id
+  AND st.tag_id = 'mobile_payment';
