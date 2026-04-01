@@ -6,7 +6,7 @@
 
 ## Pass 1 — Full Discovery
 
-*Agents: Bug Hunter, Standards & Conventions, Architecture & Design (all inline due to Sonnet rate limit)*
+_Agents: Bug Hunter, Standards & Conventions, Architecture & Design (all inline due to Sonnet rate limit)_
 
 ### Issues Found (0 total)
 
@@ -15,6 +15,7 @@ No issues found.
 ### Validation Results
 
 All checks passed:
+
 - 164 UPDATE statements with unique, valid UUIDs
 - All 20 tarot titles match `backend/core/tarot_vocabulary.py` exactly
 - Single-quote escaping correct throughout
