@@ -6,6 +6,36 @@
 
 ---
 
+## Normalize opening_hours to Structured Format (DEV-148)
+
+> **Design Doc:** [docs/designs/2026-04-01-opening-hours-normalization-design.md](docs/designs/2026-04-01-opening-hours-normalization-design.md)
+> **Plan:** [docs/plans/2026-04-01-opening-hours-normalization-plan.md](docs/plans/2026-04-01-opening-hours-normalization-plan.md)
+
+**Wave 1-2 — Foundation (TDD red/green):**
+
+- [x] Task 1: Write failing tests for parse_to_structured + is_open_now (DEV-159)
+- [x] Task 2: Implement StructuredHours + parse_to_structured + rewrite is_open_now (DEV-159)
+
+**Wave 3 — Type Updates (parallel):**
+
+- [x] Task 3: Update ScrapedShopData type (DEV-160)
+- [x] Task 6: Update Shop model type (DEV-161)
+
+**Wave 4 — Adapter Update:**
+
+- [x] Task 4: Update Apify adapter to normalize at ingest (DEV-160)
+- [x] Task 5: Update adapter test expectations (DEV-161)
+
+**Wave 5 — Migration:**
+
+- [x] Task 7: Write and verify migration script (DEV-162)
+
+**Wave 6 — Verification:**
+
+- [x] Task 8: Full test suite + coverage check
+
+---
+
 ## Search Quality for Exact/Specific Terms (DEV-122)
 
 > **Design Doc:** [docs/designs/2026-03-31-search-quality-exact-terms-design.md](docs/designs/2026-03-31-search-quality-exact-terms-design.md)

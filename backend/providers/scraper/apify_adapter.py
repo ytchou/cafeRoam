@@ -6,6 +6,7 @@ from typing import Any
 import structlog
 from apify_client import ApifyClient
 
+from core.opening_hours import parse_to_structured
 from providers.scraper.interface import (
     BatchScrapeInput,
     BatchScrapeResult,
@@ -132,12 +133,7 @@ class ApifyScraperAdapter:
             google_place_id=place.get("placeId", ""),
             rating=place.get("totalScore"),
             review_count=place.get("reviewsCount", 0),
-            opening_hours=[
-                f"{h.get('day', '')}: {h.get('hours', '')}".strip(": ")
-                for h in place.get("openingHours") or []
-                if isinstance(h, dict)
-            ]
-            or None,
+            opening_hours=self._normalize_opening_hours(place.get("openingHours")),
             phone=place.get("phone"),
             website=place.get("website"),
             menu_url=place.get("menu"),
@@ -156,6 +152,23 @@ class ApifyScraperAdapter:
             ],
             photos=self._parse_photos(place),
         )
+
+    @staticmethod
+    def _normalize_opening_hours(
+        raw_hours: list[dict[str, str]] | None,
+    ) -> list[dict[str, int | None]] | None:
+        """Convert raw Apify openingHours to structured format."""
+        if not raw_hours:
+            return None
+        strings = [
+            f"{h.get('day', '')}: {h.get('hours', '')}".strip(": ")
+            for h in raw_hours
+            if isinstance(h, dict)
+        ]
+        if not strings:
+            return None
+        structured = parse_to_structured(strings)
+        return [s.model_dump() for s in structured] if structured else None
 
     def _parse_photos(self, place: dict[str, Any]) -> list[ScrapedPhotoData]:
         """Parse photos from images[] (preferred) or imageUrls[] (fallback)."""

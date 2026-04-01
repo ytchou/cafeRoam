@@ -98,7 +98,7 @@ class TestTarotServiceDraw:
             make_tarot_shop_row(
                 id="s1",
                 tarot_title="The Scholar's Refuge",
-                opening_hours=["Wednesday: Closed"],
+                opening_hours=[{"day": 2, "open": None, "close": None}],
             ),
             make_tarot_shop_row(id="s2", tarot_title="The Hidden Alcove"),
         ]
@@ -116,7 +116,7 @@ class TestTarotServiceDraw:
             make_tarot_shop_row(
                 id="s1",
                 tarot_title="The Scholar's Refuge",
-                opening_hours=["Sunday: 9:00 AM - 5:00 PM"],
+                opening_hours=[{"day": 6, "open": 540, "close": 1020}],
             ),
         ]
         db = _make_db_mock(rows)
