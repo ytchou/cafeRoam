@@ -17,6 +17,7 @@ import { ShopMapThumbnail } from '@/components/shops/shop-map-thumbnail';
 import { ShopReviews } from '@/components/shops/shop-reviews';
 import { CommunitySummary } from '@/components/shops/community-summary';
 import { DirectionsSheet } from '@/components/shops/directions-sheet';
+import { DirectionsInline } from '@/components/shops/directions-inline';
 import { useShopReviews } from '@/lib/hooks/use-shop-reviews';
 import { useUser } from '@/lib/hooks/use-user';
 import { useGeolocation } from '@/lib/hooks/use-geolocation';
@@ -120,18 +121,17 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
   }
 
   return (
-    <div className="min-h-screen bg-white lg:flex lg:items-start">
-      {/* Left column — hero photos (sticky on desktop) */}
-      <div className="lg:sticky lg:top-0 lg:h-screen lg:w-1/2 lg:shrink-0 lg:overflow-hidden">
-        <ShopHero
-          photoUrls={photos}
-          shopName={shop.name}
-          onBack={() => router.back()}
-        />
-      </div>
+    <div className="min-h-screen bg-white">
+      {/* Hero — full width, taller on desktop */}
+      <ShopHero
+        photoUrls={photos}
+        shopName={shop.name}
+        onBack={() => router.back()}
+        className="lg:h-[480px]"
+      />
 
-      {/* Right column — shop info */}
-      <div className="lg:w-1/2 lg:overflow-y-auto">
+      {/* Shop info */}
+      <div>
         <ShopIdentity
           name={shop.name}
           rating={shop.rating}
@@ -146,6 +146,13 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
           shopName={shop.name}
           shareUrl={shareUrl}
         />
+
+        {/* Inline directions — desktop only */}
+        {hasMap && directionsShop && (
+          <div className="hidden lg:block">
+            <DirectionsInline shop={directionsShop} />
+          </div>
+        )}
 
         <div className="border-border-warm mx-5 border-t" />
 
@@ -167,7 +174,7 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
               longitude={shop.longitude!}
               shopName={shop.name}
             />
-            <div className="px-5 py-3">
+            <div className="px-5 py-3 lg:hidden">
               <button
                 type="button"
                 onClick={openDirections}
