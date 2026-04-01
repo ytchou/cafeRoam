@@ -6,6 +6,30 @@
 
 ---
 
+## Map-List Synchronization (DEV-163)
+
+> **Design Doc:** [docs/designs/2026-04-01-map-list-sync-design.md](docs/designs/2026-04-01-map-list-sync-design.md)
+> **Plan:** [docs/plans/2026-04-01-map-list-sync-plan.md](docs/plans/2026-04-01-map-list-sync-plan.md)
+
+**Wave 1 — MapView enhancements (sequential):**
+
+- [ ] Task 1: flyTo on selectedShopId change (DEV-165)
+- [ ] Task 2: onBoundsChange callback (DEV-166)
+
+**Wave 2 — Prop threading:**
+
+- [ ] Task 3: Thread onBoundsChange through layout components (DEV-166)
+
+**Wave 3 — Filtering:**
+
+- [ ] Task 4: Bounds-based shop filtering in FindPageContent (DEV-166)
+
+**Wave 4 — Verification:**
+
+- [ ] Task 5: Final verification and lint
+
+---
+
 ## Normalize opening_hours to Structured Format (DEV-148)
 
 > **Design Doc:** [docs/designs/2026-04-01-opening-hours-normalization-design.md](docs/designs/2026-04-01-opening-hours-normalization-design.md)
