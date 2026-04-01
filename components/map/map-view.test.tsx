@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 // Hoisted mocks so they can be referenced inside vi.mock factories
 const { mockQueryRenderedFeatures, mockGetClusterExpansionZoom, mockEaseTo } =
   vi.hoisted(() => ({
-    mockQueryRenderedFeatures: vi.fn(() => []),
+    mockQueryRenderedFeatures: vi.fn(() => [] as unknown[]),
     // Simulates callback-style API: getClusterExpansionZoom(id, cb) → cb(null, zoom)
     mockGetClusterExpansionZoom: vi.fn(
       (_id: number, cb: (err: Error | null, zoom: number) => void) =>
