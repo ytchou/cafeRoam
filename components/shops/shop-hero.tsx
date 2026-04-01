@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import { ChevronLeft, Bookmark, Share2, Images } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface ShopHeroProps {
   photoUrls: string[];
@@ -8,6 +9,7 @@ interface ShopHeroProps {
   onBack?: () => void;
   onSave?: () => void;
   onShare?: () => void;
+  className?: string;
 }
 
 export function ShopHero({
@@ -17,11 +19,12 @@ export function ShopHero({
   onBack,
   onSave,
   onShare,
+  className,
 }: ShopHeroProps) {
   const primary = photoUrls.at(0);
 
   return (
-    <div className="relative h-[260px] w-full bg-gray-100">
+    <div className={cn('relative h-[260px] w-full bg-gray-100', className)}>
       {primary ? (
         <Image
           src={primary}

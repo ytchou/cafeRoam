@@ -5,6 +5,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 vi.mock('@/components/shops/directions-sheet', () => ({
   DirectionsSheet: vi.fn(() => null),
 }));
+vi.mock('@/components/shops/directions-inline', () => ({
+  DirectionsInline: () => null,
+}));
 
 // Hook boundaries
 vi.mock('@/lib/hooks/use-user', () => ({
