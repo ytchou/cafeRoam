@@ -225,6 +225,7 @@ async def get_shop_reviews(
             count="exact",
         )
         .eq("shop_id", shop_id)
+        .eq("is_public", True)
         .not_.is_("stars", "null")
         .order("reviewed_at", desc=True)
         .limit(limit)
