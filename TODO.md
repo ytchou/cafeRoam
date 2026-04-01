@@ -18,7 +18,7 @@
 
 **Wave 2 — Prop threading:**
 
-- [ ] Task 3: Thread onBoundsChange through layout components (DEV-166)
+- [x] Task 3: Thread onBoundsChange through layout components (DEV-166)
 
 **Wave 3 — Filtering:**
 

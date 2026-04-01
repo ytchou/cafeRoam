@@ -10,6 +10,7 @@ import { FilterSheet } from '@/components/filters/filter-sheet';
 import { BottomNav } from '@/components/navigation/bottom-nav';
 import { MapViewDynamic as MapView } from '@/components/map/map-view-dynamic';
 import type { MappableLayoutShop } from '@/lib/types';
+import type { MapBounds } from '@/components/map/map-view';
 
 interface MapMobileLayoutProps {
   shops: MappableLayoutShop[];
@@ -28,6 +29,7 @@ interface MapMobileLayoutProps {
   onFilterApply: (filters: string[]) => void;
   onLocationRequest?: () => void;
   onCardClick?: (id: string) => void;
+  onBoundsChange?: (bounds: MapBounds) => void;
 }
 
 export function MapMobileLayout({
@@ -47,6 +49,7 @@ export function MapMobileLayout({
   onFilterApply,
   onLocationRequest,
   onCardClick,
+  onBoundsChange,
 }: MapMobileLayoutProps) {
   const activeFilterSet = useMemo(
     () => new Set(activeFilters),
@@ -67,6 +70,7 @@ export function MapMobileLayout({
             shops={shops}
             onPinClick={onShopClick}
             selectedShopId={selectedShopId}
+            onBoundsChange={onBoundsChange}
           />
         </Suspense>
       </div>
