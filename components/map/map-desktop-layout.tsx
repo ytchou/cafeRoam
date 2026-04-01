@@ -140,7 +140,7 @@ export function MapDesktopLayout({
                 <div key={shop.id} data-shop-id={shop.id}>
                   <ShopCardCompact
                     shop={shop}
-                    onClick={() => (onCardClick ?? onShopClick)(shop.id)}
+                    onClick={() => onShopClick(shop.id)}
                     selected={shop.id === selectedShopId}
                   />
                 </div>
