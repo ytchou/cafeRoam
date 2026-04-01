@@ -22,7 +22,7 @@
 
 **Wave 3 — Filtering:**
 
-- [ ] Task 4: Bounds-based shop filtering in FindPageContent (DEV-166)
+- [x] Task 4: Bounds-based shop filtering in FindPageContent (DEV-166)
 
 **Wave 4 — Verification:**
 
