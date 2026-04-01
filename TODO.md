@@ -12,7 +12,7 @@
 > **Plan:** [docs/plans/2026-04-01-opening-hours-normalization-plan.md](docs/plans/2026-04-01-opening-hours-normalization-plan.md)
 
 **Wave 1-2 — Foundation (TDD red/green):**
-- [ ] Task 1: Write failing tests for parse_to_structured + is_open_now (DEV-159)
+- [x] Task 1: Write failing tests for parse_to_structured + is_open_now (DEV-159)
 - [ ] Task 2: Implement StructuredHours + parse_to_structured + rewrite is_open_now (DEV-159)
 
 **Wave 3 — Type Updates (parallel):**
