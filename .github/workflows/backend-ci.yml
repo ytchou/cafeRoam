@@ -57,30 +57,34 @@ jobs:
         with:
           version: 9
 
-      - name: Get pnpm store directory
-        id: pnpm-cache
-        run: echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
-
-      - name: Cache pnpm modules
+      - name: Cache node_modules
         uses: actions/cache@v4
+        id: nm-cache
         with:
-          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-
+          path: node_modules
+          key: ${{ runner.os }}-nm-${{ hashFiles('pnpm-lock.yaml') }}
 
       - name: Install dependencies
+        if: steps.nm-cache.outputs.cache-hit != 'true'
         run: pnpm install --frozen-lockfile
 
-      - name: Lint
-        run: pnpm lint
+      - name: Lint, format, and type check (parallel)
+        run: |
+          pnpm lint &
+          pid_lint=$!
+          pnpm format:check &
+          pid_fmt=$!
+          tsc --noEmit &
+          pid_tsc=$!
+          tsc -p tsconfig.test.json --noEmit &
+          pid_tsc_test=$!
 
-      - name: Check formatting
-        run: pnpm format:check
-
-      - name: Type check
-        run: pnpm type-check
-        continue-on-error: true
+          fail=0
+          wait $pid_lint || fail=1
+          wait $pid_fmt || fail=1
+          wait $pid_tsc || fail=1
+          wait $pid_tsc_test || fail=1
+          exit $fail
 
       - name: Run tests with coverage
         run: pnpm test:coverage
