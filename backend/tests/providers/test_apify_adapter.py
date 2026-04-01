@@ -156,7 +156,7 @@ async def test_scrape_by_url_returns_shop_data(adapter):
     assert result.latitude == 25.033
     assert len(result.reviews) == 2
     assert len(result.photos) == 2
-    assert result.opening_hours == ["Monday: 9:00 AM - 6:00 PM"]
+    assert result.opening_hours == [{"day": 0, "open": 540, "close": 1080}]
 
 
 @pytest.mark.asyncio

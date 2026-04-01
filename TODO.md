@@ -20,8 +20,8 @@
 - [x] Task 6: Update Shop model type (DEV-161)
 
 **Wave 4 — Adapter Update:**
-- [ ] Task 4: Update Apify adapter to normalize at ingest (DEV-160)
-- [ ] Task 5: Update adapter test expectations (DEV-161)
+- [x] Task 4: Update Apify adapter to normalize at ingest (DEV-160)
+- [x] Task 5: Update adapter test expectations (DEV-161)
 
 **Wave 5 — Migration:**
 - [ ] Task 7: Write and verify migration script (DEV-162)
