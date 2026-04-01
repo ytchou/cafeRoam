@@ -6,7 +6,7 @@
 
 ## Pass 1 — Full Discovery
 
-*Agents: Bug Hunter (inline), Standards (inline), Architecture (inline), Plan Alignment (inline), Design Quality (inline)*
+_Agents: Bug Hunter (inline), Standards (inline), Architecture (inline), Plan Alignment (inline), Design Quality (inline)_
 
 ### Issues Found (0 total)
 
