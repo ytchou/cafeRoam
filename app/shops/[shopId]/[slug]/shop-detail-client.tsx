@@ -12,6 +12,7 @@ import { OwnerStory } from '@/components/shops/owner-story';
 import { VerifiedBadge } from '@/components/shops/verified-badge';
 import { ShopDescription } from '@/components/shops/shop-description';
 import { MenuHighlights } from '@/components/shops/menu-highlights';
+import { PaymentMethodSection } from '@/components/shops/payment-method-section';
 import { RecentCheckinsStrip } from '@/components/shops/recent-checkins-strip';
 import { ShopMapThumbnail } from '@/components/shops/shop-map-thumbnail';
 import { ShopReviews } from '@/components/shops/shop-reviews';
@@ -45,6 +46,7 @@ interface ShopData {
   distance?: string;
   address?: string;
   communitySummary?: string | null;
+  paymentMethods?: Record<string, boolean | null>;
   checkinPreview?: { count: number; previewPhotoUrl: string | null };
   recentCheckins?: Array<{
     id: string;
@@ -157,6 +159,22 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
         />
         {tags.length > 0 && <AttributeChips tags={tags as TaxonomyTag[]} />}
         {shop.menuHighlights && <MenuHighlights items={shop.menuHighlights} />}
+        {shop.paymentMethods && Object.keys(shop.paymentMethods).length > 0 && (
+          <>
+            <PaymentMethodSection
+              shopId={shop.id}
+              methods={Object.entries(shop.paymentMethods)
+                .filter(([, v]) => v !== null && v !== undefined)
+                .map(([method, accepted]) => ({
+                  method,
+                  accepted: Boolean(accepted),
+                  confirmationCount: 0,
+                  userVote: null,
+                }))}
+            />
+            <div className="border-border-warm mx-5 border-t" />
+          </>
+        )}
 
         <div className="border-border-warm mx-5 border-t" />
 
