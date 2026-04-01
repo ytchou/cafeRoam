@@ -131,7 +131,12 @@ async def test_search_results_include_hydrated_taxonomy_tags(mock_embeddings):
     db.rpc.side_effect = _rpc_side_effect
     db.table.return_value.select.return_value.in_.return_value.execute.return_value = MagicMock(
         data=[
-            {"id": "wifi_available", "dimension": "functionality", "label": "WiFi Available", "label_zh": "提供WiFi"},
+            {
+                "id": "wifi_available",
+                "dimension": "functionality",
+                "label": "WiFi Available",
+                "label_zh": "提供WiFi",
+            },
             {"id": "quiet", "dimension": "ambience", "label": "Quiet", "label_zh": "安靜"},
         ]
     )
