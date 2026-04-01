@@ -22,6 +22,7 @@ export interface Shop {
   updatedAt?: string;
   slug?: string;
   communitySummary?: string | null;
+  paymentMethods?: Record<string, boolean | null>;
   modeWork?: number | null;
   modeRest?: number | null;
   modeSocial?: number | null;
