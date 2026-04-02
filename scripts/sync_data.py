@@ -27,6 +27,7 @@ import sys
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
+from urllib.parse import urlparse, urlunparse
 
 try:
     import psycopg2
@@ -48,6 +49,40 @@ SYNC_TABLES = {
 SNAPSHOTS_DIR = Path(__file__).resolve().parent.parent / "supabase" / "snapshots"
 
 EMBEDDING_COVERAGE_THRESHOLD = 0.80
+
+
+# -- Helpers -------------------------------------------------------------------
+
+
+def _pg_subprocess_env(url: str) -> tuple[dict[str, str], str]:
+    """Move password out of argv into PGPASSWORD to avoid process-list credential exposure."""
+    parsed = urlparse(url)
+    env = dict(os.environ)
+    if parsed.password:
+        env["PGPASSWORD"] = parsed.password
+        netloc = parsed.hostname or ""
+        if parsed.port:
+            netloc = f"{netloc}:{parsed.port}"
+        if parsed.username:
+            netloc = f"{parsed.username}@{netloc}"
+        clean_url = urlunparse(
+            (parsed.scheme, netloc, parsed.path, parsed.params, parsed.query, parsed.fragment)
+        )
+    else:
+        clean_url = url
+    return env, clean_url
+
+
+def _require_psycopg2() -> None:
+    """Fail fast with a clear message if psycopg2 is not available."""
+    if psycopg2 is None:
+        print(
+            "Error: psycopg2-binary is not installed.\n"
+            "Run via uv: uv run scripts/sync_data.py ...\n"
+            "Or install manually: pip install psycopg2-binary",
+            file=sys.stderr,
+        )
+        sys.exit(1)
 
 
 # -- Result model --------------------------------------------------------------
@@ -109,8 +144,12 @@ def check_row_counts(cursor) -> list[AuditResult]:
 def check_required_fields(cursor) -> list[AuditResult]:
     """Check that all shops have name, latitude, longitude."""
     results = []
-    for field in ("name", "latitude", "longitude"):
-        cursor.execute(f"SELECT COUNT(*) FROM public.shops WHERE {field} IS NULL")
+    for field, query in [
+        ("name", "SELECT COUNT(*) FROM public.shops WHERE name IS NULL"),
+        ("latitude", "SELECT COUNT(*) FROM public.shops WHERE latitude IS NULL"),
+        ("longitude", "SELECT COUNT(*) FROM public.shops WHERE longitude IS NULL"),
+    ]:
+        cursor.execute(query)
         count = cursor.fetchone()[0]
         results.append(
             AuditResult(
@@ -243,9 +282,10 @@ def print_audit_report(results: list[AuditResult]) -> bool:
 
 def cmd_snapshot(database_url: str, env_name: str) -> Path:
     """pg_dump sync-scope tables to a dated snapshot file."""
+    _require_psycopg2()
     SNAPSHOTS_DIR.mkdir(parents=True, exist_ok=True)
 
-    date_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    date_str = datetime.now(timezone.utc).strftime("%Y-%m-%d-%H%M")
     filename = f"{date_str}-{env_name}.sql"
     filepath = SNAPSHOTS_DIR / filename
 
@@ -254,9 +294,10 @@ def cmd_snapshot(database_url: str, env_name: str) -> Path:
     for table in sorted(SYNC_TABLES):
         table_args.extend(["-t", f"public.{table}"])
 
+    env, dsn = _pg_subprocess_env(database_url)
     cmd = [
         "pg_dump",
-        database_url,
+        dsn,
         "--data-only",
         "--no-owner",
         "--no-privileges",
@@ -265,20 +306,36 @@ def cmd_snapshot(database_url: str, env_name: str) -> Path:
     ]
 
     print(f"Snapshotting {env_name} → {filepath}")
-    result = subprocess.run(cmd, capture_output=True, text=True)
+    result = subprocess.run(cmd, capture_output=True, text=True, env=env)
 
     if result.returncode != 0:
         print(f"pg_dump failed: {result.stderr}", file=sys.stderr)
         sys.exit(1)
 
-    # Get row counts for the header
-    conn = psycopg2.connect(database_url)
+    if not result.stdout.strip():
+        print(
+            "pg_dump returned empty output — aborting to prevent empty snapshot",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    # Get row counts for the header — single round trip via query_to_xml
+    conn = psycopg2.connect(database_url)  # type: ignore[union-attr]
     try:
         with conn.cursor() as cursor:
-            counts = {}
-            for table in sorted(SYNC_TABLES):
-                cursor.execute(f"SELECT COUNT(*) FROM public.{table}")
-                counts[table] = cursor.fetchone()[0]
+            cursor.execute(
+                "SELECT table_name, "
+                "(xpath('/row/cnt/text()', xml_count))[1]::text::int AS row_count "
+                "FROM ("
+                "  SELECT table_name, "
+                "  query_to_xml('SELECT COUNT(*) AS cnt FROM public.' || table_name, false, true, '') AS xml_count "
+                "  FROM information_schema.tables "
+                "  WHERE table_schema = 'public' AND table_type = 'BASE TABLE' "
+                "  AND table_name = ANY(%s)"
+                ") sub ORDER BY table_name",
+                (sorted(SYNC_TABLES),),
+            )
+            counts = {row[0]: row[1] for row in cursor.fetchall()}
     finally:
         conn.close()
 
@@ -326,8 +383,9 @@ def cmd_restore(filepath: Path, target_url: str) -> None:
         sys.exit(1)
 
     print(f"Restoring {filepath.name} → target database")
-    cmd = ["psql", target_url, "-f", str(filepath)]
-    result = subprocess.run(cmd, capture_output=True, text=True)
+    env, dsn = _pg_subprocess_env(target_url)
+    cmd = ["psql", dsn, "--single-transaction", "-f", str(filepath)]
+    result = subprocess.run(cmd, capture_output=True, text=True, env=env)
 
     if result.returncode != 0:
         print(f"psql restore failed: {result.stderr}", file=sys.stderr)
@@ -341,9 +399,10 @@ def cmd_restore(filepath: Path, target_url: str) -> None:
 
 def cmd_promote(staging_url: str, prod_url: str) -> None:
     """Promote staging data to prod: snapshot → validate → restore."""
+    _require_psycopg2()
     # 1. Audit staging first
     print("Step 1/3: Auditing staging data...")
-    conn = psycopg2.connect(staging_url)
+    conn = psycopg2.connect(staging_url)  # type: ignore[union-attr]
     try:
         with conn.cursor() as cursor:
             results = run_audit(cursor)
@@ -396,8 +455,18 @@ def main():
     p_snap.add_argument("--env", required=True, help="Environment name (staging, prod)")
 
     # promote
-    sub.add_parser(
+    p_promote = sub.add_parser(
         "promote", help="Promote staging → prod (snapshot + validate + restore)"
+    )
+    p_promote.add_argument(
+        "--staging-url",
+        default=os.environ.get("STAGING_DATABASE_URL"),
+        help="Staging Postgres URL. Default: $STAGING_DATABASE_URL",
+    )
+    p_promote.add_argument(
+        "--prod-url",
+        default=os.environ.get("PROD_DATABASE_URL"),
+        help="Prod Postgres URL. Default: $PROD_DATABASE_URL",
     )
 
     # restore
@@ -420,7 +489,8 @@ def main():
         if not url:
             print("Error: DATABASE_URL not set.", file=sys.stderr)
             sys.exit(1)
-        conn = psycopg2.connect(url)
+        _require_psycopg2()
+        conn = psycopg2.connect(url)  # type: ignore[union-attr]
         try:
             with conn.cursor() as cursor:
                 results = run_audit(cursor)
@@ -437,11 +507,11 @@ def main():
         cmd_snapshot(url, args.env)
 
     elif args.command == "promote":
-        staging_url = os.environ.get("STAGING_DATABASE_URL")
-        prod_url = os.environ.get("PROD_DATABASE_URL")
+        staging_url = args.staging_url
+        prod_url = args.prod_url
         if not staging_url or not prod_url:
             print(
-                "Error: Both STAGING_DATABASE_URL and PROD_DATABASE_URL must be set.",
+                "Error: Both --staging-url (STAGING_DATABASE_URL) and --prod-url (PROD_DATABASE_URL) must be set.",
                 file=sys.stderr,
             )
             sys.exit(1)
