@@ -225,6 +225,7 @@ class TestSearchAPI:
         from providers.embeddings import EmbeddingsProviderUnavailableError
 
         app.dependency_overrides[get_current_user] = lambda: {"id": "usr_g7h8i9j0k1l2"}
+        app.dependency_overrides[get_user_db] = lambda: MagicMock()
         app.dependency_overrides[get_admin_db] = lambda: _mock_admin_db()
         try:
             with patch("api.search.get_embeddings_provider") as mock_emb_factory:
