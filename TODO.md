@@ -2228,7 +2228,7 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 
 **Chunk 1 — Setup:**
 - [x] Task 0: Worktree + commit design artifacts
-- [ ] Task 1: Snapshot directory structure + gitignore
+- [x] Task 1: Snapshot directory structure + gitignore
 
 **Chunk 2 — Core Script (DEV-177/178):**
 - [ ] Task 2: Audit subcommand with TDD tests + sync_data.py scaffold
