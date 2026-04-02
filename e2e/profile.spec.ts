@@ -24,6 +24,9 @@ test.describe('@critical J15 — Account deletion: request → grace period stat
   test('requesting account deletion shows 30-day grace period confirmation', async ({
     deletionPage: page,
   }) => {
+    // Clean state: cancel any pending deletion left by a previous failed run
+    await page.request.post('/api/auth/cancel-deletion').catch(() => null);
+
     // Navigate to settings where deletion is initiated
     await page.goto('/settings');
     await page.waitForLoadState('networkidle');
@@ -82,6 +85,9 @@ test.describe
     deletionPage: page,
   }) => {
     test.setTimeout(60_000);
+
+    // Clean state: cancel any pending deletion left by a previous failed run
+    await page.request.post('/api/auth/cancel-deletion').catch(() => null);
 
     // Step 1: Navigate to settings and initiate account deletion
     await page.goto('/settings');

@@ -75,46 +75,52 @@ async function loginFresh(
   return browser.newContext({ storageState: storagePath });
 }
 
+async function createAuthContext(
+  browser: import('@playwright/test').Browser,
+  email: string,
+  password: string,
+  storagePath: string
+): Promise<import('@playwright/test').BrowserContext> {
+  let context;
+  try {
+    context = await browser.newContext({ storageState: storagePath });
+  } catch {
+    context = await loginFresh(browser, email, password, storagePath);
+  }
+
+  // Validate session is still active by probing a protected route.
+  // '/profile' requires auth and correctly redirects expired sessions to /login.
+  const probe = await context.newPage();
+  await probe.goto('/profile', { waitUntil: 'commit' });
+  const isExpired = probe.url().includes('/login');
+  await probe.close();
+
+  if (isExpired) {
+    await context.close();
+    context = await loginFresh(browser, email, password, storagePath);
+  }
+
+  // Inject the consent cookie so the cookie banner never appears during tests.
+  await context.addCookies([
+    {
+      name: 'caferoam_consent',
+      value: 'denied',
+      url: 'http://localhost:3000',
+      expires: Math.floor(Date.now() / 1000) + 31_536_000,
+      httpOnly: false,
+      secure: false,
+      sameSite: 'Lax',
+    },
+  ]);
+
+  return context;
+}
+
 export const test = base.extend<{ authedPage: Page; deletionPage: Page }>({
   authedPage: async ({ browser }, use, testInfo) => {
     const { email, password } = credentials(testInfo);
     const storagePath = storageStatePath(testInfo);
-
-    let context;
-    try {
-      context = await browser.newContext({ storageState: storagePath });
-    } catch {
-      context = await loginFresh(browser, email, password, storagePath);
-    }
-
-    // Validate session is still active by probing a protected route.
-    // NOTE: '/' is in PUBLIC_ROUTES and never redirects to /login, so it cannot
-    // detect expired sessions. '/profile' requires auth and correctly redirects
-    // expired sessions to /login.
-    const probe = await context.newPage();
-    await probe.goto('/profile', { waitUntil: 'commit' });
-    const isExpired = probe.url().includes('/login');
-    await probe.close();
-
-    if (isExpired) {
-      await context.close();
-      context = await loginFresh(browser, email, password, storagePath);
-    }
-
-    // Always inject the consent cookie into the context so the cookie banner
-    // never appears during tests. We do this here (not just in loginFresh) because
-    // cached sessions loaded from user.json may predate this cookie being set.
-    await context.addCookies([
-      {
-        name: 'caferoam_consent',
-        value: 'denied',
-        url: 'http://localhost:3000',
-        expires: Math.floor(Date.now() / 1000) + 31_536_000,
-        httpOnly: false,
-        secure: false,
-        sameSite: 'Lax',
-      },
-    ]);
+    const context = await createAuthContext(browser, email, password, storagePath);
 
     const page = await context.newPage();
     await use(page);
@@ -130,35 +136,7 @@ export const test = base.extend<{ authedPage: Page; deletionPage: Page }>({
       );
     }
     const storagePath = path.join(AUTH_DIR, 'user-deletion.json');
-
-    let context;
-    try {
-      context = await browser.newContext({ storageState: storagePath });
-    } catch {
-      context = await loginFresh(browser, email, password, storagePath);
-    }
-
-    const probe = await context.newPage();
-    await probe.goto('/profile', { waitUntil: 'commit' });
-    const isExpired = probe.url().includes('/login');
-    await probe.close();
-
-    if (isExpired) {
-      await context.close();
-      context = await loginFresh(browser, email, password, storagePath);
-    }
-
-    await context.addCookies([
-      {
-        name: 'caferoam_consent',
-        value: 'denied',
-        url: 'http://localhost:3000',
-        expires: Math.floor(Date.now() / 1000) + 31_536_000,
-        httpOnly: false,
-        secure: false,
-        sameSite: 'Lax',
-      },
-    ]);
+    const context = await createAuthContext(browser, email, password, storagePath);
 
     const page = await context.newPage();
     await use(page);
