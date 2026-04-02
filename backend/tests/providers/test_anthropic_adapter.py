@@ -251,6 +251,60 @@ class TestAnthropicEnrichShop:
         assert result.tags == []
         assert result.confidence == 0.0
 
+    async def test_menu_highlights_normalized_to_canonical_vocab_terms(self, adapter):
+        """LLM raw output is replaced with canonical vocabulary forms."""
+        mock_response = _make_tool_use_response(
+            {
+                "tags": [],
+                "summary": "Test.",
+                "topReviews": [],
+                "mode": "mixed",
+                "menu_highlights": ["巴斯克蛋糕", "great coffee"],
+            }
+        )
+        adapter._client = AsyncMock()
+        adapter._client.messages.create = AsyncMock(return_value=mock_response)
+
+        result = await adapter.enrich_shop(SAMPLE_SHOP)
+
+        assert result.menu_highlights == ["巴斯克蛋糕"]
+
+    async def test_coffee_origins_normalized_to_canonical_vocab_terms(self, adapter):
+        """Non-standard origin strings are discarded; canonical forms are kept."""
+        mock_response = _make_tool_use_response(
+            {
+                "tags": [],
+                "summary": "Test.",
+                "topReviews": [],
+                "mode": "mixed",
+                "coffee_origins": ["耶加雪菲", "Single Origin Ethiopian"],
+            }
+        )
+        adapter._client = AsyncMock()
+        adapter._client.messages.create = AsyncMock(return_value=mock_response)
+
+        result = await adapter.enrich_shop(SAMPLE_SHOP)
+
+        assert result.coffee_origins == ["耶加雪菲"]
+
+    async def test_menu_highlights_empty_when_no_vocab_match(self, adapter):
+        """All non-vocabulary highlights are discarded."""
+        mock_response = _make_tool_use_response(
+            {
+                "tags": [],
+                "summary": "Test.",
+                "topReviews": [],
+                "mode": "mixed",
+                "menu_highlights": ["amazing brunch", "great atmosphere"],
+            }
+        )
+        adapter._client = AsyncMock()
+        adapter._client.messages.create = AsyncMock(return_value=mock_response)
+
+        result = await adapter.enrich_shop(SAMPLE_SHOP)
+
+        assert result.menu_highlights == []
+
 
 def _make_menu_tool_response(tool_input: dict) -> MagicMock:
     """Build a mock Anthropic response with an extract_menu tool_use block."""

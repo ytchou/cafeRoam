@@ -3,7 +3,9 @@ import logging
 from anthropic import AsyncAnthropic
 from anthropic.types import Message
 
+from core.search_vocabulary import ITEM_TERMS, SPECIALTY_TERMS
 from core.tarot_vocabulary import TAROT_TITLES, TITLE_TO_TAGS
+from services.query_normalizer import normalize_query
 from models.types import (
     EnrichmentResult,
     MenuExtractionResult,
@@ -15,6 +17,17 @@ from models.types import (
 )
 
 logger = logging.getLogger(__name__)
+
+_ITEM_VOCAB: dict[str, str] = {normalize_query(t): t for t in ITEM_TERMS}
+_SPECIALTY_VOCAB: dict[str, str] = {normalize_query(t): t for t in SPECIALTY_TERMS}
+
+
+def _to_vocab_term(raw: str, vocab: dict[str, str]) -> str | None:
+    norm = normalize_query(raw)
+    return vocab.get(norm) or next(
+        (canonical for n, canonical in vocab.items() if norm in n), None
+    )
+
 
 CLASSIFY_SHOP_TOOL = {
     "name": "classify_shop",
@@ -390,12 +403,21 @@ class AnthropicLLMAdapter:
 
         overall_confidence = sum(confidences) / len(confidences) if confidences else 0.0
 
+        raw_highlights = tool_input.get("menu_highlights", [])
+        raw_origins = tool_input.get("coffee_origins", [])
+        menu_highlights = [
+            t for raw in raw_highlights if (t := _to_vocab_term(raw, _ITEM_VOCAB))
+        ]
+        coffee_origins = [
+            t for raw in raw_origins if (t := _to_vocab_term(raw, _SPECIALTY_VOCAB))
+        ]
+
         return EnrichmentResult(
             tags=valid_tags,
             tag_confidences=tag_confidences,
             summary=tool_input.get("summary", ""),
             confidence=overall_confidence,
             mode_scores=mode_scores,
-            menu_highlights=tool_input.get("menu_highlights", []),
-            coffee_origins=tool_input.get("coffee_origins", []),
+            menu_highlights=menu_highlights,
+            coffee_origins=coffee_origins,
         )
