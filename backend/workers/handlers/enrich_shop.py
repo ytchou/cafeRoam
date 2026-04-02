@@ -4,6 +4,7 @@ from typing import Any, cast
 import structlog
 from supabase import Client
 
+from core.lang import is_zh_dominant
 from models.types import JobType, ShopEnrichmentInput
 from providers.llm.interface import LLMProvider
 from workers.queue import JobQueue
@@ -50,6 +51,14 @@ async def handle_enrich_shop(
     )
 
     result = await llm.enrich_shop(enrichment_input)
+
+    if result.summary and not is_zh_dominant(result.summary):
+        logger.warning(
+            "Enrichment summary is not zh-TW dominant — skipping DB write",
+            shop_id=shop_id,
+            summary_preview=result.summary[:80],
+        )
+        raise ValueError(f"Enrichment summary for shop {shop_id} is not in Traditional Chinese")
 
     mode = result.mode_scores
     db.table("shops").update(
