@@ -34,7 +34,7 @@
 
 **Wave 4 — Verification:**
 
-- [ ] Task 13: Full test suite + lint verification
+- [x] Task 13: Full test suite + lint verification
 
 ---
 
