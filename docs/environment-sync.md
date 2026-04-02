@@ -30,7 +30,7 @@ These tables sync staging → prod:
 DATABASE_URL=postgresql://... make audit-staging
 ```
 
-Checks: row counts, required fields (name/lat/lng), embedding coverage (>80%), taxonomy integrity, orphaned photos.
+Checks: row counts, required fields (name/latitude/longitude), embedding coverage (>80%), taxonomy integrity, orphaned photos.
 
 ### Snapshot staging to dated file
 
