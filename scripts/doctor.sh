@@ -119,6 +119,10 @@ check "ANTHROPIC_API_KEY is set (required for LLM enrichment and photo classific
   "grep -q '^ANTHROPIC_API_KEY=.' '${PROJECT_ROOT}/backend/.env'" \
   "Add ANTHROPIC_API_KEY=<key> to backend/.env (get from console.anthropic.com)"
 
+check "OPENAI_API_KEY is set (required for semantic search embeddings)" \
+  "grep -q '^OPENAI_API_KEY=.' '${PROJECT_ROOT}/backend/.env'" \
+  "Add OPENAI_API_KEY=<key> to backend/.env (get from platform.openai.com)"
+
 # Production safety warning — does not count as a failure
 if grep -q '^ANON_SALT=caferoam-dev-salt$' "${PROJECT_ROOT}/backend/.env" 2>/dev/null; then
   printf "${YELLOW}[WARN]${NC} ANON_SALT is set to the default dev value — change before deploying to production\n"

@@ -6,7 +6,7 @@
 
 ## Pass 1 — Full Discovery
 
-*Agents: Bug Hunter, Standards & Conventions, Architecture & Design*
+_Agents: Bug Hunter, Standards & Conventions, Architecture & Design_
 
 ### Issues Found (0 total)
 
