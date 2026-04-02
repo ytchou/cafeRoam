@@ -37,7 +37,7 @@ class TestAnalyticsEndpointAuth:
                 "/analytics/events",
                 json={
                     "event": "filter_applied",
-                    "properties": {"filter_type": "mode", "filter_value": "work"},
+                    "properties": {"filter_type": "mode", "filter_value": ["work"]},
                 },
             )
             assert response.status_code == 200
@@ -54,7 +54,7 @@ class TestAnalyticsSpecEvents:
                 "/analytics/events",
                 json={
                     "event": "filter_applied",
-                    "properties": {"filter_type": "mode", "filter_value": "work"},
+                    "properties": {"filter_type": "mode", "filter_value": ["work"]},
                 },
             )
             assert response.status_code == 200
@@ -127,6 +127,30 @@ class TestAnalyticsSpecEvents:
             props = call_args[0][1]
             assert props["days_since_first_session"] == 23
             assert props["previous_sessions"] == 5
+        finally:
+            app.dependency_overrides.clear()
+
+
+class TestFilterApplied:
+    def test_filter_applied_accepts_array_filter_value(self):
+        """filter_applied should accept filter_value as a list of tag slugs.
+
+        The frontend (filter-sheet.tsx) sends selectedIds as string[]. A str-only
+        Pydantic model would reject this with 422, silently dropping all filter events.
+        """
+        _setup_overrides()
+        try:
+            response = client.post(
+                "/analytics/events",
+                json={
+                    "event": "filter_applied",
+                    "properties": {
+                        "filter_type": "sheet",
+                        "filter_value": ["wifi", "quiet", "outdoor_seating"],
+                    },
+                },
+            )
+            assert response.status_code == 200
         finally:
             app.dependency_overrides.clear()
 
