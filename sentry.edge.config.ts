@@ -7,4 +7,5 @@ Sentry.init({
   tracesSampleRate: 0.1,
   enableLogs: true,
   enabled: !!process.env.NEXT_PUBLIC_SENTRY_DSN,
+  sendDefaultPii: false,
 });
