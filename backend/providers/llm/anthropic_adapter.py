@@ -39,7 +39,7 @@ CLASSIFY_SHOP_TOOL = {
             },
             "summary": {
                 "type": "string",
-                "description": "2-3 sentence natural language profile of the shop",
+                "description": "2-3 sentence natural language profile of the shop in Traditional Chinese (繁體中文)",
             },
             "topReviews": {
                 "type": "array",
@@ -143,8 +143,9 @@ CLASSIFY_PHOTO_TOOL = {
 
 SUMMARIZE_REVIEWS_SYSTEM_PROMPT = (
     "You summarize coffee shop visitor reviews into a concise community snapshot. "
-    "Write in the same language(s) as the reviews (typically Traditional Chinese, "
-    "or mixed zh/en). Focus on: popular drinks/food, atmosphere, work-suitability, "
+    "You MUST write entirely in Traditional Chinese (繁體中文). Even if the source "
+    "reviews are in English or mixed languages, your output must be in Traditional Chinese. "
+    "Focus on: popular drinks/food, atmosphere, work-suitability, "
     "and standout qualities. Output 2-4 sentences, max 200 characters total. "
     "Do NOT use bullet points or lists — write flowing prose."
 )
@@ -167,7 +168,8 @@ SYSTEM_PROMPT = (
     "- Write a 2-3 sentence summary describing the shop's character — "
     "what makes it special, who it's for. If reviews mention specific menu items "
     "(foods, drinks) or coffee origins by name, include them in the summary. "
-    "Write the summary in Traditional Chinese (繁體中文).\n"
+    "You MUST write the summary in Traditional Chinese (繁體中文). "
+    "Even if the reviews are in English, your summary must be in Traditional Chinese.\n"
     "- Select the 3-5 most informative review excerpts that would help someone "
     "decide whether to visit.\n"
     "- Classify the primary mode: work (focused tasks), rest (relaxation/reading), "

@@ -4,6 +4,7 @@ from typing import Any, cast
 import structlog
 from supabase import Client
 
+from core.lang import is_zh_dominant
 from models.types import CHECKIN_MIN_TEXT_LENGTH, MAX_COMMUNITY_TEXTS, JobType
 from providers.llm.interface import LLMProvider
 from workers.queue import JobQueue
@@ -59,6 +60,16 @@ async def handle_summarize_reviews(
             priority=2,
         )
         return
+
+    if not is_zh_dominant(summary):
+        logger.warning(
+            "Community summary is not zh-TW dominant — skipping DB write",
+            shop_id=shop_id,
+            summary_preview=summary[:80],
+        )
+        raise ValueError(
+            f"Community summary for shop {shop_id} is not in Traditional Chinese"
+        )
 
     # Persist summary to DB
     db.table("shops").update(

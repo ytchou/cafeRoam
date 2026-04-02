@@ -127,6 +127,33 @@ class TestSummarizeReviewsHandler:
         # Only the two non-empty texts are passed to Claude
         llm.summarize_reviews.assert_called_once_with(["有料咖啡，環境好", "巴斯克蛋糕必點"])
 
+    async def test_english_summary_is_rejected_with_error(self):
+        """When Claude returns an English-dominant summary, the handler raises ValueError and does not write to DB."""
+        db = self._make_db(
+            checkin_texts=[
+                {"text": "Nice latte, quiet space for working"},
+                {"text": "Great cheesecake, friendly staff"},
+            ]
+        )
+        llm = AsyncMock()
+        llm.summarize_reviews = AsyncMock(
+            return_value="Customers recommend the latte and cheesecake. Quiet atmosphere suitable for work."
+        )
+        queue = AsyncMock()
+
+        import pytest
+
+        with pytest.raises(ValueError, match="not in Traditional Chinese"):
+            await handle_summarize_reviews(
+                payload={"shop_id": "shop-a1b2c3"},
+                db=db,
+                llm=llm,
+                queue=queue,
+            )
+
+        db._shops_table.update.assert_not_called()
+        queue.enqueue.assert_not_called()
+
     async def test_rpc_called_with_correct_parameters(self):
         """The handler calls get_ranked_checkin_texts with the correct shop_id and min length."""
         db = self._make_db(checkin_texts=[])

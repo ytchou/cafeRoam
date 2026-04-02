@@ -19,7 +19,7 @@ class TestEnrichShopHandler:
             return_value=MagicMock(
                 tags=[tag_mock],
                 tag_confidences={"tag-cozy": 0.9},
-                summary="Cozy cafe",
+                summary="溫馨的咖啡廳，適合放鬆閱讀",
                 mode_scores=None,
             )
         )
@@ -57,13 +57,13 @@ class TestEnrichShopHandler:
         llm.enrich_shop = AsyncMock(
             return_value=MagicMock(
                 tags=[],
-                summary="A cozy cafe",
+                summary="溫馨的獨立咖啡廳，提供優質手沖咖啡",
                 confidence=0.9,
                 mode_scores=None,
                 model_dump=MagicMock(
                     return_value={
                         "tags": [],
-                        "summary": "A cozy cafe",
+                        "summary": "溫馨的獨立咖啡廳，提供優質手沖咖啡",
                         "confidence": 0.9,
                         "mode_scores": None,
                     }
