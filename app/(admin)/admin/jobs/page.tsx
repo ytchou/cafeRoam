@@ -1,13 +1,16 @@
 'use client';
 
 import { useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { BatchesList } from './_components/BatchesList';
 import { RawJobsList } from './_components/RawJobsList';
 
 type Tab = 'batches' | 'raw';
 
 export default function AdminJobsPage() {
-  const [activeTab, setActiveTab] = useState<Tab>('batches');
+  const searchParams = useSearchParams();
+  const initialStatus = searchParams.get('status');
+  const [activeTab, setActiveTab] = useState<Tab>(initialStatus ? 'raw' : 'batches');
 
   return (
     <div className="space-y-6">
@@ -30,7 +33,7 @@ export default function AdminJobsPage() {
         ))}
       </div>
 
-      {activeTab === 'batches' ? <BatchesList /> : <RawJobsList />}
+      {activeTab === 'batches' ? <BatchesList /> : <RawJobsList initialStatus={initialStatus ?? undefined} />}
     </div>
   );
 }
