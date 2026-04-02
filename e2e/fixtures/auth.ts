@@ -1,7 +1,7 @@
 import { test as base, type Page, type TestInfo } from '@playwright/test';
 import { fileURLToPath } from 'node:url';
 import { renameSync, mkdirSync } from 'node:fs';
-import { randomBytes } from 'node:crypto'; // used for per-worker tmp file uniqueness
+import { randomBytes } from 'node:crypto';
 import path from 'node:path';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -133,14 +133,59 @@ export const test = base.extend<{ authedPage: Page; deletionPage: Page }>({
   },
 
   deletionPage: async ({ browser }, use) => {
-    const email = process.env.E2E_DELETION_USER_EMAIL;
-    const password = process.env.E2E_DELETION_USER_PASSWORD;
-    if (!email || !password) {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!supabaseUrl || !serviceRoleKey) {
       throw new Error(
-        'E2E_DELETION_USER_EMAIL and E2E_DELETION_USER_PASSWORD must be set for deletion tests'
+        'NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set for deletion tests'
       );
     }
-    const storagePath = path.join(AUTH_DIR, 'user-deletion.json');
+
+    const suffix = randomBytes(4).toString('hex');
+    const email = `e2e-deletion-${suffix}@caferoam.test`;
+    const password = `TestPass!${suffix}`;
+    let userId: string | null = null;
+
+    // Create a temporary user via Supabase Admin API
+    const createRes = await fetch(`${supabaseUrl}/auth/v1/admin/users`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${serviceRoleKey}`,
+        apikey: serviceRoleKey,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email,
+        password,
+        email_confirm: true,
+        app_metadata: { pdpa_consented: true },
+      }),
+    });
+    if (!createRes.ok) {
+      throw new Error(
+        `Failed to create deletion test user: ${createRes.status} ${await createRes.text()}`
+      );
+    }
+    const userData = (await createRes.json()) as { id: string };
+    userId = userData.id;
+
+    // Create a profile row (required for the app to function)
+    await fetch(`${supabaseUrl}/rest/v1/profiles`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${serviceRoleKey}`,
+        apikey: serviceRoleKey,
+        'Content-Type': 'application/json',
+        Prefer: 'return=minimal',
+      },
+      body: JSON.stringify({
+        id: userId,
+        display_name: `E2E Deletion ${suffix}`,
+        pdpa_consent_at: new Date().toISOString(),
+      }),
+    });
+
+    const storagePath = path.join(AUTH_DIR, `user-deletion-${suffix}.json`);
     const context = await createAuthContext(
       browser,
       email,
@@ -151,6 +196,24 @@ export const test = base.extend<{ authedPage: Page; deletionPage: Page }>({
     const page = await context.newPage();
     await use(page);
     await context.close();
+
+    // Cleanup: delete the temp user via Admin API
+    if (userId) {
+      await fetch(`${supabaseUrl}/auth/v1/admin/users/${userId}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${serviceRoleKey}`,
+          apikey: serviceRoleKey,
+        },
+      }).catch(() => null);
+    }
+    // Remove the temp storage state file
+    const { unlinkSync } = await import('node:fs');
+    try {
+      unlinkSync(storagePath);
+    } catch {
+      // File may not exist if login failed
+    }
   },
 });
 
