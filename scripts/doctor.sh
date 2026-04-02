@@ -191,6 +191,21 @@ if [ -z "${POSTHOG_API_KEY:-}" ]; then
   printf "${YELLOW}[WARN]${NC} POSTHOG_API_KEY not set — owner analytics will show 0 page views\n"
 fi
 
+# ─── Ops / Environment Sync (optional — only needed for promote-to-prod) ──────
+printf "\n${BOLD}Ops (environment sync)${NC}\n"
+
+if [ -z "${STAGING_DATABASE_URL:-}" ]; then
+  printf "${YELLOW}[WARN]${NC} STAGING_DATABASE_URL not set — needed for: make audit-staging, snapshot-staging, promote-to-prod\n"
+else
+  _pass "STAGING_DATABASE_URL set"
+fi
+
+if [ -z "${PROD_DATABASE_URL:-}" ]; then
+  printf "${YELLOW}[WARN]${NC} PROD_DATABASE_URL not set — needed for: make promote-to-prod\n"
+else
+  _pass "PROD_DATABASE_URL set"
+fi
+
 # ─── Railway (optional) ───────────────────────────────────────────────────────
 printf "\n${BOLD}Railway${NC}\n"
 

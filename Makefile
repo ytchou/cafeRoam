@@ -1,4 +1,4 @@
-.PHONY: help doctor setup dev dev-all migrate seed-shops restore-seed-user reset-db workers-enrich workers-embed test validate-supabase lint
+.PHONY: help doctor setup dev dev-all migrate seed-shops restore-seed-user reset-db workers-enrich workers-embed test validate-supabase lint audit-staging snapshot-staging promote-to-prod restore-snapshot
 
 help:
 	@echo "CafeRoam — Available commands:"
@@ -15,6 +15,10 @@ help:
 	@echo "  make doctor              Run environment preflight check (run before starting work)"
 	@echo "  make validate-supabase   Validate Supabase instance for schema parity (requires DATABASE_URL)"
 	@echo "  make lint                Run ESLint + Prettier check + TypeScript check"
+	@echo "  make audit-staging       Audit staging Supabase data quality (requires DATABASE_URL)"
+	@echo "  make snapshot-staging    Snapshot staging shop data to supabase/snapshots/ (requires DATABASE_URL)"
+	@echo "  make promote-to-prod     Promote staging → prod (requires STAGING_DATABASE_URL + PROD_DATABASE_URL)"
+	@echo "  make restore-snapshot    Restore a snapshot to local dev (FILE=..., TARGET=...)"
 
 doctor:
 	@bash scripts/doctor.sh
@@ -90,6 +94,33 @@ validate-supabase:
 		exit 1; \
 	fi
 	uv run scripts/validate_supabase.py
+
+audit-staging:
+	@if [ -z "$$DATABASE_URL" ]; then \
+		echo "Usage: DATABASE_URL=postgresql://... make audit-staging"; \
+		exit 1; \
+	fi
+	uv run scripts/sync_data.py audit
+
+snapshot-staging:
+	@if [ -z "$$DATABASE_URL" ]; then \
+		echo "Usage: DATABASE_URL=postgresql://... make snapshot-staging"; \
+		exit 1; \
+	fi
+	uv run scripts/sync_data.py snapshot --env staging
+
+promote-to-prod:
+	@if [ -z "$$STAGING_DATABASE_URL" ] || [ -z "$$PROD_DATABASE_URL" ]; then \
+		echo "Usage: STAGING_DATABASE_URL=... PROD_DATABASE_URL=... make promote-to-prod"; \
+		exit 1; \
+	fi
+	STAGING_DATABASE_URL=$$STAGING_DATABASE_URL PROD_DATABASE_URL=$$PROD_DATABASE_URL uv run scripts/sync_data.py promote
+
+restore-snapshot:
+	@FILE=$${FILE:-supabase/snapshots/latest.sql}; \
+	TARGET=$${TARGET:-postgresql://postgres:postgres@127.0.0.1:54322/postgres}; \
+	echo "Restoring $$FILE → target DB"; \
+	uv run scripts/sync_data.py restore --file "$$FILE" --target-url "$$TARGET"
 
 lint:
 	pnpm lint && pnpm format:check && pnpm type-check
