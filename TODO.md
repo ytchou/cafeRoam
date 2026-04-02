@@ -2235,7 +2235,7 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 - [x] Task 3: Snapshot/restore integration test
 
 **Chunk 3 — Ergonomics (DEV-179/180):**
-- [ ] Task 4: Makefile targets
+- [x] Task 4: Makefile targets
 - [ ] Task 5: Documentation
 
 **Chunk 4 — Verification:**
