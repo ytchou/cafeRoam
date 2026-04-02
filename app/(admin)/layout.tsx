@@ -11,6 +11,7 @@ const NAV_ITEMS = [
   { href: '/admin/shops', label: 'Shops' },
   { href: '/admin/jobs', label: 'Jobs' },
   { href: '/admin/taxonomy', label: 'Taxonomy' },
+  { href: '/admin/roles', label: 'Roles' },
 ];
 
 const SEGMENT_LABELS: Record<string, string> = {
@@ -18,6 +19,7 @@ const SEGMENT_LABELS: Record<string, string> = {
   shops: 'Shops',
   jobs: 'Jobs',
   taxonomy: 'Taxonomy',
+  roles: 'Roles',
 };
 
 function useBreadcrumbs(pathname: string) {

@@ -29,8 +29,8 @@
 
 **Wave 3 — Depends on Wave 2:**
 
-- [ ] Task 10: Roles management page + sidebar nav (DEV-184)
-- [ ] Task 11: Taxonomy action buttons (DEV-185)
+- [x] Task 10: Roles management page + sidebar nav (DEV-184)
+- [x] Task 11: Taxonomy action buttons (DEV-185)
 
 **Wave 4 — Verification:**
 
