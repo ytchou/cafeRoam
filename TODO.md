@@ -13,7 +13,7 @@
 
 **Wave 1 — Foundation:**
 
-- [ ] Task 1: Install AlertDialog + ConfirmDialog wrapper (DEV-181)
+- [x] Task 1: Install AlertDialog + ConfirmDialog wrapper (DEV-181)
 
 **Wave 2 — Confirmations + Independent Fixes:**
 
