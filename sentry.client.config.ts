@@ -13,7 +13,12 @@ Sentry.init({
     const req = event.request;
     if (req?.headers) {
       const headers = req.headers as Record<string, string>;
-      for (const key of ['Authorization', 'authorization', 'Cookie', 'cookie']) {
+      for (const key of [
+        'Authorization',
+        'authorization',
+        'Cookie',
+        'cookie',
+      ]) {
         delete headers[key];
       }
     }
