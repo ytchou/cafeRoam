@@ -277,7 +277,7 @@ class TestAnthropicEnrichShop:
                 "summary": "Test.",
                 "topReviews": [],
                 "mode": "mixed",
-                "coffee_origins": ["耶加雪菲", "Single Origin Ethiopian"],
+                "coffee_origins": ["耶加雪菲", "freshly sourced beans"],
             }
         )
         adapter._client = AsyncMock()
@@ -304,6 +304,24 @@ class TestAnthropicEnrichShop:
         result = await adapter.enrich_shop(SAMPLE_SHOP)
 
         assert result.menu_highlights == []
+
+    async def test_coffee_origins_empty_when_no_vocab_match(self, adapter):
+        """All non-vocabulary coffee origin strings are discarded."""
+        mock_response = _make_tool_use_response(
+            {
+                "tags": [],
+                "summary": "Test.",
+                "topReviews": [],
+                "mode": "mixed",
+                "coffee_origins": ["freshly sourced beans", "premium blend"],
+            }
+        )
+        adapter._client = AsyncMock()
+        adapter._client.messages.create = AsyncMock(return_value=mock_response)
+
+        result = await adapter.enrich_shop(SAMPLE_SHOP)
+
+        assert result.coffee_origins == []
 
 
 def _make_menu_tool_response(tool_input: dict) -> MagicMock:
