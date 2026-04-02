@@ -2,11 +2,14 @@ import asyncio
 import time
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from typing import Any
 
 import sentry_sdk
 import structlog
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 
 from api.admin import router as admin_router
 from api.admin_claims import router as admin_claims_router
@@ -32,12 +35,29 @@ from api.stamps import router as stamps_router
 from api.submissions import router as submissions_router
 from core.config import settings
 from db.supabase_client import get_service_role_client
+from middleware.rate_limit import limiter
 from middleware.request_id import RequestIDMiddleware
 from workers.scheduler import create_scheduler
 
 logger = structlog.get_logger()
 
 scheduler = create_scheduler()
+
+
+def _sentry_before_send(event: dict[str, Any], hint: dict[str, Any]) -> dict[str, Any] | None:
+    """Strip PII from Sentry events before sending.
+
+    send_default_pii=False reduces exposure but does not scrub Authorization
+    headers already captured in event["request"]["headers"].
+    """
+    event.pop("user", None)
+    request_ctx = event.get("request", {})
+    headers = request_ctx.get("headers", {})
+    headers.pop("Authorization", None)
+    headers.pop("authorization", None)
+    headers.pop("Cookie", None)
+    headers.pop("cookie", None)
+    return event
 
 
 def _init_sentry() -> None:
@@ -49,6 +69,7 @@ def _init_sentry() -> None:
         environment=settings.environment,
         traces_sample_rate=0.1,
         send_default_pii=False,
+        before_send=_sentry_before_send,
     )
     logger.info("Sentry initialized", environment=settings.environment)
 
@@ -82,6 +103,8 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.add_middleware(RequestIDMiddleware)
 
 
