@@ -110,7 +110,7 @@ export default function RolesPage() {
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         toast.error(body.detail ?? 'Failed to revoke role');
-        return;
+        throw new Error(body.detail ?? 'Failed to revoke role');
       }
       setRevokeTarget(null);
       fetchRoles(filterRole || undefined);

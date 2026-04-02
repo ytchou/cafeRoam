@@ -1,6 +1,5 @@
 'use client';
 
-import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { buttonVariants } from '@/components/ui/button';
 import {
@@ -51,7 +50,8 @@ export function ConfirmDialog({
                 await onConfirm();
                 onOpenChange(false);
               } catch {
-                toast.error('Action failed. Please try again.');
+                // onConfirm is responsible for showing error feedback;
+                // we stay open to allow retry
               }
             }}
             disabled={loading}
