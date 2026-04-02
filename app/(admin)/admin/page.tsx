@@ -46,7 +46,9 @@ export default function AdminDashboard() {
   const [claimRejectionReason, setClaimRejectionReason] =
     useState<string>('invalid_proof');
   const [approvingClaimId, setApprovingClaimId] = useState<string | null>(null);
-  const [claimStatusFilter, setClaimStatusFilter] = useState<'pending' | 'approved' | 'rejected' | 'all'>('pending');
+  const [claimStatusFilter, setClaimStatusFilter] = useState<
+    'pending' | 'approved' | 'rejected' | 'all'
+  >('pending');
   const [confirmAction, setConfirmAction] = useState<{
     type: 'approve_submission' | 'approve_claim';
     id: string;
@@ -54,26 +56,32 @@ export default function AdminDashboard() {
   } | null>(null);
   const tokenRef = useRef<string | null>(null);
 
-  const fetchClaims = useCallback(async (token: string, statusFilter: 'pending' | 'approved' | 'rejected' | 'all' = 'pending') => {
-    setClaimsLoading(true);
-    setClaimsError(null);
-    try {
-      const params = statusFilter === 'all' ? '' : `?status=${statusFilter}`;
-      const res = await fetch(`/api/admin/claims${params}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) {
-        setClaims(await res.json());
-      } else {
-        const body = await res.json().catch(() => ({}));
-        setClaimsError(body.detail || 'Failed to load claims');
+  const fetchClaims = useCallback(
+    async (
+      token: string,
+      statusFilter: 'pending' | 'approved' | 'rejected' | 'all' = 'pending'
+    ) => {
+      setClaimsLoading(true);
+      setClaimsError(null);
+      try {
+        const params = statusFilter === 'all' ? '' : `?status=${statusFilter}`;
+        const res = await fetch(`/api/admin/claims${params}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          setClaims(await res.json());
+        } else {
+          const body = await res.json().catch(() => ({}));
+          setClaimsError(body.detail || 'Failed to load claims');
+        }
+      } catch {
+        setClaimsError('Network error loading claims');
+      } finally {
+        setClaimsLoading(false);
       }
-    } catch {
-      setClaimsError('Network error loading claims');
-    } finally {
-      setClaimsLoading(false);
-    }
-  }, []);
+    },
+    []
+  );
 
   const fetchOverview = useCallback(async (token: string) => {
     const res = await fetch('/api/admin/pipeline/overview', {
@@ -118,7 +126,11 @@ export default function AdminDashboard() {
       setRejectingId(submissionId);
       return;
     }
-    setConfirmAction({ type: 'approve_submission', id: submissionId, label: 'submission' });
+    setConfirmAction({
+      type: 'approve_submission',
+      id: submissionId,
+      label: 'submission',
+    });
   }
 
   async function executeApproveSubmission(submissionId: string) {
@@ -223,7 +235,8 @@ export default function AdminDashboard() {
           type="button"
           onClick={() => {
             setTab('claims');
-            if (tokenRef.current) fetchClaims(tokenRef.current, claimStatusFilter);
+            if (tokenRef.current)
+              fetchClaims(tokenRef.current, claimStatusFilter);
           }}
           className={
             tab === 'claims'
@@ -376,7 +389,9 @@ export default function AdminDashboard() {
             <select
               aria-label="Claim status"
               value={claimStatusFilter}
-              onChange={(e) => setClaimStatusFilter(e.target.value as typeof claimStatusFilter)}
+              onChange={(e) =>
+                setClaimStatusFilter(e.target.value as typeof claimStatusFilter)
+              }
               className="rounded border px-2 py-1 text-sm"
             >
               <option value="pending">Pending</option>
@@ -417,11 +432,17 @@ export default function AdminDashboard() {
                     </td>
                     <td className="py-2">{claim.role}</td>
                     <td className="py-2">
-                      <span className={`inline-block rounded px-2 py-0.5 text-xs font-medium ${
-                        claim.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                        claim.status === 'approved' ? 'bg-green-100 text-green-800' :
-                        'bg-red-100 text-red-800'
-                      }`}>{claim.status}</span>
+                      <span
+                        className={`inline-block rounded px-2 py-0.5 text-xs font-medium ${
+                          claim.status === 'pending'
+                            ? 'bg-yellow-100 text-yellow-800'
+                            : claim.status === 'approved'
+                              ? 'bg-green-100 text-green-800'
+                              : 'bg-red-100 text-red-800'
+                        }`}
+                      >
+                        {claim.status}
+                      </span>
                     </td>
                     <td className="py-2 text-gray-500">
                       {new Date(claim.created_at).toLocaleDateString()}
@@ -459,12 +480,15 @@ export default function AdminDashboard() {
                                   setConfirmAction({
                                     type: 'approve_claim',
                                     id: claim.id,
-                                    label: claim.shops?.name ?? claim.contact_name,
+                                    label:
+                                      claim.shops?.name ?? claim.contact_name,
                                   });
                                 }}
                                 className="rounded bg-green-50 px-2 py-1 text-xs text-green-700 hover:bg-green-100 disabled:opacity-50"
                               >
-                                {approvingClaimId === claim.id ? '…' : 'Approve'}
+                                {approvingClaimId === claim.id
+                                  ? '…'
+                                  : 'Approve'}
                               </button>
                               <button
                                 type="button"
@@ -517,7 +541,10 @@ export default function AdminDashboard() {
                                   toast.success('Claim rejected');
                                   setClaimRejectingId(null);
                                   if (tokenRef.current)
-                                    fetchClaims(tokenRef.current, claimStatusFilter);
+                                    fetchClaims(
+                                      tokenRef.current,
+                                      claimStatusFilter
+                                    );
                                 } else {
                                   toast.error('Failed to reject');
                                 }
@@ -547,8 +574,14 @@ export default function AdminDashboard() {
 
       <ConfirmDialog
         open={confirmAction !== null}
-        onOpenChange={(open) => { if (!open) setConfirmAction(null); }}
-        title={confirmAction?.type === 'approve_submission' ? 'Approve submission?' : 'Approve claim?'}
+        onOpenChange={(open) => {
+          if (!open) setConfirmAction(null);
+        }}
+        title={
+          confirmAction?.type === 'approve_submission'
+            ? 'Approve submission?'
+            : 'Approve claim?'
+        }
         description={
           confirmAction?.type === 'approve_submission'
             ? 'This will set the shop live and notify the submitter.'

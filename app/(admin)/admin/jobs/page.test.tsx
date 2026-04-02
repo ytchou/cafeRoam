@@ -172,7 +172,9 @@ describe('AdminJobsPage', () => {
 
     // Confirm in alertdialog
     const dialog = await screen.findByRole('alertdialog');
-    await user.click(within(dialog).getByRole('button', { name: /cancel job/i }));
+    await user.click(
+      within(dialog).getByRole('button', { name: /cancel job/i })
+    );
 
     await waitFor(() => {
       expect(mockFetch).toHaveBeenCalledWith(
@@ -260,7 +262,9 @@ describe('AdminJobsPage', () => {
   });
 
   it('auto-selects Raw Jobs tab and failed filter when ?status=failed is in URL', async () => {
-    mockUseSearchParams.mockReturnValueOnce(new URLSearchParams('status=failed'));
+    mockUseSearchParams.mockReturnValueOnce(
+      new URLSearchParams('status=failed')
+    );
 
     const failedJobsResponse = makeJobsResponse([
       {
@@ -277,9 +281,15 @@ describe('AdminJobsPage', () => {
 
     mockFetch.mockImplementation((url: string) => {
       if (url.includes('/api/admin/pipeline/batches')) {
-        return Promise.resolve({ ok: true, json: () => Promise.resolve({ batches: [], total: 0 }) });
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ batches: [], total: 0 }),
+        });
       }
-      return Promise.resolve({ ok: true, json: () => Promise.resolve(failedJobsResponse) });
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve(failedJobsResponse),
+      });
     });
 
     render(<AdminJobsPage />);

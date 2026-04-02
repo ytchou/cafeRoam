@@ -169,7 +169,9 @@ describe('AdminShopDetail', () => {
 
     // Confirm in dialog
     const dialog = await screen.findByRole('alertdialog');
-    await user.click(within(dialog).getByRole('button', { name: /re-enrich/i }));
+    await user.click(
+      within(dialog).getByRole('button', { name: /re-enrich/i })
+    );
 
     await waitFor(() => {
       expect(mockFetch).toHaveBeenCalledWith(
@@ -213,7 +215,9 @@ describe('AdminShopDetail', () => {
 
     // Confirm in dialog
     const dialog = await screen.findByRole('alertdialog');
-    await user.click(within(dialog).getByRole('button', { name: /unpublish/i }));
+    await user.click(
+      within(dialog).getByRole('button', { name: /unpublish/i })
+    );
 
     await waitFor(() => {
       expect(mockFetch).toHaveBeenCalledWith(

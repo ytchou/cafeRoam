@@ -285,7 +285,9 @@ export default function TaxonomyPage() {
                     disabled={enqueuingIds.has(shop.id)}
                     className="ml-2 rounded bg-blue-100 px-2 py-0.5 text-xs text-blue-700 hover:bg-blue-200 disabled:opacity-50"
                   >
-                    {enqueuingIds.has(shop.id) ? 'Queued...' : 'Generate Embedding'}
+                    {enqueuingIds.has(shop.id)
+                      ? 'Queued...'
+                      : 'Generate Embedding'}
                   </button>
                 </div>
               </li>

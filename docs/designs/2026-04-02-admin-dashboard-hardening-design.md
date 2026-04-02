@@ -24,6 +24,7 @@ Reusable wrapper around shadcn AlertDialog at `app/(admin)/admin/_components/Con
 Props: `open`, `onOpenChange`, `title`, `description`, `confirmLabel` (default "Confirm"), `variant` (default/destructive), `onConfirm` (async), `loading`.
 
 Applied to all destructive/irreversible admin actions:
+
 - **Dashboard**: Approve submission, Approve claim
 - **Shops List**: Bulk Approve Selected, Bulk Approve All
 - **Shop Detail**: Set Live, Unpublish (migrated from `window.confirm()`), Re-enrich, Re-embed, Re-scrape
@@ -44,6 +45,7 @@ Dashboard Claims tab gets a `claimStatusFilter` dropdown (pending/approved/rejec
 ### D. Roles Management Page (DEV-184)
 
 Full `/admin/roles` page:
+
 - Table: user email, role, granted date, revoke button
 - Filter by role type dropdown
 - "Grant Role" dialog (uses existing `Dialog` component): user ID/email input, role dropdown (blogger, member, partner, admin, shop_owner)
@@ -52,6 +54,7 @@ Full `/admin/roles` page:
 Frontend proxy routes: `app/api/admin/roles/route.ts` (GET, POST), `app/api/admin/roles/[userId]/[role]/route.ts` (DELETE).
 
 Backend changes:
+
 - `_VALID_ROLES` expanded to include `shop_owner`
 - `list_roles` updated to JOIN `auth.users` for email resolution
 
@@ -73,12 +76,12 @@ All confirmable actions use existing try/catch + toast notification pattern. Con
 
 ## Key Decisions
 
-| Decision | Chosen | Alternative Rejected | Why |
-|----------|--------|---------------------|-----|
-| Confirmation UX | shadcn AlertDialog | `window.confirm()` | Consistent styled UI, accessible, blocks interaction |
-| shop_owner in Roles | Include in `_VALID_ROLES` | Keep separate (claims-only) | Admin needs manual grant/revoke for edge cases |
-| User display in Roles | Backend JOIN for email | Ship with user_id only | Better UX, one-time backend change |
-| Admin route guard | Already exists in middleware | n/a | Discovered during audit — gap #8 eliminated |
+| Decision              | Chosen                       | Alternative Rejected        | Why                                                  |
+| --------------------- | ---------------------------- | --------------------------- | ---------------------------------------------------- |
+| Confirmation UX       | shadcn AlertDialog           | `window.confirm()`          | Consistent styled UI, accessible, blocks interaction |
+| shop_owner in Roles   | Include in `_VALID_ROLES`    | Keep separate (claims-only) | Admin needs manual grant/revoke for edge cases       |
+| User display in Roles | Backend JOIN for email       | Ship with user_id only      | Better UX, one-time backend change                   |
+| Admin route guard     | Already exists in middleware | n/a                         | Discovered during audit — gap #8 eliminated          |
 
 ## Testing Classification
 

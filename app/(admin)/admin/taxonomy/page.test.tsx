@@ -182,9 +182,18 @@ describe('TaxonomyPage', () => {
       if (url.includes('/taxonomy/stats')) {
         return Promise.resolve({
           ok: true,
-          json: () => Promise.resolve(makeTaxonomyStats({
-            low_confidence_shops: [{ id: 'shop-lc', name: 'Low Conf Shop', max_confidence: 0.25 }],
-          })),
+          json: () =>
+            Promise.resolve(
+              makeTaxonomyStats({
+                low_confidence_shops: [
+                  {
+                    id: 'shop-lc',
+                    name: 'Low Conf Shop',
+                    max_confidence: 0.25,
+                  },
+                ],
+              })
+            ),
         });
       }
       if (opts?.method === 'POST' && url.includes('/enqueue')) {
@@ -200,7 +209,9 @@ describe('TaxonomyPage', () => {
     await user.click(screen.getByRole('button', { name: /re-enrich/i }));
 
     const dialog = await screen.findByRole('alertdialog');
-    await user.click(within(dialog).getByRole('button', { name: /re-enrich/i }));
+    await user.click(
+      within(dialog).getByRole('button', { name: /re-enrich/i })
+    );
 
     expect(mockFetch).toHaveBeenCalledWith(
       '/api/admin/shops/shop-lc/enqueue',
@@ -216,9 +227,18 @@ describe('TaxonomyPage', () => {
       if (url.includes('/taxonomy/stats')) {
         return Promise.resolve({
           ok: true,
-          json: () => Promise.resolve(makeTaxonomyStats({
-            missing_embeddings: [{ id: 'shop-me', name: 'No Embed Shop', processing_status: 'live' }],
-          })),
+          json: () =>
+            Promise.resolve(
+              makeTaxonomyStats({
+                missing_embeddings: [
+                  {
+                    id: 'shop-me',
+                    name: 'No Embed Shop',
+                    processing_status: 'live',
+                  },
+                ],
+              })
+            ),
         });
       }
       if (opts?.method === 'POST' && url.includes('/enqueue')) {
@@ -231,10 +251,14 @@ describe('TaxonomyPage', () => {
     render(<TaxonomyPage />);
     await screen.findByText('No Embed Shop');
 
-    await user.click(screen.getByRole('button', { name: /generate embedding/i }));
+    await user.click(
+      screen.getByRole('button', { name: /generate embedding/i })
+    );
 
     const dialog = await screen.findByRole('alertdialog');
-    await user.click(within(dialog).getByRole('button', { name: /generate embedding/i }));
+    await user.click(
+      within(dialog).getByRole('button', { name: /generate embedding/i })
+    );
 
     expect(mockFetch).toHaveBeenCalledWith(
       '/api/admin/shops/shop-me/enqueue',

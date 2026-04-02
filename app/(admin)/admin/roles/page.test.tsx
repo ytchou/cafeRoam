@@ -25,17 +25,31 @@ const testSession = makeSession();
 
 beforeEach(() => {
   vi.clearAllMocks();
-  mockAuth.getSession.mockResolvedValue({ data: { session: testSession }, error: null });
+  mockAuth.getSession.mockResolvedValue({
+    data: { session: testSession },
+    error: null,
+  });
 });
 
 describe('AdminRolesPage', () => {
   it('renders role grants table', async () => {
     mockFetch.mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve([
-        { user_id: 'u1', role: 'admin', email: 'admin@example.com', granted_at: '2026-01-01T00:00:00Z' },
-        { user_id: 'u2', role: 'blogger', email: 'coffee.blogger@example.com', granted_at: '2026-01-02T00:00:00Z' },
-      ]),
+      json: () =>
+        Promise.resolve([
+          {
+            user_id: 'u1',
+            role: 'admin',
+            email: 'admin@example.com',
+            granted_at: '2026-01-01T00:00:00Z',
+          },
+          {
+            user_id: 'u2',
+            role: 'blogger',
+            email: 'coffee.blogger@example.com',
+            granted_at: '2026-01-02T00:00:00Z',
+          },
+        ]),
     });
 
     render(<RolesPage />);
@@ -50,9 +64,15 @@ describe('AdminRolesPage', () => {
   it('filters by role type', async () => {
     mockFetch.mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve([
-        { user_id: 'u1', role: 'admin', email: 'admin@example.com', granted_at: '2026-01-01T00:00:00Z' },
-      ]),
+      json: () =>
+        Promise.resolve([
+          {
+            user_id: 'u1',
+            role: 'admin',
+            email: 'admin@example.com',
+            granted_at: '2026-01-01T00:00:00Z',
+          },
+        ]),
     });
 
     const user = userEvent.setup();
@@ -72,7 +92,10 @@ describe('AdminRolesPage', () => {
   it('grants a new role via dialog form', async () => {
     mockFetch.mockImplementation((url: string, opts?: RequestInit) => {
       if (opts?.method === 'POST') {
-        return Promise.resolve({ ok: true, json: () => Promise.resolve({ user_id: 'u3', role: 'member' }) });
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ user_id: 'u3', role: 'member' }),
+        });
       }
       return Promise.resolve({ ok: true, json: () => Promise.resolve([]) });
     });
@@ -83,8 +106,14 @@ describe('AdminRolesPage', () => {
     await user.click(screen.getByRole('button', { name: /grant role/i }));
 
     const dialog = await screen.findByRole('dialog');
-    await user.type(within(dialog).getByLabelText(/user id or email/i), 'user@test.com');
-    await user.selectOptions(within(dialog).getByLabelText(/^role$/i), 'member');
+    await user.type(
+      within(dialog).getByLabelText(/user id or email/i),
+      'user@test.com'
+    );
+    await user.selectOptions(
+      within(dialog).getByLabelText(/^role$/i),
+      'member'
+    );
     await user.click(within(dialog).getByRole('button', { name: /^grant$/i }));
 
     expect(mockFetch).toHaveBeenCalledWith(
@@ -99,9 +128,15 @@ describe('AdminRolesPage', () => {
   it('shows confirmation before revoking a role', async () => {
     mockFetch.mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve([
-        { user_id: 'u1', role: 'blogger', email: 'coffee.blogger@example.com', granted_at: '2026-01-01T00:00:00Z' },
-      ]),
+      json: () =>
+        Promise.resolve([
+          {
+            user_id: 'u1',
+            role: 'blogger',
+            email: 'coffee.blogger@example.com',
+            granted_at: '2026-01-01T00:00:00Z',
+          },
+        ]),
     });
 
     const user = userEvent.setup();
@@ -113,8 +148,13 @@ describe('AdminRolesPage', () => {
     const alertDialog = await screen.findByRole('alertdialog');
     expect(alertDialog).toBeInTheDocument();
 
-    mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({}) });
-    await user.click(within(alertDialog).getByRole('button', { name: /revoke/i }));
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({}),
+    });
+    await user.click(
+      within(alertDialog).getByRole('button', { name: /revoke/i })
+    );
 
     expect(mockFetch).toHaveBeenCalledWith(
       '/api/admin/roles/u1/blogger',

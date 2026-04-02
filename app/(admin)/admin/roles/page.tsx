@@ -13,7 +13,13 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 
-const ROLE_OPTIONS = ['blogger', 'member', 'partner', 'admin', 'shop_owner'] as const;
+const ROLE_OPTIONS = [
+  'blogger',
+  'member',
+  'partner',
+  'admin',
+  'shop_owner',
+] as const;
 type Role = (typeof ROLE_OPTIONS)[number];
 
 interface RoleGrant {
@@ -45,7 +51,9 @@ export default function RolesPage() {
       ? `/api/admin/roles?role=${encodeURIComponent(role)}`
       : '/api/admin/roles';
     const res = await fetch(url, {
-      headers: tokenRef.current ? { Authorization: `Bearer ${tokenRef.current}` } : {},
+      headers: tokenRef.current
+        ? { Authorization: `Bearer ${tokenRef.current}` }
+        : {},
     });
     if (res.ok) {
       setGrants(await res.json());
@@ -58,7 +66,9 @@ export default function RolesPage() {
 
   useEffect(() => {
     async function load() {
-      const { data: { session } } = await createClient().auth.getSession();
+      const {
+        data: { session },
+      } = await createClient().auth.getSession();
       if (session) {
         tokenRef.current = session.access_token;
         fetchRoles(filterRole || undefined);
@@ -81,7 +91,9 @@ export default function RolesPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...(tokenRef.current ? { Authorization: `Bearer ${tokenRef.current}` } : {}),
+          ...(tokenRef.current
+            ? { Authorization: `Bearer ${tokenRef.current}` }
+            : {}),
         },
         body: JSON.stringify({ user_id: grantEmail, role: grantRole }),
       });
@@ -103,10 +115,15 @@ export default function RolesPage() {
     if (!revokeTarget) return;
     setRevoking(true);
     try {
-      const res = await fetch(`/api/admin/roles/${revokeTarget.user_id}/${revokeTarget.role}`, {
-        method: 'DELETE',
-        headers: tokenRef.current ? { Authorization: `Bearer ${tokenRef.current}` } : {},
-      });
+      const res = await fetch(
+        `/api/admin/roles/${revokeTarget.user_id}/${revokeTarget.role}`,
+        {
+          method: 'DELETE',
+          headers: tokenRef.current
+            ? { Authorization: `Bearer ${tokenRef.current}` }
+            : {},
+        }
+      );
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         toast.error(body.detail ?? 'Failed to revoke role');
@@ -127,7 +144,10 @@ export default function RolesPage() {
       </div>
 
       <div className="flex items-center gap-3">
-        <label htmlFor="role-filter" className="text-sm font-medium text-gray-700">
+        <label
+          htmlFor="role-filter"
+          className="text-sm font-medium text-gray-700"
+        >
           Filter by role
         </label>
         <select
@@ -135,7 +155,7 @@ export default function RolesPage() {
           aria-label="Filter by role"
           value={filterRole}
           onChange={(e) => setFilterRole(e.target.value)}
-          className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
+          className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm shadow-sm focus:ring-2 focus:ring-gray-400 focus:outline-none"
         >
           <option value="">All roles</option>
           {ROLE_OPTIONS.map((r) => (
@@ -147,7 +167,9 @@ export default function RolesPage() {
       </div>
 
       {error && (
-        <p role="alert" className="text-sm text-red-600">{error}</p>
+        <p role="alert" className="text-sm text-red-600">
+          {error}
+        </p>
       )}
 
       {loading ? (
@@ -155,7 +177,7 @@ export default function RolesPage() {
       ) : (
         <div className="overflow-hidden rounded-lg border border-gray-200">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+            <thead className="bg-gray-50 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
               <tr>
                 <th className="px-4 py-3">User</th>
                 <th className="px-4 py-3">Role</th>
@@ -166,7 +188,10 @@ export default function RolesPage() {
             <tbody className="divide-y divide-gray-100 bg-white">
               {grants.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-4 py-6 text-center text-gray-400">
+                  <td
+                    colSpan={4}
+                    className="px-4 py-6 text-center text-gray-400"
+                  >
                     No role grants found.
                   </td>
                 </tr>
@@ -214,7 +239,7 @@ export default function RolesPage() {
                 type="text"
                 value={grantEmail}
                 onChange={(e) => setGrantEmail(e.target.value)}
-                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
+                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-gray-400 focus:outline-none"
                 placeholder="user@example.com or UUID"
               />
             </div>
@@ -230,7 +255,7 @@ export default function RolesPage() {
                 aria-label="Role"
                 value={grantRole}
                 onChange={(e) => setGrantRole(e.target.value as Role)}
-                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
+                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-gray-400 focus:outline-none"
               >
                 {ROLE_OPTIONS.map((r) => (
                   <option key={r} value={r}>
@@ -244,7 +269,10 @@ export default function RolesPage() {
             <Button variant="outline" onClick={() => setGrantDialogOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleGrant} disabled={granting || !grantEmail.trim()}>
+            <Button
+              onClick={handleGrant}
+              disabled={granting || !grantEmail.trim()}
+            >
               {granting ? 'Granting...' : 'Grant'}
             </Button>
           </DialogFooter>

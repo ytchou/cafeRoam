@@ -316,22 +316,38 @@ describe('AdminDashboard', () => {
 
   it('filters claims by status when dropdown changes', async () => {
     const overviewData = {
-      job_counts: { pending: 0, claimed: 0, completed: 0, failed: 0, dead_letter: 0 },
+      job_counts: {
+        pending: 0,
+        claimed: 0,
+        completed: 0,
+        failed: 0,
+        dead_letter: 0,
+      },
       recent_submissions: [],
     };
 
     mockFetch.mockImplementation((url: string) => {
       if (url.includes('/pipeline/overview')) {
-        return Promise.resolve({ ok: true, json: () => Promise.resolve(overviewData) });
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve(overviewData),
+        });
       }
       if (url.includes('/admin/claims?status=approved')) {
         return Promise.resolve({
           ok: true,
-          json: () => Promise.resolve([{
-            id: 'claim-a', shops: { name: 'Approved Shop' }, contact_name: 'Jane',
-            contact_email: 'jane@example.com', role: 'owner', status: 'approved',
-            created_at: '2026-01-01T00:00:00Z',
-          }]),
+          json: () =>
+            Promise.resolve([
+              {
+                id: 'claim-a',
+                shops: { name: 'Approved Shop' },
+                contact_name: 'Jane',
+                contact_email: 'jane@example.com',
+                role: 'owner',
+                status: 'approved',
+                created_at: '2026-01-01T00:00:00Z',
+              },
+            ]),
         });
       }
       if (url.includes('/admin/claims')) {
@@ -345,7 +361,9 @@ describe('AdminDashboard', () => {
 
     // Wait for page to finish loading
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /claims/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: /claims/i })
+      ).toBeInTheDocument();
     });
 
     // Switch to Claims tab
@@ -358,27 +376,45 @@ describe('AdminDashboard', () => {
     // Should fetch with status=approved and show approved claim
     await screen.findByText('Approved Shop');
     // Approve/Reject buttons should NOT be present for resolved claims
-    expect(screen.queryByRole('button', { name: /^approve$/i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /^approve$/i })
+    ).not.toBeInTheDocument();
   });
 
   it('shows status badge column in claims table', async () => {
     const overviewData = {
-      job_counts: { pending: 0, claimed: 0, completed: 0, failed: 0, dead_letter: 0 },
+      job_counts: {
+        pending: 0,
+        claimed: 0,
+        completed: 0,
+        failed: 0,
+        dead_letter: 0,
+      },
       recent_submissions: [],
     };
 
     mockFetch.mockImplementation((url: string) => {
       if (url.includes('/pipeline/overview')) {
-        return Promise.resolve({ ok: true, json: () => Promise.resolve(overviewData) });
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve(overviewData),
+        });
       }
       if (url.includes('/admin/claims')) {
         return Promise.resolve({
           ok: true,
-          json: () => Promise.resolve([{
-            id: 'claim-1', shops: { name: 'Test Shop' }, contact_name: 'John',
-            contact_email: 'john@example.com', role: 'owner', status: 'pending',
-            created_at: '2026-01-01T00:00:00Z',
-          }]),
+          json: () =>
+            Promise.resolve([
+              {
+                id: 'claim-1',
+                shops: { name: 'Test Shop' },
+                contact_name: 'John',
+                contact_email: 'john@example.com',
+                role: 'owner',
+                status: 'pending',
+                created_at: '2026-01-01T00:00:00Z',
+              },
+            ]),
         });
       }
       return Promise.resolve({ ok: true, json: () => Promise.resolve({}) });
@@ -387,7 +423,9 @@ describe('AdminDashboard', () => {
     const user = userEvent.setup();
     render(<AdminDashboard />);
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /claims/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: /claims/i })
+      ).toBeInTheDocument();
     });
     await user.click(screen.getByRole('button', { name: /claims/i }));
     await screen.findByText('Test Shop');

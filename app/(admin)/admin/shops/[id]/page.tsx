@@ -59,7 +59,9 @@ export default function AdminShopDetail() {
   });
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResult, setSearchResult] = useState<string | null>(null);
-  const [confirmAction, setConfirmAction] = useState<ConfirmActionState | null>(null);
+  const [confirmAction, setConfirmAction] = useState<ConfirmActionState | null>(
+    null
+  );
   const tokenRef = useRef<string | null>(null);
 
   useEffect(() => {

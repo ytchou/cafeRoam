@@ -37,7 +37,9 @@ describe('ConfirmDialog', () => {
 
   it('shows custom confirm label when provided', () => {
     render(<ConfirmDialog {...defaultProps} confirmLabel="Approve" />);
-    expect(screen.getByRole('button', { name: /approve/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /approve/i })
+    ).toBeInTheDocument();
   });
 
   it('disables confirm button when loading', () => {

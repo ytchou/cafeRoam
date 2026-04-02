@@ -6,12 +6,13 @@
 
 ## Pass 1 — Full Discovery
 
-*Agents: Bug Hunter, Standards & Conventions, Architecture & Design*
-*Skipped: Plan Alignment (no plan doc), Test Philosophy (no test files), Design Quality (no frontend files)*
+_Agents: Bug Hunter, Standards & Conventions, Architecture & Design_
+_Skipped: Plan Alignment (no plan doc), Test Philosophy (no test files), Design Quality (no frontend files)_
 
 ### Issues Found (0 total)
 
 No issues found. The change is a minimal CI config fix:
+
 - Upgraded `dawidd6/action-download-artifact` v3 → v6 (artifact API compatibility)
 - Switched from `workflow` + `commit` to `run_id` (more precise targeting)
 - Added `actions: read` permission (required by v6)

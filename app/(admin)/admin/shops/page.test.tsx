@@ -174,7 +174,9 @@ describe('AdminShopsList', () => {
     });
 
     // Select one shop
-    const checkbox = screen.getByRole('checkbox', { name: /select 待審咖啡 1/i });
+    const checkbox = screen.getByRole('checkbox', {
+      name: /select 待審咖啡 1/i,
+    });
     await user.click(checkbox);
 
     // Click "Approve Selected" — should NOT call fetch yet
@@ -193,8 +195,7 @@ describe('AdminShopsList', () => {
     // Set up mock for the bulk-approve call
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      json: () =>
-        Promise.resolve({ approved: 1, queued: 1 }),
+      json: () => Promise.resolve({ approved: 1, queued: 1 }),
     });
     // shops refetch after approve
     mockFetch.mockResolvedValueOnce({
@@ -203,7 +204,9 @@ describe('AdminShopsList', () => {
     });
 
     // Click confirm
-    const confirmBtn = within(dialog).getByRole('button', { name: /^approve$/i });
+    const confirmBtn = within(dialog).getByRole('button', {
+      name: /^approve$/i,
+    });
     await user.click(confirmBtn);
 
     await waitFor(() => {
@@ -252,9 +255,7 @@ describe('AdminShopsList', () => {
     await user.click(cancelBtn);
 
     expect(
-      mockFetch.mock.calls.some((c) =>
-        String(c[0]).includes('bulk-approve')
-      )
+      mockFetch.mock.calls.some((c) => String(c[0]).includes('bulk-approve'))
     ).toBe(false);
   });
 });

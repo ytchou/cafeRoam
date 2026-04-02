@@ -52,7 +52,9 @@ export function RawJobsList({ initialStatus }: { initialStatus?: string }) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState(
-    initialStatus && STATUS_OPTIONS.some((o) => o === initialStatus) ? initialStatus : 'all'
+    initialStatus && STATUS_OPTIONS.some((o) => o === initialStatus)
+      ? initialStatus
+      : 'all'
   );
   const [confirmAction, setConfirmAction] = useState<{
     type: 'cancel' | 'retry';
@@ -321,7 +323,9 @@ export function RawJobsList({ initialStatus }: { initialStatus?: string }) {
       )}
       <ConfirmDialog
         open={confirmAction !== null}
-        onOpenChange={(open) => { if (!open) setConfirmAction(null); }}
+        onOpenChange={(open) => {
+          if (!open) setConfirmAction(null);
+        }}
         title={confirmAction?.type === 'cancel' ? 'Cancel job?' : 'Retry job?'}
         description={
           confirmAction?.type === 'cancel'
@@ -332,7 +336,8 @@ export function RawJobsList({ initialStatus }: { initialStatus?: string }) {
         variant={confirmAction?.type === 'cancel' ? 'destructive' : 'default'}
         onConfirm={async () => {
           if (!confirmAction) return;
-          if (confirmAction.type === 'cancel') await handleCancel(confirmAction.jobId);
+          if (confirmAction.type === 'cancel')
+            await handleCancel(confirmAction.jobId);
           else await handleRetry(confirmAction.jobId);
         }}
       />

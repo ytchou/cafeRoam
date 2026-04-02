@@ -15,6 +15,7 @@
 **Tech Stack:** Next.js 16 (App Router), shadcn/ui AlertDialog, FastAPI, Supabase Auth
 
 **Acceptance Criteria:**
+
 - [ ] Every destructive admin action (approve, bulk approve, set live, enqueue, retry, cancel, unpublish, revoke role) shows a confirmation dialog before executing
 - [ ] Clicking "View N failed jobs" on Dashboard navigates to Jobs page with failed filter pre-selected and Raw Jobs tab active
 - [ ] Admin can view approved and rejected claims (not just pending) via a status filter dropdown
@@ -26,6 +27,7 @@
 ## Task 1: Install shadcn AlertDialog + Create ConfirmDialog Wrapper (DEV-181)
 
 **Files:**
+
 - Create: `components/ui/alert-dialog.tsx` (shadcn generated)
 - Create: `app/(admin)/admin/_components/ConfirmDialog.tsx`
 - Create: `app/(admin)/admin/_components/ConfirmDialog.test.tsx`
@@ -35,6 +37,7 @@
 No test needed — generated component from shadcn CLI.
 
 Run:
+
 ```bash
 pnpm dlx shadcn@latest add alert-dialog
 ```
@@ -84,7 +87,9 @@ describe('ConfirmDialog', () => {
 
   it('shows custom confirm label when provided', () => {
     render(<ConfirmDialog {...defaultProps} confirmLabel="Approve" />);
-    expect(screen.getByRole('button', { name: /approve/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /approve/i })
+    ).toBeInTheDocument();
   });
 
   it('disables confirm button when loading', () => {
@@ -159,7 +164,7 @@ export function ConfirmDialog({
             disabled={loading}
             className={
               variant === 'destructive'
-                ? 'bg-red-600 hover:bg-red-700 text-white'
+                ? 'bg-red-600 text-white hover:bg-red-700'
                 : undefined
             }
           >
@@ -189,6 +194,7 @@ git commit -m "feat(DEV-181): install AlertDialog and create reusable ConfirmDia
 ## Task 2: Add Confirmations to Dashboard Page (DEV-181)
 
 **Files:**
+
 - Modify: `app/(admin)/admin/page.tsx` (lines 1-7 imports, 35-48 state, 97-122 handleSubmissionAction, 387-409 claim approve)
 - Modify: `app/(admin)/admin/page.test.tsx`
 
@@ -202,7 +208,9 @@ In `app/(admin)/admin/page.test.tsx`, find the test `'approves a pending submiss
 await user.click(screen.getByRole('button', { name: /approve/i }));
 // Now the AlertDialog should be open
 const dialog = await screen.findByRole('alertdialog');
-await user.click(within(dialog).getByRole('button', { name: /confirm|approve/i }));
+await user.click(
+  within(dialog).getByRole('button', { name: /confirm|approve/i })
+);
 // Now assert fetch was called
 ```
 
@@ -215,16 +223,26 @@ it('shows confirmation before approving a claim', async () => {
   // Mock overview + claims data
   mockFetch.mockImplementation((url: string) => {
     if (url.includes('/pipeline/overview')) {
-      return Promise.resolve({ ok: true, json: () => Promise.resolve(makeOverview()) });
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve(makeOverview()),
+      });
     }
     if (url.includes('/admin/claims') && !url.includes('/approve')) {
       return Promise.resolve({
         ok: true,
-        json: () => Promise.resolve([{
-          id: 'claim-1', shop_name: 'Test Shop', contact_name: 'John',
-          contact_email: 'john@test.com', role: 'owner', status: 'pending',
-          created_at: '2026-01-01T00:00:00Z',
-        }]),
+        json: () =>
+          Promise.resolve([
+            {
+              id: 'claim-1',
+              shop_name: 'Test Shop',
+              contact_name: 'John',
+              contact_email: 'john@test.com',
+              role: 'owner',
+              status: 'pending',
+              created_at: '2026-01-01T00:00:00Z',
+            },
+          ]),
       });
     }
     return Promise.resolve({ ok: true, json: () => Promise.resolve({}) });
@@ -242,7 +260,9 @@ it('shows confirmation before approving a claim', async () => {
 
   // Confirm in dialog
   const dialog = await screen.findByRole('alertdialog');
-  await user.click(within(dialog).getByRole('button', { name: /confirm|approve/i }));
+  await user.click(
+    within(dialog).getByRole('button', { name: /confirm|approve/i })
+  );
 
   expect(mockFetch).toHaveBeenCalledWith(
     '/api/admin/claims/claim-1/approve',
@@ -259,11 +279,13 @@ Expected: FAIL — no dialog rendered yet
 Modify `app/(admin)/admin/page.tsx`:
 
 1. Add import (line 7):
+
 ```tsx
 import { ConfirmDialog } from './_components/ConfirmDialog';
 ```
 
 2. Add state after line 48:
+
 ```tsx
 const [confirmAction, setConfirmAction] = useState<{
   type: 'approve_submission' | 'approve_claim';
@@ -279,11 +301,18 @@ const [confirmAction, setConfirmAction] = useState<{
 5. Add a `handleConfirmedAction` function that reads `confirmAction` and dispatches to the correct fetch call.
 
 6. Add ConfirmDialog JSX at end of component (before closing fragment):
+
 ```tsx
 <ConfirmDialog
   open={confirmAction !== null}
-  onOpenChange={(open) => { if (!open) setConfirmAction(null); }}
-  title={confirmAction?.type === 'approve_submission' ? 'Approve submission?' : 'Approve claim?'}
+  onOpenChange={(open) => {
+    if (!open) setConfirmAction(null);
+  }}
+  title={
+    confirmAction?.type === 'approve_submission'
+      ? 'Approve submission?'
+      : 'Approve claim?'
+  }
   description={
     confirmAction?.type === 'approve_submission'
       ? 'This will set the shop live and notify the submitter.'
@@ -311,6 +340,7 @@ git commit -m "feat(DEV-181): add confirmation dialogs to Dashboard approve acti
 ## Task 3: Add Confirmations to Shops List Page (DEV-181)
 
 **Files:**
+
 - Modify: `app/(admin)/admin/shops/page.tsx` (lines 372-405 handleBulkApprove, 705-720 buttons)
 - Modify: `app/(admin)/admin/shops/page.test.tsx`
 
@@ -337,12 +367,17 @@ Modify `app/(admin)/admin/shops/page.tsx`:
 
 1. Import `ConfirmDialog` from `./_components/ConfirmDialog`
 2. Add state:
+
 ```tsx
-const [bulkConfirm, setBulkConfirm] = useState<{ approveAll: boolean } | null>(null);
+const [bulkConfirm, setBulkConfirm] = useState<{ approveAll: boolean } | null>(
+  null
+);
 ```
+
 3. Change "Approve Selected" button onClick (line 707) to `setBulkConfirm({ approveAll: false })`
 4. Change "Approve All" button onClick (line 715) to `setBulkConfirm({ approveAll: true })`
 5. Add ConfirmDialog with description showing count:
+
 ```tsx
 <ConfirmDialog
   open={bulkConfirm !== null}
@@ -377,12 +412,14 @@ git commit -m "feat(DEV-181): add confirmation dialog to bulk approve on Shops p
 ## Task 4: Add Confirmations to Shop Detail Page (DEV-181)
 
 **Files:**
+
 - Modify: `app/(admin)/admin/shops/[id]/page.tsx` (lines 88-110 handleEnqueue, 112-121 handleToggleLive, 432-459 buttons)
 - Modify: `app/(admin)/admin/shops/[id]/page.test.tsx`
 
 **Step 1: Update tests**
 
 In `page.test.tsx`:
+
 - Update the unpublish test (line 181) to use `findByRole('alertdialog')` instead of `vi.spyOn(window, 'confirm')`
 - Add tests for Set Live, Re-enrich, Re-embed, Re-scrape confirmations
 
@@ -395,6 +432,7 @@ Modify `app/(admin)/admin/shops/[id]/page.tsx`:
 
 1. Import `ConfirmDialog`
 2. Add state:
+
 ```tsx
 const [confirmAction, setConfirmAction] = useState<{
   type: 'enqueue' | 'toggle_live';
@@ -403,29 +441,35 @@ const [confirmAction, setConfirmAction] = useState<{
   destructive?: boolean;
 } | null>(null);
 ```
+
 3. Replace `window.confirm()` in `handleToggleLive` (line 117-120) with `setConfirmAction({ type: 'toggle_live', label: isLive ? 'Unpublish' : 'Set Live', destructive: isLive })`
 4. Replace direct `handleEnqueue` calls on Re-enrich/Re-embed/Re-scrape buttons with `setConfirmAction({ type: 'enqueue', jobType: '...', label: '...' })`
 5. Add ConfirmDialog:
+
 ```tsx
 <ConfirmDialog
   open={confirmAction !== null}
-  onOpenChange={(open) => { if (!open) setConfirmAction(null); }}
+  onOpenChange={(open) => {
+    if (!open) setConfirmAction(null);
+  }}
   title={`${confirmAction?.label}?`}
   description={
     confirmAction?.type === 'toggle_live'
-      ? (confirmAction.destructive
-          ? `This will remove "${shop?.name}" from search results.`
-          : `This will make "${shop?.name}" visible in search results.`)
+      ? confirmAction.destructive
+        ? `This will remove "${shop?.name}" from search results.`
+        : `This will make "${shop?.name}" visible in search results.`
       : `This will queue a ${confirmAction?.label?.toLowerCase()} job for "${shop?.name}".`
   }
   confirmLabel={confirmAction?.label ?? 'Confirm'}
   variant={confirmAction?.destructive ? 'destructive' : 'default'}
   onConfirm={async () => {
     if (confirmAction?.type === 'toggle_live') await handleToggleLive();
-    else if (confirmAction?.type === 'enqueue' && confirmAction.jobType) await handleEnqueue(confirmAction.jobType);
+    else if (confirmAction?.type === 'enqueue' && confirmAction.jobType)
+      await handleEnqueue(confirmAction.jobType);
   }}
 />
 ```
+
 6. Remove the `window.confirm()` from `handleToggleLive` — the dialog now gates the action.
 
 **Step 3: Run tests**
@@ -445,12 +489,14 @@ git commit -m "feat(DEV-181): add confirmation dialogs to Shop Detail actions, m
 ## Task 5: Add Confirmations to Jobs RawJobsList (DEV-181)
 
 **Files:**
+
 - Modify: `app/(admin)/admin/jobs/_components/RawJobsList.tsx` (lines 53, 106-143)
 - Modify: `app/(admin)/admin/jobs/page.test.tsx`
 
 **Step 1: Update tests**
 
 In `page.test.tsx`:
+
 - Update cancel test (line 131) to use `findByRole('alertdialog')` instead of `vi.spyOn(window, 'confirm')`
 - Update retry test (line 183) to click through confirmation dialog
 
@@ -463,19 +509,24 @@ Modify `RawJobsList.tsx`:
 
 1. Import `ConfirmDialog`
 2. Add state:
+
 ```tsx
 const [confirmAction, setConfirmAction] = useState<{
   type: 'cancel' | 'retry';
   jobId: string;
 } | null>(null);
 ```
+
 3. Replace `window.confirm()` in Cancel button onClick (line 108) with `setConfirmAction({ type: 'cancel', jobId: job.id })`
 4. Replace direct `handleRetry` on Retry button with `setConfirmAction({ type: 'retry', jobId: job.id })`
 5. Add ConfirmDialog:
+
 ```tsx
 <ConfirmDialog
   open={confirmAction !== null}
-  onOpenChange={(open) => { if (!open) setConfirmAction(null); }}
+  onOpenChange={(open) => {
+    if (!open) setConfirmAction(null);
+  }}
   title={confirmAction?.type === 'cancel' ? 'Cancel job?' : 'Retry job?'}
   description={
     confirmAction?.type === 'cancel'
@@ -486,11 +537,13 @@ const [confirmAction, setConfirmAction] = useState<{
   variant={confirmAction?.type === 'cancel' ? 'destructive' : 'default'}
   onConfirm={async () => {
     if (!confirmAction) return;
-    if (confirmAction.type === 'cancel') await handleCancel(confirmAction.jobId);
+    if (confirmAction.type === 'cancel')
+      await handleCancel(confirmAction.jobId);
     else await handleRetry(confirmAction.jobId);
   }}
 />
 ```
+
 6. Remove `window.confirm()` from `handleCancel`.
 
 **Step 3: Run tests**
@@ -510,6 +563,7 @@ git commit -m "feat(DEV-181): add confirmation dialogs to Jobs cancel/retry, mig
 ## Task 6: Fix Jobs ?status URL Param (DEV-182)
 
 **Files:**
+
 - Modify: `app/(admin)/admin/jobs/page.tsx` (37 lines)
 - Modify: `app/(admin)/admin/jobs/_components/RawJobsList.tsx` (line 53)
 - Modify: `app/(admin)/admin/jobs/page.test.tsx`
@@ -528,13 +582,18 @@ vi.mock('next/navigation', () => ({
 
 it('auto-selects Raw Jobs tab and failed filter when ?status=failed is in URL', async () => {
   // Override useSearchParams for this test
-  vi.mocked(useSearchParams).mockReturnValue(new URLSearchParams('status=failed') as any);
+  vi.mocked(useSearchParams).mockReturnValue(
+    new URLSearchParams('status=failed') as any
+  );
 
   mockFetch.mockImplementation(/* ... jobs data with failed job ... */);
   render(<AdminJobsPage />);
 
   // Should default to Raw Jobs tab (not Batches)
-  expect(screen.getByRole('button', { name: /raw jobs/i })).toHaveAttribute('aria-selected', 'true');
+  expect(screen.getByRole('button', { name: /raw jobs/i })).toHaveAttribute(
+    'aria-selected',
+    'true'
+  );
   // Should show the failed status filter
   await waitFor(() => {
     expect(screen.getByDisplayValue('failed')).toBeInTheDocument();
@@ -551,10 +610,12 @@ Modify `app/(admin)/admin/jobs/page.tsx`:
 
 1. Add import: `import { useSearchParams } from 'next/navigation';`
 2. Read params:
+
 ```tsx
 const searchParams = useSearchParams();
 const initialStatus = searchParams.get('status');
 ```
+
 3. Change default tab: `useState<Tab>(initialStatus ? 'raw' : 'batches')`
 4. Pass to RawJobsList: `<RawJobsList initialStatus={initialStatus ?? undefined} />`
 
@@ -580,6 +641,7 @@ git commit -m "fix(DEV-182): read ?status URL param on Jobs page to pre-filter a
 ## Task 7: Add Claim Status History Filter (DEV-183)
 
 **Files:**
+
 - Modify: `app/(admin)/admin/page.tsx` (lines 50-68 fetchClaims, 327-487 claims section)
 - Modify: `app/(admin)/admin/page.test.tsx`
 
@@ -591,16 +653,26 @@ Add to `page.test.tsx`:
 it('filters claims by status when dropdown changes', async () => {
   mockFetch.mockImplementation((url: string) => {
     if (url.includes('/pipeline/overview')) {
-      return Promise.resolve({ ok: true, json: () => Promise.resolve(makeOverview()) });
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve(makeOverview()),
+      });
     }
     if (url.includes('/admin/claims?status=approved')) {
       return Promise.resolve({
         ok: true,
-        json: () => Promise.resolve([{
-          id: 'claim-a', shop_name: 'Approved Shop', contact_name: 'Jane',
-          contact_email: 'jane@test.com', role: 'owner', status: 'approved',
-          created_at: '2026-01-01T00:00:00Z',
-        }]),
+        json: () =>
+          Promise.resolve([
+            {
+              id: 'claim-a',
+              shop_name: 'Approved Shop',
+              contact_name: 'Jane',
+              contact_email: 'jane@test.com',
+              role: 'owner',
+              status: 'approved',
+              created_at: '2026-01-01T00:00:00Z',
+            },
+          ]),
       });
     }
     if (url.includes('/admin/claims')) {
@@ -622,7 +694,9 @@ it('filters claims by status when dropdown changes', async () => {
   // Should fetch with status=approved and show approved claim
   await screen.findByText('Approved Shop');
   // Approve/Reject buttons should NOT be present for resolved claims
-  expect(screen.queryByRole('button', { name: /approve/i })).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole('button', { name: /approve/i })
+  ).not.toBeInTheDocument();
 });
 
 it('shows status badge column in claims table', async () => {
@@ -630,14 +704,24 @@ it('shows status badge column in claims table', async () => {
     if (url.includes('/admin/claims')) {
       return Promise.resolve({
         ok: true,
-        json: () => Promise.resolve([{
-          id: 'claim-1', shop_name: 'Shop', contact_name: 'John',
-          contact_email: 'john@test.com', role: 'owner', status: 'pending',
-          created_at: '2026-01-01T00:00:00Z',
-        }]),
+        json: () =>
+          Promise.resolve([
+            {
+              id: 'claim-1',
+              shop_name: 'Shop',
+              contact_name: 'John',
+              contact_email: 'john@test.com',
+              role: 'owner',
+              status: 'pending',
+              created_at: '2026-01-01T00:00:00Z',
+            },
+          ]),
       });
     }
-    return Promise.resolve({ ok: true, json: () => Promise.resolve(makeOverview()) });
+    return Promise.resolve({
+      ok: true,
+      json: () => Promise.resolve(makeOverview()),
+    });
   });
 
   render(<AdminDashboard />);
@@ -657,11 +741,15 @@ Expected: FAIL
 Modify `app/(admin)/admin/page.tsx`:
 
 1. Add state (after other claim state around line 44):
+
 ```tsx
-const [claimStatusFilter, setClaimStatusFilter] = useState<'pending' | 'approved' | 'rejected' | 'all'>('pending');
+const [claimStatusFilter, setClaimStatusFilter] = useState<
+  'pending' | 'approved' | 'rejected' | 'all'
+>('pending');
 ```
 
 2. Update `fetchClaims` (line 50-68): change the URL from hardcoded `?status=pending` to:
+
 ```tsx
 const params = claimStatusFilter === 'all' ? '' : `?status=${claimStatusFilter}`;
 const res = await fetch(`/api/admin/claims${params}`, { ... });
@@ -670,13 +758,16 @@ const res = await fetch(`/api/admin/claims${params}`, { ... });
 3. Add `claimStatusFilter` to the useEffect dependency array that calls `fetchClaims`.
 
 4. Add dropdown before the claims table (around line 327):
+
 ```tsx
-<div className="flex items-center justify-between mb-4">
+<div className="mb-4 flex items-center justify-between">
   <h2 className="text-lg font-semibold">Claims</h2>
   <select
     aria-label="Claim status"
     value={claimStatusFilter}
-    onChange={(e) => setClaimStatusFilter(e.target.value as typeof claimStatusFilter)}
+    onChange={(e) =>
+      setClaimStatusFilter(e.target.value as typeof claimStatusFilter)
+    }
     className="rounded border px-2 py-1 text-sm"
   >
     <option value="pending">Pending</option>
@@ -688,6 +779,7 @@ const res = await fetch(`/api/admin/claims${params}`, { ... });
 ```
 
 5. Add a Status column to the claims table header and rows:
+
 ```tsx
 // Header
 <th className="...">Status</th>
@@ -702,6 +794,7 @@ const res = await fetch(`/api/admin/claims${params}`, { ... });
 ```
 
 6. Conditionally hide action buttons for non-pending claims:
+
 ```tsx
 {claim.status === 'pending' && (
   // ... existing View Proof / Approve / Reject buttons
@@ -725,6 +818,7 @@ git commit -m "feat(DEV-183): add claim status history filter to Dashboard Claim
 ## Task 8: Backend — Add shop_owner to Valid Roles + Email Resolution (DEV-184)
 
 **Files:**
+
 - Modify: `backend/api/admin_roles.py` (lines 11, 64-79)
 - Create: `backend/tests/api/test_admin_roles.py`
 
@@ -769,11 +863,13 @@ Expected: FAIL
 Modify `backend/api/admin_roles.py`:
 
 1. Line 11 — add `shop_owner`:
+
 ```python
 _VALID_ROLES = {"blogger", "member", "partner", "admin", "shop_owner"}
 ```
 
 2. Lines 64-79 — update `list_roles` to join `auth.users` for email. The current implementation uses `supabase.table('user_roles').select('*')`. Update to:
+
 ```python
 @router.get("")
 async def list_roles(
@@ -816,6 +912,7 @@ git commit -m "feat(DEV-184): add shop_owner to valid roles, join auth.users for
 ## Task 9: Roles API Proxy Routes (DEV-184)
 
 **Files:**
+
 - Create: `app/api/admin/roles/route.ts`
 - Create: `app/api/admin/roles/[userId]/[role]/route.ts`
 
@@ -863,6 +960,7 @@ git commit -m "feat(DEV-184): add admin roles API proxy routes (GET, POST, DELET
 ## Task 10: Roles Management Page + Nav (DEV-184)
 
 **Files:**
+
 - Create: `app/(admin)/admin/roles/page.tsx`
 - Create: `app/(admin)/admin/roles/page.test.tsx`
 - Modify: `app/(admin)/layout.tsx` (lines 9-14 NAV_ITEMS, 16-21 SEGMENT_LABELS)
@@ -896,17 +994,31 @@ const testSession = makeSession();
 
 beforeEach(() => {
   vi.clearAllMocks();
-  mockAuth.getSession.mockResolvedValue({ data: { session: testSession }, error: null });
+  mockAuth.getSession.mockResolvedValue({
+    data: { session: testSession },
+    error: null,
+  });
 });
 
 describe('AdminRolesPage', () => {
   it('renders role grants table', async () => {
     mockFetch.mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve([
-        { user_id: 'u1', role: 'admin', email: 'admin@test.com', created_at: '2026-01-01T00:00:00Z' },
-        { user_id: 'u2', role: 'blogger', email: 'blog@test.com', created_at: '2026-01-02T00:00:00Z' },
-      ]),
+      json: () =>
+        Promise.resolve([
+          {
+            user_id: 'u1',
+            role: 'admin',
+            email: 'admin@test.com',
+            created_at: '2026-01-01T00:00:00Z',
+          },
+          {
+            user_id: 'u2',
+            role: 'blogger',
+            email: 'blog@test.com',
+            created_at: '2026-01-02T00:00:00Z',
+          },
+        ]),
     });
 
     render(<RolesPage />);
@@ -919,9 +1031,15 @@ describe('AdminRolesPage', () => {
   it('filters by role type', async () => {
     mockFetch.mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve([
-        { user_id: 'u1', role: 'admin', email: 'admin@test.com', created_at: '2026-01-01T00:00:00Z' },
-      ]),
+      json: () =>
+        Promise.resolve([
+          {
+            user_id: 'u1',
+            role: 'admin',
+            email: 'admin@test.com',
+            created_at: '2026-01-01T00:00:00Z',
+          },
+        ]),
     });
 
     const user = userEvent.setup();
@@ -941,7 +1059,10 @@ describe('AdminRolesPage', () => {
   it('grants a new role via dialog form', async () => {
     mockFetch.mockImplementation((url: string, opts?: RequestInit) => {
       if (opts?.method === 'POST') {
-        return Promise.resolve({ ok: true, json: () => Promise.resolve({ user_id: 'u3', role: 'member' }) });
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ user_id: 'u3', role: 'member' }),
+        });
       }
       return Promise.resolve({ ok: true, json: () => Promise.resolve([]) });
     });
@@ -952,7 +1073,10 @@ describe('AdminRolesPage', () => {
     await user.click(screen.getByRole('button', { name: /grant role/i }));
 
     const dialog = await screen.findByRole('dialog');
-    await user.type(within(dialog).getByLabelText(/user id or email/i), 'user@test.com');
+    await user.type(
+      within(dialog).getByLabelText(/user id or email/i),
+      'user@test.com'
+    );
     await user.selectOptions(within(dialog).getByLabelText(/role/i), 'member');
     await user.click(within(dialog).getByRole('button', { name: /grant/i }));
 
@@ -968,9 +1092,15 @@ describe('AdminRolesPage', () => {
   it('shows confirmation before revoking a role', async () => {
     mockFetch.mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve([
-        { user_id: 'u1', role: 'blogger', email: 'blog@test.com', created_at: '2026-01-01T00:00:00Z' },
-      ]),
+      json: () =>
+        Promise.resolve([
+          {
+            user_id: 'u1',
+            role: 'blogger',
+            email: 'blog@test.com',
+            created_at: '2026-01-01T00:00:00Z',
+          },
+        ]),
     });
 
     const user = userEvent.setup();
@@ -983,8 +1113,13 @@ describe('AdminRolesPage', () => {
     expect(alertDialog).toBeInTheDocument();
 
     // Mock the DELETE response
-    mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({}) });
-    await user.click(within(alertDialog).getByRole('button', { name: /revoke/i }));
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({}),
+    });
+    await user.click(
+      within(alertDialog).getByRole('button', { name: /revoke/i })
+    );
 
     expect(mockFetch).toHaveBeenCalledWith(
       '/api/admin/roles/u1/blogger',
@@ -1016,7 +1151,13 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 
-const ROLE_OPTIONS = ['blogger', 'member', 'partner', 'admin', 'shop_owner'] as const;
+const ROLE_OPTIONS = [
+  'blogger',
+  'member',
+  'partner',
+  'admin',
+  'shop_owner',
+] as const;
 
 interface RoleGrant {
   user_id: string;
@@ -1091,12 +1232,17 @@ export default function AdminRolesPage() {
   async function handleRevoke() {
     if (!revokeTarget) return;
     try {
-      const res = await fetch(`/api/admin/roles/${revokeTarget.user_id}/${revokeTarget.role}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${tokenRef.current}` },
-      });
+      const res = await fetch(
+        `/api/admin/roles/${revokeTarget.user_id}/${revokeTarget.role}`,
+        {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${tokenRef.current}` },
+        }
+      );
       if (!res.ok) throw new Error('Failed to revoke role');
-      toast.success(`Revoked ${revokeTarget.role} from ${revokeTarget.email || revokeTarget.user_id}`);
+      toast.success(
+        `Revoked ${revokeTarget.role} from ${revokeTarget.email || revokeTarget.user_id}`
+      );
       fetchRoles();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to revoke role');
@@ -1116,7 +1262,9 @@ export default function AdminRolesPage() {
       </div>
 
       <div className="flex items-center gap-4">
-        <label htmlFor="role-filter" className="text-sm font-medium">Filter by role</label>
+        <label htmlFor="role-filter" className="text-sm font-medium">
+          Filter by role
+        </label>
         <select
           id="role-filter"
           aria-label="Filter by role"
@@ -1126,7 +1274,9 @@ export default function AdminRolesPage() {
         >
           <option value="all">All</option>
           {ROLE_OPTIONS.map((r) => (
-            <option key={r} value={r}>{r}</option>
+            <option key={r} value={r}>
+              {r}
+            </option>
           ))}
         </select>
       </div>
@@ -1179,7 +1329,10 @@ export default function AdminRolesPage() {
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div>
-              <label htmlFor="grant-email" className="block text-sm font-medium">
+              <label
+                htmlFor="grant-email"
+                className="block text-sm font-medium"
+              >
                 User ID or email
               </label>
               <input
@@ -1203,7 +1356,9 @@ export default function AdminRolesPage() {
                 className="mt-1 w-full rounded border px-3 py-2 text-sm"
               >
                 {ROLE_OPTIONS.map((r) => (
-                  <option key={r} value={r}>{r}</option>
+                  <option key={r} value={r}>
+                    {r}
+                  </option>
                 ))}
               </select>
             </div>
@@ -1223,7 +1378,9 @@ export default function AdminRolesPage() {
       {/* Revoke Confirmation */}
       <ConfirmDialog
         open={revokeTarget !== null}
-        onOpenChange={(open) => { if (!open) setRevokeTarget(null); }}
+        onOpenChange={(open) => {
+          if (!open) setRevokeTarget(null);
+        }}
         title="Revoke role?"
         description={`Remove ${revokeTarget?.role} role from ${revokeTarget?.email || revokeTarget?.user_id}?`}
         confirmLabel="Revoke"
@@ -1240,11 +1397,13 @@ export default function AdminRolesPage() {
 Modify `app/(admin)/layout.tsx`:
 
 Add to `NAV_ITEMS` (after line 13):
+
 ```tsx
 { href: '/admin/roles', label: 'Roles' },
 ```
 
 Add to `SEGMENT_LABELS` (after line 20):
+
 ```tsx
 roles: 'Roles',
 ```
@@ -1266,6 +1425,7 @@ git commit -m "feat(DEV-184): add Roles management page with grant/revoke, API p
 ## Task 11: Taxonomy Action Buttons (DEV-185)
 
 **Files:**
+
 - Modify: `app/(admin)/admin/taxonomy/page.tsx` (lines 69-89 auth, 185-227 sections)
 - Modify: `app/(admin)/admin/taxonomy/page.test.tsx`
 
@@ -1279,9 +1439,14 @@ it('enqueues re-enrich for a low-confidence shop after confirmation', async () =
     if (url.includes('/taxonomy/stats')) {
       return Promise.resolve({
         ok: true,
-        json: () => Promise.resolve(makeTaxonomyStats({
-          low_confidence_shops: [{ id: 'shop-lc', name: 'Low Conf Shop', max_confidence: 0.25 }],
-        })),
+        json: () =>
+          Promise.resolve(
+            makeTaxonomyStats({
+              low_confidence_shops: [
+                { id: 'shop-lc', name: 'Low Conf Shop', max_confidence: 0.25 },
+              ],
+            })
+          ),
       });
     }
     if (opts?.method === 'POST' && url.includes('/enqueue')) {
@@ -1298,7 +1463,9 @@ it('enqueues re-enrich for a low-confidence shop after confirmation', async () =
 
   // Confirm in dialog
   const dialog = await screen.findByRole('alertdialog');
-  await user.click(within(dialog).getByRole('button', { name: /confirm|re-enrich/i }));
+  await user.click(
+    within(dialog).getByRole('button', { name: /confirm|re-enrich/i })
+  );
 
   expect(mockFetch).toHaveBeenCalledWith(
     '/api/admin/shops/shop-lc/enqueue',
@@ -1314,9 +1481,18 @@ it('enqueues embedding generation for a missing-embedding shop after confirmatio
     if (url.includes('/taxonomy/stats')) {
       return Promise.resolve({
         ok: true,
-        json: () => Promise.resolve(makeTaxonomyStats({
-          missing_embeddings: [{ id: 'shop-me', name: 'No Embed Shop', processing_status: 'live' }],
-        })),
+        json: () =>
+          Promise.resolve(
+            makeTaxonomyStats({
+              missing_embeddings: [
+                {
+                  id: 'shop-me',
+                  name: 'No Embed Shop',
+                  processing_status: 'live',
+                },
+              ],
+            })
+          ),
       });
     }
     if (opts?.method === 'POST' && url.includes('/enqueue')) {
@@ -1332,7 +1508,9 @@ it('enqueues embedding generation for a missing-embedding shop after confirmatio
   await user.click(screen.getByRole('button', { name: /generate embedding/i }));
 
   const dialog = await screen.findByRole('alertdialog');
-  await user.click(within(dialog).getByRole('button', { name: /confirm|generate/i }));
+  await user.click(
+    within(dialog).getByRole('button', { name: /confirm|generate/i })
+  );
 
   expect(mockFetch).toHaveBeenCalledWith(
     '/api/admin/shops/shop-me/enqueue',
@@ -1353,6 +1531,7 @@ Modify `app/(admin)/admin/taxonomy/page.tsx`:
 
 1. Import `ConfirmDialog` and add `toast` import
 2. Store the token in a ref (the current implementation uses it inline — refactor to `tokenRef`):
+
 ```tsx
 const tokenRef = useRef('');
 // In the useEffect where session is fetched:
@@ -1360,6 +1539,7 @@ tokenRef.current = session.access_token;
 ```
 
 3. Add state:
+
 ```tsx
 const [enqueuingIds, setEnqueuingIds] = useState<Set<string>>(new Set());
 const [confirmEnqueue, setConfirmEnqueue] = useState<{
@@ -1371,6 +1551,7 @@ const [confirmEnqueue, setConfirmEnqueue] = useState<{
 ```
 
 4. Add enqueue handler:
+
 ```tsx
 async function handleEnqueue(shopId: string, jobType: string) {
   setEnqueuingIds((prev) => new Set(prev).add(shopId));
@@ -1398,12 +1579,17 @@ async function handleEnqueue(shopId: string, jobType: string) {
 ```
 
 5. In the Low Confidence Shops section (line 191-203), add a button to each `<li>`:
+
 ```tsx
 <button
-  onClick={() => setConfirmEnqueue({
-    shopId: shop.id, shopName: shop.name,
-    jobType: 'enrich_shop', label: 'Re-enrich',
-  })}
+  onClick={() =>
+    setConfirmEnqueue({
+      shopId: shop.id,
+      shopName: shop.name,
+      jobType: 'enrich_shop',
+      label: 'Re-enrich',
+    })
+  }
   disabled={enqueuingIds.has(shop.id)}
   className="ml-2 rounded bg-blue-100 px-2 py-0.5 text-xs text-blue-700 hover:bg-blue-200 disabled:opacity-50"
 >
@@ -1412,12 +1598,17 @@ async function handleEnqueue(shopId: string, jobType: string) {
 ```
 
 6. In the Missing Embeddings section (line 214-224), add a button:
+
 ```tsx
 <button
-  onClick={() => setConfirmEnqueue({
-    shopId: shop.id, shopName: shop.name,
-    jobType: 'generate_embedding', label: 'Generate Embedding',
-  })}
+  onClick={() =>
+    setConfirmEnqueue({
+      shopId: shop.id,
+      shopName: shop.name,
+      jobType: 'generate_embedding',
+      label: 'Generate Embedding',
+    })
+  }
   disabled={enqueuingIds.has(shop.id)}
   className="ml-2 rounded bg-blue-100 px-2 py-0.5 text-xs text-blue-700 hover:bg-blue-200 disabled:opacity-50"
 >
@@ -1426,15 +1617,19 @@ async function handleEnqueue(shopId: string, jobType: string) {
 ```
 
 7. Add ConfirmDialog at end of component:
+
 ```tsx
 <ConfirmDialog
   open={confirmEnqueue !== null}
-  onOpenChange={(open) => { if (!open) setConfirmEnqueue(null); }}
+  onOpenChange={(open) => {
+    if (!open) setConfirmEnqueue(null);
+  }}
   title={`${confirmEnqueue?.label}?`}
   description={`Queue a ${confirmEnqueue?.label?.toLowerCase()} job for "${confirmEnqueue?.shopName}".`}
   confirmLabel={confirmEnqueue?.label ?? 'Confirm'}
   onConfirm={async () => {
-    if (confirmEnqueue) await handleEnqueue(confirmEnqueue.shopId, confirmEnqueue.jobType);
+    if (confirmEnqueue)
+      await handleEnqueue(confirmEnqueue.shopId, confirmEnqueue.jobType);
   }}
 />
 ```
@@ -1456,6 +1651,7 @@ git commit -m "feat(DEV-185): add Re-enrich and Generate Embedding action button
 ## Task 12: Dead-Letter Route Audit (DEV-186)
 
 **Files:**
+
 - Modify: `app/api/admin/pipeline/dead-letter/route.ts`
 
 **Step 1: No test needed — comment-only change**
@@ -1554,9 +1750,11 @@ graph TD
 ```
 
 **Wave 1** (foundation — must be first):
+
 - Task 1: Install AlertDialog + ConfirmDialog wrapper
 
 **Wave 2** (parallel — all depend only on Wave 1 or nothing):
+
 - Task 2: Dashboard confirmations ← Task 1
 - Task 3: Shops List confirmations ← Task 1
 - Task 4: Shop Detail confirmations ← Task 1
@@ -1568,8 +1766,10 @@ graph TD
 - Task 12: Dead-letter audit (no dependency)
 
 **Wave 3** (depends on Wave 2):
+
 - Task 10: Roles page ← Tasks 1, 8, 9
 - Task 11: Taxonomy actions ← Task 1
 
 **Wave 4** (verification — depends on all):
+
 - Task 13: Full test suite + lint verification

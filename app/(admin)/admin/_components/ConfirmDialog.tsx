@@ -55,7 +55,11 @@ export function ConfirmDialog({
               }
             }}
             disabled={loading}
-            className={variant === 'destructive' ? cn(buttonVariants({ variant: 'destructive' })) : undefined}
+            className={
+              variant === 'destructive'
+                ? cn(buttonVariants({ variant: 'destructive' }))
+                : undefined
+            }
           >
             {confirmLabel}
           </AlertDialogAction>

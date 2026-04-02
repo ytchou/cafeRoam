@@ -134,7 +134,9 @@ export default function AdminShopsList() {
     new Set()
   );
   const [approvingBulk, setApprovingBulk] = useState(false);
-  const [bulkConfirm, setBulkConfirm] = useState<{ approveAll: boolean } | null>(null);
+  const [bulkConfirm, setBulkConfirm] = useState<{
+    approveAll: boolean;
+  } | null>(null);
 
   // Pipeline status
   const [pipelineStatus, setPipelineStatus] = useState<Record<string, number>>(
