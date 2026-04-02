@@ -75,8 +75,13 @@ class ProfileService:
 
         Called by the account deletion worker prior to auth.admin.delete_user().
         Standard user data (profiles, check_ins, lists, stamps) is handled by DB
-        CASCADE on the auth user row — this covers the owner-specific tables that
-        do not share that FK cascade path.
+        CASCADE on the auth user row.
+
+        Note: shop_content, shop_owner_tags, and review_responses now also have
+        DB-level ON DELETE CASCADE (migration 20260402000006). The application-level
+        deletes below are a redundant safety belt — they run first and are harmless
+        no-ops if the cascade fires. shop_claims has no DB cascade and must be
+        deleted here to release the claim for future re-claims.
 
         PDPA: account deletion must remove all personal data. Non-negotiable.
         """
