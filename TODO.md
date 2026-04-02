@@ -2221,3 +2221,22 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 **Chunk 5 — Documentation:**
 
 - [ ] Task 16: SPEC.md business rules update
+
+## Environment Sync Strategy (DEV-176)
+> **Design Doc:** [docs/designs/2026-04-02-environment-sync-strategy-design.md](docs/designs/2026-04-02-environment-sync-strategy-design.md)
+> **Plan:** [docs/plans/2026-04-02-environment-sync-strategy-plan.md](docs/plans/2026-04-02-environment-sync-strategy-plan.md)
+
+**Chunk 1 — Setup:**
+- [x] Task 0: Worktree + commit design artifacts
+- [ ] Task 1: Snapshot directory structure + gitignore
+
+**Chunk 2 — Core Script (DEV-177/178):**
+- [ ] Task 2: Audit subcommand with TDD tests + sync_data.py scaffold
+- [ ] Task 3: Snapshot/restore integration test
+
+**Chunk 3 — Ergonomics (DEV-179/180):**
+- [ ] Task 4: Makefile targets
+- [ ] Task 5: Documentation
+
+**Chunk 4 — Verification:**
+- [ ] Task 6: Final verification + smoke tests
