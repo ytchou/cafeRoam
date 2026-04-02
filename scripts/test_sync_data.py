@@ -1,7 +1,10 @@
 """Tests for sync_data.py audit checks — mock cursor at DB boundary."""
 
 import os
+import subprocess
 import sys
+from pathlib import Path
+from unittest.mock import patch
 
 sys.path.insert(0, os.path.dirname(__file__))
 
@@ -12,6 +15,7 @@ from sync_data import (
     check_embedding_coverage,
     check_taxonomy_integrity,
     check_orphaned_photos,
+    SNAPSHOTS_DIR,
     SYNC_TABLES,
 )
 
@@ -149,3 +153,40 @@ def test_orphaned_photos_fails_when_orphans_exist():
     ])
     results = check_orphaned_photos(cursor)
     assert not results[0].passed
+
+
+# -- Snapshot integration -------------------------------------------------------
+
+def test_snapshot_creates_dated_file(tmp_path):
+    """Given a valid DATABASE_URL, snapshot creates a dated SQL file with header."""
+    db_url = "postgresql://postgres:postgres@127.0.0.1:54322/postgres"
+
+    # Check if local Supabase is available
+    try:
+        import psycopg2
+        conn = psycopg2.connect(db_url)
+        conn.close()
+    except Exception:
+        import pytest
+        pytest.skip("Local Supabase not available")
+
+    from sync_data import cmd_snapshot
+    import sync_data
+    original_dir = sync_data.SNAPSHOTS_DIR
+    sync_data.SNAPSHOTS_DIR = tmp_path / "snapshots"
+    sync_data.SNAPSHOTS_DIR.mkdir()
+
+    try:
+        filepath = cmd_snapshot(db_url, "test")
+        assert filepath.exists()
+        content = filepath.read_text()
+        assert "CafeRoam data snapshot" in content
+        assert "Source: test" in content
+        assert "SET session_replication_role = replica" in content
+        assert "TRUNCATE" in content
+
+        # Check latest symlink
+        latest = sync_data.SNAPSHOTS_DIR / "latest.sql"
+        assert latest.is_symlink()
+    finally:
+        sync_data.SNAPSHOTS_DIR = original_dir
