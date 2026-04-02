@@ -30,40 +30,6 @@ test.describe.serial('@critical J40 — Follow/unfollow toggle', () => {
       await ctx.close();
     }
 
-    // Cancel any pending account deletion from a concurrent J38 test.
-    // When J38 marks the account for deletion, the follow API returns 4xx and
-    // the optimistic update is immediately rolled back — the toggle never sticks.
-    {
-      let authCtx;
-      try {
-        authCtx = await browser.newContext({
-          storageState: authStorage(workerInfo.project.name),
-        });
-        const authPage = await authCtx.newPage();
-        try {
-          await authPage.goto('/account/recover');
-          await authPage.waitForLoadState('networkidle');
-          const cancelBtn = authPage.getByRole('button', {
-            name: /Cancel Deletion|取消刪除/i,
-          });
-          if (
-            await cancelBtn.isVisible({ timeout: 2_000 }).catch(() => false)
-          ) {
-            await cancelBtn.click();
-            await authPage
-              .waitForURL((url) => url.pathname === '/', { timeout: 10_000 })
-              .catch(() => null);
-          }
-        } finally {
-          await authPage.close();
-        }
-      } catch {
-        // Best-effort — if auth state is absent (first run), skip silently
-      } finally {
-        await authCtx?.close();
-      }
-    }
-
     // Ensure clean "not following" baseline. The proxy only forwards the Authorization
     // header (not cookies), so we must extract the JWT from the Supabase session cookie
     // and add it explicitly to the DELETE request.
@@ -148,21 +114,6 @@ test.describe.serial('@critical J40 — Follow/unfollow toggle', () => {
   }) => {
     test.skip(!shopUrl, 'No seeded shops available');
 
-    // J38 (profile.spec.ts) may start account deletion concurrently; the follow API
-    // returns 4xx while the account is in pending-deletion state and the optimistic
-    // update rolls back. Cancel any pending deletion first.
-    await page.goto('/account/recover');
-    await page.waitForLoadState('networkidle');
-    const cancelBtn = page.getByRole('button', {
-      name: /Cancel Deletion|取消刪除/i,
-    });
-    if (await cancelBtn.isVisible({ timeout: 2_000 }).catch(() => false)) {
-      await cancelBtn.click();
-      await page
-        .waitForURL((url) => url.pathname === '/', { timeout: 10_000 })
-        .catch(() => null);
-    }
-
     await page.goto(shopUrl);
     await page.waitForLoadState('networkidle');
 
@@ -171,13 +122,9 @@ test.describe.serial('@critical J40 — Follow/unfollow toggle', () => {
       name: 'Unfollow this shop',
     });
 
-    // Use toPass to retry in case J38 triggers another deletion between the
-    // cancel step above and the follow click.
-    await expect(async () => {
-      await expect(followBtn).toBeEnabled({ timeout: 5_000 });
-      await followBtn.click();
-      await expect(unfollowBtn).toBeVisible({ timeout: 8_000 });
-    }).toPass({ timeout: 30_000 });
+    await expect(followBtn).toBeEnabled({ timeout: 5_000 });
+    await followBtn.click();
+    await expect(unfollowBtn).toBeVisible({ timeout: 8_000 });
   });
 
   test('unfollowing the shop reverts button to "Follow this shop"', async ({

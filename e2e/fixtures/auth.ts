@@ -1,7 +1,7 @@
 import { test as base, type Page, type TestInfo } from '@playwright/test';
 import { fileURLToPath } from 'node:url';
 import { renameSync, mkdirSync } from 'node:fs';
-import { randomBytes } from 'node:crypto'; // used for per-worker tmp file uniqueness
+import { randomBytes } from 'node:crypto';
 import path from 'node:path';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -75,50 +75,145 @@ async function loginFresh(
   return browser.newContext({ storageState: storagePath });
 }
 
-export const test = base.extend<{ authedPage: Page }>({
+async function createAuthContext(
+  browser: import('@playwright/test').Browser,
+  email: string,
+  password: string,
+  storagePath: string
+): Promise<import('@playwright/test').BrowserContext> {
+  let context;
+  try {
+    context = await browser.newContext({ storageState: storagePath });
+  } catch {
+    context = await loginFresh(browser, email, password, storagePath);
+  }
+
+  // Validate session is still active by probing a protected route.
+  // '/profile' requires auth and correctly redirects expired sessions to /login.
+  const probe = await context.newPage();
+  await probe.goto('/profile', { waitUntil: 'commit' });
+  const isExpired = probe.url().includes('/login');
+  await probe.close();
+
+  if (isExpired) {
+    await context.close();
+    context = await loginFresh(browser, email, password, storagePath);
+  }
+
+  // Inject the consent cookie so the cookie banner never appears during tests.
+  await context.addCookies([
+    {
+      name: 'caferoam_consent',
+      value: 'denied',
+      url: 'http://localhost:3000',
+      expires: Math.floor(Date.now() / 1000) + 31_536_000,
+      httpOnly: false,
+      secure: false,
+      sameSite: 'Lax',
+    },
+  ]);
+
+  return context;
+}
+
+export const test = base.extend<{ authedPage: Page; deletionPage: Page }>({
   authedPage: async ({ browser }, use, testInfo) => {
     const { email, password } = credentials(testInfo);
     const storagePath = storageStatePath(testInfo);
-
-    let context;
-    try {
-      context = await browser.newContext({ storageState: storagePath });
-    } catch {
-      context = await loginFresh(browser, email, password, storagePath);
-    }
-
-    // Validate session is still active by probing a protected route.
-    // NOTE: '/' is in PUBLIC_ROUTES and never redirects to /login, so it cannot
-    // detect expired sessions. '/profile' requires auth and correctly redirects
-    // expired sessions to /login.
-    const probe = await context.newPage();
-    await probe.goto('/profile', { waitUntil: 'commit' });
-    const isExpired = probe.url().includes('/login');
-    await probe.close();
-
-    if (isExpired) {
-      await context.close();
-      context = await loginFresh(browser, email, password, storagePath);
-    }
-
-    // Always inject the consent cookie into the context so the cookie banner
-    // never appears during tests. We do this here (not just in loginFresh) because
-    // cached sessions loaded from user.json may predate this cookie being set.
-    await context.addCookies([
-      {
-        name: 'caferoam_consent',
-        value: 'denied',
-        url: 'http://localhost:3000',
-        expires: Math.floor(Date.now() / 1000) + 31_536_000,
-        httpOnly: false,
-        secure: false,
-        sameSite: 'Lax',
-      },
-    ]);
+    const context = await createAuthContext(
+      browser,
+      email,
+      password,
+      storagePath
+    );
 
     const page = await context.newPage();
     await use(page);
     await context.close();
+  },
+
+  deletionPage: async ({ browser }, use) => {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!supabaseUrl || !serviceRoleKey) {
+      throw new Error(
+        'NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set for deletion tests'
+      );
+    }
+
+    const suffix = randomBytes(4).toString('hex');
+    const email = `e2e-deletion-${suffix}@caferoam.test`;
+    const password = `TestPass!${suffix}`;
+    let userId: string | null = null;
+
+    // Create a temporary user via Supabase Admin API
+    const createRes = await fetch(`${supabaseUrl}/auth/v1/admin/users`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${serviceRoleKey}`,
+        apikey: serviceRoleKey,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email,
+        password,
+        email_confirm: true,
+        app_metadata: { pdpa_consented: true },
+      }),
+    });
+    if (!createRes.ok) {
+      throw new Error(
+        `Failed to create deletion test user: ${createRes.status} ${await createRes.text()}`
+      );
+    }
+    const userData = (await createRes.json()) as { id: string };
+    userId = userData.id;
+
+    // Create a profile row (required for the app to function)
+    await fetch(`${supabaseUrl}/rest/v1/profiles`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${serviceRoleKey}`,
+        apikey: serviceRoleKey,
+        'Content-Type': 'application/json',
+        Prefer: 'return=minimal',
+      },
+      body: JSON.stringify({
+        id: userId,
+        display_name: `E2E Deletion ${suffix}`,
+        pdpa_consent_at: new Date().toISOString(),
+      }),
+    });
+
+    const storagePath = path.join(AUTH_DIR, `user-deletion-${suffix}.json`);
+    const context = await createAuthContext(
+      browser,
+      email,
+      password,
+      storagePath
+    );
+
+    const page = await context.newPage();
+    await use(page);
+    await context.close();
+
+    // Cleanup: delete the temp user via Admin API
+    if (userId) {
+      await fetch(`${supabaseUrl}/auth/v1/admin/users/${userId}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${serviceRoleKey}`,
+          apikey: serviceRoleKey,
+        },
+      }).catch(() => null);
+    }
+    // Remove the temp storage state file
+    const { unlinkSync } = await import('node:fs');
+    try {
+      unlinkSync(storagePath);
+    } catch {
+      // File may not exist if login failed
+    }
   },
 });
 
