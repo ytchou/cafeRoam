@@ -71,9 +71,10 @@ class TestSpecEventValidation:
     def test_filter_applied_valid(self):
         req = AnalyticsEventRequest(
             event="filter_applied",
-            properties={"filter_type": "mode", "filter_value": "work"},
+            properties={"filter_type": "sheet", "filter_value": ["wifi", "outdoor_seating"]},
         )
-        assert req.properties["filter_type"] == "mode"
+        assert req.properties["filter_type"] == "sheet"
+        assert req.properties["filter_value"] == ["wifi", "outdoor_seating"]
 
     def test_session_start_valid(self):
         """session_start requires days_since_first_session and previous_sessions from client."""

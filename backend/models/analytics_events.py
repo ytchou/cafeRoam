@@ -80,7 +80,7 @@ class ProfileStampsViewedProperties(BaseModel):
 
 class FilterAppliedProperties(BaseModel):
     filter_type: str
-    filter_value: str
+    filter_value: list[str]
 
 
 class SessionStartProperties(BaseModel):

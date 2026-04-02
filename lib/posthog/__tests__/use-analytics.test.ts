@@ -25,8 +25,8 @@ describe('useAnalytics', () => {
 
     act(() => {
       result.current.capture('filter_applied', {
-        filter_type: 'mode',
-        filter_value: 'work',
+        filter_type: 'sheet',
+        filter_value: ['wifi', 'quiet'],
       });
     });
 
@@ -34,7 +34,7 @@ describe('useAnalytics', () => {
       method: 'POST',
       body: JSON.stringify({
         event: 'filter_applied',
-        properties: { filter_type: 'mode', filter_value: 'work' },
+        properties: { filter_type: 'sheet', filter_value: ['wifi', 'quiet'] },
       }),
     });
   });
@@ -47,8 +47,8 @@ describe('useAnalytics', () => {
 
     act(() => {
       result.current.capture('filter_applied', {
-        filter_type: 'vibe',
-        filter_value: 'quiet',
+        filter_type: 'sheet',
+        filter_value: ['quiet'],
       });
     });
 
@@ -64,8 +64,8 @@ describe('useAnalytics', () => {
 
     act(() => {
       result.current.capture('filter_applied', {
-        filter_type: 'vibe',
-        filter_value: 'quiet',
+        filter_type: 'sheet',
+        filter_value: ['quiet'],
       });
     });
   });
