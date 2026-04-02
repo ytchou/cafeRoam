@@ -206,11 +206,11 @@ class TestAnthropicEnrichShop:
         messages = call_args.kwargs.get("messages") or call_args[1].get("messages")
         user_msg = messages[0]["content"]
 
-        assert "巴斯克蛋糕" in user_msg   # food zh (only in ITEM_TERMS)
-        assert "愛樂壓" in user_msg        # drink zh (only in ITEM_TERMS, not in taxonomy)
-        assert "古吉" in user_msg          # Ethiopian sub-origin zh (only in SPECIALTY_TERMS)
-        assert "耶加雪菲" in user_msg       # origin zh (only in SPECIALTY_TERMS)
-        assert "日曬" in user_msg          # processing zh (only in SPECIALTY_TERMS)
+        assert "巴斯克蛋糕" in user_msg  # food zh (only in ITEM_TERMS)
+        assert "愛樂壓" in user_msg  # drink zh (only in ITEM_TERMS, not in taxonomy)
+        assert "古吉" in user_msg  # Ethiopian sub-origin zh (only in SPECIALTY_TERMS)
+        assert "耶加雪菲" in user_msg  # origin zh (only in SPECIALTY_TERMS)
+        assert "日曬" in user_msg  # processing zh (only in SPECIALTY_TERMS)
         assert "Traditional Chinese" in user_msg  # instruction present
 
     async def test_prompt_includes_taxonomy(self, adapter):
