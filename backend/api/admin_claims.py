@@ -5,6 +5,8 @@ import structlog
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 
 from api.deps import get_claims_service, require_admin
+from core.anonymize import anonymize_user_id
+from core.config import settings
 from core.db import first
 from db.supabase_client import get_service_role_client
 from models.types import CamelModel
@@ -66,7 +68,7 @@ async def approve_claim(
         analytics.track,
         "claim_approved",
         {"claim_id": claim_id},
-        distinct_id=user["id"],
+        distinct_id=anonymize_user_id(user["id"], salt=settings.anon_salt),
     )
     return {"message": "Claim approved"}
 
@@ -89,6 +91,6 @@ async def reject_claim(
         analytics.track,
         "claim_rejected",
         {"claim_id": claim_id, "reason": body.rejection_reason},
-        distinct_id=user["id"],
+        distinct_id=anonymize_user_id(user["id"], salt=settings.anon_salt),
     )
     return {"message": "Claim rejected"}
