@@ -1,7 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { ConfirmDialog } from '../_components/ConfirmDialog';
+import { toast } from 'sonner';
 
 interface TagFrequency {
   tag_id: string;
@@ -56,6 +58,14 @@ export default function TaxonomyPage() {
   const [loading, setLoading] = useState(true);
   const [sortKey, setSortKey] = useState<SortKey>('shop_count');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
+  const [enqueuingIds, setEnqueuingIds] = useState<Set<string>>(new Set());
+  const [confirmEnqueue, setConfirmEnqueue] = useState<{
+    shopId: string;
+    shopName: string;
+    jobType: string;
+    label: string;
+  } | null>(null);
+  const tokenRef = useRef('');
 
   function handleSort(key: SortKey) {
     if (key === sortKey) {
@@ -74,6 +84,8 @@ export default function TaxonomyPage() {
       } = await supabase.auth.getSession();
       if (!session) return;
 
+      tokenRef.current = session.access_token;
+
       const res = await fetch('/api/admin/taxonomy/stats', {
         headers: { Authorization: `Bearer ${session.access_token}` },
       });
@@ -88,6 +100,30 @@ export default function TaxonomyPage() {
     }
     load();
   }, []);
+
+  async function handleEnqueue(shopId: string, jobType: string) {
+    setEnqueuingIds((prev) => new Set(prev).add(shopId));
+    try {
+      const res = await fetch(`/api/admin/shops/${shopId}/enqueue`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${tokenRef.current}`,
+        },
+        body: JSON.stringify({ job_type: jobType }),
+      });
+      if (!res.ok) throw new Error('Failed to enqueue');
+      toast.success(`Queued ${jobType.replace(/_/g, ' ')} job`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to enqueue');
+    } finally {
+      setEnqueuingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(shopId);
+        return next;
+      });
+    }
+  }
 
   if (loading) return <p>Loading...</p>;
   if (error)
@@ -194,11 +230,27 @@ export default function TaxonomyPage() {
                 className="flex items-center justify-between rounded border px-4 py-2"
               >
                 <span>{shop.name}</span>
-                <span
-                  className={`font-mono text-sm ${confidenceColor(shop.max_confidence)}`}
-                >
-                  {shop.max_confidence.toFixed(2)}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`font-mono text-sm ${confidenceColor(shop.max_confidence)}`}
+                  >
+                    {shop.max_confidence.toFixed(2)}
+                  </span>
+                  <button
+                    onClick={() =>
+                      setConfirmEnqueue({
+                        shopId: shop.id,
+                        shopName: shop.name,
+                        jobType: 'enrich_shop',
+                        label: 'Re-enrich',
+                      })
+                    }
+                    disabled={enqueuingIds.has(shop.id)}
+                    className="ml-2 rounded bg-blue-100 px-2 py-0.5 text-xs text-blue-700 hover:bg-blue-200 disabled:opacity-50"
+                  >
+                    {enqueuingIds.has(shop.id) ? 'Queued...' : 'Re-enrich'}
+                  </button>
+                </div>
               </li>
             ))}
           </ul>
@@ -217,14 +269,44 @@ export default function TaxonomyPage() {
                 className="flex items-center justify-between rounded border px-4 py-2"
               >
                 <span>{shop.name}</span>
-                <span className="rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-600">
-                  {shop.processing_status}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-600">
+                    {shop.processing_status}
+                  </span>
+                  <button
+                    onClick={() =>
+                      setConfirmEnqueue({
+                        shopId: shop.id,
+                        shopName: shop.name,
+                        jobType: 'generate_embedding',
+                        label: 'Generate Embedding',
+                      })
+                    }
+                    disabled={enqueuingIds.has(shop.id)}
+                    className="ml-2 rounded bg-blue-100 px-2 py-0.5 text-xs text-blue-700 hover:bg-blue-200 disabled:opacity-50"
+                  >
+                    {enqueuingIds.has(shop.id) ? 'Queued...' : 'Generate Embedding'}
+                  </button>
+                </div>
               </li>
             ))}
           </ul>
         )}
       </section>
+
+      <ConfirmDialog
+        open={confirmEnqueue !== null}
+        onOpenChange={(open) => {
+          if (!open) setConfirmEnqueue(null);
+        }}
+        title={`${confirmEnqueue?.label}?`}
+        description={`Queue a ${confirmEnqueue?.label?.toLowerCase()} job for "${confirmEnqueue?.shopName}".`}
+        confirmLabel={confirmEnqueue?.label ?? 'Confirm'}
+        onConfirm={async () => {
+          if (confirmEnqueue)
+            await handleEnqueue(confirmEnqueue.shopId, confirmEnqueue.jobType);
+        }}
+      />
     </div>
   );
 }

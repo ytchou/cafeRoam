@@ -1,5 +1,6 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import userEvent from '@testing-library/user-event';
 import {
   createMockSupabaseAuth,
   createMockRouter,
@@ -174,5 +175,73 @@ describe('TaxonomyPage', () => {
     expect(
       screen.getByText('Forbidden: admin role required')
     ).toBeInTheDocument();
+  });
+
+  it('enqueues re-enrich for a low-confidence shop after confirmation', async () => {
+    mockFetch.mockImplementation((url: string, opts?: RequestInit) => {
+      if (url.includes('/taxonomy/stats')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve(makeTaxonomyStats({
+            low_confidence_shops: [{ id: 'shop-lc', name: 'Low Conf Shop', max_confidence: 0.25 }],
+          })),
+        });
+      }
+      if (opts?.method === 'POST' && url.includes('/enqueue')) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve({}) });
+      }
+      return Promise.resolve({ ok: true, json: () => Promise.resolve({}) });
+    });
+
+    const user = userEvent.setup();
+    render(<TaxonomyPage />);
+    await screen.findByText('Low Conf Shop');
+
+    await user.click(screen.getByRole('button', { name: /re-enrich/i }));
+
+    const dialog = await screen.findByRole('alertdialog');
+    await user.click(within(dialog).getByRole('button', { name: /re-enrich/i }));
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      '/api/admin/shops/shop-lc/enqueue',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ job_type: 'enrich_shop' }),
+      })
+    );
+  });
+
+  it('enqueues embedding generation for a missing-embedding shop after confirmation', async () => {
+    mockFetch.mockImplementation((url: string, opts?: RequestInit) => {
+      if (url.includes('/taxonomy/stats')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve(makeTaxonomyStats({
+            missing_embeddings: [{ id: 'shop-me', name: 'No Embed Shop', processing_status: 'live' }],
+          })),
+        });
+      }
+      if (opts?.method === 'POST' && url.includes('/enqueue')) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve({}) });
+      }
+      return Promise.resolve({ ok: true, json: () => Promise.resolve({}) });
+    });
+
+    const user = userEvent.setup();
+    render(<TaxonomyPage />);
+    await screen.findByText('No Embed Shop');
+
+    await user.click(screen.getByRole('button', { name: /generate embedding/i }));
+
+    const dialog = await screen.findByRole('alertdialog');
+    await user.click(within(dialog).getByRole('button', { name: /generate embedding/i }));
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      '/api/admin/shops/shop-me/enqueue',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ job_type: 'generate_embedding' }),
+      })
+    );
   });
 });
