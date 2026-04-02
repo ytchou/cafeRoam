@@ -172,8 +172,7 @@ test.describe('J04 — Browse map → tap pin → shop detail sheet', () => {
 
     // Find an unclustered pin and project its coordinates to screen pixels
     const pinInfo = await page.evaluate(() => {
-      const map = (window as { __caferoam_map?: mapboxgl.Map })
-        .__caferoam_map;
+      const map = (window as { __caferoam_map?: mapboxgl.Map }).__caferoam_map;
       if (!map) return null;
       const features = map.queryRenderedFeatures(undefined, {
         layers: ['shops-pins'],
@@ -445,8 +444,7 @@ test.describe('J29 — Mobile: mini card on pin tap', () => {
 
     // Find an unclustered pin and project its coordinates to screen pixels
     const pinPoint = await page.evaluate(() => {
-      const map = (window as { __caferoam_map?: mapboxgl.Map })
-        .__caferoam_map;
+      const map = (window as { __caferoam_map?: mapboxgl.Map }).__caferoam_map;
       if (!map) return null;
       const features = map.queryRenderedFeatures(undefined, {
         layers: ['shops-pins'],
