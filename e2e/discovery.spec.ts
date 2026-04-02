@@ -142,42 +142,73 @@ test.describe('J04 — Browse map → tap pin → shop detail sheet', () => {
       await expect(rejectBtn).toBeHidden({ timeout: 3_000 });
     }
 
-    // Map pins are DOM buttons wrapped in react-map-gl Marker divs (role="img",
-    // aria-label="Map marker"). Use the first visible pin (any shop) to avoid
-    // depending on a specific shop being in the default map viewport.
-    const anyPin = page
-      .locator('[role="img"][aria-label="Map marker"] button[aria-label]')
-      .first();
-    const hasPins = await anyPin
-      .isVisible({ timeout: 10_000 })
+    // Map uses GL layers (canvas-rendered circles), not DOM Marker elements.
+    // Wait for the map to load and expose its instance via window.__caferoam_map,
+    // then query rendered features to find a clickable pin.
+    const canvas = page.locator('.mapboxgl-canvas');
+    await expect(canvas).toBeVisible({ timeout: 15_000 });
+
+    // Wait for GL layer pins to render on the canvas
+    const hasPins = await page
+      .waitForFunction(
+        () => {
+          const map = (window as { __caferoam_map?: mapboxgl.Map })
+            .__caferoam_map;
+          if (!map || !map.isStyleLoaded()) return false;
+          return (
+            map.queryRenderedFeatures(undefined, {
+              layers: ['shops-pins'],
+            }).length > 0
+          );
+        },
+        { timeout: 15_000 }
+      )
+      .then(() => true)
       .catch(() => false);
     test.skip(
       !hasPins,
-      'No map pins visible in current viewport — may require seeded data in Taipei area'
+      'No map pins rendered — may require seeded data in Taipei area'
     );
 
-    const shopName = (await anyPin.getAttribute('aria-label')) ?? '';
+    // Find an unclustered pin and project its coordinates to screen pixels
+    const pinInfo = await page.evaluate(() => {
+      const map = (window as { __caferoam_map?: mapboxgl.Map })
+        .__caferoam_map;
+      if (!map) return null;
+      const features = map.queryRenderedFeatures(undefined, {
+        layers: ['shops-pins'],
+      });
+      if (!features.length) return null;
+      const feature = features[0];
+      const coords = (
+        feature.geometry as { type: string; coordinates: [number, number] }
+      ).coordinates;
+      const px = map.project(coords as [number, number]);
+      return {
+        x: Math.round(px.x),
+        y: Math.round(px.y),
+        name: (feature.properties?.name as string) ?? '',
+      };
+    });
+    test.skip(!pinInfo, 'Could not project pin to screen coordinates');
 
-    // The Mapbox canvas sits above the marker overlay in the CSS stacking context,
-    // so Playwright's pointer-event hit-test finds the canvas and times out.
-    // Dispatch the click directly via JavaScript to bypass coverage detection.
-    await page.evaluate((sel) => {
-      const btn = document.querySelector(sel) as HTMLButtonElement | null;
-      if (btn)
-        btn.dispatchEvent(
-          new MouseEvent('click', { bubbles: true, cancelable: true })
-        );
-    }, '[role="img"][aria-label="Map marker"] button[aria-label]');
+    // Click the canvas at the pin's pixel position.
+    // force: true bypasses overlapping UI elements (search bar, toggle) — the map's
+    // onClick handler uses queryRenderedFeatures for hit-testing, not DOM pointer events.
+    await canvas.click({
+      position: { x: pinInfo!.x, y: pinInfo!.y },
+      force: true,
+    });
 
     // Mobile: ShopCarousel appears at bottom (data-testid="carousel-scroll")
-    // Desktop: shop name appears in the side panel (second occurrence — first is the map pin label)
+    // Desktop: shop name appears in the preview card
     const isCarouselVisible = await page
       .locator('[data-testid="carousel-scroll"]')
       .isVisible({ timeout: 5_000 })
       .catch(() => false);
     const shopReveal = isCarouselVisible
       ? page.locator('[data-testid="carousel-scroll"]')
-      : page.getByText(shopName).nth(1);
+      : page.getByText(pinInfo!.name).nth(1);
     await expect(shopReveal).toBeVisible({ timeout: 10_000 });
   });
 });
@@ -384,28 +415,58 @@ test.describe('J29 — Mobile: mini card on pin tap', () => {
       await expect(rejectBtn).toBeHidden({ timeout: 3_000 });
     }
 
-    // Map pins are DOM buttons wrapped in react-map-gl Marker divs (role="img",
-    // aria-label="Map marker"). Use the first visible pin (any shop).
-    const anyPin = page
-      .locator('[role="img"][aria-label="Map marker"] button[aria-label]')
-      .first();
-    const hasPins = await anyPin
-      .isVisible({ timeout: 10_000 })
+    // Map uses GL layers (canvas-rendered circles), not DOM Marker elements.
+    // Wait for the map to load and expose its instance via window.__caferoam_map,
+    // then query rendered features to find a clickable pin.
+    const canvas = page.locator('.mapboxgl-canvas');
+    await expect(canvas).toBeVisible({ timeout: 15_000 });
+
+    // Wait for GL layer pins to render on the canvas
+    const hasPins = await page
+      .waitForFunction(
+        () => {
+          const map = (window as { __caferoam_map?: mapboxgl.Map })
+            .__caferoam_map;
+          if (!map || !map.isStyleLoaded()) return false;
+          return (
+            map.queryRenderedFeatures(undefined, {
+              layers: ['shops-pins'],
+            }).length > 0
+          );
+        },
+        { timeout: 15_000 }
+      )
+      .then(() => true)
       .catch(() => false);
     test.skip(
       !hasPins,
-      'No map pins visible — may require seeded data in Taipei area'
+      'No map pins rendered — may require seeded data in Taipei area'
     );
 
-    // Dispatch click via JS — Mapbox canvas sits above the marker overlay in the
-    // CSS stack, so Playwright's hit-test finds the canvas and times out.
-    await page.evaluate((sel) => {
-      const btn = document.querySelector(sel) as HTMLButtonElement | null;
-      if (btn)
-        btn.dispatchEvent(
-          new MouseEvent('click', { bubbles: true, cancelable: true })
-        );
-    }, '[role="img"][aria-label="Map marker"] button[aria-label]');
+    // Find an unclustered pin and project its coordinates to screen pixels
+    const pinPoint = await page.evaluate(() => {
+      const map = (window as { __caferoam_map?: mapboxgl.Map })
+        .__caferoam_map;
+      if (!map) return null;
+      const features = map.queryRenderedFeatures(undefined, {
+        layers: ['shops-pins'],
+      });
+      if (!features.length) return null;
+      const coords = (
+        features[0].geometry as { type: string; coordinates: [number, number] }
+      ).coordinates;
+      const px = map.project(coords as [number, number]);
+      return { x: Math.round(px.x), y: Math.round(px.y) };
+    });
+    test.skip(!pinPoint, 'Could not project pin to screen coordinates');
+
+    // Click the canvas at the pin's pixel position.
+    // force: true bypasses overlapping UI elements — the map's onClick handler
+    // uses queryRenderedFeatures for hit-testing, not DOM pointer events.
+    await canvas.click({
+      position: { x: pinPoint!.x, y: pinPoint!.y },
+      force: true,
+    });
 
     // On mobile, ShopCarousel appears at the bottom of the map (data-testid="carousel-scroll")
     await expect(page.locator('[data-testid="carousel-scroll"]')).toBeVisible({
