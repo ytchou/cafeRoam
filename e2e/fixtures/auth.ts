@@ -75,7 +75,7 @@ async function loginFresh(
   return browser.newContext({ storageState: storagePath });
 }
 
-export const test = base.extend<{ authedPage: Page }>({
+export const test = base.extend<{ authedPage: Page; deletionPage: Page }>({
   authedPage: async ({ browser }, use, testInfo) => {
     const { email, password } = credentials(testInfo);
     const storagePath = storageStatePath(testInfo);
@@ -104,6 +104,50 @@ export const test = base.extend<{ authedPage: Page }>({
     // Always inject the consent cookie into the context so the cookie banner
     // never appears during tests. We do this here (not just in loginFresh) because
     // cached sessions loaded from user.json may predate this cookie being set.
+    await context.addCookies([
+      {
+        name: 'caferoam_consent',
+        value: 'denied',
+        url: 'http://localhost:3000',
+        expires: Math.floor(Date.now() / 1000) + 31_536_000,
+        httpOnly: false,
+        secure: false,
+        sameSite: 'Lax',
+      },
+    ]);
+
+    const page = await context.newPage();
+    await use(page);
+    await context.close();
+  },
+
+  deletionPage: async ({ browser }, use) => {
+    const email = process.env.E2E_DELETION_USER_EMAIL;
+    const password = process.env.E2E_DELETION_USER_PASSWORD;
+    if (!email || !password) {
+      throw new Error(
+        'E2E_DELETION_USER_EMAIL and E2E_DELETION_USER_PASSWORD must be set for deletion tests'
+      );
+    }
+    const storagePath = path.join(AUTH_DIR, 'user-deletion.json');
+
+    let context;
+    try {
+      context = await browser.newContext({ storageState: storagePath });
+    } catch {
+      context = await loginFresh(browser, email, password, storagePath);
+    }
+
+    const probe = await context.newPage();
+    await probe.goto('/profile', { waitUntil: 'commit' });
+    const isExpired = probe.url().includes('/login');
+    await probe.close();
+
+    if (isExpired) {
+      await context.close();
+      context = await loginFresh(browser, email, password, storagePath);
+    }
+
     await context.addCookies([
       {
         name: 'caferoam_consent',
