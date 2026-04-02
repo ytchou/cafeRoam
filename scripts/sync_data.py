@@ -17,6 +17,7 @@ Usage:
     STAGING_DATABASE_URL=... PROD_DATABASE_URL=... uv run scripts/sync_data.py promote
     uv run scripts/sync_data.py restore --file supabase/snapshots/latest.sql [--target-url ...]
 """
+
 from __future__ import annotations
 
 import argparse
@@ -35,8 +36,13 @@ except ImportError:
 # -- Constants -----------------------------------------------------------------
 
 SYNC_TABLES = {
-    "shops", "shop_photos", "shop_reviews", "shop_tags",
-    "taxonomy_tags", "shop_menu_items", "shop_content",
+    "shops",
+    "shop_photos",
+    "shop_reviews",
+    "shop_tags",
+    "taxonomy_tags",
+    "shop_menu_items",
+    "shop_content",
 }
 
 SNAPSHOTS_DIR = Path(__file__).resolve().parent.parent / "supabase" / "snapshots"
@@ -45,6 +51,7 @@ EMBEDDING_COVERAGE_THRESHOLD = 0.80
 
 
 # -- Result model --------------------------------------------------------------
+
 
 @dataclass
 class AuditResult:
@@ -55,6 +62,7 @@ class AuditResult:
 
 
 # -- Audit checks --------------------------------------------------------------
+
 
 def check_row_counts(cursor) -> list[AuditResult]:
     """Check that all sync-scope tables have at least one row."""
@@ -76,20 +84,24 @@ def check_row_counts(cursor) -> list[AuditResult]:
 
     for table in sorted(SYNC_TABLES):
         if table not in found_tables:
-            results.append(AuditResult(
-                category="Row Counts",
-                name=f"{table}",
-                passed=False,
-                details="Table not found in database",
-            ))
+            results.append(
+                AuditResult(
+                    category="Row Counts",
+                    name=f"{table}",
+                    passed=False,
+                    details="Table not found in database",
+                )
+            )
         else:
             count = next(row[1] for row in rows if row[0] == table)
-            results.append(AuditResult(
-                category="Row Counts",
-                name=f"{table}",
-                passed=count > 0,
-                details=f"{count} rows" if count > 0 else "0 rows — table is empty",
-            ))
+            results.append(
+                AuditResult(
+                    category="Row Counts",
+                    name=f"{table}",
+                    passed=count > 0,
+                    details=f"{count} rows" if count > 0 else "0 rows — table is empty",
+                )
+            )
 
     return results
 
@@ -98,17 +110,18 @@ def check_required_fields(cursor) -> list[AuditResult]:
     """Check that all shops have name, lat, lng."""
     results = []
     for field in ("name", "lat", "lng"):
-        cursor.execute(
-            f"SELECT COUNT(*) FROM public.shops WHERE {field} IS NULL"
-        )
+        cursor.execute(f"SELECT COUNT(*) FROM public.shops WHERE {field} IS NULL")
         count = cursor.fetchone()[0]
-        results.append(AuditResult(
-            category="Required Fields",
-            name=f"shops.{field} not null",
-            passed=count == 0,
-            details=f"All shops have {field}" if count == 0
+        results.append(
+            AuditResult(
+                category="Required Fields",
+                name=f"shops.{field} not null",
+                passed=count == 0,
+                details=f"All shops have {field}"
+                if count == 0
                 else f"{count} shops missing {field}",
-        ))
+            )
+        )
     return results
 
 
@@ -121,22 +134,26 @@ def check_embedding_coverage(cursor) -> list[AuditResult]:
     with_embedding = cursor.fetchone()[0]
 
     if total == 0:
-        return [AuditResult(
-            category="Embeddings",
-            name="Embedding coverage",
-            passed=False,
-            details="No shops in database",
-        )]
+        return [
+            AuditResult(
+                category="Embeddings",
+                name="Embedding coverage",
+                passed=False,
+                details="No shops in database",
+            )
+        ]
 
     pct = with_embedding / total
     threshold_pct = int(EMBEDDING_COVERAGE_THRESHOLD * 100)
-    return [AuditResult(
-        category="Embeddings",
-        name="Embedding coverage",
-        passed=pct >= EMBEDDING_COVERAGE_THRESHOLD,
-        details=f"{with_embedding}/{total} ({pct:.0%}) shops have embeddings "
-                f"(threshold: {threshold_pct}%)",
-    )]
+    return [
+        AuditResult(
+            category="Embeddings",
+            name="Embedding coverage",
+            passed=pct >= EMBEDDING_COVERAGE_THRESHOLD,
+            details=f"{with_embedding}/{total} ({pct:.0%}) shops have embeddings "
+            f"(threshold: {threshold_pct}%)",
+        )
+    ]
 
 
 def check_taxonomy_integrity(cursor) -> list[AuditResult]:
@@ -147,13 +164,16 @@ def check_taxonomy_integrity(cursor) -> list[AuditResult]:
         "WHERE tt.id IS NULL"
     )
     orphaned = cursor.fetchone()[0]
-    return [AuditResult(
-        category="Referential Integrity",
-        name="shop_tags → taxonomy_tags",
-        passed=orphaned == 0,
-        details="All tag references valid" if orphaned == 0
+    return [
+        AuditResult(
+            category="Referential Integrity",
+            name="shop_tags → taxonomy_tags",
+            passed=orphaned == 0,
+            details="All tag references valid"
+            if orphaned == 0
             else f"{orphaned} shop_tags reference non-existent taxonomy_tags",
-    )]
+        )
+    ]
 
 
 def check_orphaned_photos(cursor) -> list[AuditResult]:
@@ -164,13 +184,16 @@ def check_orphaned_photos(cursor) -> list[AuditResult]:
         "WHERE s.id IS NULL"
     )
     orphaned = cursor.fetchone()[0]
-    return [AuditResult(
-        category="Referential Integrity",
-        name="shop_photos → shops",
-        passed=orphaned == 0,
-        details="All photo references valid" if orphaned == 0
+    return [
+        AuditResult(
+            category="Referential Integrity",
+            name="shop_photos → shops",
+            passed=orphaned == 0,
+            details="All photo references valid"
+            if orphaned == 0
             else f"{orphaned} shop_photos reference non-existent shops",
-    )]
+        )
+    ]
 
 
 def run_audit(cursor) -> list[AuditResult]:
@@ -216,6 +239,7 @@ def print_audit_report(results: list[AuditResult]) -> bool:
 
 
 # -- Snapshot ------------------------------------------------------------------
+
 
 def cmd_snapshot(database_url: str, env_name: str) -> Path:
     """pg_dump sync-scope tables to a dated snapshot file."""
@@ -294,6 +318,7 @@ def cmd_snapshot(database_url: str, env_name: str) -> Path:
 
 # -- Restore -------------------------------------------------------------------
 
+
 def cmd_restore(filepath: Path, target_url: str) -> None:
     """Restore a snapshot SQL file to a target database."""
     if not filepath.exists():
@@ -313,6 +338,7 @@ def cmd_restore(filepath: Path, target_url: str) -> None:
 
 # -- Promote -------------------------------------------------------------------
 
+
 def cmd_promote(staging_url: str, prod_url: str) -> None:
     """Promote staging data to prod: snapshot → validate → restore."""
     # 1. Audit staging first
@@ -326,7 +352,10 @@ def cmd_promote(staging_url: str, prod_url: str) -> None:
 
     all_passed = print_audit_report(results)
     if not all_passed:
-        print("ABORTED: Staging audit failed. Fix issues before promoting.", file=sys.stderr)
+        print(
+            "ABORTED: Staging audit failed. Fix issues before promoting.",
+            file=sys.stderr,
+        )
         sys.exit(1)
 
     # 2. Snapshot staging
@@ -341,6 +370,7 @@ def cmd_promote(staging_url: str, prod_url: str) -> None:
 
 
 # -- CLI entry point -----------------------------------------------------------
+
 
 def main():
     parser = argparse.ArgumentParser(
@@ -366,15 +396,20 @@ def main():
     p_snap.add_argument("--env", required=True, help="Environment name (staging, prod)")
 
     # promote
-    sub.add_parser("promote", help="Promote staging → prod (snapshot + validate + restore)")
+    sub.add_parser(
+        "promote", help="Promote staging → prod (snapshot + validate + restore)"
+    )
 
     # restore
     p_restore = sub.add_parser("restore", help="Restore a snapshot to a target DB")
-    p_restore.add_argument("--file", required=True, type=Path, help="Snapshot SQL file path")
+    p_restore.add_argument(
+        "--file", required=True, type=Path, help="Snapshot SQL file path"
+    )
     p_restore.add_argument(
         "--target-url",
-        default=os.environ.get("DATABASE_URL",
-            "postgresql://postgres:postgres@127.0.0.1:54322/postgres"),
+        default=os.environ.get(
+            "DATABASE_URL", "postgresql://postgres:postgres@127.0.0.1:54322/postgres"
+        ),
         help="Target DB URL. Default: local Supabase",
     )
 
@@ -405,8 +440,10 @@ def main():
         staging_url = os.environ.get("STAGING_DATABASE_URL")
         prod_url = os.environ.get("PROD_DATABASE_URL")
         if not staging_url or not prod_url:
-            print("Error: Both STAGING_DATABASE_URL and PROD_DATABASE_URL must be set.",
-                  file=sys.stderr)
+            print(
+                "Error: Both STAGING_DATABASE_URL and PROD_DATABASE_URL must be set.",
+                file=sys.stderr,
+            )
             sys.exit(1)
         cmd_promote(staging_url, prod_url)
 

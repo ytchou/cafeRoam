@@ -1,21 +1,16 @@
 """Tests for sync_data.py audit checks — mock cursor at DB boundary."""
 
 import os
-import subprocess
 import sys
-from pathlib import Path
-from unittest.mock import patch
 
 sys.path.insert(0, os.path.dirname(__file__))
 
 from sync_data import (
-    AuditResult,
     check_row_counts,
     check_required_fields,
     check_embedding_coverage,
     check_taxonomy_integrity,
     check_orphaned_photos,
-    SNAPSHOTS_DIR,
     SYNC_TABLES,
 )
 
@@ -47,11 +42,14 @@ class MockCursor:
 
 # -- Row count checks ----------------------------------------------------------
 
+
 def test_row_counts_pass_when_all_tables_populated():
     """Given all sync-scope tables have rows, row count check passes."""
-    cursor = MockCursor(results=[
-        [(t, 100) for t in sorted(SYNC_TABLES)],
-    ])
+    cursor = MockCursor(
+        results=[
+            [(t, 100) for t in sorted(SYNC_TABLES)],
+        ]
+    )
     results = check_row_counts(cursor)
     assert all(r.passed for r in results)
 
@@ -68,24 +66,29 @@ def test_row_counts_fail_when_table_empty():
 
 # -- Required fields -----------------------------------------------------------
 
+
 def test_required_fields_pass_when_all_present():
     """Given all shops have name, lat, lng, required fields check passes."""
-    cursor = MockCursor(results=[
-        (0,),  # count of shops missing name
-        (0,),  # count of shops missing lat
-        (0,),  # count of shops missing lng
-    ])
+    cursor = MockCursor(
+        results=[
+            (0,),  # count of shops missing name
+            (0,),  # count of shops missing lat
+            (0,),  # count of shops missing lng
+        ]
+    )
     results = check_required_fields(cursor)
     assert all(r.passed for r in results)
 
 
 def test_required_fields_fail_when_name_missing():
     """Given some shops missing name, required fields check fails."""
-    cursor = MockCursor(results=[
-        (5,),  # 5 shops missing name
-        (0,),  # lat ok
-        (0,),  # lng ok
-    ])
+    cursor = MockCursor(
+        results=[
+            (5,),  # 5 shops missing name
+            (0,),  # lat ok
+            (0,),  # lng ok
+        ]
+    )
     results = check_required_fields(cursor)
     failed = [r for r in results if not r.passed]
     assert len(failed) >= 1
@@ -94,22 +97,27 @@ def test_required_fields_fail_when_name_missing():
 
 # -- Embedding coverage --------------------------------------------------------
 
+
 def test_embedding_coverage_passes_above_threshold():
     """Given >80% of shops have embeddings, check passes."""
-    cursor = MockCursor(results=[
-        (100,),  # total shops
-        (85,),   # shops with embeddings
-    ])
+    cursor = MockCursor(
+        results=[
+            (100,),  # total shops
+            (85,),  # shops with embeddings
+        ]
+    )
     results = check_embedding_coverage(cursor)
     assert all(r.passed for r in results)
 
 
 def test_embedding_coverage_fails_below_threshold():
     """Given <80% of shops have embeddings, check fails."""
-    cursor = MockCursor(results=[
-        (100,),  # total shops
-        (50,),   # only 50% with embeddings
-    ])
+    cursor = MockCursor(
+        results=[
+            (100,),  # total shops
+            (50,),  # only 50% with embeddings
+        ]
+    )
     results = check_embedding_coverage(cursor)
     assert not results[0].passed
     assert "50" in results[0].details
@@ -117,45 +125,56 @@ def test_embedding_coverage_fails_below_threshold():
 
 # -- Taxonomy integrity --------------------------------------------------------
 
+
 def test_taxonomy_integrity_passes_when_all_refs_valid():
     """Given all shop_tags reference valid taxonomy_tags, check passes."""
-    cursor = MockCursor(results=[
-        (0,),  # 0 orphaned tag references
-    ])
+    cursor = MockCursor(
+        results=[
+            (0,),  # 0 orphaned tag references
+        ]
+    )
     results = check_taxonomy_integrity(cursor)
     assert all(r.passed for r in results)
 
 
 def test_taxonomy_integrity_fails_when_orphaned_refs():
     """Given shop_tags reference non-existent taxonomy_tags, check fails."""
-    cursor = MockCursor(results=[
-        (12,),  # 12 orphaned references
-    ])
+    cursor = MockCursor(
+        results=[
+            (12,),  # 12 orphaned references
+        ]
+    )
     results = check_taxonomy_integrity(cursor)
     assert not results[0].passed
 
 
 # -- Orphaned photos -----------------------------------------------------------
 
+
 def test_orphaned_photos_passes_when_none():
     """Given all shop_photos reference existing shops, check passes."""
-    cursor = MockCursor(results=[
-        (0,),  # 0 orphaned photos
-    ])
+    cursor = MockCursor(
+        results=[
+            (0,),  # 0 orphaned photos
+        ]
+    )
     results = check_orphaned_photos(cursor)
     assert all(r.passed for r in results)
 
 
 def test_orphaned_photos_fails_when_orphans_exist():
     """Given shop_photos reference non-existent shops, check fails."""
-    cursor = MockCursor(results=[
-        (8,),  # 8 orphaned photos
-    ])
+    cursor = MockCursor(
+        results=[
+            (8,),  # 8 orphaned photos
+        ]
+    )
     results = check_orphaned_photos(cursor)
     assert not results[0].passed
 
 
 # -- Snapshot integration -------------------------------------------------------
+
 
 def test_snapshot_creates_dated_file(tmp_path):
     """Given a valid DATABASE_URL, snapshot creates a dated SQL file with header."""
@@ -164,14 +183,17 @@ def test_snapshot_creates_dated_file(tmp_path):
     # Check if local Supabase is available
     try:
         import psycopg2
+
         conn = psycopg2.connect(db_url)
         conn.close()
     except Exception:
         import pytest
+
         pytest.skip("Local Supabase not available")
 
     from sync_data import cmd_snapshot
     import sync_data
+
     original_dir = sync_data.SNAPSHOTS_DIR
     sync_data.SNAPSHOTS_DIR = tmp_path / "snapshots"
     sync_data.SNAPSHOTS_DIR.mkdir()
