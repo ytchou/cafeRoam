@@ -45,8 +45,18 @@ scheduler = create_scheduler()
 
 
 def _sentry_before_send(event: dict[str, Any], hint: dict[str, Any]) -> dict[str, Any] | None:
-    """Strip any user context from Sentry events before sending."""
+    """Strip PII from Sentry events before sending.
+
+    send_default_pii=False reduces exposure but does not scrub Authorization
+    headers already captured in event["request"]["headers"].
+    """
     event.pop("user", None)
+    request_ctx = event.get("request", {})
+    headers = request_ctx.get("headers", {})
+    headers.pop("Authorization", None)
+    headers.pop("authorization", None)
+    headers.pop("Cookie", None)
+    headers.pop("cookie", None)
     return event
 
 
