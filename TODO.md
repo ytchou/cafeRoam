@@ -2231,7 +2231,7 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 - [x] Task 1: Snapshot directory structure + gitignore
 
 **Chunk 2 — Core Script (DEV-177/178):**
-- [ ] Task 2: Audit subcommand with TDD tests + sync_data.py scaffold
+- [x] Task 2: Audit subcommand with TDD tests + sync_data.py scaffold
 - [ ] Task 3: Snapshot/restore integration test
 
 **Chunk 3 — Ergonomics (DEV-179/180):**
