@@ -40,6 +40,9 @@ def _to_vocab_term(raw: str, vocab: dict[str, str]) -> str | None:
     return vocab.get(norm) or next((canonical for n, canonical in vocab.items() if n in norm), None)
 
 
+_MENU_VOCAB_REF = ", ".join(ITEM_TERMS)
+_SPECIALTY_VOCAB_REF = ", ".join(SPECIALTY_TERMS)
+
 CLASSIFY_SHOP_TOOL = {
     "name": "classify_shop",
     "description": "Classify a coffee shop based on its reviews using the provided taxonomy",
@@ -382,6 +385,24 @@ class AnthropicLLMAdapter:
         lines.append("Available taxonomy tags (ONLY select from this list):")
         for tag in self._taxonomy:
             lines.append(f"  {tag.id} ({tag.dimension}) — {tag.label} / {tag.label_zh}")
+
+        lines.append("")
+        lines.append("Reference — food & drink items (use exact terms for menu_highlights):")
+        lines.append(_MENU_VOCAB_REF)
+        lines.append("")
+        lines.append(
+            "Reference — coffee origins, varieties & processing"
+            " (use Traditional Chinese names for coffee_origins):"
+        )
+        lines.append(_SPECIALTY_VOCAB_REF)
+        lines.append("")
+        lines.append(
+            "Instruction: When extracting coffee_origins, use the Traditional Chinese name"
+            " exactly as it appears in the reference list above"
+            " (e.g. 古吉 not 'Guji', 耶加雪菲 not 'Yirgacheffe')."
+            " For menu_highlights, prefer the Traditional Chinese term from the list"
+            " (e.g. 手沖 not 'pour over', 可頌 not 'croissant')."
+        )
 
         return "\n".join(lines)
 

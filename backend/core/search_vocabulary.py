@@ -1,7 +1,13 @@
-"""Search vocabulary for query classification.
+"""Search vocabulary for query classification and LLM extraction.
 
-Term lists compiled into regex patterns by query_classifier.py at module level.
-All terms must be lowercase — the normalizer handles case before matching.
+Term lists serve two consumers:
+- query_classifier.py: compiled into regex patterns at module level for query classification.
+- anthropic_adapter.py: injected into the enrichment prompt as a canonical reference list
+  so the LLM extracts standardised Traditional Chinese terms for menu_highlights and
+  coffee_origins.
+
+All terms must be lowercase — the normalizer handles case before matching (query classifier).
+Changes to these lists affect both regex matching behaviour and LLM extraction output.
 """
 
 ITEM_TERMS: list[str] = [
