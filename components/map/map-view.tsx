@@ -137,6 +137,11 @@ export function MapView({
 
   const handleLoad = useCallback(() => {
     reportBounds();
+    // Expose map instance for E2E tests — GL layers are invisible to DOM selectors
+    if (process.env.NODE_ENV !== 'production') {
+      const map = mapRef.current?.getMap();
+      if (map) (window as { __caferoam_map?: unknown }).__caferoam_map = map;
+    }
   }, [reportBounds]);
 
   if (!mapboxToken) {
