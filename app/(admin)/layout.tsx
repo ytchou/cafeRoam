@@ -11,6 +11,7 @@ const NAV_ITEMS = [
   { href: '/admin/shops', label: 'Shops' },
   { href: '/admin/jobs', label: 'Jobs' },
   { href: '/admin/taxonomy', label: 'Taxonomy' },
+  { href: '/admin/roles', label: 'Roles' },
 ];
 
 const SEGMENT_LABELS: Record<string, string> = {
@@ -18,6 +19,7 @@ const SEGMENT_LABELS: Record<string, string> = {
   shops: 'Shops',
   jobs: 'Jobs',
   taxonomy: 'Taxonomy',
+  roles: 'Roles',
 };
 
 function useBreadcrumbs(pathname: string) {
@@ -89,7 +91,7 @@ export default function AdminLayout({
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`block rounded-md px-3 py-2 text-sm ${
+                  className={`block rounded-md px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-gray-400 focus-visible:outline-none ${
                     isActive
                       ? 'bg-gray-200 font-medium text-gray-900'
                       : 'text-gray-600 hover:bg-gray-100'

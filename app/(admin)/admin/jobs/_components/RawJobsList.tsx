@@ -3,6 +3,7 @@
 import { Fragment, useEffect, useState, useCallback, useRef } from 'react';
 import { toast } from 'sonner';
 import { createClient } from '@/lib/supabase/client';
+import { ConfirmDialog } from '../../_components/ConfirmDialog';
 
 interface Job {
   id: string;
@@ -46,11 +47,19 @@ const STATUS_COLORS: Record<string, string> = {
 
 const PAGE_SIZE = 20;
 
-export function RawJobsList() {
+export function RawJobsList({ initialStatus }: { initialStatus?: string }) {
   const [data, setData] = useState<JobsResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState(
+    initialStatus && STATUS_OPTIONS.some((o) => o === initialStatus)
+      ? initialStatus
+      : 'all'
+  );
+  const [confirmAction, setConfirmAction] = useState<{
+    type: 'cancel' | 'retry';
+    jobId: string;
+  } | null>(null);
   const [typeFilter, setTypeFilter] = useState('all');
   const [page, setPage] = useState(1);
   const [expandedJobId, setExpandedJobId] = useState<string | null>(null);
@@ -105,7 +114,6 @@ export function RawJobsList() {
 
   async function handleCancel(jobId: string) {
     if (!tokenRef.current) return;
-    if (!window.confirm('Cancel this job? This cannot be undone.')) return;
     try {
       const res = await fetch(`/api/admin/pipeline/jobs/${jobId}/cancel`, {
         method: 'POST',
@@ -239,7 +247,7 @@ export function RawJobsList() {
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleCancel(job.id);
+                        setConfirmAction({ type: 'cancel', jobId: job.id });
                       }}
                       className="rounded bg-red-50 px-2 py-1 text-xs text-red-600 hover:bg-red-100"
                     >
@@ -252,7 +260,7 @@ export function RawJobsList() {
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleRetry(job.id);
+                        setConfirmAction({ type: 'retry', jobId: job.id });
                       }}
                       className="rounded bg-blue-50 px-2 py-1 text-xs text-blue-600 hover:bg-blue-100"
                     >
@@ -313,6 +321,26 @@ export function RawJobsList() {
           </button>
         </div>
       )}
+      <ConfirmDialog
+        open={confirmAction !== null}
+        onOpenChange={(open) => {
+          if (!open) setConfirmAction(null);
+        }}
+        title={confirmAction?.type === 'cancel' ? 'Cancel job?' : 'Retry job?'}
+        description={
+          confirmAction?.type === 'cancel'
+            ? 'This cannot be undone. The job will be moved to dead letter.'
+            : 'This will re-queue the failed job for processing.'
+        }
+        confirmLabel={confirmAction?.type === 'cancel' ? 'Cancel Job' : 'Retry'}
+        variant={confirmAction?.type === 'cancel' ? 'destructive' : 'default'}
+        onConfirm={async () => {
+          if (!confirmAction) return;
+          if (confirmAction.type === 'cancel')
+            await handleCancel(confirmAction.jobId);
+          else await handleRetry(confirmAction.jobId);
+        }}
+      />
     </div>
   );
 }

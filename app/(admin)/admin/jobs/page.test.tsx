@@ -12,11 +12,12 @@ vi.mock('@/lib/supabase/client', () => ({
   createClient: () => ({ auth: mockAuth }),
 }));
 
+const mockUseSearchParams = vi.fn(() => new URLSearchParams());
 const mockRouter = createMockRouter();
 vi.mock('next/navigation', () => ({
   useRouter: () => mockRouter,
   usePathname: () => '/admin/jobs',
-  useSearchParams: () => new URLSearchParams(),
+  useSearchParams: () => mockUseSearchParams(),
 }));
 
 const mockFetch = vi.fn();
@@ -155,8 +156,6 @@ describe('AdminJobsPage', () => {
       });
     });
 
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
-
     const user = userEvent.setup();
     render(<AdminJobsPage />);
 
@@ -167,17 +166,25 @@ describe('AdminJobsPage', () => {
       expect(within(tbody).getByText('scrape_shop')).toBeInTheDocument();
     });
 
+    // Click Cancel — opens confirmation dialog
     const cancelButton = screen.getByRole('button', { name: /cancel/i });
     await user.click(cancelButton);
 
-    expect(window.confirm).toHaveBeenCalled();
-    expect(mockFetch).toHaveBeenCalledWith(
-      '/api/admin/pipeline/jobs/job-cancel-001/cancel',
-      expect.objectContaining({
-        method: 'POST',
-        headers: { Authorization: `Bearer ${testSession.access_token}` },
-      })
+    // Confirm in alertdialog
+    const dialog = await screen.findByRole('alertdialog');
+    await user.click(
+      within(dialog).getByRole('button', { name: /cancel job/i })
     );
+
+    await waitFor(() => {
+      expect(mockFetch).toHaveBeenCalledWith(
+        '/api/admin/pipeline/jobs/job-cancel-001/cancel',
+        expect.objectContaining({
+          method: 'POST',
+          headers: { Authorization: `Bearer ${testSession.access_token}` },
+        })
+      );
+    });
   });
 
   it('retries a failed job when the admin clicks Retry', async () => {
@@ -218,16 +225,23 @@ describe('AdminJobsPage', () => {
       expect(within(tbody).getByText('generate_embedding')).toBeInTheDocument();
     });
 
+    // Click Retry — opens confirmation dialog
     const retryButton = screen.getByRole('button', { name: /retry/i });
     await user.click(retryButton);
 
-    expect(mockFetch).toHaveBeenCalledWith(
-      '/api/admin/pipeline/retry/job-retry-001',
-      expect.objectContaining({
-        method: 'POST',
-        headers: { Authorization: `Bearer ${testSession.access_token}` },
-      })
-    );
+    // Confirm in alertdialog
+    const dialog = await screen.findByRole('alertdialog');
+    await user.click(within(dialog).getByRole('button', { name: /^retry$/i }));
+
+    await waitFor(() => {
+      expect(mockFetch).toHaveBeenCalledWith(
+        '/api/admin/pipeline/retry/job-retry-001',
+        expect.objectContaining({
+          method: 'POST',
+          headers: { Authorization: `Bearer ${testSession.access_token}` },
+        })
+      );
+    });
   });
 
   it('shows error alert when the pipeline jobs API returns a failure', async () => {
@@ -245,5 +259,53 @@ describe('AdminJobsPage', () => {
     expect(
       screen.getByText('Forbidden: admin role required')
     ).toBeInTheDocument();
+  });
+
+  it('auto-selects Raw Jobs tab and failed filter when ?status=failed is in URL', async () => {
+    mockUseSearchParams.mockReturnValueOnce(
+      new URLSearchParams('status=failed')
+    );
+
+    const failedJobsResponse = makeJobsResponse([
+      {
+        id: 'job-failed-001',
+        job_type: 'enrich_shop',
+        status: 'failed',
+        priority: 5,
+        attempts: 2,
+        created_at: '2026-03-01T10:00:00.000Z',
+        last_error: 'Timeout after 30s',
+        payload: { shop_id: 'shop-abc' },
+      },
+    ]);
+
+    mockFetch.mockImplementation((url: string) => {
+      if (url.includes('/api/admin/pipeline/batches')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ batches: [], total: 0 }),
+        });
+      }
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve(failedJobsResponse),
+      });
+    });
+
+    render(<AdminJobsPage />);
+
+    // Should show Raw Jobs tab active (not Batches)
+    await waitFor(() => {
+      expect(screen.getByText('Jobs Queue')).toBeInTheDocument();
+    });
+
+    // The Raw Jobs tab should be visible without needing to click it
+    await waitFor(() => {
+      const tbody = screen.getAllByRole('rowgroup')[1];
+      expect(within(tbody).getByText('enrich_shop')).toBeInTheDocument();
+    });
+
+    // The failed status filter should be pre-selected
+    expect(screen.getByDisplayValue('failed')).toBeInTheDocument();
   });
 });

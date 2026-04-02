@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import Image from 'next/image';
 import { toast } from 'sonner';
 import { createClient } from '@/lib/supabase/client';
+import { ConfirmDialog } from '../../_components/ConfirmDialog';
 
 interface ModeScores {
   work: number;
@@ -37,6 +38,13 @@ interface ShopDetail {
   photos?: Photo[];
 }
 
+interface ConfirmActionState {
+  type: 'enqueue' | 'toggle_live';
+  jobType?: string;
+  label: string;
+  destructive?: boolean;
+}
+
 export default function AdminShopDetail() {
   const { id } = useParams<{ id: string }>();
   const [shop, setShop] = useState<ShopDetail | null>(null);
@@ -51,6 +59,9 @@ export default function AdminShopDetail() {
   });
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResult, setSearchResult] = useState<string | null>(null);
+  const [confirmAction, setConfirmAction] = useState<ConfirmActionState | null>(
+    null
+  );
   const tokenRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -109,17 +120,10 @@ export default function AdminShopDetail() {
     }
   }
 
-  async function handleToggleLive() {
+  async function handleToggleLiveAction() {
     const token = tokenRef.current;
     if (!token || !shop) return;
     const newStatus = shop.processing_status === 'live' ? 'pending' : 'live';
-    if (
-      shop.processing_status === 'live' &&
-      !window.confirm(
-        'Unpublish this shop? It will be removed from search results.'
-      )
-    )
-      return;
     const toastId = toast.loading(`Setting status to ${newStatus}...`);
     try {
       const res = await fetch(`/api/admin/shops/${id}`, {
@@ -141,6 +145,26 @@ export default function AdminShopDetail() {
     } catch {
       toast.error('Network error', { id: toastId });
     }
+  }
+
+  function handleToggleLive() {
+    if (!shop) return;
+    const isLive = shop.processing_status === 'live';
+    setConfirmAction({
+      type: 'toggle_live',
+      label: isLive ? 'Unpublish' : 'Set Live',
+      destructive: isLive,
+    });
+  }
+
+  async function handleConfirmedAction() {
+    if (!confirmAction) return;
+    if (confirmAction.type === 'toggle_live') {
+      await handleToggleLiveAction();
+    } else if (confirmAction.type === 'enqueue' && confirmAction.jobType) {
+      await handleEnqueue(confirmAction.jobType);
+    }
+    setConfirmAction(null);
   }
 
   async function handleSearchRank() {
@@ -430,19 +454,37 @@ export default function AdminShopDetail() {
         <h2 className="mb-4 text-lg font-semibold">Actions</h2>
         <div className="flex flex-wrap items-center gap-3">
           <button
-            onClick={() => handleEnqueue('enrich_shop')}
+            onClick={() =>
+              setConfirmAction({
+                type: 'enqueue',
+                jobType: 'enrich_shop',
+                label: 'Re-enrich',
+              })
+            }
             className="rounded border px-3 py-1 text-sm hover:bg-gray-50"
           >
             Re-enrich
           </button>
           <button
-            onClick={() => handleEnqueue('generate_embedding')}
+            onClick={() =>
+              setConfirmAction({
+                type: 'enqueue',
+                jobType: 'generate_embedding',
+                label: 'Re-embed',
+              })
+            }
             className="rounded border px-3 py-1 text-sm hover:bg-gray-50"
           >
             Re-embed
           </button>
           <button
-            onClick={() => handleEnqueue('scrape_shop')}
+            onClick={() =>
+              setConfirmAction({
+                type: 'enqueue',
+                jobType: 'scrape_shop',
+                label: 'Re-scrape',
+              })
+            }
             className="rounded border px-3 py-1 text-sm hover:bg-gray-50"
           >
             Re-scrape
@@ -478,6 +520,24 @@ export default function AdminShopDetail() {
           )}
         </div>
       </section>
+
+      <ConfirmDialog
+        open={confirmAction !== null}
+        onOpenChange={(open) => {
+          if (!open) setConfirmAction(null);
+        }}
+        title={`${confirmAction?.label}?`}
+        description={
+          confirmAction?.type === 'toggle_live'
+            ? confirmAction.destructive
+              ? `This will remove "${shop?.name}" from search results.`
+              : `This will make "${shop?.name}" visible in search results.`
+            : `This will queue a ${confirmAction?.label?.toLowerCase()} job for "${shop?.name}".`
+        }
+        confirmLabel={confirmAction?.label ?? 'Confirm'}
+        variant={confirmAction?.destructive ? 'destructive' : 'default'}
+        onConfirm={handleConfirmedAction}
+      />
     </div>
   );
 }

@@ -8,7 +8,7 @@ from api.deps import get_admin_db, require_admin
 
 router = APIRouter(prefix="/admin/roles", tags=["admin"])
 
-_VALID_ROLES = {"blogger", "member", "partner", "admin"}
+_VALID_ROLES = {"blogger", "member", "partner", "admin", "shop_owner"}
 
 
 class GrantRoleRequest(BaseModel):
@@ -70,10 +70,19 @@ def list_roles(
     """List all role grants, optionally filtered by role."""
     query = (
         db.table("user_roles")
-        .select("id, user_id, role, granted_at, granted_by")
+        .select("id, user_id, role, granted_at, granted_by, auth_users:user_id(email)")
         .order("granted_at", desc=True)
     )
     if role:
+        if role not in _VALID_ROLES:
+            raise HTTPException(status_code=400, detail=f"Invalid role: {role}")
         query = query.eq("role", role)
     response = query.execute()
-    return cast("list[dict[str, Any]]", response.data or [])
+
+    # Flatten the joined email into each row
+    roles = []
+    for row in cast("list[dict[str, Any]]", response.data or []):
+        auth_user = row.pop("auth_users", None)
+        row["email"] = auth_user.get("email") if isinstance(auth_user, dict) else None
+        roles.append(row)
+    return roles
