@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import {
@@ -122,7 +122,7 @@ describe('AdminDashboard', () => {
     ).toBeInTheDocument();
   });
 
-  it('approves a pending submission when the admin clicks Approve', async () => {
+  it('approves a pending submission when the admin clicks Approve and confirms', async () => {
     const overviewData = {
       job_counts: {
         pending: 0,
@@ -155,15 +155,22 @@ describe('AdminDashboard', () => {
       ).toBeInTheDocument();
     });
 
+    // Click Approve — opens confirmation dialog
     await user.click(screen.getByRole('button', { name: /approve/i }));
 
-    expect(mockFetch).toHaveBeenCalledWith(
-      '/api/admin/pipeline/approve/sub-pending-001',
-      expect.objectContaining({
-        method: 'POST',
-        headers: { Authorization: `Bearer ${testSession.access_token}` },
-      })
-    );
+    // Confirm in dialog
+    const dialog = await screen.findByRole('alertdialog');
+    await user.click(within(dialog).getByRole('button', { name: /approve/i }));
+
+    await waitFor(() => {
+      expect(mockFetch).toHaveBeenCalledWith(
+        '/api/admin/pipeline/approve/sub-pending-001',
+        expect.objectContaining({
+          method: 'POST',
+          headers: { Authorization: `Bearer ${testSession.access_token}` },
+        })
+      );
+    });
   });
 
   it('shows inline rejection picker when the admin clicks Reject on a pending submission', async () => {
@@ -305,5 +312,86 @@ describe('AdminDashboard', () => {
         body: expect.stringContaining('"rejection_reason"'),
       })
     );
+  });
+
+  it('filters claims by status when dropdown changes', async () => {
+    const overviewData = {
+      job_counts: { pending: 0, claimed: 0, completed: 0, failed: 0, dead_letter: 0 },
+      recent_submissions: [],
+    };
+
+    mockFetch.mockImplementation((url: string) => {
+      if (url.includes('/pipeline/overview')) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve(overviewData) });
+      }
+      if (url.includes('/admin/claims?status=approved')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve([{
+            id: 'claim-a', shops: { name: 'Approved Shop' }, contact_name: 'Jane',
+            contact_email: 'jane@example.com', role: 'owner', status: 'approved',
+            created_at: '2026-01-01T00:00:00Z',
+          }]),
+        });
+      }
+      if (url.includes('/admin/claims')) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve([]) });
+      }
+      return Promise.resolve({ ok: true, json: () => Promise.resolve({}) });
+    });
+
+    const user = userEvent.setup();
+    render(<AdminDashboard />);
+
+    // Wait for page to finish loading
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /claims/i })).toBeInTheDocument();
+    });
+
+    // Switch to Claims tab
+    await user.click(screen.getByRole('button', { name: /claims/i }));
+
+    // Change status filter to "approved"
+    const select = screen.getByRole('combobox', { name: /claim status/i });
+    await user.selectOptions(select, 'approved');
+
+    // Should fetch with status=approved and show approved claim
+    await screen.findByText('Approved Shop');
+    // Approve/Reject buttons should NOT be present for resolved claims
+    expect(screen.queryByRole('button', { name: /^approve$/i })).not.toBeInTheDocument();
+  });
+
+  it('shows status badge column in claims table', async () => {
+    const overviewData = {
+      job_counts: { pending: 0, claimed: 0, completed: 0, failed: 0, dead_letter: 0 },
+      recent_submissions: [],
+    };
+
+    mockFetch.mockImplementation((url: string) => {
+      if (url.includes('/pipeline/overview')) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve(overviewData) });
+      }
+      if (url.includes('/admin/claims')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve([{
+            id: 'claim-1', shops: { name: 'Test Shop' }, contact_name: 'John',
+            contact_email: 'john@example.com', role: 'owner', status: 'pending',
+            created_at: '2026-01-01T00:00:00Z',
+          }]),
+        });
+      }
+      return Promise.resolve({ ok: true, json: () => Promise.resolve({}) });
+    });
+
+    const user = userEvent.setup();
+    render(<AdminDashboard />);
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /claims/i })).toBeInTheDocument();
+    });
+    await user.click(screen.getByRole('button', { name: /claims/i }));
+    await screen.findByText('Test Shop');
+
+    expect(screen.getByText('pending')).toBeInTheDocument();
   });
 });
