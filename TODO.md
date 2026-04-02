@@ -17,15 +17,15 @@
 
 **Wave 2 — Confirmations + Independent Fixes:**
 
-- [ ] Task 2: Dashboard page confirmations (DEV-181)
-- [ ] Task 3: Shops List bulk approve confirmation (DEV-181)
-- [ ] Task 4: Shop Detail confirmations + migrate window.confirm (DEV-181)
-- [ ] Task 5: Jobs cancel/retry confirmations + migrate window.confirm (DEV-181)
-- [ ] Task 6: Fix Jobs ?status URL param handling (DEV-182)
-- [ ] Task 7: Claim status history filter (DEV-183)
-- [ ] Task 8: Backend roles — shop_owner + email resolution (DEV-184)
-- [ ] Task 9: Roles API proxy routes (DEV-184)
-- [ ] Task 12: Dead-letter route audit (DEV-186)
+- [x] Task 2: Dashboard page confirmations (DEV-181)
+- [x] Task 3: Shops List bulk approve confirmation (DEV-181)
+- [x] Task 4: Shop Detail confirmations + migrate window.confirm (DEV-181)
+- [x] Task 5: Jobs cancel/retry confirmations + migrate window.confirm (DEV-181)
+- [x] Task 6: Fix Jobs ?status URL param handling (DEV-182)
+- [x] Task 7: Claim status history filter (DEV-183)
+- [x] Task 8: Backend roles — shop_owner + email resolution (DEV-184)
+- [x] Task 9: Roles API proxy routes (DEV-184)
+- [x] Task 12: Dead-letter route audit (DEV-186)
 
 **Wave 3 — Depends on Wave 2:**
 

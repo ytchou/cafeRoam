@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { createClient } from '@/lib/supabase/client';
+import { ConfirmDialog } from '../_components/ConfirmDialog';
 
 interface Shop {
   id: string;
@@ -133,6 +134,7 @@ export default function AdminShopsList() {
     new Set()
   );
   const [approvingBulk, setApprovingBulk] = useState(false);
+  const [bulkConfirm, setBulkConfirm] = useState<{ approveAll: boolean } | null>(null);
 
   // Pipeline status
   const [pipelineStatus, setPipelineStatus] = useState<Record<string, number>>(
@@ -704,7 +706,7 @@ export default function AdminShopsList() {
           </span>
           <button
             type="button"
-            onClick={() => handleBulkApprove(false)}
+            onClick={() => setBulkConfirm({ approveAll: false })}
             disabled={approvingBulk || selectedShopIds.size === 0}
             className="rounded bg-amber-600 px-3 py-1 text-sm text-white hover:bg-amber-700 disabled:opacity-50"
           >
@@ -712,7 +714,7 @@ export default function AdminShopsList() {
           </button>
           <button
             type="button"
-            onClick={() => handleBulkApprove(true)}
+            onClick={() => setBulkConfirm({ approveAll: true })}
             disabled={approvingBulk}
             className="rounded border border-amber-400 px-3 py-1 text-sm text-amber-700 hover:bg-amber-100 disabled:opacity-50"
           >
@@ -843,6 +845,24 @@ export default function AdminShopsList() {
           </div>
         </>
       )}
+
+      <ConfirmDialog
+        open={bulkConfirm !== null}
+        onOpenChange={(open) => {
+          if (!open) setBulkConfirm(null);
+        }}
+        title="Bulk approve shops?"
+        description={
+          bulkConfirm?.approveAll
+            ? `Approve ALL pending_review shops? This will queue scrape jobs for each.`
+            : `Approve ${selectedShopIds.size} selected shop(s)? This will queue scrape jobs for each.`
+        }
+        confirmLabel="Approve"
+        loading={approvingBulk}
+        onConfirm={async () => {
+          if (bulkConfirm) await handleBulkApprove(bulkConfirm.approveAll);
+        }}
+      />
     </div>
   );
 }
