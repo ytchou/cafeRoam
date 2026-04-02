@@ -7,7 +7,7 @@
 
 ## Pass 1 — Full Discovery
 
-*Agents: Bug Hunter (inline), Standards (inline), Architecture (inline)*
+_Agents: Bug Hunter (inline), Standards (inline), Architecture (inline)_
 
 ### Issues Found (0 total)
 

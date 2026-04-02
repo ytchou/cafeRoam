@@ -67,9 +67,7 @@ async def handle_summarize_reviews(
             shop_id=shop_id,
             summary_preview=summary[:80],
         )
-        raise ValueError(
-            f"Community summary for shop {shop_id} is not in Traditional Chinese"
-        )
+        raise ValueError(f"Community summary for shop {shop_id} is not in Traditional Chinese")
 
     # Persist summary to DB
     db.table("shops").update(

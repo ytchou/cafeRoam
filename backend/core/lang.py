@@ -2,11 +2,11 @@ import re
 import unicodedata
 
 _CJK_RE = re.compile(
-    r"[\u4E00-\u9FFF"        # CJK Unified Ideographs
-    r"\u3400-\u4DBF"          # CJK Extension A
-    r"\uF900-\uFAFF"          # CJK Compatibility Ideographs
-    r"\u3000-\u303F"          # CJK Symbols and Punctuation
-    r"\uFF00-\uFFEF]"         # Fullwidth Forms (fullwidth punctuation)
+    r"[\u4E00-\u9FFF"  # CJK Unified Ideographs
+    r"\u3400-\u4DBF"  # CJK Extension A
+    r"\uF900-\uFAFF"  # CJK Compatibility Ideographs
+    r"\u3000-\u303F"  # CJK Symbols and Punctuation
+    r"\uFF00-\uFFEF]"  # Fullwidth Forms (fullwidth punctuation)
 )
 
 ZH_DOMINANT_THRESHOLD = 0.3

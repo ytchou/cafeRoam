@@ -39,7 +39,10 @@ CLASSIFY_SHOP_TOOL = {
             },
             "summary": {
                 "type": "string",
-                "description": "2-3 sentence natural language profile of the shop in Traditional Chinese (繁體中文)",
+                "description": (
+                    "2-3 sentence natural language profile of the shop "
+                    "in Traditional Chinese (繁體中文)"
+                ),
             },
             "topReviews": {
                 "type": "array",

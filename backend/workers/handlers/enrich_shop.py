@@ -58,9 +58,7 @@ async def handle_enrich_shop(
             shop_id=shop_id,
             summary_preview=result.summary[:80],
         )
-        raise ValueError(
-            f"Enrichment summary for shop {shop_id} is not in Traditional Chinese"
-        )
+        raise ValueError(f"Enrichment summary for shop {shop_id} is not in Traditional Chinese")
 
     mode = result.mode_scores
     db.table("shops").update(
