@@ -9,4 +9,14 @@ Sentry.init({
   replaysOnErrorSampleRate: 1.0,
   enabled: !!process.env.NEXT_PUBLIC_SENTRY_DSN,
   sendDefaultPii: false,
+  beforeSend(event) {
+    const req = event.request;
+    if (req?.headers) {
+      const { Authorization, authorization, Cookie, cookie, ...rest } =
+        req.headers as Record<string, string>;
+      req.headers = rest;
+    }
+    delete event.user;
+    return event;
+  },
 });
