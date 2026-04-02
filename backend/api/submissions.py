@@ -3,7 +3,7 @@ from datetime import UTC, datetime, time
 from typing import Any, cast
 
 import structlog
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from postgrest import CountMethod
 from postgrest.exceptions import APIError
 from pydantic import BaseModel, field_validator
@@ -12,6 +12,7 @@ from supabase import Client
 from api.deps import get_current_user, get_user_db
 from core.db import first
 from db.supabase_client import get_service_role_client
+from middleware.rate_limit import limiter
 from models.types import JobType
 from workers.queue import JobQueue
 
@@ -41,7 +42,9 @@ class SubmitShopResponse(BaseModel):
 
 
 @router.post("/submissions", status_code=201, response_model=SubmitShopResponse)
+@limiter.limit("10/hour")
 async def submit_shop(
+    request: Request,
     body: SubmitShopRequest,
     user: dict[str, Any] = Depends(get_current_user),  # noqa: B008
     db: Client = Depends(get_user_db),  # noqa: B008
