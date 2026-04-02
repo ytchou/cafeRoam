@@ -16,11 +16,11 @@ Use pg_dump/pg_restore with table filtering to sync shop directory data between 
 
 ## Data Ownership Model
 
-| Environment | Owns | Receives from |
-|-------------|------|---------------|
-| Local dev | Nothing (consumer) | Staging snapshots or repo seed files |
-| Staging | Shop directory data | Pipeline writes here |
-| Prod | User-generated data | Staging (validated shop data sync) |
+| Environment | Owns                | Receives from                        |
+| ----------- | ------------------- | ------------------------------------ |
+| Local dev   | Nothing (consumer)  | Staging snapshots or repo seed files |
+| Staging     | Shop directory data | Pipeline writes here                 |
+| Prod        | User-generated data | Staging (validated shop data sync)   |
 
 **Data flow:** Pipeline → staging → (validated sync) → prod
 
@@ -30,15 +30,15 @@ Use pg_dump/pg_restore with table filtering to sync shop directory data between 
 
 These tables flow staging → prod:
 
-| Table | Contents |
-|-------|----------|
-| `shops` | Core shop directory (including `embedding` column) |
-| `shop_photos` | Scraped photos |
-| `shop_reviews` | Scraped Google reviews (not user reviews) |
-| `shop_tags` | Shop-to-taxonomy mappings |
-| `taxonomy_tags` | Tag definitions |
-| `shop_menu_items` | Menu data |
-| `shop_content` | Enriched content |
+| Table             | Contents                                           |
+| ----------------- | -------------------------------------------------- |
+| `shops`           | Core shop directory (including `embedding` column) |
+| `shop_photos`     | Scraped photos                                     |
+| `shop_reviews`    | Scraped Google reviews (not user reviews)          |
+| `shop_tags`       | Shop-to-taxonomy mappings                          |
+| `taxonomy_tags`   | Tag definitions                                    |
+| `shop_menu_items` | Menu data                                          |
+| `shop_content`    | Enriched content                                   |
 
 **Excluded** (per-environment, user-generated): `check_ins`, `lists`, `list_items`, `profiles`, `stamps`, `shop_followers`, `shop_claims`, `shop_submissions`, `activity_feed`, `community_note_likes`, `user_roles`, `search_events`, `search_cache`, `job_queue`, `admin_audit_logs`, `review_responses`, `shop_owner_tags`.
 
@@ -81,13 +81,13 @@ restore-snapshot:   # Restore a snapshot to local dev
 
 ### 3. Validation Gates (Before Prod Promotion)
 
-| Check | Threshold |
-|-------|-----------|
-| Row counts | shops > 0, taxonomy_tags > 0, shop_tags > 0 |
-| Required fields | All shops have `name`, `lat`, `lng` |
-| Embeddings | >80% of live shops have non-null `embedding` |
+| Check              | Threshold                                                 |
+| ------------------ | --------------------------------------------------------- |
+| Row counts         | shops > 0, taxonomy_tags > 0, shop_tags > 0               |
+| Required fields    | All shops have `name`, `lat`, `lng`                       |
+| Embeddings         | >80% of live shops have non-null `embedding`              |
 | Taxonomy integrity | All `shop_tags.tag_id` reference valid `taxonomy_tags.id` |
-| No orphaned photos | All `shop_photos.shop_id` exist in `shops` |
+| No orphaned photos | All `shop_photos.shop_id` exist in `shops`                |
 
 ### 4. Snapshot Storage
 
@@ -107,23 +107,27 @@ Snapshots are gitignored (large, change frequently). The `seeds/` files remain i
 ### 5. Backup Strategy
 
 Before every prod promotion:
+
 1. Script automatically snapshots staging to a dated file
 2. If promotion fails or staging data is corrupted, restore from the most recent good snapshot
 
 ## Data Flows
 
 **Adding new shops (ongoing):**
+
 1. Data pipeline runs on staging → writes to staging `shops` table
 2. Enrichment worker runs on staging → fills enrichment fields + embeddings
 3. `make audit-staging` → confirms data looks good
 4. `make promote-to-prod` → snapshots staging, validates, restores to prod
 
 **Refreshing local dev:**
+
 1. `make snapshot-staging` → creates `supabase/snapshots/latest.sql`
 2. `make restore-snapshot` → restores to local Supabase
 3. Or: existing `make seed-shops` for the git-committed baseline
 
 **Recovering from bad staging data:**
+
 1. Find most recent good snapshot in `supabase/snapshots/`
 2. `make restore-snapshot FILE=supabase/snapshots/<dated-file>.sql TARGET=staging`
 

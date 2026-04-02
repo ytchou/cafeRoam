@@ -5,11 +5,11 @@
 
 ## Data Ownership
 
-| Environment | Owns | Receives from |
-|-------------|------|---------------|
-| **Local dev** | Nothing (consumer) | Staging snapshots or repo seed files |
-| **Staging** | Shop directory data | Data pipeline writes here |
-| **Prod** | User-generated data | Staging (validated shop data sync) |
+| Environment   | Owns                | Receives from                        |
+| ------------- | ------------------- | ------------------------------------ |
+| **Local dev** | Nothing (consumer)  | Staging snapshots or repo seed files |
+| **Staging**   | Shop directory data | Data pipeline writes here            |
+| **Prod**      | User-generated data | Staging (validated shop data sync)   |
 
 ## Sync Scope
 
