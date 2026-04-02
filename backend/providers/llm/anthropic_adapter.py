@@ -37,9 +37,7 @@ _SPECIALTY_VOCAB: dict[str, str] = {_normalize(t): t for t in SPECIALTY_TERMS}
 
 def _to_vocab_term(raw: str, vocab: dict[str, str]) -> str | None:
     norm = _normalize(raw)
-    return vocab.get(norm) or next(
-        (canonical for n, canonical in vocab.items() if n in norm), None
-    )
+    return vocab.get(norm) or next((canonical for n, canonical in vocab.items() if n in norm), None)
 
 
 CLASSIFY_SHOP_TOOL = {
@@ -418,12 +416,12 @@ class AnthropicLLMAdapter:
 
         raw_highlights = tool_input.get("menu_highlights") or []
         raw_origins = tool_input.get("coffee_origins") or []
-        menu_highlights = list(dict.fromkeys(
-            t for raw in raw_highlights if (t := _to_vocab_term(raw, _ITEM_VOCAB))
-        ))
-        coffee_origins = list(dict.fromkeys(
-            t for raw in raw_origins if (t := _to_vocab_term(raw, _SPECIALTY_VOCAB))
-        ))
+        menu_highlights = list(
+            dict.fromkeys(t for raw in raw_highlights if (t := _to_vocab_term(raw, _ITEM_VOCAB)))
+        )
+        coffee_origins = list(
+            dict.fromkeys(t for raw in raw_origins if (t := _to_vocab_term(raw, _SPECIALTY_VOCAB)))
+        )
 
         return EnrichmentResult(
             tags=valid_tags,
