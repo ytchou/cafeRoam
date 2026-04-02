@@ -113,6 +113,46 @@ class TestSearchService:
         )
 
 
+@pytest.mark.asyncio
+async def test_search_results_include_hydrated_taxonomy_tags(mock_embeddings):
+    """When a user searches and applies a WiFi filter, results should carry taxonomy tags for client-side filtering."""
+    db = MagicMock()
+
+    shop_data = make_shop_row(tag_ids=["wifi_available", "quiet"])
+
+    def _rpc_side_effect(name, params):
+        m = MagicMock()
+        if name == "search_shops":
+            m.execute.return_value = MagicMock(data=[shop_data])
+        else:
+            m.execute.return_value = MagicMock(data=[])
+        return m
+
+    db.rpc.side_effect = _rpc_side_effect
+    db.table.return_value.select.return_value.in_.return_value.execute.return_value = MagicMock(
+        data=[
+            {
+                "id": "wifi_available",
+                "dimension": "functionality",
+                "label": "WiFi Available",
+                "label_zh": "提供WiFi",
+            },
+            {"id": "quiet", "dimension": "ambience", "label": "Quiet", "label_zh": "安靜"},
+        ]
+    )
+
+    service = SearchService(db=db, embeddings=mock_embeddings)
+    query = SearchQuery(text="wifi cafe")
+    response = await service.search(query)
+
+    assert len(response.results) == 1
+    shop = response.results[0].shop
+    assert len(shop.taxonomy_tags) == 2
+    tag_ids = {t.id for t in shop.taxonomy_tags}
+    assert "wifi_available" in tag_ids
+    assert "quiet" in tag_ids
+
+
 _SEARCH_SHOP_ROW = make_shop_row()
 
 

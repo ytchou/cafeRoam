@@ -9,6 +9,7 @@ describe('ProfileHeader', () => {
     email: 'mei.ling@gmail.com' as string | null,
     checkinCount: 23,
     stampCount: 8,
+    followingCount: 5,
   };
 
   it('renders display name in the brown banner', () => {

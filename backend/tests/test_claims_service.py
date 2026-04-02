@@ -92,6 +92,22 @@ class TestSubmitClaim:
         )
         assert email.send.call_count == 2
 
+    @pytest.mark.asyncio
+    async def test_submit_returns_claim_even_when_email_fails(self):
+        """When email provider is down, claim creation still succeeds (DEV-171)."""
+        svc, db, email = _make_service(existing_claims=[], insert_row={"id": CLAIM_ID})
+        email.send.side_effect = RuntimeError("RESEND_API_KEY not configured")
+
+        result = await svc.submit_claim(
+            user_id=USER_ID,
+            shop_id=SHOP_ID,
+            contact_name="Chen Wei-Ling",
+            contact_email="weiling@fika.tw",
+            role="owner",
+            proof_photo_path="claim-proofs/shop-abc/proof.jpg",
+        )
+        assert result["id"] == CLAIM_ID
+
 
 class TestApproveClaim:
     @pytest.mark.asyncio

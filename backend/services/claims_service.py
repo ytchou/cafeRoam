@@ -71,34 +71,40 @@ class ClaimsService:
 
         claim = first(cast("list[dict[str, Any]]", result.data), "insert claim")
 
-        # Confirmation email to owner
-        await self._email.send(
-            EmailMessage(
-                to=contact_email,
-                subject="認領申請已收到 — 48小時內回覆",
-                html=(
-                    f"<p>您好 {contact_name}，</p>"
-                    f"<p>我們已收到您對 <strong>{shop_name}</strong> 的認領申請。"
-                    "我們會在 48 小時內完成審核，並以此信箱通知您結果。</p>"
-                    "<p>CafeRoam 團隊</p>"
-                ),
+        try:
+            await self._email.send(
+                EmailMessage(
+                    to=contact_email,
+                    subject="認領申請已收到 — 48小時內回覆",
+                    html=(
+                        f"<p>您好 {contact_name}，</p>"
+                        f"<p>我們已收到您對 <strong>{shop_name}</strong> 的認領申請。"
+                        "我們會在 48 小時內完成審核，並以此信箱通知您結果。</p>"
+                        "<p>CafeRoam 團隊</p>"
+                    ),
+                )
             )
-        )
 
-        # Notification to admin
-        await self._email.send(
-            EmailMessage(
-                to=settings.admin_email,
-                subject=f"[CafeRoam] New claim: {shop_name}",
-                html=(
-                    f"<p>New claim submitted for <strong>{shop_name}</strong> "
-                    f"(shop_id: {shop_id}).</p>"
-                    f"<p>Claimant: {contact_name} &lt;{contact_email}&gt;, role: {role}</p>"
-                    f"<p>Proof photo: {proof_photo_path}</p>"
-                    "<p>Review in the admin panel: /admin</p>"
-                ),
+            await self._email.send(
+                EmailMessage(
+                    to=settings.admin_email,
+                    subject=f"[CafeRoam] New claim: {shop_name}",
+                    html=(
+                        f"<p>New claim submitted for <strong>{shop_name}</strong> "
+                        f"(shop_id: {shop_id}).</p>"
+                        f"<p>Claimant: {contact_name} &lt;{contact_email}&gt;, role: {role}</p>"
+                        f"<p>Proof photo: {proof_photo_path}</p>"
+                        "<p>Review in the admin panel: /admin</p>"
+                    ),
+                )
             )
-        )
+        except Exception:
+            logger.warning(
+                "Post-claim email failed",
+                shop_id=shop_id,
+                user_id=user_id,
+                exc_info=True,
+            )
 
         logger.info("Claim submitted", shop_id=shop_id, user_id=user_id)
         return claim

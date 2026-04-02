@@ -25,7 +25,7 @@ describe('useShopReviews', () => {
     mockUseSWR.mockReturnValue(swrReturning(undefined, { isLoading: true }));
     const { result } = renderHook(() => useShopReviews(SHOP_ID, true));
     expect(result.current.reviews).toEqual([]);
-    expect(result.current.total).toBe(0);
+    expect(result.current.totalCount).toBe(0);
     expect(result.current.averageRating).toBe(0);
     expect(result.current.isLoading).toBe(true);
     expect(result.current.isAuthError).toBe(false);
@@ -42,13 +42,13 @@ describe('useShopReviews', () => {
           reviewedAt: '2026-03-01T10:00:00Z',
         },
       ],
-      total: 1,
+      totalCount: 1,
       averageRating: 4.0,
     };
     mockUseSWR.mockReturnValue(swrReturning(mockData));
     const { result } = renderHook(() => useShopReviews(SHOP_ID, true));
     expect(result.current.reviews).toEqual(mockData.reviews);
-    expect(result.current.total).toBe(1);
+    expect(result.current.totalCount).toBe(1);
     expect(result.current.averageRating).toBe(4.0);
     expect(result.current.isAuthError).toBe(false);
   });

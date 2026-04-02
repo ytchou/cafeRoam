@@ -89,27 +89,37 @@ function FindPageContent() {
       filtered = filtered.filter((shop) => shop.isOpen === true);
     }
 
+    // Attach distance_m (metres) to each shop when geolocation is available
+    const hasGeo = latitude != null && longitude != null;
+    const attachDistance = <T extends (typeof filtered)[number]>(
+      shops: T[]
+    ): (T & { distance_m: number | null })[] =>
+      shops.map((shop) => {
+        const km =
+          hasGeo && shop.latitude != null && shop.longitude != null
+            ? haversineKm(latitude!, longitude!, shop.latitude, shop.longitude)
+            : null;
+        return {
+          ...shop,
+          distance_m: km != null ? Math.round(km * 1000) : null,
+        };
+      });
+
     // Apply rating sort
     if (activeFiltersSet.has('rating')) {
       const sorted = [...filtered].sort(
         (a, b) => (b.rating ?? 0) - (a.rating ?? 0)
       );
-      return view === 'map' ? filterByBounds(sorted, mapBounds) : sorted;
+      const result = attachDistance(sorted);
+      return view === 'map' ? filterByBounds(result, mapBounds) : result;
     }
 
     // Apply geo-sort if location available
-    if (latitude != null && longitude != null) {
-      const sorted = [...filtered].sort((a, b) => {
-        const dA =
-          a.latitude != null && a.longitude != null
-            ? haversineKm(latitude, longitude, a.latitude, a.longitude)
-            : Infinity;
-        const dB =
-          b.latitude != null && b.longitude != null
-            ? haversineKm(latitude, longitude, b.latitude, b.longitude)
-            : Infinity;
-        return dA - dB;
-      });
+    if (hasGeo) {
+      const withDistance = attachDistance(filtered);
+      const sorted = withDistance.sort(
+        (a, b) => (a.distance_m ?? Infinity) - (b.distance_m ?? Infinity)
+      );
       return view === 'map' ? filterByBounds(sorted, mapBounds) : sorted;
     }
 

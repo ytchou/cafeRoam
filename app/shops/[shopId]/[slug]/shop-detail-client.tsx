@@ -82,7 +82,7 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
   const tags = shop.taxonomyTags ?? [];
   const shopPath = `/shops/${shop.id}/${shop.slug ?? shop.id}`;
 
-  const { reviews, total, averageRating, isLoading, isAuthError } =
+  const { reviews, totalCount, averageRating, isLoading, isAuthError } =
     useShopReviews(shop.id, !!user);
 
   // TODO: Wire SWR fetch to GET /api/shops/{shopId}/payment-methods for live
@@ -216,7 +216,7 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
         <CommunitySummary summary={shop.communitySummary ?? null} />
         <ShopReviews
           reviews={reviews}
-          total={total}
+          totalCount={totalCount}
           averageRating={averageRating}
           isLoading={isLoading}
           isAuthError={!isUserLoading && (!user || isAuthError)}

@@ -97,6 +97,21 @@ class TestProviderFactories:
             assert provider is not None
             assert provider.dimensions == 1536
 
+    def test_embeddings_factory_raises_when_api_key_missing(self):
+        """When OPENAI_API_KEY is empty, the factory raises a clear error instead of letting OpenAI SDK fail cryptically."""
+        from providers.embeddings import (
+            EmbeddingsProviderUnavailableError,
+            get_embeddings_provider,
+        )
+
+        with patch("providers.embeddings.settings") as mock:
+            mock.embeddings_provider = "openai"
+            mock.openai_api_key = ""
+            with pytest.raises(
+                EmbeddingsProviderUnavailableError, match="OPENAI_API_KEY is not set"
+            ):
+                get_embeddings_provider()
+
     def test_email_factory_returns_resend(self):
         with patch("providers.email.settings") as mock:
             mock.email_provider = "resend"

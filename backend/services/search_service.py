@@ -7,7 +7,7 @@ import structlog
 from supabase import Client
 
 from core.config import settings
-from models.types import SearchQuery, SearchResult, Shop
+from models.types import SearchQuery, SearchResult, Shop, TaxonomyTag
 from providers.cache.interface import SearchCacheProvider
 from providers.embeddings.interface import EmbeddingsProvider
 from services.query_normalizer import hash_cache_key, normalize_query
@@ -140,6 +140,12 @@ class SearchService:
         if query.filters and query.filters.dimensions:
             await self._load_idf_cache()
 
+        # Hydrate taxonomy tags: collect all tag_ids, query once, build lookup
+        all_tag_ids: set[str] = set()
+        for row in rows:
+            all_tag_ids.update(row.get("tag_ids") or [])
+        tag_lookup = self._fetch_taxonomy_tags(all_tag_ids) if all_tag_ids else {}
+
         use_keyword_scoring = query_type in ("item_specific", "specialty_coffee")
         normalized_query = normalize_query(query.text)
 
@@ -148,9 +154,12 @@ class SearchService:
             similarity = row.get("similarity", 0.0)
             taxonomy_boost = self._compute_taxonomy_boost(row, query)
 
+            row_tag_ids = row.get("tag_ids") or []
+            hydrated_tags = [tag_lookup[tid] for tid in row_tag_ids if tid in tag_lookup]
+
             eligible_keys = Shop.model_fields.keys() - _SHOP_FIELDS_HANDLED_SEPARATELY
             shop = Shop(
-                taxonomy_tags=[],
+                taxonomy_tags=hydrated_tags,
                 photo_urls=row.get("photo_urls", []),
                 menu_highlights=row.get("menu_highlights") or [],
                 coffee_origins=row.get("coffee_origins") or [],
@@ -214,6 +223,25 @@ class SearchService:
 
         _IDF_CACHE = cache
         _IDF_CACHE_AT = now
+
+    def _fetch_taxonomy_tags(self, tag_ids: set[str]) -> dict[str, TaxonomyTag]:
+        """Query taxonomy_tags table once and return a lookup by tag ID."""
+        response = (
+            self._db.table("taxonomy_tags")
+            .select("id, dimension, label, label_zh")
+            .in_("id", list(tag_ids))
+            .execute()
+        )
+        rows = cast("list[dict[str, Any]]", response.data or [])
+        return {
+            row["id"]: TaxonomyTag(
+                id=row["id"],
+                dimension=row["dimension"],
+                label=row["label"],
+                label_zh=row["label_zh"],
+            )
+            for row in rows
+        }
 
     def _compute_taxonomy_boost(self, row: dict[str, Any], query: SearchQuery) -> float:
         """Compute taxonomy boost based on IDF-weighted tag overlap."""
