@@ -2236,7 +2236,7 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 
 **Chunk 3 — Ergonomics (DEV-179/180):**
 - [x] Task 4: Makefile targets
-- [ ] Task 5: Documentation
+- [x] Task 5: Documentation
 
 **Chunk 4 — Verification:**
 - [ ] Task 6: Final verification + smoke tests
