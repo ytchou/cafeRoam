@@ -21,7 +21,7 @@ describe('POST /api/analytics/events', () => {
       method: 'POST',
       body: JSON.stringify({
         event: 'filter_applied',
-        properties: { filter_type: 'mode', filter_value: 'work' },
+        properties: { filter_type: 'sheet', filter_value: ['wifi'] },
       }),
     });
 

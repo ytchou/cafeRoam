@@ -5,7 +5,7 @@ class AnalyticsProvider(Protocol):
     def track(
         self,
         event: str,
-        properties: dict[str, str | int | bool | None] | None = None,
+        properties: dict[str, str | int | bool | list[str] | None] | None = None,
         *,
         distinct_id: str | None = None,
     ) -> None: ...

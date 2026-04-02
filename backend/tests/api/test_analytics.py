@@ -132,8 +132,8 @@ class TestAnalyticsSpecEvents:
 
 
 class TestFilterApplied:
-    def test_filter_applied_accepts_array_filter_value(self):
-        """filter_applied should accept filter_value as a list of tag slugs.
+    def test_user_can_apply_multiple_filter_tags_simultaneously(self):
+        """When a user selects multiple filter tags, the event must reach the analytics provider.
 
         The frontend (filter-sheet.tsx) sends selectedIds as string[]. A str-only
         Pydantic model would reject this with 422, silently dropping all filter events.
