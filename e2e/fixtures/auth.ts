@@ -120,7 +120,12 @@ export const test = base.extend<{ authedPage: Page; deletionPage: Page }>({
   authedPage: async ({ browser }, use, testInfo) => {
     const { email, password } = credentials(testInfo);
     const storagePath = storageStatePath(testInfo);
-    const context = await createAuthContext(browser, email, password, storagePath);
+    const context = await createAuthContext(
+      browser,
+      email,
+      password,
+      storagePath
+    );
 
     const page = await context.newPage();
     await use(page);
@@ -136,7 +141,12 @@ export const test = base.extend<{ authedPage: Page; deletionPage: Page }>({
       );
     }
     const storagePath = path.join(AUTH_DIR, 'user-deletion.json');
-    const context = await createAuthContext(browser, email, password, storagePath);
+    const context = await createAuthContext(
+      browser,
+      email,
+      password,
+      storagePath
+    );
 
     const page = await context.newPage();
     await use(page);
