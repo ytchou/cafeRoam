@@ -3,6 +3,7 @@ import logging
 from anthropic import AsyncAnthropic
 from anthropic.types import Message
 
+from core.search_vocabulary import ITEM_TERMS, SPECIALTY_TERMS
 from core.tarot_vocabulary import TAROT_TITLES, TITLE_TO_TAGS
 from models.types import (
     EnrichmentResult,
@@ -15,6 +16,9 @@ from models.types import (
 )
 
 logger = logging.getLogger(__name__)
+
+_MENU_VOCAB_REF = ", ".join(ITEM_TERMS)
+_SPECIALTY_VOCAB_REF = ", ".join(SPECIALTY_TERMS)
 
 CLASSIFY_SHOP_TOOL = {
     "name": "classify_shop",
@@ -358,6 +362,23 @@ class AnthropicLLMAdapter:
         lines.append("Available taxonomy tags (ONLY select from this list):")
         for tag in self._taxonomy:
             lines.append(f"  {tag.id} ({tag.dimension}) — {tag.label} / {tag.label_zh}")
+
+        lines.append("")
+        lines.append("Reference — food & drink items (use exact terms for menu_highlights):")
+        lines.append(_MENU_VOCAB_REF)
+        lines.append("")
+        lines.append(
+            "Reference — coffee origins, varieties & processing"
+            " (use Traditional Chinese names for coffee_origins):"
+        )
+        lines.append(_SPECIALTY_VOCAB_REF)
+        lines.append("")
+        lines.append(
+            "Instruction: When extracting coffee_origins, use the Traditional Chinese name"
+            " exactly as it appears in the reference list above"
+            " (e.g. 古吉 not 'Guji', 耶加雪菲 not 'Yirgacheffe')."
+            " For menu_highlights, use the exact term from the list."
+        )
 
         return "\n".join(lines)
 

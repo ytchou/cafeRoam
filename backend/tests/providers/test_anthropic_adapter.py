@@ -192,6 +192,27 @@ class TestAnthropicEnrichShop:
         assert "$200-400" in user_msg
         assert "yes" in user_msg  # socket
 
+    async def test_prompt_includes_vocabulary_reference(self, adapter):
+        """Vocabulary reference sections appear in the enrichment prompt for consistent term extraction."""
+        mock_response = _make_tool_use_response(
+            {"tags": [], "summary": "Test.", "topReviews": [], "mode": "mixed"}
+        )
+        adapter._client = AsyncMock()
+        adapter._client.messages.create = AsyncMock(return_value=mock_response)
+
+        await adapter.enrich_shop(SAMPLE_SHOP)
+
+        call_args = adapter._client.messages.create.call_args
+        messages = call_args.kwargs.get("messages") or call_args[1].get("messages")
+        user_msg = messages[0]["content"]
+
+        assert "巴斯克蛋糕" in user_msg   # food zh
+        assert "手沖" in user_msg          # drink zh
+        assert "古吉" in user_msg          # Ethiopian sub-origin zh
+        assert "耶加雪菲" in user_msg       # origin zh
+        assert "日曬" in user_msg          # processing zh
+        assert "Traditional Chinese" in user_msg  # instruction present
+
     async def test_prompt_includes_taxonomy(self, adapter):
         mock_response = _make_tool_use_response(
             {
