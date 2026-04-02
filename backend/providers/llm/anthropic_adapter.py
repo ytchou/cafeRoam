@@ -377,7 +377,8 @@ class AnthropicLLMAdapter:
             "Instruction: When extracting coffee_origins, use the Traditional Chinese name"
             " exactly as it appears in the reference list above"
             " (e.g. 古吉 not 'Guji', 耶加雪菲 not 'Yirgacheffe')."
-            " For menu_highlights, use the exact term from the list."
+            " For menu_highlights, prefer the Traditional Chinese term from the list"
+            " (e.g. 手沖 not 'pour over', 可頌 not 'croissant')."
         )
 
         return "\n".join(lines)

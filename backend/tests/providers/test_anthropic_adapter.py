@@ -192,8 +192,8 @@ class TestAnthropicEnrichShop:
         assert "$200-400" in user_msg
         assert "yes" in user_msg  # socket
 
-    async def test_prompt_includes_vocabulary_reference(self, adapter):
-        """Vocabulary reference sections appear in the enrichment prompt for consistent term extraction."""
+    async def test_enrichment_uses_canonical_traditional_chinese_terms(self, adapter):
+        """When enriching a shop, the AI receives vocabulary reference lists so it returns standardised Traditional Chinese names for origins and menu items."""
         mock_response = _make_tool_use_response(
             {"tags": [], "summary": "Test.", "topReviews": [], "mode": "mixed"}
         )
@@ -206,11 +206,11 @@ class TestAnthropicEnrichShop:
         messages = call_args.kwargs.get("messages") or call_args[1].get("messages")
         user_msg = messages[0]["content"]
 
-        assert "巴斯克蛋糕" in user_msg   # food zh
-        assert "手沖" in user_msg          # drink zh
-        assert "古吉" in user_msg          # Ethiopian sub-origin zh
-        assert "耶加雪菲" in user_msg       # origin zh
-        assert "日曬" in user_msg          # processing zh
+        assert "巴斯克蛋糕" in user_msg   # food zh (only in ITEM_TERMS)
+        assert "愛樂壓" in user_msg        # drink zh (only in ITEM_TERMS, not in taxonomy)
+        assert "古吉" in user_msg          # Ethiopian sub-origin zh (only in SPECIALTY_TERMS)
+        assert "耶加雪菲" in user_msg       # origin zh (only in SPECIALTY_TERMS)
+        assert "日曬" in user_msg          # processing zh (only in SPECIALTY_TERMS)
         assert "Traditional Chinese" in user_msg  # instruction present
 
     async def test_prompt_includes_taxonomy(self, adapter):
