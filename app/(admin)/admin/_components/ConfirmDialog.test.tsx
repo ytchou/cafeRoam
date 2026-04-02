@@ -13,7 +13,7 @@ describe('ConfirmDialog', () => {
     onConfirm: vi.fn(),
   };
 
-  it('renders title and description when open', () => {
+  it('shows dialog content to the user when open', () => {
     render(<ConfirmDialog {...defaultProps} />);
     expect(screen.getByText('Confirm action?')).toBeInTheDocument();
     expect(screen.getByText('This will do something.')).toBeInTheDocument();
@@ -45,9 +45,9 @@ describe('ConfirmDialog', () => {
     expect(screen.getByRole('button', { name: /confirm/i })).toBeDisabled();
   });
 
-  it('applies destructive variant styling to confirm button', () => {
+  it('shows destructive styling on the confirm button for dangerous actions', () => {
     render(<ConfirmDialog {...defaultProps} variant="destructive" />);
     const btn = screen.getByRole('button', { name: /confirm/i });
-    expect(btn.className).toMatch(/destructive|red/);
+    expect(btn.className).toMatch(/destructive/);
   });
 });

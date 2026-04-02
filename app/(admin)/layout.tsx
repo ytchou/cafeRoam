@@ -91,7 +91,7 @@ export default function AdminLayout({
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`block rounded-md px-3 py-2 text-sm ${
+                  className={`block rounded-md px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 ${
                     isActive
                       ? 'bg-gray-200 font-medium text-gray-900'
                       : 'text-gray-600 hover:bg-gray-100'

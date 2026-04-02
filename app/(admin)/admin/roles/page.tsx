@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { toast } from 'sonner';
 import { createClient } from '@/lib/supabase/client';
 import { ConfirmDialog } from '../_components/ConfirmDialog';
 import {
@@ -19,12 +20,13 @@ interface RoleGrant {
   user_id: string;
   role: string;
   email: string;
-  created_at: string;
+  granted_at: string;
 }
 
 export default function RolesPage() {
   const [grants, setGrants] = useState<RoleGrant[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [filterRole, setFilterRole] = useState('');
   const tokenRef = useRef('');
 
@@ -38,6 +40,7 @@ export default function RolesPage() {
 
   const fetchRoles = useCallback(async (role?: string) => {
     setLoading(true);
+    setError(null);
     const url = role
       ? `/api/admin/roles?role=${encodeURIComponent(role)}`
       : '/api/admin/roles';
@@ -46,6 +49,9 @@ export default function RolesPage() {
     });
     if (res.ok) {
       setGrants(await res.json());
+    } else {
+      const body = await res.json().catch(() => ({}));
+      setError(body.detail ?? 'Failed to load roles');
     }
     setLoading(false);
   }, []);
@@ -70,31 +76,47 @@ export default function RolesPage() {
 
   async function handleGrant() {
     setGranting(true);
-    await fetch('/api/admin/roles', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(tokenRef.current ? { Authorization: `Bearer ${tokenRef.current}` } : {}),
-      },
-      body: JSON.stringify({ user_identifier: grantEmail, role: grantRole }),
-    });
-    setGranting(false);
-    setGrantDialogOpen(false);
-    setGrantEmail('');
-    setGrantRole('member');
-    fetchRoles(filterRole || undefined);
+    try {
+      const res = await fetch('/api/admin/roles', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(tokenRef.current ? { Authorization: `Bearer ${tokenRef.current}` } : {}),
+        },
+        body: JSON.stringify({ user_id: grantEmail, role: grantRole }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        toast.error(body.detail ?? 'Failed to grant role');
+        return;
+      }
+      setGrantDialogOpen(false);
+      setGrantEmail('');
+      setGrantRole('member');
+      fetchRoles(filterRole || undefined);
+    } finally {
+      setGranting(false);
+    }
   }
 
   async function handleRevoke() {
     if (!revokeTarget) return;
     setRevoking(true);
-    await fetch(`/api/admin/roles/${revokeTarget.user_id}/${revokeTarget.role}`, {
-      method: 'DELETE',
-      headers: tokenRef.current ? { Authorization: `Bearer ${tokenRef.current}` } : {},
-    });
-    setRevoking(false);
-    setRevokeTarget(null);
-    fetchRoles(filterRole || undefined);
+    try {
+      const res = await fetch(`/api/admin/roles/${revokeTarget.user_id}/${revokeTarget.role}`, {
+        method: 'DELETE',
+        headers: tokenRef.current ? { Authorization: `Bearer ${tokenRef.current}` } : {},
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        toast.error(body.detail ?? 'Failed to revoke role');
+        return;
+      }
+      setRevokeTarget(null);
+      fetchRoles(filterRole || undefined);
+    } finally {
+      setRevoking(false);
+    }
   }
 
   return (
@@ -124,6 +146,10 @@ export default function RolesPage() {
         </select>
       </div>
 
+      {error && (
+        <p role="alert" className="text-sm text-red-600">{error}</p>
+      )}
+
       {loading ? (
         <p className="text-sm text-gray-500">Loading...</p>
       ) : (
@@ -150,7 +176,7 @@ export default function RolesPage() {
                     <td className="px-4 py-3">{grant.email}</td>
                     <td className="px-4 py-3">{grant.role}</td>
                     <td className="px-4 py-3">
-                      {new Date(grant.created_at).toLocaleDateString('en-CA')}
+                      {new Date(grant.granted_at).toLocaleDateString('en-CA')}
                     </td>
                     <td className="px-4 py-3">
                       <Button

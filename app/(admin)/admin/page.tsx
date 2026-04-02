@@ -517,7 +517,7 @@ export default function AdminDashboard() {
                                   toast.success('Claim rejected');
                                   setClaimRejectingId(null);
                                   if (tokenRef.current)
-                                    fetchClaims(tokenRef.current);
+                                    fetchClaims(tokenRef.current, claimStatusFilter);
                                 } else {
                                   toast.error('Failed to reject');
                                 }

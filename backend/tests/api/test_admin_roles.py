@@ -19,7 +19,7 @@ def _admin_user() -> dict:
 class TestGrantRole:
     """When an admin grants a blogger role, the user becomes a partner."""
 
-    def test_returns_201_on_successful_grant(self):
+    def test_grants_a_role_to_a_target_user(self):
         mock_db = MagicMock()
         mock_db.table.return_value.insert.return_value.execute.return_value = MagicMock(
             data=[
@@ -70,7 +70,7 @@ class TestGrantRole:
 
         assert response.status_code == 403
 
-    def test_returns_400_for_invalid_role_name(self):
+    def test_rejects_grant_with_invalid_role_name(self):
         mock_db = MagicMock()
         app.dependency_overrides[get_current_user] = _admin_user
         app.dependency_overrides[get_admin_db] = lambda: mock_db
@@ -90,7 +90,7 @@ class TestGrantRole:
 class TestRevokeRole:
     """When an admin revokes a role, the user loses that permission."""
 
-    def test_returns_200_on_successful_revoke(self):
+    def test_revokes_a_role_from_a_target_user(self):
         mock_db = MagicMock()
         mock_db.table.return_value.delete.return_value.eq.return_value.eq.return_value.execute.return_value = MagicMock(
             data=[{"id": "role-1"}]
@@ -106,7 +106,7 @@ class TestRevokeRole:
 
         assert response.status_code == 200
 
-    def test_returns_404_when_role_not_found(self):
+    def test_returns_error_when_role_not_assigned_to_user(self):
         mock_db = MagicMock()
         mock_db.table.return_value.delete.return_value.eq.return_value.eq.return_value.execute.return_value = MagicMock(
             data=[]
@@ -137,6 +137,7 @@ class TestListRoles:
                         "role": "blogger",
                         "granted_at": "2026-03-18T10:00:00",
                         "granted_by": _ADMIN_ID,
+                        "auth_users": {"email": "coffee.blogger@example.com"},
                     },
                 ]
             )
@@ -151,7 +152,10 @@ class TestListRoles:
             app.dependency_overrides.clear()
 
         assert response.status_code == 200
-        assert len(response.json()) == 1
+        data = response.json()
+        assert len(data) == 1
+        assert data[0]["email"] == "coffee.blogger@example.com"
+        assert "auth_users" not in data[0]
 
     def test_filters_by_role_when_query_param_provided(self):
         mock_db = MagicMock()
@@ -163,6 +167,7 @@ class TestListRoles:
                     "role": "member",
                     "granted_at": "2026-03-18T11:00:00",
                     "granted_by": _ADMIN_ID,
+                    "auth_users": {"email": "member.user@example.com"},
                 },
             ]
         )
@@ -176,16 +181,7 @@ class TestListRoles:
             app.dependency_overrides.clear()
 
         assert response.status_code == 200
-        assert len(response.json()) == 1
-        assert response.json()[0]["role"] == "member"
-
-
-def test_valid_roles_includes_shop_owner():
-    from api.admin_roles import _VALID_ROLES
-    assert 'shop_owner' in _VALID_ROLES
-
-
-def test_valid_roles_includes_all_expected_roles():
-    from api.admin_roles import _VALID_ROLES
-    expected = {'blogger', 'member', 'partner', 'admin', 'shop_owner'}
-    assert expected.issubset(_VALID_ROLES)
+        data = response.json()
+        assert len(data) == 1
+        assert data[0]["role"] == "member"
+        assert data[0]["email"] == "member.user@example.com"

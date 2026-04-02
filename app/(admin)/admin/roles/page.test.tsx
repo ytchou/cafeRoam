@@ -33,14 +33,14 @@ describe('AdminRolesPage', () => {
     mockFetch.mockResolvedValue({
       ok: true,
       json: () => Promise.resolve([
-        { user_id: 'u1', role: 'admin', email: 'admin@test.com', created_at: '2026-01-01T00:00:00Z' },
-        { user_id: 'u2', role: 'blogger', email: 'blog@test.com', created_at: '2026-01-02T00:00:00Z' },
+        { user_id: 'u1', role: 'admin', email: 'admin@example.com', granted_at: '2026-01-01T00:00:00Z' },
+        { user_id: 'u2', role: 'blogger', email: 'coffee.blogger@example.com', granted_at: '2026-01-02T00:00:00Z' },
       ]),
     });
 
     render(<RolesPage />);
-    await screen.findByText('admin@test.com');
-    expect(screen.getByText('blog@test.com')).toBeInTheDocument();
+    await screen.findByText('admin@example.com');
+    expect(screen.getByText('coffee.blogger@example.com')).toBeInTheDocument();
     // Role badges in the table body (not the filter/grant dropdowns)
     const table = screen.getByRole('table');
     expect(within(table).getAllByText('admin').length).toBeGreaterThan(0);
@@ -51,13 +51,13 @@ describe('AdminRolesPage', () => {
     mockFetch.mockResolvedValue({
       ok: true,
       json: () => Promise.resolve([
-        { user_id: 'u1', role: 'admin', email: 'admin@test.com', created_at: '2026-01-01T00:00:00Z' },
+        { user_id: 'u1', role: 'admin', email: 'admin@example.com', granted_at: '2026-01-01T00:00:00Z' },
       ]),
     });
 
     const user = userEvent.setup();
     render(<RolesPage />);
-    await screen.findByText('admin@test.com');
+    await screen.findByText('admin@example.com');
 
     await user.selectOptions(screen.getByLabelText(/filter by role/i), 'admin');
 
@@ -91,7 +91,7 @@ describe('AdminRolesPage', () => {
       '/api/admin/roles',
       expect.objectContaining({
         method: 'POST',
-        body: expect.stringContaining('member'),
+        body: expect.stringContaining('"user_id"'),
       })
     );
   });
@@ -100,13 +100,13 @@ describe('AdminRolesPage', () => {
     mockFetch.mockResolvedValue({
       ok: true,
       json: () => Promise.resolve([
-        { user_id: 'u1', role: 'blogger', email: 'blog@test.com', created_at: '2026-01-01T00:00:00Z' },
+        { user_id: 'u1', role: 'blogger', email: 'coffee.blogger@example.com', granted_at: '2026-01-01T00:00:00Z' },
       ]),
     });
 
     const user = userEvent.setup();
     render(<RolesPage />);
-    await screen.findByText('blog@test.com');
+    await screen.findByText('coffee.blogger@example.com');
 
     await user.click(screen.getByRole('button', { name: /revoke/i }));
 

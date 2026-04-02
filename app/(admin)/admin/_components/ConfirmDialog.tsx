@@ -1,5 +1,8 @@
 'use client';
 
+import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
+import { buttonVariants } from '@/components/ui/button';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -44,15 +47,15 @@ export function ConfirmDialog({
           <AlertDialogAction
             onClick={async (e) => {
               e.preventDefault();
-              await onConfirm();
-              onOpenChange(false);
+              try {
+                await onConfirm();
+                onOpenChange(false);
+              } catch {
+                toast.error('Action failed. Please try again.');
+              }
             }}
             disabled={loading}
-            className={
-              variant === 'destructive'
-                ? 'bg-red-600 hover:bg-red-700 text-white'
-                : undefined
-            }
+            className={variant === 'destructive' ? cn(buttonVariants({ variant: 'destructive' })) : undefined}
           >
             {confirmLabel}
           </AlertDialogAction>
