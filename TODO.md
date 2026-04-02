@@ -6,6 +6,38 @@
 
 ---
 
+## Admin Dashboard Hardening (DEV-149)
+
+> **Design Doc:** [docs/designs/2026-04-02-admin-dashboard-hardening-design.md](docs/designs/2026-04-02-admin-dashboard-hardening-design.md)
+> **Plan:** [docs/plans/2026-04-02-admin-dashboard-hardening-plan.md](docs/plans/2026-04-02-admin-dashboard-hardening-plan.md)
+
+**Wave 1 — Foundation:**
+
+- [ ] Task 1: Install AlertDialog + ConfirmDialog wrapper (DEV-181)
+
+**Wave 2 — Confirmations + Independent Fixes:**
+
+- [ ] Task 2: Dashboard page confirmations (DEV-181)
+- [ ] Task 3: Shops List bulk approve confirmation (DEV-181)
+- [ ] Task 4: Shop Detail confirmations + migrate window.confirm (DEV-181)
+- [ ] Task 5: Jobs cancel/retry confirmations + migrate window.confirm (DEV-181)
+- [ ] Task 6: Fix Jobs ?status URL param handling (DEV-182)
+- [ ] Task 7: Claim status history filter (DEV-183)
+- [ ] Task 8: Backend roles — shop_owner + email resolution (DEV-184)
+- [ ] Task 9: Roles API proxy routes (DEV-184)
+- [ ] Task 12: Dead-letter route audit (DEV-186)
+
+**Wave 3 — Depends on Wave 2:**
+
+- [ ] Task 10: Roles management page + sidebar nav (DEV-184)
+- [ ] Task 11: Taxonomy action buttons (DEV-185)
+
+**Wave 4 — Verification:**
+
+- [ ] Task 13: Full test suite + lint verification
+
+---
+
 ## Map-List Synchronization (DEV-163)
 
 > **Design Doc:** [docs/designs/2026-04-01-map-list-sync-design.md](docs/designs/2026-04-01-map-list-sync-design.md)
@@ -2221,3 +2253,22 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 **Chunk 5 — Documentation:**
 
 - [ ] Task 16: SPEC.md business rules update
+
+## Environment Sync Strategy (DEV-176)
+> **Design Doc:** [docs/designs/2026-04-02-environment-sync-strategy-design.md](docs/designs/2026-04-02-environment-sync-strategy-design.md)
+> **Plan:** [docs/plans/2026-04-02-environment-sync-strategy-plan.md](docs/plans/2026-04-02-environment-sync-strategy-plan.md)
+
+**Chunk 1 — Setup:**
+- [ ] Task 0: Worktree + commit design artifacts
+- [ ] Task 1: Snapshot directory structure + gitignore
+
+**Chunk 2 — Core Script (DEV-177/178):**
+- [ ] Task 2: Audit subcommand with TDD tests + sync_data.py scaffold
+- [ ] Task 3: Snapshot/restore integration test
+
+**Chunk 3 — Ergonomics (DEV-179/180):**
+- [ ] Task 4: Makefile targets
+- [ ] Task 5: Documentation
+
+**Chunk 4 — Verification:**
+- [ ] Task 6: Final verification + smoke tests
