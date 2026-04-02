@@ -107,9 +107,9 @@ def check_row_counts(cursor) -> list[AuditResult]:
 
 
 def check_required_fields(cursor) -> list[AuditResult]:
-    """Check that all shops have name, lat, lng."""
+    """Check that all shops have name, latitude, longitude."""
     results = []
-    for field in ("name", "lat", "lng"):
+    for field in ("name", "latitude", "longitude"):
         cursor.execute(f"SELECT COUNT(*) FROM public.shops WHERE {field} IS NULL")
         count = cursor.fetchone()[0]
         results.append(

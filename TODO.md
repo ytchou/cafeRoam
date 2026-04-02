@@ -2239,4 +2239,4 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 - [x] Task 5: Documentation
 
 **Chunk 4 — Verification:**
-- [ ] Task 6: Final verification + smoke tests
+- [x] Task 6: Final verification + smoke tests

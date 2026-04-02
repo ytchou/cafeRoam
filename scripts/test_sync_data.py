@@ -68,12 +68,12 @@ def test_row_counts_fail_when_table_empty():
 
 
 def test_required_fields_pass_when_all_present():
-    """Given all shops have name, lat, lng, required fields check passes."""
+    """Given all shops have name, latitude, longitude, required fields check passes."""
     cursor = MockCursor(
         results=[
             (0,),  # count of shops missing name
-            (0,),  # count of shops missing lat
-            (0,),  # count of shops missing lng
+            (0,),  # count of shops missing latitude
+            (0,),  # count of shops missing longitude
         ]
     )
     results = check_required_fields(cursor)
@@ -85,8 +85,8 @@ def test_required_fields_fail_when_name_missing():
     cursor = MockCursor(
         results=[
             (5,),  # 5 shops missing name
-            (0,),  # lat ok
-            (0,),  # lng ok
+            (0,),  # latitude ok
+            (0,),  # longitude ok
         ]
     )
     results = check_required_fields(cursor)
