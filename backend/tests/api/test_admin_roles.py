@@ -178,3 +178,14 @@ class TestListRoles:
         assert response.status_code == 200
         assert len(response.json()) == 1
         assert response.json()[0]["role"] == "member"
+
+
+def test_valid_roles_includes_shop_owner():
+    from api.admin_roles import _VALID_ROLES
+    assert 'shop_owner' in _VALID_ROLES
+
+
+def test_valid_roles_includes_all_expected_roles():
+    from api.admin_roles import _VALID_ROLES
+    expected = {'blogger', 'member', 'partner', 'admin', 'shop_owner'}
+    assert expected.issubset(_VALID_ROLES)
