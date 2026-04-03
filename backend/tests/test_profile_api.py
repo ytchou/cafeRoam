@@ -34,7 +34,8 @@ class TestGetProfile:
         }[name]
         # Profile query: .table().select().eq().maybe_single().execute() returns a dict
         profile_table.select.return_value.eq.return_value.maybe_single.return_value.execute.return_value.data = {
-            "display_name": "Mei-Ling", "avatar_url": None
+            "display_name": "Mei-Ling",
+            "avatar_url": None,
         }
         # Count queries
         stamp_table.select.return_value.eq.return_value.execute.return_value.count = 5
