@@ -6,19 +6,19 @@
 
 ## Pass 1 — Full Discovery
 
-*Agents: Bug Hunter (Sonnet), Standards (Sonnet), Architecture (Sonnet), Plan Alignment (Sonnet), Test Philosophy (Sonnet)*
+_Agents: Bug Hunter (Sonnet), Standards (Sonnet), Architecture (Sonnet), Plan Alignment (Sonnet), Test Philosophy (Sonnet)_
 
 ### Issues Found (1 total)
 
-| Severity | File:Line | Description | Flagged By |
-|----------|-----------|-------------|------------|
-| Minor | backend/services/query_classifier.py:31-36 | Mixed CJK+Latin queries (e.g. "cafe拿") use only the CJK length rule, ignoring Latin characters. The design doc specifies "2+ CJK OR 3+ Latin" but the implementation uses CJK-first precedence, meaning a query with 1 CJK + 4 Latin chars fails the minimum length check. This is an edge case unlikely to occur in practice for Taiwan coffee search. | Bug Hunter |
+| Severity | File:Line                                  | Description                                                                                                                                                                                                                                                                                                                                              | Flagged By |
+| -------- | ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
+| Minor    | backend/services/query_classifier.py:31-36 | Mixed CJK+Latin queries (e.g. "cafe拿") use only the CJK length rule, ignoring Latin characters. The design doc specifies "2+ CJK OR 3+ Latin" but the implementation uses CJK-first precedence, meaning a query with 1 CJK + 4 Latin chars fails the minimum length check. This is an edge case unlikely to occur in practice for Taiwan coffee search. | Bug Hunter |
 
 ### Validation Results
 
-| Finding | File:Line | Classification | Reason |
-|---------|-----------|---------------|--------|
-| Mixed CJK+Latin min-length edge case | backend/services/query_classifier.py:31-36 | Debatable | The design explicitly says "2+ CJK characters OR 3+ Latin characters" — the current code implements CJK-first precedence which is a reasonable simplification for a Taiwan-focused product where mixed-script partial queries are extremely rare. The behavior is deterministic and documented. Fix anyway for correctness but low priority. |
+| Finding                              | File:Line                                  | Classification | Reason                                                                                                                                                                                                                                                                                                                                       |
+| ------------------------------------ | ------------------------------------------ | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Mixed CJK+Latin min-length edge case | backend/services/query_classifier.py:31-36 | Debatable      | The design explicitly says "2+ CJK characters OR 3+ Latin characters" — the current code implements CJK-first precedence which is a reasonable simplification for a Taiwan-focused product where mixed-script partial queries are extremely rare. The behavior is deterministic and documented. Fix anyway for correctness but low priority. |
 
 ### Notes
 
@@ -33,20 +33,24 @@
 
 **Pre-fix SHA:** 7a2a82b1241244fcdf1b75ac0c4a616d5577b2b7
 **Issues fixed:**
+
 - [Minor] backend/services/query_classifier.py:31-36 — Implemented true OR logic in `_meets_reverse_min_length`: changed `if cjk_count > 0: return cjk_count >= 2` to `if cjk_count >= 2: return True` + `return (len(query) - cjk_count) >= 3`. Mixed CJK+Latin queries now correctly evaluated.
 
 **Batch Test Run:**
+
 - `cd backend && uv run pytest` — PASS (801 passed, 0 failing, 4.95s)
 
 ## Pass 2 — Re-Verify
 
-*Agents re-run (smart routing): Bug Hunter*
-*Agents skipped (no findings in previous pass): Standards, Architecture, Plan Alignment, Test Philosophy*
+_Agents re-run (smart routing): Bug Hunter_
+_Agents skipped (no findings in previous pass): Standards, Architecture, Plan Alignment, Test Philosophy_
 
 ### Previously Flagged Issues — Resolution Status
+
 - [Minor] backend/services/query_classifier.py:31-36 — ✓ Resolved
 
 ### New Issues Found (0)
+
 No regressions detected.
 
 ## Final State

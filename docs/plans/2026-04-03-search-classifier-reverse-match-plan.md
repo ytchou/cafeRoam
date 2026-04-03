@@ -15,6 +15,7 @@
 **Tech Stack:** Python 3.12+, pytest
 
 **Acceptance Criteria:**
+
 - [ ] A user searching "巴斯克" gets results scored via keyword matching (classified as `item_specific`, not `generic`)
 - [ ] A user searching "西西里" gets results scored via keyword matching (classified as `item_specific`)
 - [ ] A user searching "咖啡" gets reclassified (not `generic`), busting any stale cache entry
@@ -26,6 +27,7 @@
 ## Task 1: Write failing tests for reverse matching
 
 **Files:**
+
 - Modify: `backend/tests/services/test_query_classifier.py:63` (insert new test class before `# --- generic ---`)
 
 **Step 1: Write the failing tests**
@@ -95,6 +97,7 @@ git commit -m "test(DEV-198): add failing tests for reverse substring matching i
 ## Task 2: Implement reverse matching in query classifier
 
 **Files:**
+
 - Modify: `backend/services/query_classifier.py` (full rewrite — 55 lines)
 
 **Step 1: Implement reverse matching**
@@ -184,11 +187,13 @@ should match '巴斯克蛋糕'."
 ## Task 3: Add vocabulary terms to search_vocabulary.py
 
 **Files:**
+
 - Modify: `backend/core/search_vocabulary.py`
 
 **Step 1: Add new ITEM_TERMS — Food (zh section, after line 62 "蜂蜜蛋糕")**
 
 Insert before `# === Food (en) ===`:
+
 ```python
     # Trending / French-inspired
     "舒芙蕾",
@@ -205,6 +210,7 @@ Insert before `# === Food (en) ===`:
 **Step 2: Add new ITEM_TERMS — Food (en section, after line 107 "castella")**
 
 Insert before `# === Drinks (zh) ===`:
+
 ```python
     # Trending / French-inspired
     "souffle pancake",
@@ -221,6 +227,7 @@ Insert before `# === Drinks (zh) ===`:
 **Step 3: Add new ITEM_TERMS — Drinks (zh section, after line 149 "濾掛")**
 
 Insert after `"濾掛",` in the `# More coffee drinks` block:
+
 ```python
     "掛耳",
     "西西里咖啡",
@@ -234,6 +241,7 @@ Insert after `"濾掛",` in the `# More coffee drinks` block:
 ```
 
 Insert after `"豆漿",` in the `# Tea & non-coffee` block:
+
 ```python
     "鮮奶茶",
     "紅茶拿鐵",
@@ -246,6 +254,7 @@ Insert after `"豆漿",` in the `# Tea & non-coffee` block:
 **Step 4: Add new ITEM_TERMS — Drinks (en section, after line 192 "drip bag")**
 
 Insert after `"drip bag",` in the `# More coffee drinks` block:
+
 ```python
     "drip bag coffee",
     "sicilian coffee",
@@ -259,6 +268,7 @@ Insert after `"drip bag",` in the `# More coffee drinks` block:
 ```
 
 Insert after `"soy milk",` in the `# Tea & non-coffee` block:
+
 ```python
     "fresh milk tea",
     "black tea latte",
@@ -271,6 +281,7 @@ Insert after `"soy milk",` in the `# Tea & non-coffee` block:
 **Step 5: Add new SPECIALTY_TERMS — (zh section, after line 435 "競標豆")**
 
 Insert before `# === Roast & style (en) ===`:
+
 ```python
     "台灣咖啡",
     "台灣豆",
@@ -282,6 +293,7 @@ Insert before `# === Roast & style (en) ===`:
 **Step 6: Add new SPECIALTY_TERMS — (en section, after line 452 "competition lot")**
 
 Append before the closing `]`:
+
 ```python
     "taiwan coffee",
     "house blend",
@@ -341,12 +353,15 @@ graph TD
 ```
 
 **Wave 1** (sequential — test-first):
+
 - Task 1: Write failing tests for reverse matching
 
 **Wave 2** (sequential — depends on Wave 1):
+
 - Task 2: Implement reverse matching in classifier ← Task 1
 
 **Wave 3** (sequential — depends on Wave 2):
+
 - Task 3: Add vocabulary terms + verify all tests pass ← Task 2
 
 All three tasks touch different files (test → classifier → vocabulary), but the test expectations depend on both the classifier logic (Task 2) and vocabulary data (Task 3). Strictly sequential.
@@ -356,15 +371,19 @@ All three tasks touch different files (test → classifier → vocabulary), but 
 ## TODO
 
 ### DEV-198: Search Classifier Reverse Matching
+
 > **Design Doc:** [docs/designs/2026-04-03-search-classifier-reverse-match-design.md](docs/designs/2026-04-03-search-classifier-reverse-match-design.md)
 > **Plan:** [docs/plans/2026-04-03-search-classifier-reverse-match-plan.md](docs/plans/2026-04-03-search-classifier-reverse-match-plan.md)
 
 **Chunk 1 — Tests:**
+
 - [ ] Write failing tests for reverse substring matching
 
 **Chunk 2 — Classifier:**
+
 - [ ] Implement reverse matching with min-length guard
 
 **Chunk 3 — Vocabulary:**
+
 - [ ] Add 47 new Taiwan coffee terms to search_vocabulary.py
 - [ ] Verify all tests pass + lint clean

@@ -20,6 +20,7 @@ Searching for "西西里", "咖啡", "巴斯克" returns no/near-empty results. 
 After each forward regex check in `classify()`, add a reverse check: if the normalized query is found as a substring within any vocabulary term, classify it accordingly.
 
 **Minimum length guard** to avoid false positives from single-character noise:
+
 - 2+ CJK characters (e.g., "咖啡" ✓, "蛋" ✗)
 - 3+ Latin characters (e.g., "basque" ✓, "ba" ✗)
 
@@ -37,13 +38,13 @@ These terms feed both the classifier regex (query classification) and the LLM en
 
 ## Fix verification per query
 
-| Query | Before | After | Why |
-|-------|--------|-------|-----|
-| 巴斯克 | generic | item_specific | Reverse matches "巴斯克蛋糕" in ITEM_TERMS |
-| 西西里 | generic | item_specific | Reverse matches new "西西里咖啡" in ITEM_TERMS |
-| 咖啡 | generic | item_specific | Reverse matches new "西西里咖啡" in ITEM_TERMS; cache key hash changes |
-| basque | generic | item_specific | Reverse matches "basque cheesecake" in ITEM_TERMS |
-| 蛋 | generic | generic | Below 2-CJK minimum — no false positive |
+| Query  | Before  | After         | Why                                                                    |
+| ------ | ------- | ------------- | ---------------------------------------------------------------------- |
+| 巴斯克 | generic | item_specific | Reverse matches "巴斯克蛋糕" in ITEM_TERMS                             |
+| 西西里 | generic | item_specific | Reverse matches new "西西里咖啡" in ITEM_TERMS                         |
+| 咖啡   | generic | item_specific | Reverse matches new "西西里咖啡" in ITEM_TERMS; cache key hash changes |
+| basque | generic | item_specific | Reverse matches "basque cheesecake" in ITEM_TERMS                      |
+| 蛋     | generic | generic       | Below 2-CJK minimum — no false positive                                |
 
 ## Files changed
 
