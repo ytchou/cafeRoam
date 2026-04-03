@@ -2,7 +2,8 @@
 -- Covers: check_ins, shop_menu_items, shop_payment_confirmations, review_responses, shop_followers
 -- Actor: dev admin user (caferoam.tw@gmail.com)
 -- Run: docker exec supabase_db_caferoam psql -U postgres -d postgres -f /path/to/kino_test_data.sql
--- Idempotent: uses ON CONFLICT DO NOTHING throughout
+-- Idempotent: ON CONFLICT DO NOTHING for check_ins/shop_payment_confirmations/review_responses/shop_followers;
+--             WHERE NOT EXISTS for shop_menu_items (no unique constraint on shop_id+item_name)
 
 DO $$
 DECLARE
