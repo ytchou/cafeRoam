@@ -101,7 +101,8 @@ async def get_shop(shop_id: str) -> Any:
             f"{_SHOP_DETAIL_COLUMNS}, shop_photos(url), "
             "shop_tags(tag_id, taxonomy_tags(id, dimension, label, label_zh)), "
             "shop_claims(status, user_id), "
-            "shop_content(id, title, body, photo_url, is_published, updated_at, content_type)"
+            "shop_content(id, title, body, photo_url, is_published, updated_at, content_type), "
+            "districts(slug, name_zh)"
         )
         .eq("id", shop_id)
         .limit(1)
@@ -140,6 +141,12 @@ async def get_shop(shop_id: str) -> Any:
     response_data["claimStatus"] = claim_status
     response_data["ownerId"] = owner_user_id
     response_data["ownerStory"] = owner_story
+    raw_district = shop.pop("districts", None)
+    response_data["district"] = (
+        {"slug": raw_district["slug"], "nameZh": raw_district["name_zh"]}
+        if raw_district
+        else None
+    )
     return response_data
 
 

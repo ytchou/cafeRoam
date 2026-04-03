@@ -20,7 +20,7 @@
 - [x] Add Pydantic models + test factories
 - [x] TDD: DistrictService (tests -> implementation)
 - [x] TDD: API endpoints (tests -> implementation)
-- [ ] Expose district on shop detail API
+- [x] Expose district on shop detail API
 
 **Chunk 3 — District Landing Page (DEV-206):**
 - [ ] TypeScript types + server-side API helpers

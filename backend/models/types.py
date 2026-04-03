@@ -260,6 +260,7 @@ class ShopReview(CamelModel):
 class ShopReviewsResponse(CamelModel):
     reviews: list[ShopReview]
     total_count: int
+    average_rating: float
 
 
 class District(CamelModel):
