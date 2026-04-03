@@ -12,8 +12,7 @@ _DISTRICT_COLS = (
 )
 
 _SHOP_COLS = (
-    "id, name, slug, rating, review_count, address, mrt, "
-    "processing_status, shop_photos(url)"
+    "id, name, slug, rating, review_count, address, mrt, processing_status, shop_photos(url)"
 )
 
 
@@ -64,9 +63,7 @@ class DistrictService:
             )
 
         results.sort(key=lambda r: (-(r.rating or 0), r.name))
-        return DistrictShopsResponse(
-            district=district, shops=results, total_count=len(results)
-        )
+        return DistrictShopsResponse(district=district, shops=results, total_count=len(results))
 
     def _fetch_district(self, slug: str) -> District:
         response = (
@@ -100,9 +97,7 @@ class DistrictService:
         )
         return cast("list[dict[str, Any]]", response.data or [])
 
-    def _fetch_shops_with_vibe(
-        self, district_id: str, vibe_slug: str
-    ) -> list[dict[str, Any]]:
+    def _fetch_shops_with_vibe(self, district_id: str, vibe_slug: str) -> list[dict[str, Any]]:
         """Fetch shops in district that match a vibe's tags."""
         # 1. Get vibe tag_ids
         vibe_resp = (

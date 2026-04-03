@@ -8,6 +8,7 @@ from tests.factories import make_district_row, make_district_shop_row, make_shop
 
 # ── Helpers ──────────────────────────────────────────────────────
 
+
 def _chain_mock() -> MagicMock:
     """Return a mock that supports Supabase query chaining."""
     mock = MagicMock()
@@ -24,6 +25,7 @@ def _chain_mock() -> MagicMock:
 
 # ── TestDistrictServiceGetDistricts ──────────────────────────────
 
+
 class TestDistrictServiceGetDistricts:
     """get_districts returns active districts with enough shops."""
 
@@ -34,7 +36,13 @@ class TestDistrictServiceGetDistricts:
         db.execute.return_value = MagicMock(
             data=[
                 make_district_row(shop_count=10),
-                make_district_row(id="dist-zhongshan", slug="zhongshan", name_zh="中山區", shop_count=5, sort_order=2),
+                make_district_row(
+                    id="dist-zhongshan",
+                    slug="zhongshan",
+                    name_zh="中山區",
+                    shop_count=5,
+                    sort_order=2,
+                ),
             ]
         )
         service = DistrictService(db)
@@ -67,6 +75,7 @@ class TestDistrictServiceGetDistricts:
 
 
 # ── TestDistrictServiceGetShopsForDistrict ───────────────────────
+
 
 class TestDistrictServiceGetShopsForDistrict:
     """get_shops_for_district returns shops in a district, with optional vibe filter."""

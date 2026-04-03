@@ -211,6 +211,7 @@ def make_community_note_row(**overrides: object) -> dict:
     }
     return {**defaults, **overrides}
 
+
 def make_district_row(**overrides: object) -> dict:
     """A districts table row."""
     defaults = {
@@ -240,7 +241,9 @@ def make_district_shop_row(**overrides: object) -> dict:
         "mrt": "台電大樓",
         "processing_status": "live",
         "shop_photos": [
-            {"url": "https://example.supabase.co/storage/v1/object/public/shop-photos/d4e5f6/exterior.jpg"}
+            {
+                "url": "https://example.supabase.co/storage/v1/object/public/shop-photos/d4e5f6/exterior.jpg"
+            }
         ],
     }
     return {**defaults, **overrides}

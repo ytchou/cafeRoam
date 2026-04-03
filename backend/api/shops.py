@@ -143,9 +143,7 @@ async def get_shop(shop_id: str) -> Any:
     response_data["ownerId"] = owner_user_id
     response_data["ownerStory"] = owner_story
     response_data["district"] = (
-        {"slug": raw_district["slug"], "nameZh": raw_district["name_zh"]}
-        if raw_district
-        else None
+        {"slug": raw_district["slug"], "nameZh": raw_district["name_zh"]} if raw_district else None
     )
     return response_data
 

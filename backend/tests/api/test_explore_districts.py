@@ -11,7 +11,9 @@ client = TestClient(app)
 
 MOCK_DISTRICTS = [
     make_district_row(),
-    make_district_row(id="dist-zhongshan", slug="zhongshan", name_zh="中山區", shop_count=15, sort_order=2),
+    make_district_row(
+        id="dist-zhongshan", slug="zhongshan", name_zh="中山區", shop_count=15, sort_order=2
+    ),
 ]
 
 
@@ -22,9 +24,7 @@ class TestListDistrictsEndpoint:
         from models.types import District
 
         mock_svc = MagicMock()
-        mock_svc.return_value.get_districts.return_value = [
-            District(**d) for d in MOCK_DISTRICTS
-        ]
+        mock_svc.return_value.get_districts.return_value = [District(**d) for d in MOCK_DISTRICTS]
 
         with (
             patch("api.explore.get_anon_client", return_value=MagicMock()),
@@ -69,9 +69,7 @@ class TestDistrictShopsEndpoint:
             address="台北市大安區溫州街74巷5弄2號",
             mrt="台電大樓",
         )
-        mock_response = DistrictShopsResponse(
-            district=district, shops=[shop], total_count=1
-        )
+        mock_response = DistrictShopsResponse(district=district, shops=[shop], total_count=1)
 
         mock_svc = MagicMock()
         mock_svc.return_value.get_shops_for_district.return_value = mock_response
@@ -104,9 +102,7 @@ class TestDistrictShopsEndpoint:
         from models.types import District, DistrictShopsResponse
 
         district = District(**make_district_row())
-        mock_response = DistrictShopsResponse(
-            district=district, shops=[], total_count=0
-        )
+        mock_response = DistrictShopsResponse(district=district, shops=[], total_count=0)
 
         mock_svc = MagicMock()
         mock_svc.return_value.get_shops_for_district.return_value = mock_response
