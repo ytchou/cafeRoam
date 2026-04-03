@@ -17,9 +17,9 @@ class ProfileService:
             asyncio.to_thread(
                 lambda: (
                     self._db.table("profiles")
-                    .select("display_name, avatar_url")
+                    .select("display_name, avatar_url, analytics_opt_out")
                     .eq("id", user_id)
-                    .limit(1)
+                    .maybe_single()
                     .execute()
                 )
             ),
@@ -40,11 +40,12 @@ class ProfileService:
                 )
             ),
         )
-        rows = cast("list[dict[str, Any]]", profile_resp.data)
-        profile = rows[0] if rows else {}
+        raw = profile_resp.data if profile_resp else None
+        profile = cast("dict[str, Any]", raw) if raw else {}
         return ProfileResponse(
             display_name=profile.get("display_name"),
             avatar_url=profile.get("avatar_url"),
+            analytics_opt_out=profile.get("analytics_opt_out", False),
             stamp_count=stamp_resp.count or 0,
             checkin_count=checkin_resp.count or 0,
         )
@@ -55,6 +56,7 @@ class ProfileService:
         fields: set[str],
         display_name: str | None = None,
         avatar_url: str | None = None,
+        analytics_opt_out: bool | None = None,
     ) -> None:
         """Update profile fields. `fields` is the set of keys explicitly provided in the request."""
         update_data: dict[str, Any] = {}
@@ -62,6 +64,8 @@ class ProfileService:
             update_data["display_name"] = display_name
         if "avatar_url" in fields:
             update_data["avatar_url"] = avatar_url
+        if "analytics_opt_out" in fields:
+            update_data["analytics_opt_out"] = analytics_opt_out
 
         if not update_data:
             return  # nothing to update — no-op

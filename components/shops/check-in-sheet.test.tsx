@@ -36,6 +36,13 @@ describe('CheckInSheet', () => {
     expect(screen.getByText('Simple Kaffa')).toBeInTheDocument();
   });
 
+  it('shows photo usage disclosure below the upload area', () => {
+    render(<CheckInSheet {...defaultProps} />);
+    expect(
+      screen.getByText(/Menu photos may be used to improve shop information/)
+    ).toBeInTheDocument();
+  });
+
   it('disables submit when no photo is selected', () => {
     render(<CheckInSheet {...defaultProps} />);
     const submitBtn = screen.getByRole('button', { name: /Check In/i });

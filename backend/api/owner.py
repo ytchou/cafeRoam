@@ -19,6 +19,27 @@ def get_owner_service(
     return OwnerService(db=db, analytics=analytics)
 
 
+@router.get("/{shop_id}/analytics-terms")
+async def get_analytics_terms_status(
+    shop_id: str,
+    user: dict[str, Any] = Depends(require_shop_owner),  # noqa: B008
+    svc: OwnerService = Depends(get_owner_service),  # noqa: B008
+) -> dict[str, bool]:
+    """Return whether this owner has accepted the analytics data usage terms."""
+    return {"accepted": svc.get_analytics_terms_status(shop_id, user["id"])}
+
+
+@router.post("/{shop_id}/analytics-terms")
+async def accept_analytics_terms(
+    shop_id: str,
+    user: dict[str, Any] = Depends(require_shop_owner),  # noqa: B008
+    svc: OwnerService = Depends(get_owner_service),  # noqa: B008
+) -> dict[str, str]:
+    """Record that the owner has acknowledged the analytics data usage terms. Idempotent."""
+    svc.accept_analytics_terms(shop_id, user["id"])
+    return {"status": "accepted"}
+
+
 @router.get("/{shop_id}/dashboard")
 async def get_dashboard(
     shop_id: str,

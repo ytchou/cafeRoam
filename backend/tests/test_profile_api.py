@@ -32,10 +32,11 @@ class TestGetProfile:
             "stamps": stamp_table,
             "check_ins": checkin_table,
         }[name]
-        # Profile query: .table().select().eq().limit(1).execute() returns a list
-        profile_table.select.return_value.eq.return_value.limit.return_value.execute.return_value.data = [
-            {"display_name": "Mei-Ling", "avatar_url": None}
-        ]
+        # Profile query: .table().select().eq().maybe_single().execute() returns a dict
+        profile_table.select.return_value.eq.return_value.maybe_single.return_value.execute.return_value.data = {
+            "display_name": "Mei-Ling",
+            "avatar_url": None,
+        }
         # Count queries
         stamp_table.select.return_value.eq.return_value.execute.return_value.count = 5
         checkin_table.select.return_value.eq.return_value.execute.return_value.count = 5

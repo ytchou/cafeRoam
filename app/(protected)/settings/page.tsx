@@ -22,11 +22,14 @@ export default function SettingsPage() {
   const [profileError, setProfileError] = useState<string | null>(null);
   const [profileSuccess, setProfileSuccess] = useState(false);
   const profileInitialized = useRef(false);
+  const [analyticsOptOut, setAnalyticsOptOut] = useState(false);
+  const [savingAnalytics, setSavingAnalytics] = useState(false);
 
   useEffect(() => {
     if (profile && !profileInitialized.current) {
       setDisplayName(profile.display_name ?? '');
       setAvatarUrl(profile.avatar_url ?? null);
+      setAnalyticsOptOut(profile.analytics_opt_out ?? false);
       profileInitialized.current = true;
     }
   }, [profile]);
@@ -99,6 +102,23 @@ export default function SettingsPage() {
       setProfileError('Failed to save profile');
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleAnalyticsOptOutToggle(optOut: boolean) {
+    setAnalyticsOptOut(optOut);
+    setSavingAnalytics(true);
+    try {
+      await fetchWithAuth('/api/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ analytics_opt_out: optOut }),
+      });
+      mutateProfile();
+    } catch {
+      setAnalyticsOptOut(!optOut);
+    } finally {
+      setSavingAnalytics(false);
     }
   }
 
@@ -211,6 +231,42 @@ export default function SettingsPage() {
           {profileSuccess && (
             <p className="text-sm text-green-600">Profile updated!</p>
           )}
+        </section>
+
+        <section className="space-y-4 rounded-lg border p-6">
+          <h2 className="text-lg font-semibold">Privacy (隱私)</h2>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="text-sm font-medium">
+                Include my usage data in shop analytics
+              </p>
+              <p className="text-muted-foreground mt-0.5 text-xs">
+                When on, your anonymized, aggregate usage data helps verified
+                shop owners understand their visitors. Turning this off excludes
+                your future data from those reports.
+              </p>
+            </div>
+            <button
+              role="switch"
+              aria-checked={!analyticsOptOut}
+              aria-label="Include my usage data in shop analytics"
+              disabled={savingAnalytics}
+              onClick={() => handleAnalyticsOptOutToggle(!analyticsOptOut)}
+              className="focus-visible:ring-brand -m-[10px] mt-0.5 flex-shrink-0 rounded-full p-[10px] focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50"
+            >
+              <span
+                className={`relative block h-6 w-11 rounded-full transition-colors ${
+                  !analyticsOptOut ? 'bg-brand' : 'bg-gray-300'
+                }`}
+              >
+                <span
+                  className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
+                    !analyticsOptOut ? 'translate-x-5' : 'translate-x-0'
+                  }`}
+                />
+              </span>
+            </button>
+          </div>
         </section>
 
         <section className="space-y-4">

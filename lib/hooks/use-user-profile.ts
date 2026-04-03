@@ -8,6 +8,7 @@ export interface ProfileData {
   avatar_url: string | null;
   stamp_count: number;
   checkin_count: number;
+  analytics_opt_out: boolean;
 }
 
 export function useUserProfile() {

@@ -25,6 +25,12 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+# PDPA k-anonymity threshold (DEV-191).
+# Demographic queries (age, gender, neighborhood) MUST NOT expose a slice
+# when fewer than this many distinct users contribute to it. Pure aggregate
+# counts (views, check-in totals) are exempt per PDPA Art. 5 purpose limitation.
+K_ANONYMITY_THRESHOLD = 10
+
 
 class OwnerService:
     def __init__(self, db: Client, analytics: AnalyticsProvider | None = None) -> None:
@@ -193,6 +199,50 @@ class OwnerService:
                     )
                 )
         return sorted(rankings, key=lambda r: r.rank)[:3]
+
+    # ── Analytics Terms ────────────────────────────────────────────────────
+
+    def get_analytics_terms_status(self, shop_id: str, user_id: str) -> bool:
+        """Return whether the owner has accepted the analytics data usage terms."""
+        result = (
+            self._db.table("shop_claims")
+            .select("analytics_terms_accepted_at")
+            .eq("shop_id", shop_id)
+            .eq("user_id", user_id)
+            .eq("status", "approved")
+            .maybe_single()
+            .execute()
+        )
+        data: dict[str, Any] | None = cast("dict[str, Any] | None", result.data if result else None)
+        return bool(data and data.get("analytics_terms_accepted_at"))
+
+    def accept_analytics_terms(self, shop_id: str, user_id: str) -> None:
+        """Record that the owner accepted the analytics terms. Idempotent."""
+        from datetime import datetime
+
+        self._db.table("shop_claims").update(
+            {"analytics_terms_accepted_at": datetime.now(UTC).isoformat()}
+        ).eq("shop_id", shop_id).eq("user_id", user_id).eq("status", "approved").is_(
+            "analytics_terms_accepted_at", "null"
+        ).execute()
+
+    # ── k-Anonymity ────────────────────────────────────────────────────────
+
+    @staticmethod
+    def suppress_demographic_slice(distinct_user_count: int) -> bool:
+        """Return True if a demographic slice has enough contributors to be disclosed.
+
+        Usage: call before returning any demographic breakdown (age, gender,
+        neighborhood). If False, return None / "Not enough data" to the caller.
+        Pure aggregate counts (views, check-in totals) are exempt.
+
+        Example SQL pattern for demographic queries:
+            SELECT age_group, COUNT(DISTINCT user_id) AS contributors, COUNT(*) AS events
+            FROM ...
+            GROUP BY age_group
+            HAVING COUNT(DISTINCT user_id) >= 10  -- K_ANONYMITY_THRESHOLD
+        """
+        return distinct_user_count >= K_ANONYMITY_THRESHOLD
 
     # ── Shop Story ─────────────────────────────────────────────────────────
 

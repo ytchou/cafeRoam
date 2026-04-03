@@ -19,7 +19,9 @@ def _make_table_map(profile_data: list, stamp_count: int = 0, checkin_count: int
     stamp_table = MagicMock()
     checkin_table = MagicMock()
 
-    profile_table.select.return_value.eq.return_value.limit.return_value.execute.return_value.data = profile_data
+    profile_table.select.return_value.eq.return_value.maybe_single.return_value.execute.return_value.data = (
+        profile_data[0] if profile_data else None
+    )
     stamp_table.select.return_value.eq.return_value.execute.return_value.count = stamp_count
     checkin_table.select.return_value.eq.return_value.execute.return_value.count = checkin_count
 
