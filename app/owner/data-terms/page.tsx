@@ -17,7 +17,9 @@ export default function OwnerDataTermsPage() {
 
       <section className="mt-8 space-y-6 text-sm leading-relaxed">
         <div>
-          <h2 className="font-semibold">1. Aggregate and anonymized data only</h2>
+          <h2 className="font-semibold">
+            1. Aggregate and anonymized data only
+          </h2>
           <p className="mt-1">
             All analytics data provided through the CafeRoam owner dashboard is
             aggregate and anonymized. Individual user identities are never
@@ -58,8 +60,8 @@ export default function OwnerDataTermsPage() {
           <h2 className="font-semibold">4. PDPA compliance obligation</h2>
           <p className="mt-1">
             By accessing the analytics dashboard, you acknowledge that CafeRoam
-            operates under Taiwan&apos;s Personal Data Protection Act (PDPA). You
-            agree to handle any insights derived from analytics in a manner
+            operates under Taiwan&apos;s Personal Data Protection Act (PDPA).
+            You agree to handle any insights derived from analytics in a manner
             consistent with PDPA obligations. CafeRoam users have been informed
             of and consented to the aggregate sharing of anonymized data with
             verified shop owners at the time of account creation.

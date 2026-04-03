@@ -213,7 +213,8 @@ class OwnerService:
             .maybe_single()
             .execute()
         )
-        return bool(result and result.data and result.data.get("analytics_terms_accepted_at"))
+        data: dict[str, Any] | None = cast("dict[str, Any] | None", result.data if result else None)
+        return bool(data and data.get("analytics_terms_accepted_at"))
 
     def accept_analytics_terms(self, shop_id: str, user_id: str) -> None:
         """Record that the owner accepted the analytics terms. Idempotent."""

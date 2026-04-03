@@ -252,7 +252,7 @@ export default function SettingsPage() {
               aria-label="Include my usage data in shop analytics"
               disabled={savingAnalytics}
               onClick={() => handleAnalyticsOptOutToggle(!analyticsOptOut)}
-              className="-m-[10px] mt-0.5 flex-shrink-0 rounded-full p-[10px] focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 disabled:opacity-50"
+              className="focus-visible:ring-brand -m-[10px] mt-0.5 flex-shrink-0 rounded-full p-[10px] focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50"
             >
               <span
                 className={`relative block h-6 w-11 rounded-full transition-colors ${

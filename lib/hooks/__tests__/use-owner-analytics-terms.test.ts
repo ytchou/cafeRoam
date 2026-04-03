@@ -47,7 +47,9 @@ describe('useOwnerAnalyticsTerms', () => {
 
   it('owner accepting terms calls the POST endpoint then revalidates SWR cache', async () => {
     const mutateFn = vi.fn().mockResolvedValue(undefined);
-    mockUseSWR.mockReturnValue(swrReturning({ accepted: false }, { mutate: mutateFn }));
+    mockUseSWR.mockReturnValue(
+      swrReturning({ accepted: false }, { mutate: mutateFn })
+    );
     mockFetchWithAuth.mockResolvedValue({} as Response);
 
     const { result } = renderHook(() => useOwnerAnalyticsTerms(SHOP_ID));
@@ -57,7 +59,10 @@ describe('useOwnerAnalyticsTerms', () => {
       `/api/owner/${SHOP_ID}/analytics-terms`,
       { method: 'POST' }
     );
-    expect(mutateFn).toHaveBeenCalledWith({ accepted: true }, { revalidate: true });
+    expect(mutateFn).toHaveBeenCalledWith(
+      { accepted: true },
+      { revalidate: true }
+    );
   });
 
   it('clears accepting state after the POST completes', async () => {

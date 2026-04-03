@@ -14,9 +14,15 @@ const COLLECTION_ITEMS = [
     label: '打卡記錄',
     detail: '打卡照片、評分、文字心得、打卡時間與地點（店家）',
   },
-  { label: '使用行為', detail: '搜尋關鍵字、瀏覽頁面（匿名化，不含個人識別資訊）' },
+  {
+    label: '使用行為',
+    detail: '搜尋關鍵字、瀏覽頁面（匿名化，不含個人識別資訊）',
+  },
   { label: '裝置資訊', detail: '瀏覽器類型、語系偏好（不含 IP 位址）' },
-  { label: '店家認領資料', detail: '認領店家時提供的聯絡人資訊（認領有效期間內保存）' },
+  {
+    label: '店家認領資料',
+    detail: '認領店家時提供的聯絡人資訊（認領有效期間內保存）',
+  },
 ];
 
 const PURPOSE_ITEMS = [
@@ -91,7 +97,8 @@ export default function PrivacyPage() {
         <div>
           <h2 className="text-lg font-semibold">1. 資料控制者</h2>
           <p className="mt-2 text-sm">
-            CafeRoam 啡遊（以下稱「本平台」）為本隱私權政策所稱之個人資料控制者。
+            CafeRoam
+            啡遊（以下稱「本平台」）為本隱私權政策所稱之個人資料控制者。
             如有資料保護相關問題，請透過下方聯絡方式與我們聯繫。
           </p>
         </div>
@@ -124,13 +131,17 @@ export default function PrivacyPage() {
           <h2 className="text-lg font-semibold">4. 匿名化與資料保護措施</h2>
           <ul className="mt-2 list-disc space-y-1.5 pl-5 text-sm">
             <li>
-              使用行為分析事件採用 SHA-256 雜湊後的使用者 ID，不記錄原始帳號資訊。
+              使用行為分析事件採用 SHA-256 雜湊後的使用者
+              ID，不記錄原始帳號資訊。
             </li>
             <li>
               提供給店主的數據僅為彙總計數，並採用 k-匿名性（k≥10）：
-              當特定族群的使用者人數少於 10 人時，該項數據將顯示「資料不足」，不予揭露。
+              當特定族群的使用者人數少於 10
+              人時，該項數據將顯示「資料不足」，不予揭露。
             </li>
-            <li>人口統計數據（年齡層、性別）採週/月級別彙總，不提供逐日數據。</li>
+            <li>
+              人口統計數據（年齡層、性別）採週/月級別彙總，不提供逐日數據。
+            </li>
             <li>
               彙總數據不得與其他資料集交叉比對以還原個人身份，此義務亦透過店主服務條款約束。
             </li>
@@ -148,7 +159,8 @@ export default function PrivacyPage() {
             </p>
             <p>
               <strong>服務供應商：</strong>
-              我們使用 Supabase（資料庫與儲存）、PostHog（分析）、Sentry（錯誤追蹤）、
+              我們使用
+              Supabase（資料庫與儲存）、PostHog（分析）、Sentry（錯誤追蹤）、
               Resend（電子郵件）等服務供應商。這些供應商依照資料處理協議運作，不得將資料用於其他目的。
             </p>
             <p>
@@ -166,8 +178,7 @@ export default function PrivacyPage() {
             ))}
           </ul>
           <p className="text-text-meta mt-2 text-sm">
-            如需行使上述權利，請透過下方聯絡方式提交請求，我們將於 30
-            天內處理。
+            如需行使上述權利，請透過下方聯絡方式提交請求，我們將於 30 天內處理。
           </p>
         </div>
 
@@ -178,19 +189,27 @@ export default function PrivacyPage() {
             <table className="w-full border-collapse text-sm">
               <thead>
                 <tr className="border-b">
-                  <th className="py-2 pr-4 text-left font-semibold">資料類型</th>
-                  <th className="py-2 pr-4 text-left font-semibold">保存期間</th>
+                  <th className="py-2 pr-4 text-left font-semibold">
+                    資料類型
+                  </th>
+                  <th className="py-2 pr-4 text-left font-semibold">
+                    保存期間
+                  </th>
                   <th className="py-2 text-left font-semibold">刪除時機</th>
                 </tr>
               </thead>
               <tbody>
                 {RETENTION_ROWS.map((row) => (
                   <tr key={row.type} className="border-b last:border-0">
-                    <td className="py-2 pr-4 align-top font-medium">{row.type}</td>
+                    <td className="py-2 pr-4 align-top font-medium">
+                      {row.type}
+                    </td>
                     <td className="text-text-meta py-2 pr-4 align-top">
                       {row.period}
                     </td>
-                    <td className="text-text-meta py-2 align-top">{row.trigger}</td>
+                    <td className="text-text-meta py-2 align-top">
+                      {row.trigger}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -204,7 +223,8 @@ export default function PrivacyPage() {
           <p className="mt-2 text-sm">
             您在打卡時上傳的菜單照片，可能被用於改善平台上的店家資訊（例如更新菜單品項與價格）。
             此用途已包含在您簽署個人資料同意書時所揭露的目的範圍內。
-            您可隨時申請刪除帳號，所有打卡照片將在 30 天內自 Supabase Storage 完全刪除。
+            您可隨時申請刪除帳號，所有打卡照片將在 30 天內自 Supabase Storage
+            完全刪除。
           </p>
         </div>
 
