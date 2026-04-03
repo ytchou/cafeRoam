@@ -566,13 +566,6 @@ class TestOptionCPlusScoring:
 class TestOpeningHoursCoercion:
     """Search must not crash when the DB returns legacy string opening_hours."""
 
-    @pytest.fixture
-    def mock_embeddings(self):
-        emb = AsyncMock()
-        emb.embed = AsyncMock(return_value=[0.1] * 1536)
-        emb.dimensions = 1536
-        return emb
-
     def _make_rpc_db(self, rows):
         db = MagicMock()
         db.rpc = MagicMock(
@@ -623,3 +616,17 @@ class TestOpeningHoursCoercion:
         assert shop.id == "shop-structured-hours"
         assert shop.opening_hours is not None
         assert len(shop.opening_hours) == 4
+
+    async def test_empty_opening_hours_yields_none_on_shop(self, mock_embeddings):
+        """When a shop row has opening_hours=[], the Shop model receives opening_hours=None without raising."""
+        row = make_shop_row(
+            id="shop-no-hours",
+            name="無時間咖啡",
+            opening_hours=[],
+        )
+        db = self._make_rpc_db([row])
+        service = SearchService(db=db, embeddings=mock_embeddings)
+        response = await service.search(SearchQuery(text="無時間"))
+
+        assert len(response.results) == 1
+        assert response.results[0].shop.opening_hours is None

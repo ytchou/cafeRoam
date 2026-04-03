@@ -161,10 +161,15 @@ class SearchService:
 
             eligible_keys = Shop.model_fields.keys() - _SHOP_FIELDS_HANDLED_SEPARATELY
             raw_hours = row.get("opening_hours") or []
-            if raw_hours and isinstance(raw_hours[0], str):
-                coerced_hours: list[dict] | None = [
-                    h.model_dump() for h in parse_to_structured(raw_hours)
-                ] or None
+            first_hour = next(iter(raw_hours), None)
+            if first_hour is not None and isinstance(first_hour, str):
+                structured = parse_to_structured(raw_hours)
+                if not structured:
+                    logger.warning(
+                        "Search: legacy opening_hours present but none parseable",
+                        shop_id=row.get("id"),
+                    )
+                coerced_hours: list[dict] | None = [h.model_dump() for h in structured] or None
             else:
                 coerced_hours = raw_hours or None
             shop = Shop(
