@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 from fastapi.testclient import TestClient
 
 from main import app
-from tests.factories import make_district_row, make_district_shop_row
+from tests.factories import make_district_row
 
 client = TestClient(app)
 

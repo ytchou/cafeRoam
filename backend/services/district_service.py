@@ -7,7 +7,9 @@ from supabase import Client
 from core.db import first
 from models.types import District, DistrictShopResult, DistrictShopsResponse
 
-_DISTRICT_COLS = "id, slug, name_en, name_zh, description_en, description_zh, city, shop_count, sort_order"
+_DISTRICT_COLS = (
+    "id, slug, name_en, name_zh, description_en, description_zh, city, shop_count, sort_order"
+)
 
 _SHOP_COLS = (
     "id, name, slug, rating, review_count, address, mrt, "

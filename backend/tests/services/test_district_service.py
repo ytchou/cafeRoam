@@ -1,12 +1,10 @@
 """Tests for DistrictService — mirrors test_vibe_service.py pattern."""
 
 from unittest.mock import MagicMock
-from typing import Any, cast
 
 import pytest
 
 from tests.factories import make_district_row, make_district_shop_row, make_shop_tag_row
-
 
 # ── Helpers ──────────────────────────────────────────────────────
 
