@@ -1,0 +1,16 @@
+{
+  "findings": [
+    {
+      "severity": "Minor",
+      "file": "backend/services/query_classifier.py",
+      "line": "31-36",
+      "description": "Mixed CJK+Latin queries (e.g. 'cafe拿') use only the CJK length rule, ignoring Latin characters. _meets_reverse_min_length checks cjk_count first; if any CJK chars are present, it requires 2+ CJK regardless of Latin char count. A query like 'cafe拿' (1 CJK + 4 Latin) would fail the guard. This is an edge case unlikely to matter for Taiwan coffee search but deviates slightly from the stated '2+ CJK OR 3+ Latin' rule.",
+      "flagged_by": "Bug Hunter",
+      "status": "debatable"
+    }
+  ],
+  "active_agents": ["Bug Hunter"],
+  "skipped": [],
+  "head_sha": "7a2a82b1241244fcdf1b75ac0c4a616d5577b2b7",
+  "review_log_path": "docs/reviews/2026-04-03-dev-dev-198-search-vocab.md"
+}

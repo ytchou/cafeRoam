@@ -76,3 +76,48 @@ class TestClassifyQuery:
     def test_item_specific_takes_priority_over_specialty(self):
         """If both match, item_specific wins."""
         assert classify("espresso single origin") == "item_specific"
+
+
+class TestReverseMatchClassification:
+    """When a user types a partial term that is a substring of a vocabulary
+    entry, the classifier still routes to the correct scoring path."""
+
+    # --- item_specific via reverse ---
+
+    def test_partial_chinese_food_term_classified_as_item_specific(self):
+        """User types '巴斯克' (short for 巴斯克蛋糕) — reverse match triggers item_specific."""
+        assert classify("巴斯克") == "item_specific"
+
+    def test_partial_chinese_drink_term_classified_as_item_specific(self):
+        """User types '西西里' (short for 西西里咖啡) — reverse match triggers item_specific."""
+        assert classify("西西里") == "item_specific"
+
+    def test_generic_coffee_term_classified_via_reverse(self):
+        """User types '咖啡' — matches '西西里咖啡' in ITEM_TERMS via reverse."""
+        assert classify("咖啡") == "item_specific"
+
+    def test_partial_english_food_term_classified_as_item_specific(self):
+        """User types 'basque' — matches 'basque cheesecake' via reverse."""
+        assert classify("basque") == "item_specific"
+
+    # --- minimum length guard ---
+
+    def test_single_cjk_char_stays_generic(self):
+        """Single CJK character '蛋' should NOT match '巴斯克蛋糕' — below 2-char minimum."""
+        assert classify("蛋") == "generic"
+
+    def test_single_cjk_char_na_stays_generic(self):
+        """Single CJK character '拿' should NOT match '拿鐵' — below 2-char minimum."""
+        assert classify("拿") == "generic"
+
+    def test_short_english_stays_generic(self):
+        """Two-letter English 'ba' should NOT match 'basque cheesecake' — below 3-char minimum."""
+        assert classify("ba") == "generic"
+
+    # --- priority: item reverse > specialty forward ---
+
+    def test_item_reverse_beats_specialty_forward(self):
+        """If a query reverse-matches ITEM_TERMS, it wins over a forward SPECIALTY_TERMS match."""
+        # "咖啡" reverse-matches "西西里咖啡" in ITEM_TERMS → item_specific
+        # even though "精品咖啡" in SPECIALTY_TERMS also contains "咖啡"
+        assert classify("咖啡") == "item_specific"
