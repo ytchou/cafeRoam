@@ -19,7 +19,7 @@
 **Chunk 2 — Backend Service + API (DEV-205):**
 - [x] Add Pydantic models + test factories
 - [x] TDD: DistrictService (tests -> implementation)
-- [ ] TDD: API endpoints (tests -> implementation)
+- [x] TDD: API endpoints (tests -> implementation)
 - [ ] Expose district on shop detail API
 
 **Chunk 3 — District Landing Page (DEV-206):**
