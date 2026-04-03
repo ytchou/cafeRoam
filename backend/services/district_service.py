@@ -112,7 +112,7 @@ class DistrictService:
         vibe_rows = cast("list[dict[str, Any]]", vibe_resp.data or [])
         if not vibe_rows:
             return []
-        tag_ids = vibe_rows[0].get("tag_ids") or []
+        tag_ids = (first(vibe_rows) or {}).get("tag_ids") or []
         if not tag_ids:
             return []
 
