@@ -3,8 +3,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { POST } from './route';
 
 const mockFetch = vi.fn();
-beforeEach(() => { vi.stubGlobal('fetch', mockFetch); });
-afterEach(() => { vi.unstubAllGlobals(); });
+beforeEach(() => {
+  vi.stubGlobal('fetch', mockFetch);
+});
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 describe('POST /api/shops/[shopId]/payment-methods/confirm', () => {
   it('a shop owner can confirm their accepted payment methods', async () => {
@@ -21,9 +25,7 @@ describe('POST /api/shops/[shopId]/payment-methods/confirm', () => {
     });
 
     expect(mockFetch).toHaveBeenCalledWith(
-      expect.stringContaining(
-        '/shops/shop-taipei-123/payment-methods/confirm'
-      ),
+      expect.stringContaining('/shops/shop-taipei-123/payment-methods/confirm'),
       expect.objectContaining({ method: 'POST' })
     );
   });
