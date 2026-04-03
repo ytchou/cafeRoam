@@ -111,8 +111,8 @@ Things that must exist for this product to ship. If any of these slip, the timel
 
 ## 5. Compliance & Security
 
-- **Compliance:** Taiwan PDPA (個人資料保護法). Key requirements: explicit consent at signup for data collection purposes; user right to delete account + all personal data within 30 days; purpose limitation — disclose that check-in photos may inform data enrichment; data retention policy for photos and check-in history.
-- **PDPA checkpoints during build:** Consent flow at signup, account deletion endpoint (cascades all user data: check-ins, photos, lists, stamps, profile), privacy policy page, photo usage disclosure on check-in flow.
+- **Compliance:** Taiwan PDPA (個人資料保護法). Key requirements: explicit consent at signup for data collection purposes; user right to delete account + all personal data within 30 days; purpose limitation — disclose that check-in photos may inform data enrichment; data retention policy for photos and check-in history. See [`docs/legal/data-retention-policy.md`](docs/legal/data-retention-policy.md) for full retention schedule.
+- **PDPA checkpoints during build:** Consent flow at signup (includes shop owner analytics disclosure), account deletion endpoint (cascades all user data: check-ins, photos, lists, polaroids, profile), privacy policy page (`/privacy`), photo usage disclosure on check-in flow, consent withdrawal toggle in profile settings.
 - **Auth mechanism:** Supabase Auth (JWT-based sessions). Server-side session validation on all protected API routes.
 - **Secrets management:** Environment variables only. `.env` and `.env.local` are gitignored. `.env.example` documents all required vars with descriptions.
 - **Encryption:** In transit: TLS/HTTPS (Railway + Supabase enforce). At rest: Supabase Storage encrypts by default.

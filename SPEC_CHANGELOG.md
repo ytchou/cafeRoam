@@ -5,6 +5,7 @@ Every change to SPEC.md must be logged here immediately after the edit is made.
 **Format:** `YYYY-MM-DD | Section changed | What changed | Why`
 
 | 2026-04-01 | §9 Business Rules | Added payment method business rules: 6 supported methods, JSONB storage, community confirmations (auth-gated, PDPA cascade), taxonomy-based filters. | DEV-90 payment methods design |
+| 2026-04-03 | §5 Compliance | Added link to data-retention-policy.md; expanded PDPA checkpoints to include analytics disclosure, /privacy page, withdrawal toggle. | DEV-194 data retention policy |
 
 ---
 

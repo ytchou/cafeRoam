@@ -97,6 +97,10 @@ export function CheckInSheet({
                 maxPhotos={3}
               />
             </div>
+            <p className="text-text-meta mt-1.5 text-xs">
+              Menu photos may be used to improve shop information (e.g., menu
+              items, pricing).
+            </p>
           </div>
 
           <div>

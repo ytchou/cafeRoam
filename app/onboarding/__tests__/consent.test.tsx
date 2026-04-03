@@ -39,6 +39,16 @@ describe('ConsentPage', () => {
     expect(screen.getByText(/打卡記錄與照片/)).toBeInTheDocument();
   });
 
+  it('discloses that anonymized data is shared with shop owners', () => {
+    render(<ConsentPage />);
+    expect(screen.getByText(/以匿名、彙總方式提供店家經營數據參考/)).toBeInTheDocument();
+  });
+
+  it('informs users they can withdraw from shop analytics sharing', () => {
+    render(<ConsentPage />);
+    expect(screen.getByText(/在個人設定中選擇退出店家數據共享/)).toBeInTheDocument();
+  });
+
   it('disables confirm button until checkbox is checked', () => {
     render(<ConsentPage />);
     const button = screen.getByRole('button', { name: /確認並繼續|confirm/i });
