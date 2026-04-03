@@ -96,6 +96,8 @@ vi.mock('react-map-gl/mapbox', () => ({
     children?: React.ReactNode;
     onClick?: () => void;
   }) => <div onClick={onClick}>{children}</div>,
+  Source: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
+  Layer: () => null,
 }));
 
 vi.mock('@/lib/supabase/client', () => ({
