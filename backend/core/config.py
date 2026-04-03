@@ -55,7 +55,7 @@ class Settings(BaseSettings):
     anon_salt: str = "caferoam-dev-salt"
 
     # Worker concurrency
-    worker_poll_interval_seconds: int = 5
+    worker_poll_interval_seconds: int = 300
     worker_concurrency_enrich: int = 3
     worker_concurrency_embed: int = 20
     worker_concurrency_publish: int = 20

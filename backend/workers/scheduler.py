@@ -389,14 +389,15 @@ def create_scheduler() -> AsyncIOScheduler:
     scheduler.add_job(
         _run_delete_expired_accounts,
         "cron",
-        hour=4,
+        hour=3,
+        minute=2,
         id="delete_expired_accounts",
     )
     scheduler.add_job(
         run_reembed_reviewed_shops,
         "cron",
         hour=3,
-        minute=30,  # offset from staleness_sweep at 03:00
+        minute=1,
         id="reembed_reviewed_shops",
     )
 
@@ -413,7 +414,7 @@ def create_scheduler() -> AsyncIOScheduler:
     scheduler.add_job(
         reclaim_stuck_jobs,
         "interval",
-        minutes=5,
+        minutes=30,
         id="reclaim_stuck_jobs",
         max_instances=1,
         coalesce=True,
