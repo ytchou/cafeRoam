@@ -12,8 +12,8 @@
 > **Plan:** [docs/plans/2026-04-03-district-landing-pages-plan.md](docs/plans/2026-04-03-district-landing-pages-plan.md)
 
 **Chunk 1 — DB Foundation (DEV-204):**
-- [ ] Create districts table + seed 12 Taipei districts
-- [ ] Add district_id FK to shops
+- [x] Create districts table + seed 12 Taipei districts
+- [x] Add district_id FK to shops
 - [ ] Run backfill script
 
 **Chunk 2 — Backend Service + API (DEV-205):**
