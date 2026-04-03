@@ -14,6 +14,7 @@ const eslintConfig = defineConfig([
     '**/*.d.ts',
     'backend/.venv/**',
     'e2e/**',
+    'playwright-report/**',
   ]),
 ]);
 

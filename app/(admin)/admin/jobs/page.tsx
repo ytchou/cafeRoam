@@ -1,13 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { BatchesList } from './_components/BatchesList';
 import { RawJobsList } from './_components/RawJobsList';
 
 type Tab = 'batches' | 'raw';
 
-export default function AdminJobsPage() {
+function AdminJobsContent() {
   const searchParams = useSearchParams();
   const initialStatus = searchParams.get('status');
   const [activeTab, setActiveTab] = useState<Tab>(
@@ -15,9 +15,7 @@ export default function AdminJobsPage() {
   );
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Jobs Queue</h1>
-
+    <>
       <div className="flex gap-1 border-b">
         {(['batches', 'raw'] as const).map((tab) => (
           <button
@@ -40,6 +38,17 @@ export default function AdminJobsPage() {
       ) : (
         <RawJobsList initialStatus={initialStatus ?? undefined} />
       )}
+    </>
+  );
+}
+
+export default function AdminJobsPage() {
+  return (
+    <div className="space-y-6">
+      <h1 className="text-2xl font-bold">Jobs Queue</h1>
+      <Suspense>
+        <AdminJobsContent />
+      </Suspense>
     </div>
   );
 }
