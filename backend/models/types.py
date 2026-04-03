@@ -260,7 +260,36 @@ class ShopReview(CamelModel):
 class ShopReviewsResponse(CamelModel):
     reviews: list[ShopReview]
     total_count: int
-    average_rating: float
+
+
+class District(CamelModel):
+    id: str
+    slug: str
+    name_en: str
+    name_zh: str
+    description_en: str | None = None
+    description_zh: str | None = None
+    city: str
+    shop_count: int
+    sort_order: int
+
+
+class DistrictShopResult(CamelModel):
+    shop_id: str
+    name: str
+    slug: str | None = None
+    rating: float | None = None
+    review_count: int = 0
+    cover_photo_url: str | None = None
+    address: str | None = None
+    mrt: str | None = None
+    matched_tag_labels: list[str] = []
+
+
+class DistrictShopsResponse(CamelModel):
+    district: District
+    shops: list[DistrictShopResult]
+    total_count: int
 
 
 class SearchFilters(CamelModel):
