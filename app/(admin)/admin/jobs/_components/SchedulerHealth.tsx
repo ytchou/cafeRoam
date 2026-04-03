@@ -47,7 +47,12 @@ export function SchedulerHealth() {
   }, []);
 
   if (loading) return <p>Loading...</p>;
-  if (error) return <p role="alert" className="text-red-600">{error}</p>;
+  if (error)
+    return (
+      <p role="alert" className="text-red-600">
+        {error}
+      </p>
+    );
   if (!data) return null;
 
   return (

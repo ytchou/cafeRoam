@@ -32,21 +32,21 @@ on each Supabase project.
 
 ### Cron jobs (time-triggered)
 
-| Job ID | Schedule | Handler | Purpose |
-|---|---|---|---|
-| `staleness_sweep` | Daily @ 03:00 Taipei | `handle_smart_staleness_sweep` | Scans all shops for stale data; enqueues `STALENESS_SWEEP` jobs for shops needing refresh |
-| `reembed_reviewed_shops` | Daily @ 03:01 Taipei | `handle_reembed_reviewed_shops` | Re-generates pgvector embeddings for shops that were recently reviewed/enriched |
-| `delete_expired_accounts` | Daily @ 03:02 Taipei | `delete_expired_accounts` | PDPA cascade: permanently deletes accounts that have been scheduled for deletion (photos, notes, lists, polaroids, profile) |
-| `weekly_email` | Monday @ 09:00 Taipei | `handle_weekly_email` | Sends weekly digest email to subscribed users |
+| Job ID                    | Schedule              | Handler                         | Purpose                                                                                                                     |
+| ------------------------- | --------------------- | ------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `staleness_sweep`         | Daily @ 03:00 Taipei  | `handle_smart_staleness_sweep`  | Scans all shops for stale data; enqueues `STALENESS_SWEEP` jobs for shops needing refresh                                   |
+| `reembed_reviewed_shops`  | Daily @ 03:01 Taipei  | `handle_reembed_reviewed_shops` | Re-generates pgvector embeddings for shops that were recently reviewed/enriched                                             |
+| `delete_expired_accounts` | Daily @ 03:02 Taipei  | `delete_expired_accounts`       | PDPA cascade: permanently deletes accounts that have been scheduled for deletion (photos, notes, lists, polaroids, profile) |
+| `weekly_email`            | Monday @ 09:00 Taipei | `handle_weekly_email`           | Sends weekly digest email to subscribed users                                                                               |
 
 All four are wrapped with `@idempotent_cron` — see **Idempotency** section below.
 
 ### Interval jobs (continuous loops)
 
-| Job ID | Interval | Purpose |
-|---|---|---|
-| `poll_pending_jobs` | Every 5 min (`settings.worker_poll_interval_seconds`, default 300s) | Main worker loop — one DB query to find pending job types, then dispatches each type up to its concurrency limit |
-| `reclaim_stuck_jobs` | Every 30 min | Reclaims jobs stuck in `CLAIMED` status (handles worker crashes). Also runs cron lock cleanup once per day (7-day retention) |
+| Job ID               | Interval                                                            | Purpose                                                                                                                      |
+| -------------------- | ------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `poll_pending_jobs`  | Every 5 min (`settings.worker_poll_interval_seconds`, default 300s) | Main worker loop — one DB query to find pending job types, then dispatches each type up to its concurrency limit             |
+| `reclaim_stuck_jobs` | Every 30 min                                                        | Reclaims jobs stuck in `CLAIMED` status (handles worker crashes). Also runs cron lock cleanup once per day (7-day retention) |
 
 Both use `max_instances=1` and `coalesce=True` — if a previous run is still in progress, the
 next tick is skipped rather than overlapping.
@@ -57,8 +57,8 @@ next tick is skipped rather than overlapping.
 
 **Migration:** `supabase/migrations/20260327000004_register_search_cache_cron.sql`
 
-| Job name | Schedule | SQL | Purpose |
-|---|---|---|---|
+| Job name               | Schedule             | SQL                                                 | Purpose                                                   |
+| ---------------------- | -------------------- | --------------------------------------------------- | --------------------------------------------------------- |
 | `cleanup-search-cache` | Hourly (`0 * * * *`) | `DELETE FROM search_cache WHERE expires_at < now()` | Purges expired rows from the semantic search result cache |
 
 The migration is safe to apply even when pg_cron is not enabled — the `DO $$` block checks
@@ -110,7 +110,7 @@ The actual work happens asynchronously via `poll_pending_jobs`:
 cron trigger fires
   → acquire_cron_lock (idempotency check)
   → queue.enqueue(job_type=..., payload={})   ← writes to background_jobs table
-  
+
 poll_pending_jobs fires every N seconds
   → queue.get_pending_job_types()             ← one SELECT DISTINCT
   → process_job_type(jt) for each type
@@ -128,13 +128,13 @@ Concurrency limits per job type are configured via env vars
 
 APScheduler and pg_cron are fully isolated per environment. No shared state.
 
-| | Staging | Production |
-|---|---|---|
-| Scheduler host | Railway staging service | Railway prod service |
-| Supabase project | `caferoam-staging` | `caferoam-prod` (to be created, DEV-76) |
-| cron_locks table | staging DB | prod DB |
+|                    | Staging                                       | Production                                 |
+| ------------------ | --------------------------------------------- | ------------------------------------------ |
+| Scheduler host     | Railway staging service                       | Railway prod service                       |
+| Supabase project   | `caferoam-staging`                            | `caferoam-prod` (to be created, DEV-76)    |
+| cron_locks table   | staging DB                                    | prod DB                                    |
 | pg_cron registered | only if extension enabled in staging Supabase | only if extension enabled in prod Supabase |
-| background_jobs | staging DB | prod DB |
+| background_jobs    | staging DB                                    | prod DB                                    |
 
 When you deploy to staging, the APScheduler starts fresh. The first cron trigger after deploy
 will acquire locks for the current window and enqueue work. Previous locks from a prior deploy
@@ -152,6 +152,7 @@ Authorization: Bearer <admin-jwt>
 ```
 
 Returns:
+
 ```json
 {
   "status": "ok",
@@ -234,11 +235,11 @@ calendar window. Use this to manually re-trigger a job without waiting for the n
 
 ## Troubleshooting
 
-| Symptom | Likely cause | Fix |
-|---|---|---|
-| `/health/scheduler` returns `registered_jobs: 0` | Scheduler failed to start | Check Railway logs for startup errors |
-| `last_poll_at` is `null` after 1 min | Worker poll loop not firing | Verify `WORKER_POLL_INTERVAL_SECONDS` is set; check logs for DB connection errors |
-| Cron job not firing | Lock from prior deploy still blocking | Delete the lock row: `DELETE FROM cron_locks WHERE job_name = '...'` |
-| Jobs stuck in `CLAIMED` | Worker crashed mid-job | `reclaim_stuck_jobs` will auto-reclaim after `WORKER_STUCK_JOB_TIMEOUT_MINUTES`; or retry from `/admin/jobs` |
-| `cleanup-search-cache` not in `cron.job` | pg_cron was not enabled when migration ran | Enable extension, then run `SELECT cron.schedule(...)` manually |
-| pg_cron job not running | Extension disabled or job not registered | See verification steps above |
+| Symptom                                          | Likely cause                               | Fix                                                                                                          |
+| ------------------------------------------------ | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
+| `/health/scheduler` returns `registered_jobs: 0` | Scheduler failed to start                  | Check Railway logs for startup errors                                                                        |
+| `last_poll_at` is `null` after 1 min             | Worker poll loop not firing                | Verify `WORKER_POLL_INTERVAL_SECONDS` is set; check logs for DB connection errors                            |
+| Cron job not firing                              | Lock from prior deploy still blocking      | Delete the lock row: `DELETE FROM cron_locks WHERE job_name = '...'`                                         |
+| Jobs stuck in `CLAIMED`                          | Worker crashed mid-job                     | `reclaim_stuck_jobs` will auto-reclaim after `WORKER_STUCK_JOB_TIMEOUT_MINUTES`; or retry from `/admin/jobs` |
+| `cleanup-search-cache` not in `cron.job`         | pg_cron was not enabled when migration ran | Enable extension, then run `SELECT cron.schedule(...)` manually                                              |
+| pg_cron job not running                          | Extension disabled or job not registered   | See verification steps above                                                                                 |
