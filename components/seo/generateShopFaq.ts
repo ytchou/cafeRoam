@@ -58,7 +58,7 @@ export function generateShopFaq(shop: ShopForFaq): FaqEntry[] {
   if (ambienceTags.length > 0) {
     faq.push({
       question: `What's the vibe at ${shop.name}?`,
-      answer: `${shop.name} is known for its ${ambienceTags.join(', ').toLowerCase()} atmosphere.`,
+      answer: `${shop.name} is known for its ${ambienceTags.join(', ')} atmosphere.`,
     });
   }
 
@@ -76,7 +76,7 @@ export function generateShopFaq(shop: ShopForFaq): FaqEntry[] {
   if (coffeeTags.length > 0) {
     faq.push({
       question: `What kind of coffee does ${shop.name} serve?`,
-      answer: `${shop.name} specializes in ${coffeeTags.join(', ').toLowerCase()}.`,
+      answer: `${shop.name} specializes in ${coffeeTags.join(', ')}.`,
     });
   }
 
