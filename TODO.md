@@ -15,7 +15,7 @@
 - [x] Write failing tests for reverse substring matching
 
 **Chunk 2 — Classifier:**
-- [ ] Implement reverse matching with min-length guard
+- [x] Implement reverse matching with min-length guard
 
 **Chunk 3 — Vocabulary:**
 - [ ] Add 47 new Taiwan coffee terms to search_vocabulary.py
