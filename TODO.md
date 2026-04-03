@@ -6,6 +6,23 @@
 
 ---
 
+## Search Classifier Reverse Matching (DEV-198)
+
+> **Design Doc:** [docs/designs/2026-04-03-search-classifier-reverse-match-design.md](docs/designs/2026-04-03-search-classifier-reverse-match-design.md)
+> **Plan:** [docs/plans/2026-04-03-search-classifier-reverse-match-plan.md](docs/plans/2026-04-03-search-classifier-reverse-match-plan.md)
+
+**Chunk 1 — Tests:**
+- [ ] Write failing tests for reverse substring matching
+
+**Chunk 2 — Classifier:**
+- [ ] Implement reverse matching with min-length guard
+
+**Chunk 3 — Vocabulary:**
+- [ ] Add 47 new Taiwan coffee terms to search_vocabulary.py
+- [ ] Verify all tests pass + lint clean
+
+---
+
 ## Admin Dashboard Hardening (DEV-149)
 
 > **Design Doc:** [docs/designs/2026-04-02-admin-dashboard-hardening-design.md](docs/designs/2026-04-02-admin-dashboard-hardening-design.md)
