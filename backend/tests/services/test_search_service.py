@@ -561,3 +561,65 @@ class TestOptionCPlusScoring:
         # Normalization strips trailing ？, exact match → keyword_score 1.0
         expected = 0.8 * 0.5 + 0.0 * 0.2 + 1.0 * 0.3
         assert response.results[0].total_score == pytest.approx(expected, rel=1e-4)
+
+
+class TestOpeningHoursCoercion:
+    """Search must not crash when the DB returns legacy string opening_hours."""
+
+    @pytest.fixture
+    def mock_embeddings(self):
+        emb = AsyncMock()
+        emb.embed = AsyncMock(return_value=[0.1] * 1536)
+        emb.dimensions = 1536
+        return emb
+
+    def _make_rpc_db(self, rows):
+        db = MagicMock()
+        db.rpc = MagicMock(
+            return_value=MagicMock(execute=MagicMock(return_value=MagicMock(data=rows)))
+        )
+        return db
+
+    async def test_legacy_string_opening_hours_does_not_crash(self, mock_embeddings):
+        """When a shop row has Chinese-string opening_hours (legacy DB format), search returns results without raising."""
+        row = make_shop_row(
+            id="shop-legacy-hours",
+            name="西西里咖啡",
+            opening_hours=[
+                "星期六: 10:00 to 19:00",
+                "星期日: 10:00 to 19:00",
+                "星期一: 10:00 to 19:00",
+                "星期二: 10:00 to 19:00",
+                "星期三: 10:00 to 19:00",
+                "星期四: 10:00 to 19:00",
+                "星期五: 10:00 to 19:00",
+            ],
+        )
+        db = self._make_rpc_db([row])
+        service = SearchService(db=db, embeddings=mock_embeddings)
+        response = await service.search(SearchQuery(text="西西里"))
+
+        assert len(response.results) == 1
+        assert response.results[0].shop.id == "shop-legacy-hours"
+
+    async def test_structured_dict_opening_hours_passes_through(self, mock_embeddings):
+        """When a shop row has structured-dict opening_hours (current DB format), search returns results without raising."""
+        row = make_shop_row(
+            id="shop-structured-hours",
+            name="山小孩咖啡",
+            opening_hours=[
+                {"day": 0, "open": 540, "close": 1080},
+                {"day": 1, "open": 540, "close": 1080},
+                {"day": 5, "open": 600, "close": 1140},
+                {"day": 6, "open": 600, "close": 1080},
+            ],
+        )
+        db = self._make_rpc_db([row])
+        service = SearchService(db=db, embeddings=mock_embeddings)
+        response = await service.search(SearchQuery(text="山小孩"))
+
+        assert len(response.results) == 1
+        shop = response.results[0].shop
+        assert shop.id == "shop-structured-hours"
+        assert shop.opening_hours is not None
+        assert len(shop.opening_hours) == 4
