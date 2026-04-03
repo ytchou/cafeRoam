@@ -6,6 +6,35 @@
 
 ---
 
+## District Landing Pages (DEV-201)
+
+> **Design Doc:** [docs/designs/2026-04-03-district-landing-pages-design.md](docs/designs/2026-04-03-district-landing-pages-design.md)
+> **Plan:** [docs/plans/2026-04-03-district-landing-pages-plan.md](docs/plans/2026-04-03-district-landing-pages-plan.md)
+
+**Chunk 1 — DB Foundation (DEV-204):**
+- [ ] Create districts table + seed 12 Taipei districts
+- [ ] Add district_id FK to shops
+- [ ] Run backfill script
+
+**Chunk 2 — Backend Service + API (DEV-205):**
+- [ ] Add Pydantic models + test factories
+- [ ] TDD: DistrictService (tests -> implementation)
+- [ ] TDD: API endpoints (tests -> implementation)
+- [ ] Expose district on shop detail API
+
+**Chunk 3 — District Landing Page (DEV-206):**
+- [ ] TypeScript types + server-side API helpers
+- [ ] API proxy routes + DistrictJsonLd
+- [ ] District landing page (SSR + generateMetadata)
+- [ ] Districts index page
+- [ ] Sitemap update
+
+**Chunk 4 — Explore Page + Shop Detail (DEV-207, DEV-208):**
+- [ ] useDistricts hook + Explore page district section
+- [ ] "More in District" link on shop detail
+
+---
+
 ## Search Classifier Reverse Matching (DEV-198)
 
 > **Design Doc:** [docs/designs/2026-04-03-search-classifier-reverse-match-design.md](docs/designs/2026-04-03-search-classifier-reverse-match-design.md)
