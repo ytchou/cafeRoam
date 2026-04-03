@@ -25,6 +25,7 @@ CafeRoam's core principle is that shop owners never see individual user data —
 ## Rationale
 
 Bundled consent is the right fit because:
+
 1. It satisfies Taiwan PDPA Art. 19§5 — the data subject is informed of the purpose at collection time
 2. It preserves a clean signup UX (no extra checkbox or modal)
 3. The disclosure is specific enough to meet Art. 20 purpose limitation requirements
