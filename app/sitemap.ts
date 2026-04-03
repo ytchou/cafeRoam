@@ -28,7 +28,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     console.error('[sitemap] Failed to fetch vibes:', vibesError.message);
   }
   if (districtsError) {
-    console.error('[sitemap] Failed to fetch districts:', districtsError.message);
+    console.error(
+      '[sitemap] Failed to fetch districts:',
+      districtsError.message
+    );
   }
 
   const shopEntries: MetadataRoute.Sitemap = (shops ?? []).map((shop) => ({

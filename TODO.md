@@ -12,17 +12,20 @@
 > **Plan:** [docs/plans/2026-04-03-district-landing-pages-plan.md](docs/plans/2026-04-03-district-landing-pages-plan.md)
 
 **Chunk 1 — DB Foundation (DEV-204):**
+
 - [x] Create districts table + seed 12 Taipei districts
 - [x] Add district_id FK to shops
 - [x] Run backfill script
 
 **Chunk 2 — Backend Service + API (DEV-205):**
+
 - [x] Add Pydantic models + test factories
 - [x] TDD: DistrictService (tests -> implementation)
 - [x] TDD: API endpoints (tests -> implementation)
 - [x] Expose district on shop detail API
 
 **Chunk 3 — District Landing Page (DEV-206):**
+
 - [x] TypeScript types + server-side API helpers
 - [x] API proxy routes + DistrictJsonLd
 - [x] District landing page (SSR + generateMetadata)
@@ -30,6 +33,7 @@
 - [x] Sitemap update
 
 **Chunk 4 — Explore Page + Shop Detail (DEV-207, DEV-208):**
+
 - [x] useDistricts hook + Explore page district section
 - [x] "More in District" link on shop detail
 

@@ -12,14 +12,14 @@ Create crawlable geo landing pages for Taiwan districts so CafeRoam ranks for hi
 
 ## Decisions
 
-| Decision | Choice | Alternative Rejected | Why |
-|----------|--------|---------------------|-----|
-| District membership | FK on shops table + backfill | Geo bounding boxes at query time | Precise, queryable, no runtime computation; worth the one-time backfill effort |
-| Rendering | Server component + ISR (5-min) | Client-side SWR (like vibes) | SEO is the primary goal; needs server-rendered HTML + generateMetadata for crawlers |
-| Min threshold | 3 shops per district | 5 shops / no minimum | Low bar; most districts clear it at 160 shops. Avoids thin-content penalty |
-| Vibe filter | Query param (`?vibe=study-cave`) | Separate routes per district x vibe | Simpler routing; avoids 150+ thin intersection pages |
-| Explore page slot | Grid cards between Vibes and Community | Carousel / map picker | Matches existing vibes section layout; lowest implementation cost |
-| Granularity | District first (大安區) | Neighborhood (Yongkang Street) | Density supports districts now; neighborhoods can be added later |
+| Decision            | Choice                                 | Alternative Rejected                | Why                                                                                 |
+| ------------------- | -------------------------------------- | ----------------------------------- | ----------------------------------------------------------------------------------- |
+| District membership | FK on shops table + backfill           | Geo bounding boxes at query time    | Precise, queryable, no runtime computation; worth the one-time backfill effort      |
+| Rendering           | Server component + ISR (5-min)         | Client-side SWR (like vibes)        | SEO is the primary goal; needs server-rendered HTML + generateMetadata for crawlers |
+| Min threshold       | 3 shops per district                   | 5 shops / no minimum                | Low bar; most districts clear it at 160 shops. Avoids thin-content penalty          |
+| Vibe filter         | Query param (`?vibe=study-cave`)       | Separate routes per district x vibe | Simpler routing; avoids 150+ thin intersection pages                                |
+| Explore page slot   | Grid cards between Vibes and Community | Carousel / map picker               | Matches existing vibes section layout; lowest implementation cost                   |
+| Granularity         | District first (大安區)                | Neighborhood (Yongkang Street)      | Density supports districts now; neighborhoods can be added later                    |
 
 ## Architecture
 
@@ -27,20 +27,20 @@ Create crawlable geo landing pages for Taiwan districts so CafeRoam ranks for hi
 
 **New `districts` table** (modeled after `vibe_collections`):
 
-| Column | Type | Notes |
-|--------|------|-------|
-| id | UUID PK | `gen_random_uuid()` |
-| slug | TEXT UNIQUE NOT NULL | URL slug, e.g. `da-an` |
-| name_en | TEXT NOT NULL | e.g. `Da'an` |
-| name_zh | TEXT NOT NULL | e.g. `大安區` |
-| description_en | TEXT | SEO description |
-| description_zh | TEXT | SEO description (zh) |
-| city | TEXT NOT NULL DEFAULT 'taipei' | Parent city |
-| sort_order | INT NOT NULL DEFAULT 0 | UI ordering |
-| is_active | BOOLEAN NOT NULL DEFAULT true | Soft delete |
-| shop_count | INT NOT NULL DEFAULT 0 | Denormalized count |
-| created_at | TIMESTAMPTZ | Auto |
-| updated_at | TIMESTAMPTZ | Auto |
+| Column         | Type                           | Notes                  |
+| -------------- | ------------------------------ | ---------------------- |
+| id             | UUID PK                        | `gen_random_uuid()`    |
+| slug           | TEXT UNIQUE NOT NULL           | URL slug, e.g. `da-an` |
+| name_en        | TEXT NOT NULL                  | e.g. `Da'an`           |
+| name_zh        | TEXT NOT NULL                  | e.g. `大安區`          |
+| description_en | TEXT                           | SEO description        |
+| description_zh | TEXT                           | SEO description (zh)   |
+| city           | TEXT NOT NULL DEFAULT 'taipei' | Parent city            |
+| sort_order     | INT NOT NULL DEFAULT 0         | UI ordering            |
+| is_active      | BOOLEAN NOT NULL DEFAULT true  | Soft delete            |
+| shop_count     | INT NOT NULL DEFAULT 0         | Denormalized count     |
+| created_at     | TIMESTAMPTZ                    | Auto                   |
+| updated_at     | TIMESTAMPTZ                    | Auto                   |
 
 **New FK on `shops`**: `district_id UUID REFERENCES districts(id)`, nullable, indexed.
 
@@ -51,10 +51,12 @@ Create crawlable geo landing pages for Taiwan districts so CafeRoam ranks for hi
 ### Backend Layer
 
 **`DistrictService`** (mirrors `VibeService`):
+
 - `get_districts(min_shops=3)` — active districts with shop_count >= threshold
 - `get_shops_for_district(slug, vibe_slug=None)` — shops where `district_id` matches, optional vibe filter via `shop_tags` join
 
 **API endpoints** on explore router:
+
 - `GET /explore/districts` — public, lists active districts
 - `GET /explore/districts/{slug}/shops?vibe=` — public, shops in district
 
@@ -63,17 +65,20 @@ Create crawlable geo landing pages for Taiwan districts so CafeRoam ranks for hi
 ### Frontend Layer
 
 **District landing page** (`app/explore/districts/[slug]/page.tsx`):
+
 - Server component with `generateMetadata` — dynamic per-district title/description
 - ISR data fetch via `BACKEND_URL` with `revalidate: 300`
 - Client sub-component for vibe filter chips
 - JSON-LD (`CollectionPage` schema)
 
 **Explore page slot** (modify `app/explore/page.tsx`):
+
 - "Browse by District" section — 6 grid cards (name_zh, name_en, shop count badge)
 - Client-side `useDistricts()` SWR hook
 - "See all" links to `/explore/districts`
 
 **Shop detail** (modify `shop-detail-client.tsx`):
+
 - "More cafes in [District]" link near bottom
 
 **Sitemap**: Add district entries at priority 0.7.

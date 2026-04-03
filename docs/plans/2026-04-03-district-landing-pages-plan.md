@@ -15,6 +15,7 @@
 **Tech Stack:** Supabase (Postgres), FastAPI, Next.js 16 (App Router), Tailwind CSS, SWR
 
 **Acceptance Criteria:**
+
 - [ ] A user searching "大安區咖啡廳" lands on a CafeRoam district page with shops, metadata, and JSON-LD
 - [ ] A user on the Explore page sees a "Browse by District" grid with 6 districts and can tap through
 - [ ] A user on a shop detail page sees "More cafes in [District]" linking to the district page
@@ -28,6 +29,7 @@
 **Sub-issue:** DEV-204 (Foundation)
 
 **Files:**
+
 - Create: `supabase/migrations/20260404000001_create_districts_table.sql`
 
 **Step 1: Write the migration**
@@ -102,6 +104,7 @@ git commit -m "feat(DEV-204): create districts reference table with 12 Taipei di
 **Sub-issue:** DEV-204
 
 **Files:**
+
 - Create: `supabase/migrations/20260404000002_add_district_id_to_shops.sql`
 
 **Step 1: Write the migration**
@@ -135,6 +138,7 @@ git commit -m "feat(DEV-204): add district_id FK to shops table"
 **Sub-issue:** DEV-204
 
 **Files:**
+
 - Create: `backend/scripts/backfill_districts.py`
 
 **Step 1: Write the backfill script**
@@ -248,6 +252,7 @@ git commit -m "feat(DEV-204): backfill script to assign districts to shops"
 **Sub-issue:** DEV-205
 
 **Files:**
+
 - Modify: `backend/models/types.py` (append after VibeShopsResponse ~line 328)
 
 **Step 1: Write the models**
@@ -301,6 +306,7 @@ git commit -m "feat(DEV-205): add District, DistrictShopResult, DistrictShopsRes
 **Sub-issue:** DEV-205
 
 **Files:**
+
 - Modify: `backend/tests/factories.py` (append at end)
 
 **Step 1: Add district factories**
@@ -355,6 +361,7 @@ git commit -m "feat(DEV-205): add district test factories"
 **Sub-issue:** DEV-205
 
 **Files:**
+
 - Create: `backend/tests/services/test_district_service.py`
 
 **Step 1: Write failing tests**
@@ -511,6 +518,7 @@ Expected: FAIL — `ModuleNotFoundError: No module named 'services.district_serv
 **Sub-issue:** DEV-205
 
 **Files:**
+
 - Create: `backend/services/district_service.py`
 
 **Step 1: Implement the service**
@@ -700,6 +708,7 @@ git commit -m "feat(DEV-205): implement DistrictService with tests"
 **Sub-issue:** DEV-205
 
 **Files:**
+
 - Create: `backend/tests/api/test_explore_districts.py`
 
 **Step 1: Write failing tests**
@@ -842,6 +851,7 @@ Expected: FAIL — `DistrictService` not imported in `api/explore.py` yet.
 **Sub-issue:** DEV-205
 
 **Files:**
+
 - Modify: `backend/api/explore.py` (add imports + 2 endpoints)
 
 **Step 1: Add district endpoints to explore router**
@@ -901,6 +911,7 @@ git commit -m "feat(DEV-205): add district list and shop endpoints to explore AP
 **Sub-issue:** DEV-205
 
 **Files:**
+
 - Modify: `backend/api/shops.py` (modify `get_shop` endpoint, ~line 83-111)
 
 **Step 1: Add district join to shop detail query**
@@ -949,6 +960,7 @@ git commit -m "feat(DEV-205): expose district on shop detail API response"
 **Sub-issue:** DEV-206
 
 **Files:**
+
 - Create: `types/districts.ts`
 
 **Step 1: Write types**
@@ -1001,6 +1013,7 @@ git commit -m "feat(DEV-206): add District TypeScript types"
 **Sub-issue:** DEV-206
 
 **Files:**
+
 - Create: `lib/api/districts.ts`
 
 **Step 1: Write API helpers**
@@ -1029,8 +1042,7 @@ export async function fetchDistrictShops(
     { next: { revalidate: 300 } }
   );
   if (res.status === 404) return null;
-  if (!res.ok)
-    throw new Error(`Failed to fetch district shops: ${res.status}`);
+  if (!res.ok) throw new Error(`Failed to fetch district shops: ${res.status}`);
   return res.json();
 }
 ```
@@ -1049,6 +1061,7 @@ git commit -m "feat(DEV-206): add server-side district API helpers with ISR"
 **Sub-issue:** DEV-206, DEV-207
 
 **Files:**
+
 - Create: `app/api/explore/districts/route.ts`
 - Create: `app/api/explore/districts/[slug]/shops/route.ts`
 
@@ -1057,6 +1070,7 @@ git commit -m "feat(DEV-206): add server-side district API helpers with ISR"
 No test needed — thin proxies following `app/api/explore/vibes/route.ts` pattern.
 
 `app/api/explore/districts/route.ts`:
+
 ```typescript
 import { NextRequest } from 'next/server';
 import { proxyToBackend } from '@/lib/api/proxy';
@@ -1067,6 +1081,7 @@ export async function GET(request: NextRequest) {
 ```
 
 `app/api/explore/districts/[slug]/shops/route.ts`:
+
 ```typescript
 import { NextRequest } from 'next/server';
 import { proxyToBackend } from '@/lib/api/proxy';
@@ -1094,6 +1109,7 @@ git commit -m "feat(DEV-206): add district API proxy routes"
 **Sub-issue:** DEV-206
 
 **Files:**
+
 - Create: `components/seo/DistrictJsonLd.tsx`
 
 **Step 1: Write JSON-LD component**
@@ -1143,6 +1159,7 @@ git commit -m "feat(DEV-206): add DistrictJsonLd structured data component"
 **Sub-issue:** DEV-206
 
 **Files:**
+
 - Create: `app/explore/districts/[slug]/layout.tsx`
 - Create: `app/explore/districts/[slug]/page.tsx`
 
@@ -1341,6 +1358,7 @@ git commit -m "feat(DEV-206): district landing page with SSR, generateMetadata, 
 **Sub-issue:** DEV-206
 
 **Files:**
+
 - Create: `app/explore/districts/page.tsx`
 
 **Step 1: Write the index page**
@@ -1402,6 +1420,7 @@ git commit -m "feat(DEV-206): districts index page (See all)"
 **Sub-issue:** DEV-206
 
 **Files:**
+
 - Modify: `app/sitemap.ts`
 
 **Step 1: Add district entries to sitemap**
@@ -1455,6 +1474,7 @@ git commit -m "feat(DEV-206): add district entries to sitemap"
 **Sub-issue:** DEV-207
 
 **Files:**
+
 - Create: `lib/hooks/use-districts.ts`
 
 **Step 1: Write the hook**
@@ -1497,16 +1517,19 @@ git commit -m "feat(DEV-207): add useDistricts SWR hook"
 **Sub-issue:** DEV-207
 
 **Files:**
+
 - Modify: `app/explore/page.tsx`
 
 **Step 1: Add district section to Explore page**
 
 1. Add import at top (~line 15):
+
 ```typescript
 import { useDistricts } from '@/lib/hooks/use-districts';
 ```
 
 2. Add hook + memo inside `ExplorePage()` (~after line 36):
+
 ```typescript
 const { districts } = useDistricts();
 const previewDistricts = useMemo(() => districts.slice(0, 6), [districts]);
@@ -1515,43 +1538,43 @@ const previewDistricts = useMemo(() => districts.slice(0, 6), [districts]);
 3. Add district section inside the `tarotAndVibes` JSX, after the vibes section closing `)}` (~after line 144, before `</>` at line 145):
 
 ```tsx
-{previewDistricts.length > 0 && (
-  <section className="mt-8">
-    <div className="mb-3 flex items-center justify-between">
-      <h2
-        className="text-text-primary text-lg font-bold"
-        style={BRICOLAGE_STYLE_SM}
-      >
-        Browse by District
-      </h2>
-      <Link
-        href="/explore/districts"
-        className="text-link-green text-xs font-medium"
-      >
-        See all &rarr;
-      </Link>
-    </div>
-    <div className="grid grid-cols-3 gap-2">
-      {previewDistricts.map((district) => (
-        <Link
-          key={district.slug}
-          href={`/explore/districts/${district.slug}`}
-          className="flex flex-col gap-1.5 rounded-2xl border border-gray-100 bg-white px-4 py-3"
+{
+  previewDistricts.length > 0 && (
+    <section className="mt-8">
+      <div className="mb-3 flex items-center justify-between">
+        <h2
+          className="text-text-primary text-lg font-bold"
+          style={BRICOLAGE_STYLE_SM}
         >
-          <span className="text-text-primary text-[13px] leading-tight font-semibold">
-            {district.nameZh}
-          </span>
-          <span className="text-[11px] text-gray-400">
-            {district.nameEn}
-          </span>
-          <span className="mt-0.5 self-start rounded-full bg-gray-100 px-1.5 py-0.5 text-[10px] text-gray-500">
-            {district.shopCount} shops
-          </span>
+          Browse by District
+        </h2>
+        <Link
+          href="/explore/districts"
+          className="text-link-green text-xs font-medium"
+        >
+          See all &rarr;
         </Link>
-      ))}
-    </div>
-  </section>
-)}
+      </div>
+      <div className="grid grid-cols-3 gap-2">
+        {previewDistricts.map((district) => (
+          <Link
+            key={district.slug}
+            href={`/explore/districts/${district.slug}`}
+            className="flex flex-col gap-1.5 rounded-2xl border border-gray-100 bg-white px-4 py-3"
+          >
+            <span className="text-text-primary text-[13px] leading-tight font-semibold">
+              {district.nameZh}
+            </span>
+            <span className="text-[11px] text-gray-400">{district.nameEn}</span>
+            <span className="mt-0.5 self-start rounded-full bg-gray-100 px-1.5 py-0.5 text-[10px] text-gray-500">
+              {district.shopCount} shops
+            </span>
+          </Link>
+        ))}
+      </div>
+    </section>
+  );
+}
 ```
 
 **Step 2: Run type check + lint**
@@ -1573,35 +1596,41 @@ git commit -m "feat(DEV-207): add Browse by District section to Explore page"
 **Sub-issue:** DEV-208
 
 **Files:**
+
 - Modify: `app/shops/[shopId]/[slug]/shop-detail-client.tsx`
 
 **Step 1: Add district link to shop detail**
 
 1. Add to the `ShopData` interface (~after line 57):
+
 ```typescript
 district?: { slug: string; nameZh: string } | null;
 ```
 
 2. Add after `<ClaimBanner ... />` (~after line 224, before closing `</div>`):
+
 ```tsx
-{shop.district && (
-  <div className="px-5 py-4">
-    <Link
-      href={`/explore/districts/${shop.district.slug}`}
-      className="flex items-center justify-between rounded-xl bg-white px-4 py-3 shadow-sm"
-    >
-      <span className="text-sm font-medium text-gray-700">
-        More cafes in {shop.district.nameZh}
-      </span>
-      <span className="text-link-green text-xs font-medium">
-        See all &rarr;
-      </span>
-    </Link>
-  </div>
-)}
+{
+  shop.district && (
+    <div className="px-5 py-4">
+      <Link
+        href={`/explore/districts/${shop.district.slug}`}
+        className="flex items-center justify-between rounded-xl bg-white px-4 py-3 shadow-sm"
+      >
+        <span className="text-sm font-medium text-gray-700">
+          More cafes in {shop.district.nameZh}
+        </span>
+        <span className="text-link-green text-xs font-medium">
+          See all &rarr;
+        </span>
+      </Link>
+    </div>
+  );
+}
 ```
 
 3. Add `Link` import at top if not already present:
+
 ```typescript
 import Link from 'next/link';
 ```
@@ -1707,18 +1736,22 @@ graph TD
 ```
 
 **Wave 1** (parallel):
+
 - Task 1: districts table migration
 - Task 2: district_id FK migration
 
 **Wave 2** (parallel after Wave 1):
+
 - Task 3: Backfill script
 - Task 4: Pydantic models
 
 **Wave 3** (parallel after Wave 2):
+
 - Task 5: Test factories
 - Task 11: TypeScript types
 
 **Wave 4** (sequential — TDD cycle):
+
 - Task 6: Service tests (RED)
 - Task 7: Service implementation (GREEN)
 - Task 8: API tests (RED)
@@ -1726,12 +1759,14 @@ graph TD
 - Task 10: Shop detail API change
 
 **Wave 5** (parallel after Wave 3+4):
+
 - Task 12: Server-side API helpers
 - Task 13: Proxy routes
 - Task 14: DistrictJsonLd
 - Task 18: useDistricts hook
 
 **Wave 6** (parallel after Wave 5):
+
 - Task 15: District landing page
 - Task 16: Districts index page
 - Task 17: Sitemap update
@@ -1739,4 +1774,5 @@ graph TD
 - Task 20: Shop detail "More in District"
 
 **Wave 7** (after all):
+
 - Task 21: Full test suite verification

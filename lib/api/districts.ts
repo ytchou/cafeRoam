@@ -19,7 +19,6 @@ export async function fetchDistrictShops(
     { next: { revalidate: 300 } }
   );
   if (res.status === 404) return null;
-  if (!res.ok)
-    throw new Error(`Failed to fetch district shops: ${res.status}`);
+  if (!res.ok) throw new Error(`Failed to fetch district shops: ${res.status}`);
   return res.json();
 }

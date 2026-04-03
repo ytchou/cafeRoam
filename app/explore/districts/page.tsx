@@ -14,7 +14,10 @@ export default async function DistrictsIndexPage() {
     <main className="bg-surface-warm min-h-screen px-5 pt-6 pb-24">
       <h1
         className="text-text-primary mb-6 text-[28px] font-bold"
-        style={{ fontFamily: 'var(--font-bricolage), var(--font-geist-sans), sans-serif' }}
+        style={{
+          fontFamily:
+            'var(--font-bricolage), var(--font-geist-sans), sans-serif',
+        }}
       >
         Browse by District
       </h1>
