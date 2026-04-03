@@ -7,6 +7,10 @@ const mockProxy = vi.hoisted(() =>
 vi.mock('@/lib/api/proxy', () => ({ proxyToBackend: mockProxy }));
 
 import { GET as analyticsGET } from '../[shopId]/analytics/route';
+import {
+  GET as analyticsTermsGET,
+  POST as analyticsTermsPOST,
+} from '../[shopId]/analytics-terms/route';
 import { GET as dashboardGET } from '../[shopId]/dashboard/route';
 import { PATCH as infoPATCH } from '../[shopId]/info/route';
 import { GET as reviewsGET } from '../[shopId]/reviews/route';
@@ -107,6 +111,26 @@ describe('owner API proxy routes', () => {
     expect(mockProxy).toHaveBeenCalledWith(
       expect.any(NextRequest),
       '/owner/shop-abc/tags'
+    );
+  });
+
+  it('owner checking analytics terms status proxies GET to backend', async () => {
+    await analyticsTermsGET(req(), {
+      params: Promise.resolve({ shopId: 'shop-abc' }),
+    });
+    expect(mockProxy).toHaveBeenCalledWith(
+      expect.any(NextRequest),
+      '/owner/shop-abc/analytics-terms'
+    );
+  });
+
+  it('owner accepting analytics terms proxies POST to backend', async () => {
+    await analyticsTermsPOST(req('POST'), {
+      params: Promise.resolve({ shopId: 'shop-abc' }),
+    });
+    expect(mockProxy).toHaveBeenCalledWith(
+      expect.any(NextRequest),
+      '/owner/shop-abc/analytics-terms'
     );
   });
 });

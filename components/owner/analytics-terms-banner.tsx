@@ -38,7 +38,7 @@ export function AnalyticsTermsBanner({
         <button
           onClick={onAccept}
           disabled={accepting}
-          className="bg-brand mt-5 w-full rounded-full py-3 text-sm font-semibold text-white disabled:opacity-50"
+          className="bg-brand mt-5 w-full rounded-full py-3 text-sm font-semibold text-white focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-brand disabled:opacity-50"
         >
           {accepting ? 'Processing...' : 'I understand'}
         </button>

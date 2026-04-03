@@ -22,7 +22,7 @@ export function useOwnerAnalyticsTerms(shopId: string) {
       await fetchWithAuth(`/api/owner/${shopId}/analytics-terms`, {
         method: 'POST',
       });
-      await mutate({ accepted: true }, false);
+      await mutate({ accepted: true }, { revalidate: true });
     } finally {
       setAccepting(false);
     }

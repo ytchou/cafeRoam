@@ -19,7 +19,7 @@ class ProfileService:
                     self._db.table("profiles")
                     .select("display_name, avatar_url, analytics_opt_out")
                     .eq("id", user_id)
-                    .limit(1)
+                    .maybe_single()
                     .execute()
                 )
             ),
@@ -40,8 +40,7 @@ class ProfileService:
                 )
             ),
         )
-        rows = cast("list[dict[str, Any]]", profile_resp.data)
-        profile = rows[0] if rows else {}
+        profile = cast("dict[str, Any]", profile_resp.data) if profile_resp.data else {}
         return ProfileResponse(
             display_name=profile.get("display_name"),
             avatar_url=profile.get("avatar_url"),

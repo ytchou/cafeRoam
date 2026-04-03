@@ -56,7 +56,7 @@ export default function OwnerDashboardPage() {
         <DashboardOverview stats={stats} isLoading={statsLoading} />
         <section>
           <h2 className="mb-3 text-base font-semibold">搜尋與社群洞察</h2>
-          <DashboardAnalytics data={analyticsData} isLoading={analyticsLoading} />
+          <DashboardAnalytics data={analyticsData} isLoading={analyticsLoading || termsLoading} />
         </section>
         <section>
           <h2 className="mb-3 text-base font-semibold">編輯店家資訊</h2>

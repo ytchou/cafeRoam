@@ -200,6 +200,31 @@ class OwnerService:
                 )
         return sorted(rankings, key=lambda r: r.rank)[:3]
 
+    # ── Analytics Terms ────────────────────────────────────────────────────
+
+    def get_analytics_terms_status(self, shop_id: str, user_id: str) -> bool:
+        """Return whether the owner has accepted the analytics data usage terms."""
+        result = (
+            self._db.table("shop_claims")
+            .select("analytics_terms_accepted_at")
+            .eq("shop_id", shop_id)
+            .eq("user_id", user_id)
+            .eq("status", "approved")
+            .maybe_single()
+            .execute()
+        )
+        return bool(result and result.data and result.data.get("analytics_terms_accepted_at"))
+
+    def accept_analytics_terms(self, shop_id: str, user_id: str) -> None:
+        """Record that the owner accepted the analytics terms. Idempotent."""
+        from datetime import datetime
+
+        self._db.table("shop_claims").update(
+            {"analytics_terms_accepted_at": datetime.now(UTC).isoformat()}
+        ).eq("shop_id", shop_id).eq("user_id", user_id).eq("status", "approved").is_(
+            "analytics_terms_accepted_at", "null"
+        ).execute()
+
     # ── k-Anonymity ────────────────────────────────────────────────────────
 
     @staticmethod
