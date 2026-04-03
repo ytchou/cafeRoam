@@ -25,13 +25,13 @@
 **Chunk 3 — District Landing Page (DEV-206):**
 - [x] TypeScript types + server-side API helpers
 - [x] API proxy routes + DistrictJsonLd
-- [ ] District landing page (SSR + generateMetadata)
-- [ ] Districts index page
-- [ ] Sitemap update
+- [x] District landing page (SSR + generateMetadata)
+- [x] Districts index page
+- [x] Sitemap update
 
 **Chunk 4 — Explore Page + Shop Detail (DEV-207, DEV-208):**
-- [ ] useDistricts hook + Explore page district section
-- [ ] "More in District" link on shop detail
+- [x] useDistricts hook + Explore page district section
+- [x] "More in District" link on shop detail
 
 ---
 
