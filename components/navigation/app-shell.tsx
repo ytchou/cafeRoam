@@ -23,7 +23,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {children}
       </main>
       {isDesktop && !isFindPage && (
-        <footer className="flex justify-center py-3 border-t border-[#e5e7eb]">
+        <footer className="flex justify-center border-t border-[#e5e7eb] py-3">
           <BuyMeACoffeeButton />
         </footer>
       )}

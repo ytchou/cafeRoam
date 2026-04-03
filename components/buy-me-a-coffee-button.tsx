@@ -11,7 +11,7 @@ export function BuyMeACoffeeButton() {
       target="_blank"
       rel="noopener noreferrer"
       onClick={() => capture('bmc_click', { source: 'footer' })}
-      className="text-sm text-[#6b7280] hover:text-[#4b5563] transition-colors"
+      className="text-sm text-[#6b7280] transition-colors hover:text-[#4b5563]"
     >
       Buy me a coffee
     </a>
