@@ -23,8 +23,8 @@
 - [x] Expose district on shop detail API
 
 **Chunk 3 — District Landing Page (DEV-206):**
-- [ ] TypeScript types + server-side API helpers
-- [ ] API proxy routes + DistrictJsonLd
+- [x] TypeScript types + server-side API helpers
+- [x] API proxy routes + DistrictJsonLd
 - [ ] District landing page (SSR + generateMetadata)
 - [ ] Districts index page
 - [ ] Sitemap update
