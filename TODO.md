@@ -17,7 +17,7 @@
 - [x] Run backfill script
 
 **Chunk 2 — Backend Service + API (DEV-205):**
-- [ ] Add Pydantic models + test factories
+- [x] Add Pydantic models + test factories
 - [ ] TDD: DistrictService (tests -> implementation)
 - [ ] TDD: API endpoints (tests -> implementation)
 - [ ] Expose district on shop detail API

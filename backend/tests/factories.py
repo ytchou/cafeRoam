@@ -210,3 +210,37 @@ def make_community_note_row(**overrides: object) -> dict:
         "community_note_likes": [{"count": 12}],
     }
     return {**defaults, **overrides}
+
+def make_district_row(**overrides: object) -> dict:
+    """A districts table row."""
+    defaults = {
+        "id": "dist-da-an",
+        "slug": "da-an",
+        "name_en": "Da'an",
+        "name_zh": "大安區",
+        "description_en": "Coffee culture hub with the highest concentration of specialty cafes.",
+        "description_zh": "咖啡文化重鎮，獨立咖啡廳密度最高的區域。",
+        "city": "taipei",
+        "shop_count": 42,
+        "sort_order": 1,
+        "is_active": True,
+    }
+    return {**defaults, **overrides}
+
+
+def make_district_shop_row(**overrides: object) -> dict:
+    """A shop row as returned for district shop queries."""
+    defaults = {
+        "id": "shop-d4e5f6",
+        "name": "山小孩咖啡",
+        "slug": "shan-xiao-hai",
+        "rating": 4.6,
+        "review_count": 287,
+        "address": "台北市大安區溫州街74巷5弄2號",
+        "mrt": "台電大樓",
+        "processing_status": "live",
+        "shop_photos": [
+            {"url": "https://example.supabase.co/storage/v1/object/public/shop-photos/d4e5f6/exterior.jpg"}
+        ],
+    }
+    return {**defaults, **overrides}
