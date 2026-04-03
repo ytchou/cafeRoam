@@ -169,7 +169,9 @@ class SearchService:
                         "Search: legacy opening_hours present but none parseable",
                         shop_id=row.get("id"),
                     )
-                coerced_hours: list[dict[str, int | None]] | None = [h.model_dump() for h in structured] or None
+                coerced_hours: list[dict[str, int | None]] | None = (
+                    [h.model_dump() for h in structured] or None
+                )
             else:
                 coerced_hours = raw_hours or None
             shop = Shop(
