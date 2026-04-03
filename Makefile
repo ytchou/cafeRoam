@@ -1,4 +1,4 @@
-.PHONY: help doctor setup dev dev-all migrate seed-shops restore-seed-user reset-db workers-enrich workers-embed test validate-supabase lint audit-staging snapshot-staging promote-to-prod restore-snapshot
+.PHONY: help doctor setup dev dev-all migrate seed-shops seed-staging restore-seed-user reset-db workers-enrich workers-embed test validate-supabase lint audit-staging snapshot-staging promote-to-prod restore-snapshot
 
 help:
 	@echo "CafeRoam — Available commands:"
@@ -7,6 +7,7 @@ help:
 	@echo "  make dev-all             Start frontend + backend concurrently (Supabase must already be running)"
 	@echo "  make migrate             Apply Supabase migrations"
 	@echo "  make seed-shops          Restore full scraped shop data (710 shops, 164 live) from supabase/seeds/shops_data.sql"
+	@echo "  make seed-staging        Seed shops + payment methods to staging (requires DATABASE_URL)"
 	@echo "  make restore-seed-user   Restore the local dev admin user via Supabase Admin API (safe — no data loss)"
 	@echo "  make reset-db            !! DESTRUCTIVE: wipes all data. Use only on a fresh clone. Run 'make seed-shops' after."
 	@echo "  make workers-enrich      Run data enrichment worker locally"
@@ -68,6 +69,17 @@ seed-shops:
 	@echo "Applying payment methods seed..."
 	@docker exec -i supabase_db_caferoam psql -U postgres -d postgres < supabase/seeds/payment_methods_seed.sql
 	@echo "Done — shop data restored."
+
+seed-staging:
+	@if [ -z "$$DATABASE_URL" ]; then \
+		echo "Usage: DATABASE_URL=postgresql://... make seed-staging"; \
+		exit 1; \
+	fi
+	@echo "Seeding shops data to staging..."
+	@psql "$$DATABASE_URL" < supabase/seeds/shops_data.sql
+	@echo "Seeding payment methods to staging..."
+	@psql "$$DATABASE_URL" < supabase/seeds/payment_methods_seed.sql
+	@echo "Done — staging seeded."
 
 reset-db:
 	@echo "!! WARNING: This will wipe ALL local data (shops, users, check-ins, lists)."
