@@ -33,5 +33,6 @@ async def update_profile(
         fields=body.model_fields_set,
         display_name=body.display_name,
         avatar_url=body.avatar_url,
+        analytics_opt_out=body.analytics_opt_out,
     )
     return {"message": "Profile updated"}

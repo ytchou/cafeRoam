@@ -97,11 +97,13 @@ class ProfileResponse(CamelModel):
     avatar_url: str | None = None
     stamp_count: int
     checkin_count: int
+    analytics_opt_out: bool = False
 
 
 class ProfileUpdateRequest(CamelModel):
     display_name: str | None = None
     avatar_url: str | None = None
+    analytics_opt_out: bool | None = None
 
     @field_validator("display_name")
     @classmethod

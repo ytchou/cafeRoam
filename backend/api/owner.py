@@ -1,3 +1,4 @@
+from datetime import UTC, datetime
 from typing import Any
 
 from fastapi import APIRouter, Depends, Query
@@ -17,6 +18,41 @@ def get_owner_service(
     analytics: AnalyticsProvider = Depends(get_analytics_provider),  # noqa: B008
 ) -> OwnerService:
     return OwnerService(db=db, analytics=analytics)
+
+
+@router.get("/{shop_id}/analytics-terms")
+async def get_analytics_terms_status(
+    shop_id: str,
+    user: dict[str, Any] = Depends(require_shop_owner),  # noqa: B008
+    db: Client = Depends(get_admin_db),  # noqa: B008
+) -> dict[str, bool]:
+    """Return whether this owner has accepted the analytics data usage terms."""
+    result = (
+        db.table("shop_claims")
+        .select("analytics_terms_accepted_at")
+        .eq("shop_id", shop_id)
+        .eq("user_id", user["id"])
+        .eq("status", "approved")
+        .maybe_single()
+        .execute()
+    )
+    accepted = bool(result and result.data and result.data.get("analytics_terms_accepted_at"))
+    return {"accepted": accepted}
+
+
+@router.post("/{shop_id}/analytics-terms")
+async def accept_analytics_terms(
+    shop_id: str,
+    user: dict[str, Any] = Depends(require_shop_owner),  # noqa: B008
+    db: Client = Depends(get_admin_db),  # noqa: B008
+) -> dict[str, str]:
+    """Record that the owner has acknowledged the analytics data usage terms. Idempotent."""
+    db.table("shop_claims").update(
+        {"analytics_terms_accepted_at": datetime.now(UTC).isoformat()}
+    ).eq("shop_id", shop_id).eq("user_id", user["id"]).eq("status", "approved").is_(
+        "analytics_terms_accepted_at", "null"
+    ).execute()
+    return {"status": "accepted"}
 
 
 @router.get("/{shop_id}/dashboard")
