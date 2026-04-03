@@ -43,8 +43,8 @@
       "apple-icon.tsx",
       "icon.tsx",
       "global-error.tsx",
-      "privacy/page.tsx",
-      "owner/data-terms/page.tsx"
+      "**/privacy/page.tsx",
+      "**/owner/data-terms/page.tsx"
     ]
   },
   "backend": {
