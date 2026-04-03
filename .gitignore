@@ -24,6 +24,9 @@ node_modules/
 !SPEC_CHANGELOG.md
 !PRD_CHANGELOG.md
 
+# Legal docs — sensitive, local only
+docs/legal/
+
 # Next.js build output
 .next/
 out/
