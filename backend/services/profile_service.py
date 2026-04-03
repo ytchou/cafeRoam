@@ -40,7 +40,8 @@ class ProfileService:
                 )
             ),
         )
-        profile = cast("dict[str, Any]", profile_resp.data) if profile_resp and profile_resp.data else {}
+        raw = profile_resp.data if profile_resp else None
+        profile = cast("dict[str, Any]", raw) if raw else {}
         return ProfileResponse(
             display_name=profile.get("display_name"),
             avatar_url=profile.get("avatar_url"),
