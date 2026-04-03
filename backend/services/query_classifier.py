@@ -31,9 +31,9 @@ _CJK_RE = re.compile(r"[\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff]")
 def _meets_reverse_min_length(query: str) -> bool:
     """Require 2+ CJK characters or 3+ Latin characters for reverse matching."""
     cjk_count = len(_CJK_RE.findall(query))
-    if cjk_count > 0:
-        return cjk_count >= 2
-    return len(query) >= 3
+    if cjk_count >= 2:
+        return True
+    return (len(query) - cjk_count) >= 3
 
 
 def _reverse_match(query: str, terms: list[str]) -> bool:
