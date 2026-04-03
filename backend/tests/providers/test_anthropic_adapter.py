@@ -316,7 +316,7 @@ class TestAnthropicEnrichShop:
                 "summary": "Test.",
                 "topReviews": [],
                 "mode": "mixed",
-                "menu_highlights": ["amazing brunch", "great atmosphere"],
+                "menu_highlights": ["amazing decor", "great atmosphere"],
             }
         )
         adapter._client = AsyncMock()

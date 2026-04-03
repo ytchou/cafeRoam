@@ -18,8 +18,8 @@
 - [x] Implement reverse matching with min-length guard
 
 **Chunk 3 — Vocabulary:**
-- [ ] Add 47 new Taiwan coffee terms to search_vocabulary.py
-- [ ] Verify all tests pass + lint clean
+- [x] Add 47 new Taiwan coffee terms to search_vocabulary.py
+- [x] Verify all tests pass + lint clean
 
 ---
 

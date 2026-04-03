@@ -60,6 +60,16 @@ ITEM_TERMS: list[str] = [
     # Traditional Taiwanese
     "鳳梨酥",
     "蜂蜜蛋糕",
+    # Trending / French-inspired
+    "舒芙蕾",
+    "布朗尼",
+    "達克瓦茲",
+    "生乳捲",
+    "甜甜圈",
+    "水果塔",
+    # Brunch & meals
+    "帕尼尼",
+    "早午餐",
     # === Food (en) ===
     "basque cheesecake",
     "scone",
@@ -105,6 +115,16 @@ ITEM_TERMS: list[str] = [
     # Traditional Taiwanese
     "pineapple cake",
     "castella",
+    # Trending / French-inspired
+    "souffle pancake",
+    "brownie",
+    "dacquoise",
+    "fresh cream roll",
+    "donut",
+    "fruit tart",
+    # Brunch & meals
+    "panini",
+    "brunch",
     # === Drinks (zh) ===
     "拿鐵",
     "卡布奇諾",
@@ -127,6 +147,15 @@ ITEM_TERMS: list[str] = [
     "豆漿拿鐵",
     "特調",
     "濾掛",
+    "掛耳",
+    "西西里咖啡",
+    "維也納咖啡",
+    "黑糖拿鐵",
+    "阿芙佳朵",
+    "黑咖啡",
+    "防彈咖啡",
+    "咖啡歐蕾",
+    "康寶藍",
     # Tea & non-coffee
     "抹茶拿鐵",
     "焙茶",
@@ -137,6 +166,12 @@ ITEM_TERMS: list[str] = [
     "柚子茶",
     "燕麥奶",
     "豆漿",
+    "鮮奶茶",
+    "紅茶拿鐵",
+    "鍋煮奶茶",
+    "柴拿鐵",
+    "紅茶",
+    "鴛鴦",
     # === Drinks (en) ===
     "latte",
     "cappuccino",
@@ -155,6 +190,15 @@ ITEM_TERMS: list[str] = [
     "flat white",
     "oat milk latte",
     "drip bag",
+    "drip bag coffee",
+    "sicilian coffee",
+    "vienna coffee",
+    "brown sugar latte",
+    "affogato",
+    "black coffee",
+    "bulletproof coffee",
+    "cafe au lait",
+    "con panna",
     # Tea & non-coffee
     "matcha latte",
     "hojicha",
@@ -164,6 +208,12 @@ ITEM_TERMS: list[str] = [
     "yuzu tea",
     "oat milk",
     "soy milk",
+    "fresh milk tea",
+    "black tea latte",
+    "pot-brewed milk tea",
+    "chai latte",
+    "black tea",
+    "yuanyang",
     # === Dietary modifiers (zh) ===
     "無麩質",
     "素食",
@@ -383,6 +433,11 @@ SPECIALTY_TERMS: list[str] = [
     "精品咖啡",
     "莊園豆",
     "競標豆",
+    "台灣咖啡",
+    "台灣豆",
+    "配方豆",
+    "拉花",
+    "杯測",
     # === Roast & style (en) ===
     "single origin",
     "light roast",
@@ -400,4 +455,9 @@ SPECIALTY_TERMS: list[str] = [
     "specialty coffee",
     "estate coffee",
     "competition lot",
+    "taiwan coffee",
+    "house blend",
+    "latte art",
+    "cupping",
+    "soe",
 ]
