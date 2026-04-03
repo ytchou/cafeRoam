@@ -134,6 +134,7 @@ async def get_shop(shop_id: str) -> Any:
             owner_story = {to_camel(k): v for k, v in row.items() if k != "content_type"}
             break
 
+    raw_district = shop.pop("districts", None)
     response_data: dict[str, Any] = {to_camel(k): v for k, v in shop.items()}
     response_data["photoUrls"] = photo_urls
     response_data["modeScores"] = mode_scores
@@ -141,7 +142,6 @@ async def get_shop(shop_id: str) -> Any:
     response_data["claimStatus"] = claim_status
     response_data["ownerId"] = owner_user_id
     response_data["ownerStory"] = owner_story
-    raw_district = shop.pop("districts", None)
     response_data["district"] = (
         {"slug": raw_district["slug"], "nameZh": raw_district["name_zh"]}
         if raw_district
