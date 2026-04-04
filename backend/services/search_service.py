@@ -7,6 +7,7 @@ import structlog
 from supabase import Client
 
 from core.config import settings
+from core.opening_hours import parse_to_structured
 from models.types import SearchQuery, SearchResult, Shop, TaxonomyTag
 from providers.cache.interface import SearchCacheProvider
 from providers.embeddings.interface import EmbeddingsProvider
@@ -29,6 +30,7 @@ _SHOP_FIELDS_HANDLED_SEPARATELY = {
     "mode_scores",
     "menu_highlights",
     "coffee_origins",
+    "opening_hours",
 }
 
 # Module-level IDF cache — shared across all SearchService instances.
@@ -158,11 +160,26 @@ class SearchService:
             hydrated_tags = [tag_lookup[tid] for tid in row_tag_ids if tid in tag_lookup]
 
             eligible_keys = Shop.model_fields.keys() - _SHOP_FIELDS_HANDLED_SEPARATELY
+            raw_hours = row.get("opening_hours") or []
+            first_hour = next(iter(raw_hours), None)
+            if first_hour is not None and isinstance(first_hour, str):
+                structured = parse_to_structured(raw_hours)
+                if not structured:
+                    logger.warning(
+                        "Search: legacy opening_hours present but none parseable",
+                        shop_id=row.get("id"),
+                    )
+                coerced_hours: list[dict[str, int | None]] | None = [
+                    h.model_dump() for h in structured
+                ] or None
+            else:
+                coerced_hours = raw_hours or None
             shop = Shop(
                 taxonomy_tags=hydrated_tags,
                 photo_urls=row.get("photo_urls", []),
                 menu_highlights=row.get("menu_highlights") or [],
                 coffee_origins=row.get("coffee_origins") or [],
+                opening_hours=coerced_hours,
                 **{k: v for k, v in row.items() if k in eligible_keys},
             )
 
