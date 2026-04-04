@@ -1,0 +1,36 @@
+{
+  "findings": [
+    {
+      "severity": "Important",
+      "file": "backend/api/shops.py",
+      "line": "144",
+      "description": "shop.pop('districts') happens AFTER response_data is built from shop.items() on line 137. This leaks the raw Supabase join object ('districts' with snake_case keys) into the API response alongside the intended clean 'district' key. The pop must be moved before line 137, matching the pattern of shop_photos, shop_tags, shop_claims, and shop_content which are all popped before the dict comprehension.",
+      "flagged_by": "Bug Hunter",
+      "status": "valid"
+    },
+    {
+      "severity": "Minor",
+      "file": "backend/services/district_service.py",
+      "line": "115",
+      "description": "Uses vibe_rows[0] instead of the project's first() helper function. The first() helper is already imported (line 7) and used elsewhere in the same file (line 80). CLAUDE.md: 'Never use unsafe [0] array indexing. Use the project's first() helper function instead.'",
+      "flagged_by": "Standards & Conventions",
+      "status": "valid"
+    },
+    {
+      "severity": "Minor",
+      "file": "app/explore/districts/[slug]/layout.tsx",
+      "line": "3-6",
+      "description": "Static metadata export in the layout is completely shadowed by the page's generateMetadata function. The layout only returns children and adds dead metadata. It can be simplified to remove the unused metadata, or the entire layout file can be removed since it adds no value.",
+      "flagged_by": "Architecture & Design",
+      "status": "valid"
+    }
+  ],
+  "active_agents": [
+    "Bug Hunter",
+    "Standards & Conventions",
+    "Architecture & Design"
+  ],
+  "skipped": [],
+  "head_sha": "5488baa0af73f5d10ec87250c421b34cd240d52e",
+  "review_log_path": "docs/reviews/2026-04-04-feat-district-landing-pages.md"
+}

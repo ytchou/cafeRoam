@@ -10,6 +10,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [
     { data: shops, error: shopsError },
     { data: vibes, error: vibesError },
+    { data: districts, error: districtsError },
   ] = await Promise.all([
     supabase
       .from('shops')
@@ -17,6 +18,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       .eq('processing_status', 'live')
       .limit(5000),
     supabase.from('vibe_collections').select('slug'),
+    supabase.from('districts').select('slug').eq('is_active', true),
   ]);
 
   if (shopsError) {
@@ -24,6 +26,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }
   if (vibesError) {
     console.error('[sitemap] Failed to fetch vibes:', vibesError.message);
+  }
+  if (districtsError) {
+    console.error(
+      '[sitemap] Failed to fetch districts:',
+      districtsError.message
+    );
   }
 
   const shopEntries: MetadataRoute.Sitemap = (shops ?? []).map((shop) => ({
@@ -35,6 +43,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const vibeEntries: MetadataRoute.Sitemap = (vibes ?? []).map((vibe) => ({
     url: `${BASE_URL}/explore/vibes/${vibe.slug}`,
+    changeFrequency: 'weekly' as const,
+    priority: 0.7,
+  }));
+
+  const districtEntries: MetadataRoute.Sitemap = (districts ?? []).map((d) => ({
+    url: `${BASE_URL}/explore/districts/${d.slug}`,
     changeFrequency: 'weekly' as const,
     priority: 0.7,
   }));
@@ -54,5 +68,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
-  return [...staticPages, ...vibeEntries, ...shopEntries];
+  return [...staticPages, ...vibeEntries, ...districtEntries, ...shopEntries];
 }

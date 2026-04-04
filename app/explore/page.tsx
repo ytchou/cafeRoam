@@ -13,6 +13,7 @@ import { useGeolocation } from '@/lib/hooks/use-geolocation';
 import { useIsDesktop } from '@/lib/hooks/use-media-query';
 import { useTarotDraw } from '@/lib/hooks/use-tarot-draw';
 import { useVibes } from '@/lib/hooks/use-vibes';
+import { useDistricts } from '@/lib/hooks/use-districts';
 
 const BRICOLAGE_STYLE = {
   fontFamily: 'var(--font-bricolage), var(--font-geist-sans), sans-serif',
@@ -37,6 +38,8 @@ export default function ExplorePage() {
   );
   const { vibes } = useVibes();
   const previewVibes = useMemo(() => vibes.slice(0, 6), [vibes]);
+  const { districts } = useDistricts();
+  const previewDistricts = useMemo(() => districts.slice(0, 6), [districts]);
   const { notes: communityNotes } = useCommunityPreview();
 
   useEffect(() => {
@@ -178,6 +181,43 @@ export default function ExplorePage() {
                       ))}
                   </div>
                 )}
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+      {previewDistricts.length > 0 && (
+        <section className="mt-8">
+          <div className="mb-3 flex items-center justify-between">
+            <h2
+              className="text-text-primary text-lg font-bold"
+              style={BRICOLAGE_STYLE_SM}
+            >
+              Browse by District
+            </h2>
+            <Link
+              href="/explore/districts"
+              className="text-link-green text-xs font-medium"
+            >
+              See all &rarr;
+            </Link>
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            {previewDistricts.map((district) => (
+              <Link
+                key={district.slug}
+                href={`/explore/districts/${district.slug}`}
+                className="flex flex-col gap-1.5 rounded-2xl border border-gray-100 bg-white px-4 py-3"
+              >
+                <span className="text-text-primary text-[13px] leading-tight font-semibold">
+                  {district.nameZh}
+                </span>
+                <span className="text-[11px] text-gray-400">
+                  {district.nameEn}
+                </span>
+                <span className="mt-0.5 self-start rounded-full bg-gray-100 px-1.5 py-0.5 text-[10px] text-gray-500">
+                  {district.shopCount} shops
+                </span>
               </Link>
             ))}
           </div>

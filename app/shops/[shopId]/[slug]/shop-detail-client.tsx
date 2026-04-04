@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Navigation } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import type { TaxonomyTag } from '@/lib/types';
 import { ShopHero } from '@/components/shops/shop-hero';
 import { ShopIdentity } from '@/components/shops/shop-identity';
@@ -65,6 +66,7 @@ interface ShopData {
     is_published: boolean;
     updated_at: string;
   } | null;
+  district?: { slug: string; nameZh: string } | null;
 }
 
 interface ShopDetailClientProps {
@@ -235,6 +237,21 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
           shopName={shop.name}
           claimStatus={shop.claimStatus ?? null}
         />
+        {shop.district && (
+          <div className="px-5 py-4">
+            <Link
+              href={`/explore/districts/${shop.district.slug}`}
+              className="flex items-center justify-between rounded-xl bg-white px-4 py-3 shadow-sm"
+            >
+              <span className="text-sm font-medium text-gray-700">
+                More cafes in {shop.district.nameZh}
+              </span>
+              <span className="text-link-green text-xs font-medium">
+                See all &rarr;
+              </span>
+            </Link>
+          </div>
+        )}
       </div>
 
       {hasMap && directionsShop && (

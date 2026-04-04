@@ -6,6 +6,7 @@ from supabase import Client
 from api.deps import get_current_user, get_user_db
 from db.supabase_client import get_anon_client
 from services.community_service import CommunityService
+from services.district_service import DistrictService
 from services.tarot_service import TarotService
 from services.vibe_service import VibeService
 
@@ -48,6 +49,30 @@ def vibe_shops(
     service = VibeService(db)
     try:
         result = service.get_shops_for_vibe(slug=slug, lat=lat, lng=lng, radius_km=radius_km)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    return result.model_dump(by_alias=True)
+
+
+@router.get("/districts")
+def list_districts() -> list[dict[str, object]]:
+    """Return active districts with enough shops. Public — no auth required."""
+    db = get_anon_client()
+    service = DistrictService(db)
+    districts = service.get_districts()
+    return [d.model_dump(by_alias=True) for d in districts]
+
+
+@router.get("/districts/{slug}/shops")
+def district_shops(
+    slug: str,
+    vibe: str | None = Query(default=None),
+) -> dict[str, object]:
+    """Return shops in a district, optional vibe filter. Public — no auth required."""
+    db = get_anon_client()
+    service = DistrictService(db)
+    try:
+        result = service.get_shops_for_district(slug=slug, vibe_slug=vibe)
     except ValueError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     return result.model_dump(by_alias=True)
