@@ -10,7 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { createClient } from '@/lib/supabase/client';
+import { useAdminAuth } from '../../_hooks/use-admin-auth';
 import { BatchDetail } from './BatchDetail';
 
 interface BatchStatusCounts {
@@ -42,6 +42,7 @@ const STATUS_COLORS: Record<string, string> = {
 const PAGE_SIZE = 20;
 
 export function BatchesList() {
+  const { getToken } = useAdminAuth();
   const [data, setData] = useState<BatchesResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -50,13 +51,13 @@ export function BatchesList() {
   const [token, setToken] = useState<string | null>(null);
 
   const fetchBatches = useCallback(
-    async (token: string, currentPage: number) => {
+    async (authToken: string, currentPage: number) => {
       const params = new URLSearchParams({
         offset: String((currentPage - 1) * PAGE_SIZE),
         limit: String(PAGE_SIZE),
       });
       const res = await fetch(`/api/admin/pipeline/batches?${params}`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${authToken}` },
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
@@ -73,19 +74,16 @@ export function BatchesList() {
 
   useEffect(() => {
     async function load() {
-      const supabase = createClient();
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session) {
+      const authToken = await getToken();
+      if (!authToken) {
         setLoading(false);
         return;
       }
-      setToken(session.access_token);
-      fetchBatches(session.access_token, page);
+      setToken(authToken);
+      fetchBatches(authToken, page);
     }
     load();
-  }, [page, fetchBatches]);
+  }, [page, fetchBatches, getToken]);
 
   if (loading) return <p>Loading...</p>;
   if (error)

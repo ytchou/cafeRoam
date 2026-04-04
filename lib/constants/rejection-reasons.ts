@@ -15,3 +15,10 @@ export const ADMIN_REJECTION_REASONS: { value: string; label: string }[] = [
   { value: 'invalid_url', label: 'Invalid URL' },
   { value: 'other', label: 'Other' },
 ];
+
+export const ADMIN_CLAIM_REJECTION_REASONS: { value: string; label: string }[] = [
+  { value: 'invalid_proof', label: 'Invalid proof' },
+  { value: 'not_an_owner', label: 'Not an owner' },
+  { value: 'duplicate_request', label: 'Duplicate request' },
+  { value: 'other', label: 'Other' },
+];

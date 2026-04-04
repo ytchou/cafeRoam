@@ -19,6 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { ADMIN_CLAIM_REJECTION_REASONS } from '@/lib/constants/rejection-reasons';
 import { getStatusVariant } from '../_lib/status-badge';
 import { ConfirmDialog } from './ConfirmDialog';
 
@@ -84,10 +85,6 @@ export function ClaimsTab({ getToken }: ClaimsTabProps) {
   );
 
   useEffect(() => {
-    fetchClaims('pending');
-  }, [fetchClaims]);
-
-  useEffect(() => {
     fetchClaims(claimStatusFilter);
   }, [claimStatusFilter, fetchClaims]);
 
@@ -114,22 +111,27 @@ export function ClaimsTab({ getToken }: ClaimsTabProps) {
   async function handleClaimReject() {
     const token = await getToken();
     if (!token || !claimRejectingId) return;
-    const res = await fetch(`/api/admin/claims/${claimRejectingId}/reject`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        rejectionReason: claimRejectionReason,
-      }),
-    });
-    if (res.ok) {
-      toast.success('Claim rejected');
-      setClaimRejectingId(null);
-      fetchClaims(claimStatusFilter);
-    } else {
-      toast.error('Failed to reject');
+    try {
+      const res = await fetch(`/api/admin/claims/${claimRejectingId}/reject`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          rejectionReason: claimRejectionReason,
+        }),
+      });
+      if (res.ok) {
+        toast.success('Claim rejected');
+        setClaimRejectingId(null);
+        fetchClaims(claimStatusFilter);
+      } else {
+        const body = await res.json().catch(() => ({}));
+        toast.error(body.detail || 'Failed to reject');
+      }
+    } catch {
+      toast.error('Network error');
     }
   }
 
@@ -266,16 +268,15 @@ export function ClaimsTab({ getToken }: ClaimsTabProps) {
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="invalid_proof">
-                                Invalid proof
-                              </SelectItem>
-                              <SelectItem value="not_an_owner">
-                                Not an owner
-                              </SelectItem>
-                              <SelectItem value="duplicate_request">
-                                Duplicate request
-                              </SelectItem>
-                              <SelectItem value="other">Other</SelectItem>
+                              {ADMIN_CLAIM_REJECTION_REASONS.map((r) => (
+                                <SelectItem
+                                  key={r.value}
+                                  value={r.value}
+                                  className="text-xs"
+                                >
+                                  {r.label}
+                                </SelectItem>
+                              ))}
                             </SelectContent>
                           </Select>
                           <Button
