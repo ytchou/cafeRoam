@@ -2,6 +2,8 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 import { fetchDistricts } from '@/lib/api/districts';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: '依區域探索咖啡廳 — 啡遊',
   description: '瀏覽台北各區的獨立咖啡廳——大安、中山、信義、松山等。',

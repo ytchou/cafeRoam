@@ -206,6 +206,17 @@ else
   _pass "PROD_DATABASE_URL set"
 fi
 
+# ─── Anti-Crawling / Rate Limiting ───────────────────────────────────────────
+printf "\n${BOLD}Anti-Crawling (optional — defaults used if unset)${NC}\n"
+
+if ! grep -q '^RATE_LIMIT_DEFAULT=.' "${PROJECT_ROOT}/backend/.env" 2>/dev/null; then
+  printf "${YELLOW}[WARN]${NC} RATE_LIMIT_DEFAULT not set in backend/.env — using default '60/minute'\n"
+fi
+
+if ! grep -q '^BOT_DETECTION_ENABLED=.' "${PROJECT_ROOT}/backend/.env" 2>/dev/null; then
+  printf "${YELLOW}[WARN]${NC} BOT_DETECTION_ENABLED not set in backend/.env — defaults to True\n"
+fi
+
 # ─── Railway (optional) ───────────────────────────────────────────────────────
 printf "\n${BOLD}Railway${NC}\n"
 

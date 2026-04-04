@@ -69,6 +69,38 @@ class Settings(BaseSettings):
     search_cache_ttl_seconds: int = 14400  # 4 hours
     search_cache_similarity_threshold: float = 0.85
 
+    # Anti-crawling / rate limiting
+    rate_limit_default: str = "60/minute"
+    rate_limit_search: str = "10/minute"
+    rate_limit_maps_directions: str = "30/minute"
+    rate_limit_shops_list: str = "30/minute"
+    bot_detection_enabled: bool = True
+    bot_ua_blocklist: list[str] = [
+        "curl",
+        "wget",
+        "python-requests",
+        "python-urllib",
+        "scrapy",
+        "Go-http-client",
+        "Java/",
+        "libwww-perl",
+        "PHP/",
+        "Apache-HttpClient",
+        "node-fetch",
+        "axios",
+        "httpclient",
+        "okhttp",
+    ]
+    bot_ua_allowlist: list[str] = [
+        "Googlebot",
+        "Bingbot",
+        "Slurp",
+        "DuckDuckBot",
+        "facebookexternalhit",
+        "Twitterbot",
+        "LinkedInBot",
+    ]
+
     @model_validator(mode="after")
     def check_production_salt(self) -> "Settings":
         if self.environment != "development" and self.anon_salt == "caferoam-dev-salt":

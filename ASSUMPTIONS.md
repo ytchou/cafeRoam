@@ -71,6 +71,16 @@
 
 ---
 
+### Data Scraping & Competitive Extraction
+
+**Risk:** CafeRoam's enriched shop data (taxonomy tags, mode scores, vibe descriptions) is served publicly. A competitor could scrape all shop pages and replicate the data advantage identified in PRD §5 (Unfair Advantage).
+
+**Mitigation (implemented):** Application-level rate limiting + bot detection middleware blocks automated scraping. **Mitigation (planned):** Cloudflare WAF, honeypot endpoints, response poisoning for suspected bots (DEV-223).
+
+**Residual risk:** A determined attacker with rotating IPs and browser-like headers can still scrape slowly. The cost of doing so is now higher than building the data independently.
+
+---
+
 ## Invalidated Assumptions
 
 | Assumption | Why it was wrong | Impact | Date |
