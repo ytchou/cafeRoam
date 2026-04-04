@@ -13,7 +13,7 @@
 
 **Chunk 1 — Config + Foundation (DEV-217, DEV-218):**
 
-- [ ] Add rate limit + bot detection config fields
+- [x] Add rate limit + bot detection config fields
 - [ ] Extend rate limiter with default limits + per-user key func
 
 **Chunk 2 — Bot Detection (DEV-220):**
