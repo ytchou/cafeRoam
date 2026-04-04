@@ -89,6 +89,12 @@ make reset-db                  # !! DESTRUCTIVE — wipes all data. Has a 5s war
 
 ---
 
+## Design Principles
+
+- **Desktop/mobile feature parity**: The functionality between desktop and mobile must be identical. Only the design (layout, spacing, navigation patterns) will differ.
+
+---
+
 ## Coding Standards
 
 ### Provider Abstraction (Python Backend)
