@@ -167,7 +167,9 @@ describe('DiscoveryPage', () => {
     });
 
     it('burns the free try when an anonymous user performs a semantic search', () => {
-      vi.mocked(useSearchState).mockReturnValue(searchState('有插座可以工作的咖啡廳'));
+      vi.mocked(useSearchState).mockReturnValue(
+        searchState('有插座可以工作的咖啡廳')
+      );
       vi.mocked(useSearch).mockReturnValue({
         results: [],
         queryType: 'semantic',
@@ -205,7 +207,9 @@ describe('DiscoveryPage', () => {
         refresh: vi.fn(),
         prefetch: vi.fn(),
       } as ReturnType<typeof useRouter>);
-      vi.mocked(useSearchState).mockReturnValue(searchState('安靜有wifi的咖啡廳'));
+      vi.mocked(useSearchState).mockReturnValue(
+        searchState('安靜有wifi的咖啡廳')
+      );
       vi.mocked(useSearch).mockReturnValue({
         results: [],
         queryType: 'semantic',

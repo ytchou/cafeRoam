@@ -15,6 +15,7 @@
 **Tech Stack:** Next.js 16 (App Router), TypeScript, Tailwind CSS, FastAPI, Vitest, pytest
 
 **Acceptance Criteria:**
+
 - [ ] A first-time visitor landing on `/` sees a search-first discovery page with AI search bar, suggestion chips, mode chips, and featured shops
 - [ ] Tapping "地圖" in the bottom nav navigates to `/find` showing the full map/directory view
 - [ ] An unauthenticated user can perform 1 free semantic search on the homepage before being prompted to log in
@@ -28,6 +29,7 @@
 **Linear:** DEV-224 (Foundation, S)
 
 **Files:**
+
 - Create: `app/find/page.tsx`
 - Create: `app/find/layout.tsx` (metadata)
 - Modify: `app/page.tsx` (will be gutted — but keep file for Task 3)
@@ -81,7 +83,11 @@ export const metadata: Metadata = {
   description: '在地圖上探索台灣的獨立咖啡廳',
 };
 
-export default function FindLayout({ children }: { children: React.ReactNode }) {
+export default function FindLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return children;
 }
 ```
@@ -94,7 +100,7 @@ In `middleware.ts`, add `/find` to `PUBLIC_ROUTES`:
 // Add '/find' to the PUBLIC_ROUTES set
 const PUBLIC_ROUTES = new Set([
   '/',
-  '/find',  // ← add this
+  '/find', // ← add this
   '/login',
   '/signup',
   // ... rest unchanged
@@ -104,6 +110,7 @@ const PUBLIC_ROUTES = new Set([
 **Step 3: Update internal links**
 
 Search codebase for links pointing to `/` that should now point to `/find`:
+
 - `components/map/` internal links — likely none (map is self-contained)
 - Any "view on map" buttons in shop cards or detail pages
 
@@ -123,6 +130,7 @@ git commit -m "feat(DEV-224): relocate map view to /find route"
 **Linear:** DEV-225 (Foundation, S)
 
 **Files:**
+
 - Modify: `components/navigation/bottom-nav.tsx`
 - Modify: `components/navigation/bottom-nav.test.tsx`
 
@@ -199,6 +207,7 @@ git commit -m "feat(DEV-225): update bottom nav to 5 tabs"
 **Linear:** DEV-226 (Feature, M) — blocked by Task 1, Task 2
 
 **Files:**
+
 - Create: `components/discovery/discovery-page.tsx`
 - Create: `components/discovery/discovery-page.test.tsx`
 - Modify: `app/page.tsx` (replace MapWithFallback with DiscoveryPage)
@@ -242,8 +251,24 @@ vi.mock('@/lib/hooks/use-search', () => ({
 vi.mock('@/lib/hooks/use-shops', () => ({
   useShops: () => ({
     shops: [
-      { id: '1', name: '木下庵 Kino', district: '大安區', rating: 4.5, latitude: 25.03, longitude: 121.54, taxonomyTags: [] },
-      { id: '2', name: 'Café Costumice', district: '信義區', rating: 4.3, latitude: 25.03, longitude: 121.55, taxonomyTags: [] },
+      {
+        id: '1',
+        name: '木下庵 Kino',
+        district: '大安區',
+        rating: 4.5,
+        latitude: 25.03,
+        longitude: 121.54,
+        taxonomyTags: [],
+      },
+      {
+        id: '2',
+        name: 'Café Costumice',
+        district: '信義區',
+        rating: 4.3,
+        latitude: 25.03,
+        longitude: 121.55,
+        taxonomyTags: [],
+      },
     ],
     isLoading: false,
     error: null,
@@ -264,7 +289,9 @@ describe('DiscoveryPage', () => {
 
   it('renders the AI search bar with placeholder', () => {
     render(<DiscoveryPage />);
-    expect(screen.getByPlaceholderText(/想找什麼樣的咖啡廳/)).toBeInTheDocument();
+    expect(
+      screen.getByPlaceholderText(/想找什麼樣的咖啡廳/)
+    ).toBeInTheDocument();
   });
 
   it('renders suggestion chips', () => {
@@ -363,14 +390,16 @@ export function DiscoveryPage() {
     <div className="flex min-h-screen flex-col bg-white">
       {/* Hero section */}
       <div className="px-6 pt-4 pb-2">
-        <p className="text-xl font-bold text-primary font-heading">啡遊</p>
+        <p className="text-primary font-heading text-xl font-bold">啡遊</p>
       </div>
 
-      <div className="px-6 pb-6 space-y-2">
-        <h1 className="text-[34px] font-bold leading-tight tracking-tight text-espresso font-heading">
-          找到你的<br />理想咖啡廳
+      <div className="space-y-2 px-6 pb-6">
+        <h1 className="text-espresso font-heading text-[34px] leading-tight font-bold tracking-tight">
+          找到你的
+          <br />
+          理想咖啡廳
         </h1>
-        <p className="text-sm text-slate-text">
+        <p className="text-slate-text text-sm">
           用 AI 語義搜尋，告訴我們你想要什麼
         </p>
       </div>
@@ -383,14 +412,14 @@ export function DiscoveryPage() {
             const input = e.currentTarget.querySelector('input');
             if (input) handleSearch(input.value);
           }}
-          className="flex items-center gap-2.5 rounded-full border border-primary/25 bg-cream-card px-4 h-[52px] shadow-[0_4px_16px_rgba(224,107,63,0.08)]"
+          className="border-primary/25 bg-cream-card flex h-[52px] items-center gap-2.5 rounded-full border px-4 shadow-[0_4px_16px_rgba(224,107,63,0.08)]"
         >
-          <Sparkles className="h-5 w-5 text-primary shrink-0" />
+          <Sparkles className="text-primary h-5 w-5 shrink-0" />
           <input
             type="text"
             placeholder="想找什麼樣的咖啡廳？"
             defaultValue={query}
-            className="flex-1 bg-transparent text-[15px] text-espresso placeholder:text-ash-text outline-none"
+            className="text-espresso placeholder:text-ash-text flex-1 bg-transparent text-[15px] outline-none"
           />
         </form>
       </div>
@@ -406,25 +435,27 @@ export function DiscoveryPage() {
       </div>
 
       {/* Divider */}
-      <div className="mx-6 border-t border-cool-border" />
+      <div className="border-cool-border mx-6 border-t" />
 
       {/* Featured / Results section */}
-      <div className="px-6 pt-4 pb-2 flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-espresso">
+      <div className="flex items-center justify-between px-6 pt-4 pb-2">
+        <h2 className="text-espresso text-lg font-semibold">
           {query ? `搜尋結果 (${displayShops.length})` : '精選咖啡廳'}
         </h2>
         {!query && (
-          <Link href="/find" className="text-sm font-medium text-primary">
+          <Link href="/find" className="text-primary text-sm font-medium">
             查看全部 →
           </Link>
         )}
       </div>
 
-      <div className="flex-1 overflow-y-auto px-6 pb-24 space-y-2.5">
+      <div className="flex-1 space-y-2.5 overflow-y-auto px-6 pb-24">
         {isLoading ? (
-          <div className="py-12 text-center text-ash-text text-sm">搜尋中...</div>
+          <div className="text-ash-text py-12 text-center text-sm">
+            搜尋中...
+          </div>
         ) : displayShops.length === 0 ? (
-          <div className="py-12 text-center text-ash-text text-sm">
+          <div className="text-ash-text py-12 text-center text-sm">
             {query ? '沒有找到符合的咖啡廳' : '載入中...'}
           </div>
         ) : (
@@ -442,7 +473,7 @@ export function DiscoveryPage() {
       <div className="px-6 pb-4">
         <Link
           href="/find"
-          className="flex items-center justify-center gap-2 h-11 rounded-xl bg-parchment text-slate-text text-sm font-medium"
+          className="bg-parchment text-slate-text flex h-11 items-center justify-center gap-2 rounded-xl text-sm font-medium"
         >
           <Map className="h-4 w-4" />
           地圖瀏覽
@@ -495,6 +526,7 @@ git commit -m "feat(DEV-226): build search-first discovery homepage"
 **Linear:** DEV-227 (M)
 
 **Files:**
+
 - Modify: `backend/api/search.py` (add optional auth path)
 - Create: `backend/api/deps.py` — add `get_optional_user` dependency (or modify existing)
 - Modify: `backend/tests/api/test_search.py` (add unauth test cases)
@@ -641,6 +673,7 @@ git commit -m "feat(DEV-227): allow unauth search with 1 free semantic try"
 **Linear:** DEV-228 (S) — blocked by Task 3
 
 **Files:**
+
 - Remove: `app/(protected)/search/page.tsx`
 - Remove: `app/(protected)/search/page.test.tsx`
 - Modify: any components linking to `/search` (redirect to `/`)
@@ -697,11 +730,13 @@ No test needed — documentation only.
 **Step 3: Add changelog entries**
 
 `SPEC_CHANGELOG.md`:
+
 ```
 2026-04-04 | §2, §9 | Homepage split: discovery+search at /, map at /find. Auth wall loosened for 1 free semantic search. | DEV-197 redesign
 ```
 
 `PRD_CHANGELOG.md`:
+
 ```
 2026-04-04 | §5, §6 | Homepage leads with AI search instead of map view. Map demoted to /find. | DEV-197 redesign
 ```
@@ -739,15 +774,18 @@ graph TD
 ```
 
 **Wave 1** (parallel — no dependencies):
+
 - Task 1: Relocate map view to `/find`
 - Task 2: Update bottom nav to 5 tabs
 - Task 4: Implement unauth search with 1 free semantic try
 - Task 6: Update SPEC.md and DESIGN.md
 
 **Wave 2** (depends on Wave 1):
+
 - Task 3: Build discovery homepage ← Task 1, Task 2
 
 **Wave 3** (depends on Wave 2):
+
 - Task 5: Remove `/search` page ← Task 3
 
 ---
@@ -755,17 +793,21 @@ graph TD
 ## TODO
 
 ### Homepage Redesign (DEV-197)
+
 > **Design Doc:** [docs/designs/2026-04-04-homepage-redesign-design.md](docs/designs/2026-04-04-homepage-redesign-design.md)
 > **Plan:** [docs/plans/2026-04-04-homepage-redesign-plan.md](docs/plans/2026-04-04-homepage-redesign-plan.md)
 
 **Wave 1 — Foundation (parallel):**
+
 - [ ] Task 1: Relocate map view to `/find` (DEV-224)
 - [ ] Task 2: Update bottom nav to 5 tabs (DEV-225)
 - [ ] Task 4: Implement unauth search (DEV-227)
 - [ ] Task 6: Update SPEC.md and DESIGN.md (DEV-229)
 
 **Wave 2 — Discovery Page:**
+
 - [ ] Task 3: Build discovery homepage (DEV-226)
 
 **Wave 3 — Cleanup:**
+
 - [ ] Task 5: Remove `/search` page (DEV-228)

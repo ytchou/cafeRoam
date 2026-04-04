@@ -12,15 +12,18 @@
 > **Plan:** [docs/plans/2026-04-04-homepage-redesign-plan.md](docs/plans/2026-04-04-homepage-redesign-plan.md)
 
 **Wave 1 — Foundation (parallel, no dependencies):**
+
 - [x] Task 1: Relocate map view to `/find` (DEV-224) — No test needed (verbatim relocation)
 - [x] Task 2: Update bottom nav to 5 tabs (DEV-225)
 - [x] Task 4: Implement unauth search with 1 free semantic try (DEV-227)
 - [x] Task 6: Update SPEC.md and DESIGN.md (DEV-229)
 
 **Wave 2 — Discovery Page:**
+
 - [x] Task 3: Build search-first discovery homepage (DEV-226)
 
 **Wave 3 — Cleanup:**
+
 - [x] Task 5: Remove `/search` page and update references (DEV-228)
 
 ---

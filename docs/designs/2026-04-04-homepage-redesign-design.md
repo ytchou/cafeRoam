@@ -17,6 +17,7 @@ The current homepage (`/`) is a full-screen map view. It communicates "directory
 **Option B (Search-First)** — chosen after visual comparison of three mockups (A: Intent+Search Hybrid, B: Search-First, C: Editorial+Search).
 
 Rationale:
+
 - Clean, uncluttered layout lets the AI search bar take center stage
 - Mode chips (work/rest/social) serve as structured shortcuts without overwhelming the first impression
 - Editorial option (C) was rejected — requires content pipeline that doesn't exist
@@ -26,18 +27,19 @@ Rationale:
 
 ## Architecture: Two-Page Split
 
-| Route | Page | Rationale |
-|-------|------|-----------|
-| `/` | Discovery + Search (new) | Lead with differentiator |
-| `/find` | Map/Directory (relocated from `/`) | Spatial browsing, commodity utility |
-| `/explore` | Explore tarot feature | Unchanged |
-| `/search` | **Removed** | Absorbed into `/` |
+| Route      | Page                               | Rationale                           |
+| ---------- | ---------------------------------- | ----------------------------------- |
+| `/`        | Discovery + Search (new)           | Lead with differentiator            |
+| `/find`    | Map/Directory (relocated from `/`) | Spatial browsing, commodity utility |
+| `/explore` | Explore tarot feature              | Unchanged                           |
+| `/search`  | **Removed**                        | Absorbed into `/`                   |
 
 ---
 
 ## New Homepage Layout (Option B)
 
 **Mobile (390px):**
+
 - Brand mark "啡遊" in Terracotta `#E06B3F`
 - Headline: "找到你的理想咖啡廳" (Bricolage Grotesque, 34px)
 - Subheadline: "用 AI 語義搜尋，告訴我們你想要什麼"
@@ -55,21 +57,21 @@ Rationale:
 
 ## Bottom Navigation: 5 Tabs
 
-| Tab | Label | Route | Icon |
-|-----|-------|-------|------|
-| 1 | 首頁 | `/` | Home |
-| 2 | 探索 | `/explore` | Compass |
-| 3 | 地圖 | `/find` | Map |
-| 4 | 收藏 | `/lists` | Heart |
-| 5 | 我的 | `/profile` | User |
+| Tab | Label | Route      | Icon    |
+| --- | ----- | ---------- | ------- |
+| 1   | 首頁  | `/`        | Home    |
+| 2   | 探索  | `/explore` | Compass |
+| 3   | 地圖  | `/find`    | Map     |
+| 4   | 收藏  | `/lists`   | Heart   |
+| 5   | 我的  | `/profile` | User    |
 
 ---
 
 ## Auth Strategy
 
-| Query Type | Unauthenticated |
-|-----------|----------------|
-| Name-based ("木下庵") | Always free |
+| Query Type                 | Unauthenticated                                                         |
+| -------------------------- | ----------------------------------------------------------------------- |
+| Name-based ("木下庵")      | Always free                                                             |
 | Semantic/vibe ("安靜工作") | 1 free try (localStorage: `caferoam_free_search_used`), then login gate |
 
 After 1 free semantic search: gentle nudge "登入以繼續探索更多" → login redirect.
@@ -82,15 +84,18 @@ Frontend: `fetchWithAuth` → `fetchOptionalAuth` in `useSearch` hook.
 ## Components
 
 ### New
+
 - `components/discovery/discovery-page.tsx` — homepage layout component
 
 ### Reused (unchanged)
+
 - `ModeChips` — wired in as secondary filter row
 - `SuggestionChips` — moved from `/search` to homepage
 - `ShopCardCompact` — featured shops listing
 - `useSearchState` / `useSearch` / `useShops` — hooks
 
 ### Modified
+
 - `components/navigation/bottom-nav.tsx` — 4 tabs → 5 tabs
 - `backend/api/search.py` — optional auth
 - `backend/api/deps.py` — add `get_optional_user`
@@ -98,6 +103,7 @@ Frontend: `fetchWithAuth` → `fetchOptionalAuth` in `useSearch` hook.
 - `middleware.ts` — add `/find` to PUBLIC_ROUTES
 
 ### Removed
+
 - `app/(protected)/search/page.tsx` — absorbed into `/`
 
 ---

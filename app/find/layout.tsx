@@ -5,6 +5,10 @@ export const metadata: Metadata = {
   description: '在地圖上探索台灣的獨立咖啡廳',
 };
 
-export default function FindLayout({ children }: { children: React.ReactNode }) {
+export default function FindLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return children;
 }

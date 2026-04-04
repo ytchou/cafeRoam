@@ -8,10 +8,7 @@ import { SuggestionChips } from '@/components/discovery/suggestion-chips';
 import { ShopCardCompact } from '@/components/shops/shop-card-compact';
 import { trackSearch, trackSignupCtaClick } from '@/lib/analytics/ga4-events';
 import { useSearch } from '@/lib/hooks/use-search';
-import {
-  useSearchState,
-  type SearchMode,
-} from '@/lib/hooks/use-search-state';
+import { useSearchState, type SearchMode } from '@/lib/hooks/use-search-state';
 import { useShops } from '@/lib/hooks/use-shops';
 import { useUser } from '@/lib/hooks/use-user';
 import type { Shop } from '@/lib/types';
@@ -30,10 +27,12 @@ export function DiscoveryPage() {
   const isSearching = trimmedQuery.length > 0;
   const lastHandledQueryRef = useRef<string | null>(null);
 
-  const { results, isLoading: isSearchLoading, error: searchError, queryType } = useSearch(
-    isSearching ? trimmedQuery : null,
-    mode as SearchMode
-  );
+  const {
+    results,
+    isLoading: isSearchLoading,
+    error: searchError,
+    queryType,
+  } = useSearch(isSearching ? trimmedQuery : null, mode as SearchMode);
   const {
     shops: featuredShops,
     isLoading: isFeaturedLoading,
@@ -82,7 +81,7 @@ export function DiscoveryPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      <section className="bg-[#2c1810] px-5 pb-8 pt-8 text-white">
+      <section className="bg-[#2c1810] px-5 pt-8 pb-8 text-white">
         <div className="mx-auto max-w-5xl">
           <span className="text-brand text-sm font-semibold tracking-[0.2em]">
             啡遊
@@ -101,7 +100,7 @@ export function DiscoveryPage() {
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="想找什麼樣的咖啡廳？"
-              className="w-full rounded-full border border-white/10 bg-white px-5 py-4 text-base text-gray-900 outline-none ring-0 placeholder:text-gray-500"
+              className="w-full rounded-full border border-white/10 bg-white px-5 py-4 text-base text-gray-900 ring-0 outline-none placeholder:text-gray-500"
             />
           </div>
           <div className="mt-4">
@@ -136,7 +135,9 @@ export function DiscoveryPage() {
             <p className="text-sm text-red-600">暫時無法載入資料。</p>
           ) : shopsToRender.length === 0 ? (
             <p className="text-sm text-gray-600">
-              {isSearching ? '目前沒有符合條件的咖啡廳。' : '暫時沒有精選咖啡廳。'}
+              {isSearching
+                ? '目前沒有符合條件的咖啡廳。'
+                : '暫時沒有精選咖啡廳。'}
             </p>
           ) : (
             <div className="overflow-hidden rounded-3xl border border-[#e5e7eb] bg-white shadow-sm">
