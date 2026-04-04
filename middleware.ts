@@ -11,8 +11,7 @@ const PUBLIC_ROUTES = new Set([
   '/map',
   '/manifest.webmanifest',
 ]);
-// /api routes handle their own JWT auth via FastAPI — do not redirect them
-const PUBLIC_PREFIXES = ['/shops', '/api'];
+const PUBLIC_PREFIXES = ['/shops'];
 const ONBOARDING_ROUTES = ['/onboarding/consent'];
 const RECOVERY_ROUTES = ['/account/recover'];
 
@@ -23,6 +22,12 @@ function isPublicRoute(pathname: string): boolean {
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // API routes handle their own JWT auth via FastAPI — skip session refresh entirely
+  if (pathname.startsWith('/api')) {
+    return NextResponse.next();
+  }
+
   const { user, supabaseResponse } = await updateSession(request);
 
   // Public routes — pass through

@@ -27,6 +27,9 @@ vi.mock('./check-in-popover', () => ({
 vi.mock('@/lib/supabase/client', () => ({
   createClient: () => ({
     auth: {
+      getSession: vi.fn().mockResolvedValue({
+        data: { session: { user: { id: 'test-user-123' } } },
+      }),
       getUser: vi.fn().mockResolvedValue({
         data: { user: { id: 'test-user-123' } },
       }),
