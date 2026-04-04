@@ -11,6 +11,7 @@ import { ConsentProvider } from '@/lib/consent/provider';
 import { GA4Provider } from '@/lib/analytics/ga4';
 import { CookieConsentBanner } from '@/components/cookie-consent-banner';
 import { PostHogProvider } from '@/lib/posthog/provider';
+import { SWRProvider } from '@/components/swr-provider';
 import { SessionTracker } from '@/components/session-tracker';
 import { AppShell } from '@/components/navigation/app-shell';
 import { Agentation } from 'agentation';
@@ -91,12 +92,14 @@ export default function RootLayout({ children }: RootLayoutProps) {
       >
         <ConsentProvider>
           <GA4Provider />
-          <PostHogProvider>
-            <SessionTracker />
-            <AppShell>{children}</AppShell>
-            {process.env.NODE_ENV === 'development' && <Agentation />}
-            <Toaster position="bottom-center" />
-          </PostHogProvider>
+          <SWRProvider>
+            <PostHogProvider>
+              <SessionTracker />
+              <AppShell>{children}</AppShell>
+              {process.env.NODE_ENV === 'development' && <Agentation />}
+              <Toaster position="bottom-center" />
+            </PostHogProvider>
+          </SWRProvider>
           <CookieConsentBanner />
         </ConsentProvider>
       </body>
