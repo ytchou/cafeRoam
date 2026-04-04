@@ -195,8 +195,8 @@ The tarot reveal mechanic (Explore) adds a playful, slightly mystical register t
 **Desktop (≥1024px):**
 
 - Two-column: 60/40 split for Shop Detail (content / media+map)
-- Map desktop: full-viewport map with floating UI panels — no sidebar
-- Home desktop: centered search hero, then 3-column card grid
+- Home desktop (`/`): search-first Option B layout — centered search bar hero, suggestion chips row, mode chips row (work/rest/social), featured shops list (2-column card grid); no map on homepage
+- Find desktop (`/find`): full-viewport map with floating UI panels — no sidebar
 - Nav: floating glassmorphism bar at top
 
 **Whitespace philosophy:** Photography-forward means whitespace is structural, not decorative. Cards have just enough breathing room to make the image the hero. Section headers are minimal — the content speaks.

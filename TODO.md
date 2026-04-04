@@ -15,7 +15,7 @@
 - [x] Task 1: Relocate map view to `/find` (DEV-224) — No test needed (verbatim relocation)
 - [ ] Task 2: Update bottom nav to 5 tabs (DEV-225)
 - [ ] Task 4: Implement unauth search with 1 free semantic try (DEV-227)
-- [ ] Task 6: Update SPEC.md and DESIGN.md (DEV-229)
+- [x] Task 6: Update SPEC.md and DESIGN.md (DEV-229)
 
 **Wave 2 — Discovery Page:**
 - [ ] Task 3: Build search-first discovery homepage (DEV-226)
