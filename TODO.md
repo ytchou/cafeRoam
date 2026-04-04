@@ -13,7 +13,7 @@
 
 **Wave 1 — Foundation (parallel):**
 - [x] Task 1: Install shadcn Table/Input/Select/Badge (DEV-230)
-- [ ] Task 2: Create useAdminAuth hook (DEV-230)
+- [x] Task 2: Create useAdminAuth hook (DEV-230)
 
 **Wave 2 — Extraction (parallel):**
 - [ ] Task 3: Extract Dashboard → SubmissionsTab + ClaimsTab (DEV-231)
