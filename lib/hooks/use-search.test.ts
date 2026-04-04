@@ -3,8 +3,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Declare mock with vi.hoisted to avoid hoisting ReferenceError
 const mockFetchWithAuth = vi.hoisted(() => vi.fn());
+const mockFetchOptionalAuth = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/api/fetch', () => ({
   fetchWithAuth: mockFetchWithAuth,
+  fetchOptionalAuth: mockFetchOptionalAuth,
 }));
 
 // SWR wrapper
@@ -35,35 +37,36 @@ const MOCK_RESULTS = [
 describe('useSearch', () => {
   beforeEach(() => {
     mockFetchWithAuth.mockClear();
+    mockFetchOptionalAuth.mockClear();
   });
 
   it('does not fetch when query is null', () => {
     renderHook(() => useSearch(null, null), { wrapper: createWrapper() });
-    expect(mockFetchWithAuth).not.toHaveBeenCalled();
+    expect(mockFetchOptionalAuth).not.toHaveBeenCalled();
   });
 
   it('fetches search results when query is provided', async () => {
-    mockFetchWithAuth.mockResolvedValue({ results: MOCK_RESULTS });
+    mockFetchOptionalAuth.mockResolvedValue({ results: MOCK_RESULTS });
     const { result } = renderHook(() => useSearch('espresso bar', null), {
       wrapper: createWrapper(),
     });
     await waitFor(() => expect(result.current.results).toHaveLength(1));
-    expect(mockFetchWithAuth).toHaveBeenCalledWith(
+    expect(mockFetchOptionalAuth).toHaveBeenCalledWith(
       expect.stringContaining('search')
     );
   });
 
   it('passes mode parameter when set', async () => {
-    mockFetchWithAuth.mockResolvedValue({ results: [] });
+    mockFetchOptionalAuth.mockResolvedValue({ results: [] });
     renderHook(() => useSearch('coffee', 'work'), { wrapper: createWrapper() });
-    await waitFor(() => expect(mockFetchWithAuth).toHaveBeenCalled());
-    expect(mockFetchWithAuth).toHaveBeenCalledWith(
+    await waitFor(() => expect(mockFetchOptionalAuth).toHaveBeenCalled());
+    expect(mockFetchOptionalAuth).toHaveBeenCalledWith(
       expect.stringContaining('mode=work')
     );
   });
 
   it('returns isLoading=true while fetching', () => {
-    mockFetchWithAuth.mockImplementation(() => new Promise(() => {})); // never resolves
+    mockFetchOptionalAuth.mockImplementation(() => new Promise(() => {})); // never resolves
     const { result } = renderHook(() => useSearch('latte', null), {
       wrapper: createWrapper(),
     });

@@ -103,7 +103,7 @@ vi.mock('next/dynamic', () => ({
   },
 }));
 
-import FindPage from './page';
+import FindPage from './find/page';
 
 describe('Find page (map)', () => {
   afterEach(() => {
