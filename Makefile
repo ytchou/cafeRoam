@@ -1,4 +1,4 @@
-.PHONY: help doctor setup dev dev-all migrate seed-shops seed-staging restore-seed-user reset-db workers-enrich workers-embed test validate-supabase lint audit-staging snapshot-staging promote-to-prod restore-snapshot
+.PHONY: help doctor setup dev dev-all migrate seed-shops seed-kino seed-staging restore-seed-user reset-db workers-enrich workers-embed test validate-supabase lint audit-staging snapshot-staging promote-to-prod restore-snapshot
 
 help:
 	@echo "CafeRoam — Available commands:"
@@ -7,6 +7,7 @@ help:
 	@echo "  make dev-all             Start frontend + backend concurrently (Supabase must already be running)"
 	@echo "  make migrate             Apply Supabase migrations"
 	@echo "  make seed-shops          Restore full scraped shop data (710 shops, 164 live) from supabase/seeds/shops_data.sql"
+	@echo "  make seed-kino           Seed test data for 木下庵 Kino (check-ins, menu items, payment votes, replies, followers)"
 	@echo "  make seed-staging        Seed shops + payment methods to staging (requires DATABASE_URL)"
 	@echo "  make restore-seed-user   Restore the local dev admin user via Supabase Admin API (safe — no data loss)"
 	@echo "  make reset-db            !! DESTRUCTIVE: wipes all data. Use only on a fresh clone. Run 'make seed-shops' after."
@@ -62,6 +63,11 @@ restore-seed-user:
 	  || (grep -q "already been registered" /tmp/seed_user_result.json \
 	      && echo "Already exists — no action needed." \
 	      || (echo "Failed:" && cat /tmp/seed_user_result.json && exit 1))
+
+seed-kino:
+	@echo "Seeding test data for 木下庵 Kino..."
+	@docker exec -i supabase_db_caferoam psql -U postgres -d postgres < supabase/seeds/kino_test_data.sql
+	@echo "Done — Kino test data seeded."
 
 seed-shops:
 	@echo "Restoring scraped shop data from supabase/seeds/shops_data.sql..."
