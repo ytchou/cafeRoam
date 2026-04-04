@@ -1,3 +1,4 @@
+import uuid
 from typing import Any
 
 import structlog
@@ -5,7 +6,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from starlette.requests import Request
 from supabase import Client
 
-from api.deps import get_admin_db, get_current_user, get_user_db
+from api.deps import get_admin_db, get_optional_user, get_optional_user_db
 from core.anonymize import anonymize_user_id
 from core.config import settings
 from middleware.rate_limit import get_user_id_or_ip, limiter
@@ -52,11 +53,14 @@ async def search(
     text: str = Query(..., min_length=1),
     mode: str | None = Query(None, pattern="^(work|rest|social)$"),
     limit: int = Query(20, ge=1, le=50),
-    user: dict[str, Any] = Depends(get_current_user),  # noqa: B008
-    db: Client = Depends(get_user_db),  # noqa: B008
+    user: dict[str, Any] | None = Depends(get_optional_user),  # noqa: B008
+    db: Client = Depends(get_optional_user_db),  # noqa: B008
     admin_db: Client = Depends(get_admin_db),  # noqa: B008
 ) -> dict[str, Any]:
-    """Semantic search with optional mode filter. Auth required."""
+    """Semantic search with optional mode filter.
+
+    Auth optional; unauthenticated users can search.
+    """
     try:
         embeddings = get_embeddings_provider()
     except EmbeddingsProviderUnavailableError as exc:
@@ -71,7 +75,8 @@ async def search(
     query = SearchQuery(text=text, limit=limit)
     query_type = classify(text)
     response = await service.search(query, mode=mode, query_type=query_type)
-    user_id_anon = anonymize_user_id(user["id"], salt=settings.anon_salt)
+    user_id = user["id"] if user else str(uuid.uuid4())
+    user_id_anon = anonymize_user_id(user_id, salt=settings.anon_salt)
     result_count = len(response.results)
 
     background_tasks.add_task(

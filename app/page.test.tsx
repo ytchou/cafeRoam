@@ -103,7 +103,20 @@ vi.mock('next/dynamic', () => ({
   },
 }));
 
-import FindPage from './page';
+import HomePage from './page';
+import FindPage from './find/page';
+
+describe('Home page (AI search entry point)', () => {
+  it('When a user visits the home page, they see the AI search input', () => {
+    render(<HomePage />);
+    expect(screen.getByLabelText('搜尋咖啡廳')).toBeInTheDocument();
+  });
+
+  it('When a user visits the home page, they see the CafeRoam branding', () => {
+    render(<HomePage />);
+    expect(screen.getByText('啡遊')).toBeInTheDocument();
+  });
+});
 
 describe('Find page (map)', () => {
   afterEach(() => {

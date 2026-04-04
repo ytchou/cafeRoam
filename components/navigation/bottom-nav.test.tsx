@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import { usePathname } from 'next/navigation';
 import { describe, it, expect } from 'vitest';
 import { vi } from 'vitest';
 import { BottomNav } from './bottom-nav';
@@ -39,6 +40,7 @@ describe('a user interacting with the BottomNav', () => {
   });
 
   it('a user on the map page sees the map tab highlighted as active', () => {
+    vi.mocked(usePathname).mockReturnValueOnce('/find');
     render(<BottomNav />);
     const findTab = screen.getByText('地圖').closest('[data-tab]');
     expect(findTab).toHaveAttribute('data-active', 'true');
@@ -66,5 +68,26 @@ describe('a user interacting with the BottomNav', () => {
     expect(nav).toBeInTheDocument();
     expect(nav).not.toHaveClass('fixed');
     expect(nav).not.toHaveClass('z-40');
+  });
+
+  it('renders 5 navigation tabs in correct order', () => {
+    render(<BottomNav />);
+    const tabs = screen.getAllByRole('link');
+    expect(tabs).toHaveLength(5);
+    expect(tabs[0]).toHaveTextContent('首頁');
+    expect(tabs[1]).toHaveTextContent('探索');
+    expect(tabs[2]).toHaveTextContent('地圖');
+    expect(tabs[3]).toHaveTextContent('收藏');
+    expect(tabs[4]).toHaveTextContent('我的');
+  });
+
+  it('links to correct routes including /find for map tab', () => {
+    render(<BottomNav />);
+    const tabs = screen.getAllByRole('link');
+    expect(tabs[0]).toHaveAttribute('href', '/');
+    expect(tabs[1]).toHaveAttribute('href', '/explore');
+    expect(tabs[2]).toHaveAttribute('href', '/find');
+    expect(tabs[3]).toHaveAttribute('href', '/lists');
+    expect(tabs[4]).toHaveAttribute('href', '/profile');
   });
 });

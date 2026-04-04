@@ -106,7 +106,7 @@ Object.defineProperty(navigator, 'geolocation', {
   },
 });
 
-import FindPage from '../page';
+import FindPage from '../find/page';
 import { _resetDeviceCapabilityCache } from '@/lib/hooks/use-device-capability';
 
 describe('FindPage map degradation integration', () => {

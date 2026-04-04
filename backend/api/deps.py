@@ -47,6 +47,15 @@ async def get_user_db(token: str = Depends(_get_bearer_token)) -> Client:  # noq
     return get_user_client(token)
 
 
+def get_optional_user_db(request: Request) -> Client:
+    """Return an authenticated user DB client if Bearer token present, else service-role client."""
+    auth_header = request.headers.get("Authorization")
+    if auth_header and auth_header.startswith("Bearer "):
+        token = auth_header.removeprefix("Bearer ")
+        return get_user_client(token)
+    return get_service_role_client()
+
+
 def _decode_jwt_user_id(token: str) -> str:
     """Decode and verify a Supabase JWT, returning the user_id (sub claim).
 

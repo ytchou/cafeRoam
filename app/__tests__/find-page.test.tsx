@@ -236,7 +236,7 @@ vi.mock('next/image', () => ({
   },
 }));
 
-import FindPage from '../page';
+import FindPage from '../find/page';
 
 describe('FindPage', () => {
   beforeEach(() => {
