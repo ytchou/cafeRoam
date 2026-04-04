@@ -5,7 +5,9 @@ import { SWRProvider } from '../swr-provider';
 
 function ConfigReader() {
   const { revalidateOnFocus } = useSWRConfig();
-  return <div data-testid="revalidate-on-focus">{String(revalidateOnFocus)}</div>;
+  return (
+    <div data-testid="revalidate-on-focus">{String(revalidateOnFocus)}</div>
+  );
 }
 
 describe('SWRProvider', () => {
