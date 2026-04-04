@@ -63,12 +63,14 @@ describe('middleware route guards', () => {
     });
 
     it('/api/auth/consent (public prefix) passes through without session', async () => {
-      mockUpdateSession.mockResolvedValue({
-        user: null,
-        supabaseResponse: passThroughResponse,
-      });
       const res = await middleware(makeRequest('/api/auth/consent'));
-      expect(res).toBe(passThroughResponse);
+      expect(res.status).toBe(200);
+    });
+
+    it('skips updateSession for /api routes', async () => {
+      const request = new NextRequest(new URL('/api/shops/123/follow', 'http://localhost'));
+      await middleware(request);
+      expect(mockUpdateSession).not.toHaveBeenCalled();
     });
   });
 
