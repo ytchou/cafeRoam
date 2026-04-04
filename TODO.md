@@ -29,7 +29,7 @@
 
 **Chunk 4 — Docs (DEV-222):**
 
-- [ ] Update SPEC.md + ASSUMPTIONS.md with anti-crawling protections
+- [x] Update SPEC.md + ASSUMPTIONS.md with anti-crawling protections
 
 ---
 
