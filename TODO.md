@@ -18,8 +18,8 @@
 
 **Chunk 2 — Bot Detection (DEV-220):**
 
-- [ ] Write bot detection tests (TDD)
-- [ ] Implement BotDetectionMiddleware
+- [x] Write bot detection tests (TDD)
+- [x] Implement BotDetectionMiddleware
 
 **Chunk 3 — Rate Limiting (DEV-219, DEV-221):**
 
