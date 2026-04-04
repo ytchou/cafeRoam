@@ -5,10 +5,9 @@ import { useSearchParams } from 'next/navigation';
 import { BatchesList } from './_components/BatchesList';
 import { RawJobsList } from './_components/RawJobsList';
 import { SchedulerHealth } from './_components/SchedulerHealth';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 
-type Tab = 'batches' | 'raw' | 'scheduler';
-
-const TAB_LABELS: Record<Tab, string> = {
+const TAB_LABELS: Record<'batches' | 'raw' | 'scheduler', string> = {
   batches: 'Batch Runs',
   raw: 'Raw Jobs',
   scheduler: 'Scheduler',
@@ -17,35 +16,24 @@ const TAB_LABELS: Record<Tab, string> = {
 function AdminJobsContent() {
   const searchParams = useSearchParams();
   const initialStatus = searchParams.get('status');
-  const [activeTab, setActiveTab] = useState<Tab>(
-    initialStatus ? 'raw' : 'batches'
-  );
 
   return (
-    <>
-      <div className="flex gap-1 border-b">
-        {(['batches', 'raw', 'scheduler'] as const).map((tab) => (
-          <button
-            key={tab}
-            type="button"
-            onClick={() => setActiveTab(tab)}
-            className={`px-4 py-2 text-sm ${
-              activeTab === tab
-                ? 'border-b-2 border-blue-600 font-medium text-blue-600'
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            {TAB_LABELS[tab]}
-          </button>
-        ))}
-      </div>
-
-      {activeTab === 'batches' && <BatchesList />}
-      {activeTab === 'raw' && (
+    <Tabs defaultValue={initialStatus ? 'raw' : 'batches'}>
+      <TabsList>
+        <TabsTrigger value="batches">{TAB_LABELS.batches}</TabsTrigger>
+        <TabsTrigger value="raw">{TAB_LABELS.raw}</TabsTrigger>
+        <TabsTrigger value="scheduler">{TAB_LABELS.scheduler}</TabsTrigger>
+      </TabsList>
+      <TabsContent value="batches">
+        <BatchesList />
+      </TabsContent>
+      <TabsContent value="raw">
         <RawJobsList initialStatus={initialStatus ?? undefined} />
-      )}
-      {activeTab === 'scheduler' && <SchedulerHealth />}
-    </>
+      </TabsContent>
+      <TabsContent value="scheduler">
+        <SchedulerHealth />
+      </TabsContent>
+    </Tabs>
   );
 }
 

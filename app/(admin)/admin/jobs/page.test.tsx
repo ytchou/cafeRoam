@@ -102,7 +102,7 @@ describe('AdminJobsPage', () => {
     const user = userEvent.setup();
     render(<AdminJobsPage />);
 
-    await user.click(screen.getByRole('button', { name: /raw jobs/i }));
+    await user.click(screen.getByRole('tab', { name: /raw jobs/i }));
 
     await waitFor(() => {
       expect(screen.getByText('Jobs Queue')).toBeInTheDocument();
@@ -159,7 +159,7 @@ describe('AdminJobsPage', () => {
     const user = userEvent.setup();
     render(<AdminJobsPage />);
 
-    await user.click(screen.getByRole('button', { name: /raw jobs/i }));
+    await user.click(screen.getByRole('tab', { name: /raw jobs/i }));
 
     await waitFor(() => {
       const tbody = screen.getAllByRole('rowgroup')[1];
@@ -218,7 +218,7 @@ describe('AdminJobsPage', () => {
     const user = userEvent.setup();
     render(<AdminJobsPage />);
 
-    await user.click(screen.getByRole('button', { name: /raw jobs/i }));
+    await user.click(screen.getByRole('tab', { name: /raw jobs/i }));
 
     await waitFor(() => {
       const tbody = screen.getAllByRole('rowgroup')[1];

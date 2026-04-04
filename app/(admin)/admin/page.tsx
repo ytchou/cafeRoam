@@ -8,13 +8,13 @@ import {
   SubmissionsTab,
 } from './_components/SubmissionsTab';
 import { useAdminAuth } from './_hooks/use-admin-auth';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 
 export default function AdminDashboard() {
   const { getToken } = useAdminAuth();
   const [data, setData] = useState<PipelineOverview | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<'submissions' | 'claims'>('submissions');
 
   const fetchOverview = useCallback(async () => {
     const token = await getToken();
@@ -54,33 +54,12 @@ export default function AdminDashboard() {
     <div className="space-y-8">
       <h1 className="text-2xl font-bold">Pipeline Dashboard</h1>
 
-      <div className="flex gap-4 border-b pb-2">
-        <button
-          type="button"
-          onClick={() => setTab('submissions')}
-          className={
-            tab === 'submissions'
-              ? 'border-b-2 border-black font-semibold'
-              : 'text-gray-500'
-          }
-        >
-          Submissions
-        </button>
-        <button
-          type="button"
-          onClick={() => setTab('claims')}
-          className={
-            tab === 'claims'
-              ? 'border-b-2 border-black font-semibold'
-              : 'text-gray-500'
-          }
-        >
-          Claims
-        </button>
-      </div>
-
-      {tab === 'submissions' && (
-        <>
+      <Tabs defaultValue="submissions">
+        <TabsList>
+          <TabsTrigger value="submissions">Submissions</TabsTrigger>
+          <TabsTrigger value="claims">Claims</TabsTrigger>
+        </TabsList>
+        <TabsContent value="submissions" className="space-y-8">
           <section>
             <h2 className="mb-4 text-lg font-semibold">Job Queue</h2>
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
@@ -102,12 +81,12 @@ export default function AdminDashboard() {
               </Link>
             )}
           </section>
-
           <SubmissionsTab data={data} getToken={getToken} onRefresh={fetchOverview} />
-        </>
-      )}
-
-      {tab === 'claims' && <ClaimsTab getToken={getToken} />}
+        </TabsContent>
+        <TabsContent value="claims">
+          <ClaimsTab getToken={getToken} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

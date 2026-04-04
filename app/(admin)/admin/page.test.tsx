@@ -362,12 +362,12 @@ describe('AdminDashboard', () => {
     // Wait for page to finish loading
     await waitFor(() => {
       expect(
-        screen.getByRole('button', { name: /claims/i })
+        screen.getByRole('tab', { name: /claims/i })
       ).toBeInTheDocument();
     });
 
     // Switch to Claims tab
-    await user.click(screen.getByRole('button', { name: /claims/i }));
+    await user.click(screen.getByRole('tab', { name: /claims/i }));
 
     // Change status filter to "approved"
     const select = screen.getByRole('combobox', { name: /claim status/i });
@@ -424,10 +424,10 @@ describe('AdminDashboard', () => {
     render(<AdminDashboard />);
     await waitFor(() => {
       expect(
-        screen.getByRole('button', { name: /claims/i })
+        screen.getByRole('tab', { name: /claims/i })
       ).toBeInTheDocument();
     });
-    await user.click(screen.getByRole('button', { name: /claims/i }));
+    await user.click(screen.getByRole('tab', { name: /claims/i }));
     await screen.findByText('Test Shop');
 
     expect(screen.getByText('pending')).toBeInTheDocument();
