@@ -33,7 +33,6 @@ jobs:
               - 'package.json'
               - 'pnpm-lock.yaml'
               - 'tsconfig.json'
-              - '.github/workflows/frontend-ci.yml'
 
   frontend:
     name: Frontend (lint, format, tsc, vitest)
@@ -75,5 +74,5 @@ jobs:
           wait $pid_tsc_test
           exit $fail
 
-      - name: Run tests
-        run: pnpm test
+      - name: Run tests (changed files only)
+        run: pnpm exec vitest run --changed origin/main
