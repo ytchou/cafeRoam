@@ -4,10 +4,14 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 // Mock posthog-js before importing the provider
 const mockInit = vi.fn();
 const mockOptOut = vi.fn();
+const mockRegister = vi.fn();
+const mockOptIn = vi.fn();
 vi.mock('posthog-js', () => ({
   default: {
     init: mockInit,
     opt_out_capturing: mockOptOut,
+    opt_in_capturing: mockOptIn,
+    register: mockRegister,
   },
 }));
 

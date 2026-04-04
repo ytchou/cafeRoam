@@ -103,7 +103,8 @@ describe('ExplorePage — vibe strip', () => {
     setupSwrMock();
     render(<ExplorePage />);
     expect(screen.getByText('Study Cave')).toBeInTheDocument();
-    expect(screen.getByText('Quiet · WiFi')).toBeInTheDocument();
+    expect(screen.getByText('Quiet')).toBeInTheDocument();
+    expect(screen.getByText('WiFi')).toBeInTheDocument();
     expect(screen.getByText('First Date')).toBeInTheDocument();
   });
 

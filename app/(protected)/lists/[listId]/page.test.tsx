@@ -71,6 +71,20 @@ vi.mock('@/lib/hooks/use-media-query', () => ({
   useMediaQuery: () => false,
 }));
 
+vi.mock('vaul', () => ({
+  Drawer: {
+    Root: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+    Portal: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+    Content: ({ children }: { children: React.ReactNode }) => (
+      <div>{children}</div>
+    ),
+    Handle: () => null,
+    Title: ({ children }: { children: React.ReactNode }) => (
+      <span>{children}</span>
+    ),
+  },
+}));
+
 vi.mock('react-map-gl/mapbox', () => ({
   default: ({ children }: { children?: React.ReactNode }) => (
     <div data-testid="map">{children}</div>
@@ -82,6 +96,8 @@ vi.mock('react-map-gl/mapbox', () => ({
     children?: React.ReactNode;
     onClick?: () => void;
   }) => <div onClick={onClick}>{children}</div>,
+  Source: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
+  Layer: () => null,
 }));
 
 vi.mock('@/lib/supabase/client', () => ({

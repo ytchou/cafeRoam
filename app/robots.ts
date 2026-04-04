@@ -14,6 +14,7 @@ export default function robots(): MetadataRoute.Robots {
           '/login',
           '/signup',
           '/api/',
+          '/shops/*/claim',
         ],
       },
       {
@@ -26,6 +27,7 @@ export default function robots(): MetadataRoute.Robots {
           '/login',
           '/signup',
           '/api/',
+          '/shops/*/claim',
         ],
       },
       {
@@ -38,6 +40,7 @@ export default function robots(): MetadataRoute.Robots {
           '/login',
           '/signup',
           '/api/',
+          '/shops/*/claim',
         ],
       },
       {
@@ -50,6 +53,7 @@ export default function robots(): MetadataRoute.Robots {
           '/login',
           '/signup',
           '/api/',
+          '/shops/*/claim',
         ],
       },
       {
@@ -62,6 +66,7 @@ export default function robots(): MetadataRoute.Robots {
           '/login',
           '/signup',
           '/api/',
+          '/shops/*/claim',
         ],
       },
     ],

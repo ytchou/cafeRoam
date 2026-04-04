@@ -38,7 +38,13 @@
       "layout.tsx",
       "*/components/ui/*.tsx",
       "**/e2e/**",
-      "**/types/*.ts"
+      "**/types/*.ts",
+      "instrumentation-client.ts",
+      "apple-icon.tsx",
+      "icon.tsx",
+      "global-error.tsx",
+      "**/privacy/page.tsx",
+      "**/owner/data-terms/page.tsx"
     ]
   },
   "backend": {
