@@ -1,0 +1,85 @@
+{
+  "findings": [
+    {
+      "severity": "Critical",
+      "file": "backend/pyproject.toml",
+      "line": "N/A",
+      "description": "PyJWT (`import jwt as pyjwt`) used in rate_limit.py but not declared as a direct dependency — only a transitive dep via supabase-auth. A supabase-auth version change could silently break this import.",
+      "flagged_by": "Bug Hunter",
+      "status": "valid"
+    },
+    {
+      "severity": "Critical",
+      "file": "backend/middleware/bot_detection.py",
+      "line": "31-39,49-56",
+      "description": "Structured log events missing required `reason` field. Plan acceptance criterion explicitly requires: event_type, ip, path, reason. The bot_detection logger uses `action` instead; the rate_limit handler in main.py has no `reason` field at all.",
+      "flagged_by": "Plan Alignment",
+      "status": "valid"
+    },
+    {
+      "severity": "Important",
+      "file": "backend/middleware/bot_detection.py",
+      "line": "70-83",
+      "description": "Allowlist checked before blocklist in _classify(). A scraper with UA 'Scrapy/2.0 (Googlebot compatible)' bypasses all blocklist checks because the allowlist match returns 'ok' first. Blocklist should be evaluated before allowlist.",
+      "flagged_by": "Bug Hunter",
+      "status": "valid"
+    },
+    {
+      "severity": "Important",
+      "file": "backend/tests/middleware/test_bot_detection.py",
+      "line": "47-53",
+      "description": "test_blocks_missing_user_agent is identical to test_blocks_empty_user_agent — both send headers={\"user-agent\": \"\"}. The test does not cover a genuinely absent User-Agent header and provides false coverage signal.",
+      "flagged_by": "Bug Hunter",
+      "status": "valid"
+    },
+    {
+      "severity": "Important",
+      "file": "backend/tests/middleware/test_rate_limiting.py",
+      "line": "73-77",
+      "description": "Tautological assertion: `or response.status_code == 429` makes the compound assertion always pass after line 73 already asserts 429. The test never actually validates the response body content.",
+      "flagged_by": "Standards",
+      "status": "valid"
+    },
+    {
+      "severity": "Important",
+      "file": "scripts/doctor.sh",
+      "line": "N/A",
+      "description": "CLAUDE.md rule: 'When adding a new env var, update scripts/doctor.sh with a corresponding health check.' Four new config fields added (rate_limit_*, bot_detection_enabled). doctor.sh has no corresponding checks.",
+      "flagged_by": "Plan Alignment",
+      "status": "valid"
+    },
+    {
+      "severity": "Minor",
+      "file": "backend/middleware/bot_detection.py",
+      "line": "36,44",
+      "description": "get_ipaddr(request) called twice in the blocked branch — once for the logger and once for the Sentry breadcrumb. Should be extracted to a local variable `ip` before the first use, matching the pattern in main.py:102.",
+      "flagged_by": "Bug Hunter",
+      "status": "valid"
+    }
+  ],
+  "active_agents": ["Bug Hunter", "Standards", "Architecture & Design", "Plan Alignment"],
+  "skipped": [
+    {
+      "file": "backend/middleware/bot_detection.py",
+      "line": "86",
+      "reason": "Threshold >= 1 intentional per handoff: 'Starlette TestClient auto-injects accept and accept-encoding, so threshold of 2 never triggered in tests. Semantically correct: any missing browser header is a signal.'"
+    },
+    {
+      "file": "backend/api/maps.py,backend/api/shops.py",
+      "line": "15,59",
+      "reason": "IP-only key for maps/shops is correct per design doc — table explicitly specifies '30/min per IP' for these endpoints. Only /search is per-user."
+    },
+    {
+      "file": "backend/middleware/bot_detection.py",
+      "line": "36,54",
+      "reason": "IP in structlog is not a PDPA violation — design doc explicitly requires ip field in all log events for abuse prevention. CLAUDE.md PII clause applies to analytics events (PostHog), not security/operational logs."
+    },
+    {
+      "file": "backend/middleware/bot_detection.py,backend/main.py",
+      "line": "40-45,110-115",
+      "reason": "Sentry breadcrumbs without associated exception is an accepted tradeoff — breadcrumbs provide context when a bot-triggered request later causes an error in the same transaction."
+    }
+  ],
+  "head_sha": "d2c7d07b26dae28ae7414f1bfe366f064b638cf9",
+  "review_log_path": "docs/reviews/2026-04-04-feat-anti-crawling.md"
+}
