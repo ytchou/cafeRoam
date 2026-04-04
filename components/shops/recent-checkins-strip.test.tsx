@@ -48,7 +48,7 @@ describe('RecentCheckinsStrip', () => {
   });
 
   it('an authenticated user sees individual check-in photos with usernames', async () => {
-mockGetSession.mockResolvedValue({ data: { session: { user: { id: 'u1' } } } });
+    mockGetSession.mockResolvedValue({ data: { session: { user: { id: 'u1' } } } });
     render(<RecentCheckinsStrip preview={PREVIEW} checkins={CHECKINS} />);
     expect(await screen.findByText('Alice')).toBeInTheDocument();
     expect(screen.getByText('Bob')).toBeInTheDocument();
