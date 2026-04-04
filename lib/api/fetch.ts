@@ -6,12 +6,7 @@ export async function fetchPublic<T = unknown>(url: string): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-export async function fetchWithAuth(url: string, init?: RequestInit) {
-  const supabase = createClient();
-  const { data } = await supabase.auth.getSession();
-  const token = data.session?.access_token;
-  if (!token) throw new Error('Not authenticated');
-
+async function fetchWithToken(url: string, token: string, init?: RequestInit) {
   const res = await fetch(url, {
     ...init,
     headers: {
@@ -27,26 +22,20 @@ export async function fetchWithAuth(url: string, init?: RequestInit) {
   return res.json();
 }
 
+export async function fetchWithAuth(url: string, init?: RequestInit) {
+  const supabase = createClient();
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+  if (!token) throw new Error('Not authenticated');
+  return fetchWithToken(url, token, init);
+}
+
 export async function fetchOptionalAuth(url: string, init?: RequestInit) {
   const supabase = createClient();
   const { data } = await supabase.auth.getSession();
   const token = data.session?.access_token;
 
-  if (token) {
-    const res = await fetch(url, {
-      ...init,
-      headers: {
-        ...init?.headers,
-        Authorization: `Bearer ${token}`,
-        ...(init?.body ? { 'Content-Type': 'application/json' } : {}),
-      },
-    });
-    if (!res.ok) {
-      const body = await res.json().catch(() => ({}));
-      throw new Error(body.detail || `Request failed: ${res.status}`);
-    }
-    return res.json();
-  }
+  if (token) return fetchWithToken(url, token, init);
 
   const res = await fetch(url, init);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);

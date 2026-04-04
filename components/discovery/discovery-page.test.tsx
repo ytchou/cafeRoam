@@ -2,6 +2,10 @@ import { render, screen } from '@testing-library/react';
 import { Suspense, type ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+vi.mock('@/lib/analytics/ga4-events', () => ({
+  trackSearch: vi.fn(),
+  trackSignupCtaClick: vi.fn(),
+}));
 vi.mock('@/lib/hooks/use-search', () => ({ useSearch: vi.fn() }));
 vi.mock('@/lib/hooks/use-shops', () => ({ useShops: vi.fn() }));
 vi.mock('@/lib/hooks/use-search-state', () => ({ useSearchState: vi.fn() }));
@@ -142,5 +146,114 @@ describe('DiscoveryPage', () => {
       'href',
       expect.stringContaining('/find')
     );
+  });
+
+  describe('free search gate (unauthenticated users)', () => {
+    const searchState = (query: string) => ({
+      query,
+      mode: null as null,
+      setQuery: vi.fn(),
+      setMode: vi.fn(),
+      filters: [] as string[],
+      view: 'list' as const,
+      toggleFilter: vi.fn(),
+      setFilters: vi.fn(),
+      setView: vi.fn(),
+      clearAll: vi.fn(),
+    });
+
+    beforeEach(() => {
+      localStorage.clear();
+    });
+
+    it('burns the free try when an anonymous user performs a semantic search', () => {
+      vi.mocked(useSearchState).mockReturnValue(searchState('有插座可以工作的咖啡廳'));
+      vi.mocked(useSearch).mockReturnValue({
+        results: [],
+        queryType: 'semantic',
+        resultCount: 0,
+        isLoading: false,
+        error: null,
+      });
+
+      renderDiscoveryPage();
+      expect(localStorage.getItem('caferoam_free_search_used')).toBe('true');
+    });
+
+    it('does not burn the free try when an anonymous user searches by shop name', () => {
+      vi.mocked(useSearchState).mockReturnValue(searchState('木下庵'));
+      vi.mocked(useSearch).mockReturnValue({
+        results: [],
+        queryType: 'name',
+        resultCount: 0,
+        isLoading: false,
+        error: null,
+      });
+
+      renderDiscoveryPage();
+      expect(localStorage.getItem('caferoam_free_search_used')).toBeNull();
+    });
+
+    it('redirects to login when free try is already used and user performs another semantic search', () => {
+      localStorage.setItem('caferoam_free_search_used', 'true');
+      const pushMock = vi.fn();
+      vi.mocked(useRouter).mockReturnValue({
+        push: pushMock,
+        replace: vi.fn(),
+        back: vi.fn(),
+        forward: vi.fn(),
+        refresh: vi.fn(),
+        prefetch: vi.fn(),
+      } as ReturnType<typeof useRouter>);
+      vi.mocked(useSearchState).mockReturnValue(searchState('安靜有wifi的咖啡廳'));
+      vi.mocked(useSearch).mockReturnValue({
+        results: [],
+        queryType: 'semantic',
+        resultCount: 0,
+        isLoading: false,
+        error: null,
+      });
+
+      renderDiscoveryPage();
+      expect(pushMock).toHaveBeenCalledWith('/login?returnTo=/');
+    });
+
+    it('does not redirect when free try is used but user searches by shop name', () => {
+      localStorage.setItem('caferoam_free_search_used', 'true');
+      const pushMock = vi.fn();
+      vi.mocked(useRouter).mockReturnValue({
+        push: pushMock,
+        replace: vi.fn(),
+        back: vi.fn(),
+        forward: vi.fn(),
+        refresh: vi.fn(),
+        prefetch: vi.fn(),
+      } as ReturnType<typeof useRouter>);
+      vi.mocked(useSearchState).mockReturnValue(searchState('木下庵'));
+      vi.mocked(useSearch).mockReturnValue({
+        results: [],
+        queryType: 'name',
+        resultCount: 0,
+        isLoading: false,
+        error: null,
+      });
+
+      renderDiscoveryPage();
+      expect(pushMock).not.toHaveBeenCalledWith('/login?returnTo=/');
+    });
+
+    it('does not gate when queryType is not yet known (search in flight)', () => {
+      vi.mocked(useSearchState).mockReturnValue(searchState('有插座的咖啡廳'));
+      vi.mocked(useSearch).mockReturnValue({
+        results: [],
+        queryType: null,
+        resultCount: 0,
+        isLoading: true,
+        error: null,
+      });
+
+      renderDiscoveryPage();
+      expect(localStorage.getItem('caferoam_free_search_used')).toBeNull();
+    });
   });
 });

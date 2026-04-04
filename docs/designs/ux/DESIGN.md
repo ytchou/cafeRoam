@@ -22,7 +22,7 @@ The tarot reveal mechanic (Explore) adds a playful, slightly mystical register t
 | ---------------- | --------- | ------------------------------------------------------------------------------------------- |
 | Terracotta       | `#E06B3F` | Primary brand accent — CTAs, search bar accents, active states, focus rings, map pin stroke |
 | Map Brown        | `#8b5e3c` | Map pin fill — warm coffee leather, slightly darker than terracotta                         |
-| Espresso         | `#2c1810` | Active/selected state backgrounds — deepest brand tone, used for selected chips and tags    |
+| Espresso         | `#2c1810` | Active/selected state backgrounds and dark hero sections — deepest brand tone, used for selected chips, tags, and the `/` discovery page hero |
 | Warm White       | `#ffffff` | Page background, card surface, input background                                             |
 | Cream Card       | `#fdf8f5` | Selected card background — barely-there warmth that signals selection without using color   |
 | Parchment Toggle | `#f0efed` | Toggle backgrounds, inactive tab bars — neutral warm surface                                |

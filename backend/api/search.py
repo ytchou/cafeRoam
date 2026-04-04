@@ -1,3 +1,4 @@
+import uuid
 from typing import Any
 
 import structlog
@@ -74,7 +75,7 @@ async def search(
     query = SearchQuery(text=text, limit=limit)
     query_type = classify(text)
     response = await service.search(query, mode=mode, query_type=query_type)
-    user_id = user["id"] if user else "anonymous"
+    user_id = user["id"] if user else str(uuid.uuid4())
     user_id_anon = anonymize_user_id(user_id, salt=settings.anon_salt)
     result_count = len(response.results)
 

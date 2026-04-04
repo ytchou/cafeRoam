@@ -30,7 +30,7 @@ export function DiscoveryPage() {
   const isSearching = trimmedQuery.length > 0;
   const lastHandledQueryRef = useRef<string | null>(null);
 
-  const { results, isLoading: isSearchLoading, error: searchError } = useSearch(
+  const { results, isLoading: isSearchLoading, error: searchError, queryType } = useSearch(
     isSearching ? trimmedQuery : null,
     mode as SearchMode
   );
@@ -50,7 +50,15 @@ export function DiscoveryPage() {
       lastHandledQueryRef.current = null;
       return;
     }
+    // Wait for the server response to know the query type
+    if (queryType === null) return;
     if (lastHandledQueryRef.current === trimmedQuery) return;
+
+    // Name searches are always free per SPEC — only gate semantic/vibe searches
+    if (queryType !== 'semantic') {
+      lastHandledQueryRef.current = trimmedQuery;
+      return;
+    }
 
     const hasUsedFreeSearch =
       window.localStorage.getItem(FREE_SEARCH_KEY) === 'true';
@@ -65,7 +73,7 @@ export function DiscoveryPage() {
     window.localStorage.setItem(FREE_SEARCH_KEY, 'true');
     trackSearch(trimmedQuery);
     lastHandledQueryRef.current = trimmedQuery;
-  }, [query, trimmedQuery, user, router]);
+  }, [query, trimmedQuery, user, router, queryType]);
 
   const shopsToRender = isSearching ? results : featuredShops;
   const isLoading = isSearching ? isSearchLoading : isFeaturedLoading;
@@ -73,15 +81,15 @@ export function DiscoveryPage() {
   const sectionTitle = isSearching ? '搜尋結果' : '精選咖啡廳';
 
   return (
-    <div className="min-h-screen bg-stone-50">
-      <section className="bg-stone-900 px-5 pb-8 pt-8 text-white">
+    <div className="min-h-screen bg-white">
+      <section className="bg-[#2c1810] px-5 pb-8 pt-8 text-white">
         <div className="mx-auto max-w-5xl">
           <span className="text-brand text-sm font-semibold tracking-[0.2em]">
             啡遊
           </span>
           <h1 className="mt-4 flex flex-col text-4xl font-bold tracking-tight sm:text-5xl">
             <span>找到你的</span>
-            <span className="text-amber-50">理想咖啡廳</span>
+            <span className="text-white/80">理想咖啡廳</span>
           </h1>
           <div className="mt-6">
             <label htmlFor="discovery-search" className="sr-only">
@@ -102,13 +110,13 @@ export function DiscoveryPage() {
         </div>
       </section>
 
-      <section className="border-b border-stone-200 bg-stone-50 px-5 py-4">
+      <section className="border-b border-[#e5e7eb] bg-white px-5 py-4">
         <div className="mx-auto max-w-5xl">
           <ModeChips activeMode={mode} onModeChange={setMode} />
         </div>
       </section>
 
-      <section className="bg-stone-50 px-5 py-8">
+      <section className="bg-white px-5 py-8">
         <div className="mx-auto max-w-5xl">
           <div className="mb-4 flex items-center justify-between gap-4">
             <h2 className="text-2xl font-semibold text-gray-900">
@@ -131,7 +139,7 @@ export function DiscoveryPage() {
               {isSearching ? '目前沒有符合條件的咖啡廳。' : '暫時沒有精選咖啡廳。'}
             </p>
           ) : (
-            <div className="overflow-hidden rounded-3xl border border-stone-200 bg-white shadow-sm">
+            <div className="overflow-hidden rounded-3xl border border-[#e5e7eb] bg-white shadow-sm">
               {shopsToRender.map((shop) => (
                 <ShopCardCompact
                   key={shop.id}
