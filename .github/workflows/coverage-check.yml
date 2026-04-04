@@ -1,8 +1,8 @@
-name: Coverage Check
+name: Coverage Report
 
 on:
   workflow_run:
-    workflows: ['CafeRoam CI']
+    workflows: ['Frontend CI', 'Backend CI']
     types: [completed]
     branches: ['**']
 
@@ -13,7 +13,7 @@ permissions:
   contents: read
 
 jobs:
-  coverage-analysis:
+  coverage-report:
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
@@ -63,20 +63,48 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
 
-      - name: Download coverage artifact
-        id: artifact
+      - name: Find CI run IDs for this SHA
+        id: runs
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const sha = context.payload.workflow_run.head_sha;
+
+            async function findRunId(workflowFile) {
+              const { data } = await github.rest.actions.listWorkflowRuns({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                workflow_id: workflowFile,
+                head_sha: sha,
+                status: 'completed',
+                per_page: 1
+              });
+              return data.workflow_runs[0]?.id?.toString() || '';
+            }
+
+            const frontendRunId = await findRunId('frontend-ci.yml');
+            const backendRunId = await findRunId('backend-ci.yml');
+
+            console.log(`Frontend CI run: ${frontendRunId || 'not found'}`);
+            console.log(`Backend CI run: ${backendRunId || 'not found'}`);
+
+            core.setOutput('frontend_run_id', frontendRunId);
+            core.setOutput('backend_run_id', backendRunId);
+
+      - name: Download frontend coverage artifact
+        if: steps.runs.outputs.frontend_run_id != ''
         uses: dawidd6/action-download-artifact@v6
         with:
-          run_id: ${{ github.event.workflow_run.id }}
+          run_id: ${{ steps.runs.outputs.frontend_run_id }}
           name: coverage-app
           path: ./coverage-reports/
         continue-on-error: true
 
       - name: Download backend coverage artifact
-        id: backend-artifact
+        if: steps.runs.outputs.backend_run_id != ''
         uses: dawidd6/action-download-artifact@v6
         with:
-          run_id: ${{ github.event.workflow_run.id }}
+          run_id: ${{ steps.runs.outputs.backend_run_id }}
           name: coverage-backend
           path: ./coverage-reports/backend/
         continue-on-error: true
@@ -156,7 +184,7 @@ jobs:
             let conclusion = 'success';
 
             if (!artifactAvailable) {
-              summary = 'No coverage data — test jobs were skipped by path filters. This is expected when the PR does not touch source files (e.g., E2E-only or docs-only changes).';
+              summary = 'No coverage data — test jobs were skipped by path filters. This is expected when the PR does not touch source files.';
               conclusion = 'success';
               title = 'Coverage Report (Skipped)';
             } else {
