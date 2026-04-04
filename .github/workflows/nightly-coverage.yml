@@ -2,7 +2,7 @@ name: Nightly Coverage
 
 on:
   schedule:
-    - cron: '0 18 * * *'  # 02:00 Taiwan time (UTC+8)
+    - cron: '0 18 * * *' # 02:00 Taiwan time (UTC+8)
   workflow_dispatch:
 
 jobs:
