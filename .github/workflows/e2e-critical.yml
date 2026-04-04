@@ -12,8 +12,6 @@ jobs:
   e2e-critical:
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    # Skip when staging secrets are not configured (e.g. forks, early PRs)
-    if: ${{ secrets.E2E_STAGING_URL != '' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -33,11 +31,18 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium webkit
 
       - name: Run critical e2e tests
-        run: pnpm exec playwright test --grep @critical --project mobile
+        # Skip when staging secrets are not configured (e.g. forks, early PRs)
+        # secrets context is unavailable at job-level if; check via env instead
         env:
           E2E_BASE_URL: ${{ secrets.E2E_STAGING_URL }}
           E2E_USER_EMAIL: ${{ secrets.E2E_USER_EMAIL }}
           E2E_USER_PASSWORD: ${{ secrets.E2E_USER_PASSWORD }}
+        run: |
+          if [ -z "$E2E_BASE_URL" ]; then
+            echo "E2E_STAGING_URL not configured — skipping e2e tests"
+            exit 0
+          fi
+          pnpm exec playwright test --grep @critical --project mobile
 
       - name: Upload test results
         if: ${{ !cancelled() }}
