@@ -122,6 +122,7 @@ Things that must exist for this product to ship. If any of these slip, the timel
 ### Anti-Crawling & Abuse Prevention
 
 **Rate Limiting:**
+
 - Global default: 60 requests/minute per IP on all API routes
 - `/search`: 10 requests/minute per authenticated user (per-user, not per-IP)
 - `/maps/directions`: 30 requests/minute per IP
@@ -131,6 +132,7 @@ Things that must exist for this product to ship. If any of these slip, the timel
 - In-memory state (resets on deploy); upgrade to Redis planned for scale
 
 **Bot Detection:**
+
 - BotDetectionMiddleware runs outermost in the middleware chain
 - Blocks: empty User-Agent, known scraper UAs (curl, scrapy, python-requests, etc.)
 - Flags as suspicious: requests missing 2+ browser headers (Accept, Accept-Language, Accept-Encoding)
@@ -138,6 +140,7 @@ Things that must exist for this product to ship. If any of these slip, the timel
 - Killswitch: `BOT_DETECTION_ENABLED=false`
 
 **Alerting:**
+
 - Bot blocks and rate limit violations logged as structured events (`event_type=bot_detection|rate_limit`)
 - Sentry breadcrumbs attached for correlation with downstream errors
 

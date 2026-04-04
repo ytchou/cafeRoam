@@ -57,7 +57,12 @@
       "status": "valid"
     }
   ],
-  "active_agents": ["Bug Hunter", "Standards", "Architecture & Design", "Plan Alignment"],
+  "active_agents": [
+    "Bug Hunter",
+    "Standards",
+    "Architecture & Design",
+    "Plan Alignment"
+  ],
   "skipped": [
     {
       "file": "backend/middleware/bot_detection.py",

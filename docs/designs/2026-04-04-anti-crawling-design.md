@@ -13,11 +13,13 @@ The semantic search endpoint (`/search`) requires auth but has no rate limit —
 ## Scope
 
 **In scope (this ticket):**
+
 - Rate limiting on all API routes (per-IP default + route-specific overrides)
 - Bot detection middleware (UA screening + missing browser header heuristic)
 - Structured alerting (structlog events + Sentry breadcrumbs)
 
 **Out of scope (DEV-223 hardening ticket):**
+
 - Honeypot endpoints
 - Response poisoning for suspected bots
 - Cloudflare WAF / CDN
@@ -49,17 +51,18 @@ New `BotDetectionMiddleware` (Starlette `BaseHTTPMiddleware`) — runs outermost
 ### 2. Rate Limiting
 
 Extends existing slowapi `Limiter` with:
+
 - `default_limits=["60/minute"]` as global safety net (all routes)
 - Route-specific overrides:
 
-| Route | Limit | Key |
-|-------|-------|-----|
-| `GET /search` | 10/min | Per user (JWT `sub` claim) |
-| `GET /maps/directions` | 30/min | Per IP |
-| `GET /shops/` (list) | 30/min | Per IP |
-| All other routes | 60/min | Per IP (default) |
-| Health endpoints | Exempt | — |
-| `POST /submissions` | 10/hour | Per IP (existing, unchanged) |
+| Route                  | Limit   | Key                          |
+| ---------------------- | ------- | ---------------------------- |
+| `GET /search`          | 10/min  | Per user (JWT `sub` claim)   |
+| `GET /maps/directions` | 30/min  | Per IP                       |
+| `GET /shops/` (list)   | 30/min  | Per IP                       |
+| All other routes       | 60/min  | Per IP (default)             |
+| Health endpoints       | Exempt  | —                            |
+| `POST /submissions`    | 10/hour | Per IP (existing, unchanged) |
 
 **Per-user key function:** `get_user_id_or_ip` extracts the JWT `sub` claim via unverified decode (rate limiting only needs a stable key; auth verification happens in the dependency chain). Falls back to IP for unauthenticated requests.
 
@@ -97,18 +100,18 @@ After registration (last added = outermost in Starlette):
 
 ## Files Changed
 
-| File | Change |
-|------|--------|
-| `backend/core/config.py` | Add 7 config fields |
-| `backend/middleware/rate_limit.py` | Add `default_limits`, `get_user_id_or_ip` |
-| `backend/middleware/bot_detection.py` | **New** — BotDetectionMiddleware |
-| `backend/main.py` | Register bot middleware, custom 429 handler, exempt health |
-| `backend/api/search.py` | `@limiter.limit()` + `Request` param |
-| `backend/api/maps.py` | `@limiter.limit()` + `Request` param |
-| `backend/api/shops.py` | `@limiter.limit()` on list endpoint + `Request` param |
-| `backend/api/health.py` | `@limiter.exempt` on admin health endpoints |
-| `backend/tests/middleware/test_bot_detection.py` | **New** — 13 test cases |
-| `backend/tests/middleware/test_rate_limiting.py` | **New** — 5 test cases |
+| File                                             | Change                                                     |
+| ------------------------------------------------ | ---------------------------------------------------------- |
+| `backend/core/config.py`                         | Add 7 config fields                                        |
+| `backend/middleware/rate_limit.py`               | Add `default_limits`, `get_user_id_or_ip`                  |
+| `backend/middleware/bot_detection.py`            | **New** — BotDetectionMiddleware                           |
+| `backend/main.py`                                | Register bot middleware, custom 429 handler, exempt health |
+| `backend/api/search.py`                          | `@limiter.limit()` + `Request` param                       |
+| `backend/api/maps.py`                            | `@limiter.limit()` + `Request` param                       |
+| `backend/api/shops.py`                           | `@limiter.limit()` on list endpoint + `Request` param      |
+| `backend/api/health.py`                          | `@limiter.exempt` on admin health endpoints                |
+| `backend/tests/middleware/test_bot_detection.py` | **New** — 13 test cases                                    |
+| `backend/tests/middleware/test_rate_limiting.py` | **New** — 5 test cases                                     |
 
 ## Testing Classification
 

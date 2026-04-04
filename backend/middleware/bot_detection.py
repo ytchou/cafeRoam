@@ -1,5 +1,7 @@
 """Middleware that blocks obvious bots and flags suspicious requests."""
 
+from collections.abc import Awaitable, Callable
+
 import sentry_sdk
 import structlog
 from slowapi.util import get_ipaddr
@@ -16,7 +18,9 @@ _BROWSER_HEADERS = ("accept", "accept-language", "accept-encoding")
 
 
 class BotDetectionMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next) -> Response:  # type: ignore[override]
+    async def dispatch(
+        self, request: Request, call_next: Callable[[Request], Awaitable[Response]]
+    ) -> Response:
         if not settings.bot_detection_enabled:
             return await call_next(request)
 

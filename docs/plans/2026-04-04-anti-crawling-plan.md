@@ -15,6 +15,7 @@
 **Tech Stack:** slowapi (existing), structlog (existing), sentry_sdk (existing), PyJWT (existing transitive dep via `jwt`)
 
 **Acceptance Criteria:**
+
 - [ ] A request with `curl` User-Agent to `/shops/` returns 403 Forbidden
 - [ ] A request with a real browser UA to `/shops/` succeeds until the 31st request in a minute, which returns 429
 - [ ] An authenticated user hitting `/search` more than 10 times in a minute gets 429
@@ -26,6 +27,7 @@
 ### Task 1: Add rate limit + bot detection config fields
 
 **Files:**
+
 - Modify: `backend/core/config.py:5-81` (Settings class)
 
 **Step 1: Add config fields — no test needed (pure config, no logic)**
@@ -83,6 +85,7 @@ git commit -m "feat(DEV-217): add rate limit + bot detection config fields"
 ### Task 2: Write bot detection middleware tests
 
 **Files:**
+
 - Create: `backend/tests/middleware/test_bot_detection.py`
 
 **Step 1: Write the failing tests**
@@ -200,6 +203,7 @@ Expected: ImportError — `middleware.bot_detection` does not exist yet.
 ### Task 3: Implement BotDetectionMiddleware
 
 **Files:**
+
 - Create: `backend/middleware/bot_detection.py`
 
 **Step 1: Write the implementation**
@@ -315,6 +319,7 @@ git commit -m "feat(DEV-220): add BotDetectionMiddleware with tests"
 ### Task 4: Write rate limiting tests
 
 **Files:**
+
 - Create: `backend/tests/middleware/test_rate_limiting.py`
 
 **Step 1: Write the failing tests**
@@ -415,6 +420,7 @@ git commit -m "test(DEV-221): add rate limiting integration tests"
 ### Task 5: Extend rate limiter with default limits + per-user key func
 
 **Files:**
+
 - Modify: `backend/middleware/rate_limit.py`
 
 **Step 1: Update the limiter module**
@@ -477,11 +483,13 @@ git commit -m "feat(DEV-218): extend rate limiter with default limits + per-user
 ### Task 6: Register bot middleware + custom 429 handler + exempt health
 
 **Files:**
+
 - Modify: `backend/main.py:1-113`
 
 **Step 1: Update main.py**
 
 Changes:
+
 1. Import `BotDetectionMiddleware`
 2. Import `get_ipaddr` and `structlog` for the custom handler
 3. Replace `_rate_limit_exceeded_handler` import with a custom one
@@ -489,17 +497,20 @@ Changes:
 5. Register `BotDetectionMiddleware` after `RequestIDMiddleware`
 
 Add import at top:
+
 ```python
 from middleware.bot_detection import BotDetectionMiddleware
 from slowapi.util import get_ipaddr
 ```
 
 Replace the exception handler with a custom one (replace line 107):
+
 ```python
 app.add_exception_handler(RateLimitExceeded, _custom_rate_limit_handler)
 ```
 
 Add the custom handler function (before `app = FastAPI(...)`):
+
 ```python
 def _custom_rate_limit_handler(request: Request, exc: RateLimitExceeded) -> JSONResponse:
     """Custom 429 handler with structured logging and Sentry breadcrumbs."""
@@ -524,6 +535,7 @@ def _custom_rate_limit_handler(request: Request, exc: RateLimitExceeded) -> JSON
 ```
 
 Add `@limiter.exempt` to health endpoints:
+
 ```python
 @app.get("/health")
 @limiter.exempt
@@ -537,11 +549,13 @@ async def deep_health_check() -> JSONResponse:
 ```
 
 Register bot middleware (after `app.add_middleware(RequestIDMiddleware)`):
+
 ```python
 app.add_middleware(BotDetectionMiddleware)
 ```
 
 Also remove the now-unused import:
+
 ```python
 # Remove: from slowapi import _rate_limit_exceeded_handler
 ```
@@ -563,6 +577,7 @@ git commit -m "feat(DEV-218): register bot middleware, custom 429 handler, exemp
 ### Task 7: Apply route-specific rate limits
 
 **Files:**
+
 - Modify: `backend/api/search.py:45-55` — add `@limiter.limit` + `Request` param
 - Modify: `backend/api/maps.py:12-19` — add `@limiter.limit` + `Request` param
 - Modify: `backend/api/shops.py:56-61` — add `@limiter.limit` + `Request` param
@@ -571,6 +586,7 @@ git commit -m "feat(DEV-218): register bot middleware, custom 429 handler, exemp
 **Step 1: Update search.py**
 
 Add imports:
+
 ```python
 from starlette.requests import Request
 from middleware.rate_limit import limiter, get_user_id_or_ip
@@ -578,6 +594,7 @@ from core.config import settings
 ```
 
 Update the endpoint decorator and signature:
+
 ```python
 @router.get("/search")
 @limiter.limit(settings.rate_limit_search, key_func=get_user_id_or_ip)
@@ -590,6 +607,7 @@ async def search(
 **Step 2: Update maps.py**
 
 Add imports:
+
 ```python
 from starlette.requests import Request
 from middleware.rate_limit import limiter
@@ -597,6 +615,7 @@ from core.config import settings
 ```
 
 Update the endpoint:
+
 ```python
 @router.get("/directions")
 @limiter.limit(settings.rate_limit_maps_directions)
@@ -609,6 +628,7 @@ async def get_directions(
 **Step 3: Update shops.py list endpoint**
 
 Add imports:
+
 ```python
 from starlette.requests import Request
 from middleware.rate_limit import limiter
@@ -616,6 +636,7 @@ from core.config import settings
 ```
 
 Update the list endpoint:
+
 ```python
 @router.get("/")
 @limiter.limit(settings.rate_limit_shops_list)
@@ -628,11 +649,13 @@ async def list_shops(
 **Step 4: Update health.py**
 
 Add import:
+
 ```python
 from middleware.rate_limit import limiter
 ```
 
 Add `@limiter.exempt` to both endpoints:
+
 ```python
 @router.get("/health/scheduler")
 @limiter.exempt
@@ -662,6 +685,7 @@ git commit -m "feat(DEV-219): apply route-specific rate limits to search, maps, 
 ### Task 8: Update SPEC.md and ASSUMPTIONS.md
 
 **Files:**
+
 - Modify: `SPEC.md` — add anti-crawling section to §5
 - Modify: `ASSUMPTIONS.md` — add data scraping risk
 - Modify: `SPEC_CHANGELOG.md` — add entry
@@ -674,6 +698,7 @@ Add a new subsection:
 ### Anti-Crawling & Abuse Prevention
 
 **Rate Limiting:**
+
 - Global default: 60 requests/minute per IP on all API routes
 - `/search`: 10 requests/minute per authenticated user (per-user, not per-IP)
 - `/maps/directions`: 30 requests/minute per IP
@@ -683,6 +708,7 @@ Add a new subsection:
 - In-memory state (resets on deploy); upgrade to Redis planned for scale
 
 **Bot Detection:**
+
 - BotDetectionMiddleware runs outermost in the middleware chain
 - Blocks: empty User-Agent, known scraper UAs (curl, scrapy, python-requests, etc.)
 - Flags as suspicious: requests missing 2+ browser headers (Accept, Accept-Language, Accept-Encoding)
@@ -690,6 +716,7 @@ Add a new subsection:
 - Killswitch: `BOT_DETECTION_ENABLED=false`
 
 **Alerting:**
+
 - Bot blocks and rate limit violations logged as structured events (`event_type=bot_detection|rate_limit`)
 - Sentry breadcrumbs attached for correlation with downstream errors
 
@@ -761,23 +788,29 @@ graph TD
 ```
 
 **Wave 1** (sequential — foundation):
+
 - Task 1: Config fields
 
 **Wave 2** (parallel — all depend on Task 1 only):
+
 - Task 2: Bot detection tests (write failing tests)
 - Task 4: Rate limiting tests
 - Task 5: Extend rate limiter module
 
 **Wave 3** (depends on Task 2):
+
 - Task 3: Implement BotDetectionMiddleware
 
 **Wave 4** (depends on Tasks 3 + 5):
+
 - Task 6: Register middleware + custom 429 handler in main.py
 
 **Wave 5** (depends on Task 6):
+
 - Task 7: Route-specific rate limits on search, maps, shops
 
 **Wave 6** (depends on Task 7):
+
 - Task 8: Update SPEC.md + ASSUMPTIONS.md
 
 ---
