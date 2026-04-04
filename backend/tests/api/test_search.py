@@ -3,7 +3,11 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from fastapi.testclient import TestClient
 
-from api.deps import get_admin_db, get_current_user, get_user_db
+from api.deps import (
+    get_admin_db,
+    get_current_user,
+    get_optional_user_db,
+)
 from main import app
 from providers.analytics import get_analytics_provider
 from providers.cache.null_adapter import NullSearchCacheAdapter
@@ -25,10 +29,24 @@ class TestSearchAPI:
             mock.return_value = NullSearchCacheAdapter()
             yield mock
 
-    def test_search_requires_auth(self):
-        """GET /search should require auth."""
-        response = client.get("/search?text=good+wifi")
-        assert response.status_code == 401
+    def test_search_is_publicly_accessible(self):
+        """GET /search is accessible without authentication."""
+        mock_db = MagicMock()
+        mock_db.rpc = MagicMock(
+            return_value=MagicMock(execute=MagicMock(return_value=MagicMock(data=[])))
+        )
+        app.dependency_overrides[get_optional_user_db] = lambda: mock_db
+        app.dependency_overrides[get_admin_db] = lambda: _mock_admin_db()
+        try:
+            with patch("api.search.get_embeddings_provider") as mock_emb_factory:
+                mock_emb = AsyncMock()
+                mock_emb.embed = AsyncMock(return_value=[0.1] * 1536)
+                mock_emb.dimensions = 1536
+                mock_emb_factory.return_value = mock_emb
+                response = client.get("/search?text=good+wifi")
+                assert response.status_code == 200
+        finally:
+            app.dependency_overrides.clear()
 
     def test_search_uses_user_db(self):
         """Search route must use per-request JWT client."""
@@ -37,7 +55,7 @@ class TestSearchAPI:
             return_value=MagicMock(execute=MagicMock(return_value=MagicMock(data=[])))
         )
         app.dependency_overrides[get_current_user] = lambda: {"id": "usr_a1b2c3d4e5f6"}
-        app.dependency_overrides[get_user_db] = lambda: mock_db
+        app.dependency_overrides[get_optional_user_db] = lambda: mock_db
         app.dependency_overrides[get_admin_db] = lambda: _mock_admin_db()
         try:
             with patch("api.search.get_embeddings_provider") as mock_emb_factory:
@@ -65,7 +83,7 @@ class TestSearchAPI:
         mock_admin_db = _mock_admin_db()
 
         app.dependency_overrides[get_current_user] = lambda: {"id": "user-a1b2c3"}
-        app.dependency_overrides[get_user_db] = lambda: mock_db
+        app.dependency_overrides[get_optional_user_db] = lambda: mock_db
         app.dependency_overrides[get_admin_db] = lambda: mock_admin_db
         try:
             with patch("api.search.get_embeddings_provider") as mock_emb_factory:
@@ -98,7 +116,7 @@ class TestSearchAPI:
             return_value=MagicMock(execute=MagicMock(return_value=MagicMock(data=[])))
         )
         app.dependency_overrides[get_current_user] = lambda: {"id": "usr_b2c3d4e5f6a1"}
-        app.dependency_overrides[get_user_db] = lambda: mock_db
+        app.dependency_overrides[get_optional_user_db] = lambda: mock_db
         app.dependency_overrides[get_admin_db] = lambda: _mock_admin_db()
         try:
             with patch("api.search.get_embeddings_provider") as mock_emb_factory:
@@ -148,7 +166,7 @@ class TestSearchAPI:
             return_value=MagicMock(execute=MagicMock(return_value=MagicMock(data=[mock_rpc_row])))
         )
         app.dependency_overrides[get_current_user] = lambda: {"id": "usr_d4e5f6a1b2c3"}
-        app.dependency_overrides[get_user_db] = lambda: mock_db
+        app.dependency_overrides[get_optional_user_db] = lambda: mock_db
         app.dependency_overrides[get_admin_db] = lambda: _mock_admin_db()
         try:
             with patch("api.search.get_embeddings_provider") as mock_emb_factory:
@@ -178,7 +196,7 @@ class TestSearchAPI:
             return_value=MagicMock(execute=MagicMock(return_value=MagicMock(data=[])))
         )
         app.dependency_overrides[get_current_user] = lambda: {"id": "usr_e5f6a1b2c3d4"}
-        app.dependency_overrides[get_user_db] = lambda: mock_db
+        app.dependency_overrides[get_optional_user_db] = lambda: mock_db
         app.dependency_overrides[get_admin_db] = lambda: _mock_admin_db()
         try:
             with patch("api.search.get_embeddings_provider") as mock_emb_factory:
@@ -204,7 +222,7 @@ class TestSearchAPI:
         )
         mock_analytics = MagicMock()
         app.dependency_overrides[get_current_user] = lambda: {"id": "usr_c3d4e5f6a1b2"}
-        app.dependency_overrides[get_user_db] = lambda: mock_db
+        app.dependency_overrides[get_optional_user_db] = lambda: mock_db
         app.dependency_overrides[get_admin_db] = lambda: _mock_admin_db()
         app.dependency_overrides[get_analytics_provider] = lambda: mock_analytics
         try:
@@ -225,7 +243,7 @@ class TestSearchAPI:
         from providers.embeddings import EmbeddingsProviderUnavailableError
 
         app.dependency_overrides[get_current_user] = lambda: {"id": "usr_g7h8i9j0k1l2"}
-        app.dependency_overrides[get_user_db] = lambda: MagicMock()
+        app.dependency_overrides[get_optional_user_db] = lambda: MagicMock()
         app.dependency_overrides[get_admin_db] = lambda: _mock_admin_db()
         try:
             with patch("api.search.get_embeddings_provider") as mock_emb_factory:
@@ -249,7 +267,7 @@ class TestSearchCacheAPI:
         mock_admin = _mock_admin_db()
 
         app.dependency_overrides[get_current_user] = lambda: {"id": "usr_f6a1b2c3d4e5"}
-        app.dependency_overrides[get_user_db] = lambda: mock_db
+        app.dependency_overrides[get_optional_user_db] = lambda: mock_db
         app.dependency_overrides[get_admin_db] = lambda: mock_admin
         try:
             with (
@@ -283,5 +301,83 @@ class TestSearchCacheAPI:
                 assert response.status_code == 200
                 body = response.json()
                 assert body["cache_hit"] is True
+        finally:
+            app.dependency_overrides.clear()
+
+
+class TestUnauthenticatedSearch:
+    """Unauthenticated users can search without auth."""
+
+    @pytest.fixture(autouse=True)
+    def patch_cache(self):
+        """Patch cache provider to null."""
+        with patch("api.search.get_search_cache_provider") as mock:
+            mock.return_value = NullSearchCacheAdapter()
+            yield mock
+
+    def test_name_search_without_auth_succeeds(self):
+        """Name-based searches work without authentication."""
+        mock_db = MagicMock()
+        mock_db.rpc = MagicMock(
+            return_value=MagicMock(execute=MagicMock(return_value=MagicMock(data=[])))
+        )
+        app.dependency_overrides[get_optional_user_db] = lambda: mock_db
+        app.dependency_overrides[get_admin_db] = lambda: _mock_admin_db()
+        try:
+            with patch("api.search.get_embeddings_provider") as mock_emb_factory:
+                mock_emb = AsyncMock()
+                mock_emb.embed = AsyncMock(return_value=[0.1] * 1536)
+                mock_emb.dimensions = 1536
+                mock_emb_factory.return_value = mock_emb
+                response = client.get("/search?text=木下庵")
+                assert response.status_code == 200
+                data = response.json()
+                assert "results" in data
+        finally:
+            app.dependency_overrides.clear()
+
+    def test_semantic_search_without_auth_returns_results(self):
+        """Semantic search without auth is allowed (no 401)."""
+        mock_db = MagicMock()
+        mock_db.rpc = MagicMock(
+            return_value=MagicMock(execute=MagicMock(return_value=MagicMock(data=[])))
+        )
+        app.dependency_overrides[get_optional_user_db] = lambda: mock_db
+        app.dependency_overrides[get_admin_db] = lambda: _mock_admin_db()
+        try:
+            with patch("api.search.get_embeddings_provider") as mock_emb_factory:
+                mock_emb = AsyncMock()
+                mock_emb.embed = AsyncMock(return_value=[0.1] * 1536)
+                mock_emb.dimensions = 1536
+                mock_emb_factory.return_value = mock_emb
+                response = client.get(
+                    "/search",
+                    params={"text": "安靜可以工作的地方"},
+                )
+                assert response.status_code == 200
+        finally:
+            app.dependency_overrides.clear()
+
+    def test_search_response_includes_query_type(self):
+        """Search response always includes query_type field."""
+        mock_db = MagicMock()
+        mock_db.rpc = MagicMock(
+            return_value=MagicMock(execute=MagicMock(return_value=MagicMock(data=[])))
+        )
+        app.dependency_overrides[get_optional_user_db] = lambda: mock_db
+        app.dependency_overrides[get_admin_db] = lambda: _mock_admin_db()
+        try:
+            with patch("api.search.get_embeddings_provider") as mock_emb_factory:
+                mock_emb = AsyncMock()
+                mock_emb.embed = AsyncMock(return_value=[0.1] * 1536)
+                mock_emb.dimensions = 1536
+                mock_emb_factory.return_value = mock_emb
+                response = client.get(
+                    "/search",
+                    params={"text": "coffee"},
+                )
+                assert response.status_code == 200
+                data = response.json()
+                assert "query_type" in data
         finally:
             app.dependency_overrides.clear()

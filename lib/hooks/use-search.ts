@@ -1,6 +1,6 @@
 'use client';
 import useSWR from 'swr';
-import { fetchWithAuth } from '@/lib/api/fetch';
+import { fetchOptionalAuth } from '@/lib/api/fetch';
 import type { Shop } from '@/lib/types';
 import type { SearchMode } from './use-search-state';
 
@@ -23,7 +23,7 @@ export function useSearch(query: string | null, mode: SearchMode) {
 
   const { data, isLoading, error } = useSWR<SearchResponse>(
     key,
-    fetchWithAuth,
+    fetchOptionalAuth,
     { revalidateOnFocus: false }
   );
 
