@@ -119,6 +119,33 @@ Things that must exist for this product to ship. If any of these slip, the timel
 - **Data residency:** Supabase region — `ap-northeast-1` (Tokyo; lowest latency to Taiwan at ~20ms).
 - **RLS:** Supabase Row Level Security enabled on all user-facing tables. Users can only read/write their own data (check-ins, lists, stamps, profile).
 
+### Anti-Crawling & Abuse Prevention
+
+**Rate Limiting:**
+
+- Global default: 60 requests/minute per IP on all API routes
+- `/search`: 10 requests/minute per authenticated user (per-user, not per-IP)
+- `/maps/directions`: 30 requests/minute per IP
+- `/shops/` (list): 30 requests/minute per IP
+- Health endpoints exempt from all rate limits
+- All thresholds env-configurable (e.g., `RATE_LIMIT_DEFAULT`, `RATE_LIMIT_SEARCH`)
+- In-memory state (resets on deploy); upgrade to Redis planned for scale
+
+**Bot Detection:**
+
+- BotDetectionMiddleware runs outermost in the middleware chain
+- Blocks: empty User-Agent, known scraper UAs (curl, scrapy, python-requests, etc.)
+- Flags as suspicious: requests missing 2+ browser headers (Accept, Accept-Language, Accept-Encoding)
+- Allows: legitimate crawlers (Googlebot, Bingbot, etc.) via configurable allowlist
+- Killswitch: `BOT_DETECTION_ENABLED=false`
+
+**Alerting:**
+
+- Bot blocks and rate limit violations logged as structured events (`event_type=bot_detection|rate_limit`)
+- Sentry breadcrumbs attached for correlation with downstream errors
+
+Note: These are security rate limits distinct from feature caps (e.g., 5 AI searches/day in §9 Business Rules). Feature caps are monetization gates; security rate limits prevent infrastructure abuse.
+
 ---
 
 ## 6. Observability

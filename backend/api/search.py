@@ -2,11 +2,13 @@ from typing import Any
 
 import structlog
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
+from starlette.requests import Request
 from supabase import Client
 
 from api.deps import get_admin_db, get_current_user, get_user_db
 from core.anonymize import anonymize_user_id
 from core.config import settings
+from middleware.rate_limit import get_user_id_or_ip, limiter
 from models.types import SearchQuery
 from providers.cache import get_search_cache_provider
 from providers.embeddings import EmbeddingsProviderUnavailableError, get_embeddings_provider
@@ -42,8 +44,10 @@ def _log_search_event(
         logger.warning("search_event insert failed", query_type=query_type, exc_info=True)
 
 
+@limiter.limit(settings.rate_limit_search, key_func=get_user_id_or_ip)
 @router.get("/search")
 async def search(
+    request: Request,
     background_tasks: BackgroundTasks,
     text: str = Query(..., min_length=1),
     mode: str | None = Query(None, pattern="^(work|rest|social)$"),
