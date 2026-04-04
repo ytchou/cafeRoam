@@ -15,6 +15,7 @@
 **Tech Stack:** Next.js 16 (App Router), TypeScript, Tailwind CSS, schema.org JSON-LD
 
 **Acceptance Criteria:**
+
 - [ ] A visitor can navigate to `/about` and read what CafeRoam is, how it works, and who built it
 - [ ] A visitor can navigate to `/faq` and expand/collapse answers to brand-level questions
 - [ ] Google and LLMs can parse FAQPage and Organization JSON-LD from the respective pages
@@ -25,6 +26,7 @@
 ## Task 1: Create `FaqPageJsonLd` component (DEV-215)
 
 **Files:**
+
 - Create: `components/seo/FaqPageJsonLd.tsx`
 - Create: `components/seo/__tests__/FaqPageJsonLd.test.tsx`
 
@@ -130,6 +132,7 @@ git commit -m "feat(DEV-215): add FaqPageJsonLd component with FAQPage schema"
 ## Task 2: Create `OrganizationJsonLd` component (DEV-214)
 
 **Files:**
+
 - Create: `components/seo/OrganizationJsonLd.tsx`
 - Create: `components/seo/__tests__/OrganizationJsonLd.test.tsx`
 
@@ -204,6 +207,7 @@ git commit -m "feat(DEV-214): add OrganizationJsonLd component"
 ## Task 3: Create Footer component (DEV-213)
 
 **Files:**
+
 - Create: `components/navigation/footer.tsx`
 - Create: `components/navigation/__tests__/footer.test.tsx`
 - Modify: `components/navigation/app-shell.tsx` (replace inline footer)
@@ -291,26 +295,33 @@ Expected: PASS
 In `components/navigation/app-shell.tsx`:
 
 Add import at top:
+
 ```tsx
 import { Footer } from './footer';
 ```
 
 Remove import:
+
 ```tsx
 import { BuyMeACoffeeButton } from '@/components/buy-me-a-coffee-button';
 ```
 
 Replace lines 25-28 (inline footer block):
+
 ```tsx
 // Before:
-{isDesktop && !isFindPage && (
-  <footer className="flex justify-center border-t border-[#e5e7eb] py-3">
-    <BuyMeACoffeeButton />
-  </footer>
-)}
+{
+  isDesktop && !isFindPage && (
+    <footer className="flex justify-center border-t border-[#e5e7eb] py-3">
+      <BuyMeACoffeeButton />
+    </footer>
+  );
+}
 
 // After:
-{!isFindPage && <Footer />}
+{
+  !isFindPage && <Footer />;
+}
 ```
 
 Note: Footer now renders on both desktop and mobile. The `pb-16` on `<main>` already provides clearance for BottomNav. Footer scrolls with page content.
@@ -332,6 +343,7 @@ git commit -m "feat(DEV-213): extract Footer component with About/FAQ/Privacy na
 ## Task 4: Create `/about` page (DEV-214)
 
 **Files:**
+
 - Create: `app/about/page.tsx`
 
 **Step 1: No unit test needed**
@@ -440,6 +452,7 @@ git commit -m "feat(DEV-214): add /about page with Organization JSON-LD"
 ## Task 5: Create `/faq` page (DEV-215)
 
 **Files:**
+
 - Create: `app/faq/page.tsx`
 
 **Step 1: No unit test needed**
@@ -483,13 +496,11 @@ const FAQ_ITEMS = [
   },
   {
     question: '我可以提交新的咖啡廳嗎？',
-    answer:
-      '可以！登入後你可以透過提交功能推薦咖啡廳，我們會審核後加入平台。',
+    answer: '可以！登入後你可以透過提交功能推薦咖啡廳，我們會審核後加入平台。',
   },
   {
     question: '啡遊是免費的嗎？',
-    answer:
-      '是的，啡遊完全免費使用。瀏覽、搜尋、建立清單、打卡都不需要付費。',
+    answer: '是的，啡遊完全免費使用。瀏覽、搜尋、建立清單、打卡都不需要付費。',
   },
   {
     question: '我的個人資料安全嗎？',
@@ -559,6 +570,7 @@ git commit -m "feat(DEV-215): add /faq page with FAQPage JSON-LD and accordion"
 ## Task 6: Add `/about` and `/faq` to sitemap (DEV-216)
 
 **Files:**
+
 - Modify: `app/sitemap.ts` (add to `staticPages`)
 - Modify: `lib/__tests__/seo/sitemap.test.ts` (update assertions)
 
@@ -572,12 +584,14 @@ expect(urls).toContain('https://caferoam.tw/faq');
 ```
 
 Update the minimum length assertion:
+
 ```ts
 // Was: expect(entries.length).toBeGreaterThanOrEqual(6);
 expect(entries.length).toBeGreaterThanOrEqual(8);
 ```
 
 In second test case (error fallback) — add:
+
 ```ts
 expect(urls).toContain('https://caferoam.tw/about');
 expect(urls).toContain('https://caferoam.tw/faq');
@@ -628,6 +642,7 @@ git commit -m "feat(DEV-216): add /about and /faq to sitemap"
 ```bash
 pnpm test
 ```
+
 Expected: All tests pass (no regressions)
 
 **Step 2: Run linter**
@@ -635,6 +650,7 @@ Expected: All tests pass (no regressions)
 ```bash
 pnpm lint
 ```
+
 Expected: Clean
 
 **Step 3: Run build**
@@ -642,6 +658,7 @@ Expected: Clean
 ```bash
 pnpm build
 ```
+
 Expected: Build succeeds with no errors
 
 **Step 4: Visual verification (manual)**
@@ -682,16 +699,20 @@ graph TD
 ```
 
 **Wave 1** (parallel — no dependencies):
+
 - Task 1: FaqPageJsonLd component
 - Task 2: OrganizationJsonLd component
 - Task 3: Footer component
 
 **Wave 2** (parallel — depends on Wave 1):
+
 - Task 4: /about page ← Task 2 (OrganizationJsonLd)
 - Task 5: /faq page ← Task 1 (FaqPageJsonLd)
 
 **Wave 3** (sequential — depends on Wave 2):
+
 - Task 6: Sitemap update ← Task 4, Task 5
 
 **Wave 4** (sequential — depends on all):
+
 - Task 7: Final validation ← all tasks

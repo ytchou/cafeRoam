@@ -5,7 +5,9 @@ import { OrganizationJsonLd } from '../OrganizationJsonLd';
 describe('OrganizationJsonLd', () => {
   it('renders Organization schema with name, url, and description', () => {
     const { container } = render(<OrganizationJsonLd />);
-    const script = container.querySelector('script[type="application/ld+json"]');
+    const script = container.querySelector(
+      'script[type="application/ld+json"]'
+    );
     expect(script).not.toBeNull();
     const data = JSON.parse(script!.textContent!);
     expect(data['@type']).toBe('Organization');
