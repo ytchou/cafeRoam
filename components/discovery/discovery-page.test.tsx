@@ -1,0 +1,146 @@
+import { render, screen } from '@testing-library/react';
+import { Suspense, type ReactNode } from 'react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+vi.mock('@/lib/hooks/use-search', () => ({ useSearch: vi.fn() }));
+vi.mock('@/lib/hooks/use-shops', () => ({ useShops: vi.fn() }));
+vi.mock('@/lib/hooks/use-search-state', () => ({ useSearchState: vi.fn() }));
+vi.mock('@/lib/hooks/use-user', () => ({ useUser: vi.fn() }));
+vi.mock('next/navigation', () => ({
+  useRouter: vi.fn(),
+  useSearchParams: vi.fn(),
+  usePathname: vi.fn(),
+}));
+vi.mock('next/link', () => ({
+  default: ({
+    href,
+    children,
+    ...props
+  }: {
+    href: string;
+    children: ReactNode;
+    [key: string]: unknown;
+  }) => (
+    <a href={href} {...props}>
+      {children}
+    </a>
+  ),
+}));
+
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useSearch } from '@/lib/hooks/use-search';
+import { useSearchState } from '@/lib/hooks/use-search-state';
+import { useShops } from '@/lib/hooks/use-shops';
+import { useUser } from '@/lib/hooks/use-user';
+import { DiscoveryPage } from './discovery-page';
+
+const renderDiscoveryPage = () =>
+  render(
+    <Suspense fallback={null}>
+      <DiscoveryPage />
+    </Suspense>
+  );
+
+describe('DiscoveryPage', () => {
+  beforeEach(() => {
+    vi.mocked(useSearchState).mockReturnValue({
+      query: '',
+      mode: null,
+      setQuery: vi.fn(),
+      setMode: vi.fn(),
+      filters: [],
+      view: 'list',
+      toggleFilter: vi.fn(),
+      setFilters: vi.fn(),
+      setView: vi.fn(),
+      clearAll: vi.fn(),
+    });
+
+    vi.mocked(useSearch).mockReturnValue({
+      results: [],
+      queryType: null,
+      resultCount: 0,
+      isLoading: false,
+      error: null,
+    });
+
+    vi.mocked(useShops).mockReturnValue({
+      shops: [],
+      isLoading: false,
+      error: null,
+    });
+
+    vi.mocked(useUser).mockReturnValue({
+      user: null,
+      isLoading: false,
+    });
+
+    vi.mocked(useRouter).mockReturnValue({
+      push: vi.fn(),
+      replace: vi.fn(),
+    } as ReturnType<typeof useRouter>);
+
+    vi.mocked(useSearchParams).mockReturnValue({
+      get: () => null,
+      toString: () => '',
+    } as ReturnType<typeof useSearchParams>);
+
+    vi.mocked(usePathname).mockReturnValue('/');
+  });
+
+  it('renders brand mark 啡遊', () => {
+    renderDiscoveryPage();
+    expect(screen.getByText('啡遊')).toBeInTheDocument();
+  });
+
+  it('renders headline containing 找到你的 and 理想咖啡廳', () => {
+    renderDiscoveryPage();
+    expect(screen.getByText('找到你的')).toBeVisible();
+    expect(screen.getByText('理想咖啡廳')).toBeVisible();
+  });
+
+  it('renders search input with correct placeholder', () => {
+    renderDiscoveryPage();
+    expect(
+      screen.getByPlaceholderText('想找什麼樣的咖啡廳？')
+    ).toBeInTheDocument();
+  });
+
+  it('renders suggestion chips', () => {
+    renderDiscoveryPage();
+    expect(screen.getByText('想找安靜可以工作的地方')).toBeInTheDocument();
+  });
+
+  it('renders mode chips for 工作 放鬆 社交', () => {
+    renderDiscoveryPage();
+    expect(screen.getByRole('button', { name: '工作' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '放鬆' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '社交' })).toBeInTheDocument();
+  });
+
+  it('renders 精選咖啡廳 section header when not searching', () => {
+    vi.mocked(useSearchState).mockReturnValue({
+      query: '',
+      mode: null,
+      setQuery: vi.fn(),
+      setMode: vi.fn(),
+      filters: [],
+      view: 'list',
+      toggleFilter: vi.fn(),
+      setFilters: vi.fn(),
+      setView: vi.fn(),
+      clearAll: vi.fn(),
+    });
+
+    renderDiscoveryPage();
+    expect(screen.getByText('精選咖啡廳')).toBeInTheDocument();
+  });
+
+  it('renders 地圖瀏覽 link pointing to /find', () => {
+    renderDiscoveryPage();
+    expect(screen.getByRole('link', { name: '地圖瀏覽' })).toHaveAttribute(
+      'href',
+      expect.stringContaining('/find')
+    );
+  });
+});
