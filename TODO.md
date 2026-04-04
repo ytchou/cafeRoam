@@ -17,7 +17,7 @@
 
 **Wave 2 — Extraction (parallel):**
 - [x] Task 3: Extract Dashboard → SubmissionsTab + ClaimsTab (DEV-231)
-- [ ] Task 4: Extract Shops → FilterBar + ShopTable + ImportSection (DEV-232)
+- [x] Task 4: Extract Shops → FilterBar + ShopTable + ImportSection (DEV-232)
 
 **Wave 3 — Migration:**
 - [ ] Task 5: Migrate all admin pages to shadcn components (DEV-233)
