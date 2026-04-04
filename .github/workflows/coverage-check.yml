@@ -1,0 +1,244 @@
+name: Coverage Report
+
+on:
+  workflow_run:
+    workflows: ['Frontend CI', 'Backend CI']
+    types: [completed]
+    branches: ['**']
+
+permissions:
+  actions: read
+  checks: write
+  pull-requests: write
+  contents: read
+
+jobs:
+  coverage-report:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
+    steps:
+      - name: Find PR number
+        id: pr
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: pulls } = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              head: `${context.repo.owner}:${context.payload.workflow_run.head_branch}`
+            });
+            if (pulls.length > 0) {
+              core.setOutput('number', pulls[0].number);
+              core.setOutput('found', 'true');
+              console.log(`Found PR #${pulls[0].number}`);
+            } else {
+              core.setOutput('found', 'false');
+              console.log('No PR found for this branch');
+            }
+
+      - name: Create check run (in progress)
+        id: check
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const check = await github.rest.checks.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              name: 'Coverage Report',
+              head_sha: '${{ github.event.workflow_run.head_sha }}',
+              status: 'in_progress',
+              started_at: new Date().toISOString(),
+              output: { title: 'Analyzing coverage...', summary: 'Downloading coverage reports...' }
+            });
+            core.setOutput('check_id', check.data.id);
+
+      - uses: actions/checkout@v4
+
+      - name: Fetch coverage-rules from PR branch
+        run: |
+          gh api "repos/${{ github.repository }}/contents/scripts/ci/coverage-rules.json?ref=${{ github.event.workflow_run.head_sha }}" \
+            --jq '.content' | base64 -d > scripts/ci/coverage-rules.json
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Find CI run IDs for this SHA
+        id: runs
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const sha = context.payload.workflow_run.head_sha;
+
+            async function findRunId(workflowFile) {
+              const { data } = await github.rest.actions.listWorkflowRuns({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                workflow_id: workflowFile,
+                head_sha: sha,
+                status: 'completed',
+                per_page: 1
+              });
+              return data.workflow_runs[0]?.id?.toString() || '';
+            }
+
+            const frontendRunId = await findRunId('frontend-ci.yml');
+            const backendRunId = await findRunId('backend-ci.yml');
+
+            console.log(`Frontend CI run: ${frontendRunId || 'not found'}`);
+            console.log(`Backend CI run: ${backendRunId || 'not found'}`);
+
+            core.setOutput('frontend_run_id', frontendRunId);
+            core.setOutput('backend_run_id', backendRunId);
+
+      - name: Download frontend coverage artifact
+        if: steps.runs.outputs.frontend_run_id != ''
+        uses: dawidd6/action-download-artifact@v6
+        with:
+          run_id: ${{ steps.runs.outputs.frontend_run_id }}
+          name: coverage-app
+          path: ./coverage-reports/
+        continue-on-error: true
+
+      - name: Download backend coverage artifact
+        if: steps.runs.outputs.backend_run_id != ''
+        uses: dawidd6/action-download-artifact@v6
+        with:
+          run_id: ${{ steps.runs.outputs.backend_run_id }}
+          name: coverage-backend
+          path: ./coverage-reports/backend/
+        continue-on-error: true
+
+      - name: Check if artifacts are available
+        id: artifacts-check
+        run: |
+          FRONTEND=false
+          BACKEND=false
+          if [ -f ./coverage-reports/coverage-final.json ]; then
+            FRONTEND=true
+            echo "Frontend coverage artifact found"
+          fi
+          if [ -f ./coverage-reports/backend/coverage.xml ]; then
+            BACKEND=true
+            echo "Backend coverage artifact found"
+          fi
+          if [ "$FRONTEND" = true ] || [ "$BACKEND" = true ]; then
+            echo "available=true" >> $GITHUB_OUTPUT
+          else
+            echo "available=false" >> $GITHUB_OUTPUT
+            echo "No coverage artifacts found"
+          fi
+          echo "frontend=$FRONTEND" >> $GITHUB_OUTPUT
+          echo "backend=$BACKEND" >> $GITHUB_OUTPUT
+
+      - name: Setup Python
+        if: steps.artifacts-check.outputs.available == 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install coverage script dependencies
+        if: steps.artifacts-check.outputs.available == 'true'
+        run: pip install defusedxml
+
+      - name: Run coverage check
+        id: coverage
+        if: steps.artifacts-check.outputs.available == 'true'
+        run: |
+          ARGS="--rules ./scripts/ci/coverage-rules.json --output ./coverage-summary.md"
+          if [ "${{ steps.artifacts-check.outputs.frontend }}" = "true" ]; then
+            ARGS="$ARGS --frontend ./coverage-reports/coverage-final.json"
+          fi
+          if [ "${{ steps.artifacts-check.outputs.backend }}" = "true" ]; then
+            ARGS="$ARGS --backend ./coverage-reports/backend/coverage.xml"
+          fi
+          python scripts/ci/coverage-check.py $ARGS
+        continue-on-error: true
+
+      - name: Read coverage summary
+        id: read-summary
+        if: steps.artifacts-check.outputs.available == 'true'
+        run: |
+          if [ -f ./coverage-summary.md ]; then
+            SUMMARY=$(cat ./coverage-summary.md)
+            echo "summary<<EOF" >> $GITHUB_OUTPUT
+            echo "$SUMMARY" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+            echo "has_summary=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_summary=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Update check run (completed)
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const checkId = ${{ steps.check.outputs.check_id }};
+            const coverageResult = '${{ steps.coverage.outcome }}';
+            const artifactAvailable = '${{ steps.artifacts-check.outputs.available }}' === 'true';
+
+            let summary = 'Coverage analysis completed.';
+            let title = 'Coverage Report';
+            let conclusion = 'success';
+
+            if (!artifactAvailable) {
+              summary = 'No coverage data — test jobs were skipped by path filters. This is expected when the PR does not touch source files.';
+              conclusion = 'success';
+              title = 'Coverage Report (Skipped)';
+            } else {
+              try {
+                summary = fs.readFileSync('./coverage-summary.md', 'utf8');
+              } catch (e) {
+                summary = 'Could not generate coverage report.';
+                conclusion = 'neutral';
+              }
+            }
+
+            if (coverageResult === 'failure') {
+              conclusion = 'failure';
+              title = 'Coverage Check Failed';
+            }
+
+            await github.rest.checks.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              check_run_id: checkId,
+              status: 'completed',
+              conclusion: conclusion,
+              completed_at: new Date().toISOString(),
+              output: { title: title, summary: summary.substring(0, 65535) }
+            });
+
+      - name: Post PR comment
+        if: steps.pr.outputs.found == 'true' && steps.read-summary.outputs.has_summary == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const summary = fs.readFileSync('./coverage-summary.md', 'utf8');
+            const prNumber = ${{ steps.pr.outputs.number }};
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber
+            });
+            const botComment = comments.find(c =>
+              c.user.type === 'Bot' && c.body.includes('## Test Coverage Report')
+            );
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: summary
+              });
+            } else {
+              await github.rest.issues.createComment({
+                issue_number: prNumber,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: summary
+              });
+            }

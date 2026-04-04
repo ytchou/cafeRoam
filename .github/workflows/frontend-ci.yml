@@ -74,5 +74,13 @@ jobs:
           wait $pid_tsc_test
           exit $fail
 
-      - name: Run tests (changed files only)
-        run: pnpm exec vitest run --changed origin/main
+      - name: Run tests with coverage (changed files)
+        run: pnpm exec vitest run --coverage --changed origin/main
+
+      - name: Upload coverage artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-app
+          path: coverage/coverage-final.json
+          retention-days: 3
