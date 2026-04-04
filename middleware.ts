@@ -11,7 +11,6 @@ const PUBLIC_ROUTES = new Set([
   '/map',
   '/manifest.webmanifest',
 ]);
-// /api routes handle their own JWT auth via FastAPI — do not redirect them
 const PUBLIC_PREFIXES = ['/shops'];
 const ONBOARDING_ROUTES = ['/onboarding/consent'];
 const RECOVERY_ROUTES = ['/account/recover'];
