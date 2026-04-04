@@ -56,7 +56,10 @@ async def search(
     db: Client = Depends(get_optional_user_db),  # noqa: B008
     admin_db: Client = Depends(get_admin_db),  # noqa: B008
 ) -> dict[str, Any]:
-    """Semantic search with optional mode filter. Auth optional; unauthenticated users can search."""
+    """Semantic search with optional mode filter.
+
+    Auth optional; unauthenticated users can search.
+    """
     try:
         embeddings = get_embeddings_provider()
     except EmbeddingsProviderUnavailableError as exc:
