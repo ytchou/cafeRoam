@@ -163,7 +163,7 @@ export function ClaimsTab({ getToken }: ClaimsTabProps) {
               setClaimStatusFilter(value as typeof claimStatusFilter)
             }
           >
-            <SelectTrigger aria-label="Claim status">
+            <SelectTrigger aria-label="Filter by status">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -262,7 +262,7 @@ export function ClaimsTab({ getToken }: ClaimsTabProps) {
                               setClaimRejectionReason(value)
                             }
                           >
-                            <SelectTrigger className="h-8 text-xs">
+                            <SelectTrigger className="h-8 text-xs" aria-label="Rejection reason">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>

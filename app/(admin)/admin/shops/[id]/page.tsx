@@ -368,7 +368,14 @@ export default function AdminShopDetail() {
                 <span className="w-14 text-sm font-medium capitalize">
                   {mode}
                 </span>
-                <div className="h-4 flex-1 rounded bg-gray-200">
+                <div
+                  role="progressbar"
+                  aria-valuenow={Math.round(shop.mode_scores![mode] * 100)}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-label={`${mode} score`}
+                  className="h-4 flex-1 rounded bg-gray-200"
+                >
                   <div
                     className={`h-4 rounded ${
                       mode === 'work'
@@ -397,7 +404,14 @@ export default function AdminShopDetail() {
             {shop.tags.map((t) => (
               <div key={t.tag_id} className="flex items-center gap-3">
                 <span className="w-40 text-sm">{t.tag_id}</span>
-                <div className="h-3 flex-1 rounded bg-gray-200">
+                <div
+                  role="progressbar"
+                  aria-valuenow={Math.round(t.confidence * 100)}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-label={`${t.tag_id} confidence score`}
+                  className="h-3 flex-1 rounded bg-gray-200"
+                >
                   <div
                     className={`h-3 rounded ${confidenceColor(t.confidence)}`}
                     style={{ width: `${Math.round(t.confidence * 100)}%` }}
@@ -497,6 +511,7 @@ export default function AdminShopDetail() {
             placeholder="Search query..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            aria-label="Search rank score"
             className="max-w-sm"
           />
           <Button

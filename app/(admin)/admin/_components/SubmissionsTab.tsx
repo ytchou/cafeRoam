@@ -192,7 +192,7 @@ export function SubmissionsTab({
                                 setRejectionReason(value)
                               }
                             >
-                              <SelectTrigger className="h-8 text-xs">
+                              <SelectTrigger className="h-8 text-xs" aria-label="Rejection reason">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>

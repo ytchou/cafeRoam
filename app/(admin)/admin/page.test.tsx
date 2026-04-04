@@ -370,7 +370,7 @@ describe('AdminDashboard', () => {
     await user.click(screen.getByRole('tab', { name: /claims/i }));
 
     // Change status filter to "approved"
-    const select = screen.getByRole('combobox', { name: /claim status/i });
+    const select = screen.getByRole('combobox', { name: /filter by status/i });
     await user.selectOptions(select, 'approved');
 
     // Should fetch with status=approved and show approved claim

@@ -23,7 +23,7 @@
 - [x] Task 5: Migrate all admin pages to shadcn components (DEV-233)
 
 **Wave 4 — A11y:**
-- [ ] Task 6: Fix a11y — keyboard rows, form labels, progress bars, sortable headers (DEV-234)
+- [x] Task 6: Fix a11y — keyboard rows, form labels, progress bars, sortable headers (DEV-234)
 
 **Wave 5 — Verify:**
 - [ ] Task 7: Consistency pass — grep for stragglers, full test suite (DEV-235)

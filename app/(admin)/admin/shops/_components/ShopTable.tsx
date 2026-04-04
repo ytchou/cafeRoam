@@ -166,8 +166,15 @@ export function ShopTable({
             {shops.map((shop) => (
               <TableRow
                 key={shop.id}
+                tabIndex={0}
                 onClick={() => router.push(`/admin/shops/${shop.id}`)}
-                className="cursor-pointer border-b hover:bg-gray-50"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    router.push(`/admin/shops/${shop.id}`);
+                  }
+                }}
+                className="cursor-pointer border-b hover:bg-gray-50 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
               >
                 {isReviewFilter && (
                   <TableCell

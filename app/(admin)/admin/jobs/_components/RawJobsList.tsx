@@ -235,10 +235,18 @@ export function RawJobsList({ initialStatus }: { initialStatus?: string }) {
           {data.jobs.map((job) => (
             <Fragment key={job.id}>
               <TableRow
-                className="cursor-pointer border-b hover:bg-gray-50"
+                tabIndex={0}
+                aria-expanded={expandedJobId === job.id}
+                className="cursor-pointer border-b hover:bg-gray-50 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
                 onClick={() =>
                   setExpandedJobId(expandedJobId === job.id ? null : job.id)
                 }
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setExpandedJobId(expandedJobId === job.id ? null : job.id);
+                  }
+                }}
               >
                 <TableCell className="py-2">{job.job_type}</TableCell>
                 <TableCell className="py-2">

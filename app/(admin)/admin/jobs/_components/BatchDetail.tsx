@@ -160,6 +160,7 @@ export function BatchDetail({
           placeholder="Search by name…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
+          aria-label="Search jobs"
           className="flex-1"
         />
         <Select
@@ -171,7 +172,7 @@ export function BatchDetail({
             setPage(1);
           }}
         >
-          <SelectTrigger>
+          <SelectTrigger aria-label="Filter by status">
             <SelectValue placeholder="All statuses" />
           </SelectTrigger>
           <SelectContent>
@@ -204,8 +205,15 @@ export function BatchDetail({
             {data.shops.map((shop) => (
               <TableRow
                 key={shop.shop_id}
-                className="cursor-pointer border-t hover:bg-gray-100"
+                tabIndex={0}
+                className="cursor-pointer border-t hover:bg-gray-100 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
                 onClick={() => router.push(`/admin/shops/${shop.shop_id}`)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    router.push(`/admin/shops/${shop.shop_id}`);
+                  }
+                }}
               >
                 <TableCell className="py-1">{shop.name || shop.shop_id}</TableCell>
                 <TableCell className="py-1">

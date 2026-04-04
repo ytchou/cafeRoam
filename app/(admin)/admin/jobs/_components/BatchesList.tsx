@@ -117,12 +117,22 @@ export function BatchesList() {
             {data.batches.map((batch) => (
               <Fragment key={batch.batch_id}>
                 <TableRow
-                  className="cursor-pointer border-b hover:bg-gray-50"
+                  className="cursor-pointer border-b hover:bg-gray-50 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+                  tabIndex={0}
+                  aria-expanded={expandedBatchId === batch.batch_id}
                   onClick={() =>
                     setExpandedBatchId(
                       expandedBatchId === batch.batch_id ? null : batch.batch_id
                     )
                   }
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setExpandedBatchId(
+                        expandedBatchId === batch.batch_id ? null : batch.batch_id
+                      );
+                    }
+                  }}
                 >
                   <TableCell className="py-2 text-gray-500">
                     {new Date(batch.created_at).toLocaleString()}

@@ -201,8 +201,22 @@ export default function TaxonomyPage() {
               ).map(([key, label]) => (
                 <TableHead
                   key={key}
-                  className="cursor-pointer pb-2 select-none hover:text-gray-800"
+                  aria-sort={
+                    sortKey === key
+                      ? sortDir === 'asc'
+                        ? 'ascending'
+                        : 'descending'
+                      : 'none'
+                  }
+                  tabIndex={0}
+                  className="cursor-pointer pb-2 select-none hover:text-gray-800 focus-visible:ring-2 focus-visible:outline-none"
                   onClick={() => handleSort(key)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleSort(key);
+                    }
+                  }}
                 >
                   {label}
                   {sortKey === key && (

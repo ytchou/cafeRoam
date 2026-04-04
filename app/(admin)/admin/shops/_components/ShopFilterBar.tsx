@@ -80,10 +80,11 @@ export function ShopFilterBar({
         value={search}
         onChange={(e) => handleSearchChange(e.target.value)}
         onKeyDown={handleSearchKeyDown}
+        aria-label="Search shops"
         className="flex-1"
       />
       <Select value={statusFilter} onValueChange={handleStatusChange}>
-        <SelectTrigger>
+        <SelectTrigger aria-label="Filter by status">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -95,7 +96,7 @@ export function ShopFilterBar({
         </SelectContent>
       </Select>
       <Select value={sourceFilter} onValueChange={handleSourceChange}>
-        <SelectTrigger>
+        <SelectTrigger aria-label="Filter by source">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
