@@ -42,7 +42,10 @@ describe('useUser', () => {
 
     expect(mockGetSession).toHaveBeenCalledOnce();
     expect(mockGetUser).not.toHaveBeenCalled();
-    expect(result.current.user).toEqual({ id: 'user-123', email: 'test@caferoam.tw' });
+    expect(result.current.user).toEqual({
+      id: 'user-123',
+      email: 'test@caferoam.tw',
+    });
   });
 
   it('returns null user when no session exists', async () => {

@@ -9,7 +9,12 @@ vi.mock('@/lib/supabase/client', () => ({
   createClient: () => ({
     auth: {
       getSession: vi.fn().mockResolvedValue({
-        data: { session: { access_token: 'test-token', user: { email: 'mei.ling@gmail.com' } } },
+        data: {
+          session: {
+            access_token: 'test-token',
+            user: { email: 'mei.ling@gmail.com' },
+          },
+        },
       }),
       getUser: vi.fn().mockResolvedValue({
         data: { user: { email: 'mei.ling@gmail.com' } },

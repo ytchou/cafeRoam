@@ -68,7 +68,9 @@ describe('middleware route guards', () => {
     });
 
     it('skips updateSession for /api routes', async () => {
-      const request = new NextRequest(new URL('/api/shops/123/follow', 'http://localhost'));
+      const request = new NextRequest(
+        new URL('/api/shops/123/follow', 'http://localhost')
+      );
       await middleware(request);
       expect(mockUpdateSession).not.toHaveBeenCalled();
     });
