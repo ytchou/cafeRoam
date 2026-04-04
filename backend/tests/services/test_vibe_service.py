@@ -22,6 +22,7 @@ def _make_db_mock_for_vibes(
     mock.lte.return_value = mock
     mock.limit.return_value = mock
     mock.not_.return_value = mock
+    mock.not_.is_.return_value = mock
 
     # Sequence .execute() calls in order: vibes → tags → shops
     execute_mock = MagicMock()
@@ -168,6 +169,23 @@ class TestVibeServiceGetShopsForVibe:
         service = VibeService(db)
         result = service.get_shops_for_vibe("study-cave", lat=25.033, lng=121.543)
         assert result.shops == []
+
+    def test_not_is_null_filter_applied_for_geo_queries(self):
+        """When a user browses by vibe with location, the null-coord filter uses
+        the correct supabase-py API: .not_.is_('latitude', 'null'), not the
+        invalid three-argument form .not_('latitude', 'is', 'null')."""
+        vibe = make_vibe_row(tag_ids=["quiet"])
+        tag_rows = [make_shop_tag_row("shop-a", "quiet")]
+        shop_rows = [{**make_tarot_shop_row(id="shop-a"), "shop_photos": []}]
+        db = _make_db_mock_for_vibes([vibe], tag_rows, shop_rows)
+
+        service = VibeService(db)
+        service.get_shops_for_vibe("study-cave", lat=25.033, lng=121.543)
+
+        # The builder is the db mock itself (each method returns mock).
+        # Assert that .not_.is_ was called with the correct args — NOT that
+        # .not_ was called with three positional args (the buggy form).
+        db.not_.is_.assert_called_once_with("latitude", "null")
 
     def test_total_count_matches_shops_length(self):
         vibe = make_vibe_row(tag_ids=["quiet"])
