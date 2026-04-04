@@ -75,7 +75,6 @@ describe('AdminRolesPage', () => {
         ]),
     });
 
-    const user = userEvent.setup();
     render(<RolesPage />);
     await screen.findByText('admin@example.com');
 
