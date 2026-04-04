@@ -42,7 +42,8 @@ const mockDistrict: DistrictShopsResponse['district'] = {
   slug: 'da-an',
   nameEn: 'Da-an',
   nameZh: '大安',
-  descriptionEn: 'A leafy, university-rich district packed with specialty cafes.',
+  descriptionEn:
+    'A leafy, university-rich district packed with specialty cafes.',
   descriptionZh: '綠意盎然、大學林立的大安區，充滿精品咖啡廳。',
   city: 'Taipei',
   shopCount: 2,
@@ -115,9 +116,7 @@ describe('app/explore/districts/[slug]/page — district detail page', () => {
     const jsx = await DistrictPage(defaultParams);
     render(jsx);
 
-    expect(
-      screen.getByText('禾多咖啡 Hoto Cafe')
-    ).toBeInTheDocument();
+    expect(screen.getByText('禾多咖啡 Hoto Cafe')).toBeInTheDocument();
     expect(screen.getByText('木下庵 Kino')).toBeInTheDocument();
   });
 

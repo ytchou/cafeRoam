@@ -9,7 +9,8 @@ const district = {
   nameZh: '大安',
   descriptionEn:
     'Da-an District is the cultural heart of Taipei, home to university cafes, tree-lined boulevards, and a dense concentration of independent coffee shops.',
-  descriptionZh: '大安區是台北的文化中心，擁有大學咖啡廳、林蔭大道，以及密集的獨立咖啡館。',
+  descriptionZh:
+    '大安區是台北的文化中心，擁有大學咖啡廳、林蔭大道，以及密集的獨立咖啡館。',
   city: 'Taipei',
   shopCount: 48,
   sortOrder: 1,
@@ -34,7 +35,8 @@ describe('DistrictJsonLd', () => {
   it('uses descriptionEn when provided', () => {
     const { container } = render(<DistrictJsonLd district={district} />);
     const schema = JSON.parse(
-      container.querySelector('script[type="application/ld+json"]')!.textContent!
+      container.querySelector('script[type="application/ld+json"]')!
+        .textContent!
     );
 
     expect(schema.description).toBe(district.descriptionEn);
@@ -46,7 +48,8 @@ describe('DistrictJsonLd', () => {
       <DistrictJsonLd district={districtWithoutDesc} />
     );
     const schema = JSON.parse(
-      container.querySelector('script[type="application/ld+json"]')!.textContent!
+      container.querySelector('script[type="application/ld+json"]')!
+        .textContent!
     );
 
     expect(schema.description).toBe(
@@ -57,7 +60,8 @@ describe('DistrictJsonLd', () => {
   it('renders isPartOf pointing to the CafeRoam website', () => {
     const { container } = render(<DistrictJsonLd district={district} />);
     const schema = JSON.parse(
-      container.querySelector('script[type="application/ld+json"]')!.textContent!
+      container.querySelector('script[type="application/ld+json"]')!
+        .textContent!
     );
 
     expect(schema.isPartOf['@type']).toBe('WebSite');
