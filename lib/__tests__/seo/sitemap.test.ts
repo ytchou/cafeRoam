@@ -65,8 +65,12 @@ describe('sitemap generation', () => {
     expect(urls).toContain('https://caferoam.tw/shops/shop-1/cafe-flaneur');
     expect(urls).toContain('https://caferoam.tw/shops/shop-2/beans-and-leaves');
 
-    // 2 static + 2 vibes + 2 shops
-    expect(entries.length).toBeGreaterThanOrEqual(6);
+    // Info pages
+    expect(urls).toContain('https://caferoam.tw/about');
+    expect(urls).toContain('https://caferoam.tw/faq');
+
+    // 2 static + 2 vibes + 2 shops + 2 info pages
+    expect(entries.length).toBeGreaterThanOrEqual(8);
   });
 
   it('when the shops query fails, the sitemap logs the error and returns static pages only', async () => {
@@ -86,6 +90,8 @@ describe('sitemap generation', () => {
       'connection timeout'
     );
     expect(urls).toContain('https://caferoam.tw');
+    expect(urls).toContain('https://caferoam.tw/about');
+    expect(urls).toContain('https://caferoam.tw/faq');
     expect(urls).not.toContain('https://caferoam.tw/shops/shop-1/cafe-flaneur');
     consoleSpy.mockRestore();
   });

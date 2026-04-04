@@ -1,0 +1,62 @@
+{
+  "findings": [
+    {
+      "severity": "Important",
+      "file": "components/navigation/app-shell.tsx",
+      "line": "25",
+      "description": "Footer renders on mobile but has no bottom padding to clear the fixed BottomNav (62px). The pb-16 is only on <main>, not on a wrapper that includes the Footer. On mobile, Footer content will be partially obscured by the fixed BottomNav overlay.",
+      "flagged_by": "Bug Hunter",
+      "status": "valid"
+    },
+    {
+      "severity": "Important",
+      "file": "app/about/page.tsx",
+      "line": "40,44,55,66",
+      "description": "Body paragraphs use text-sm (14px) which is below the 16px minimum for body content readability and WCAG zoom compliance. Same issue in app/faq/page.tsx:79 for FAQ answer text.",
+      "flagged_by": "Design Quality",
+      "status": "valid"
+    },
+    {
+      "severity": "Important",
+      "file": "components/navigation/footer.tsx",
+      "line": "16-22",
+      "description": "Footer link touch targets are approximately 18px tall (text-xs with no additional padding), well below the 44px minimum required by WCAG 2.5.5 and Apple HIG for mobile tap targets.",
+      "flagged_by": "Design Quality",
+      "status": "valid"
+    },
+    {
+      "severity": "Minor",
+      "file": "app/faq/page.tsx",
+      "line": "58-61",
+      "description": "Unnecessary .map() that copies question/answer fields identically from FAQ_ITEMS. The FAQ_ITEMS array already matches the FaqItem interface and can be passed directly.",
+      "flagged_by": "Architecture & Design",
+      "status": "valid"
+    },
+    {
+      "severity": "Minor",
+      "file": "app/about/page.tsx",
+      "line": "13,18,23",
+      "description": "Emojis in HOW_IT_WORKS titles (emoji-prefixed content strings). CLAUDE.md says 'No emojis in code unless requested.' These are user-facing content, but the rest of the app does not use emojis in content.",
+      "flagged_by": "Standards & Conventions",
+      "status": "debatable"
+    },
+    {
+      "severity": "Minor",
+      "file": "components/navigation/__tests__/footer.test.tsx",
+      "line": "6-8",
+      "description": "vi.mock of internal BuyMeACoffeeButton component rather than mocking at a system boundary. The component requires PostHog useAnalytics context, making this a pragmatic boundary mock.",
+      "flagged_by": "Test Philosophy",
+      "status": "debatable"
+    }
+  ],
+  "active_agents": [
+    "Bug Hunter",
+    "Design Quality",
+    "Architecture & Design",
+    "Standards & Conventions",
+    "Test Philosophy"
+  ],
+  "skipped": [],
+  "head_sha": "62d1db1f287de674fbc91374fd28e28d591fa6dc",
+  "review_log_path": "docs/reviews/2026-04-04-feat-dev-211-about-faq.md"
+}
