@@ -34,7 +34,7 @@ The tarot reveal mechanic (Explore) adds a playful, slightly mystical register t
 **Usage rules:**
 
 - Never apply `bg-[#E06B3F]` directly in shared components — use `bg-primary` if promoted, or a named class
-- Espresso (`#2c1810`) is only for active/selected states — never use as general text color
+- Espresso (`#2c1810`) is for active/selected state backgrounds and dark hero sections only — never use as general body text color
 - Glassmorphism overlays: `backdrop-blur-md bg-white/70` for map floating cards
 
 ---
