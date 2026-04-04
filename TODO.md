@@ -56,7 +56,6 @@
 - [ ] Task 5: Remove `/search` page and update references (DEV-228)
 
 ---
-
 ## Anti-Crawling Core Protection (DEV-210)
 
 > **Design Doc:** [docs/designs/2026-04-04-anti-crawling-design.md](docs/designs/2026-04-04-anti-crawling-design.md)
