@@ -25,7 +25,7 @@
 
 - [x] Write rate limiting integration tests
 - [ ] Apply route-specific rate limits (search, maps, shops list)
-- [ ] Register middleware + custom 429 handler in main.py
+- [x] Register middleware + custom 429 handler in main.py
 
 **Chunk 4 — Docs (DEV-222):**
 

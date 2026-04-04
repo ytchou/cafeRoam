@@ -6,10 +6,10 @@ from typing import Any
 
 import sentry_sdk
 import structlog
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
-from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_ipaddr
 
 from api.admin import router as admin_router
 from api.admin_claims import router as admin_claims_router
@@ -35,6 +35,7 @@ from api.stamps import router as stamps_router
 from api.submissions import router as submissions_router
 from core.config import settings
 from db.supabase_client import get_service_role_client
+from middleware.bot_detection import BotDetectionMiddleware
 from middleware.rate_limit import limiter
 from middleware.request_id import RequestIDMiddleware
 from workers.scheduler import create_scheduler
@@ -96,6 +97,28 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     logger.info("Shutting down CafeRoam API")
 
 
+def _custom_rate_limit_handler(request: Request, exc: RateLimitExceeded) -> JSONResponse:
+    """Custom 429 handler with structured logging and Sentry breadcrumbs."""
+    ip = get_ipaddr(request)
+    logger.warning(
+        "rate_limit_exceeded",
+        event_type="rate_limit",
+        ip=ip,
+        path=request.url.path,
+        method=request.method,
+    )
+    sentry_sdk.add_breadcrumb(
+        category="rate_limit",
+        message=f"Rate limit exceeded: {request.url.path}",
+        level="warning",
+        data={"ip": ip, "path": request.url.path},
+    )
+    return JSONResponse(
+        status_code=429,
+        content={"detail": "Rate limit exceeded. Please slow down."},
+    )
+
+
 app = FastAPI(
     title="CafeRoam API",
     description="Backend API for CafeRoam coffee shop directory",
@@ -104,16 +127,19 @@ app = FastAPI(
 )
 
 app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_exception_handler(RateLimitExceeded, _custom_rate_limit_handler)
 app.add_middleware(RequestIDMiddleware)
+app.add_middleware(BotDetectionMiddleware)
 
 
 @app.get("/health")
+@limiter.exempt
 async def health_check() -> dict[str, str]:
     return {"status": "ok"}
 
 
 @app.get("/health/deep")
+@limiter.exempt
 async def deep_health_check() -> JSONResponse:
     """Check connectivity to all critical dependencies."""
     checks: dict = {}
