@@ -12,25 +12,20 @@
 > **Plan:** [docs/plans/2026-04-04-admin-dashboard-audit-plan.md](docs/plans/2026-04-04-admin-dashboard-audit-plan.md)
 
 **Wave 1 — Foundation (parallel):**
-
-- [ ] Task 1: Install shadcn Table/Input/Select/Badge (DEV-230)
+- [x] Task 1: Install shadcn Table/Input/Select/Badge (DEV-230)
 - [ ] Task 2: Create useAdminAuth hook (DEV-230)
 
 **Wave 2 — Extraction (parallel):**
-
 - [ ] Task 3: Extract Dashboard → SubmissionsTab + ClaimsTab (DEV-231)
 - [ ] Task 4: Extract Shops → FilterBar + ShopTable + ImportSection (DEV-232)
 
 **Wave 3 — Migration:**
-
 - [ ] Task 5: Migrate all admin pages to shadcn components (DEV-233)
 
 **Wave 4 — A11y:**
-
 - [ ] Task 6: Fix a11y — keyboard rows, form labels, progress bars, sortable headers (DEV-234)
 
 **Wave 5 — Verify:**
-
 - [ ] Task 7: Consistency pass — grep for stragglers, full test suite (DEV-235)
 
 ---
@@ -41,19 +36,16 @@
 > **Plan:** [docs/plans/2026-04-04-homepage-redesign-plan.md](docs/plans/2026-04-04-homepage-redesign-plan.md)
 
 **Wave 1 — Foundation (parallel, no dependencies):**
-
-- [x] Task 1: Relocate map view to `/find` (DEV-224) — No test needed (verbatim relocation)
-- [x] Task 2: Update bottom nav to 5 tabs (DEV-225)
-- [x] Task 4: Implement unauth search with 1 free semantic try (DEV-227)
-- [x] Task 6: Update SPEC.md and DESIGN.md (DEV-229)
+- [ ] Task 1: Relocate map view to `/find` (DEV-224)
+- [ ] Task 2: Update bottom nav to 5 tabs (DEV-225)
+- [ ] Task 4: Implement unauth search with 1 free semantic try (DEV-227)
+- [ ] Task 6: Update SPEC.md and DESIGN.md (DEV-229)
 
 **Wave 2 — Discovery Page:**
-
-- [x] Task 3: Build search-first discovery homepage (DEV-226)
+- [ ] Task 3: Build search-first discovery homepage (DEV-226)
 
 **Wave 3 — Cleanup:**
-
-- [x] Task 5: Remove `/search` page and update references (DEV-228)
+- [ ] Task 5: Remove `/search` page and update references (DEV-228)
 
 ---
 
@@ -64,23 +56,23 @@
 
 **Chunk 1 — Config + Foundation (DEV-217, DEV-218):**
 
-- [ ] Add rate limit + bot detection config fields
-- [ ] Extend rate limiter with default limits + per-user key func
+- [x] Add rate limit + bot detection config fields
+- [x] Extend rate limiter with default limits + per-user key func
 
 **Chunk 2 — Bot Detection (DEV-220):**
 
-- [ ] Write bot detection tests (TDD)
-- [ ] Implement BotDetectionMiddleware
+- [x] Write bot detection tests (TDD)
+- [x] Implement BotDetectionMiddleware
 
 **Chunk 3 — Rate Limiting (DEV-219, DEV-221):**
 
-- [ ] Write rate limiting integration tests
-- [ ] Apply route-specific rate limits (search, maps, shops list)
-- [ ] Register middleware + custom 429 handler in main.py
+- [x] Write rate limiting integration tests
+- [x] Apply route-specific rate limits (search, maps, shops list)
+- [x] Register middleware + custom 429 handler in main.py
 
 **Chunk 4 — Docs (DEV-222):**
 
-- [ ] Update SPEC.md + ASSUMPTIONS.md with anti-crawling protections
+- [x] Update SPEC.md + ASSUMPTIONS.md with anti-crawling protections
 
 ---
 
