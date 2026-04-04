@@ -129,7 +129,7 @@ class VibeService:
         if lat is not None and lng is not None:
             lat_min, lat_max, lng_min, lng_max = bounding_box(lat, lng, radius_km)
             builder = (
-                builder.not_("latitude", "is", "null")
+                builder.not_.is_("latitude", "null")
                 .gte("latitude", lat_min)
                 .lte("latitude", lat_max)
                 .gte("longitude", lng_min)
