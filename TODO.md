@@ -6,6 +6,33 @@
 
 ---
 
+## Anti-Crawling Core Protection (DEV-210)
+
+> **Design Doc:** [docs/designs/2026-04-04-anti-crawling-design.md](docs/designs/2026-04-04-anti-crawling-design.md)
+> **Plan:** [docs/plans/2026-04-04-anti-crawling-plan.md](docs/plans/2026-04-04-anti-crawling-plan.md)
+
+**Chunk 1 — Config + Foundation (DEV-217, DEV-218):**
+
+- [x] Add rate limit + bot detection config fields
+- [x] Extend rate limiter with default limits + per-user key func
+
+**Chunk 2 — Bot Detection (DEV-220):**
+
+- [x] Write bot detection tests (TDD)
+- [x] Implement BotDetectionMiddleware
+
+**Chunk 3 — Rate Limiting (DEV-219, DEV-221):**
+
+- [x] Write rate limiting integration tests
+- [x] Apply route-specific rate limits (search, maps, shops list)
+- [x] Register middleware + custom 429 handler in main.py
+
+**Chunk 4 — Docs (DEV-222):**
+
+- [x] Update SPEC.md + ASSUMPTIONS.md with anti-crawling protections
+
+---
+
 ## District Landing Pages (DEV-201)
 
 > **Design Doc:** [docs/designs/2026-04-03-district-landing-pages-design.md](docs/designs/2026-04-03-district-landing-pages-design.md)
@@ -2306,6 +2333,27 @@ Explicitly cut from V1. Revisit after Phase 4 validation data is in hand.
 **Chunk 5 — Documentation:**
 
 - [ ] Task 16: SPEC.md business rules update
+
+## About + FAQ Pages (DEV-211)
+
+> **Design Doc:** [docs/designs/2026-04-04-about-faq-pages-design.md](docs/designs/2026-04-04-about-faq-pages-design.md)
+> **Plan:** [docs/plans/2026-04-04-about-faq-pages-plan.md](docs/plans/2026-04-04-about-faq-pages-plan.md)
+
+**Chunk 1 — SEO Components (Wave 1, parallel):**
+
+- [ ] Task 1: FaqPageJsonLd component (DEV-215)
+- [ ] Task 2: OrganizationJsonLd component (DEV-214)
+- [ ] Task 3: Footer component + AppShell update (DEV-213)
+
+**Chunk 2 — Pages (Wave 2, parallel):**
+
+- [ ] Task 4: /about page (DEV-214)
+- [ ] Task 5: /faq page (DEV-215)
+
+**Chunk 3 — SEO Wiring + Validation (Wave 3-4):**
+
+- [ ] Task 6: Sitemap update (DEV-216)
+- [ ] Task 7: Final validation (lint, build, manual check)
 
 ## Environment Sync Strategy (DEV-176)
 

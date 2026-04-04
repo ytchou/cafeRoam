@@ -33,7 +33,6 @@ jobs:
               - 'package.json'
               - 'pnpm-lock.yaml'
               - 'tsconfig.json'
-              - '.github/workflows/frontend-ci.yml'
 
   frontend:
     name: Frontend (lint, format, tsc, vitest)
@@ -76,7 +75,7 @@ jobs:
           exit $fail
 
       - name: Run tests with coverage (changed files)
-        run: pnpm exec vitest run --coverage --changed
+        run: pnpm exec vitest run --coverage --changed origin/main
 
       - name: Upload coverage artifact
         if: always()

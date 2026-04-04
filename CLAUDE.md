@@ -136,21 +136,8 @@ make reset-db                  # !! DESTRUCTIVE — wipes all data. Has a 5s war
 
 ### Critical Paths Requiring Tests
 
-**Backend (pytest):**
-
-- `backend/services/search_service.py` — semantic search + taxonomy boost logic
-- `backend/services/checkin_service.py` — photo upload, stamp generation
-- `backend/services/lists_service.py` — list CRUD, **3-list cap enforcement**
-- `backend/providers/` — all provider adapters
-- `backend/api/` — all API route handlers (auth validation, input validation)
-
-**Frontend (Vitest + Testing Library):**
-
-- Auth flows — login, signup, OAuth callback, consent
-- List management — create, delete, cap enforcement
-- Check-in — photo upload validation, form submission
-- Search — query → results rendering
-- Profile — stamp collection, check-in history
+- **Backend:** search_service, checkin_service, lists_service (3-list cap), all providers, all API route handlers
+- **Frontend:** auth flows, list management, check-in, search, profile
 
 ### Test Quality Checklist
 
@@ -180,4 +167,4 @@ Before finishing any test, verify:
 - **PDPA compliance:** Never log or track user PII in analytics events. Use anonymized user IDs only. Account deletion must cascade all personal data.
 - **Check-in photos:** Stored in Supabase Storage with RLS. Only the owning user can access their photos. Disclose at check-in time that menu photos may be used for data enrichment.
 - **Sensitive context:** Use `PRIVATE_CONTEXT.md` (gitignored) for business-sensitive notes.
-- **CI scanning:** `security.yml` runs TruffleHog + Semgrep + pnpm audit nightly (10am Taiwan time). Check GitHub Security tab for SARIF results. `backend-ci.yml` runs on PRs to main only, with path-based job skipping (frontend jobs skip on backend-only PRs and vice versa).
+- **CI scanning:** `security.yml` runs TruffleHog + pnpm audit on PRs; Semgrep SAST runs nightly only. Check GitHub Security tab for SARIF results. `frontend-ci.yml` and `backend-ci.yml` run on PRs to main with path-based job skipping (each only triggers when its own files change).

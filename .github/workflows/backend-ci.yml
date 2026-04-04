@@ -56,7 +56,7 @@ jobs:
       - name: Type check
         run: cd backend && uv run mypy .
 
-      - name: Run tests with coverage (changed files)
+      - name: Run tests with coverage
         run: cd backend && uv run pytest -v --cov --cov-report=xml:coverage.xml --cov-report=term
 
       - name: Upload coverage artifact
