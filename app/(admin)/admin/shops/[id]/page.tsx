@@ -341,10 +341,7 @@ export default function AdminShopDetail() {
                 />
               </div>
             </div>
-            <Button
-              onClick={handleSaveEdit}
-              className="mt-3"
-            >
+            <Button onClick={handleSaveEdit} className="mt-3">
               Save
             </Button>
           </div>
@@ -510,10 +507,7 @@ export default function AdminShopDetail() {
             aria-label="Search rank score"
             className="max-w-sm"
           />
-          <Button
-            onClick={handleSearchRank}
-            variant="outline"
-          >
+          <Button onClick={handleSearchRank} variant="outline">
             Test Search
           </Button>
           {searchResult && (

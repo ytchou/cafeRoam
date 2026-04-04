@@ -13,12 +13,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { ConfirmDialog } from '../../_components/ConfirmDialog';
-import {
-  PAGE_SIZE,
-  Shop,
-  SOURCE_LABELS,
-  STATUS_LABELS,
-} from '../_constants';
+import { PAGE_SIZE, Shop, SOURCE_LABELS, STATUS_LABELS } from '../_constants';
 
 interface ShopTableProps {
   shops: Shop[];
@@ -146,8 +141,7 @@ export function ShopTable({
                     type="checkbox"
                     aria-label="Select all"
                     checked={
-                      shops.length > 0 &&
-                      selectedShopIds.size === shops.length
+                      shops.length > 0 && selectedShopIds.size === shops.length
                     }
                     onChange={(e) => handleSelectAll(e.target.checked)}
                   />
@@ -190,7 +184,9 @@ export function ShopTable({
                   </TableCell>
                 )}
                 <TableCell className="py-2">{shop.name}</TableCell>
-                <TableCell className="py-2 text-gray-600">{shop.address}</TableCell>
+                <TableCell className="py-2 text-gray-600">
+                  {shop.address}
+                </TableCell>
                 <TableCell className="py-2">
                   {STATUS_LABELS[shop.processing_status] ??
                     shop.processing_status}
@@ -198,7 +194,9 @@ export function ShopTable({
                 <TableCell className="py-2 text-gray-500">
                   {SOURCE_LABELS[shop.source] ?? shop.source}
                 </TableCell>
-                <TableCell className="py-2 text-gray-500">{shop.tag_count}</TableCell>
+                <TableCell className="py-2 text-gray-500">
+                  {shop.tag_count}
+                </TableCell>
                 <TableCell className="py-2 text-gray-500">
                   {shop.has_embedding ? (
                     <span className="rounded bg-green-100 px-1.5 py-0.5 text-xs text-green-700">

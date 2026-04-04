@@ -52,7 +52,11 @@ export function ShopFilterBar({
     setSearch(value);
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
-      onFilterChange({ search: value, status: statusFilter, source: sourceFilter });
+      onFilterChange({
+        search: value,
+        status: statusFilter,
+        source: sourceFilter,
+      });
     }, 300);
   }
 

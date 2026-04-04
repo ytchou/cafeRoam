@@ -49,8 +49,7 @@ export function SubmissionsTab({
   onRefresh,
 }: SubmissionsTabProps) {
   const [rejectingId, setRejectingId] = useState<string | null>(null);
-  const [rejectionReason, setRejectionReason] =
-    useState<string>('not_a_cafe');
+  const [rejectionReason, setRejectionReason] = useState<string>('not_a_cafe');
   const [confirmAction, setConfirmAction] = useState<{
     type: 'approve_submission';
     id: string;
@@ -146,7 +145,9 @@ export function SubmissionsTab({
               {data?.recent_submissions.map((sub) => (
                 <TableRow key={sub.id} className="border-b">
                   <TableCell className="max-w-xs truncate py-2">
-                    <Link href={sub.google_maps_url}>{sub.google_maps_url}</Link>
+                    <Link href={sub.google_maps_url}>
+                      {sub.google_maps_url}
+                    </Link>
                   </TableCell>
                   <TableCell className="py-2 text-gray-500">
                     {sub.submitted_by ?? '—'}
@@ -192,7 +193,10 @@ export function SubmissionsTab({
                                 setRejectionReason(value)
                               }
                             >
-                              <SelectTrigger className="h-8 text-xs" aria-label="Rejection reason">
+                              <SelectTrigger
+                                className="h-8 text-xs"
+                                aria-label="Rejection reason"
+                              >
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>

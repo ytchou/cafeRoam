@@ -127,7 +127,9 @@ export function BatchesList() {
                     if (e.key === 'Enter' || e.key === ' ') {
                       e.preventDefault();
                       setExpandedBatchId(
-                        expandedBatchId === batch.batch_id ? null : batch.batch_id
+                        expandedBatchId === batch.batch_id
+                          ? null
+                          : batch.batch_id
                       );
                     }
                   }}

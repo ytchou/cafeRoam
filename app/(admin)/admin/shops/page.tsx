@@ -310,11 +310,7 @@ export default function AdminShopsList() {
               />
             </div>
           </div>
-          <Button
-            type="submit"
-            disabled={createLoading}
-            variant="default"
-          >
+          <Button type="submit" disabled={createLoading} variant="default">
             {createLoading ? 'Saving...' : 'Save'}
           </Button>
         </form>

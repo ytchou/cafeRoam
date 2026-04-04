@@ -199,7 +199,9 @@ export function ClaimsTab({ getToken }: ClaimsTabProps) {
             <TableBody>
               {claims.map((claim) => (
                 <TableRow key={claim.id} className="border-b">
-                  <TableCell className="py-2">{claim.shops?.name ?? '—'}</TableCell>
+                  <TableCell className="py-2">
+                    {claim.shops?.name ?? '—'}
+                  </TableCell>
                   <TableCell className="py-2">
                     <div>{claim.contact_name}</div>
                     <div className="text-xs text-gray-500">
@@ -264,7 +266,10 @@ export function ClaimsTab({ getToken }: ClaimsTabProps) {
                               setClaimRejectionReason(value)
                             }
                           >
-                            <SelectTrigger className="h-8 text-xs" aria-label="Rejection reason">
+                            <SelectTrigger
+                              className="h-8 text-xs"
+                              aria-label="Rejection reason"
+                            >
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>

@@ -79,7 +79,10 @@ export default function AdminLayout({
       </header>
 
       <div className="flex flex-1">
-        <aside aria-label="Admin navigation" className="w-56 border-r bg-gray-50 p-4">
+        <aside
+          aria-label="Admin navigation"
+          className="w-56 border-r bg-gray-50 p-4"
+        >
           <h2 className="mb-6 text-lg font-bold">Admin</h2>
           <nav className="space-y-1">
             {NAV_ITEMS.map((item) => {

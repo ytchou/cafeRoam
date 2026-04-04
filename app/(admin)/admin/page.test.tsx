@@ -1,4 +1,10 @@
-import { render, screen, waitFor, within, fireEvent } from '@testing-library/react';
+import {
+  render,
+  screen,
+  waitFor,
+  within,
+  fireEvent,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import {
@@ -361,9 +367,7 @@ describe('AdminDashboard', () => {
 
     // Wait for page to finish loading
     await waitFor(() => {
-      expect(
-        screen.getByRole('tab', { name: /claims/i })
-      ).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: /claims/i })).toBeInTheDocument();
     });
 
     // Switch to Claims tab
@@ -426,9 +430,7 @@ describe('AdminDashboard', () => {
     const user = userEvent.setup();
     render(<AdminDashboard />);
     await waitFor(() => {
-      expect(
-        screen.getByRole('tab', { name: /claims/i })
-      ).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: /claims/i })).toBeInTheDocument();
     });
     await user.click(screen.getByRole('tab', { name: /claims/i }));
     await screen.findByText('Test Shop');

@@ -258,7 +258,11 @@ export default function RolesPage() {
                 value={grantRole}
                 onValueChange={(value) => setGrantRole(value as Role)}
               >
-                <SelectTrigger id="grant-role" aria-label="Role" className="w-full">
+                <SelectTrigger
+                  id="grant-role"
+                  aria-label="Role"
+                  className="w-full"
+                >
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

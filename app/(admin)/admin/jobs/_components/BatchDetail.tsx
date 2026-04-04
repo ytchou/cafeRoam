@@ -168,9 +168,7 @@ export function BatchDetail({
         <Select
           value={statusFilter || ALL_STATUSES_VALUE}
           onValueChange={(value) => {
-            setStatusFilter(
-              value === ALL_STATUSES_VALUE ? '' : value
-            );
+            setStatusFilter(value === ALL_STATUSES_VALUE ? '' : value);
             setPage(1);
           }}
         >
@@ -217,7 +215,9 @@ export function BatchDetail({
                   }
                 }}
               >
-                <TableCell className="py-1">{shop.name || shop.shop_id}</TableCell>
+                <TableCell className="py-1">
+                  {shop.name || shop.shop_id}
+                </TableCell>
                 <TableCell className="py-1">
                   <Badge variant={getStatusVariant(shop.processing_status)}>
                     {shop.processing_status}

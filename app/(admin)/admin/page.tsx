@@ -3,10 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ClaimsTab } from './_components/ClaimsTab';
-import {
-  PipelineOverview,
-  SubmissionsTab,
-} from './_components/SubmissionsTab';
+import { PipelineOverview, SubmissionsTab } from './_components/SubmissionsTab';
 import { useAdminAuth } from './_hooks/use-admin-auth';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 
@@ -81,7 +78,11 @@ export default function AdminDashboard() {
               </Link>
             )}
           </section>
-          <SubmissionsTab data={data} getToken={getToken} onRefresh={fetchOverview} />
+          <SubmissionsTab
+            data={data}
+            getToken={getToken}
+            onRefresh={fetchOverview}
+          />
         </TabsContent>
         <TabsContent value="claims">
           <ClaimsTab getToken={getToken} />

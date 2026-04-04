@@ -15,6 +15,7 @@
 **Tech Stack:** Next.js 16 (App Router), TypeScript, shadcn/ui (Tabs, Table, Input, Select, Badge, Button, Dialog, AlertDialog), Tailwind CSS, Radix UI primitives, Supabase Auth
 
 **Acceptance Criteria:**
+
 - [ ] All admin tabs are keyboard-navigable and announce correctly to screen readers (ARIA tablist/tab/tabpanel)
 - [ ] All clickable table rows are reachable and activatable via keyboard (Tab + Enter/Space)
 - [ ] All form controls (inputs, selects) have accessible labels
@@ -28,6 +29,7 @@
 **Linear:** DEV-230 (Foundation)
 
 **Files:**
+
 - Create: `components/ui/table.tsx` (via shadcn CLI)
 - Create: `components/ui/input.tsx` (via shadcn CLI)
 - Create: `components/ui/select.tsx` (via shadcn CLI)
@@ -71,6 +73,7 @@ git commit -m "chore(DEV-230): install shadcn Table, Input, Select, Badge compon
 **Linear:** DEV-230 (Foundation)
 
 **Files:**
+
 - Create: `app/(admin)/admin/_hooks/use-admin-auth.ts`
 - Create: `app/(admin)/admin/_hooks/use-admin-auth.test.ts`
 
@@ -192,6 +195,7 @@ git commit -m "feat(DEV-230): add useAdminAuth hook — unified admin auth with 
 **Linear:** DEV-231
 
 **Files:**
+
 - Create: `app/(admin)/admin/_components/SubmissionsTab.tsx`
 - Create: `app/(admin)/admin/_components/ClaimsTab.tsx`
 - Modify: `app/(admin)/admin/page.tsx`
@@ -199,11 +203,11 @@ git commit -m "feat(DEV-230): add useAdminAuth hook — unified admin auth with 
 
 **State ownership analysis:**
 
-| Component | State Variables |
-|---|---|
-| **Dashboard shell** (page.tsx) | `tab`, `error`, `loading`, `confirmAction`, `data` (overview stats) |
-| **SubmissionsTab** | `rejectingId`, `rejectionReason` + receives `data`, `getToken`, `onRefresh` as props |
-| **ClaimsTab** | `claims`, `claimsLoading`, `claimsError`, `claimRejectingId`, `claimRejectionReason`, `approvingClaimId`, `claimStatusFilter` + receives `getToken` as prop |
+| Component                      | State Variables                                                                                                                                             |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Dashboard shell** (page.tsx) | `tab`, `error`, `loading`, `confirmAction`, `data` (overview stats)                                                                                         |
+| **SubmissionsTab**             | `rejectingId`, `rejectionReason` + receives `data`, `getToken`, `onRefresh` as props                                                                        |
+| **ClaimsTab**                  | `claims`, `claimsLoading`, `claimsError`, `claimRejectingId`, `claimRejectionReason`, `approvingClaimId`, `claimStatusFilter` + receives `getToken` as prop |
 
 **Step 1: Write SubmissionsTab**
 
@@ -234,6 +238,7 @@ Move `claims`, `claimsLoading`, `claimsError`, `claimRejectingId`, `claimRejecti
 **Step 3: Simplify page.tsx**
 
 Replace `tokenRef` with `useAdminAuth()`. The page becomes a thin shell:
+
 - Fetches overview stats
 - Renders stat cards
 - Renders `<SubmissionsTab>` and `<ClaimsTab>` (still using hand-rolled tabs for now — shadcn migration in Task 5)
@@ -270,6 +275,7 @@ git commit -m "refactor(DEV-231): extract Dashboard into SubmissionsTab + Claims
 **Linear:** DEV-232
 
 **Files:**
+
 - Create: `app/(admin)/admin/shops/_components/ShopFilterBar.tsx`
 - Create: `app/(admin)/admin/shops/_components/ShopTable.tsx`
 - Create: `app/(admin)/admin/shops/_components/ImportSection.tsx`
@@ -279,23 +285,28 @@ git commit -m "refactor(DEV-231): extract Dashboard into SubmissionsTab + Claims
 
 **State ownership analysis:**
 
-| Component | State Variables |
-|---|---|
-| **Shops shell** (page.tsx) | `shops`, `total`, `offset`, `loading`, `error`, `showCreateForm`, `createLoading` |
-| **ShopFilterBar** | `search`, `appliedSearch`, `statusFilter`, `sourceFilter` → calls `onFilterChange` |
-| **ShopTable** | `selectedIds` (bulk select) + receives `shops`, `loading`, `offset`, `total`, `onPageChange`, `getToken`, `onRefresh` |
-| **ImportSection** | `selectedRegion`, `importingCafeNomad`, `importingTakeout`, `checkingUrls`, `takeoutFileRef` |
+| Component                  | State Variables                                                                                                       |
+| -------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| **Shops shell** (page.tsx) | `shops`, `total`, `offset`, `loading`, `error`, `showCreateForm`, `createLoading`                                     |
+| **ShopFilterBar**          | `search`, `appliedSearch`, `statusFilter`, `sourceFilter` → calls `onFilterChange`                                    |
+| **ShopTable**              | `selectedIds` (bulk select) + receives `shops`, `loading`, `offset`, `total`, `onPageChange`, `getToken`, `onRefresh` |
+| **ImportSection**          | `selectedRegion`, `importingCafeNomad`, `importingTakeout`, `checkingUrls`, `takeoutFileRef`                          |
 
-**Step 1: Extract _constants.ts**
+**Step 1: Extract \_constants.ts**
 
 Move module-scope constants from `shops/page.tsx` to `shops/_constants.ts`:
+
 - `REGIONS`, `STATUS_OPTIONS`, `STATUS_LABELS`, `STATUS_COLORS`, `SOURCE_OPTIONS`, `SOURCE_LABELS`, `PAGE_SIZE`
 
 **Step 2: Extract ShopFilterBar**
 
 ```typescript
 interface ShopFilterBarProps {
-  onFilterChange: (filters: { search: string; status: string; source: string }) => void;
+  onFilterChange: (filters: {
+    search: string;
+    status: string;
+    source: string;
+  }) => void;
   statusOptions: typeof STATUS_OPTIONS;
   sourceOptions: typeof SOURCE_OPTIONS;
 }
@@ -357,6 +368,7 @@ git commit -m "refactor(DEV-232): extract Shops into FilterBar + ShopTable + Imp
 Work page-by-page, committing after each logical group.
 
 **Files to modify:**
+
 - `app/(admin)/admin/page.tsx` — shadcn Tabs
 - `app/(admin)/admin/_components/SubmissionsTab.tsx` — Table, Button, Badge, Select
 - `app/(admin)/admin/_components/ClaimsTab.tsx` — Table, Button, Badge, Select
@@ -403,16 +415,39 @@ Jobs page: same pattern for Batch Runs / Raw Jobs / Scheduler tabs.
 ```tsx
 // Before (raw)
 <table className="w-full text-sm">
-  <thead><tr><th className="pb-2 text-left font-medium">Name</th></tr></thead>
-  <tbody><tr><td className="py-2">...</td></tr></tbody>
-</table>
+  <thead>
+    <tr>
+      <th className="pb-2 text-left font-medium">Name</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td className="py-2">...</td>
+    </tr>
+  </tbody>
+</table>;
 
 // After (shadcn)
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from '@/components/ui/table';
 <Table>
-  <TableHeader><TableRow><TableHead>Name</TableHead></TableRow></TableHeader>
-  <TableBody><TableRow><TableCell>...</TableCell></TableRow></TableBody>
-</Table>
+  <TableHeader>
+    <TableRow>
+      <TableHead>Name</TableHead>
+    </TableRow>
+  </TableHeader>
+  <TableBody>
+    <TableRow>
+      <TableCell>...</TableCell>
+    </TableRow>
+  </TableBody>
+</Table>;
 ```
 
 Apply to: SubmissionsTab, ClaimsTab, ShopTable, BatchesList, BatchDetail, RawJobsList, Taxonomy, Roles.
@@ -427,7 +462,10 @@ Create shared status-to-variant mapping first:
 
 ```typescript
 // app/(admin)/admin/_lib/status-badge.ts
-const STATUS_VARIANT: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
+const STATUS_VARIANT: Record<
+  string,
+  'default' | 'secondary' | 'destructive' | 'outline'
+> = {
   approved: 'default',
   live: 'default',
   pending: 'secondary',
@@ -439,12 +477,15 @@ const STATUS_VARIANT: Record<string, 'default' | 'secondary' | 'destructive' | '
   running: 'secondary',
 };
 
-export function getStatusVariant(status: string): 'default' | 'secondary' | 'destructive' | 'outline' {
+export function getStatusVariant(
+  status: string
+): 'default' | 'secondary' | 'destructive' | 'outline' {
   return STATUS_VARIANT[status] ?? 'outline';
 }
 ```
 
 Replace across all pages:
+
 - Raw `<input>` → shadcn `<Input>`
 - Raw `<select>` → shadcn `<Select>` (or keep native if very simple)
 - Raw `<button>` → shadcn `<Button>`
@@ -461,6 +502,7 @@ Replace across all pages:
 **Linear:** DEV-234
 
 **Files:**
+
 - `app/(admin)/admin/shops/_components/ShopTable.tsx` — keyboard rows
 - `app/(admin)/admin/jobs/_components/BatchesList.tsx` — keyboard rows
 - `app/(admin)/admin/jobs/_components/BatchDetail.tsx` — keyboard rows + form labels
@@ -530,7 +572,13 @@ Apply to: mode score bars and tag confidence bars in `shops/[id]/page.tsx`.
 
 ```tsx
 <TableHead
-  aria-sort={sortField === 'tag' ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}
+  aria-sort={
+    sortField === 'tag'
+      ? sortDir === 'asc'
+        ? 'ascending'
+        : 'descending'
+      : 'none'
+  }
   tabIndex={0}
   onClick={() => handleSort('tag')}
   onKeyDown={(e) => {
@@ -636,18 +684,23 @@ graph TD
 ```
 
 **Wave 1** (parallel — no dependencies):
+
 - Task 1: Install shadcn Table/Input/Select/Badge
 - Task 2: Create useAdminAuth hook
 
 **Wave 2** (parallel — depends on Wave 1):
+
 - Task 3: Extract Dashboard → SubmissionsTab + ClaimsTab ← Tasks 1, 2
 - Task 4: Extract Shops → FilterBar + ShopTable + ImportSection ← Tasks 1, 2
 
 **Wave 3** (sequential — depends on Wave 2):
+
 - Task 5: Migrate all pages to shadcn components ← Tasks 3, 4
 
 **Wave 4** (sequential — depends on Wave 3):
+
 - Task 6: A11y fixes ← Task 5
 
 **Wave 5** (sequential — depends on Wave 4):
+
 - Task 7: Consistency pass ← Task 6

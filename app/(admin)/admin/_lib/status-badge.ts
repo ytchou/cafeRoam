@@ -1,4 +1,7 @@
-const STATUS_VARIANT: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
+const STATUS_VARIANT: Record<
+  string,
+  'default' | 'secondary' | 'destructive' | 'outline'
+> = {
   approved: 'default',
   live: 'default',
   pending: 'secondary',
@@ -10,6 +13,8 @@ const STATUS_VARIANT: Record<string, 'default' | 'secondary' | 'destructive' | '
   running: 'secondary',
 };
 
-export function getStatusVariant(status: string): 'default' | 'secondary' | 'destructive' | 'outline' {
+export function getStatusVariant(
+  status: string
+): 'default' | 'secondary' | 'destructive' | 'outline' {
   return STATUS_VARIANT[status] ?? 'outline';
 }

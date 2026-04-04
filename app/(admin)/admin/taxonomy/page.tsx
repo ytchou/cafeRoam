@@ -227,7 +227,9 @@ export default function TaxonomyPage() {
             {sortedTags.map((tag) => (
               <TableRow key={tag.tag_id} className="border-b">
                 <TableCell className="py-2">{tag.tag_id}</TableCell>
-                <TableCell className="py-2 text-gray-500">{tag.dimension}</TableCell>
+                <TableCell className="py-2 text-gray-500">
+                  {tag.dimension}
+                </TableCell>
                 <TableCell className="py-2">{tag.shop_count}</TableCell>
                 <TableCell className="py-2">
                   {tag.avg_confidence?.toFixed(2) ?? '—'}
