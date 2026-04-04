@@ -1,0 +1,232 @@
+'use client';
+
+import { useState } from 'react';
+import Link from 'next/link';
+import { toast } from 'sonner';
+import { ADMIN_REJECTION_REASONS } from '@/lib/constants/rejection-reasons';
+import { ConfirmDialog } from './ConfirmDialog';
+
+interface Submission {
+  id: string;
+  google_maps_url: string;
+  status: string;
+  submitted_by: string | null;
+  created_at: string;
+}
+
+export interface PipelineOverview {
+  job_counts: Record<string, number>;
+  recent_submissions: Submission[];
+}
+
+interface SubmissionsTabProps {
+  data: PipelineOverview | null;
+  getToken: () => Promise<string | null>;
+  onRefresh: () => void;
+}
+
+export function SubmissionsTab({
+  data,
+  getToken,
+  onRefresh,
+}: SubmissionsTabProps) {
+  const [rejectingId, setRejectingId] = useState<string | null>(null);
+  const [rejectionReason, setRejectionReason] =
+    useState<string>('not_a_cafe');
+  const [confirmAction, setConfirmAction] = useState<{
+    type: 'approve_submission';
+    id: string;
+    label: string;
+  } | null>(null);
+
+  async function handleSubmissionAction(
+    submissionId: string,
+    action: 'approve' | 'reject'
+  ) {
+    const token = await getToken();
+    if (!token) return;
+    if (action === 'reject') {
+      setRejectionReason('not_a_cafe');
+      setRejectingId(submissionId);
+      return;
+    }
+    setConfirmAction({
+      type: 'approve_submission',
+      id: submissionId,
+      label: 'submission',
+    });
+  }
+
+  async function executeApproveSubmission(submissionId: string) {
+    const token = await getToken();
+    if (!token) return;
+    try {
+      const res = await fetch(`/api/admin/pipeline/approve/${submissionId}`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        toast.error(body.detail || 'Failed to approve submission');
+        return;
+      }
+      toast.success('Submission approved');
+      onRefresh();
+    } catch {
+      toast.error('Network error');
+    }
+  }
+
+  async function confirmReject() {
+    const token = await getToken();
+    if (!token || !rejectingId) return;
+    try {
+      const res = await fetch(`/api/admin/pipeline/reject/${rejectingId}`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ rejection_reason: rejectionReason }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        toast.error(body.detail || 'Failed to reject submission');
+        return;
+      }
+      toast.success('Submission rejected');
+      setRejectingId(null);
+      onRefresh();
+    } catch {
+      toast.error('Network error');
+    }
+  }
+
+  async function handleConfirmedAction() {
+    if (!confirmAction) return;
+    await executeApproveSubmission(confirmAction.id);
+  }
+
+  return (
+    <>
+      <section>
+        <h2 className="mb-4 text-lg font-semibold">Recent Submissions</h2>
+        {data?.recent_submissions.length === 0 ? (
+          <p className="text-gray-500">No submissions yet.</p>
+        ) : (
+          <table className="w-full text-left text-sm">
+            <thead>
+              <tr className="border-b text-gray-500">
+                <th className="pb-2">URL</th>
+                <th className="pb-2">Submitted By</th>
+                <th className="pb-2">Status</th>
+                <th className="pb-2">Date</th>
+                <th className="pb-2">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data?.recent_submissions.map((sub) => (
+                <tr key={sub.id} className="border-b">
+                  <td className="max-w-xs truncate py-2">
+                    <Link href={sub.google_maps_url}>{sub.google_maps_url}</Link>
+                  </td>
+                  <td className="py-2 text-gray-500">
+                    {sub.submitted_by ?? '—'}
+                  </td>
+                  <td className="py-2">
+                    <span
+                      className={`rounded px-2 py-0.5 text-xs ${
+                        sub.status === 'live'
+                          ? 'bg-green-100 text-green-700'
+                          : sub.status === 'failed'
+                            ? 'bg-red-100 text-red-700'
+                            : sub.status === 'pending_review'
+                              ? 'bg-blue-100 text-blue-700'
+                              : 'bg-yellow-100 text-yellow-700'
+                      }`}
+                    >
+                      {sub.status}
+                    </span>
+                  </td>
+                  <td className="py-2 text-gray-500">
+                    {new Date(sub.created_at).toLocaleDateString()}
+                  </td>
+                  <td className="py-2">
+                    {(sub.status === 'pending' ||
+                      sub.status === 'processing' ||
+                      sub.status === 'pending_review') && (
+                      <div>
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleSubmissionAction(sub.id, 'approve')
+                            }
+                            className="rounded bg-green-50 px-2 py-1 text-xs text-green-700 hover:bg-green-100"
+                          >
+                            Approve
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleSubmissionAction(sub.id, 'reject')
+                            }
+                            className="rounded bg-red-50 px-2 py-1 text-xs text-red-600 hover:bg-red-100"
+                          >
+                            Reject
+                          </button>
+                        </div>
+                        {rejectingId === sub.id && (
+                          <div className="mt-2 flex items-center gap-2">
+                            <select
+                              value={rejectionReason}
+                              onChange={(e) =>
+                                setRejectionReason(e.target.value)
+                              }
+                              className="rounded border px-2 py-1 text-xs"
+                            >
+                              {ADMIN_REJECTION_REASONS.map((r) => (
+                                <option key={r.value} value={r.value}>
+                                  {r.label}
+                                </option>
+                              ))}
+                            </select>
+                            <button
+                              type="button"
+                              onClick={confirmReject}
+                              className="rounded bg-red-600 px-2 py-1 text-xs text-white"
+                            >
+                              Confirm
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setRejectingId(null)}
+                              className="text-xs text-gray-500"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </section>
+
+      <ConfirmDialog
+        open={confirmAction !== null}
+        onOpenChange={(open) => {
+          if (!open) setConfirmAction(null);
+        }}
+        title="Approve submission?"
+        description="This will set the shop live and notify the submitter."
+        confirmLabel="Approve"
+        onConfirm={handleConfirmedAction}
+      />
+    </>
+  );
+}

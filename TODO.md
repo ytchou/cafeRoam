@@ -16,7 +16,7 @@
 - [x] Task 2: Create useAdminAuth hook (DEV-230)
 
 **Wave 2 — Extraction (parallel):**
-- [ ] Task 3: Extract Dashboard → SubmissionsTab + ClaimsTab (DEV-231)
+- [x] Task 3: Extract Dashboard → SubmissionsTab + ClaimsTab (DEV-231)
 - [ ] Task 4: Extract Shops → FilterBar + ShopTable + ImportSection (DEV-232)
 
 **Wave 3 — Migration:**
