@@ -73,8 +73,7 @@ describe('AppShell', () => {
     );
 
     // Footer renders a copyright or brand mark — check via role or text
-    const footer = document.querySelector('footer');
-    expect(footer).toBeInTheDocument();
+    expect(screen.getByRole('contentinfo')).toBeInTheDocument();
   });
 
   it('on desktop home page (/), HeaderNav is rendered', () => {
@@ -114,7 +113,6 @@ describe('AppShell', () => {
       </AppShell>
     );
 
-    const footer = document.querySelector('footer');
-    expect(footer).not.toBeInTheDocument();
+    expect(screen.queryByRole('contentinfo')).not.toBeInTheDocument();
   });
 });
