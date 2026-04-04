@@ -1,149 +1,46 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { toast } from 'sonner';
-import { createClient } from '@/lib/supabase/client';
-import { ConfirmDialog } from '../_components/ConfirmDialog';
-
-interface Shop {
-  id: string;
-  name: string;
-  address: string;
-  processing_status: string;
-  source: string;
-  enriched_at: string | null;
-  tag_count: number;
-  has_embedding: boolean;
-}
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { useAdminAuth } from '../_hooks/use-admin-auth';
+import { ImportSection } from './_components/ImportSection';
+import { ShopFilterBar } from './_components/ShopFilterBar';
+import { ShopTable } from './_components/ShopTable';
+import {
+  PAGE_SIZE,
+  Shop,
+  SOURCE_OPTIONS,
+  STATUS_COLORS,
+  STATUS_LABELS,
+  STATUS_OPTIONS,
+} from './_constants';
 
 interface ShopsResponse {
   shops: Shop[];
   total: number;
 }
 
-interface ImportSummary {
-  imported: number;
-  filtered: {
-    invalid_url: number;
-    invalid_name: number;
-    known_failed: number;
-    closed: number;
-  };
-  pending_url_check: number;
-  flagged_duplicates: number;
-  region: string;
-}
-
-const REGIONS = [
-  { value: 'greater_taipei', label: 'Greater Taipei (大台北)' },
-] as const;
-
-const STATUS_OPTIONS = [
-  'all',
-  'pending',
-  'pending_url_check',
-  'pending_review',
-  'scraping',
-  'enriching',
-  'embedding',
-  'publishing',
-  'live',
-  'failed',
-  'filtered_dead_url',
-] as const;
-
-const STATUS_LABELS: Record<string, string> = {
-  all: 'All statuses',
-  pending: 'Queued',
-  pending_url_check: 'URL Check',
-  pending_review: 'Awaiting Approval',
-  scraping: 'Scraping',
-  enriching: 'Enriching',
-  embedding: 'Embedding',
-  publishing: 'Publishing',
-  live: 'Live',
-  failed: 'Failed',
-  filtered_dead_url: 'Dead URL',
-};
-
-const STATUS_COLORS: Record<string, string> = {
-  pending_url_check: 'bg-yellow-100 text-yellow-800 border-yellow-300',
-  pending_review: 'bg-blue-100 text-blue-800 border-blue-300',
-  pending: 'bg-gray-100 text-gray-700 border-gray-300',
-  scraping: 'bg-orange-100 text-orange-800 border-orange-300',
-  enriching: 'bg-purple-100 text-purple-800 border-purple-300',
-  embedding: 'bg-indigo-100 text-indigo-800 border-indigo-300',
-  publishing: 'bg-teal-100 text-teal-800 border-teal-300',
-  live: 'bg-green-100 text-green-800 border-green-300',
-  filtered_dead_url: 'bg-red-100 text-red-700 border-red-300',
-  failed: 'bg-red-100 text-red-800 border-red-300',
-};
-
-const SOURCE_OPTIONS = [
-  'all',
-  'cafe_nomad',
-  'manual',
-  'google_takeout',
-  'user_submission',
-] as const;
-
-const SOURCE_LABELS: Record<string, string> = {
-  all: 'All sources',
-  cafe_nomad: 'Cafe Nomad',
-  manual: 'Manual',
-  google_takeout: 'Google Takeout',
-  user_submission: 'User Submission',
-};
-
-const PAGE_SIZE = 20;
-
-async function getAuthToken(): Promise<string | null> {
-  const supabase = createClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  return session?.access_token ?? null;
-}
-
 export default function AdminShopsList() {
-  const router = useRouter();
+  const { getToken } = useAdminAuth();
+
   const [shops, setShops] = useState<Shop[]>([]);
   const [total, setTotal] = useState(0);
   const [offset, setOffset] = useState(0);
-  const [search, setSearch] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   const [appliedSearch, setAppliedSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [sourceFilter, setSourceFilter] = useState<string>('all');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [createLoading, setCreateLoading] = useState(false);
 
-  // Import section state
-  const [selectedRegion, setSelectedRegion] = useState<string>(
-    REGIONS[0].value
-  );
-  const [importingCafeNomad, setImportingCafeNomad] = useState(false);
-  const [importingTakeout, setImportingTakeout] = useState(false);
-  const [checkingUrls, setCheckingUrls] = useState(false);
-  const takeoutFileRef = useRef<HTMLInputElement>(null);
-
-  // Bulk approve state
-  const [selectedShopIds, setSelectedShopIds] = useState<Set<string>>(
-    new Set()
-  );
-  const [approvingBulk, setApprovingBulk] = useState(false);
-  const [bulkConfirm, setBulkConfirm] = useState<{
-    approveAll: boolean;
-  } | null>(null);
-
-  // Pipeline status
   const [pipelineStatus, setPipelineStatus] = useState<Record<string, number>>(
     {}
   );
-
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const fetchShops = useCallback(
     async (
@@ -156,7 +53,7 @@ export default function AdminShopsList() {
       setError(null);
 
       try {
-        const token = await getAuthToken();
+        const token = await getToken();
         if (!token) {
           setError('Session expired — please refresh the page');
           setLoading(false);
@@ -192,23 +89,16 @@ export default function AdminShopsList() {
         setLoading(false);
       }
     },
-    []
+    [getToken]
   );
 
   useEffect(() => {
     fetchShops(appliedSearch, statusFilter, sourceFilter, offset);
   }, [fetchShops, appliedSearch, statusFilter, sourceFilter, offset]);
 
-  // Reset selection when filter changes
-  useEffect(() => {
-    setSelectedShopIds(new Set());
-  }, [statusFilter, sourceFilter, appliedSearch, offset]);
-
-  // Pipeline status polling — fetch once on mount, then every 5s.
-  // Empty deps: interval is created once and never recreated.
   useEffect(() => {
     async function fetchPipelineStatus() {
-      const token = await getAuthToken();
+      const token = await getToken();
       if (!token) return;
       try {
         const res = await fetch('/api/admin/shops/pipeline-status', {
@@ -223,192 +113,9 @@ export default function AdminShopsList() {
     fetchPipelineStatus();
     const id = setInterval(fetchPipelineStatus, 5000);
     return () => clearInterval(id);
-  }, []);
+  }, [getToken]);
 
-  function handleSearchChange(value: string) {
-    setSearch(value);
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => {
-      setOffset(0);
-      setAppliedSearch(value);
-    }, 300);
-  }
-
-  function handleSearchKeyDown(e: React.KeyboardEvent) {
-    if (e.key === 'Enter') {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-      setOffset(0);
-      setAppliedSearch(search);
-    }
-  }
-
-  function handleStatusChange(value: string) {
-    setStatusFilter(value);
-    setOffset(0);
-  }
-
-  function handleSourceChange(value: string) {
-    setSourceFilter(value);
-    setOffset(0);
-  }
-
-  function toggleShopSelection(shopId: string) {
-    setSelectedShopIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(shopId)) {
-        next.delete(shopId);
-      } else {
-        next.add(shopId);
-      }
-      return next;
-    });
-  }
-
-  function handleSelectAll() {
-    if (selectedShopIds.size === shops.length) {
-      setSelectedShopIds(new Set());
-    } else {
-      setSelectedShopIds(new Set(shops.map((s) => s.id)));
-    }
-  }
-
-  async function handleImportCafeNomad() {
-    setImportingCafeNomad(true);
-    try {
-      const token = await getAuthToken();
-      if (!token) {
-        toast.error('Session expired — please refresh the page');
-        return;
-      }
-      const res = await fetch('/api/admin/shops/import/cafe-nomad', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ region: selectedRegion }),
-      });
-      const data: ImportSummary = await res.json();
-      if (!res.ok) {
-        toast.error((data as { detail?: string }).detail || 'Import failed');
-        return;
-      }
-      toast.success(
-        `Imported ${data.imported} shops (${data.flagged_duplicates} flagged as duplicates)`
-      );
-      fetchShops(appliedSearch, statusFilter, sourceFilter, offset);
-    } catch {
-      toast.error('Network error');
-    } finally {
-      setImportingCafeNomad(false);
-    }
-  }
-
-  async function handleImportTakeout() {
-    const file = takeoutFileRef.current?.files?.[0];
-    if (!file) {
-      toast.error('Please select a GeoJSON or CSV file first');
-      return;
-    }
-
-    setImportingTakeout(true);
-    try {
-      const token = await getAuthToken();
-      if (!token) {
-        toast.error('Session expired — please refresh the page');
-        return;
-      }
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('region', selectedRegion);
-
-      const res = await fetch('/api/admin/shops/import/google-takeout', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-        body: formData,
-      });
-      const data: ImportSummary = await res.json();
-      if (!res.ok) {
-        toast.error((data as { detail?: string }).detail || 'Upload failed');
-        return;
-      }
-      toast.success(
-        `Imported ${data.imported} shops from Google Takeout (${data.flagged_duplicates} flagged as duplicates)`
-      );
-      if (takeoutFileRef.current) takeoutFileRef.current.value = '';
-      fetchShops(appliedSearch, statusFilter, sourceFilter, offset);
-    } catch {
-      toast.error('Network error');
-    } finally {
-      setImportingTakeout(false);
-    }
-  }
-
-  async function handleCheckUrls() {
-    setCheckingUrls(true);
-    try {
-      const token = await getAuthToken();
-      if (!token) {
-        toast.error('Session expired — please refresh the page');
-        return;
-      }
-      const res = await fetch('/api/admin/shops/import/check-urls', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({}),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        toast.error(data.detail || 'URL check failed');
-        return;
-      }
-      toast.success(`URL check started for ${data.checking} shops`);
-    } catch {
-      toast.error('Network error');
-    } finally {
-      setCheckingUrls(false);
-    }
-  }
-
-  async function handleBulkApprove(approveAll: boolean) {
-    setApprovingBulk(true);
-    try {
-      const token = await getAuthToken();
-      if (!token) {
-        toast.error('Session expired — please refresh the page');
-        return;
-      }
-      const body = approveAll ? {} : { shop_ids: Array.from(selectedShopIds) };
-
-      const res = await fetch('/api/admin/shops/bulk-approve', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(body),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        toast.error(data.detail || 'Bulk approve failed');
-        return;
-      }
-      toast.success(
-        `Approved ${data.approved} shops, queued ${data.queued} scrape jobs`
-      );
-      setSelectedShopIds(new Set());
-      fetchShops(appliedSearch, statusFilter, sourceFilter, offset);
-    } catch {
-      toast.error('Network error');
-    } finally {
-      setApprovingBulk(false);
-    }
-  }
-
-  async function handleCreateShop(e: React.FormEvent<HTMLFormElement>) {
+  async function handleCreateShop(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setCreateLoading(true);
 
@@ -430,7 +137,7 @@ export default function AdminShopsList() {
     };
 
     try {
-      const token = await getAuthToken();
+      const token = await getToken();
       if (!token) {
         toast.error('Session expired — please refresh the page');
         setCreateLoading(false);
@@ -461,24 +168,32 @@ export default function AdminShopsList() {
     }
   }
 
-  const hasPrev = offset > 0;
-  const hasNext = offset + PAGE_SIZE < total;
+  function handleFilterChange(filters: {
+    search: string;
+    status: string;
+    source: string;
+  }) {
+    setOffset(0);
+    setAppliedSearch(filters.search);
+    setStatusFilter(filters.status);
+    setSourceFilter(filters.source);
+  }
+
+  function handleRefresh() {
+    fetchShops(appliedSearch, statusFilter, sourceFilter, offset);
+  }
+
   const isReviewFilter = statusFilter === 'pending_review';
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Shops</h1>
-        <button
-          type="button"
-          onClick={() => setShowCreateForm((v) => !v)}
-          className="rounded bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700"
-        >
+        <Button onClick={() => setShowCreateForm((v) => !v)}>
           Create Shop
-        </button>
+        </Button>
       </div>
 
-      {/* Pipeline Status */}
       {Object.keys(pipelineStatus).length > 0 && (
         <div className="space-y-2 rounded-lg border p-4">
           <h2 className="text-sm font-semibold text-gray-700">
@@ -488,14 +203,15 @@ export default function AdminShopsList() {
             {Object.keys(STATUS_COLORS)
               .filter((key) => (pipelineStatus[key] ?? 0) > 0)
               .map((key) => (
-                <button
+                <Button
                   key={key}
-                  type="button"
+                  variant="outline"
+                  size="sm"
                   onClick={() => setStatusFilter(key)}
                   className={`rounded-full border px-3 py-1 text-xs font-medium ${STATUS_COLORS[key]} transition-opacity hover:opacity-80`}
                 >
                   {STATUS_LABELS[key]}: {pipelineStatus[key]}
-                </button>
+                </Button>
               ))}
           </div>
           {[
@@ -510,7 +226,6 @@ export default function AdminShopsList() {
         </div>
       )}
 
-      {/* Review CTA — shown when there are shops awaiting approval but user isn't already in review mode */}
       {(pipelineStatus['pending_review'] ?? 0) > 0 &&
         statusFilter !== 'pending_review' && (
           <div className="flex items-center justify-between rounded-lg border border-blue-200 bg-blue-50 px-4 py-3">
@@ -524,75 +239,13 @@ export default function AdminShopsList() {
                 Review and bulk-approve to queue them for scraping.
               </p>
             </div>
-            <button
-              type="button"
-              onClick={() => setStatusFilter('pending_review')}
-              className="rounded bg-blue-600 px-3 py-1.5 text-sm text-white hover:bg-blue-700"
-            >
+            <Button onClick={() => setStatusFilter('pending_review')}>
               Review &amp; Approve
-            </button>
+            </Button>
           </div>
         )}
 
-      {/* Import Section */}
-      <div className="space-y-3 rounded-lg border p-4">
-        <h2 className="text-sm font-semibold text-gray-700">Import Shops</h2>
-        <div className="flex flex-wrap items-center gap-3">
-          <div>
-            <label htmlFor="region-select" className="sr-only">
-              Region
-            </label>
-            <select
-              id="region-select"
-              value={selectedRegion}
-              onChange={(e) => setSelectedRegion(e.target.value)}
-              className="rounded border px-3 py-1.5 text-sm"
-            >
-              {REGIONS.map((r) => (
-                <option key={r.value} value={r.value}>
-                  {r.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <button
-            type="button"
-            onClick={handleImportCafeNomad}
-            disabled={importingCafeNomad}
-            className="rounded bg-amber-600 px-3 py-1.5 text-sm text-white hover:bg-amber-700 disabled:opacity-50"
-          >
-            {importingCafeNomad ? 'Importing...' : 'Import from Cafe Nomad'}
-          </button>
-
-          <div className="flex items-center gap-2">
-            <input
-              ref={takeoutFileRef}
-              type="file"
-              accept=".json,.geojson,.csv"
-              className="text-sm"
-              id="takeout-file"
-            />
-            <button
-              type="button"
-              onClick={handleImportTakeout}
-              disabled={importingTakeout}
-              className="rounded bg-green-700 px-3 py-1.5 text-sm text-white hover:bg-green-800 disabled:opacity-50"
-            >
-              {importingTakeout ? 'Uploading...' : 'Import Google Takeout'}
-            </button>
-          </div>
-
-          <button
-            type="button"
-            onClick={handleCheckUrls}
-            disabled={checkingUrls}
-            className="rounded border border-gray-300 px-3 py-1.5 text-sm hover:bg-gray-50 disabled:opacity-50"
-          >
-            {checkingUrls ? 'Checking...' : 'Check URLs'}
-          </button>
-        </div>
-      </div>
+      <ImportSection getToken={getToken} onImportComplete={handleRefresh} />
 
       {showCreateForm && (
         <form
@@ -603,24 +256,24 @@ export default function AdminShopsList() {
             <label htmlFor="shop-name" className="block text-sm font-medium">
               Name
             </label>
-            <input
+            <Input
               id="shop-name"
               name="name"
               type="text"
               required
-              className="mt-1 w-full rounded border px-3 py-2 text-sm"
+              className="mt-1"
             />
           </div>
           <div>
             <label htmlFor="shop-address" className="block text-sm font-medium">
               Address
             </label>
-            <input
+            <Input
               id="shop-address"
               name="address"
               type="text"
               required
-              className="mt-1 w-full rounded border px-3 py-2 text-sm"
+              className="mt-1"
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -631,13 +284,13 @@ export default function AdminShopsList() {
               >
                 Latitude
               </label>
-              <input
+              <Input
                 id="shop-latitude"
                 name="latitude"
                 type="number"
                 step="any"
                 required
-                className="mt-1 w-full rounded border px-3 py-2 text-sm"
+                className="mt-1"
               />
             </div>
             <div>
@@ -647,83 +300,29 @@ export default function AdminShopsList() {
               >
                 Longitude
               </label>
-              <input
+              <Input
                 id="shop-longitude"
                 name="longitude"
                 type="number"
                 step="any"
                 required
-                className="mt-1 w-full rounded border px-3 py-2 text-sm"
+                className="mt-1"
               />
             </div>
           </div>
-          <button
-            type="submit"
-            disabled={createLoading}
-            className="rounded bg-green-600 px-4 py-2 text-sm text-white hover:bg-green-700 disabled:opacity-50"
-          >
+          <Button type="submit" disabled={createLoading} variant="default">
             {createLoading ? 'Saving...' : 'Save'}
-          </button>
+          </Button>
         </form>
       )}
 
-      <div className="flex gap-4">
-        <input
-          type="text"
-          placeholder="Search shops..."
-          value={search}
-          onChange={(e) => handleSearchChange(e.target.value)}
-          onKeyDown={handleSearchKeyDown}
-          className="flex-1 rounded border px-3 py-2 text-sm"
-        />
-        <select
-          value={statusFilter}
-          onChange={(e) => handleStatusChange(e.target.value)}
-          className="rounded border px-3 py-2 text-sm"
-        >
-          {STATUS_OPTIONS.map((s) => (
-            <option key={s} value={s}>
-              {STATUS_LABELS[s] ?? s}
-            </option>
-          ))}
-        </select>
-        <select
-          value={sourceFilter}
-          onChange={(e) => handleSourceChange(e.target.value)}
-          className="rounded border px-3 py-2 text-sm"
-        >
-          {SOURCE_OPTIONS.map((s) => (
-            <option key={s} value={s}>
-              {SOURCE_LABELS[s] ?? s}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* Bulk approve bar — shown only when filtering by pending_review */}
-      {isReviewFilter && (
-        <div className="flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2">
-          <span className="text-sm text-amber-800">
-            {selectedShopIds.size} selected
-          </span>
-          <button
-            type="button"
-            onClick={() => setBulkConfirm({ approveAll: false })}
-            disabled={approvingBulk || selectedShopIds.size === 0}
-            className="rounded bg-amber-600 px-3 py-1 text-sm text-white hover:bg-amber-700 disabled:opacity-50"
-          >
-            Approve Selected
-          </button>
-          <button
-            type="button"
-            onClick={() => setBulkConfirm({ approveAll: true })}
-            disabled={approvingBulk}
-            className="rounded border border-amber-400 px-3 py-1 text-sm text-amber-700 hover:bg-amber-100 disabled:opacity-50"
-          >
-            Approve All
-          </button>
-        </div>
-      )}
+      <ShopFilterBar
+        onFilterChange={handleFilterChange}
+        statusOptions={STATUS_OPTIONS}
+        sourceOptions={SOURCE_OPTIONS}
+        currentStatus={statusFilter}
+        currentSource={sourceFilter}
+      />
 
       {error && (
         <div
@@ -735,136 +334,18 @@ export default function AdminShopsList() {
       )}
 
       {!error && (
-        <>
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="border-b text-gray-500">
-                {isReviewFilter && (
-                  <th className="pr-2 pb-2">
-                    <input
-                      type="checkbox"
-                      aria-label="Select all"
-                      checked={
-                        shops.length > 0 &&
-                        selectedShopIds.size === shops.length
-                      }
-                      onChange={handleSelectAll}
-                    />
-                  </th>
-                )}
-                <th className="pb-2">Name</th>
-                <th className="pb-2">Address</th>
-                <th className="pb-2">Status</th>
-                <th className="pb-2">Source</th>
-                <th className="pb-2">Tags</th>
-                <th className="pb-2">Embedding</th>
-                <th className="pb-2">Enriched</th>
-              </tr>
-            </thead>
-            <tbody>
-              {shops.map((shop) => (
-                <tr
-                  key={shop.id}
-                  onClick={() => router.push(`/admin/shops/${shop.id}`)}
-                  className="cursor-pointer border-b hover:bg-gray-50"
-                >
-                  {isReviewFilter && (
-                    <td
-                      className="py-2 pr-2"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <input
-                        type="checkbox"
-                        aria-label={`Select ${shop.name}`}
-                        checked={selectedShopIds.has(shop.id)}
-                        onChange={() => toggleShopSelection(shop.id)}
-                      />
-                    </td>
-                  )}
-                  <td className="py-2">{shop.name}</td>
-                  <td className="py-2 text-gray-600">{shop.address}</td>
-                  <td className="py-2">
-                    {STATUS_LABELS[shop.processing_status] ??
-                      shop.processing_status}
-                  </td>
-                  <td className="py-2 text-gray-500">
-                    {SOURCE_LABELS[shop.source] ?? shop.source}
-                  </td>
-                  <td className="py-2 text-gray-500">{shop.tag_count}</td>
-                  <td className="py-2 text-gray-500">
-                    {shop.has_embedding ? (
-                      <span className="rounded bg-green-100 px-1.5 py-0.5 text-xs text-green-700">
-                        yes
-                      </span>
-                    ) : (
-                      <span className="rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-500">
-                        no
-                      </span>
-                    )}
-                  </td>
-                  <td className="py-2 text-gray-500">
-                    {shop.enriched_at
-                      ? new Date(shop.enriched_at).toLocaleDateString()
-                      : '—'}
-                  </td>
-                </tr>
-              ))}
-              {!loading && shops.length === 0 && (
-                <tr>
-                  <td
-                    colSpan={isReviewFilter ? 8 : 7}
-                    className="py-8 text-center text-gray-400"
-                  >
-                    No shops found
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-500">
-              {total} shop{total !== 1 ? 's' : ''} total
-            </span>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                disabled={!hasPrev}
-                onClick={() => setOffset((o) => Math.max(0, o - PAGE_SIZE))}
-                className="rounded border px-3 py-1 disabled:opacity-40"
-              >
-                Previous
-              </button>
-              <button
-                type="button"
-                disabled={!hasNext}
-                onClick={() => setOffset((o) => o + PAGE_SIZE)}
-                className="rounded border px-3 py-1 disabled:opacity-40"
-              >
-                Next
-              </button>
-            </div>
-          </div>
-        </>
+        <ShopTable
+          key={`${appliedSearch}:${statusFilter}:${sourceFilter}:${offset}`}
+          shops={shops}
+          loading={loading}
+          offset={offset}
+          total={total}
+          onPageChange={setOffset}
+          getToken={getToken}
+          onRefresh={handleRefresh}
+          isReviewFilter={isReviewFilter}
+        />
       )}
-
-      <ConfirmDialog
-        open={bulkConfirm !== null}
-        onOpenChange={(open) => {
-          if (!open) setBulkConfirm(null);
-        }}
-        title="Bulk approve shops?"
-        description={
-          bulkConfirm?.approveAll
-            ? `Approve ALL pending_review shops? This will queue scrape jobs for each.`
-            : `Approve ${selectedShopIds.size} selected shop(s)? This will queue scrape jobs for each.`
-        }
-        confirmLabel="Approve"
-        loading={approvingBulk}
-        onConfirm={async () => {
-          if (bulkConfirm) await handleBulkApprove(bulkConfirm.approveAll);
-        }}
-      />
     </div>
   );
 }

@@ -1,7 +1,16 @@
 'use client';
 
 import { Fragment, useCallback, useEffect, useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
+import { Button } from '@/components/ui/button';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { useAdminAuth } from '../../_hooks/use-admin-auth';
 import { BatchDetail } from './BatchDetail';
 
 interface BatchStatusCounts {
@@ -33,6 +42,7 @@ const STATUS_COLORS: Record<string, string> = {
 const PAGE_SIZE = 20;
 
 export function BatchesList() {
+  const { getToken } = useAdminAuth();
   const [data, setData] = useState<BatchesResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -41,13 +51,13 @@ export function BatchesList() {
   const [token, setToken] = useState<string | null>(null);
 
   const fetchBatches = useCallback(
-    async (token: string, currentPage: number) => {
+    async (authToken: string, currentPage: number) => {
       const params = new URLSearchParams({
         offset: String((currentPage - 1) * PAGE_SIZE),
         limit: String(PAGE_SIZE),
       });
       const res = await fetch(`/api/admin/pipeline/batches?${params}`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${authToken}` },
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
@@ -64,19 +74,16 @@ export function BatchesList() {
 
   useEffect(() => {
     async function load() {
-      const supabase = createClient();
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session) {
+      const authToken = await getToken();
+      if (!authToken) {
         setLoading(false);
         return;
       }
-      setToken(session.access_token);
-      fetchBatches(session.access_token, page);
+      setToken(authToken);
+      fetchBatches(authToken, page);
     }
     load();
-  }, [page, fetchBatches]);
+  }, [page, fetchBatches, getToken]);
 
   if (loading) return <p>Loading...</p>;
   if (error)
@@ -96,30 +103,42 @@ export function BatchesList() {
           No batch runs yet. Approve some shops to create a batch.
         </p>
       ) : (
-        <table className="w-full text-left text-sm">
-          <thead>
-            <tr className="border-b text-gray-500">
-              <th className="pb-2">Date</th>
-              <th className="pb-2">Shops</th>
-              <th className="pb-2">Status Breakdown</th>
-            </tr>
-          </thead>
-          <tbody>
+        <Table className="w-full text-left text-sm">
+          <TableHeader>
+            <TableRow className="border-b text-gray-500">
+              <TableHead className="pb-2">Date</TableHead>
+              <TableHead className="pb-2">Shops</TableHead>
+              <TableHead className="pb-2">Status Breakdown</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {data.batches.map((batch) => (
               <Fragment key={batch.batch_id}>
-                <tr
-                  className="cursor-pointer border-b hover:bg-gray-50"
+                <TableRow
+                  className="cursor-pointer border-b hover:bg-gray-50 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+                  tabIndex={0}
+                  aria-expanded={expandedBatchId === batch.batch_id}
                   onClick={() =>
                     setExpandedBatchId(
                       expandedBatchId === batch.batch_id ? null : batch.batch_id
                     )
                   }
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setExpandedBatchId(
+                        expandedBatchId === batch.batch_id
+                          ? null
+                          : batch.batch_id
+                      );
+                    }
+                  }}
                 >
-                  <td className="py-2 text-gray-500">
+                  <TableCell className="py-2 text-gray-500">
                     {new Date(batch.created_at).toLocaleString()}
-                  </td>
-                  <td className="py-2">{batch.shop_count}</td>
-                  <td className="py-2">
+                  </TableCell>
+                  <TableCell className="py-2">{batch.shop_count}</TableCell>
+                  <TableCell className="py-2">
                     <div className="flex flex-wrap gap-1">
                       {Object.entries(batch.status_counts).map(
                         ([status, count]) => (
@@ -132,40 +151,40 @@ export function BatchesList() {
                         )
                       )}
                     </div>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
                 {expandedBatchId === batch.batch_id && token && (
-                  <tr className="border-b bg-gray-50">
-                    <td colSpan={3} className="px-4 py-3">
+                  <TableRow className="border-b bg-gray-50">
+                    <TableCell colSpan={3} className="px-4 py-3">
                       <BatchDetail batchId={batch.batch_id} token={token} />
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 )}
               </Fragment>
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       )}
 
       {totalPages > 1 && (
         <div className="flex items-center justify-between">
-          <button
+          <Button
             disabled={page <= 1}
             onClick={() => setPage((p) => p - 1)}
-            className="rounded border px-3 py-1 text-sm disabled:opacity-50"
+            variant="outline"
           >
             Previous
-          </button>
+          </Button>
           <span className="text-sm text-gray-500">
             Page {page} of {totalPages}
           </span>
-          <button
+          <Button
             disabled={page >= totalPages}
             onClick={() => setPage((p) => p + 1)}
-            className="rounded border px-3 py-1 text-sm disabled:opacity-50"
+            variant="outline"
           >
             Next
-          </button>
+          </Button>
         </div>
       )}
     </div>

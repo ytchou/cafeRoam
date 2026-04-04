@@ -1,9 +1,27 @@
 'use client';
 
-import { Fragment, useEffect, useState, useCallback, useRef } from 'react';
+import { Fragment, useEffect, useState, useCallback } from 'react';
 import { toast } from 'sonner';
-import { createClient } from '@/lib/supabase/client';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { getStatusVariant } from '../../_lib/status-badge';
 import { ConfirmDialog } from '../../_components/ConfirmDialog';
+import { useAdminAuth } from '../../_hooks/use-admin-auth';
 
 interface Job {
   id: string;
@@ -37,17 +55,10 @@ const JOB_TYPE_OPTIONS = [
   'scrape_shop',
 ] as const;
 
-const STATUS_COLORS: Record<string, string> = {
-  pending: 'bg-yellow-100 text-yellow-700',
-  claimed: 'bg-blue-100 text-blue-700',
-  completed: 'bg-green-100 text-green-700',
-  failed: 'bg-red-100 text-red-700',
-  dead_letter: 'bg-gray-100 text-gray-700',
-};
-
 const PAGE_SIZE = 20;
 
 export function RawJobsList({ initialStatus }: { initialStatus?: string }) {
+  const { getToken } = useAdminAuth();
   const [data, setData] = useState<JobsResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -63,15 +74,16 @@ export function RawJobsList({ initialStatus }: { initialStatus?: string }) {
   const [typeFilter, setTypeFilter] = useState('all');
   const [page, setPage] = useState(1);
   const [expandedJobId, setExpandedJobId] = useState<string | null>(null);
-  const tokenRef = useRef<string | null>(null);
 
   const fetchJobs = useCallback(
-    async (
-      token: string,
-      currentPage: number,
-      status: string,
-      jobType: string
-    ) => {
+    async (currentPage: number, status: string, jobType: string) => {
+      setLoading(true);
+      const token = await getToken();
+      if (!token) {
+        setLoading(false);
+        return;
+      }
+
       const params = new URLSearchParams({
         offset: String((currentPage - 1) * PAGE_SIZE),
         limit: String(PAGE_SIZE),
@@ -92,32 +104,24 @@ export function RawJobsList({ initialStatus }: { initialStatus?: string }) {
       setError(null);
       setLoading(false);
     },
-    []
+    [getToken]
   );
 
   useEffect(() => {
-    async function load() {
-      const supabase = createClient();
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session) {
-        setLoading(false);
-        return;
-      }
+    const timeoutId = setTimeout(() => {
+      void fetchJobs(page, statusFilter, typeFilter);
+    }, 0);
 
-      tokenRef.current = session.access_token;
-      fetchJobs(session.access_token, page, statusFilter, typeFilter);
-    }
-    load();
+    return () => clearTimeout(timeoutId);
   }, [page, statusFilter, typeFilter, fetchJobs]);
 
   async function handleCancel(jobId: string) {
-    if (!tokenRef.current) return;
     try {
+      const token = await getToken();
+      if (!token) return;
       const res = await fetch(`/api/admin/pipeline/jobs/${jobId}/cancel`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${tokenRef.current}` },
+        headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
@@ -125,18 +129,19 @@ export function RawJobsList({ initialStatus }: { initialStatus?: string }) {
         return;
       }
       toast.success('Job cancelled');
-      fetchJobs(tokenRef.current, page, statusFilter, typeFilter);
+      fetchJobs(page, statusFilter, typeFilter);
     } catch {
       toast.error('Network error');
     }
   }
 
   async function handleRetry(jobId: string) {
-    if (!tokenRef.current) return;
     try {
+      const token = await getToken();
+      if (!token) return;
       const res = await fetch(`/api/admin/pipeline/retry/${jobId}`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${tokenRef.current}` },
+        headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
@@ -144,7 +149,7 @@ export function RawJobsList({ initialStatus }: { initialStatus?: string }) {
         return;
       }
       toast.success('Job queued for retry');
-      fetchJobs(tokenRef.current, page, statusFilter, typeFilter);
+      fetchJobs(page, statusFilter, typeFilter);
     } catch {
       toast.error('Network error');
     }
@@ -166,112 +171,126 @@ export function RawJobsList({ initialStatus }: { initialStatus?: string }) {
       <div className="flex gap-4">
         <label className="flex items-center gap-2 text-sm">
           Status:
-          <select
+          <Select
             value={statusFilter}
-            onChange={(e) => {
-              setStatusFilter(e.target.value);
+            onValueChange={(value) => {
+              setStatusFilter(value);
               setPage(1);
             }}
-            className="rounded border px-2 py-1"
           >
-            {STATUS_OPTIONS.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {STATUS_OPTIONS.map((s) => (
+                <SelectItem key={s} value={s}>
+                  {s}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </label>
 
         <label className="flex items-center gap-2 text-sm">
           Type:
-          <select
+          <Select
             value={typeFilter}
-            onChange={(e) => {
-              setTypeFilter(e.target.value);
+            onValueChange={(value) => {
+              setTypeFilter(value);
               setPage(1);
             }}
-            className="rounded border px-2 py-1"
           >
-            {JOB_TYPE_OPTIONS.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {JOB_TYPE_OPTIONS.map((t) => (
+                <SelectItem key={t} value={t}>
+                  {t}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </label>
       </div>
 
-      <table className="w-full text-left text-sm">
-        <thead>
-          <tr className="border-b text-gray-500">
-            <th className="pb-2">Type</th>
-            <th className="pb-2">Status</th>
-            <th className="pb-2">Priority</th>
-            <th className="pb-2">Attempts</th>
-            <th className="pb-2">Created</th>
-            <th className="pb-2">Error</th>
-            <th className="pb-2">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
+      <Table className="w-full text-left text-sm">
+        <TableHeader>
+          <TableRow className="border-b text-gray-500">
+            <TableHead className="pb-2">Type</TableHead>
+            <TableHead className="pb-2">Status</TableHead>
+            <TableHead className="pb-2">Priority</TableHead>
+            <TableHead className="pb-2">Attempts</TableHead>
+            <TableHead className="pb-2">Created</TableHead>
+            <TableHead className="pb-2">Error</TableHead>
+            <TableHead className="pb-2">Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
           {data.jobs.map((job) => (
             <Fragment key={job.id}>
-              <tr
-                className="cursor-pointer border-b hover:bg-gray-50"
+              <TableRow
+                tabIndex={0}
+                aria-expanded={expandedJobId === job.id}
+                className="cursor-pointer border-b hover:bg-gray-50 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
                 onClick={() =>
                   setExpandedJobId(expandedJobId === job.id ? null : job.id)
                 }
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setExpandedJobId(expandedJobId === job.id ? null : job.id);
+                  }
+                }}
               >
-                <td className="py-2">{job.job_type}</td>
-                <td className="py-2">
-                  <span
-                    className={`rounded px-2 py-0.5 text-xs ${STATUS_COLORS[job.status] || 'bg-gray-100 text-gray-700'}`}
-                  >
+                <TableCell className="py-2">{job.job_type}</TableCell>
+                <TableCell className="py-2">
+                  <Badge variant={getStatusVariant(job.status)}>
                     {job.status}
-                  </span>
-                </td>
-                <td className="py-2">{job.priority}</td>
-                <td className="py-2">{job.attempts}</td>
-                <td className="py-2 text-gray-500">
+                  </Badge>
+                </TableCell>
+                <TableCell className="py-2">{job.priority}</TableCell>
+                <TableCell className="py-2">{job.attempts}</TableCell>
+                <TableCell className="py-2 text-gray-500">
                   {new Date(job.created_at).toLocaleDateString()}
-                </td>
-                <td className="max-w-xs truncate py-2 text-gray-500">
+                </TableCell>
+                <TableCell className="max-w-xs truncate py-2 text-gray-500">
                   {job.last_error
                     ? job.last_error.slice(0, 60) +
                       (job.last_error.length > 60 ? '...' : '')
                     : '-'}
-                </td>
-                <td className="py-2">
+                </TableCell>
+                <TableCell className="py-2">
                   {(job.status === 'pending' || job.status === 'claimed') && (
-                    <button
-                      type="button"
+                    <Button
                       onClick={(e) => {
                         e.stopPropagation();
                         setConfirmAction({ type: 'cancel', jobId: job.id });
                       }}
-                      className="rounded bg-red-50 px-2 py-1 text-xs text-red-600 hover:bg-red-100"
+                      variant="destructive"
+                      size="sm"
                     >
                       Cancel
-                    </button>
+                    </Button>
                   )}
                   {(job.status === 'failed' ||
                     job.status === 'dead_letter') && (
-                    <button
-                      type="button"
+                    <Button
                       onClick={(e) => {
                         e.stopPropagation();
                         setConfirmAction({ type: 'retry', jobId: job.id });
                       }}
-                      className="rounded bg-blue-50 px-2 py-1 text-xs text-blue-600 hover:bg-blue-100"
+                      variant="secondary"
+                      size="sm"
                     >
                       Retry
-                    </button>
+                    </Button>
                   )}
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
               {expandedJobId === job.id && (
-                <tr className="border-b bg-gray-50">
-                  <td colSpan={7} className="px-4 py-3">
+                <TableRow className="border-b bg-gray-50">
+                  <TableCell colSpan={7} className="px-4 py-3">
                     <div className="space-y-2">
                       <div>
                         <p className="text-xs font-semibold text-gray-500">
@@ -292,33 +311,33 @@ export function RawJobsList({ initialStatus }: { initialStatus?: string }) {
                         </div>
                       )}
                     </div>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               )}
             </Fragment>
           ))}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
 
       {totalPages > 1 && (
         <div className="flex items-center justify-between">
-          <button
+          <Button
             disabled={page <= 1}
             onClick={() => setPage((p) => p - 1)}
-            className="rounded border px-3 py-1 text-sm disabled:opacity-50"
+            variant="outline"
           >
             Previous
-          </button>
+          </Button>
           <span className="text-sm text-gray-500">
             Page {page} of {totalPages}
           </span>
-          <button
+          <Button
             disabled={page >= totalPages}
             onClick={() => setPage((p) => p + 1)}
-            className="rounded border px-3 py-1 text-sm disabled:opacity-50"
+            variant="outline"
           >
             Next
-          </button>
+          </Button>
         </div>
       )}
       <ConfirmDialog

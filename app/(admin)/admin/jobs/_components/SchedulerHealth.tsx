@@ -1,7 +1,15 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { useAdminAuth } from '../../_hooks/use-admin-auth';
 
 interface SchedulerJob {
   id: string;
@@ -16,23 +24,21 @@ interface SchedulerStatus {
 }
 
 export function SchedulerHealth() {
+  const { getToken } = useAdminAuth();
   const [data, setData] = useState<SchedulerStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function load() {
-      const supabase = createClient();
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session) {
+      const token = await getToken();
+      if (!token) {
         setError('Not authenticated');
         setLoading(false);
         return;
       }
       const res = await fetch('/api/admin/pipeline/scheduler-health', {
-        headers: { Authorization: `Bearer ${session.access_token}` },
+        headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
@@ -44,7 +50,7 @@ export function SchedulerHealth() {
       setLoading(false);
     }
     load();
-  }, []);
+  }, [getToken]);
 
   if (loading) return <p>Loading...</p>;
   if (error)
@@ -78,26 +84,26 @@ export function SchedulerHealth() {
         </span>
       </div>
 
-      <table className="w-full text-left text-sm">
-        <thead>
-          <tr className="border-b text-gray-500">
-            <th className="pb-2">Job ID</th>
-            <th className="pb-2">Next Run</th>
-          </tr>
-        </thead>
-        <tbody>
+      <Table>
+        <TableHeader>
+          <TableRow className="border-b text-gray-500">
+            <TableHead className="pb-2">Job ID</TableHead>
+            <TableHead className="pb-2">Next Run</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
           {data.jobs.map((job) => (
-            <tr key={job.id} className="border-b">
-              <td className="py-2 font-mono text-xs">{job.id}</td>
-              <td className="py-2 text-gray-600">
+            <TableRow key={job.id} className="border-b">
+              <TableCell className="py-2 font-mono text-xs">{job.id}</TableCell>
+              <TableCell className="py-2 text-gray-600">
                 {job.next_run
                   ? new Date(job.next_run).toLocaleString()
                   : 'not scheduled'}
-              </td>
-            </tr>
+              </TableCell>
+            </TableRow>
           ))}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
     </div>
   );
 }

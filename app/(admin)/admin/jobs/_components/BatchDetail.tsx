@@ -2,6 +2,25 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { getStatusVariant } from '../../_lib/status-badge';
 
 interface ShopDetail {
   shop_id: string;
@@ -37,6 +56,7 @@ const ALL_STATUSES = [
   'live',
   'failed',
 ];
+const ALL_STATUSES_VALUE = 'all';
 
 const PAGE_SIZE = 20;
 
@@ -118,46 +138,52 @@ export function BatchDetail({
       {data?.status_summary && (
         <div className="flex flex-wrap gap-1">
           {Object.entries(data.status_summary).map(([st, count]) => (
-            <button
+            <Button
               key={st}
               onClick={() => {
                 setStatusFilter(statusFilter === st ? '' : st);
                 setPage(1);
               }}
+              variant="outline"
+              size="sm"
               className={`rounded px-2 py-0.5 text-xs ring-1 ring-transparent transition ${
                 STATUS_COLORS[st] || 'bg-gray-100 text-gray-700'
               } ${statusFilter === st ? 'ring-current' : 'opacity-80 hover:opacity-100'}`}
             >
               {st}: {count}
-            </button>
+            </Button>
           ))}
         </div>
       )}
 
       {/* Search + filter controls */}
       <div className="flex gap-2">
-        <input
-          type="text"
+        <Input
           placeholder="Search by name…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="flex-1 rounded border px-2 py-1 text-sm"
+          aria-label="Search jobs"
+          className="flex-1"
         />
-        <select
-          value={statusFilter}
-          onChange={(e) => {
-            setStatusFilter(e.target.value);
+        <Select
+          value={statusFilter || ALL_STATUSES_VALUE}
+          onValueChange={(value) => {
+            setStatusFilter(value === ALL_STATUSES_VALUE ? '' : value);
             setPage(1);
           }}
-          className="rounded border px-2 py-1 text-sm"
         >
-          <option value="">All statuses</option>
-          {ALL_STATUSES.map((s) => (
-            <option key={s} value={s}>
-              {s}
-            </option>
-          ))}
-        </select>
+          <SelectTrigger aria-label="Filter by status">
+            <SelectValue placeholder="All statuses" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ALL_STATUSES_VALUE}>All statuses</SelectItem>
+            {ALL_STATUSES.map((s) => (
+              <SelectItem key={s} value={s}>
+                {s}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {loading ? (
@@ -167,63 +193,67 @@ export function BatchDetail({
           No shops match the current filter.
         </p>
       ) : (
-        <table className="w-full text-left text-sm">
-          <thead>
-            <tr className="text-gray-500">
-              <th className="pb-1">Shop</th>
-              <th className="pb-1">Status</th>
-              <th className="pb-1">Error</th>
-            </tr>
-          </thead>
-          <tbody>
+        <Table className="w-full text-left text-sm">
+          <TableHeader>
+            <TableRow className="text-gray-500">
+              <TableHead className="pb-1">Shop</TableHead>
+              <TableHead className="pb-1">Status</TableHead>
+              <TableHead className="pb-1">Error</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {data.shops.map((shop) => (
-              <tr
+              <TableRow
                 key={shop.shop_id}
-                className="cursor-pointer border-t hover:bg-gray-100"
+                tabIndex={0}
+                className="cursor-pointer border-t hover:bg-gray-100 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
                 onClick={() => router.push(`/admin/shops/${shop.shop_id}`)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    router.push(`/admin/shops/${shop.shop_id}`);
+                  }
+                }}
               >
-                <td className="py-1">{shop.name || shop.shop_id}</td>
-                <td className="py-1">
-                  <span
-                    className={`rounded px-2 py-0.5 text-xs ${
-                      STATUS_COLORS[shop.processing_status] ||
-                      'bg-gray-100 text-gray-700'
-                    }`}
-                  >
+                <TableCell className="py-1">
+                  {shop.name || shop.shop_id}
+                </TableCell>
+                <TableCell className="py-1">
+                  <Badge variant={getStatusVariant(shop.processing_status)}>
                     {shop.processing_status}
-                  </span>
-                </td>
-                <td className="max-w-xs truncate py-1 text-xs text-red-600">
+                  </Badge>
+                </TableCell>
+                <TableCell className="max-w-xs truncate py-1 text-xs text-red-600">
                   {shop.last_error
                     ? `[${shop.failed_at_stage}] ${shop.last_error.slice(0, 80)}${shop.last_error.length > 80 ? '…' : ''}`
                     : '-'}
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       )}
 
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex items-center justify-between pt-1">
-          <button
+          <Button
             disabled={page <= 1}
             onClick={() => setPage((p) => p - 1)}
-            className="rounded border px-3 py-1 text-sm disabled:opacity-50"
+            variant="outline"
           >
             Previous
-          </button>
+          </Button>
           <span className="text-sm text-gray-500">
             Page {page} of {totalPages}
           </span>
-          <button
+          <Button
             disabled={page >= totalPages}
             onClick={() => setPage((p) => p + 1)}
-            className="rounded border px-3 py-1 text-sm disabled:opacity-50"
+            variant="outline"
           >
             Next
-          </button>
+          </Button>
         </div>
       )}
     </div>

@@ -1,0 +1,40 @@
+{
+  "findings": [
+    {
+      "severity": "Important",
+      "file": "app/(admin)/admin/_components/ClaimsTab.tsx",
+      "line": "86-92",
+      "description": "Double useEffect on mount: the first effect (line 86) unconditionally calls fetchClaims('pending'), while the second (line 90) calls fetchClaims(claimStatusFilter) which is also 'pending' initially. This fires two identical API calls on every mount. Fix: remove the first useEffect (lines 86-88) since the second already handles the initial fetch.",
+      "flagged_by": "Bug Hunter",
+      "status": "valid"
+    },
+    {
+      "severity": "Important",
+      "file": "app/(admin)/admin/jobs/_components/BatchesList.tsx",
+      "line": "76",
+      "description": "BatchesList still uses createClient() directly (line 13, 76) instead of the useAdminAuth hook that was created in this branch. This is inconsistent with the auth unification goal and retains the Bearer null bug risk on expired sessions. Fix: replace the createClient/getSession pattern with useAdminAuth().getToken(), matching the pattern in RawJobsList and SchedulerHealth.",
+      "flagged_by": "Bug Hunter, Standards",
+      "status": "valid"
+    },
+    {
+      "severity": "Important",
+      "file": "app/(admin)/admin/_components/ClaimsTab.tsx",
+      "line": "114-134",
+      "description": "handleClaimReject makes a fetch call without try/catch. Every other async handler in the same file (executeApproveClaim, handleViewProof, fetchClaims) handles errors, but handleClaimReject will surface network errors as unhandled promise rejections. Fix: wrap the fetch in try/catch with toast.error('Network error') in the catch block.",
+      "flagged_by": "Bug Hunter",
+      "status": "valid"
+    },
+    {
+      "severity": "Minor",
+      "file": "app/(admin)/admin/_components/ClaimsTab.tsx",
+      "line": "269-278",
+      "description": "Claim rejection reasons are hardcoded inline (invalid_proof, not_an_owner, duplicate_request, other) while SubmissionsTab imports ADMIN_REJECTION_REASONS from @/lib/constants/rejection-reasons. Inconsistent pattern -- consider using a shared constant or creating a CLAIM_REJECTION_REASONS constant.",
+      "flagged_by": "Architecture",
+      "status": "debatable"
+    }
+  ],
+  "active_agents": ["Bug Hunter", "Standards", "Architecture"],
+  "skipped": [],
+  "head_sha": "98d2ab4e91f5c86f5c2c0e36c3a7ccfe658780da",
+  "review_log_path": "docs/reviews/2026-04-04-feat-dev-199-admin-audit.md"
+}

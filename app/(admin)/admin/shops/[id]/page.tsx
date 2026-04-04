@@ -1,11 +1,15 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Image from 'next/image';
 import { toast } from 'sonner';
-import { createClient } from '@/lib/supabase/client';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { getStatusVariant } from '../../_lib/status-badge';
 import { ConfirmDialog } from '../../_components/ConfirmDialog';
+import { useAdminAuth } from '../../_hooks/use-admin-auth';
 
 interface ModeScores {
   work: number;
@@ -46,6 +50,7 @@ interface ConfirmActionState {
 }
 
 export default function AdminShopDetail() {
+  const { getToken } = useAdminAuth();
   const { id } = useParams<{ id: string }>();
   const [shop, setShop] = useState<ShopDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -62,19 +67,14 @@ export default function AdminShopDetail() {
   const [confirmAction, setConfirmAction] = useState<ConfirmActionState | null>(
     null
   );
-  const tokenRef = useRef<string | null>(null);
 
   useEffect(() => {
     async function load() {
-      const supabase = createClient();
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session) return;
-      tokenRef.current = session.access_token;
+      const token = await getToken();
+      if (!token) return;
 
       const res = await fetch(`/api/admin/shops/${id}`, {
-        headers: { Authorization: `Bearer ${session.access_token}` },
+        headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
@@ -94,10 +94,10 @@ export default function AdminShopDetail() {
       setLoading(false);
     }
     load();
-  }, [id]);
+  }, [getToken, id]);
 
   async function handleEnqueue(jobType: string) {
-    const token = tokenRef.current;
+    const token = await getToken();
     if (!token) return;
     const toastId = toast.loading(`Enqueuing ${jobType}...`);
     try {
@@ -121,7 +121,7 @@ export default function AdminShopDetail() {
   }
 
   async function handleToggleLiveAction() {
-    const token = tokenRef.current;
+    const token = await getToken();
     if (!token || !shop) return;
     const newStatus = shop.processing_status === 'live' ? 'pending' : 'live';
     const toastId = toast.loading(`Setting status to ${newStatus}...`);
@@ -169,7 +169,7 @@ export default function AdminShopDetail() {
 
   async function handleSearchRank() {
     if (!searchQuery.trim()) return;
-    const token = tokenRef.current;
+    const token = await getToken();
     if (!token) return;
     setSearchResult('Searching...');
     try {
@@ -195,7 +195,7 @@ export default function AdminShopDetail() {
   }
 
   async function handleSaveEdit() {
-    const token = tokenRef.current;
+    const token = await getToken();
     if (!token) return;
 
     const lat = parseFloat(editForm.latitude);
@@ -261,29 +261,22 @@ export default function AdminShopDetail() {
             <h1 className="text-2xl font-bold">{shop.name}</h1>
             <p className="mt-1 text-gray-600">{shop.address}</p>
             <div className="mt-2 flex items-center gap-3 text-sm">
-              <span
-                className={`rounded px-2 py-0.5 text-xs ${
-                  shop.processing_status === 'live'
-                    ? 'bg-green-100 text-green-700'
-                    : shop.processing_status === 'failed'
-                      ? 'bg-red-100 text-red-700'
-                      : 'bg-yellow-100 text-yellow-700'
-                }`}
-              >
+              <Badge variant={getStatusVariant(shop.processing_status)}>
                 {shop.processing_status}
-              </span>
+              </Badge>
               <span className="text-gray-500">{shop.source}</span>
               <span className="text-gray-400">
                 {shop.latitude}, {shop.longitude}
               </span>
             </div>
           </div>
-          <button
+          <Button
             onClick={() => setEditing(!editing)}
-            className="rounded border px-3 py-1 text-sm hover:bg-gray-50"
+            variant="outline"
+            size="sm"
           >
             {editing ? 'Cancel' : 'Edit'}
-          </button>
+          </Button>
         </div>
 
         {editing && (
@@ -296,14 +289,13 @@ export default function AdminShopDetail() {
                 >
                   Name
                 </label>
-                <input
+                <Input
                   id="edit-name"
-                  type="text"
                   value={editForm.name}
                   onChange={(e) =>
                     setEditForm({ ...editForm, name: e.target.value })
                   }
-                  className="mt-1 w-full rounded border px-2 py-1 text-sm"
+                  className="mt-1"
                 />
               </div>
               <div>
@@ -313,51 +305,45 @@ export default function AdminShopDetail() {
                 >
                   Address
                 </label>
-                <input
+                <Input
                   id="edit-address"
-                  type="text"
                   value={editForm.address}
                   onChange={(e) =>
                     setEditForm({ ...editForm, address: e.target.value })
                   }
-                  className="mt-1 w-full rounded border px-2 py-1 text-sm"
+                  className="mt-1"
                 />
               </div>
               <div>
                 <label htmlFor="edit-lat" className="block text-sm font-medium">
                   Latitude
                 </label>
-                <input
+                <Input
                   id="edit-lat"
-                  type="text"
                   value={editForm.latitude}
                   onChange={(e) =>
                     setEditForm({ ...editForm, latitude: e.target.value })
                   }
-                  className="mt-1 w-full rounded border px-2 py-1 text-sm"
+                  className="mt-1"
                 />
               </div>
               <div>
                 <label htmlFor="edit-lng" className="block text-sm font-medium">
                   Longitude
                 </label>
-                <input
+                <Input
                   id="edit-lng"
-                  type="text"
                   value={editForm.longitude}
                   onChange={(e) =>
                     setEditForm({ ...editForm, longitude: e.target.value })
                   }
-                  className="mt-1 w-full rounded border px-2 py-1 text-sm"
+                  className="mt-1"
                 />
               </div>
             </div>
-            <button
-              onClick={handleSaveEdit}
-              className="mt-3 rounded bg-blue-600 px-4 py-1 text-sm text-white hover:bg-blue-700"
-            >
+            <Button onClick={handleSaveEdit} className="mt-3">
               Save
-            </button>
+            </Button>
           </div>
         )}
       </section>
@@ -375,7 +361,14 @@ export default function AdminShopDetail() {
                 <span className="w-14 text-sm font-medium capitalize">
                   {mode}
                 </span>
-                <div className="h-4 flex-1 rounded bg-gray-200">
+                <div
+                  role="progressbar"
+                  aria-valuenow={Math.round(shop.mode_scores![mode] * 100)}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-label={`${mode} score`}
+                  className="h-4 flex-1 rounded bg-gray-200"
+                >
                   <div
                     className={`h-4 rounded ${
                       mode === 'work'
@@ -404,7 +397,14 @@ export default function AdminShopDetail() {
             {shop.tags.map((t) => (
               <div key={t.tag_id} className="flex items-center gap-3">
                 <span className="w-40 text-sm">{t.tag_id}</span>
-                <div className="h-3 flex-1 rounded bg-gray-200">
+                <div
+                  role="progressbar"
+                  aria-valuenow={Math.round(t.confidence * 100)}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-label={`${t.tag_id} confidence score`}
+                  className="h-3 flex-1 rounded bg-gray-200"
+                >
                   <div
                     className={`h-3 rounded ${confidenceColor(t.confidence)}`}
                     style={{ width: `${Math.round(t.confidence * 100)}%` }}
@@ -453,7 +453,7 @@ export default function AdminShopDetail() {
       <section>
         <h2 className="mb-4 text-lg font-semibold">Actions</h2>
         <div className="flex flex-wrap items-center gap-3">
-          <button
+          <Button
             onClick={() =>
               setConfirmAction({
                 type: 'enqueue',
@@ -461,11 +461,11 @@ export default function AdminShopDetail() {
                 label: 'Re-enrich',
               })
             }
-            className="rounded border px-3 py-1 text-sm hover:bg-gray-50"
+            variant="outline"
           >
             Re-enrich
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={() =>
               setConfirmAction({
                 type: 'enqueue',
@@ -473,11 +473,11 @@ export default function AdminShopDetail() {
                 label: 'Re-embed',
               })
             }
-            className="rounded border px-3 py-1 text-sm hover:bg-gray-50"
+            variant="outline"
           >
             Re-embed
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={() =>
               setConfirmAction({
                 type: 'enqueue',
@@ -485,36 +485,31 @@ export default function AdminShopDetail() {
                 label: 'Re-scrape',
               })
             }
-            className="rounded border px-3 py-1 text-sm hover:bg-gray-50"
+            variant="outline"
           >
             Re-scrape
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={handleToggleLive}
-            className={`rounded border px-3 py-1 text-sm ${
-              shop.processing_status === 'live'
-                ? 'border-red-300 text-red-600 hover:bg-red-50'
-                : 'border-green-300 text-green-600 hover:bg-green-50'
-            }`}
+            variant={
+              shop.processing_status === 'live' ? 'destructive' : 'default'
+            }
           >
             {shop.processing_status === 'live' ? 'Unpublish' : 'Set Live'}
-          </button>
+          </Button>
         </div>
 
         <div className="mt-4 flex items-center gap-2">
-          <input
-            type="text"
+          <Input
             placeholder="Search query..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="rounded border px-2 py-1 text-sm"
+            aria-label="Search rank score"
+            className="max-w-sm"
           />
-          <button
-            onClick={handleSearchRank}
-            className="rounded border px-3 py-1 text-sm hover:bg-gray-50"
-          >
+          <Button onClick={handleSearchRank} variant="outline">
             Test Search
-          </button>
+          </Button>
           {searchResult && (
             <span className="text-sm text-gray-600">{searchResult}</span>
           )}

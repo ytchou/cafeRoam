@@ -1,4 +1,10 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import {
+  render,
+  screen,
+  waitFor,
+  within,
+  fireEvent,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import {
@@ -361,17 +367,18 @@ describe('AdminDashboard', () => {
 
     // Wait for page to finish loading
     await waitFor(() => {
-      expect(
-        screen.getByRole('button', { name: /claims/i })
-      ).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: /claims/i })).toBeInTheDocument();
     });
 
     // Switch to Claims tab
-    await user.click(screen.getByRole('button', { name: /claims/i }));
+    await user.click(screen.getByRole('tab', { name: /claims/i }));
 
     // Change status filter to "approved"
-    const select = screen.getByRole('combobox', { name: /claim status/i });
-    await user.selectOptions(select, 'approved');
+    const trigger = screen.getByRole('combobox', { name: /filter by status/i });
+    trigger.focus();
+    fireEvent.keyDown(trigger, { key: 'ArrowDown' });
+    const option = await screen.findByRole('option', { name: /^approved$/i });
+    fireEvent.click(option);
 
     // Should fetch with status=approved and show approved claim
     await screen.findByText('Approved Shop');
@@ -423,11 +430,9 @@ describe('AdminDashboard', () => {
     const user = userEvent.setup();
     render(<AdminDashboard />);
     await waitFor(() => {
-      expect(
-        screen.getByRole('button', { name: /claims/i })
-      ).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: /claims/i })).toBeInTheDocument();
     });
-    await user.click(screen.getByRole('button', { name: /claims/i }));
+    await user.click(screen.getByRole('tab', { name: /claims/i }));
     await screen.findByText('Test Shop');
 
     expect(screen.getByText('pending')).toBeInTheDocument();

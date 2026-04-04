@@ -1,9 +1,20 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
-import { ConfirmDialog } from '../_components/ConfirmDialog';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { getStatusVariant } from '../_lib/status-badge';
+import { ConfirmDialog } from '../_components/ConfirmDialog';
+import { useAdminAuth } from '../_hooks/use-admin-auth';
 
 interface TagFrequency {
   tag_id: string;
@@ -53,6 +64,7 @@ type SortKey = keyof Pick<
 type SortDir = 'asc' | 'desc';
 
 export default function TaxonomyPage() {
+  const { getToken } = useAdminAuth();
   const [data, setData] = useState<TaxonomyStats | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -65,8 +77,6 @@ export default function TaxonomyPage() {
     jobType: string;
     label: string;
   } | null>(null);
-  const tokenRef = useRef('');
-
   function handleSort(key: SortKey) {
     if (key === sortKey) {
       setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
@@ -78,16 +88,11 @@ export default function TaxonomyPage() {
 
   useEffect(() => {
     async function load() {
-      const supabase = createClient();
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session) return;
-
-      tokenRef.current = session.access_token;
+      const token = await getToken();
+      if (!token) return;
 
       const res = await fetch('/api/admin/taxonomy/stats', {
-        headers: { Authorization: `Bearer ${session.access_token}` },
+        headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
@@ -99,16 +104,17 @@ export default function TaxonomyPage() {
       setLoading(false);
     }
     load();
-  }, []);
+  }, [getToken]);
 
   async function handleEnqueue(shopId: string, jobType: string) {
     setEnqueuingIds((prev) => new Set(prev).add(shopId));
     try {
+      const token = await getToken();
       const res = await fetch(`/api/admin/shops/${shopId}/enqueue`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${tokenRef.current}`,
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({ job_type: jobType }),
       });
@@ -177,9 +183,9 @@ export default function TaxonomyPage() {
 
       <section>
         <h2 className="mb-4 text-lg font-semibold">Tag Frequency</h2>
-        <table className="w-full text-left text-sm">
-          <thead>
-            <tr className="border-b text-gray-500">
+        <Table className="w-full text-left text-sm">
+          <TableHeader>
+            <TableRow className="border-b text-gray-500">
               {(
                 [
                   ['tag_id', 'Tag ID'],
@@ -188,10 +194,24 @@ export default function TaxonomyPage() {
                   ['avg_confidence', 'Avg Confidence'],
                 ] as [SortKey, string][]
               ).map(([key, label]) => (
-                <th
+                <TableHead
                   key={key}
-                  className="cursor-pointer pb-2 select-none hover:text-gray-800"
+                  aria-sort={
+                    sortKey === key
+                      ? sortDir === 'asc'
+                        ? 'ascending'
+                        : 'descending'
+                      : 'none'
+                  }
+                  tabIndex={0}
+                  className="cursor-pointer pb-2 select-none hover:text-gray-800 focus-visible:ring-2 focus-visible:outline-none"
                   onClick={() => handleSort(key)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleSort(key);
+                    }
+                  }}
                 >
                   {label}
                   {sortKey === key && (
@@ -199,23 +219,25 @@ export default function TaxonomyPage() {
                       {sortDir === 'asc' ? '↑' : '↓'}
                     </span>
                   )}
-                </th>
+                </TableHead>
               ))}
-            </tr>
-          </thead>
-          <tbody>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {sortedTags.map((tag) => (
-              <tr key={tag.tag_id} className="border-b">
-                <td className="py-2">{tag.tag_id}</td>
-                <td className="py-2 text-gray-500">{tag.dimension}</td>
-                <td className="py-2">{tag.shop_count}</td>
-                <td className="py-2">
+              <TableRow key={tag.tag_id} className="border-b">
+                <TableCell className="py-2">{tag.tag_id}</TableCell>
+                <TableCell className="py-2 text-gray-500">
+                  {tag.dimension}
+                </TableCell>
+                <TableCell className="py-2">{tag.shop_count}</TableCell>
+                <TableCell className="py-2">
                   {tag.avg_confidence?.toFixed(2) ?? '—'}
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </section>
 
       <section>
@@ -236,7 +258,7 @@ export default function TaxonomyPage() {
                   >
                     {shop.max_confidence.toFixed(2)}
                   </span>
-                  <button
+                  <Button
                     onClick={() =>
                       setConfirmEnqueue({
                         shopId: shop.id,
@@ -246,10 +268,11 @@ export default function TaxonomyPage() {
                       })
                     }
                     disabled={enqueuingIds.has(shop.id)}
-                    className="ml-2 rounded bg-blue-100 px-2 py-0.5 text-xs text-blue-700 hover:bg-blue-200 disabled:opacity-50"
+                    variant="secondary"
+                    size="sm"
                   >
                     {enqueuingIds.has(shop.id) ? 'Queued...' : 'Re-enrich'}
-                  </button>
+                  </Button>
                 </div>
               </li>
             ))}
@@ -270,10 +293,10 @@ export default function TaxonomyPage() {
               >
                 <span>{shop.name}</span>
                 <div className="flex items-center gap-2">
-                  <span className="rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-600">
+                  <Badge variant={getStatusVariant(shop.processing_status)}>
                     {shop.processing_status}
-                  </span>
-                  <button
+                  </Badge>
+                  <Button
                     onClick={() =>
                       setConfirmEnqueue({
                         shopId: shop.id,
@@ -283,12 +306,13 @@ export default function TaxonomyPage() {
                       })
                     }
                     disabled={enqueuingIds.has(shop.id)}
-                    className="ml-2 rounded bg-blue-100 px-2 py-0.5 text-xs text-blue-700 hover:bg-blue-200 disabled:opacity-50"
+                    variant="secondary"
+                    size="sm"
                   >
                     {enqueuingIds.has(shop.id)
                       ? 'Queued...'
                       : 'Generate Embedding'}
-                  </button>
+                  </Button>
                 </div>
               </li>
             ))}

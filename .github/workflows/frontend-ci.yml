@@ -74,8 +74,8 @@ jobs:
           wait $pid_tsc_test
           exit $fail
 
-      - name: Run tests with coverage (changed files)
-        run: pnpm exec vitest run --coverage --changed origin/main
+      - name: Run tests with coverage
+        run: pnpm exec vitest run --coverage
 
       - name: Upload coverage artifact
         if: always()
