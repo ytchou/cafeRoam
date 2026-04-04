@@ -28,12 +28,14 @@ class BotDetectionMiddleware(BaseHTTPMiddleware):
         verdict = self._classify(ua, request)
 
         if verdict == "blocked":
+            ip = get_ipaddr(request)
             logger.warning(
                 "bot_blocked",
                 event_type="bot_detection",
                 action="blocked",
+                reason="blocked_ua",
                 user_agent=ua[:200],
-                ip=get_ipaddr(request),
+                ip=ip,
                 path=path,
                 method=request.method,
             )
@@ -41,17 +43,19 @@ class BotDetectionMiddleware(BaseHTTPMiddleware):
                 category="bot_detection",
                 message=f"Blocked bot: {path}",
                 level="warning",
-                data={"user_agent": ua[:200], "ip": get_ipaddr(request)},
+                data={"user_agent": ua[:200], "ip": ip},
             )
             return JSONResponse(status_code=403, content={"detail": "Forbidden"})
 
         if verdict == "suspicious":
+            ip = get_ipaddr(request)
             logger.info(
                 "bot_suspicious",
                 event_type="bot_detection",
                 action="suspicious",
+                reason="missing_browser_headers",
                 user_agent=ua[:200],
-                ip=get_ipaddr(request),
+                ip=ip,
                 path=path,
                 method=request.method,
             )
@@ -74,13 +78,13 @@ class BotDetectionMiddleware(BaseHTTPMiddleware):
 
         ua_lower = ua.lower()
 
-        for allowed in settings.bot_ua_allowlist:
-            if allowed.lower() in ua_lower:
-                return "ok"
-
         for blocked in settings.bot_ua_blocklist:
             if blocked.lower() in ua_lower:
                 return "blocked"
+
+        for allowed in settings.bot_ua_allowlist:
+            if allowed.lower() in ua_lower:
+                return "ok"
 
         missing_count = sum(1 for h in _BROWSER_HEADERS if h not in request.headers)
         if missing_count >= 1:

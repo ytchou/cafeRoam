@@ -103,6 +103,7 @@ def _custom_rate_limit_handler(request: Request, exc: RateLimitExceeded) -> JSON
     logger.warning(
         "rate_limit_exceeded",
         event_type="rate_limit",
+        reason="rate_limit_exceeded",
         ip=ip,
         path=request.url.path,
         method=request.method,
