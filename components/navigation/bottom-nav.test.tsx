@@ -75,8 +75,8 @@ describe('a user interacting with the BottomNav', () => {
     const tabs = screen.getAllByRole('link');
     expect(tabs).toHaveLength(5);
     expect(tabs[0]).toHaveTextContent('首頁');
-    expect(tabs[1]).toHaveTextContent('探索');
-    expect(tabs[2]).toHaveTextContent('地圖');
+    expect(tabs[1]).toHaveTextContent('地圖');
+    expect(tabs[2]).toHaveTextContent('探索');
     expect(tabs[3]).toHaveTextContent('收藏');
     expect(tabs[4]).toHaveTextContent('我的');
   });
@@ -85,8 +85,8 @@ describe('a user interacting with the BottomNav', () => {
     render(<BottomNav />);
     const tabs = screen.getAllByRole('link');
     expect(tabs[0]).toHaveAttribute('href', '/');
-    expect(tabs[1]).toHaveAttribute('href', '/explore');
-    expect(tabs[2]).toHaveAttribute('href', '/find');
+    expect(tabs[1]).toHaveAttribute('href', '/find');
+    expect(tabs[2]).toHaveAttribute('href', '/explore');
     expect(tabs[3]).toHaveAttribute('href', '/lists');
     expect(tabs[4]).toHaveAttribute('href', '/profile');
   });
