@@ -6,11 +6,14 @@ from zoneinfo import ZoneInfo
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import ValidationError
 from pydantic.alias_generators import to_camel
+from starlette.requests import Request
 
 from api.deps import get_admin_db, get_current_user, get_optional_user
+from core.config import settings
 from core.db import first
 from core.opening_hours import is_open_now
 from db.supabase_client import get_anon_client
+from middleware.rate_limit import limiter
 from models.types import (
     ShopCheckInPreview,
     ShopCheckInSummary,
@@ -53,8 +56,10 @@ _SHOP_LIST_COLUMNS = (
 _SHOP_DETAIL_COLUMNS = f"{_SHOP_LIST_COLUMNS}, phone, website, price_range, updated_at"
 
 
+@limiter.limit(settings.rate_limit_shops_list)
 @router.get("/")
 async def list_shops(
+    request: Request,
     city: str | None = None,
     featured: bool = False,
     limit: int = Query(default=50, ge=1, le=200),

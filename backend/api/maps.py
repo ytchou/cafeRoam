@@ -1,7 +1,10 @@
 from typing import Any, Literal, cast
 
 from fastapi import APIRouter, HTTPException, Query
+from starlette.requests import Request
 
+from core.config import settings
+from middleware.rate_limit import limiter
 from providers.maps import get_maps_provider
 
 router = APIRouter(prefix="/maps", tags=["maps"])
@@ -9,8 +12,10 @@ router = APIRouter(prefix="/maps", tags=["maps"])
 VALID_PROFILES = {"walking", "driving-traffic"}
 
 
+@limiter.limit(settings.rate_limit_maps_directions)
 @router.get("/directions")
 async def get_directions(
+    request: Request,
     origin_lat: float = Query(..., ge=-90.0, le=90.0),
     origin_lng: float = Query(..., ge=-180.0, le=180.0),
     dest_lat: float = Query(..., ge=-90.0, le=90.0),
