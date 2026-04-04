@@ -14,7 +14,7 @@
 **Chunk 1 — Config + Foundation (DEV-217, DEV-218):**
 
 - [x] Add rate limit + bot detection config fields
-- [ ] Extend rate limiter with default limits + per-user key func
+- [x] Extend rate limiter with default limits + per-user key func
 
 **Chunk 2 — Bot Detection (DEV-220):**
 
@@ -23,7 +23,7 @@
 
 **Chunk 3 — Rate Limiting (DEV-219, DEV-221):**
 
-- [ ] Write rate limiting integration tests
+- [x] Write rate limiting integration tests
 - [ ] Apply route-specific rate limits (search, maps, shops list)
 - [ ] Register middleware + custom 429 handler in main.py
 
