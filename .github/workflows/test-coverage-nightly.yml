@@ -1,0 +1,124 @@
+name: Test Coverage (Nightly)
+
+on:
+  schedule:
+    - cron: '0 18 * * *' # 02:00 Taiwan time (UTC+8)
+  workflow_dispatch:
+
+jobs:
+  frontend-coverage:
+    name: Frontend coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run tests with coverage
+        run: pnpm test:coverage
+        continue-on-error: true
+
+      - name: Upload coverage artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-app
+          path: coverage/coverage-final.json
+          retention-days: 7
+
+  backend-coverage:
+    name: Backend coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Install dependencies
+        run: cd backend && uv sync --all-extras
+
+      - name: Run tests with coverage
+        run: cd backend && uv run pytest --cov --cov-report=xml:coverage.xml --cov-branch -v
+        continue-on-error: true
+
+      - name: Upload coverage artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-backend
+          path: backend/coverage.xml
+          retention-days: 7
+
+  coverage-report:
+    name: Coverage report
+    needs: [frontend-coverage, backend-coverage]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download frontend coverage
+        id: frontend-artifact
+        uses: dawidd6/action-download-artifact@v6
+        with:
+          run_id: ${{ github.run_id }}
+          name: coverage-app
+          path: ./coverage-reports/
+        continue-on-error: true
+
+      - name: Download backend coverage
+        id: backend-artifact
+        uses: dawidd6/action-download-artifact@v6
+        with:
+          run_id: ${{ github.run_id }}
+          name: coverage-backend
+          path: ./coverage-reports/backend/
+        continue-on-error: true
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install coverage script dependencies
+        run: pip install defusedxml
+
+      - name: Run coverage check
+        id: coverage
+        run: |
+          ARGS="--rules ./scripts/ci/coverage-rules.json --output ./coverage-summary.md"
+          if [ -f ./coverage-reports/coverage-final.json ]; then
+            ARGS="$ARGS --frontend ./coverage-reports/coverage-final.json"
+          fi
+          if [ -f ./coverage-reports/backend/coverage.xml ]; then
+            ARGS="$ARGS --backend ./coverage-reports/backend/coverage.xml"
+          fi
+          python scripts/ci/coverage-check.py $ARGS
+        continue-on-error: true
+
+      - name: Write summary
+        if: always()
+        run: |
+          if [ -f ./coverage-summary.md ]; then
+            cat ./coverage-summary.md >> $GITHUB_STEP_SUMMARY
+          else
+            echo "No coverage summary generated." >> $GITHUB_STEP_SUMMARY
+          fi

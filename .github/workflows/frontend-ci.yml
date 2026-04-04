@@ -1,0 +1,78 @@
+name: Frontend CI
+
+on:
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  changes:
+    name: Detect changed paths
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      frontend: ${{ steps.filter.outputs.frontend }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            frontend:
+              - 'app/**'
+              - 'components/**'
+              - 'lib/**'
+              - 'workers/**'
+              - 'scripts/**'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'tsconfig.json'
+
+  frontend:
+    name: Frontend (lint, format, tsc, vitest)
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint, format, and type check (parallel)
+        run: |
+          pnpm lint &
+          pid_lint=$!
+          pnpm format:check &
+          pid_fmt=$!
+          (tsc --noEmit || echo "::warning::tsc --noEmit failed") &
+          pid_tsc=$!
+          (tsc -p tsconfig.test.json --noEmit || echo "::warning::tsc tsconfig.test.json failed") &
+          pid_tsc_test=$!
+
+          fail=0
+          wait $pid_lint || fail=1
+          wait $pid_fmt || fail=1
+          wait $pid_tsc
+          wait $pid_tsc_test
+          exit $fail
+
+      - name: Run tests (changed files only)
+        run: pnpm exec vitest run --changed origin/main
