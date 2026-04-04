@@ -232,11 +232,6 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
           />
         )}
 
-        <ClaimBanner
-          shopId={shop.id}
-          shopName={shop.name}
-          claimStatus={shop.claimStatus ?? null}
-        />
         {shop.district && (
           <div className="px-5 py-4">
             <Link
@@ -252,6 +247,11 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
             </Link>
           </div>
         )}
+        <ClaimBanner
+          shopId={shop.id}
+          shopName={shop.name}
+          claimStatus={shop.claimStatus ?? null}
+        />
       </div>
 
       {hasMap && directionsShop && (
