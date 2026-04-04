@@ -54,12 +54,7 @@ const FAQ_ITEMS = [
 export default function FaqPage() {
   return (
     <main className="mx-auto max-w-2xl px-6 py-12">
-      <FaqPageJsonLd
-        items={FAQ_ITEMS.map((item) => ({
-          question: item.question,
-          answer: item.answer,
-        }))}
-      />
+      <FaqPageJsonLd items={FAQ_ITEMS} />
 
       <h1 className="text-2xl font-bold">常見問題</h1>
       <p className="text-text-meta mt-1 text-sm">FAQ</p>
@@ -76,7 +71,7 @@ export default function FaqPage() {
                 ▾
               </span>
             </summary>
-            <p className="text-text-meta mt-2 text-sm">{item.answer}</p>
+            <p className="text-text-meta mt-2 text-base">{item.answer}</p>
           </details>
         ))}
       </section>

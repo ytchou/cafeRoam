@@ -22,7 +22,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       >
         {children}
       </main>
-      {!isFindPage && <Footer />}
+      {!isFindPage && (
+        <div className={!isDesktop ? 'pb-16' : undefined}>
+          <Footer />
+        </div>
+      )}
       {!isDesktop && !isFindPage && <BottomNav />}
     </>
   );

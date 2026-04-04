@@ -16,7 +16,7 @@ export function Footer() {
             <Link
               key={link.href}
               href={link.href}
-              className="text-text-meta text-xs hover:underline"
+              className="text-text-meta inline-flex min-h-[44px] items-center text-xs hover:underline"
             >
               {link.label}
             </Link>

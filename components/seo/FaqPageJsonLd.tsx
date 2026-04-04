@@ -6,7 +6,7 @@ interface FaqItem {
 }
 
 interface FaqPageJsonLdProps {
-  items: FaqItem[];
+  items: readonly FaqItem[];
 }
 
 export function FaqPageJsonLd({ items }: FaqPageJsonLdProps) {
