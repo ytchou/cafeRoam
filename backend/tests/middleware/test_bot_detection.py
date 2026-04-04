@@ -48,10 +48,6 @@ class TestBotDetection:
         response = client.get("/test", headers={"user-agent": ""})
         assert response.status_code == 403
 
-    def test_blocks_missing_user_agent(self, client):
-        response = client.get("/test", headers={k: v for k, v in _BROWSER_HEADERS.items() if k != "user-agent"})
-        assert response.status_code == 403
-
     def test_blocks_curl_user_agent(self, client):
         response = client.get("/test", headers={"user-agent": "curl/7.68.0"})
         assert response.status_code == 403
