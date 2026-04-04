@@ -44,7 +44,9 @@
       "icon.tsx",
       "global-error.tsx",
       "**/privacy/page.tsx",
-      "**/owner/data-terms/page.tsx"
+      "**/owner/data-terms/page.tsx",
+      "**/about/page.tsx",
+      "**/faq/page.tsx"
     ]
   },
   "backend": {
