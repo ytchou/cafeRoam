@@ -136,21 +136,8 @@ make reset-db                  # !! DESTRUCTIVE — wipes all data. Has a 5s war
 
 ### Critical Paths Requiring Tests
 
-**Backend (pytest):**
-
-- `backend/services/search_service.py` — semantic search + taxonomy boost logic
-- `backend/services/checkin_service.py` — photo upload, stamp generation
-- `backend/services/lists_service.py` — list CRUD, **3-list cap enforcement**
-- `backend/providers/` — all provider adapters
-- `backend/api/` — all API route handlers (auth validation, input validation)
-
-**Frontend (Vitest + Testing Library):**
-
-- Auth flows — login, signup, OAuth callback, consent
-- List management — create, delete, cap enforcement
-- Check-in — photo upload validation, form submission
-- Search — query → results rendering
-- Profile — stamp collection, check-in history
+- **Backend:** search_service, checkin_service, lists_service (3-list cap), all providers, all API route handlers
+- **Frontend:** auth flows, list management, check-in, search, profile
 
 ### Test Quality Checklist
 
