@@ -82,9 +82,7 @@ class BotDetectionMiddleware(BaseHTTPMiddleware):
             if blocked.lower() in ua_lower:
                 return "blocked"
 
-        missing_count = sum(
-            1 for h in _BROWSER_HEADERS if h not in request.headers
-        )
+        missing_count = sum(1 for h in _BROWSER_HEADERS if h not in request.headers)
         if missing_count >= 1:
             return "suspicious"
 

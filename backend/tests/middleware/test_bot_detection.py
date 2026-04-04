@@ -73,7 +73,9 @@ class TestBotDetection:
         assert response.status_code == 200
 
     def test_allows_bingbot(self, client):
-        response = client.get("/test", headers={"user-agent": "Mozilla/5.0 (compatible; Bingbot/2.0)"})
+        response = client.get(
+            "/test", headers={"user-agent": "Mozilla/5.0 (compatible; Bingbot/2.0)"}
+        )
         assert response.status_code == 200
 
     def test_blocklist_case_insensitive(self, client):
@@ -92,6 +94,7 @@ class TestBotDetection:
 
     def test_disabled_via_config(self, client, monkeypatch):
         from core.config import settings
+
         monkeypatch.setattr(settings, "bot_detection_enabled", False)
         response = client.get("/test", headers={"user-agent": "curl/7.68.0"})
         assert response.status_code == 200
