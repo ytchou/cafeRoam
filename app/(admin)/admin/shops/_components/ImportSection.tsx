@@ -2,6 +2,14 @@
 
 import { useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { REGIONS } from '../_constants';
 
 interface ImportSummary {
@@ -143,28 +151,30 @@ export function ImportSection({
           <label htmlFor="region-select" className="sr-only">
             Region
           </label>
-          <select
-            id="region-select"
+          <Select
             value={selectedRegion}
-            onChange={(e) => setSelectedRegion(e.target.value)}
-            className="rounded border px-3 py-1.5 text-sm"
+            onValueChange={(value) => setSelectedRegion(value)}
           >
-            {REGIONS.map((r) => (
-              <option key={r.value} value={r.value}>
-                {r.label}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger id="region-select">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {REGIONS.map((r) => (
+                <SelectItem key={r.value} value={r.value}>
+                  {r.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
-        <button
-          type="button"
+        <Button
           onClick={handleImportCafeNomad}
           disabled={importingCafeNomad}
-          className="rounded bg-amber-600 px-3 py-1.5 text-sm text-white hover:bg-amber-700 disabled:opacity-50"
+          variant="default"
         >
           {importingCafeNomad ? 'Importing...' : 'Import from Cafe Nomad'}
-        </button>
+        </Button>
 
         <div className="flex items-center gap-2">
           <input
@@ -174,24 +184,22 @@ export function ImportSection({
             className="text-sm"
             id="takeout-file"
           />
-          <button
-            type="button"
+          <Button
             onClick={handleImportTakeout}
             disabled={importingTakeout}
-            className="rounded bg-green-700 px-3 py-1.5 text-sm text-white hover:bg-green-800 disabled:opacity-50"
+            variant="default"
           >
             {importingTakeout ? 'Uploading...' : 'Import Google Takeout'}
-          </button>
+          </Button>
         </div>
 
-        <button
-          type="button"
+        <Button
           onClick={handleCheckUrls}
           disabled={checkingUrls}
-          className="rounded border border-gray-300 px-3 py-1.5 text-sm hover:bg-gray-50 disabled:opacity-50"
+          variant="outline"
         >
           {checkingUrls ? 'Checking...' : 'Check URLs'}
-        </button>
+        </Button>
       </div>
     </div>
   );

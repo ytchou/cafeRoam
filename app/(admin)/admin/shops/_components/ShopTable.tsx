@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
 import {
   Table,
   TableBody,
@@ -118,22 +119,20 @@ export function ShopTable({
           <span className="text-sm text-amber-800">
             {selectedShopIds.size} selected
           </span>
-          <button
-            type="button"
+          <Button
             onClick={() => setBulkConfirm({ approveAll: false })}
             disabled={approvingBulk || selectedShopIds.size === 0}
-            className="rounded bg-amber-600 px-3 py-1 text-sm text-white hover:bg-amber-700 disabled:opacity-50"
+            variant="default"
           >
             Approve Selected
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
             onClick={() => setBulkConfirm({ approveAll: true })}
             disabled={approvingBulk}
-            className="rounded border border-amber-400 px-3 py-1 text-sm text-amber-700 hover:bg-amber-100 disabled:opacity-50"
+            variant="outline"
           >
             Approve All
-          </button>
+          </Button>
         </div>
       )}
 
@@ -229,22 +228,20 @@ export function ShopTable({
             {total} shop{total !== 1 ? 's' : ''} total
           </span>
           <div className="flex gap-2">
-            <button
-              type="button"
+            <Button
               disabled={!hasPrev}
               onClick={() => onPageChange(offset - PAGE_SIZE)}
-              className="rounded border px-3 py-1 disabled:opacity-40"
+              variant="outline"
             >
               Previous
-            </button>
-            <button
-              type="button"
+            </Button>
+            <Button
               disabled={!hasNext}
               onClick={() => onPageChange(offset + PAGE_SIZE)}
-              className="rounded border px-3 py-1 disabled:opacity-40"
+              variant="outline"
             >
               Next
-            </button>
+            </Button>
           </div>
         </div>
       </>

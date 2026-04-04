@@ -3,6 +3,15 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { toast } from 'sonner';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   Table,
   TableBody,
@@ -12,6 +21,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { ADMIN_REJECTION_REASONS } from '@/lib/constants/rejection-reasons';
+import { getStatusVariant } from '../_lib/status-badge';
 import { ConfirmDialog } from './ConfirmDialog';
 
 interface Submission {
@@ -142,19 +152,9 @@ export function SubmissionsTab({
                     {sub.submitted_by ?? '—'}
                   </TableCell>
                   <TableCell className="py-2">
-                    <span
-                      className={`rounded px-2 py-0.5 text-xs ${
-                        sub.status === 'live'
-                          ? 'bg-green-100 text-green-700'
-                          : sub.status === 'failed'
-                            ? 'bg-red-100 text-red-700'
-                            : sub.status === 'pending_review'
-                              ? 'bg-blue-100 text-blue-700'
-                              : 'bg-yellow-100 text-yellow-700'
-                      }`}
-                    >
+                    <Badge variant={getStatusVariant(sub.status)}>
                       {sub.status}
-                    </span>
+                    </Badge>
                   </TableCell>
                   <TableCell className="py-2 text-gray-500">
                     {new Date(sub.created_at).toLocaleDateString()}
@@ -165,54 +165,62 @@ export function SubmissionsTab({
                       sub.status === 'pending_review') && (
                       <div>
                         <div className="flex gap-2">
-                          <button
-                            type="button"
+                          <Button
                             onClick={() =>
                               handleSubmissionAction(sub.id, 'approve')
                             }
-                            className="rounded bg-green-50 px-2 py-1 text-xs text-green-700 hover:bg-green-100"
+                            variant="default"
+                            size="sm"
                           >
                             Approve
-                          </button>
-                          <button
-                            type="button"
+                          </Button>
+                          <Button
                             onClick={() =>
                               handleSubmissionAction(sub.id, 'reject')
                             }
-                            className="rounded bg-red-50 px-2 py-1 text-xs text-red-600 hover:bg-red-100"
+                            variant="destructive"
+                            size="sm"
                           >
                             Reject
-                          </button>
+                          </Button>
                         </div>
                         {rejectingId === sub.id && (
                           <div className="mt-2 flex items-center gap-2">
-                            <select
+                            <Select
                               value={rejectionReason}
-                              onChange={(e) =>
-                                setRejectionReason(e.target.value)
+                              onValueChange={(value) =>
+                                setRejectionReason(value)
                               }
-                              className="rounded border px-2 py-1 text-xs"
                             >
-                              {ADMIN_REJECTION_REASONS.map((r) => (
-                                <option key={r.value} value={r.value}>
-                                  {r.label}
-                                </option>
-                              ))}
-                            </select>
-                            <button
-                              type="button"
+                              <SelectTrigger className="h-8 text-xs">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {ADMIN_REJECTION_REASONS.map((r) => (
+                                  <SelectItem
+                                    key={r.value}
+                                    value={r.value}
+                                    className="text-xs"
+                                  >
+                                    {r.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <Button
                               onClick={confirmReject}
-                              className="rounded bg-red-600 px-2 py-1 text-xs text-white"
+                              variant="destructive"
+                              size="sm"
                             >
                               Confirm
-                            </button>
-                            <button
-                              type="button"
+                            </Button>
+                            <Button
                               onClick={() => setRejectingId(null)}
-                              className="text-xs text-gray-500"
+                              variant="outline"
+                              size="sm"
                             >
                               Cancel
-                            </button>
+                            </Button>
                           </div>
                         )}
                       </div>

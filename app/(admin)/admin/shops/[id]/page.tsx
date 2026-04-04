@@ -4,7 +4,11 @@ import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Image from 'next/image';
 import { toast } from 'sonner';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { createClient } from '@/lib/supabase/client';
+import { getStatusVariant } from '../../_lib/status-badge';
 import { ConfirmDialog } from '../../_components/ConfirmDialog';
 
 interface ModeScores {
@@ -261,29 +265,22 @@ export default function AdminShopDetail() {
             <h1 className="text-2xl font-bold">{shop.name}</h1>
             <p className="mt-1 text-gray-600">{shop.address}</p>
             <div className="mt-2 flex items-center gap-3 text-sm">
-              <span
-                className={`rounded px-2 py-0.5 text-xs ${
-                  shop.processing_status === 'live'
-                    ? 'bg-green-100 text-green-700'
-                    : shop.processing_status === 'failed'
-                      ? 'bg-red-100 text-red-700'
-                      : 'bg-yellow-100 text-yellow-700'
-                }`}
-              >
+              <Badge variant={getStatusVariant(shop.processing_status)}>
                 {shop.processing_status}
-              </span>
+              </Badge>
               <span className="text-gray-500">{shop.source}</span>
               <span className="text-gray-400">
                 {shop.latitude}, {shop.longitude}
               </span>
             </div>
           </div>
-          <button
+          <Button
             onClick={() => setEditing(!editing)}
-            className="rounded border px-3 py-1 text-sm hover:bg-gray-50"
+            variant="outline"
+            size="sm"
           >
             {editing ? 'Cancel' : 'Edit'}
-          </button>
+          </Button>
         </div>
 
         {editing && (
@@ -296,14 +293,13 @@ export default function AdminShopDetail() {
                 >
                   Name
                 </label>
-                <input
+                <Input
                   id="edit-name"
-                  type="text"
                   value={editForm.name}
                   onChange={(e) =>
                     setEditForm({ ...editForm, name: e.target.value })
                   }
-                  className="mt-1 w-full rounded border px-2 py-1 text-sm"
+                  className="mt-1"
                 />
               </div>
               <div>
@@ -313,51 +309,48 @@ export default function AdminShopDetail() {
                 >
                   Address
                 </label>
-                <input
+                <Input
                   id="edit-address"
-                  type="text"
                   value={editForm.address}
                   onChange={(e) =>
                     setEditForm({ ...editForm, address: e.target.value })
                   }
-                  className="mt-1 w-full rounded border px-2 py-1 text-sm"
+                  className="mt-1"
                 />
               </div>
               <div>
                 <label htmlFor="edit-lat" className="block text-sm font-medium">
                   Latitude
                 </label>
-                <input
+                <Input
                   id="edit-lat"
-                  type="text"
                   value={editForm.latitude}
                   onChange={(e) =>
                     setEditForm({ ...editForm, latitude: e.target.value })
                   }
-                  className="mt-1 w-full rounded border px-2 py-1 text-sm"
+                  className="mt-1"
                 />
               </div>
               <div>
                 <label htmlFor="edit-lng" className="block text-sm font-medium">
                   Longitude
                 </label>
-                <input
+                <Input
                   id="edit-lng"
-                  type="text"
                   value={editForm.longitude}
                   onChange={(e) =>
                     setEditForm({ ...editForm, longitude: e.target.value })
                   }
-                  className="mt-1 w-full rounded border px-2 py-1 text-sm"
+                  className="mt-1"
                 />
               </div>
             </div>
-            <button
+            <Button
               onClick={handleSaveEdit}
-              className="mt-3 rounded bg-blue-600 px-4 py-1 text-sm text-white hover:bg-blue-700"
+              className="mt-3"
             >
               Save
-            </button>
+            </Button>
           </div>
         )}
       </section>
@@ -453,7 +446,7 @@ export default function AdminShopDetail() {
       <section>
         <h2 className="mb-4 text-lg font-semibold">Actions</h2>
         <div className="flex flex-wrap items-center gap-3">
-          <button
+          <Button
             onClick={() =>
               setConfirmAction({
                 type: 'enqueue',
@@ -461,11 +454,11 @@ export default function AdminShopDetail() {
                 label: 'Re-enrich',
               })
             }
-            className="rounded border px-3 py-1 text-sm hover:bg-gray-50"
+            variant="outline"
           >
             Re-enrich
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={() =>
               setConfirmAction({
                 type: 'enqueue',
@@ -473,11 +466,11 @@ export default function AdminShopDetail() {
                 label: 'Re-embed',
               })
             }
-            className="rounded border px-3 py-1 text-sm hover:bg-gray-50"
+            variant="outline"
           >
             Re-embed
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={() =>
               setConfirmAction({
                 type: 'enqueue',
@@ -485,36 +478,33 @@ export default function AdminShopDetail() {
                 label: 'Re-scrape',
               })
             }
-            className="rounded border px-3 py-1 text-sm hover:bg-gray-50"
+            variant="outline"
           >
             Re-scrape
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={handleToggleLive}
-            className={`rounded border px-3 py-1 text-sm ${
-              shop.processing_status === 'live'
-                ? 'border-red-300 text-red-600 hover:bg-red-50'
-                : 'border-green-300 text-green-600 hover:bg-green-50'
-            }`}
+            variant={
+              shop.processing_status === 'live' ? 'destructive' : 'default'
+            }
           >
             {shop.processing_status === 'live' ? 'Unpublish' : 'Set Live'}
-          </button>
+          </Button>
         </div>
 
         <div className="mt-4 flex items-center gap-2">
-          <input
-            type="text"
+          <Input
             placeholder="Search query..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="rounded border px-2 py-1 text-sm"
+            className="max-w-sm"
           />
-          <button
+          <Button
             onClick={handleSearchRank}
-            className="rounded border px-3 py-1 text-sm hover:bg-gray-50"
+            variant="outline"
           >
             Test Search
-          </button>
+          </Button>
           {searchResult && (
             <span className="text-sm text-gray-600">{searchResult}</span>
           )}

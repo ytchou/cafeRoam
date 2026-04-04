@@ -20,7 +20,7 @@
 - [x] Task 4: Extract Shops → FilterBar + ShopTable + ImportSection (DEV-232)
 
 **Wave 3 — Migration:**
-- [ ] Task 5: Migrate all admin pages to shadcn components (DEV-233)
+- [x] Task 5: Migrate all admin pages to shadcn components (DEV-233)
 
 **Wave 4 — A11y:**
 - [ ] Task 6: Fix a11y — keyboard rows, form labels, progress bars, sortable headers (DEV-234)

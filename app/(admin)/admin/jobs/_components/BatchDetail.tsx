@@ -2,6 +2,16 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   Table,
   TableBody,
@@ -10,6 +20,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { getStatusVariant } from '../../_lib/status-badge';
 
 interface ShopDetail {
   shop_id: string;
@@ -45,6 +56,7 @@ const ALL_STATUSES = [
   'live',
   'failed',
 ];
+const ALL_STATUSES_VALUE = 'all';
 
 const PAGE_SIZE = 20;
 
@@ -144,28 +156,33 @@ export function BatchDetail({
 
       {/* Search + filter controls */}
       <div className="flex gap-2">
-        <input
-          type="text"
+        <Input
           placeholder="Search by name…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="flex-1 rounded border px-2 py-1 text-sm"
+          className="flex-1"
         />
-        <select
-          value={statusFilter}
-          onChange={(e) => {
-            setStatusFilter(e.target.value);
+        <Select
+          value={statusFilter || ALL_STATUSES_VALUE}
+          onValueChange={(value) => {
+            setStatusFilter(
+              value === ALL_STATUSES_VALUE ? '' : value
+            );
             setPage(1);
           }}
-          className="rounded border px-2 py-1 text-sm"
         >
-          <option value="">All statuses</option>
-          {ALL_STATUSES.map((s) => (
-            <option key={s} value={s}>
-              {s}
-            </option>
-          ))}
-        </select>
+          <SelectTrigger>
+            <SelectValue placeholder="All statuses" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ALL_STATUSES_VALUE}>All statuses</SelectItem>
+            {ALL_STATUSES.map((s) => (
+              <SelectItem key={s} value={s}>
+                {s}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {loading ? (
@@ -192,14 +209,9 @@ export function BatchDetail({
               >
                 <TableCell className="py-1">{shop.name || shop.shop_id}</TableCell>
                 <TableCell className="py-1">
-                  <span
-                    className={`rounded px-2 py-0.5 text-xs ${
-                      STATUS_COLORS[shop.processing_status] ||
-                      'bg-gray-100 text-gray-700'
-                    }`}
-                  >
+                  <Badge variant={getStatusVariant(shop.processing_status)}>
                     {shop.processing_status}
-                  </span>
+                  </Badge>
                 </TableCell>
                 <TableCell className="max-w-xs truncate py-1 text-xs text-red-600">
                   {shop.last_error
@@ -215,23 +227,23 @@ export function BatchDetail({
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex items-center justify-between pt-1">
-          <button
+          <Button
             disabled={page <= 1}
             onClick={() => setPage((p) => p - 1)}
-            className="rounded border px-3 py-1 text-sm disabled:opacity-50"
+            variant="outline"
           >
             Previous
-          </button>
+          </Button>
           <span className="text-sm text-gray-500">
             Page {page} of {totalPages}
           </span>
-          <button
+          <Button
             disabled={page >= totalPages}
             onClick={() => setPage((p) => p + 1)}
-            className="rounded border px-3 py-1 text-sm disabled:opacity-50"
+            variant="outline"
           >
             Next
-          </button>
+          </Button>
         </div>
       )}
     </div>

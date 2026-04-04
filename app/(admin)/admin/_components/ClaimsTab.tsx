@@ -2,6 +2,15 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   Table,
   TableBody,
@@ -10,6 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { getStatusVariant } from '../_lib/status-badge';
 import { ConfirmDialog } from './ConfirmDialog';
 
 interface Claim {
@@ -147,19 +157,22 @@ export function ClaimsTab({ getToken }: ClaimsTabProps) {
       <section>
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold">Claims</h2>
-          <select
-            aria-label="Claim status"
+          <Select
             value={claimStatusFilter}
-            onChange={(e) =>
-              setClaimStatusFilter(e.target.value as typeof claimStatusFilter)
+            onValueChange={(value) =>
+              setClaimStatusFilter(value as typeof claimStatusFilter)
             }
-            className="rounded border px-2 py-1 text-sm"
           >
-            <option value="pending">Pending</option>
-            <option value="approved">Approved</option>
-            <option value="rejected">Rejected</option>
-            <option value="all">All</option>
-          </select>
+            <SelectTrigger aria-label="Claim status">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="approved">Approved</SelectItem>
+              <SelectItem value="rejected">Rejected</SelectItem>
+              <SelectItem value="all">All</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
         {claimsLoading ? (
           <p>Loading claims...</p>
@@ -193,17 +206,9 @@ export function ClaimsTab({ getToken }: ClaimsTabProps) {
                   </TableCell>
                   <TableCell className="py-2">{claim.role}</TableCell>
                   <TableCell className="py-2">
-                    <span
-                      className={`inline-block rounded px-2 py-0.5 text-xs font-medium ${
-                        claim.status === 'pending'
-                          ? 'bg-yellow-100 text-yellow-800'
-                          : claim.status === 'approved'
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-red-100 text-red-800'
-                      }`}
-                    >
+                    <Badge variant={getStatusVariant(claim.status)}>
                       {claim.status}
-                    </span>
+                    </Badge>
                   </TableCell>
                   <TableCell className="py-2 text-gray-500">
                     {new Date(claim.created_at).toLocaleDateString()}
@@ -211,17 +216,16 @@ export function ClaimsTab({ getToken }: ClaimsTabProps) {
                   <TableCell className="py-2">
                     <div className="flex flex-col gap-2">
                       <div className="flex gap-2">
-                        <button
-                          type="button"
+                        <Button
                           onClick={() => handleViewProof(claim.id)}
-                          className="rounded bg-blue-50 px-2 py-1 text-xs text-blue-700 hover:bg-blue-100"
+                          variant="secondary"
+                          size="sm"
                         >
                           View Proof
-                        </button>
+                        </Button>
                         {claim.status === 'pending' && (
                           <>
-                            <button
-                              type="button"
+                            <Button
                               disabled={approvingClaimId === claim.id}
                               onClick={() => {
                                 if (approvingClaimId) return;
@@ -232,53 +236,62 @@ export function ClaimsTab({ getToken }: ClaimsTabProps) {
                                     claim.shops?.name ?? claim.contact_name,
                                 });
                               }}
-                              className="rounded bg-green-50 px-2 py-1 text-xs text-green-700 hover:bg-green-100 disabled:opacity-50"
+                              variant="default"
+                              size="sm"
                             >
                               {approvingClaimId === claim.id ? '…' : 'Approve'}
-                            </button>
-                            <button
-                              type="button"
+                            </Button>
+                            <Button
                               onClick={() => {
                                 setClaimRejectionReason('invalid_proof');
                                 setClaimRejectingId(claim.id);
                               }}
-                              className="rounded bg-red-50 px-2 py-1 text-xs text-red-600 hover:bg-red-100"
+                              variant="destructive"
+                              size="sm"
                             >
                               Reject
-                            </button>
+                            </Button>
                           </>
                         )}
                       </div>
                       {claimRejectingId === claim.id && (
                         <div className="flex items-center gap-2">
-                          <select
+                          <Select
                             value={claimRejectionReason}
-                            onChange={(e) =>
-                              setClaimRejectionReason(e.target.value)
+                            onValueChange={(value) =>
+                              setClaimRejectionReason(value)
                             }
-                            className="rounded border px-2 py-1 text-xs"
                           >
-                            <option value="invalid_proof">Invalid proof</option>
-                            <option value="not_an_owner">Not an owner</option>
-                            <option value="duplicate_request">
-                              Duplicate request
-                            </option>
-                            <option value="other">Other</option>
-                          </select>
-                          <button
-                            type="button"
+                            <SelectTrigger className="h-8 text-xs">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="invalid_proof">
+                                Invalid proof
+                              </SelectItem>
+                              <SelectItem value="not_an_owner">
+                                Not an owner
+                              </SelectItem>
+                              <SelectItem value="duplicate_request">
+                                Duplicate request
+                              </SelectItem>
+                              <SelectItem value="other">Other</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <Button
                             onClick={handleClaimReject}
-                            className="rounded bg-red-600 px-2 py-1 text-xs text-white"
+                            variant="destructive"
+                            size="sm"
                           >
                             Confirm
-                          </button>
-                          <button
-                            type="button"
+                          </Button>
+                          <Button
                             onClick={() => setClaimRejectingId(null)}
-                            className="text-xs text-gray-500"
+                            variant="outline"
+                            size="sm"
                           >
                             Cancel
-                          </button>
+                          </Button>
                         </div>
                       )}
                     </div>

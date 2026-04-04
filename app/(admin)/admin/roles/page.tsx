@@ -12,6 +12,14 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   Table,
   TableBody,
@@ -29,6 +37,7 @@ const ROLE_OPTIONS = [
   'shop_owner',
 ] as const;
 type Role = (typeof ROLE_OPTIONS)[number];
+const ALL_ROLES_VALUE = 'all';
 
 interface RoleGrant {
   user_id: string;
@@ -158,20 +167,24 @@ export default function RolesPage() {
         >
           Filter by role
         </label>
-        <select
-          id="role-filter"
-          aria-label="Filter by role"
-          value={filterRole}
-          onChange={(e) => setFilterRole(e.target.value)}
-          className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm shadow-sm focus:ring-2 focus:ring-gray-400 focus:outline-none"
+        <Select
+          value={filterRole || ALL_ROLES_VALUE}
+          onValueChange={(value) =>
+            setFilterRole(value === ALL_ROLES_VALUE ? '' : value)
+          }
         >
-          <option value="">All roles</option>
-          {ROLE_OPTIONS.map((r) => (
-            <option key={r} value={r}>
-              {r}
-            </option>
-          ))}
-        </select>
+          <SelectTrigger id="role-filter" aria-label="Filter by role">
+            <SelectValue placeholder="All roles" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ALL_ROLES_VALUE}>All roles</SelectItem>
+            {ROLE_OPTIONS.map((r) => (
+              <SelectItem key={r} value={r}>
+                {r}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {error && (
@@ -241,13 +254,11 @@ export default function RolesPage() {
               >
                 User ID or email
               </label>
-              <input
+              <Input
                 id="grant-identifier"
                 aria-label="User ID or email"
-                type="text"
                 value={grantEmail}
                 onChange={(e) => setGrantEmail(e.target.value)}
-                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-gray-400 focus:outline-none"
                 placeholder="user@example.com or UUID"
               />
             </div>
@@ -258,19 +269,21 @@ export default function RolesPage() {
               >
                 Role
               </label>
-              <select
-                id="grant-role"
-                aria-label="Role"
+              <Select
                 value={grantRole}
-                onChange={(e) => setGrantRole(e.target.value as Role)}
-                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-gray-400 focus:outline-none"
+                onValueChange={(value) => setGrantRole(value as Role)}
               >
-                {ROLE_OPTIONS.map((r) => (
-                  <option key={r} value={r}>
-                    {r}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger id="grant-role" aria-label="Role" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {ROLE_OPTIONS.map((r) => (
+                    <SelectItem key={r} value={r}>
+                      {r}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
           <DialogFooter>

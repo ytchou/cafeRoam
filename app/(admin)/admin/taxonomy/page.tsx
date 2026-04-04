@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
-import { ConfirmDialog } from '../_components/ConfirmDialog';
 import { toast } from 'sonner';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   Table,
   TableBody,
@@ -12,6 +12,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { getStatusVariant } from '../_lib/status-badge';
+import { createClient } from '@/lib/supabase/client';
+import { ConfirmDialog } from '../_components/ConfirmDialog';
 
 interface TagFrequency {
   tag_id: string;
@@ -244,7 +247,7 @@ export default function TaxonomyPage() {
                   >
                     {shop.max_confidence.toFixed(2)}
                   </span>
-                  <button
+                  <Button
                     onClick={() =>
                       setConfirmEnqueue({
                         shopId: shop.id,
@@ -254,10 +257,11 @@ export default function TaxonomyPage() {
                       })
                     }
                     disabled={enqueuingIds.has(shop.id)}
-                    className="ml-2 rounded bg-blue-100 px-2 py-0.5 text-xs text-blue-700 hover:bg-blue-200 disabled:opacity-50"
+                    variant="secondary"
+                    size="sm"
                   >
                     {enqueuingIds.has(shop.id) ? 'Queued...' : 'Re-enrich'}
-                  </button>
+                  </Button>
                 </div>
               </li>
             ))}
@@ -278,10 +282,10 @@ export default function TaxonomyPage() {
               >
                 <span>{shop.name}</span>
                 <div className="flex items-center gap-2">
-                  <span className="rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-600">
+                  <Badge variant={getStatusVariant(shop.processing_status)}>
                     {shop.processing_status}
-                  </span>
-                  <button
+                  </Badge>
+                  <Button
                     onClick={() =>
                       setConfirmEnqueue({
                         shopId: shop.id,
@@ -291,12 +295,13 @@ export default function TaxonomyPage() {
                       })
                     }
                     disabled={enqueuingIds.has(shop.id)}
-                    className="ml-2 rounded bg-blue-100 px-2 py-0.5 text-xs text-blue-700 hover:bg-blue-200 disabled:opacity-50"
+                    variant="secondary"
+                    size="sm"
                   >
                     {enqueuingIds.has(shop.id)
                       ? 'Queued...'
                       : 'Generate Embedding'}
-                  </button>
+                  </Button>
                 </div>
               </li>
             ))}

@@ -2,6 +2,15 @@
 
 import { Fragment, useEffect, useState, useCallback, useRef } from 'react';
 import { toast } from 'sonner';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   Table,
   TableBody,
@@ -10,6 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { getStatusVariant } from '../../_lib/status-badge';
 import { createClient } from '@/lib/supabase/client';
 import { ConfirmDialog } from '../../_components/ConfirmDialog';
 
@@ -44,14 +54,6 @@ const JOB_TYPE_OPTIONS = [
   'generate_embedding',
   'scrape_shop',
 ] as const;
-
-const STATUS_COLORS: Record<string, string> = {
-  pending: 'bg-yellow-100 text-yellow-700',
-  claimed: 'bg-blue-100 text-blue-700',
-  completed: 'bg-green-100 text-green-700',
-  failed: 'bg-red-100 text-red-700',
-  dead_letter: 'bg-gray-100 text-gray-700',
-};
 
 const PAGE_SIZE = 20;
 
@@ -174,38 +176,46 @@ export function RawJobsList({ initialStatus }: { initialStatus?: string }) {
       <div className="flex gap-4">
         <label className="flex items-center gap-2 text-sm">
           Status:
-          <select
+          <Select
             value={statusFilter}
-            onChange={(e) => {
-              setStatusFilter(e.target.value);
+            onValueChange={(value) => {
+              setStatusFilter(value);
               setPage(1);
             }}
-            className="rounded border px-2 py-1"
           >
-            {STATUS_OPTIONS.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {STATUS_OPTIONS.map((s) => (
+                <SelectItem key={s} value={s}>
+                  {s}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </label>
 
         <label className="flex items-center gap-2 text-sm">
           Type:
-          <select
+          <Select
             value={typeFilter}
-            onChange={(e) => {
-              setTypeFilter(e.target.value);
+            onValueChange={(value) => {
+              setTypeFilter(value);
               setPage(1);
             }}
-            className="rounded border px-2 py-1"
           >
-            {JOB_TYPE_OPTIONS.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {JOB_TYPE_OPTIONS.map((t) => (
+                <SelectItem key={t} value={t}>
+                  {t}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </label>
       </div>
 
@@ -232,11 +242,9 @@ export function RawJobsList({ initialStatus }: { initialStatus?: string }) {
               >
                 <TableCell className="py-2">{job.job_type}</TableCell>
                 <TableCell className="py-2">
-                  <span
-                    className={`rounded px-2 py-0.5 text-xs ${STATUS_COLORS[job.status] || 'bg-gray-100 text-gray-700'}`}
-                  >
+                  <Badge variant={getStatusVariant(job.status)}>
                     {job.status}
-                  </span>
+                  </Badge>
                 </TableCell>
                 <TableCell className="py-2">{job.priority}</TableCell>
                 <TableCell className="py-2">{job.attempts}</TableCell>
@@ -251,29 +259,29 @@ export function RawJobsList({ initialStatus }: { initialStatus?: string }) {
                 </TableCell>
                 <TableCell className="py-2">
                   {(job.status === 'pending' || job.status === 'claimed') && (
-                    <button
-                      type="button"
+                    <Button
                       onClick={(e) => {
                         e.stopPropagation();
                         setConfirmAction({ type: 'cancel', jobId: job.id });
                       }}
-                      className="rounded bg-red-50 px-2 py-1 text-xs text-red-600 hover:bg-red-100"
+                      variant="destructive"
+                      size="sm"
                     >
                       Cancel
-                    </button>
+                    </Button>
                   )}
                   {(job.status === 'failed' ||
                     job.status === 'dead_letter') && (
-                    <button
-                      type="button"
+                    <Button
                       onClick={(e) => {
                         e.stopPropagation();
                         setConfirmAction({ type: 'retry', jobId: job.id });
                       }}
-                      className="rounded bg-blue-50 px-2 py-1 text-xs text-blue-600 hover:bg-blue-100"
+                      variant="secondary"
+                      size="sm"
                     >
                       Retry
-                    </button>
+                    </Button>
                   )}
                 </TableCell>
               </TableRow>
@@ -310,23 +318,23 @@ export function RawJobsList({ initialStatus }: { initialStatus?: string }) {
 
       {totalPages > 1 && (
         <div className="flex items-center justify-between">
-          <button
+          <Button
             disabled={page <= 1}
             onClick={() => setPage((p) => p - 1)}
-            className="rounded border px-3 py-1 text-sm disabled:opacity-50"
+            variant="outline"
           >
             Previous
-          </button>
+          </Button>
           <span className="text-sm text-gray-500">
             Page {page} of {totalPages}
           </span>
-          <button
+          <Button
             disabled={page >= totalPages}
             onClick={() => setPage((p) => p + 1)}
-            className="rounded border px-3 py-1 text-sm disabled:opacity-50"
+            variant="outline"
           >
             Next
-          </button>
+          </Button>
         </div>
       )}
       <ConfirmDialog
