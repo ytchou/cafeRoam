@@ -18,19 +18,19 @@ The tarot reveal mechanic (Explore) adds a playful, slightly mystical register t
 
 ## 2. Color Palette & Roles
 
-| Name             | Hex       | Role                                                                                                                                          |
-| ---------------- | --------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| Terracotta       | `#E06B3F` | Primary brand accent — CTAs, search bar accents, active states, focus rings, map pin stroke                                                   |
-| Map Brown        | `#8b5e3c` | Map pin fill — warm coffee leather, slightly darker than terracotta                                                                           |
-| Espresso         | `#2c1810` | Active/selected state backgrounds — deepest brand tone, used for selected chips, tags, and active states                                      |
-| Deep Espresso    | `#3d2314` | Discovery page (`/`) hero background only — slightly lighter than Espresso to prevent the hero from reading as pure black on OLED displays     |
-| Warm White       | `#ffffff` | Page background, card surface, input background                                                                                               |
-| Cream Card       | `#fdf8f5` | Selected card background — barely-there warmth that signals selection without using color                                                     |
-| Parchment Toggle | `#f0efed` | Toggle backgrounds, inactive tab bars — neutral warm surface                                                                                  |
-| Slate Text       | `#6b7280` | Secondary body text — descriptions, metadata, labels                                                                                          |
-| Ash Text         | `#9ca3af` | Tertiary text — placeholders, disabled states, timestamps                                                                                     |
-| Star Gold        | `#fcd34d` | Rating stars only — never used decoratively                                                                                                   |
-| Cool Border      | `#e5e7eb` | Borders, dividers, inactive chip outlines — neutral cool                                                                                      |
+| Name             | Hex       | Role                                                                                                                                       |
+| ---------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| Terracotta       | `#E06B3F` | Primary brand accent — CTAs, search bar accents, active states, focus rings, map pin stroke                                                |
+| Map Brown        | `#8b5e3c` | Map pin fill — warm coffee leather, slightly darker than terracotta                                                                        |
+| Espresso         | `#2c1810` | Active/selected state backgrounds — deepest brand tone, used for selected chips, tags, and active states                                   |
+| Deep Espresso    | `#3d2314` | Discovery page (`/`) hero background only — slightly lighter than Espresso to prevent the hero from reading as pure black on OLED displays |
+| Warm White       | `#ffffff` | Page background, card surface, input background                                                                                            |
+| Cream Card       | `#fdf8f5` | Selected card background — barely-there warmth that signals selection without using color                                                  |
+| Parchment Toggle | `#f0efed` | Toggle backgrounds, inactive tab bars — neutral warm surface                                                                               |
+| Slate Text       | `#6b7280` | Secondary body text — descriptions, metadata, labels                                                                                       |
+| Ash Text         | `#9ca3af` | Tertiary text — placeholders, disabled states, timestamps                                                                                  |
+| Star Gold        | `#fcd34d` | Rating stars only — never used decoratively                                                                                                |
+| Cool Border      | `#e5e7eb` | Borders, dividers, inactive chip outlines — neutral cool                                                                                   |
 
 **Usage rules:**
 

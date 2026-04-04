@@ -17,7 +17,11 @@
       "status": "debatable"
     }
   ],
-  "active_agents": ["Design Quality", "Standards & Conventions", "Test Philosophy"],
+  "active_agents": [
+    "Design Quality",
+    "Standards & Conventions",
+    "Test Philosophy"
+  ],
   "skipped": [],
   "head_sha": "7e93f625e34364f6f504c0269761f60ae3cce7bb",
   "review_log_path": "docs/reviews/2026-04-04-fix-dev-236-mobile-home-nav-footer.md"
