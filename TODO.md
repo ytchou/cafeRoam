@@ -26,7 +26,7 @@
 - [x] Task 6: Fix a11y — keyboard rows, form labels, progress bars, sortable headers (DEV-234)
 
 **Wave 5 — Verify:**
-- [ ] Task 7: Consistency pass — grep for stragglers, full test suite (DEV-235)
+- [x] Task 7: Consistency pass — grep for stragglers, full test suite (DEV-235)
 
 ---
 

@@ -66,8 +66,8 @@ export function ShopTable({
     });
   }
 
-  function handleSelectAll() {
-    if (selectedShopIds.size === shops.length) {
+  function handleSelectAll(checked: boolean) {
+    if (!checked) {
       setSelectedShopIds(new Set());
     } else {
       setSelectedShopIds(new Set(shops.map((s) => s.id)));
@@ -149,7 +149,7 @@ export function ShopTable({
                       shops.length > 0 &&
                       selectedShopIds.size === shops.length
                     }
-                    onChange={handleSelectAll}
+                    onChange={(e) => handleSelectAll(e.target.checked)}
                   />
                 </TableHead>
               )}

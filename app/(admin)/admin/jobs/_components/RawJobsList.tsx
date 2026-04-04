@@ -1,6 +1,6 @@
 'use client';
 
-import { Fragment, useEffect, useState, useCallback, useRef } from 'react';
+import { Fragment, useEffect, useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -20,8 +20,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { getStatusVariant } from '../../_lib/status-badge';
-import { createClient } from '@/lib/supabase/client';
 import { ConfirmDialog } from '../../_components/ConfirmDialog';
+import { useAdminAuth } from '../../_hooks/use-admin-auth';
 
 interface Job {
   id: string;
@@ -58,6 +58,7 @@ const JOB_TYPE_OPTIONS = [
 const PAGE_SIZE = 20;
 
 export function RawJobsList({ initialStatus }: { initialStatus?: string }) {
+  const { getToken } = useAdminAuth();
   const [data, setData] = useState<JobsResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -73,15 +74,16 @@ export function RawJobsList({ initialStatus }: { initialStatus?: string }) {
   const [typeFilter, setTypeFilter] = useState('all');
   const [page, setPage] = useState(1);
   const [expandedJobId, setExpandedJobId] = useState<string | null>(null);
-  const tokenRef = useRef<string | null>(null);
 
   const fetchJobs = useCallback(
-    async (
-      token: string,
-      currentPage: number,
-      status: string,
-      jobType: string
-    ) => {
+    async (currentPage: number, status: string, jobType: string) => {
+      setLoading(true);
+      const token = await getToken();
+      if (!token) {
+        setLoading(false);
+        return;
+      }
+
       const params = new URLSearchParams({
         offset: String((currentPage - 1) * PAGE_SIZE),
         limit: String(PAGE_SIZE),
@@ -102,32 +104,24 @@ export function RawJobsList({ initialStatus }: { initialStatus?: string }) {
       setError(null);
       setLoading(false);
     },
-    []
+    [getToken]
   );
 
   useEffect(() => {
-    async function load() {
-      const supabase = createClient();
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session) {
-        setLoading(false);
-        return;
-      }
+    const timeoutId = setTimeout(() => {
+      void fetchJobs(page, statusFilter, typeFilter);
+    }, 0);
 
-      tokenRef.current = session.access_token;
-      fetchJobs(session.access_token, page, statusFilter, typeFilter);
-    }
-    load();
+    return () => clearTimeout(timeoutId);
   }, [page, statusFilter, typeFilter, fetchJobs]);
 
   async function handleCancel(jobId: string) {
-    if (!tokenRef.current) return;
     try {
+      const token = await getToken();
+      if (!token) return;
       const res = await fetch(`/api/admin/pipeline/jobs/${jobId}/cancel`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${tokenRef.current}` },
+        headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
@@ -135,18 +129,19 @@ export function RawJobsList({ initialStatus }: { initialStatus?: string }) {
         return;
       }
       toast.success('Job cancelled');
-      fetchJobs(tokenRef.current, page, statusFilter, typeFilter);
+      fetchJobs(page, statusFilter, typeFilter);
     } catch {
       toast.error('Network error');
     }
   }
 
   async function handleRetry(jobId: string) {
-    if (!tokenRef.current) return;
     try {
+      const token = await getToken();
+      if (!token) return;
       const res = await fetch(`/api/admin/pipeline/retry/${jobId}`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${tokenRef.current}` },
+        headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
@@ -154,7 +149,7 @@ export function RawJobsList({ initialStatus }: { initialStatus?: string }) {
         return;
       }
       toast.success('Job queued for retry');
-      fetchJobs(tokenRef.current, page, statusFilter, typeFilter);
+      fetchJobs(page, statusFilter, typeFilter);
     } catch {
       toast.error('Network error');
     }

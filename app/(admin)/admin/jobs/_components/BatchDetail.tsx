@@ -138,18 +138,20 @@ export function BatchDetail({
       {data?.status_summary && (
         <div className="flex flex-wrap gap-1">
           {Object.entries(data.status_summary).map(([st, count]) => (
-            <button
+            <Button
               key={st}
               onClick={() => {
                 setStatusFilter(statusFilter === st ? '' : st);
                 setPage(1);
               }}
+              variant="outline"
+              size="sm"
               className={`rounded px-2 py-0.5 text-xs ring-1 ring-transparent transition ${
                 STATUS_COLORS[st] || 'bg-gray-100 text-gray-700'
               } ${statusFilter === st ? 'ring-current' : 'opacity-80 hover:opacity-100'}`}
             >
               {st}: {count}
-            </button>
+            </Button>
           ))}
         </div>
       )}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -13,8 +13,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { getStatusVariant } from '../_lib/status-badge';
-import { createClient } from '@/lib/supabase/client';
 import { ConfirmDialog } from '../_components/ConfirmDialog';
+import { useAdminAuth } from '../_hooks/use-admin-auth';
 
 interface TagFrequency {
   tag_id: string;
@@ -64,6 +64,7 @@ type SortKey = keyof Pick<
 type SortDir = 'asc' | 'desc';
 
 export default function TaxonomyPage() {
+  const { getToken } = useAdminAuth();
   const [data, setData] = useState<TaxonomyStats | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -76,8 +77,6 @@ export default function TaxonomyPage() {
     jobType: string;
     label: string;
   } | null>(null);
-  const tokenRef = useRef('');
-
   function handleSort(key: SortKey) {
     if (key === sortKey) {
       setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
@@ -89,16 +88,11 @@ export default function TaxonomyPage() {
 
   useEffect(() => {
     async function load() {
-      const supabase = createClient();
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session) return;
-
-      tokenRef.current = session.access_token;
+      const token = await getToken();
+      if (!token) return;
 
       const res = await fetch('/api/admin/taxonomy/stats', {
-        headers: { Authorization: `Bearer ${session.access_token}` },
+        headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
@@ -110,16 +104,17 @@ export default function TaxonomyPage() {
       setLoading(false);
     }
     load();
-  }, []);
+  }, [getToken]);
 
   async function handleEnqueue(shopId: string, jobType: string) {
     setEnqueuingIds((prev) => new Set(prev).add(shopId));
     try {
+      const token = await getToken();
       const res = await fetch(`/api/admin/shops/${shopId}/enqueue`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${tokenRef.current}`,
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({ job_type: jobType }),
       });

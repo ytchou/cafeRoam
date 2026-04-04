@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { useAdminAuth } from '../_hooks/use-admin-auth';
 import { ImportSection } from './_components/ImportSection';
 import { ShopFilterBar } from './_components/ShopFilterBar';
@@ -187,13 +189,9 @@ export default function AdminShopsList() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Shops</h1>
-        <button
-          type="button"
-          onClick={() => setShowCreateForm((v) => !v)}
-          className="rounded bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700"
-        >
+        <Button onClick={() => setShowCreateForm((v) => !v)}>
           Create Shop
-        </button>
+        </Button>
       </div>
 
       {Object.keys(pipelineStatus).length > 0 && (
@@ -205,14 +203,15 @@ export default function AdminShopsList() {
             {Object.keys(STATUS_COLORS)
               .filter((key) => (pipelineStatus[key] ?? 0) > 0)
               .map((key) => (
-                <button
+                <Button
                   key={key}
-                  type="button"
+                  variant="outline"
+                  size="sm"
                   onClick={() => setStatusFilter(key)}
                   className={`rounded-full border px-3 py-1 text-xs font-medium ${STATUS_COLORS[key]} transition-opacity hover:opacity-80`}
                 >
                   {STATUS_LABELS[key]}: {pipelineStatus[key]}
-                </button>
+                </Button>
               ))}
           </div>
           {[
@@ -240,13 +239,9 @@ export default function AdminShopsList() {
                 Review and bulk-approve to queue them for scraping.
               </p>
             </div>
-            <button
-              type="button"
-              onClick={() => setStatusFilter('pending_review')}
-              className="rounded bg-blue-600 px-3 py-1.5 text-sm text-white hover:bg-blue-700"
-            >
+            <Button onClick={() => setStatusFilter('pending_review')}>
               Review &amp; Approve
-            </button>
+            </Button>
           </div>
         )}
 
@@ -261,24 +256,24 @@ export default function AdminShopsList() {
             <label htmlFor="shop-name" className="block text-sm font-medium">
               Name
             </label>
-            <input
+            <Input
               id="shop-name"
               name="name"
               type="text"
               required
-              className="mt-1 w-full rounded border px-3 py-2 text-sm"
+              className="mt-1"
             />
           </div>
           <div>
             <label htmlFor="shop-address" className="block text-sm font-medium">
               Address
             </label>
-            <input
+            <Input
               id="shop-address"
               name="address"
               type="text"
               required
-              className="mt-1 w-full rounded border px-3 py-2 text-sm"
+              className="mt-1"
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -289,13 +284,13 @@ export default function AdminShopsList() {
               >
                 Latitude
               </label>
-              <input
+              <Input
                 id="shop-latitude"
                 name="latitude"
                 type="number"
                 step="any"
                 required
-                className="mt-1 w-full rounded border px-3 py-2 text-sm"
+                className="mt-1"
               />
             </div>
             <div>
@@ -305,23 +300,23 @@ export default function AdminShopsList() {
               >
                 Longitude
               </label>
-              <input
+              <Input
                 id="shop-longitude"
                 name="longitude"
                 type="number"
                 step="any"
                 required
-                className="mt-1 w-full rounded border px-3 py-2 text-sm"
+                className="mt-1"
               />
             </div>
           </div>
-          <button
+          <Button
             type="submit"
             disabled={createLoading}
-            className="rounded bg-green-600 px-4 py-2 text-sm text-white hover:bg-green-700 disabled:opacity-50"
+            variant="default"
           >
             {createLoading ? 'Saving...' : 'Save'}
-          </button>
+          </Button>
         </form>
       )}
 

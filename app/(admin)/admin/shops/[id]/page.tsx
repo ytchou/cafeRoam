@@ -1,15 +1,15 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Image from 'next/image';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { createClient } from '@/lib/supabase/client';
 import { getStatusVariant } from '../../_lib/status-badge';
 import { ConfirmDialog } from '../../_components/ConfirmDialog';
+import { useAdminAuth } from '../../_hooks/use-admin-auth';
 
 interface ModeScores {
   work: number;
@@ -50,6 +50,7 @@ interface ConfirmActionState {
 }
 
 export default function AdminShopDetail() {
+  const { getToken } = useAdminAuth();
   const { id } = useParams<{ id: string }>();
   const [shop, setShop] = useState<ShopDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -66,19 +67,14 @@ export default function AdminShopDetail() {
   const [confirmAction, setConfirmAction] = useState<ConfirmActionState | null>(
     null
   );
-  const tokenRef = useRef<string | null>(null);
 
   useEffect(() => {
     async function load() {
-      const supabase = createClient();
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session) return;
-      tokenRef.current = session.access_token;
+      const token = await getToken();
+      if (!token) return;
 
       const res = await fetch(`/api/admin/shops/${id}`, {
-        headers: { Authorization: `Bearer ${session.access_token}` },
+        headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
@@ -98,10 +94,10 @@ export default function AdminShopDetail() {
       setLoading(false);
     }
     load();
-  }, [id]);
+  }, [getToken, id]);
 
   async function handleEnqueue(jobType: string) {
-    const token = tokenRef.current;
+    const token = await getToken();
     if (!token) return;
     const toastId = toast.loading(`Enqueuing ${jobType}...`);
     try {
@@ -125,7 +121,7 @@ export default function AdminShopDetail() {
   }
 
   async function handleToggleLiveAction() {
-    const token = tokenRef.current;
+    const token = await getToken();
     if (!token || !shop) return;
     const newStatus = shop.processing_status === 'live' ? 'pending' : 'live';
     const toastId = toast.loading(`Setting status to ${newStatus}...`);
@@ -173,7 +169,7 @@ export default function AdminShopDetail() {
 
   async function handleSearchRank() {
     if (!searchQuery.trim()) return;
-    const token = tokenRef.current;
+    const token = await getToken();
     if (!token) return;
     setSearchResult('Searching...');
     try {
@@ -199,7 +195,7 @@ export default function AdminShopDetail() {
   }
 
   async function handleSaveEdit() {
-    const token = tokenRef.current;
+    const token = await getToken();
     if (!token) return;
 
     const lat = parseFloat(editForm.latitude);

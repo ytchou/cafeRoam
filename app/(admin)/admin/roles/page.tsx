@@ -1,8 +1,7 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { createClient } from '@/lib/supabase/client';
 import { ConfirmDialog } from '../_components/ConfirmDialog';
 import {
   Dialog,
@@ -20,6 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { useAdminAuth } from '../_hooks/use-admin-auth';
 import {
   Table,
   TableBody,
@@ -47,11 +47,11 @@ interface RoleGrant {
 }
 
 export default function RolesPage() {
+  const { getToken } = useAdminAuth();
   const [grants, setGrants] = useState<RoleGrant[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filterRole, setFilterRole] = useState('');
-  const tokenRef = useRef('');
 
   const [grantDialogOpen, setGrantDialogOpen] = useState(false);
   const [grantEmail, setGrantEmail] = useState('');
@@ -61,56 +61,42 @@ export default function RolesPage() {
   const [revokeTarget, setRevokeTarget] = useState<RoleGrant | null>(null);
   const [revoking, setRevoking] = useState(false);
 
-  const fetchRoles = useCallback(async (role?: string) => {
-    setLoading(true);
-    setError(null);
-    const url = role
-      ? `/api/admin/roles?role=${encodeURIComponent(role)}`
-      : '/api/admin/roles';
-    const res = await fetch(url, {
-      headers: tokenRef.current
-        ? { Authorization: `Bearer ${tokenRef.current}` }
-        : {},
-    });
-    if (res.ok) {
-      setGrants(await res.json());
-    } else {
-      const body = await res.json().catch(() => ({}));
-      setError(body.detail ?? 'Failed to load roles');
-    }
-    setLoading(false);
-  }, []);
+  const fetchRoles = useCallback(
+    async (role?: string) => {
+      setLoading(true);
+      setError(null);
 
-  useEffect(() => {
-    async function load() {
-      const {
-        data: { session },
-      } = await createClient().auth.getSession();
-      if (session) {
-        tokenRef.current = session.access_token;
-        fetchRoles(filterRole || undefined);
+      const token = await getToken();
+      const url = role
+        ? `/api/admin/roles?role=${encodeURIComponent(role)}`
+        : '/api/admin/roles';
+      const res = await fetch(url, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (res.ok) {
+        setGrants(await res.json());
+      } else {
+        const body = await res.json().catch(() => ({}));
+        setError(body.detail ?? 'Failed to load roles');
       }
-    }
-    load();
-  }, [fetchRoles]);
+      setLoading(false);
+    },
+    [getToken]
+  );
 
   useEffect(() => {
-    async function refetch() {
-      await fetchRoles(filterRole || undefined);
-    }
-    if (tokenRef.current) refetch();
+    fetchRoles(filterRole || undefined);
   }, [filterRole, fetchRoles]);
 
   async function handleGrant() {
     setGranting(true);
     try {
+      const token = await getToken();
       const res = await fetch('/api/admin/roles', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...(tokenRef.current
-            ? { Authorization: `Bearer ${tokenRef.current}` }
-            : {}),
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({ user_id: grantEmail, role: grantRole }),
       });
@@ -132,13 +118,12 @@ export default function RolesPage() {
     if (!revokeTarget) return;
     setRevoking(true);
     try {
+      const token = await getToken();
       const res = await fetch(
         `/api/admin/roles/${revokeTarget.user_id}/${revokeTarget.role}`,
         {
           method: 'DELETE',
-          headers: tokenRef.current
-            ? { Authorization: `Bearer ${tokenRef.current}` }
-            : {},
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
         }
       );
       if (!res.ok) {
