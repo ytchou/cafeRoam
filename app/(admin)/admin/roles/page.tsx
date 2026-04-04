@@ -12,6 +12,14 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 
 const ROLE_OPTIONS = [
   'blogger',
@@ -176,34 +184,34 @@ export default function RolesPage() {
         <p className="text-sm text-gray-500">Loading...</p>
       ) : (
         <div className="overflow-hidden rounded-lg border border-gray-200">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
-              <tr>
-                <th className="px-4 py-3">User</th>
-                <th className="px-4 py-3">Role</th>
-                <th className="px-4 py-3">Granted</th>
-                <th className="px-4 py-3">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 bg-white">
+          <Table className="w-full text-sm">
+            <TableHeader className="bg-gray-50 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+              <TableRow>
+                <TableHead className="px-4 py-3">User</TableHead>
+                <TableHead className="px-4 py-3">Role</TableHead>
+                <TableHead className="px-4 py-3">Granted</TableHead>
+                <TableHead className="px-4 py-3">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody className="divide-y divide-gray-100 bg-white">
               {grants.length === 0 ? (
-                <tr>
-                  <td
+                <TableRow>
+                  <TableCell
                     colSpan={4}
                     className="px-4 py-6 text-center text-gray-400"
                   >
                     No role grants found.
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ) : (
                 grants.map((grant) => (
-                  <tr key={`${grant.user_id}-${grant.role}`}>
-                    <td className="px-4 py-3">{grant.email}</td>
-                    <td className="px-4 py-3">{grant.role}</td>
-                    <td className="px-4 py-3">
+                  <TableRow key={`${grant.user_id}-${grant.role}`}>
+                    <TableCell className="px-4 py-3">{grant.email}</TableCell>
+                    <TableCell className="px-4 py-3">{grant.role}</TableCell>
+                    <TableCell className="px-4 py-3">
                       {new Date(grant.granted_at).toLocaleDateString('en-CA')}
-                    </td>
-                    <td className="px-4 py-3">
+                    </TableCell>
+                    <TableCell className="px-4 py-3">
                       <Button
                         variant="destructive"
                         size="sm"
@@ -211,12 +219,12 @@ export default function RolesPage() {
                       >
                         Revoke
                       </Button>
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))
               )}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
       )}
 

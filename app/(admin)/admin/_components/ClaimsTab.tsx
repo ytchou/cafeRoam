@@ -2,6 +2,14 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { ConfirmDialog } from './ConfirmDialog';
 
 interface Claim {
@@ -162,29 +170,29 @@ export function ClaimsTab({ getToken }: ClaimsTabProps) {
         ) : claims.length === 0 ? (
           <p className="text-gray-500">No claims found.</p>
         ) : (
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="border-b text-gray-500">
-                <th className="pb-2">Shop</th>
-                <th className="pb-2">Contact</th>
-                <th className="pb-2">Role</th>
-                <th className="pb-2">Status</th>
-                <th className="pb-2">Date</th>
-                <th className="pb-2">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
+          <Table className="w-full text-left text-sm">
+            <TableHeader>
+              <TableRow className="border-b text-gray-500">
+                <TableHead className="pb-2">Shop</TableHead>
+                <TableHead className="pb-2">Contact</TableHead>
+                <TableHead className="pb-2">Role</TableHead>
+                <TableHead className="pb-2">Status</TableHead>
+                <TableHead className="pb-2">Date</TableHead>
+                <TableHead className="pb-2">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {claims.map((claim) => (
-                <tr key={claim.id} className="border-b">
-                  <td className="py-2">{claim.shops?.name ?? '—'}</td>
-                  <td className="py-2">
+                <TableRow key={claim.id} className="border-b">
+                  <TableCell className="py-2">{claim.shops?.name ?? '—'}</TableCell>
+                  <TableCell className="py-2">
                     <div>{claim.contact_name}</div>
                     <div className="text-xs text-gray-500">
                       {claim.contact_email}
                     </div>
-                  </td>
-                  <td className="py-2">{claim.role}</td>
-                  <td className="py-2">
+                  </TableCell>
+                  <TableCell className="py-2">{claim.role}</TableCell>
+                  <TableCell className="py-2">
                     <span
                       className={`inline-block rounded px-2 py-0.5 text-xs font-medium ${
                         claim.status === 'pending'
@@ -196,11 +204,11 @@ export function ClaimsTab({ getToken }: ClaimsTabProps) {
                     >
                       {claim.status}
                     </span>
-                  </td>
-                  <td className="py-2 text-gray-500">
+                  </TableCell>
+                  <TableCell className="py-2 text-gray-500">
                     {new Date(claim.created_at).toLocaleDateString()}
-                  </td>
-                  <td className="py-2">
+                  </TableCell>
+                  <TableCell className="py-2">
                     <div className="flex flex-col gap-2">
                       <div className="flex gap-2">
                         <button
@@ -274,11 +282,11 @@ export function ClaimsTab({ getToken }: ClaimsTabProps) {
                         </div>
                       )}
                     </div>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         )}
       </section>
 

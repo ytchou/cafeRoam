@@ -1,6 +1,14 @@
 'use client';
 
 import { Fragment, useCallback, useEffect, useState } from 'react';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { createClient } from '@/lib/supabase/client';
 import { BatchDetail } from './BatchDetail';
 
@@ -96,18 +104,18 @@ export function BatchesList() {
           No batch runs yet. Approve some shops to create a batch.
         </p>
       ) : (
-        <table className="w-full text-left text-sm">
-          <thead>
-            <tr className="border-b text-gray-500">
-              <th className="pb-2">Date</th>
-              <th className="pb-2">Shops</th>
-              <th className="pb-2">Status Breakdown</th>
-            </tr>
-          </thead>
-          <tbody>
+        <Table className="w-full text-left text-sm">
+          <TableHeader>
+            <TableRow className="border-b text-gray-500">
+              <TableHead className="pb-2">Date</TableHead>
+              <TableHead className="pb-2">Shops</TableHead>
+              <TableHead className="pb-2">Status Breakdown</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {data.batches.map((batch) => (
               <Fragment key={batch.batch_id}>
-                <tr
+                <TableRow
                   className="cursor-pointer border-b hover:bg-gray-50"
                   onClick={() =>
                     setExpandedBatchId(
@@ -115,11 +123,11 @@ export function BatchesList() {
                     )
                   }
                 >
-                  <td className="py-2 text-gray-500">
+                  <TableCell className="py-2 text-gray-500">
                     {new Date(batch.created_at).toLocaleString()}
-                  </td>
-                  <td className="py-2">{batch.shop_count}</td>
-                  <td className="py-2">
+                  </TableCell>
+                  <TableCell className="py-2">{batch.shop_count}</TableCell>
+                  <TableCell className="py-2">
                     <div className="flex flex-wrap gap-1">
                       {Object.entries(batch.status_counts).map(
                         ([status, count]) => (
@@ -132,19 +140,19 @@ export function BatchesList() {
                         )
                       )}
                     </div>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
                 {expandedBatchId === batch.batch_id && token && (
-                  <tr className="border-b bg-gray-50">
-                    <td colSpan={3} className="px-4 py-3">
+                  <TableRow className="border-b bg-gray-50">
+                    <TableCell colSpan={3} className="px-4 py-3">
                       <BatchDetail batchId={batch.batch_id} token={token} />
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 )}
               </Fragment>
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       )}
 
       {totalPages > 1 && (

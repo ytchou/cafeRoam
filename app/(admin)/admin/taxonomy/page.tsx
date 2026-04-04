@@ -4,6 +4,14 @@ import { useEffect, useRef, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { ConfirmDialog } from '../_components/ConfirmDialog';
 import { toast } from 'sonner';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 
 interface TagFrequency {
   tag_id: string;
@@ -177,9 +185,9 @@ export default function TaxonomyPage() {
 
       <section>
         <h2 className="mb-4 text-lg font-semibold">Tag Frequency</h2>
-        <table className="w-full text-left text-sm">
-          <thead>
-            <tr className="border-b text-gray-500">
+        <Table className="w-full text-left text-sm">
+          <TableHeader>
+            <TableRow className="border-b text-gray-500">
               {(
                 [
                   ['tag_id', 'Tag ID'],
@@ -188,7 +196,7 @@ export default function TaxonomyPage() {
                   ['avg_confidence', 'Avg Confidence'],
                 ] as [SortKey, string][]
               ).map(([key, label]) => (
-                <th
+                <TableHead
                   key={key}
                   className="cursor-pointer pb-2 select-none hover:text-gray-800"
                   onClick={() => handleSort(key)}
@@ -199,23 +207,23 @@ export default function TaxonomyPage() {
                       {sortDir === 'asc' ? '↑' : '↓'}
                     </span>
                   )}
-                </th>
+                </TableHead>
               ))}
-            </tr>
-          </thead>
-          <tbody>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {sortedTags.map((tag) => (
-              <tr key={tag.tag_id} className="border-b">
-                <td className="py-2">{tag.tag_id}</td>
-                <td className="py-2 text-gray-500">{tag.dimension}</td>
-                <td className="py-2">{tag.shop_count}</td>
-                <td className="py-2">
+              <TableRow key={tag.tag_id} className="border-b">
+                <TableCell className="py-2">{tag.tag_id}</TableCell>
+                <TableCell className="py-2 text-gray-500">{tag.dimension}</TableCell>
+                <TableCell className="py-2">{tag.shop_count}</TableCell>
+                <TableCell className="py-2">
                   {tag.avg_confidence?.toFixed(2) ?? '—'}
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </section>
 
       <section>

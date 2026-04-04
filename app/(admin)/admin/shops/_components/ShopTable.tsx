@@ -3,6 +3,14 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { ConfirmDialog } from '../../_components/ConfirmDialog';
 import {
   PAGE_SIZE,
@@ -130,11 +138,11 @@ export function ShopTable({
       )}
 
       <>
-        <table className="w-full text-left text-sm">
-          <thead>
-            <tr className="border-b text-gray-500">
+        <Table className="w-full text-left text-sm">
+          <TableHeader>
+            <TableRow className="border-b text-gray-500">
               {isReviewFilter && (
-                <th className="pr-2 pb-2">
+                <TableHead className="pr-2 pb-2">
                   <input
                     type="checkbox"
                     aria-label="Select all"
@@ -144,26 +152,26 @@ export function ShopTable({
                     }
                     onChange={handleSelectAll}
                   />
-                </th>
+                </TableHead>
               )}
-              <th className="pb-2">Name</th>
-              <th className="pb-2">Address</th>
-              <th className="pb-2">Status</th>
-              <th className="pb-2">Source</th>
-              <th className="pb-2">Tags</th>
-              <th className="pb-2">Embedding</th>
-              <th className="pb-2">Enriched</th>
-            </tr>
-          </thead>
-          <tbody>
+              <TableHead className="pb-2">Name</TableHead>
+              <TableHead className="pb-2">Address</TableHead>
+              <TableHead className="pb-2">Status</TableHead>
+              <TableHead className="pb-2">Source</TableHead>
+              <TableHead className="pb-2">Tags</TableHead>
+              <TableHead className="pb-2">Embedding</TableHead>
+              <TableHead className="pb-2">Enriched</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {shops.map((shop) => (
-              <tr
+              <TableRow
                 key={shop.id}
                 onClick={() => router.push(`/admin/shops/${shop.id}`)}
                 className="cursor-pointer border-b hover:bg-gray-50"
               >
                 {isReviewFilter && (
-                  <td
+                  <TableCell
                     className="py-2 pr-2"
                     onClick={(e) => e.stopPropagation()}
                   >
@@ -173,19 +181,19 @@ export function ShopTable({
                       checked={selectedShopIds.has(shop.id)}
                       onChange={() => toggleShopSelection(shop.id)}
                     />
-                  </td>
+                  </TableCell>
                 )}
-                <td className="py-2">{shop.name}</td>
-                <td className="py-2 text-gray-600">{shop.address}</td>
-                <td className="py-2">
+                <TableCell className="py-2">{shop.name}</TableCell>
+                <TableCell className="py-2 text-gray-600">{shop.address}</TableCell>
+                <TableCell className="py-2">
                   {STATUS_LABELS[shop.processing_status] ??
                     shop.processing_status}
-                </td>
-                <td className="py-2 text-gray-500">
+                </TableCell>
+                <TableCell className="py-2 text-gray-500">
                   {SOURCE_LABELS[shop.source] ?? shop.source}
-                </td>
-                <td className="py-2 text-gray-500">{shop.tag_count}</td>
-                <td className="py-2 text-gray-500">
+                </TableCell>
+                <TableCell className="py-2 text-gray-500">{shop.tag_count}</TableCell>
+                <TableCell className="py-2 text-gray-500">
                   {shop.has_embedding ? (
                     <span className="rounded bg-green-100 px-1.5 py-0.5 text-xs text-green-700">
                       yes
@@ -195,26 +203,26 @@ export function ShopTable({
                       no
                     </span>
                   )}
-                </td>
-                <td className="py-2 text-gray-500">
+                </TableCell>
+                <TableCell className="py-2 text-gray-500">
                   {shop.enriched_at
                     ? new Date(shop.enriched_at).toLocaleDateString()
                     : '—'}
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ))}
             {!loading && shops.length === 0 && (
-              <tr>
-                <td
+              <TableRow>
+                <TableCell
                   colSpan={isReviewFilter ? 8 : 7}
                   className="py-8 text-center text-gray-400"
                 >
                   No shops found
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             )}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
 
         <div className="flex items-center justify-between text-sm">
           <span className="text-gray-500">

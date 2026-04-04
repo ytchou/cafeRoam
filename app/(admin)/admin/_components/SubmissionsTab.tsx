@@ -3,6 +3,14 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { toast } from 'sonner';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { ADMIN_REJECTION_REASONS } from '@/lib/constants/rejection-reasons';
 import { ConfirmDialog } from './ConfirmDialog';
 
@@ -114,26 +122,26 @@ export function SubmissionsTab({
         {data?.recent_submissions.length === 0 ? (
           <p className="text-gray-500">No submissions yet.</p>
         ) : (
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="border-b text-gray-500">
-                <th className="pb-2">URL</th>
-                <th className="pb-2">Submitted By</th>
-                <th className="pb-2">Status</th>
-                <th className="pb-2">Date</th>
-                <th className="pb-2">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
+          <Table className="w-full text-left text-sm">
+            <TableHeader>
+              <TableRow className="border-b text-gray-500">
+                <TableHead className="pb-2">URL</TableHead>
+                <TableHead className="pb-2">Submitted By</TableHead>
+                <TableHead className="pb-2">Status</TableHead>
+                <TableHead className="pb-2">Date</TableHead>
+                <TableHead className="pb-2">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {data?.recent_submissions.map((sub) => (
-                <tr key={sub.id} className="border-b">
-                  <td className="max-w-xs truncate py-2">
+                <TableRow key={sub.id} className="border-b">
+                  <TableCell className="max-w-xs truncate py-2">
                     <Link href={sub.google_maps_url}>{sub.google_maps_url}</Link>
-                  </td>
-                  <td className="py-2 text-gray-500">
+                  </TableCell>
+                  <TableCell className="py-2 text-gray-500">
                     {sub.submitted_by ?? '—'}
-                  </td>
-                  <td className="py-2">
+                  </TableCell>
+                  <TableCell className="py-2">
                     <span
                       className={`rounded px-2 py-0.5 text-xs ${
                         sub.status === 'live'
@@ -147,11 +155,11 @@ export function SubmissionsTab({
                     >
                       {sub.status}
                     </span>
-                  </td>
-                  <td className="py-2 text-gray-500">
+                  </TableCell>
+                  <TableCell className="py-2 text-gray-500">
                     {new Date(sub.created_at).toLocaleDateString()}
-                  </td>
-                  <td className="py-2">
+                  </TableCell>
+                  <TableCell className="py-2">
                     {(sub.status === 'pending' ||
                       sub.status === 'processing' ||
                       sub.status === 'pending_review') && (
@@ -209,11 +217,11 @@ export function SubmissionsTab({
                         )}
                       </div>
                     )}
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         )}
       </section>
 

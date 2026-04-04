@@ -2,6 +2,14 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 
 interface ShopDetail {
   shop_id: string;
@@ -167,23 +175,23 @@ export function BatchDetail({
           No shops match the current filter.
         </p>
       ) : (
-        <table className="w-full text-left text-sm">
-          <thead>
-            <tr className="text-gray-500">
-              <th className="pb-1">Shop</th>
-              <th className="pb-1">Status</th>
-              <th className="pb-1">Error</th>
-            </tr>
-          </thead>
-          <tbody>
+        <Table className="w-full text-left text-sm">
+          <TableHeader>
+            <TableRow className="text-gray-500">
+              <TableHead className="pb-1">Shop</TableHead>
+              <TableHead className="pb-1">Status</TableHead>
+              <TableHead className="pb-1">Error</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {data.shops.map((shop) => (
-              <tr
+              <TableRow
                 key={shop.shop_id}
                 className="cursor-pointer border-t hover:bg-gray-100"
                 onClick={() => router.push(`/admin/shops/${shop.shop_id}`)}
               >
-                <td className="py-1">{shop.name || shop.shop_id}</td>
-                <td className="py-1">
+                <TableCell className="py-1">{shop.name || shop.shop_id}</TableCell>
+                <TableCell className="py-1">
                   <span
                     className={`rounded px-2 py-0.5 text-xs ${
                       STATUS_COLORS[shop.processing_status] ||
@@ -192,16 +200,16 @@ export function BatchDetail({
                   >
                     {shop.processing_status}
                   </span>
-                </td>
-                <td className="max-w-xs truncate py-1 text-xs text-red-600">
+                </TableCell>
+                <TableCell className="max-w-xs truncate py-1 text-xs text-red-600">
                   {shop.last_error
                     ? `[${shop.failed_at_stage}] ${shop.last_error.slice(0, 80)}${shop.last_error.length > 80 ? '…' : ''}`
                     : '-'}
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       )}
 
       {/* Pagination */}

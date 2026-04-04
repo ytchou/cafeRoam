@@ -2,6 +2,14 @@
 
 import { Fragment, useEffect, useState, useCallback, useRef } from 'react';
 import { toast } from 'sonner';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { createClient } from '@/lib/supabase/client';
 import { ConfirmDialog } from '../../_components/ConfirmDialog';
 
@@ -201,47 +209,47 @@ export function RawJobsList({ initialStatus }: { initialStatus?: string }) {
         </label>
       </div>
 
-      <table className="w-full text-left text-sm">
-        <thead>
-          <tr className="border-b text-gray-500">
-            <th className="pb-2">Type</th>
-            <th className="pb-2">Status</th>
-            <th className="pb-2">Priority</th>
-            <th className="pb-2">Attempts</th>
-            <th className="pb-2">Created</th>
-            <th className="pb-2">Error</th>
-            <th className="pb-2">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
+      <Table className="w-full text-left text-sm">
+        <TableHeader>
+          <TableRow className="border-b text-gray-500">
+            <TableHead className="pb-2">Type</TableHead>
+            <TableHead className="pb-2">Status</TableHead>
+            <TableHead className="pb-2">Priority</TableHead>
+            <TableHead className="pb-2">Attempts</TableHead>
+            <TableHead className="pb-2">Created</TableHead>
+            <TableHead className="pb-2">Error</TableHead>
+            <TableHead className="pb-2">Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
           {data.jobs.map((job) => (
             <Fragment key={job.id}>
-              <tr
+              <TableRow
                 className="cursor-pointer border-b hover:bg-gray-50"
                 onClick={() =>
                   setExpandedJobId(expandedJobId === job.id ? null : job.id)
                 }
               >
-                <td className="py-2">{job.job_type}</td>
-                <td className="py-2">
+                <TableCell className="py-2">{job.job_type}</TableCell>
+                <TableCell className="py-2">
                   <span
                     className={`rounded px-2 py-0.5 text-xs ${STATUS_COLORS[job.status] || 'bg-gray-100 text-gray-700'}`}
                   >
                     {job.status}
                   </span>
-                </td>
-                <td className="py-2">{job.priority}</td>
-                <td className="py-2">{job.attempts}</td>
-                <td className="py-2 text-gray-500">
+                </TableCell>
+                <TableCell className="py-2">{job.priority}</TableCell>
+                <TableCell className="py-2">{job.attempts}</TableCell>
+                <TableCell className="py-2 text-gray-500">
                   {new Date(job.created_at).toLocaleDateString()}
-                </td>
-                <td className="max-w-xs truncate py-2 text-gray-500">
+                </TableCell>
+                <TableCell className="max-w-xs truncate py-2 text-gray-500">
                   {job.last_error
                     ? job.last_error.slice(0, 60) +
                       (job.last_error.length > 60 ? '...' : '')
                     : '-'}
-                </td>
-                <td className="py-2">
+                </TableCell>
+                <TableCell className="py-2">
                   {(job.status === 'pending' || job.status === 'claimed') && (
                     <button
                       type="button"
@@ -267,11 +275,11 @@ export function RawJobsList({ initialStatus }: { initialStatus?: string }) {
                       Retry
                     </button>
                   )}
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
               {expandedJobId === job.id && (
-                <tr className="border-b bg-gray-50">
-                  <td colSpan={7} className="px-4 py-3">
+                <TableRow className="border-b bg-gray-50">
+                  <TableCell colSpan={7} className="px-4 py-3">
                     <div className="space-y-2">
                       <div>
                         <p className="text-xs font-semibold text-gray-500">
@@ -292,13 +300,13 @@ export function RawJobsList({ initialStatus }: { initialStatus?: string }) {
                         </div>
                       )}
                     </div>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               )}
             </Fragment>
           ))}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
 
       {totalPages > 1 && (
         <div className="flex items-center justify-between">
