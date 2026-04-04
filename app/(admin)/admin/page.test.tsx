@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { render, screen, waitFor, within, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import {
@@ -370,8 +370,11 @@ describe('AdminDashboard', () => {
     await user.click(screen.getByRole('tab', { name: /claims/i }));
 
     // Change status filter to "approved"
-    const select = screen.getByRole('combobox', { name: /filter by status/i });
-    await user.selectOptions(select, 'approved');
+    const trigger = screen.getByRole('combobox', { name: /filter by status/i });
+    trigger.focus();
+    fireEvent.keyDown(trigger, { key: 'ArrowDown' });
+    const option = await screen.findByRole('option', { name: /^approved$/i });
+    fireEvent.click(option);
 
     // Should fetch with status=approved and show approved claim
     await screen.findByText('Approved Shop');

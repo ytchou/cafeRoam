@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { render, screen, waitFor, within, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import {
@@ -79,7 +79,11 @@ describe('AdminRolesPage', () => {
     render(<RolesPage />);
     await screen.findByText('admin@example.com');
 
-    await user.selectOptions(screen.getByLabelText(/filter by role/i), 'admin');
+    const trigger = screen.getByRole('combobox', { name: /filter by role/i });
+    trigger.focus();
+    fireEvent.keyDown(trigger, { key: 'ArrowDown' });
+    const option = await screen.findByRole('option', { name: /^admin$/i });
+    fireEvent.click(option);
 
     await waitFor(() => {
       expect(mockFetch).toHaveBeenCalledWith(
@@ -110,10 +114,11 @@ describe('AdminRolesPage', () => {
       within(dialog).getByLabelText(/user id or email/i),
       'user@test.com'
     );
-    await user.selectOptions(
-      within(dialog).getByLabelText(/^role$/i),
-      'member'
-    );
+    const roleTrigger = within(dialog).getByRole('combobox', { name: /^role$/i });
+    roleTrigger.focus();
+    fireEvent.keyDown(roleTrigger, { key: 'ArrowDown' });
+    const memberOption = await screen.findByRole('option', { name: /^member$/i });
+    fireEvent.click(memberOption);
     await user.click(within(dialog).getByRole('button', { name: /^grant$/i }));
 
     expect(mockFetch).toHaveBeenCalledWith(

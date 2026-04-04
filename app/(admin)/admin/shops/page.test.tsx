@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { render, screen, waitFor, within, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
@@ -167,8 +167,11 @@ describe('AdminShopsList', () => {
     });
 
     // Switch to pending_review filter to show the bulk approve bar
-    const statusSelect = screen.getByDisplayValue('All statuses');
-    await user.selectOptions(statusSelect, 'pending_review');
+    const statusTrigger = screen.getByRole('combobox', { name: /filter by status/i });
+    statusTrigger.focus();
+    fireEvent.keyDown(statusTrigger, { key: 'ArrowDown' });
+    const pendingReviewOption = await screen.findByRole('option', { name: /awaiting approval/i });
+    fireEvent.click(pendingReviewOption);
     await waitFor(() => {
       expect(screen.getByText('待審咖啡 1')).toBeInTheDocument();
     });
@@ -233,8 +236,11 @@ describe('AdminShopsList', () => {
     });
 
     // Switch to pending_review filter to show the bulk approve bar
-    const statusSelect = screen.getByDisplayValue('All statuses');
-    await user.selectOptions(statusSelect, 'pending_review');
+    const statusTrigger = screen.getByRole('combobox', { name: /filter by status/i });
+    statusTrigger.focus();
+    fireEvent.keyDown(statusTrigger, { key: 'ArrowDown' });
+    const pendingReviewOption = await screen.findByRole('option', { name: /awaiting approval/i });
+    fireEvent.click(pendingReviewOption);
     await waitFor(() => {
       expect(screen.getByText('待審咖啡 1')).toBeInTheDocument();
     });

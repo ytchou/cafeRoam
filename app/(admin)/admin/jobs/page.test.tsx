@@ -306,6 +306,7 @@ describe('AdminJobsPage', () => {
     });
 
     // The failed status filter should be pre-selected
-    expect(screen.getByDisplayValue('failed')).toBeInTheDocument();
+    const statusTrigger = screen.getAllByRole('combobox')[0];
+    expect(statusTrigger).toHaveTextContent('failed');
   });
 });
