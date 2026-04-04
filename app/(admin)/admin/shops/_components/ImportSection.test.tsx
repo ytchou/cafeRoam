@@ -44,7 +44,12 @@ describe('ImportSection', () => {
       json: async () => ({
         imported: 12,
         flagged_duplicates: 2,
-        filtered: { invalid_url: 0, invalid_name: 0, known_failed: 0, closed: 0 },
+        filtered: {
+          invalid_url: 0,
+          invalid_name: 0,
+          known_failed: 0,
+          closed: 0,
+        },
         pending_url_check: 0,
         region: 'taipei',
       }),

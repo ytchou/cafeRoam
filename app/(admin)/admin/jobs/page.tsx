@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useState } from 'react';
+import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { BatchesList } from './_components/BatchesList';
 import { RawJobsList } from './_components/RawJobsList';

@@ -4,7 +4,7 @@ import { describe, it, expect, vi } from 'vitest';
 
 vi.mock('next/image', () => ({
   default: ({ alt, ...rest }: Record<string, unknown>) => (
-    // eslint-disable-next-line jsx-a11y/alt-text, @next/next/no-img-element
+    // eslint-disable-next-line @next/next/no-img-element
     <img alt={alt as string} {...rest} />
   ),
 }));
