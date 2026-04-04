@@ -1,0 +1,40 @@
+{
+  "findings": [
+    {
+      "severity": "Minor",
+      "file": "app/(protected)/profile/page.test.tsx",
+      "line": "11-13",
+      "description": "Broken indentation: getSession mock is flush-left (2-space indent) while sibling getUser and onAuthStateChange are at 6-space indent. Should match surrounding code at 6 spaces.",
+      "flagged_by": "Standards & Conventions",
+      "status": "valid"
+    },
+    {
+      "severity": "Minor",
+      "file": "components/shops/recent-checkins-strip.test.tsx",
+      "line": "51",
+      "description": "Broken indentation: mockGetSession.mockResolvedValue is at column 0 (no indent) while surrounding code is at 4-space indent inside the it() block.",
+      "flagged_by": "Standards & Conventions",
+      "status": "valid"
+    },
+    {
+      "severity": "Minor",
+      "file": "middleware.ts",
+      "line": "14",
+      "description": "Stale comment: '// /api routes handle their own JWT auth via FastAPI -- do not redirect them' sits above PUBLIC_PREFIXES but /api was removed from that array. The comment now misleadingly describes PUBLIC_PREFIXES when the actual /api handling moved to the early return at line 28. Either move the comment to line 27 or delete it (line 27 already has its own comment).",
+      "flagged_by": "Standards & Conventions",
+      "status": "valid"
+    },
+    {
+      "severity": "Minor",
+      "file": "components/swr-provider.tsx",
+      "line": "7",
+      "description": "Inline object literal in render: value={{ revalidateOnFocus: false }} creates a new object on every render. CLAUDE.md performance rule: 'No inline object/array in render without useMemo'. Should hoist to a module-level constant since the value never changes.",
+      "flagged_by": "Standards & Conventions",
+      "status": "debatable"
+    }
+  ],
+  "active_agents": ["Standards & Conventions"],
+  "skipped": [],
+  "head_sha": "cb180f373b55f45c38239ce86446620acbfc0d61",
+  "review_log_path": "docs/reviews/2026-04-05-feat-button-latency-fix.md"
+}
