@@ -21,7 +21,7 @@
 - [x] Task 3: Build search-first discovery homepage (DEV-226)
 
 **Wave 3 — Cleanup:**
-- [ ] Task 5: Remove `/search` page and update references (DEV-228)
+- [x] Task 5: Remove `/search` page and update references (DEV-228)
 
 ---
 
