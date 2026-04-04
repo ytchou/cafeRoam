@@ -1,8 +1,8 @@
 'use client';
 import { usePathname } from 'next/navigation';
 import { useIsDesktop } from '@/lib/hooks/use-media-query';
-import { BuyMeACoffeeButton } from '@/components/buy-me-a-coffee-button';
 import { BottomNav } from './bottom-nav';
+import { Footer } from './footer';
 import { HeaderNav } from './header-nav';
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -22,11 +22,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       >
         {children}
       </main>
-      {isDesktop && !isFindPage && (
-        <footer className="flex justify-center border-t border-[#e5e7eb] py-3">
-          <BuyMeACoffeeButton />
-        </footer>
-      )}
+      {!isFindPage && <Footer />}
       {!isDesktop && !isFindPage && <BottomNav />}
     </>
   );
