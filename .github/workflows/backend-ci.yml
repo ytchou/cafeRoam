@@ -1,4 +1,4 @@
-name: CafeRoam CI
+name: Backend CI
 
 on:
   pull_request:
@@ -16,7 +16,6 @@ jobs:
       contents: read
       pull-requests: read
     outputs:
-      frontend: ${{ steps.filter.outputs.frontend }}
       backend: ${{ steps.filter.outputs.backend }}
     steps:
       - uses: actions/checkout@v4
@@ -25,71 +24,9 @@ jobs:
         id: filter
         with:
           filters: |
-            frontend:
-              - 'app/**'
-              - 'components/**'
-              - 'lib/**'
-              - 'workers/**'
-              - 'scripts/**'
-              - 'package.json'
-              - 'pnpm-lock.yaml'
-              - 'tsconfig.json'
-              - '.github/workflows/backend-ci.yml'
             backend:
               - 'backend/**'
               - '.github/workflows/backend-ci.yml'
-
-  frontend:
-    name: Frontend (lint, format, tsc, vitest)
-    needs: changes
-    if: needs.changes.outputs.frontend == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v3
-        with:
-          version: 9
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'pnpm'
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Lint, format, and type check (parallel)
-        run: |
-          pnpm lint &
-          pid_lint=$!
-          pnpm format:check &
-          pid_fmt=$!
-          (tsc --noEmit || echo "::warning::tsc --noEmit failed") &
-          pid_tsc=$!
-          (tsc -p tsconfig.test.json --noEmit || echo "::warning::tsc tsconfig.test.json failed") &
-          pid_tsc_test=$!
-
-          fail=0
-          wait $pid_lint || fail=1
-          wait $pid_fmt || fail=1
-          wait $pid_tsc
-          wait $pid_tsc_test
-          exit $fail
-
-      - name: Run tests with coverage
-        run: pnpm test:coverage
-        continue-on-error: true
-
-      - name: Upload coverage report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-app
-          path: coverage/coverage-final.json
-          retention-days: 1
 
   backend:
     name: Backend (ruff, mypy, pytest)
@@ -119,13 +56,5 @@ jobs:
       - name: Type check
         run: cd backend && uv run mypy .
 
-      - name: Run tests with coverage
-        run: cd backend && uv run pytest --cov --cov-report=xml:coverage.xml --cov-branch -v
-
-      - name: Upload coverage report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-backend
-          path: backend/coverage.xml
-          retention-days: 1
+      - name: Run tests
+        run: cd backend && uv run pytest -v
