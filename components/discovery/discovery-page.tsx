@@ -81,7 +81,7 @@ export function DiscoveryPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      <section className="bg-[#2c1810] px-5 pt-8 pb-8 text-white">
+      <section className="bg-[#3d2314] px-5 pt-8 pb-8 text-white">
         <div className="mx-auto max-w-5xl">
           <span className="text-brand text-sm font-semibold tracking-[0.2em]">
             啡遊

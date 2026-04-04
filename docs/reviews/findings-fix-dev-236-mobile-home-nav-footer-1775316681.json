@@ -1,0 +1,28 @@
+{
+  "findings": [
+    {
+      "severity": "Important",
+      "file": "components/discovery/discovery-page.tsx",
+      "line": "84",
+      "description": "Off-palette hex #3d2314 used for hero background. DESIGN.md explicitly declares Espresso #2c1810 for 'the / discovery page hero'. The new color is not documented in the palette. Either update DESIGN.md to include the new color with a role description, or revert to #2c1810.",
+      "flagged_by": "Design Quality, Standards & Conventions",
+      "status": "valid"
+    },
+    {
+      "severity": "Minor",
+      "file": "components/navigation/app-shell.test.tsx",
+      "line": "76,118",
+      "description": "Tests use document.querySelector('footer') instead of Testing Library accessible queries. Prefer screen.getByRole('contentinfo') for the <footer> element to align with Testing Library's guiding principles (query by accessibility role first).",
+      "flagged_by": "Test Philosophy",
+      "status": "debatable"
+    }
+  ],
+  "active_agents": [
+    "Design Quality",
+    "Standards & Conventions",
+    "Test Philosophy"
+  ],
+  "skipped": [],
+  "head_sha": "7e93f625e34364f6f504c0269761f60ae3cce7bb",
+  "review_log_path": "docs/reviews/2026-04-04-fix-dev-236-mobile-home-nav-footer.md"
+}

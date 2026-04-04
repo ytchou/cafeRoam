@@ -1,7 +1,14 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { MapPin, Compass, Bookmark, User, Search } from 'lucide-react';
+import {
+  Home,
+  Map as MapIcon,
+  Compass,
+  Bookmark,
+  User,
+  Search,
+} from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 const NAV_ITEMS: {
@@ -10,7 +17,8 @@ const NAV_ITEMS: {
   icon: LucideIcon;
   tab: string;
 }[] = [
-  { href: '/', label: 'Find', icon: MapPin, tab: 'find' },
+  { href: '/', label: 'Home', icon: Home, tab: 'home' },
+  { href: '/find', label: 'Find', icon: MapIcon, tab: 'find' },
   { href: '/explore', label: 'Explore', icon: Compass, tab: 'explore' },
   { href: '/lists', label: 'Favorites', icon: Bookmark, tab: 'favorites' },
   { href: '/profile', label: 'Profile', icon: User, tab: 'profile' },
@@ -24,7 +32,7 @@ interface HeaderNavProps {
 export function HeaderNav({ activeTab }: HeaderNavProps) {
   const pathname = usePathname();
   const currentTab =
-    activeTab ?? NAV_ITEMS_BY_HREF.get(pathname)?.tab ?? 'find';
+    activeTab ?? NAV_ITEMS_BY_HREF.get(pathname)?.tab ?? 'home';
 
   return (
     <header className="border-border-light fixed top-0 right-0 left-0 z-40 flex h-16 items-center justify-between border-b bg-white px-8">
