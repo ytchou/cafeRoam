@@ -20,7 +20,7 @@ const inactivePill = 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50';
 const disabledPill =
   'border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed';
 const loadingPill =
-  'border-gray-200 bg-gray-100 text-gray-400 cursor-wait animate-pulse';
+  'border-gray-200 bg-gray-100 text-gray-600 cursor-wait animate-pulse';
 
 function getStatusMessage(gpsStatus: GpsStatus, radiusKm: number): string | null {
   switch (gpsStatus) {
