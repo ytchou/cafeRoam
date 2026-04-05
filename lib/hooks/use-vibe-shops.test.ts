@@ -71,12 +71,23 @@ describe('useVibeShops', () => {
     );
   });
 
-  it('passes districtId to URL when provided', () => {
+  it('passes districtIds to URL when provided', () => {
     mockUseSWR.mockReturnValue(swrReturning(undefined));
-    renderHook(() => useVibeShops('first-date', { districtId: 'daan-uuid' }));
+    renderHook(() => useVibeShops('first-date', { districtIds: ['daan-uuid'] }));
 
     expect(mockUseSWR).toHaveBeenCalledWith(
-      expect.stringContaining('district_id=daan-uuid'),
+      expect.stringContaining('district_ids=daan-uuid'),
+      expect.any(Function),
+      expect.anything()
+    );
+  });
+
+  it('sorts multiple districtIds in URL for cache stability', () => {
+    mockUseSWR.mockReturnValue(swrReturning(undefined));
+    renderHook(() => useVibeShops('first-date', { districtIds: ['z-uuid', 'a-uuid'] }));
+
+    expect(mockUseSWR).toHaveBeenCalledWith(
+      expect.stringContaining('district_ids=a-uuid,z-uuid'),
       expect.any(Function),
       expect.anything()
     );

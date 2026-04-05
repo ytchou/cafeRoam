@@ -11,7 +11,7 @@ export function buildVibeShopsUrl(
     lat?: number | null;
     lng?: number | null;
     radiusKm?: number;
-    districtId?: string | null;
+    districtIds?: string[] | null;
   }
 ): string {
   const params = new URLSearchParams();
@@ -20,11 +20,17 @@ export function buildVibeShopsUrl(
     params.set('lng', String(options.lng));
     params.set('radius_km', String(options?.radiusKm ?? 5));
   }
-  if (options?.districtId) {
-    params.set('district_id', options.districtId);
-  }
+  const base = `/api/explore/vibes/${slug}/shops`;
+  const parts: string[] = [];
   const qs = params.toString();
-  return `/api/explore/vibes/${slug}/shops${qs ? `?${qs}` : ''}`;
+  if (qs) {
+    parts.push(qs);
+  }
+  if (options?.districtIds && options.districtIds.length > 0) {
+    parts.push(`district_ids=${options.districtIds.slice().sort().join(',')}`);
+  }
+
+  return parts.length > 0 ? `${base}?${parts.join('&')}` : base;
 }
 
 export async function fetchVibeShops(
