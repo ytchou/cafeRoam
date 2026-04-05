@@ -224,3 +224,34 @@ def test_get_shops_for_vibe_includes_coordinates():
     shop = result.shops[0]
     assert shop.latitude == 25.033
     assert shop.longitude == 121.565
+
+
+def test_get_shops_for_vibe_filters_by_district():
+    """Given a district_id, only shops in that district are returned."""
+    db = _make_db_mock_for_vibes(
+        [make_vibe_row(slug="first-date", tag_ids=["cozy"])],
+        [
+            make_shop_tag_row("shop-1", "cozy"),
+            make_shop_tag_row("shop-2", "cozy"),
+        ],
+        [
+            {
+                "id": "shop-1",
+                "name": "Daan Cafe",
+                "slug": "daan-cafe",
+                "latitude": 25.026,
+                "longitude": 121.543,
+                "district_id": "daan-uuid",
+                "rating": 4.2,
+                "review_count": 5,
+                "processing_status": "live",
+                "shop_photos": [],
+            }
+        ],
+    )
+
+    service = VibeService(db)
+    result = service.get_shops_for_vibe("first-date", district_id="daan-uuid")
+
+    assert len(result.shops) == 1
+    assert result.shops[0].name == "Daan Cafe"

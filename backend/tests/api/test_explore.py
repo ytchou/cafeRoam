@@ -227,3 +227,17 @@ class TestVibeShopsEndpoint:
         call_kwargs = mock_svc.return_value.get_shops_for_vibe.call_args.kwargs
         assert call_kwargs["lat"] is None
         assert call_kwargs["lng"] is None
+
+
+def test_vibe_shops_with_district_id():
+    """GET /vibes/{slug}/shops?district_id=xxx passes district_id to service."""
+    with (
+        patch("api.explore.get_anon_client", return_value=MagicMock()),
+        patch("api.explore.VibeService") as mock_svc,
+    ):
+        mock_svc.return_value.get_shops_for_vibe.return_value = MOCK_VIBE_SHOPS_RESPONSE
+        response = client.get("/explore/vibes/first-date/shops?district_id=daan-uuid")
+
+    assert response.status_code == 200
+    call_kwargs = mock_svc.return_value.get_shops_for_vibe.call_args.kwargs
+    assert call_kwargs.get("district_id") == "daan-uuid"
