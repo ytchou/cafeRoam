@@ -37,7 +37,7 @@ describe('DistrictChips', () => {
     expect(allChip).toHaveAttribute('data-active', 'true');
   });
 
-  it('calls onFilterChange with district when district chip is tapped', async () => {
+  it('calls onFilterChange with districts when district chip is tapped', async () => {
     const user = userEvent.setup();
     const onFilterChange = vi.fn();
 
@@ -52,8 +52,8 @@ describe('DistrictChips', () => {
     await user.click(screen.getByRole('button', { name: '大安' }));
 
     expect(onFilterChange).toHaveBeenCalledWith({
-      type: 'district',
-      districtId: 'd1',
+      type: 'districts',
+      districtIds: ['d1'],
     });
   });
 
