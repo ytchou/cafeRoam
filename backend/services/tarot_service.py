@@ -86,7 +86,7 @@ class TarotService:
         return await asyncio.to_thread(_query)
 
     async def _query_district_shops(self, district_ids: list[str]) -> list[dict[str, Any]]:
-        """Query shops within a district using FK filter."""
+        """Query shops within one or more districts using FK filter."""
 
         def _query() -> list[dict[str, Any]]:
             response = (
