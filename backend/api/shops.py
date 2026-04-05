@@ -8,7 +8,7 @@ from pydantic import ValidationError
 from pydantic.alias_generators import to_camel
 from starlette.requests import Request
 
-from api.deps import get_admin_db, get_current_user, get_optional_user
+from api.deps import get_admin_db, get_optional_user
 from core.config import settings
 from core.db import first
 from core.opening_hours import is_open_now
@@ -220,14 +220,13 @@ async def get_shop_reviews(
     shop_id: str,
     limit: int = Query(default=10, ge=1, le=50),
     offset: int = Query(default=0, ge=0),
-    user: dict[str, Any] = Depends(get_current_user),  # noqa: B008
     db: Any = Depends(get_admin_db),  # noqa: B008
 ) -> dict[str, Any]:
-    """Get reviews for a shop. Auth-gated.
+    """Get reviews for a shop. Public endpoint — no auth required.
 
     Returns paginated reviews (check-ins with stars), total count, and average rating.
     Uses admin DB (bypasses RLS) for consistent reads — matches checkins endpoint pattern.
-    Auth is still enforced via get_current_user dependency.
+    DEV-237: reviews are publicly visible per auth wall spec (shop detail content is public).
     """
 
     response = (

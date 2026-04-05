@@ -75,14 +75,15 @@ interface ShopDetailClientProps {
 export function ShopDetailClient({ shop }: ShopDetailClientProps) {
   const { capture } = useAnalytics();
   const searchParams = useSearchParams();
-  const { user, isLoading: isUserLoading } = useUser();
+  const { user } = useUser();
   const router = useRouter();
   const photos = shop.photoUrls ?? [];
   const tags = shop.taxonomyTags ?? [];
   const shopPath = `/shops/${shop.id}/${shop.slug ?? shop.id}`;
 
-  const { reviews, totalCount, averageRating, isLoading, isAuthError } =
-    useShopReviews(shop.id, !!user);
+  const { reviews, totalCount, averageRating, isLoading } = useShopReviews(
+    shop.id
+  );
 
   // TODO: Wire SWR fetch to GET /api/shops/{shopId}/payment-methods for live
   // confirmation counts and user votes instead of hardcoded 0/null.
@@ -247,7 +248,6 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
           totalCount={totalCount}
           averageRating={averageRating}
           isLoading={isLoading}
-          isAuthError={!isUserLoading && (!user || isAuthError)}
           shopId={shop.id}
         />
 
