@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import useSWR from 'swr';
 import VibePage from './page';
 
@@ -24,6 +25,9 @@ vi.mock('@/lib/hooks/use-media-query', () => ({
 vi.mock('@/lib/hooks/use-vibes', () => ({
   useVibes: vi.fn(() => ({ vibes: [] })),
 }));
+vi.mock('@/components/map/map-view', () => ({
+  MapView: () => <div data-testid="mock-map-view" />,
+}));
 
 const MOCK_VIBE = {
   slug: 'study-cave',
@@ -45,6 +49,8 @@ const MOCK_SHOP = {
   distanceKm: null,
   coverPhotoUrl: null,
   matchedTagLabels: ['quiet', 'wifi'],
+  latitude: 25.033,
+  longitude: 121.565,
 };
 
 const MOCK_RESPONSE = {
@@ -125,10 +131,11 @@ describe('VibePage — /explore/vibes/[slug]', () => {
     expect(screen.getByText('WiFi')).toBeInTheDocument();
   });
 
-  it('When shops are nearby, the count badge reflects how many were found', () => {
+  it('When all shops are shown without a filter, the count badge shows the total without a nearby qualifier', () => {
     mockVibeShopsLoaded();
     render(<VibePage />);
-    expect(screen.getByText(/shop nearby/)).toBeInTheDocument();
+    expect(screen.getByText(/1 shop/i)).toBeInTheDocument();
+    expect(screen.queryByText(/nearby/i)).not.toBeInTheDocument();
   });
 
   it('When a shop matches the vibe, its name and star rating appear in the list', () => {
@@ -158,5 +165,24 @@ describe('VibePage — /explore/vibes/[slug]', () => {
     mockVibeShopsWithDistance();
     render(<VibePage />);
     expect(screen.getByText('1.2 km')).toBeInTheDocument();
+  });
+
+  it('When a user opens a vibe page, the collapsible map panel is rendered showing all shop pins', () => {
+    mockVibeShopsLoaded();
+    render(<VibePage />);
+    expect(screen.getByTestId('map-container')).toBeInTheDocument();
+    expect(screen.getByTestId('map-container')).toHaveAttribute('data-collapsed', 'false');
+  });
+
+  it('When a user opens a vibe page, district filter chips are rendered with a 全部 option', () => {
+    mockVibeShopsLoaded();
+    render(<VibePage />);
+    expect(screen.getByRole('button', { name: '全部' })).toBeInTheDocument();
+  });
+
+  it('When a user opens a vibe page, all shops load immediately without waiting for geolocation', async () => {
+    mockVibeShopsLoaded();
+    render(<VibePage />);
+    expect(await screen.findByText('森日咖啡')).toBeInTheDocument();
   });
 });
