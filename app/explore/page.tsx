@@ -39,12 +39,20 @@ export default function ExplorePage() {
   );
   const gpsAvailable = !geoError && latitude != null;
   const isNearMeMode = gpsAvailable && selectedDistrictId === null;
+  const gpsStatus: 'loading' | 'active' | 'denied' | 'district-selected' =
+    geoLoading
+      ? 'loading'
+      : geoError || latitude == null
+        ? 'denied'
+        : selectedDistrictId !== null
+          ? 'district-selected'
+          : 'active';
   const activeDistrictId =
     selectedDistrictId ?? (!gpsAvailable ? (districts[0]?.id ?? null) : null);
   const effectiveLat = isNearMeMode ? latitude : null;
   const effectiveLng = isNearMeMode ? longitude : null;
   const effectiveDistrictId = isNearMeMode ? null : activeDistrictId;
-  const { cards, isLoading, error, redraw, setRadiusKm } = useTarotDraw(
+  const { cards, isLoading, error, redraw, radiusKm, setRadiusKm } = useTarotDraw(
     effectiveLat,
     effectiveLng,
     effectiveDistrictId
@@ -93,6 +101,8 @@ export default function ExplorePage() {
           selectedDistrictId={activeDistrictId}
           gpsAvailable={gpsAvailable}
           isNearMeActive={isNearMeMode}
+          gpsStatus={gpsStatus}
+          radiusKm={radiusKm}
           onSelectDistrict={handleSelectDistrict}
           onSelectNearMe={handleSelectNearMe}
         />
