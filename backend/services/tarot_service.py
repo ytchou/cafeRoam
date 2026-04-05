@@ -24,14 +24,14 @@ class TarotService:
         radius_km: float,
         excluded_ids: list[str],
         now: datetime | None = None,
-        district_id: str | None = None,
+        district_ids: list[str] | None = None,
     ) -> list[TarotCard]:
         """Draw up to 3 tarot cards from nearby open shops with unique titles."""
         if now is None:
             now = datetime.now(TW)
 
-        if district_id:
-            rows = await self._query_district_shops(district_id)
+        if district_ids:
+            rows = await self._query_district_shops(district_ids)
         else:
             assert lat is not None and lng is not None
             rows = await self._query_nearby_shops(lat, lng, radius_km)
@@ -85,7 +85,7 @@ class TarotService:
 
         return await asyncio.to_thread(_query)
 
-    async def _query_district_shops(self, district_id: str) -> list[dict[str, Any]]:
+    async def _query_district_shops(self, district_ids: list[str]) -> list[dict[str, Any]]:
         """Query shops within a district using FK filter."""
 
         def _query() -> list[dict[str, Any]]:
@@ -98,7 +98,7 @@ class TarotService:
                 )
                 .eq("processing_status", "live")
                 .not_.is_("tarot_title", "null")
-                .eq("district_id", district_id)
+                .in_("district_id", district_ids)
                 .limit(200)
                 .execute()
             )
