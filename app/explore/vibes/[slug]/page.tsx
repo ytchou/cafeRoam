@@ -44,8 +44,8 @@ export default function VibePage() {
       return { lat: latitude, lng: longitude };
     }
 
-    if (activeFilter.type === 'district') {
-      return { districtId: activeFilter.districtId };
+    if (activeFilter.type === 'districts') {
+      return { districtIds: activeFilter.districtIds };
     }
 
     return {};
