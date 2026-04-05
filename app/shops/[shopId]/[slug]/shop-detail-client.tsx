@@ -144,9 +144,8 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
     [hasMap, shop.latitude, shop.longitude, shop.address]
   );
 
-  function NavigationLinks() {
-    if (!googleMapsUrl || !appleMapsUrl) return null;
-    return (
+  const navigationLinks =
+    googleMapsUrl && appleMapsUrl ? (
       <>
         <a
           href={googleMapsUrl}
@@ -167,8 +166,7 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
           Apple Maps
         </a>
       </>
-    );
-  }
+    ) : null;
 
   return (
     <div className="min-h-screen bg-white">
@@ -200,7 +198,7 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
         {/* Inline directions — desktop only */}
         {hasMap && (
           <div className="hidden lg:flex gap-2">
-            <NavigationLinks />
+            {navigationLinks}
           </div>
         )}
 
@@ -231,7 +229,7 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
               shopName={shop.name}
             />
             <div className="flex gap-2 px-5 py-3 lg:hidden">
-              <NavigationLinks />
+              {navigationLinks}
             </div>
           </div>
         )}
