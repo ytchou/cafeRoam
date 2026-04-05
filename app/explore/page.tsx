@@ -37,16 +37,22 @@ export default function ExplorePage() {
   const [selectedDistrictIds, setSelectedDistrictIds] = useState<string[]>([]);
   const gpsAvailable = !geoError && latitude != null;
   const isNearMeMode = gpsAvailable && selectedDistrictIds.length === 0;
-  const activeDistrictIds =
-    selectedDistrictIds.length > 0
-      ? selectedDistrictIds
-      : !gpsAvailable && districts[0]
-        ? [districts[0].id]
-        : [];
+  const [firstDistrict] = districts;
+  const activeDistrictIds = useMemo(
+    () =>
+      selectedDistrictIds.length > 0
+        ? selectedDistrictIds
+        : !gpsAvailable && firstDistrict
+          ? [firstDistrict.id]
+          : [],
+    [selectedDistrictIds, gpsAvailable, firstDistrict]
+  );
   const effectiveLat = isNearMeMode ? latitude : null;
   const effectiveLng = isNearMeMode ? longitude : null;
-  const effectiveDistrictIds =
-    isNearMeMode ? null : activeDistrictIds.length > 0 ? activeDistrictIds : null;
+  const effectiveDistrictIds = useMemo(
+    () => (isNearMeMode ? null : activeDistrictIds.length > 0 ? activeDistrictIds : null),
+    [isNearMeMode, activeDistrictIds]
+  );
   const { cards, isLoading, error, redraw, setRadiusKm } = useTarotDraw(
     effectiveLat,
     effectiveLng,
@@ -61,17 +67,17 @@ export default function ExplorePage() {
     requestLocation();
   }, [requestLocation]);
 
+  const effectiveDistrictKey = effectiveDistrictIds?.join(',') ?? null;
   useEffect(() => {
     if (
       cards.length > 0 &&
-      ((latitude && longitude) ||
-        (effectiveDistrictIds && effectiveDistrictIds.length > 0))
+      ((latitude && longitude) || (effectiveDistrictKey && effectiveDistrictKey.length > 0))
     ) {
       capture('tarot_draw_loaded', {
         card_count: cards.length,
       });
     }
-  }, [cards.length, latitude, longitude, effectiveDistrictIds, capture]);
+  }, [cards.length, latitude, longitude, effectiveDistrictKey, capture]);
 
   const handleExpandRadius = useCallback(() => {
     capture('tarot_empty_state', {
@@ -80,7 +86,7 @@ export default function ExplorePage() {
     setRadiusKm(10);
   }, [capture, setRadiusKm]);
 
-  const handleTryDifferentDistrict = useCallback(() => {
+  const handleClearDistricts = useCallback(() => {
     setSelectedDistrictIds([]);
   }, []);
 
@@ -175,7 +181,7 @@ export default function ExplorePage() {
             }
             onTryDifferentDistrict={
               effectiveDistrictIds && effectiveDistrictIds.length > 0
-                ? handleTryDifferentDistrict
+                ? handleClearDistricts
                 : undefined
             }
           />
