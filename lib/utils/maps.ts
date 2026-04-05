@@ -7,20 +7,11 @@ interface MapsShop {
 }
 
 export function getGoogleMapsUrl(shop: MapsShop): string {
-  if (shop.googlePlaceId) {
-    const name = encodeURIComponent(shop.name).replace(/%20/g, '+');
-    return `https://www.google.com/maps/dir/?api=1&destination=${name}&destination_place_id=${shop.googlePlaceId}`;
-  }
-
-  return `https://www.google.com/maps/dir/?api=1&destination=${shop.latitude},${shop.longitude}`;
+  return `https://www.google.com/maps/search/?api=1&query=${shop.latitude},${shop.longitude}`;
 }
 
 export function getAppleMapsUrl(
-  shop: Pick<MapsShop, 'latitude' | 'longitude' | 'address'>
+  shop: Pick<MapsShop, 'name' | 'latitude' | 'longitude'>
 ): string {
-  if (shop.address) {
-    return `https://maps.apple.com/?daddr=${encodeURIComponent(shop.address)}`;
-  }
-
-  return `https://maps.apple.com/?daddr=${shop.latitude},${shop.longitude}`;
+  return `https://maps.apple.com/?ll=${shop.latitude},${shop.longitude}&q=${encodeURIComponent(shop.name)}`;
 }
