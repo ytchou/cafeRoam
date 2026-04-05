@@ -50,7 +50,12 @@ export default function ExplorePage() {
   const effectiveLat = isNearMeMode ? latitude : null;
   const effectiveLng = isNearMeMode ? longitude : null;
   const effectiveDistrictIds = useMemo(
-    () => (isNearMeMode ? null : activeDistrictIds.length > 0 ? activeDistrictIds : null),
+    () =>
+      isNearMeMode
+        ? null
+        : activeDistrictIds.length > 0
+          ? activeDistrictIds
+          : null,
     [isNearMeMode, activeDistrictIds]
   );
   const { cards, isLoading, error, redraw, setRadiusKm } = useTarotDraw(
@@ -71,7 +76,8 @@ export default function ExplorePage() {
   useEffect(() => {
     if (
       cards.length > 0 &&
-      ((latitude && longitude) || (effectiveDistrictKey && effectiveDistrictKey.length > 0))
+      ((latitude && longitude) ||
+        (effectiveDistrictKey && effectiveDistrictKey.length > 0))
     ) {
       capture('tarot_draw_loaded', {
         card_count: cards.length,

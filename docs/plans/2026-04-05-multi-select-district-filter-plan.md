@@ -15,6 +15,7 @@
 **Tech Stack:** FastAPI (Python), Next.js (TypeScript), Supabase (Postgres), SWR, Vitest, pytest
 
 **Acceptance Criteria:**
+
 - [ ] A user can select multiple district pills simultaneously and see shops from all selected districts
 - [ ] A user can tap a selected district to deselect it (toggle off)
 - [ ] Selecting "Near Me" clears all selected districts; selecting any district deactivates Near Me
@@ -26,7 +27,8 @@
 ### Task 1: Backend TarotService — multi-district query
 
 **Files:**
-- Modify: `backend/services/tarot_service.py:19-33` (draw signature), `backend/services/tarot_service.py:88-107` (_query_district_shops)
+
+- Modify: `backend/services/tarot_service.py:19-33` (draw signature), `backend/services/tarot_service.py:88-107` (\_query_district_shops)
 - Test: `backend/tests/services/test_tarot_service.py`
 
 **Step 1: Update tests for multi-district**
@@ -122,6 +124,7 @@ Expected: FAIL — `draw()` does not accept `district_ids` keyword
 In `backend/services/tarot_service.py`:
 
 Change `draw()` signature (line 26):
+
 ```python
 # Old:
         district_id: str | None = None,
@@ -130,6 +133,7 @@ Change `draw()` signature (line 26):
 ```
 
 Change routing logic (lines 32-33):
+
 ```python
 # Old:
         if district_id:
@@ -140,6 +144,7 @@ Change routing logic (lines 32-33):
 ```
 
 Change `_query_district_shops` (line 88 and 101):
+
 ```python
 # Old:
     async def _query_district_shops(self, district_id: str) -> list[dict[str, Any]]:
@@ -168,7 +173,8 @@ git commit -m "feat(DEV-258): convert TarotService to multi-district query with 
 ### Task 2: Backend VibeService — multi-district query
 
 **Files:**
-- Modify: `backend/services/vibe_service.py:28-34` (get_shops_for_vibe signature), `backend/services/vibe_service.py:117-146` (_fetch_shop_details)
+
+- Modify: `backend/services/vibe_service.py:28-34` (get_shops_for_vibe signature), `backend/services/vibe_service.py:117-146` (\_fetch_shop_details)
 - Test: `backend/tests/services/test_vibe_service.py`
 
 **Step 1: Update tests for multi-district**
@@ -259,6 +265,7 @@ Expected: FAIL — `get_shops_for_vibe()` does not accept `district_ids`
 In `backend/services/vibe_service.py`:
 
 Change `get_shops_for_vibe()` signature (line 34):
+
 ```python
 # Old:
         district_id: str | None = None,
@@ -267,6 +274,7 @@ Change `get_shops_for_vibe()` signature (line 34):
 ```
 
 Change pass-through (line 44):
+
 ```python
 # Old:
             list(shop_matches.keys()), lat, lng, radius_km, district_id
@@ -275,6 +283,7 @@ Change pass-through (line 44):
 ```
 
 Change `_fetch_shop_details()` signature (line 123):
+
 ```python
 # Old:
         district_id: str | None = None,
@@ -283,6 +292,7 @@ Change `_fetch_shop_details()` signature (line 123):
 ```
 
 Change filter logic (lines 144-145):
+
 ```python
 # Old:
         if district_id is not None:
@@ -309,6 +319,7 @@ git commit -m "feat(DEV-258): convert VibeService to multi-district query with .
 ### Task 3: Backend API — rename param to district_ids
 
 **Files:**
+
 - Modify: `backend/api/explore.py:16-41` (tarot_draw), `backend/api/explore.py:53-74` (vibe_shops)
 - Test: `backend/tests/services/test_tarot_service.py` (already passing), `backend/tests/services/test_vibe_service.py` (already passing)
 
@@ -319,6 +330,7 @@ No test needed — this is API wiring that forwards parsed values to already-tes
 In `backend/api/explore.py`:
 
 Change param (line 22):
+
 ```python
 # Old:
     district_id: str | None = Query(default=None),
@@ -327,6 +339,7 @@ Change param (line 22):
 ```
 
 Change validation (line 26):
+
 ```python
 # Old:
     if not has_coords and not district_id:
@@ -344,6 +357,7 @@ Change validation (line 26):
 ```
 
 Change service call (line 39):
+
 ```python
 # Old:
         district_id=district_id,
@@ -354,6 +368,7 @@ Change service call (line 39):
 **Step 2: Update vibe_shops endpoint**
 
 Change param (line 59):
+
 ```python
 # Old:
     district_id: str | None = Query(default=None),
@@ -362,6 +377,7 @@ Change param (line 59):
 ```
 
 Add parsing and update service call (line 65-70):
+
 ```python
     db = get_anon_client()
     service = VibeService(db)
@@ -393,6 +409,7 @@ git commit -m "feat(DEV-258): rename API param district_id → district_ids (com
 ### Task 4: Frontend useTarotDraw hook — accept string array
 
 **Files:**
+
 - Modify: `lib/hooks/use-tarot-draw.ts:12-31`
 - Test: `lib/hooks/use-tarot-draw.test.ts`
 
@@ -401,38 +418,38 @@ git commit -m "feat(DEV-258): rename API param district_id → district_ids (com
 In `lib/hooks/use-tarot-draw.test.ts`, update district tests (lines 159-183):
 
 ```typescript
-  describe('useTarotDraw with districtIds', () => {
-    it('fetches by district_ids when districtIds is provided and lat/lng are null', () => {
-      mockUseSWR.mockReturnValue(swrReturning([], { isLoading: false }));
-      renderHook(() => useTarotDraw(null, null, ['district-123']));
-      const key = mockUseSWR.mock.calls[0][0] as string;
-      expect(key).toContain('district_ids=district-123');
-    });
-
-    it('uses null key when both coords and districtIds are empty', () => {
-      mockUseSWR.mockReturnValue(swrReturning(undefined, { isLoading: false }));
-      const { result } = renderHook(() => useTarotDraw(null, null));
-      const key = mockUseSWR.mock.calls[0][0];
-      expect(key).toBeNull();
-      expect(result.current.cards).toEqual([]);
-      expect(result.current.isLoading).toBe(false);
-    });
-
-    it('prefers lat/lng over districtIds when both are provided', () => {
-      mockUseSWR.mockReturnValue(swrReturning([], { isLoading: false }));
-      renderHook(() => useTarotDraw(25.033, 121.565, ['district-123']));
-      const key = mockUseSWR.mock.calls[0][0] as string;
-      expect(key).toContain('lat=25.033');
-      expect(key).not.toContain('district_ids=');
-    });
-
-    it('sorts district IDs in cache key for stability', () => {
-      mockUseSWR.mockReturnValue(swrReturning([], { isLoading: false }));
-      renderHook(() => useTarotDraw(null, null, ['z-district', 'a-district']));
-      const key = mockUseSWR.mock.calls[0][0] as string;
-      expect(key).toContain('district_ids=a-district,z-district');
-    });
+describe('useTarotDraw with districtIds', () => {
+  it('fetches by district_ids when districtIds is provided and lat/lng are null', () => {
+    mockUseSWR.mockReturnValue(swrReturning([], { isLoading: false }));
+    renderHook(() => useTarotDraw(null, null, ['district-123']));
+    const key = mockUseSWR.mock.calls[0][0] as string;
+    expect(key).toContain('district_ids=district-123');
   });
+
+  it('uses null key when both coords and districtIds are empty', () => {
+    mockUseSWR.mockReturnValue(swrReturning(undefined, { isLoading: false }));
+    const { result } = renderHook(() => useTarotDraw(null, null));
+    const key = mockUseSWR.mock.calls[0][0];
+    expect(key).toBeNull();
+    expect(result.current.cards).toEqual([]);
+    expect(result.current.isLoading).toBe(false);
+  });
+
+  it('prefers lat/lng over districtIds when both are provided', () => {
+    mockUseSWR.mockReturnValue(swrReturning([], { isLoading: false }));
+    renderHook(() => useTarotDraw(25.033, 121.565, ['district-123']));
+    const key = mockUseSWR.mock.calls[0][0] as string;
+    expect(key).toContain('lat=25.033');
+    expect(key).not.toContain('district_ids=');
+  });
+
+  it('sorts district IDs in cache key for stability', () => {
+    mockUseSWR.mockReturnValue(swrReturning([], { isLoading: false }));
+    renderHook(() => useTarotDraw(null, null, ['z-district', 'a-district']));
+    const key = mockUseSWR.mock.calls[0][0] as string;
+    expect(key).toContain('district_ids=a-district,z-district');
+  });
+});
 ```
 
 **Step 2: Run tests to verify they fail**
@@ -445,6 +462,7 @@ Expected: FAIL — `useTarotDraw` does not accept array
 In `lib/hooks/use-tarot-draw.ts`:
 
 Change signature (line 15):
+
 ```typescript
 // Old:
   districtId?: string | null
@@ -453,16 +471,17 @@ Change signature (line 15):
 ```
 
 Change SWR key (lines 27-29):
+
 ```typescript
 // Old:
-    if (districtId) {
-      return `/api/explore/tarot-draw?district_id=${districtId}&radius_km=${radiusKm}&excluded_ids=${excludedParam}`;
-    }
+if (districtId) {
+  return `/api/explore/tarot-draw?district_id=${districtId}&radius_km=${radiusKm}&excluded_ids=${excludedParam}`;
+}
 // New:
-    if (districtIds && districtIds.length > 0) {
-      const sortedIds = districtIds.slice().sort().join(',');
-      return `/api/explore/tarot-draw?district_ids=${sortedIds}&radius_km=${radiusKm}&excluded_ids=${excludedParam}`;
-    }
+if (districtIds && districtIds.length > 0) {
+  const sortedIds = districtIds.slice().sort().join(',');
+  return `/api/explore/tarot-draw?district_ids=${sortedIds}&radius_km=${radiusKm}&excluded_ids=${excludedParam}`;
+}
 ```
 
 **Step 4: Run tests to verify they pass**
@@ -482,6 +501,7 @@ git commit -m "feat(DEV-258): useTarotDraw accepts districtIds string array"
 ### Task 5: Frontend vibes URL builder + hook — accept string array
 
 **Files:**
+
 - Modify: `lib/api/vibes.ts:8-28`, `lib/hooks/use-vibe-shops.ts:8-13`
 - Test: `lib/hooks/use-vibe-shops.test.ts`
 
@@ -490,27 +510,29 @@ git commit -m "feat(DEV-258): useTarotDraw accepts districtIds string array"
 In `lib/hooks/use-vibe-shops.test.ts`, update district test (line 74):
 
 ```typescript
-  it('passes districtIds to URL when provided', () => {
-    mockUseSWR.mockReturnValue(swrReturning(undefined));
-    renderHook(() => useVibeShops('first-date', { districtIds: ['daan-uuid'] }));
+it('passes districtIds to URL when provided', () => {
+  mockUseSWR.mockReturnValue(swrReturning(undefined));
+  renderHook(() => useVibeShops('first-date', { districtIds: ['daan-uuid'] }));
 
-    expect(mockUseSWR).toHaveBeenCalledWith(
-      expect.stringContaining('district_ids=daan-uuid'),
-      expect.any(Function),
-      expect.anything()
-    );
-  });
+  expect(mockUseSWR).toHaveBeenCalledWith(
+    expect.stringContaining('district_ids=daan-uuid'),
+    expect.any(Function),
+    expect.anything()
+  );
+});
 
-  it('sorts multiple districtIds in URL for cache stability', () => {
-    mockUseSWR.mockReturnValue(swrReturning(undefined));
-    renderHook(() => useVibeShops('first-date', { districtIds: ['z-uuid', 'a-uuid'] }));
+it('sorts multiple districtIds in URL for cache stability', () => {
+  mockUseSWR.mockReturnValue(swrReturning(undefined));
+  renderHook(() =>
+    useVibeShops('first-date', { districtIds: ['z-uuid', 'a-uuid'] })
+  );
 
-    expect(mockUseSWR).toHaveBeenCalledWith(
-      expect.stringContaining('district_ids=a-uuid,z-uuid'),
-      expect.any(Function),
-      expect.anything()
-    );
-  });
+  expect(mockUseSWR).toHaveBeenCalledWith(
+    expect.stringContaining('district_ids=a-uuid,z-uuid'),
+    expect.any(Function),
+    expect.anything()
+  );
+});
 ```
 
 **Step 2: Run tests to verify they fail**
@@ -521,6 +543,7 @@ Expected: FAIL — `districtIds` not recognized
 **Step 3: Implement**
 
 In `lib/api/vibes.ts`, change `buildVibeShopsUrl` (lines 14, 23-24):
+
 ```typescript
 // Old:
     districtId?: string | null;
@@ -537,6 +560,7 @@ In `lib/api/vibes.ts`, change `buildVibeShopsUrl` (lines 14, 23-24):
 ```
 
 In `lib/hooks/use-vibe-shops.ts`, change `VibeShopsFilter` (line 12):
+
 ```typescript
 // Old:
   districtId?: string | null;
@@ -561,6 +585,7 @@ git commit -m "feat(DEV-258): vibes URL builder and hook accept districtIds arra
 ### Task 6: Frontend DistrictPicker — multi-select props
 
 **Files:**
+
 - Modify: `components/explore/district-picker.tsx`
 - Test: `components/explore/district-picker.test.tsx`
 
@@ -573,37 +598,42 @@ Replace all `selectedDistrictId="d1"` with `selectedDistrictIds={['d1']}`.
 Replace all `onSelectDistrict` with `onToggleDistrict`.
 
 Add multi-select highlight test:
-```tsx
-  it('highlights multiple selected districts', () => {
-    render(
-      <DistrictPicker
-        districts={mockDistricts}
-        selectedDistrictIds={['d1', 'd2']}
-        gpsAvailable={true}
-        isNearMeActive={false}
-        onToggleDistrict={vi.fn()}
-        onSelectNearMe={vi.fn()}
-      />
-    );
-    expect(screen.getByRole('button', { name: /大安/i })).toHaveClass('bg-amber-700');
-    expect(screen.getByRole('button', { name: /信義/i })).toHaveClass('bg-amber-700');
-  });
 
-  it('calls onToggleDistrict when a district is clicked', async () => {
-    const onToggle = vi.fn();
-    render(
-      <DistrictPicker
-        districts={mockDistricts}
-        selectedDistrictIds={[]}
-        gpsAvailable={true}
-        isNearMeActive={true}
-        onToggleDistrict={onToggle}
-        onSelectNearMe={vi.fn()}
-      />
-    );
-    await userEvent.click(screen.getByRole('button', { name: /大安/i }));
-    expect(onToggle).toHaveBeenCalledWith('d1');
-  });
+```tsx
+it('highlights multiple selected districts', () => {
+  render(
+    <DistrictPicker
+      districts={mockDistricts}
+      selectedDistrictIds={['d1', 'd2']}
+      gpsAvailable={true}
+      isNearMeActive={false}
+      onToggleDistrict={vi.fn()}
+      onSelectNearMe={vi.fn()}
+    />
+  );
+  expect(screen.getByRole('button', { name: /大安/i })).toHaveClass(
+    'bg-amber-700'
+  );
+  expect(screen.getByRole('button', { name: /信義/i })).toHaveClass(
+    'bg-amber-700'
+  );
+});
+
+it('calls onToggleDistrict when a district is clicked', async () => {
+  const onToggle = vi.fn();
+  render(
+    <DistrictPicker
+      districts={mockDistricts}
+      selectedDistrictIds={[]}
+      gpsAvailable={true}
+      isNearMeActive={true}
+      onToggleDistrict={onToggle}
+      onSelectNearMe={vi.fn()}
+    />
+  );
+  await userEvent.click(screen.getByRole('button', { name: /大安/i }));
+  expect(onToggle).toHaveBeenCalledWith('d1');
+});
 ```
 
 **Step 2: Run tests to verify they fail**
@@ -627,6 +657,7 @@ interface DistrictPickerProps {
 ```
 
 Update the component to use `selectedDistrictIds` and `onToggleDistrict`:
+
 ```tsx
 export function DistrictPicker({
   districts,
@@ -639,14 +670,16 @@ export function DistrictPicker({
 ```
 
 Change highlight logic (line 53):
+
 ```tsx
 // Old:
-            selectedDistrictId === district.id && !isNearMeActive
+selectedDistrictId === district.id && !isNearMeActive;
 // New:
-            selectedDistrictIds.includes(district.id) && !isNearMeActive
+selectedDistrictIds.includes(district.id) && !isNearMeActive;
 ```
 
 Change click handler (line 51):
+
 ```tsx
 // Old:
           onClick={() => onSelectDistrict(district.id)}
@@ -671,6 +704,7 @@ git commit -m "feat(DEV-258): DistrictPicker accepts multi-select props"
 ### Task 7: Frontend DistrictChips — multi-select with toggle
 
 **Files:**
+
 - Modify: `components/explore/district-chips.tsx`
 - Create: `components/explore/district-chips.test.tsx`
 
@@ -711,8 +745,14 @@ describe('DistrictChips', () => {
         onFilterChange={vi.fn()}
       />
     );
-    expect(screen.getByRole('button', { name: /大安/i })).toHaveAttribute('data-active', 'true');
-    expect(screen.getByRole('button', { name: /信義/i })).toHaveAttribute('data-active', 'true');
+    expect(screen.getByRole('button', { name: /大安/i })).toHaveAttribute(
+      'data-active',
+      'true'
+    );
+    expect(screen.getByRole('button', { name: /信義/i })).toHaveAttribute(
+      'data-active',
+      'true'
+    );
   });
 
   it('adds a district to selection on click', async () => {
@@ -725,7 +765,10 @@ describe('DistrictChips', () => {
       />
     );
     await userEvent.click(screen.getByRole('button', { name: /大安/i }));
-    expect(onChange).toHaveBeenCalledWith({ type: 'districts', districtIds: ['d1'] });
+    expect(onChange).toHaveBeenCalledWith({
+      type: 'districts',
+      districtIds: ['d1'],
+    });
   });
 
   it('adds to existing selection on click', async () => {
@@ -738,7 +781,10 @@ describe('DistrictChips', () => {
       />
     );
     await userEvent.click(screen.getByRole('button', { name: /信義/i }));
-    expect(onChange).toHaveBeenCalledWith({ type: 'districts', districtIds: ['d1', 'd2'] });
+    expect(onChange).toHaveBeenCalledWith({
+      type: 'districts',
+      districtIds: ['d1', 'd2'],
+    });
   });
 
   it('removes a district on toggle-off click', async () => {
@@ -751,7 +797,10 @@ describe('DistrictChips', () => {
       />
     );
     await userEvent.click(screen.getByRole('button', { name: /��安/i }));
-    expect(onChange).toHaveBeenCalledWith({ type: 'districts', districtIds: ['d2'] });
+    expect(onChange).toHaveBeenCalledWith({
+      type: 'districts',
+      districtIds: ['d2'],
+    });
   });
 
   it('reverts to all when last district is deselected', async () => {
@@ -792,6 +841,7 @@ Expected: FAIL — VibeFilter type doesn't have `districts` variant
 In `components/explore/district-chips.tsx`:
 
 Update `VibeFilter` type (lines 5-8):
+
 ```tsx
 // Old:
 export type VibeFilter =
@@ -806,28 +856,30 @@ export type VibeFilter =
 ```
 
 Update `isActive` (lines 23-29):
+
 ```tsx
 // Old:
-  const isActive = (type: string, districtId?: string) => {
-    if (activeFilter.type !== type) return false;
-    if (type === 'district' && 'districtId' in activeFilter) {
-      return activeFilter.districtId === districtId;
-    }
-    return true;
-  };
+const isActive = (type: string, districtId?: string) => {
+  if (activeFilter.type !== type) return false;
+  if (type === 'district' && 'districtId' in activeFilter) {
+    return activeFilter.districtId === districtId;
+  }
+  return true;
+};
 // New:
-  const isActive = (type: string, districtId?: string) => {
-    if (type === 'all' || type === 'nearby') {
-      return activeFilter.type === type;
-    }
-    if (districtId && activeFilter.type === 'districts') {
-      return activeFilter.districtIds.includes(districtId);
-    }
-    return false;
-  };
+const isActive = (type: string, districtId?: string) => {
+  if (type === 'all' || type === 'nearby') {
+    return activeFilter.type === type;
+  }
+  if (districtId && activeFilter.type === 'districts') {
+    return activeFilter.districtIds.includes(districtId);
+  }
+  return false;
+};
 ```
 
 Update district chip onClick (line 51):
+
 ```tsx
 // Old:
           onClick={() => onFilterChange({ type: 'district', districtId: d.id })}
@@ -860,6 +912,7 @@ git commit -m "feat(DEV-258): DistrictChips multi-select with toggle and VibeFil
 ### Task 8: Explore page — array state management
 
 **Files:**
+
 - Modify: `app/explore/page.tsx`
 - Test: No separate test — behavior verified via component and hook tests; page is a composition layer. No test needed — page wires already-tested hooks and components.
 
@@ -868,55 +921,62 @@ git commit -m "feat(DEV-258): DistrictChips multi-select with toggle and VibeFil
 In `app/explore/page.tsx`:
 
 Change state (line 37-39):
+
 ```typescript
 // Old:
-  const [selectedDistrictId, setSelectedDistrictId] = useState<string | null>(
-    null
-  );
+const [selectedDistrictId, setSelectedDistrictId] = useState<string | null>(
+  null
+);
 // New:
-  const [selectedDistrictIds, setSelectedDistrictIds] = useState<string[]>([]);
+const [selectedDistrictIds, setSelectedDistrictIds] = useState<string[]>([]);
 ```
 
 Change derived values (lines 41-46):
+
 ```typescript
 // Old:
-  const isNearMeMode = gpsAvailable && selectedDistrictId === null;
-  const activeDistrictId =
-    selectedDistrictId ?? (!gpsAvailable ? (districts[0]?.id ?? null) : null);
-  const effectiveLat = isNearMeMode ? latitude : null;
-  const effectiveLng = isNearMeMode ? longitude : null;
-  const effectiveDistrictId = isNearMeMode ? null : activeDistrictId;
+const isNearMeMode = gpsAvailable && selectedDistrictId === null;
+const activeDistrictId =
+  selectedDistrictId ?? (!gpsAvailable ? (districts[0]?.id ?? null) : null);
+const effectiveLat = isNearMeMode ? latitude : null;
+const effectiveLng = isNearMeMode ? longitude : null;
+const effectiveDistrictId = isNearMeMode ? null : activeDistrictId;
 // New:
-  const isNearMeMode = gpsAvailable && selectedDistrictIds.length === 0;
-  const activeDistrictIds =
-    selectedDistrictIds.length > 0
-      ? selectedDistrictIds
-      : !gpsAvailable && districts[0]
-        ? [districts[0].id]
-        : [];
-  const effectiveLat = isNearMeMode ? latitude : null;
-  const effectiveLng = isNearMeMode ? longitude : null;
-  const effectiveDistrictIds =
-    isNearMeMode ? null : activeDistrictIds.length > 0 ? activeDistrictIds : null;
+const isNearMeMode = gpsAvailable && selectedDistrictIds.length === 0;
+const activeDistrictIds =
+  selectedDistrictIds.length > 0
+    ? selectedDistrictIds
+    : !gpsAvailable && districts[0]
+      ? [districts[0].id]
+      : [];
+const effectiveLat = isNearMeMode ? latitude : null;
+const effectiveLng = isNearMeMode ? longitude : null;
+const effectiveDistrictIds = isNearMeMode
+  ? null
+  : activeDistrictIds.length > 0
+    ? activeDistrictIds
+    : null;
 ```
 
 Change hook call (line 47-51):
+
 ```typescript
 // Old:
-  const { cards, isLoading, error, redraw, setRadiusKm } = useTarotDraw(
-    effectiveLat,
-    effectiveLng,
-    effectiveDistrictId
-  );
+const { cards, isLoading, error, redraw, setRadiusKm } = useTarotDraw(
+  effectiveLat,
+  effectiveLng,
+  effectiveDistrictId
+);
 // New:
-  const { cards, isLoading, error, redraw, setRadiusKm } = useTarotDraw(
-    effectiveLat,
-    effectiveLng,
-    effectiveDistrictIds
-  );
+const { cards, isLoading, error, redraw, setRadiusKm } = useTarotDraw(
+  effectiveLat,
+  effectiveLng,
+  effectiveDistrictIds
+);
 ```
 
 Change analytics effect (line 62):
+
 ```typescript
 // Old:
     if (cards.length > 0 && ((latitude && longitude) || effectiveDistrictId)) {
@@ -925,6 +985,7 @@ Change analytics effect (line 62):
 ```
 
 Update dependency array (line 67):
+
 ```typescript
 // Old:
   }, [cards.length, latitude, longitude, effectiveDistrictId, capture]);
@@ -933,43 +994,45 @@ Update dependency array (line 67):
 ```
 
 Change handlers (lines 76-86):
+
 ```typescript
 // Old:
-  const handleTryDifferentDistrict = useCallback(() => {
-    setSelectedDistrictId(null);
-  }, []);
+const handleTryDifferentDistrict = useCallback(() => {
+  setSelectedDistrictId(null);
+}, []);
 
-  const handleSelectDistrict = useCallback((districtId: string) => {
-    setSelectedDistrictId(districtId);
-  }, []);
+const handleSelectDistrict = useCallback((districtId: string) => {
+  setSelectedDistrictId(districtId);
+}, []);
 
-  const handleSelectNearMe = useCallback(() => {
-    setSelectedDistrictId(null);
-  }, []);
+const handleSelectNearMe = useCallback(() => {
+  setSelectedDistrictId(null);
+}, []);
 // New:
-  const handleTryDifferentDistrict = useCallback(() => {
-    setSelectedDistrictIds([]);
-  }, []);
+const handleTryDifferentDistrict = useCallback(() => {
+  setSelectedDistrictIds([]);
+}, []);
 
-  const handleToggleDistrict = useCallback(
-    (districtId: string) => {
-      setSelectedDistrictIds((prev) => {
-        const next = prev.includes(districtId)
-          ? prev.filter((id) => id !== districtId)
-          : [...prev, districtId];
-        if (next.length === 0 && !gpsAvailable) return prev;
-        return next;
-      });
-    },
-    [gpsAvailable]
-  );
+const handleToggleDistrict = useCallback(
+  (districtId: string) => {
+    setSelectedDistrictIds((prev) => {
+      const next = prev.includes(districtId)
+        ? prev.filter((id) => id !== districtId)
+        : [...prev, districtId];
+      if (next.length === 0 && !gpsAvailable) return prev;
+      return next;
+    });
+  },
+  [gpsAvailable]
+);
 
-  const handleSelectNearMe = useCallback(() => {
-    setSelectedDistrictIds([]);
-  }, []);
+const handleSelectNearMe = useCallback(() => {
+  setSelectedDistrictIds([]);
+}, []);
 ```
 
 Change DistrictPicker props (lines 91-98):
+
 ```tsx
 // Old:
         <DistrictPicker
@@ -992,6 +1055,7 @@ Change DistrictPicker props (lines 91-98):
 ```
 
 Change loading/empty state conditions (line 120):
+
 ```typescript
 // Old:
         (effectiveLat == null && !geoError && !effectiveDistrictId)) && (
@@ -1000,6 +1064,7 @@ Change loading/empty state conditions (line 120):
 ```
 
 Change empty state condition (line 150):
+
 ```typescript
 // Old:
         (effectiveLat != null || effectiveDistrictId != null) && (
@@ -1008,6 +1073,7 @@ Change empty state condition (line 150):
 ```
 
 Change empty state button logic (line 153):
+
 ```typescript
 // Old:
             onExpandRadius={
@@ -1042,6 +1108,7 @@ git commit -m "feat(DEV-258): Explore page multi-district state management"
 ### Task 9: Vibe page — multi-district filter
 
 **Files:**
+
 - Modify: `app/explore/vibes/[slug]/page.tsx:38-52` (vibeShopsFilter memo), `app/explore/vibes/[slug]/page.tsx:134-137` (badgeText)
 - Test: No separate page test — composition layer. No test needed — wires already-tested DistrictChips and useVibeShops.
 
@@ -1050,15 +1117,16 @@ git commit -m "feat(DEV-258): Explore page multi-district state management"
 In `app/explore/vibes/[slug]/page.tsx`:
 
 Change filter memo (lines 47-49):
+
 ```typescript
 // Old:
-    if (activeFilter.type === 'district') {
-      return { districtId: activeFilter.districtId };
-    }
+if (activeFilter.type === 'district') {
+  return { districtId: activeFilter.districtId };
+}
 // New:
-    if (activeFilter.type === 'districts') {
-      return { districtIds: activeFilter.districtIds };
-    }
+if (activeFilter.type === 'districts') {
+  return { districtIds: activeFilter.districtIds };
+}
 ```
 
 **Step 2: Run type check and tests**
@@ -1078,6 +1146,7 @@ git commit -m "feat(DEV-258): VibePage filter memo supports multi-district"
 ### Task 10: SPEC.md updates
 
 **Files:**
+
 - Modify: `SPEC.md` (§9 and §2)
 - Modify: `SPEC_CHANGELOG.md`
 
@@ -1086,18 +1155,26 @@ No test needed — documentation only.
 **Step 1: Update SPEC.md**
 
 In §9 Geolocation fallback (around line 227), update:
+
 ```markdown
 <!-- Old: -->
+
 Users can select any Taipei district to scope Tarot Draw results.
+
 <!-- New: -->
+
 Users can select one or more Taipei districts to scope Tarot Draw results. Multiple districts are combined with OR logic.
 ```
 
 In §2 Explore module (around line 44), clarify:
+
 ```markdown
 <!-- Old: -->
+
 district filter chips
+
 <!-- New: -->
+
 multi-select district filter chips
 ```
 
@@ -1179,6 +1256,7 @@ graph TD
 ```
 
 **Wave 1** (parallel — no dependencies):
+
 - Task 1: TarotService multi-district
 - Task 2: VibeService multi-district
 - Task 4: useTarotDraw hook
@@ -1187,12 +1265,15 @@ graph TD
 - Task 7: DistrictChips component
 
 **Wave 2** (depends on Wave 1):
+
 - Task 3: Backend API params ← Tasks 1, 2
 - Task 8: Explore page ← Tasks 4, 6
 - Task 9: Vibe page ← Tasks 5, 7
 
 **Wave 3** (depends on Wave 2):
+
 - Task 10: SPEC.md updates ← Tasks 8, 9
 
 **Wave 4** (depends on all):
+
 - Task 11: Full verification ← all tasks

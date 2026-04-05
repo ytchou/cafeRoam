@@ -1,0 +1,77 @@
+{
+  "findings": [
+    {
+      "severity": "Important",
+      "file": "app/explore/page.tsx",
+      "line": "48-74",
+      "description": "effectiveDistrictIds is a new array reference every render (no useMemo). When passed to the useEffect dependency array on line 74, it causes the analytics capture('tarot_draw_loaded') to fire on every re-render when districts are active, spamming PostHog with duplicate events. Wrap effectiveDistrictIds computation in useMemo, or change the useEffect dependency to a stable primitive like effectiveDistrictIds?.join(',').",
+      "flagged_by": "Bug Hunter, Architecture & Design",
+      "status": "valid"
+    },
+    {
+      "severity": "Important",
+      "file": "app/explore/page.tsx",
+      "line": "40-45",
+      "description": "activeDistrictIds is computed as a bare expression (new array every render) and passed as a prop to DistrictPicker (line 109) and used to derive effectiveDistrictIds. Per CLAUDE.md performance standards: 'No inline object/array in render without useMemo'. Should be wrapped in useMemo to avoid unnecessary child re-renders and the cascading effectiveDistrictIds instability.",
+      "flagged_by": "Standards & Conventions",
+      "status": "valid"
+    },
+    {
+      "severity": "Important",
+      "file": "components/explore/district-chips.test.tsx",
+      "line": "1-107",
+      "description": "Duplicate test file. There are now TWO test files for DistrictChips: components/explore/district-chips.test.tsx (new, 107 lines) AND components/explore/__tests__/district-chips.test.tsx (existing, updated). Both test the same component with overlapping coverage. The new file should be removed, or the tests should be consolidated into one location.",
+      "flagged_by": "Architecture & Design",
+      "status": "valid"
+    },
+    {
+      "severity": "Minor",
+      "file": "app/explore/page.tsx",
+      "line": "43",
+      "description": "districts[0] uses unsafe array indexing. CLAUDE.md states 'Never use unsafe [0] array indexing. Use the project's first() helper function instead.' However, this is guarded by the preceding condition (!gpsAvailable && districts[0]), so it is safe at runtime. Flagging for CLAUDE.md compliance, not a bug.",
+      "flagged_by": "Standards & Conventions",
+      "status": "debatable"
+    },
+    {
+      "severity": "Minor",
+      "file": "backend/services/tarot_service.py",
+      "line": "88",
+      "description": "Docstring for _query_district_shops still says 'Query shops within a district' (singular). Should read 'Query shops within one or more districts' to reflect the multi-district signature change.",
+      "flagged_by": "Plan Alignment",
+      "status": "debatable"
+    },
+    {
+      "severity": "Minor",
+      "file": "app/explore/page.tsx",
+      "line": "83-85",
+      "description": "handleTryDifferentDistrict sets selectedDistrictIds to [] which in near-me mode triggers GPS-based fetch and in no-GPS mode falls back to districts[0]. The behavior is correct but the function name 'TryDifferentDistrict' is now misleading -- it clears all districts rather than trying a different one. Consider renaming to handleClearDistricts or handleResetFilter for clarity.",
+      "flagged_by": "Architecture & Design",
+      "status": "debatable"
+    }
+  ],
+  "active_agents": [
+    "Bug Hunter",
+    "Standards & Conventions",
+    "Architecture & Design",
+    "Plan Alignment"
+  ],
+  "skipped": [
+    {
+      "file": "components/explore/district-picker.tsx",
+      "line": "53",
+      "reason": "selectedDistrictIds.includes() is O(n) per district button render. Considered flagging as performance issue per CLAUDE.md 'Map over Array.find() in list renders', but district count is inherently small (10-20 max for Taiwan cities), so a Set pre-index would be over-engineering."
+    },
+    {
+      "file": "lib/api/vibes.ts",
+      "line": "30",
+      "reason": "district_ids param is appended via string concatenation rather than URLSearchParams.set(). Considered flagging as inconsistent with the lat/lng params above it, but the values are pre-sorted UUIDs with no special characters, so URL encoding is not needed."
+    },
+    {
+      "file": "backend/api/explore.py",
+      "line": "26",
+      "reason": "Duplicate parsing pattern (comma-split list comprehension) appears in both tarot_draw and vibe_shops. Considered flagging as DRY violation, but it is a 1-line idiom and extracting a helper would add indirection for minimal benefit."
+    }
+  ],
+  "head_sha": "488aef78bf64472462b105862247b8406afacf27",
+  "review_log_path": "docs/reviews/2026-04-05-feat-dev-258-multi-select-district.md"
+}

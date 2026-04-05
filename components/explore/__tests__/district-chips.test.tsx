@@ -83,8 +83,14 @@ describe('DistrictChips', () => {
       />
     );
 
-    expect(screen.getByRole('button', { name: '大安' })).toHaveAttribute('data-active', 'true');
-    expect(screen.getByRole('button', { name: '信義' })).toHaveAttribute('data-active', 'true');
+    expect(screen.getByRole('button', { name: '大安' })).toHaveAttribute(
+      'data-active',
+      'true'
+    );
+    expect(screen.getByRole('button', { name: '信義' })).toHaveAttribute(
+      'data-active',
+      'true'
+    );
   });
 
   it('adds to existing district selection when a second district chip is tapped', async () => {

@@ -63,7 +63,10 @@ export function DistrictChips({
               return;
             }
 
-            onFilterChange({ type: 'districts', districtIds: [...currentIds, d.id] });
+            onFilterChange({
+              type: 'districts',
+              districtIds: [...currentIds, d.id],
+            });
           }}
           disabled={isLoading}
         >
