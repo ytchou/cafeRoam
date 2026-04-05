@@ -1,7 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { DistrictChips } from './district-chips';
-import type { VibeFilter } from './district-chips';
 
 const mockDistricts = [
   { id: 'd1', nameZh: '大安' },
