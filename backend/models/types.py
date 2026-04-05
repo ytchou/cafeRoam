@@ -347,6 +347,8 @@ class VibeShopResult(CamelModel):
     review_count: int = 0
     cover_photo_url: str | None = None
     distance_km: float | None = None
+    latitude: float | None = None
+    longitude: float | None = None
     overlap_score: float
     matched_tag_labels: list[str] = []
 

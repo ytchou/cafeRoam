@@ -72,6 +72,8 @@ class VibeService:
                     review_count=row.get("review_count") or 0,
                     cover_photo_url=cover,
                     distance_km=distance_km,
+                    latitude=row.get("latitude"),
+                    longitude=row.get("longitude"),
                     overlap_score=round(match_count / total_tags, 4),
                     matched_tag_labels=matched_tags,
                 )

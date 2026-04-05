@@ -196,3 +196,31 @@ class TestVibeServiceGetShopsForVibe:
         service = VibeService(db)
         result = service.get_shops_for_vibe("study-cave")
         assert result.total_count == len(result.shops)
+
+
+def test_get_shops_for_vibe_includes_coordinates():
+    """Given a vibe with matching shops, response includes latitude and longitude."""
+    db = _make_db_mock_for_vibes(
+        [make_vibe_row(slug="first-date", tag_ids=["cozy"])],
+        [make_shop_tag_row("shop-1", "cozy")],
+        [
+            {
+                "id": "shop-1",
+                "name": "Cafe Test",
+                "slug": "cafe-test",
+                "latitude": 25.033,
+                "longitude": 121.565,
+                "rating": 4.5,
+                "review_count": 10,
+                "processing_status": "live",
+                "shop_photos": [{"url": "https://example.com/photo.jpg"}],
+            }
+        ],
+    )
+
+    service = VibeService(db)
+    result = service.get_shops_for_vibe("first-date")
+
+    shop = result.shops[0]
+    assert shop.latitude == 25.033
+    assert shop.longitude == 121.565
