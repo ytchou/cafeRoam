@@ -1,9 +1,8 @@
 import logging
-from typing import Literal
 
 import httpx
 
-from models.types import DirectionsResult, GeocodingResult
+from models.types import GeocodingResult
 
 logger = logging.getLogger(__name__)
 
@@ -63,40 +62,6 @@ class MapboxMapsAdapter:
             return str(features[0]["properties"]["full_address"])
         except (httpx.HTTPStatusError, httpx.RequestError, KeyError) as e:
             logger.warning("Mapbox reverse geocode failed: %s", e)
-            return None
-
-    DIRECTIONS_URL = "https://api.mapbox.com/directions/v5/mapbox"
-
-    async def get_directions(
-        self,
-        origin_lat: float,
-        origin_lng: float,
-        dest_lat: float,
-        dest_lng: float,
-        profile: Literal["walking", "driving-traffic"],
-    ) -> DirectionsResult | None:
-        try:
-            coords = f"{origin_lng},{origin_lat};{dest_lng},{dest_lat}"
-            response = await self._client.get(
-                f"{self.DIRECTIONS_URL}/{profile}/{coords}",
-                params={
-                    "access_token": self._token,
-                    "overview": "false",
-                },
-            )
-            response.raise_for_status()
-            data = response.json()
-            routes = data.get("routes", [])
-            if not routes:
-                return None
-            route = routes[0]  # safe: empty case handled above
-            return DirectionsResult(
-                duration_min=max(1, round(route["duration"] / 60)),
-                distance_m=round(route["distance"]),
-                profile=profile,
-            )
-        except (httpx.HTTPStatusError, httpx.RequestError, KeyError) as e:
-            logger.warning("Mapbox directions failed: %s", e)
             return None
 
     async def close(self) -> None:
