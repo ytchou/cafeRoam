@@ -1,7 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import useSWR from 'swr';
+import { toast } from 'sonner';
 import VibePage from './page';
+
+const mockUseGeolocation = vi.fn();
 
 vi.mock('swr', () => ({ default: vi.fn() }));
 vi.mock('next/navigation', () => ({
@@ -9,13 +13,7 @@ vi.mock('next/navigation', () => ({
   useParams: () => ({ slug: 'study-cave' }),
 }));
 vi.mock('@/lib/hooks/use-geolocation', () => ({
-  useGeolocation: () => ({
-    latitude: null,
-    longitude: null,
-    error: null,
-    loading: false,
-    requestLocation: vi.fn(),
-  }),
+  useGeolocation: (...args: unknown[]) => mockUseGeolocation(...args),
 }));
 vi.mock('@/lib/hooks/use-media-query', () => ({
   useIsDesktop: vi.fn(() => false),
@@ -27,6 +25,7 @@ vi.mock('@/lib/hooks/use-vibes', () => ({
 vi.mock('@/components/map/map-view', () => ({
   MapView: () => <div data-testid="mock-map-view" />,
 }));
+vi.mock('sonner', () => ({ toast: { error: vi.fn() } }));
 
 const MOCK_VIBE = {
   slug: 'study-cave',
@@ -108,6 +107,13 @@ function mockVibeShopsWithDistance() {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mockUseGeolocation.mockReturnValue({
+    latitude: null,
+    longitude: null,
+    error: null,
+    loading: false,
+    requestLocation: vi.fn(),
+  });
 });
 
 describe('VibePage — /explore/vibes/[slug]', () => {
@@ -155,9 +161,7 @@ describe('VibePage — /explore/vibes/[slug]', () => {
   it('When no shops match the vibe, an empty state message is shown', () => {
     mockVibeShopsEmpty();
     render(<VibePage />);
-    expect(
-      screen.getByText('No shops found for this vibe.')
-    ).toBeInTheDocument();
+    expect(screen.getByText('此區域尚無符合的咖啡廳')).toBeInTheDocument();
   });
 
   it('When a shop has a known distance, the distance badge is shown in the row', () => {
@@ -183,5 +187,33 @@ describe('VibePage — /explore/vibes/[slug]', () => {
     mockVibeShopsLoaded();
     render(<VibePage />);
     expect(await screen.findByText('森日咖啡')).toBeInTheDocument();
+  });
+
+  it('When geolocation is denied, the 附近 filter reverts to 全部 and an error is shown', async () => {
+    const user = userEvent.setup();
+    const mockRequestLocation = vi.fn().mockResolvedValue(null);
+    mockUseGeolocation.mockReturnValue({
+      latitude: null,
+      longitude: null,
+      error: 'denied',
+      loading: false,
+      requestLocation: mockRequestLocation,
+    });
+
+    mockVibeShopsLoaded();
+    render(<VibePage />);
+    await user.click(screen.getByRole('button', { name: /附近/ }));
+
+    expect(screen.getByRole('button', { name: '全部' })).toHaveAttribute(
+      'data-active',
+      'true'
+    );
+    expect(toast.error).toHaveBeenCalledWith('無法取得位置，已切換回全部');
+  });
+
+  it('When no shops match the active filter, an empty state message is shown in Chinese', () => {
+    mockVibeShopsEmpty();
+    render(<VibePage />);
+    expect(screen.getByText(/此區域尚無符合的咖啡廳/)).toBeInTheDocument();
   });
 });

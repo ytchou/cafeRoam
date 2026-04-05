@@ -15,6 +15,7 @@ import { useGeolocation } from '@/lib/hooks/use-geolocation';
 import { useIsDesktop } from '@/lib/hooks/use-media-query';
 import { useVibeShops } from '@/lib/hooks/use-vibe-shops';
 import { useVibes } from '@/lib/hooks/use-vibes';
+import { toast } from 'sonner';
 
 const BRICOLAGE_STYLE = {
   fontFamily: 'var(--font-bricolage), sans-serif',
@@ -50,7 +51,12 @@ export default function VibePage() {
     async (filter: VibeFilter) => {
       if (filter.type === 'nearby') {
         const coords = await requestLocation();
-        setActiveFilter(coords ? { type: 'nearby' } : { type: 'all' });
+        if (!coords) {
+          toast.error('無法取得位置，已切換回全部');
+          setActiveFilter({ type: 'all' });
+        } else {
+          setActiveFilter({ type: 'nearby' });
+        }
         return;
       }
 
@@ -172,9 +178,7 @@ export default function VibePage() {
       />
 
       {shops.length === 0 ? (
-        <div className="rounded-xl bg-white/60 px-6 py-10 text-center">
-          <p className="text-sm text-gray-500">No shops found for this vibe.</p>
-        </div>
+        <div className="py-12 text-center text-gray-400">此區域尚無符合的咖啡廳</div>
       ) : (
         <ul
           className={
