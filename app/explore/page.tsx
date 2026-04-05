@@ -59,7 +59,7 @@ export default function ExplorePage() {
   }, [requestLocation]);
 
   useEffect(() => {
-    if (cards.length > 0 && (latitude && longitude || effectiveDistrictId)) {
+    if (cards.length > 0 && ((latitude && longitude) || effectiveDistrictId)) {
       capture('tarot_draw_loaded', {
         card_count: cards.length,
       });
@@ -149,8 +149,12 @@ export default function ExplorePage() {
         cards.length === 0 &&
         (effectiveLat != null || effectiveDistrictId != null) && (
           <TarotEmptyState
-            onExpandRadius={effectiveDistrictId ? undefined : handleExpandRadius}
-            onTryDifferentDistrict={effectiveDistrictId ? handleTryDifferentDistrict : undefined}
+            onExpandRadius={
+              effectiveDistrictId ? undefined : handleExpandRadius
+            }
+            onTryDifferentDistrict={
+              effectiveDistrictId ? handleTryDifferentDistrict : undefined
+            }
           />
         )}
 

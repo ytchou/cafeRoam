@@ -15,6 +15,7 @@
 **Tech Stack:** FastAPI (Python), Next.js, TypeScript, SWR, Tailwind CSS, Vitest, pytest
 
 **Acceptance Criteria:**
+
 - [ ] A user who denies GPS sees a district picker and can draw tarot cards for any selected district
 - [ ] A user with GPS active sees "Near Me" selected by default and can switch to any district
 - [ ] The district picker is always visible above "Your Daily Draw" regardless of GPS state
@@ -25,6 +26,7 @@
 ### Task 1: Backend — Add district_id path to TarotService
 
 **Files:**
+
 - Modify: `backend/services/tarot_service.py`
 - Test: `backend/tests/services/test_tarot_service.py`
 
@@ -92,6 +94,7 @@ Expected: FAIL — `draw()` does not accept `district_id` parameter
 In `backend/services/tarot_service.py`:
 
 1. Update `draw()` signature:
+
 ```python
 async def draw(
     self,
@@ -105,6 +108,7 @@ async def draw(
 ```
 
 2. Add routing logic at the start of `draw()`:
+
 ```python
 if district_id:
     rows = await self._query_district_shops(district_id)
@@ -114,6 +118,7 @@ else:
 ```
 
 3. Add new method:
+
 ```python
 async def _query_district_shops(self, district_id: str) -> list[dict[str, Any]]:
     """Query shops within a district using FK filter."""
@@ -137,6 +142,7 @@ async def _query_district_shops(self, district_id: str) -> list[dict[str, Any]]:
 ```
 
 4. Update `_to_card` to handle missing lat/lng:
+
 ```python
 def _to_card(
     self, row: dict[str, Any], user_lat: float | None, user_lng: float | None, now: datetime
@@ -156,6 +162,7 @@ def _to_card(
 ```
 
 5. Update the `return` in `draw()` to pass lat/lng (which may be None):
+
 ```python
 return [self._to_card(row, lat, lng, now) for row in chosen]
 ```
@@ -177,21 +184,23 @@ git commit -m "feat(DEV-245): add district_id path to TarotService.draw()"
 ### Task 2: Backend — Update explore endpoint with district_id param + validation
 
 **Files:**
+
 - Modify: `backend/api/explore.py`
 - Test: `backend/tests/api/test_explore.py`
 
 **API Contract:**
+
 ```yaml
 endpoint: GET /explore/tarot-draw
 request:
-  lat: float | null     # optional, required if no district_id
-  lng: float | null     # optional, required if no district_id
-  radius_km: float      # default 3.0
-  excluded_ids: string  # default ""
-  district_id: string | null  # optional, required if no lat/lng
-response: TarotCard[]   # same shape as before
+  lat: float | null # optional, required if no district_id
+  lng: float | null # optional, required if no district_id
+  radius_km: float # default 3.0
+  excluded_ids: string # default ""
+  district_id: string | null # optional, required if no lat/lng
+response: TarotCard[] # same shape as before
 errors:
-  422: "Either lat+lng or district_id must be provided"
+  422: 'Either lat+lng or district_id must be provided'
 ```
 
 **Step 1: Write the failing tests**
@@ -282,6 +291,7 @@ git commit -m "feat(DEV-245): add district_id param to tarot-draw endpoint"
 ### Task 3: Frontend — Update useTarotDraw hook to accept districtId
 
 **Files:**
+
 - Modify: `lib/hooks/use-tarot-draw.ts`
 - Test: `lib/hooks/use-tarot-draw.test.ts`
 
@@ -292,14 +302,16 @@ git commit -m "feat(DEV-245): add district_id param to tarot-draw endpoint"
 
 describe('useTarotDraw with districtId', () => {
   it('fetches by district_id when districtId is provided and lat/lng are null', async () => {
-    const { result } = renderHook(() => useTarotDraw(null, null, 'district-123'));
+    const { result } = renderHook(() =>
+      useTarotDraw(null, null, 'district-123')
+    );
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);
     });
     // Verify SWR key contains district_id param
     expect(global.fetch).toHaveBeenCalledWith(
       expect.stringContaining('district_id=district-123'),
-      expect.any(Object),
+      expect.any(Object)
     );
   });
 
@@ -311,17 +323,19 @@ describe('useTarotDraw with districtId', () => {
   });
 
   it('prefers lat/lng over districtId when both are provided', async () => {
-    const { result } = renderHook(() => useTarotDraw(25.033, 121.565, 'district-123'));
+    const { result } = renderHook(() =>
+      useTarotDraw(25.033, 121.565, 'district-123')
+    );
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);
     });
     expect(global.fetch).toHaveBeenCalledWith(
       expect.stringContaining('lat=25.033'),
-      expect.any(Object),
+      expect.any(Object)
     );
     expect(global.fetch).not.toHaveBeenCalledWith(
       expect.stringContaining('district_id='),
-      expect.any(Object),
+      expect.any(Object)
     );
   });
 });
@@ -340,7 +354,7 @@ Update `lib/hooks/use-tarot-draw.ts`:
 export function useTarotDraw(
   lat: number | null,
   lng: number | null,
-  districtId?: string | null,
+  districtId?: string | null
 ) {
   const [radiusKm, setRadiusKm] = useState(3);
   const [excludedIds, setExcludedIds] = useState<string[]>(() =>
@@ -379,6 +393,7 @@ git commit -m "feat(DEV-245): add districtId support to useTarotDraw hook"
 ### Task 4: Frontend — Create DistrictPicker component
 
 **Files:**
+
 - Create: `components/explore/district-picker.tsx`
 - Test: `components/explore/district-picker.test.tsx`
 
@@ -561,6 +576,7 @@ git commit -m "feat(DEV-245): create DistrictPicker component"
 ### Task 5: Frontend — Wire district picker into ExplorePage
 
 **Files:**
+
 - Modify: `app/explore/page.tsx`
 - Test: `app/explore/page.test.tsx`
 
@@ -631,6 +647,7 @@ Expected: FAIL — no district picker rendered, "Enable Location" still shows on
 Update `app/explore/page.tsx`:
 
 1. Add imports:
+
 ```typescript
 import { useState } from 'react';
 import { DistrictPicker } from '@/components/explore/district-picker';
@@ -638,12 +655,16 @@ import { first } from '@/lib/utils/array'; // use project's safe array access
 ```
 
 2. Add state in `ExplorePage`:
+
 ```typescript
-const [selectedDistrictId, setSelectedDistrictId] = useState<string | null>(null);
+const [selectedDistrictId, setSelectedDistrictId] = useState<string | null>(
+  null
+);
 const [isNearMeMode, setIsNearMeMode] = useState(true);
 ```
 
 3. Add effect to auto-select first district when GPS fails:
+
 ```typescript
 useEffect(() => {
   if (geoError && districts.length > 0 && !selectedDistrictId) {
@@ -657,6 +678,7 @@ useEffect(() => {
 ```
 
 4. Update useTarotDraw call:
+
 ```typescript
 const effectiveLat = isNearMeMode ? latitude : null;
 const effectiveLng = isNearMeMode ? longitude : null;
@@ -665,17 +687,21 @@ const effectiveDistrictId = isNearMeMode ? null : selectedDistrictId;
 const { cards, isLoading, error, redraw, setRadiusKm } = useTarotDraw(
   effectiveLat,
   effectiveLng,
-  effectiveDistrictId,
+  effectiveDistrictId
 );
 ```
 
 5. Add handlers:
+
 ```typescript
-const handleSelectDistrict = useCallback((districtId: string) => {
-  setSelectedDistrictId(districtId);
-  setIsNearMeMode(false);
-  capture('district_picker_select', { district_id: districtId });
-}, [capture]);
+const handleSelectDistrict = useCallback(
+  (districtId: string) => {
+    setSelectedDistrictId(districtId);
+    setIsNearMeMode(false);
+    capture('district_picker_select', { district_id: districtId });
+  },
+  [capture]
+);
 
 const handleSelectNearMe = useCallback(() => {
   setIsNearMeMode(true);
@@ -685,26 +711,32 @@ const handleSelectNearMe = useCallback(() => {
 ```
 
 6. Render DistrictPicker above the "Your Daily Draw" heading in `tarotAndVibes`:
+
 ```tsx
-{districts.length > 0 && (
-  <DistrictPicker
-    districts={districts}
-    selectedDistrictId={selectedDistrictId}
-    gpsAvailable={!geoError && latitude != null}
-    isNearMeActive={isNearMeMode && !geoError}
-    onSelectDistrict={handleSelectDistrict}
-    onSelectNearMe={handleSelectNearMe}
-  />
-)}
+{
+  districts.length > 0 && (
+    <DistrictPicker
+      districts={districts}
+      selectedDistrictId={selectedDistrictId}
+      gpsAvailable={!geoError && latitude != null}
+      isNearMeActive={isNearMeMode && !geoError}
+      onSelectDistrict={handleSelectDistrict}
+      onSelectNearMe={handleSelectNearMe}
+    />
+  );
+}
 ```
 
 7. Replace the `geoError` dead-end block — remove the "Enable location" div entirely. The district picker auto-fallback handles this case now. Keep the loading and error states as-is, but update the loading condition:
+
 ```typescript
 {!isNearMeMode && !effectiveDistrictId && geoLoading && (
   // loading skeleton — only show when waiting for GPS in Near Me mode
 )}
 ```
+
 Adjust the loading condition to:
+
 ```typescript
 {(isLoading || (isNearMeMode && geoLoading) || (isNearMeMode && latitude == null && !geoError)) && (
 ```
@@ -726,6 +758,7 @@ git commit -m "feat(DEV-245): wire district picker into explore page with GPS fa
 ### Task 6: Frontend — Update TarotEmptyState with district CTA
 
 **Files:**
+
 - Modify: `components/tarot/tarot-empty-state.tsx`
 - Test: `components/tarot/tarot-empty-state.test.tsx`
 
@@ -827,6 +860,7 @@ git commit -m "feat(DEV-245): add 'Try a different district' CTA to TarotEmptySt
 ### Task 7: SPEC update — Add geolocation fallback business rule
 
 **Files:**
+
 - Modify: `SPEC.md` (§9 Business Rules)
 - Modify: `SPEC_CHANGELOG.md`
 - No test needed — documentation only
@@ -885,18 +919,23 @@ graph TD
 ```
 
 **Wave 1** (parallel — no dependencies):
+
 - Task 1: TarotService district_id path
 - Task 4: DistrictPicker component
 
 **Wave 2** (depends on Wave 1):
+
 - Task 2: Explore endpoint district_id param ← Task 1
 
 **Wave 3** (depends on Wave 2):
+
 - Task 3: useTarotDraw districtId support ← Task 2
 
 **Wave 4** (depends on Wave 1 + Wave 3):
+
 - Task 5: Wire district picker into ExplorePage ← Task 3, Task 4
 
 **Wave 5** (parallel — depends on Wave 4):
+
 - Task 6: TarotEmptyState district CTA ← Task 5
 - Task 7: SPEC update (no code dependency, but logically last)

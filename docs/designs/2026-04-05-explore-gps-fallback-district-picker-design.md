@@ -26,17 +26,18 @@ When GPS is denied, "Near Me" is disabled/dimmed and the picker defaults to the 
 
 **`GET /explore/tarot-draw` parameter changes:**
 
-| Param | Before | After |
-|-------|--------|-------|
-| `lat` | `float` (required) | `float \| None` (optional) |
-| `lng` | `float` (required) | `float \| None` (optional) |
-| `radius_km` | `float` (default 3.0) | unchanged |
-| `excluded_ids` | `str` (default "") | unchanged |
-| `district_id` | — | `str \| None` (optional, new) |
+| Param          | Before                | After                         |
+| -------------- | --------------------- | ----------------------------- |
+| `lat`          | `float` (required)    | `float \| None` (optional)    |
+| `lng`          | `float` (required)    | `float \| None` (optional)    |
+| `radius_km`    | `float` (default 3.0) | unchanged                     |
+| `excluded_ids` | `str` (default "")    | unchanged                     |
+| `district_id`  | —                     | `str \| None` (optional, new) |
 
 **Validation:** Require either `(lat + lng)` OR `district_id`. Return 422 if neither provided.
 
 **`TarotService.draw()` changes:**
+
 - New signature: `draw(self, lat, lng, radius_km, excluded_ids, now, district_id=None)`
 - When `district_id` provided: new `_query_district_shops(district_id)` method filters by `.eq("district_id", district_id)` instead of bounding box
 - When lat/lng provided: existing `_query_nearby_shops` unchanged
@@ -46,16 +47,19 @@ When GPS is denied, "Near Me" is disabled/dimmed and the picker defaults to the 
 ### Frontend
 
 **New component: `components/explore/district-picker.tsx`**
+
 - Horizontally scrollable pill/chip row
 - "Near Me" pill: highlighted when GPS active, disabled+dimmed when GPS denied
 - District pills from `useDistricts()` data
 - Props: `districts: District[]`, `selectedDistrictId: string | null`, `gpsAvailable: boolean`, `isNearMeActive: boolean`, `onSelectDistrict: (id: string) => void`, `onSelectNearMe: () => void`
 
 **`useTarotDraw` hook changes:**
+
 - New signature: `useTarotDraw(lat, lng, districtId?: string | null)`
 - SWR key: when `districtId` present → `/api/explore/tarot-draw?district_id=${districtId}&...`; when `lat && lng` → existing URL; otherwise `null`
 
 **`ExplorePage` changes:**
+
 - New state: `selectedDistrictId: string | null`, `isNearMeMode: boolean`
 - When GPS available: `isNearMeMode = true` by default
 - When GPS denied: `isNearMeMode = false`, auto-select first district
@@ -63,6 +67,7 @@ When GPS is denied, "Near Me" is disabled/dimmed and the picker defaults to the 
 - `geoError` dead-end replaced with district picker fallback
 
 **`TarotEmptyState` changes:**
+
 - New optional prop: `onTryDifferentDistrict?: () => void`
 - When provided, renders "Try a different district" as secondary button
 
@@ -80,4 +85,5 @@ When GPS is denied, "Near Me" is disabled/dimmed and the picker defaults to the 
 ## SPEC Update Required
 
 Add to SPEC.md §9 Business Rules:
+
 > **Geolocation fallback:** When geolocation is unavailable, the Explore page defaults to a district picker. Users can select any Taipei district to scope Tarot Draw results. The district picker is always visible regardless of GPS state, with "Near Me" as the default when GPS is available.

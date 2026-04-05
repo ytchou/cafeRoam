@@ -12,8 +12,7 @@ interface DistrictPickerProps {
 }
 
 const activePill = 'border-amber-700 bg-amber-700 text-white';
-const inactivePill =
-  'border-gray-200 bg-white text-gray-700 hover:bg-gray-50';
+const inactivePill = 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50';
 const disabledPill =
   'border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed';
 
@@ -27,7 +26,7 @@ export function DistrictPicker({
 }: DistrictPickerProps) {
   return (
     <div
-      className="mb-3 flex gap-2 overflow-x-auto pb-1 scrollbar-hide"
+      className="scrollbar-hide mb-3 flex gap-2 overflow-x-auto pb-1"
       role="group"
       aria-label="Location filter"
     >
@@ -36,7 +35,11 @@ export function DistrictPicker({
         onClick={onSelectNearMe}
         disabled={!gpsAvailable}
         className={`shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-medium transition-colors ${
-          !gpsAvailable ? disabledPill : isNearMeActive ? activePill : inactivePill
+          !gpsAvailable
+            ? disabledPill
+            : isNearMeActive
+              ? activePill
+              : inactivePill
         }`}
       >
         Near Me

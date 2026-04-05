@@ -40,7 +40,10 @@ describe('TarotEmptyState with district CTA', () => {
   it('calls onTryDifferentDistrict when district button is clicked', async () => {
     const onTry = vi.fn();
     render(
-      <TarotEmptyState onExpandRadius={vi.fn()} onTryDifferentDistrict={onTry} />
+      <TarotEmptyState
+        onExpandRadius={vi.fn()}
+        onTryDifferentDistrict={onTry}
+      />
     );
     await userEvent.click(
       screen.getByRole('button', { name: /try a different district/i })
@@ -49,9 +52,7 @@ describe('TarotEmptyState with district CTA', () => {
   });
 
   it('hides Expand radius button in district mode (onExpandRadius not provided)', () => {
-    render(
-      <TarotEmptyState onTryDifferentDistrict={vi.fn()} />
-    );
+    render(<TarotEmptyState onTryDifferentDistrict={vi.fn()} />);
     expect(
       screen.queryByRole('button', { name: /expand radius/i })
     ).not.toBeInTheDocument();

@@ -9,7 +9,11 @@ import {
 } from '@/lib/tarot/recently-seen';
 import type { TarotCardData } from '@/types/tarot';
 
-export function useTarotDraw(lat: number | null, lng: number | null, districtId?: string | null) {
+export function useTarotDraw(
+  lat: number | null,
+  lng: number | null,
+  districtId?: string | null
+) {
   const [radiusKm, setRadiusKm] = useState(3);
   const [excludedIds, setExcludedIds] = useState<string[]>(() =>
     getRecentlySeenIds()

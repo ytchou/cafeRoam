@@ -179,15 +179,27 @@ describe('ExplorePage — district-mode empty state', () => {
   function setupSwrWithEmptyTarot() {
     vi.mocked(useSWR).mockImplementation((key) => {
       if (typeof key === 'string' && key.includes('/api/explore/tarot-draw')) {
-        return { data: [], error: null, isLoading: false } as ReturnType<typeof useSWR>;
+        return { data: [], error: null, isLoading: false } as ReturnType<
+          typeof useSWR
+        >;
       }
       if (key === '/api/explore/vibes') {
-        return { data: MOCK_VIBES, error: null, isLoading: false } as ReturnType<typeof useSWR>;
+        return {
+          data: MOCK_VIBES,
+          error: null,
+          isLoading: false,
+        } as ReturnType<typeof useSWR>;
       }
       if (key === '/api/explore/community/preview') {
-        return { data: MOCK_COMMUNITY, error: null, isLoading: false } as ReturnType<typeof useSWR>;
+        return {
+          data: MOCK_COMMUNITY,
+          error: null,
+          isLoading: false,
+        } as ReturnType<typeof useSWR>;
       }
-      return { data: undefined, error: null, isLoading: false } as ReturnType<typeof useSWR>;
+      return { data: undefined, error: null, isLoading: false } as ReturnType<
+        typeof useSWR
+      >;
     });
   }
 
@@ -229,7 +241,9 @@ describe('ExplorePage — district-mode empty state', () => {
     });
     setupSwrWithEmptyTarot();
     render(<ExplorePage />);
-    const button = screen.getByRole('button', { name: /try a different district/i });
+    const button = screen.getByRole('button', {
+      name: /try a different district/i,
+    });
     await userEvent.click(button);
     // Handler fired without errors — GPS-denied users always have a fallback district,
     // so the empty state remains visible after reset (expected behavior)

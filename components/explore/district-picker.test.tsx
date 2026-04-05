@@ -3,8 +3,28 @@ import userEvent from '@testing-library/user-event';
 import { DistrictPicker } from './district-picker';
 
 const mockDistricts = [
-  { id: 'd1', slug: 'daan', nameEn: 'Da-an', nameZh: '大安', descriptionEn: null, descriptionZh: null, city: 'Taipei', shopCount: 25, sortOrder: 1 },
-  { id: 'd2', slug: 'xinyi', nameEn: 'Xinyi', nameZh: '信義', descriptionEn: null, descriptionZh: null, city: 'Taipei', shopCount: 18, sortOrder: 2 },
+  {
+    id: 'd1',
+    slug: 'daan',
+    nameEn: 'Da-an',
+    nameZh: '大安',
+    descriptionEn: null,
+    descriptionZh: null,
+    city: 'Taipei',
+    shopCount: 25,
+    sortOrder: 1,
+  },
+  {
+    id: 'd2',
+    slug: 'xinyi',
+    nameEn: 'Xinyi',
+    nameZh: '信義',
+    descriptionEn: null,
+    descriptionZh: null,
+    city: 'Taipei',
+    shopCount: 18,
+    sortOrder: 2,
+  },
 ];
 
 describe('DistrictPicker', () => {
@@ -19,7 +39,9 @@ describe('DistrictPicker', () => {
         onSelectNearMe={vi.fn()}
       />
     );
-    expect(screen.getByRole('button', { name: /near me/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /near me/i })
+    ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /大安/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /信義/i })).toBeInTheDocument();
   });
