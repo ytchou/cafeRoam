@@ -156,9 +156,7 @@ test.describe('J04 — Browse map → tap pin → shop detail sheet', () => {
             .__caferoam_map;
           if (!map || !map.isStyleLoaded()) return false;
           return (
-            map.queryRenderedFeatures(undefined, {
-              layers: ['shops-pins'],
-            }).length > 0
+            map.queryRenderedFeatures({ layers: ['shops-pins'] }).length > 0
           );
         },
         { timeout: 15_000 }
@@ -174,9 +172,7 @@ test.describe('J04 — Browse map → tap pin → shop detail sheet', () => {
     const pinInfo = await page.evaluate(() => {
       const map = (window as { __caferoam_map?: mapboxgl.Map }).__caferoam_map;
       if (!map) return null;
-      const features = map.queryRenderedFeatures(undefined, {
-        layers: ['shops-pins'],
-      });
+      const features = map.queryRenderedFeatures({ layers: ['shops-pins'] });
       if (!features.length) return null;
       const feature = features[0];
       const coords = (
@@ -428,9 +424,7 @@ test.describe('J29 — Mobile: mini card on pin tap', () => {
             .__caferoam_map;
           if (!map || !map.isStyleLoaded()) return false;
           return (
-            map.queryRenderedFeatures(undefined, {
-              layers: ['shops-pins'],
-            }).length > 0
+            map.queryRenderedFeatures({ layers: ['shops-pins'] }).length > 0
           );
         },
         { timeout: 15_000 }
@@ -446,9 +440,7 @@ test.describe('J29 — Mobile: mini card on pin tap', () => {
     const pinPoint = await page.evaluate(() => {
       const map = (window as { __caferoam_map?: mapboxgl.Map }).__caferoam_map;
       if (!map) return null;
-      const features = map.queryRenderedFeatures(undefined, {
-        layers: ['shops-pins'],
-      });
+      const features = map.queryRenderedFeatures({ layers: ['shops-pins'] });
       if (!features.length) return null;
       const coords = (
         features[0].geometry as { type: string; coordinates: [number, number] }
