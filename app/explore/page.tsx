@@ -37,10 +37,13 @@ export default function ExplorePage() {
   const [selectedDistrictId, setSelectedDistrictId] = useState<string | null>(
     null
   );
-  const [isNearMeMode, setIsNearMeMode] = useState(true);
+  const gpsAvailable = !geoError && latitude != null;
+  const isNearMeMode = gpsAvailable && selectedDistrictId === null;
+  const activeDistrictId =
+    selectedDistrictId ?? (!gpsAvailable ? (districts[0]?.id ?? null) : null);
   const effectiveLat = isNearMeMode ? latitude : null;
   const effectiveLng = isNearMeMode ? longitude : null;
-  const effectiveDistrictId = isNearMeMode ? null : selectedDistrictId;
+  const effectiveDistrictId = isNearMeMode ? null : activeDistrictId;
   const { cards, isLoading, error, redraw, setRadiusKm } = useTarotDraw(
     effectiveLat,
     effectiveLng,
@@ -54,18 +57,6 @@ export default function ExplorePage() {
   useEffect(() => {
     requestLocation();
   }, [requestLocation]);
-
-  useEffect(() => {
-    if (geoError && districts.length > 0 && !selectedDistrictId) {
-      const firstDistrict = districts[0];
-      if (firstDistrict) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setSelectedDistrictId(firstDistrict.id);
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setIsNearMeMode(false);
-      }
-    }
-  }, [geoError, districts, selectedDistrictId]);
 
   useEffect(() => {
     if (cards.length > 0 && latitude && longitude) {
@@ -84,11 +75,9 @@ export default function ExplorePage() {
 
   const handleSelectDistrict = useCallback((districtId: string) => {
     setSelectedDistrictId(districtId);
-    setIsNearMeMode(false);
   }, []);
 
   const handleSelectNearMe = useCallback(() => {
-    setIsNearMeMode(true);
     setSelectedDistrictId(null);
   }, []);
 
@@ -97,9 +86,9 @@ export default function ExplorePage() {
       {districts.length > 0 && (
         <DistrictPicker
           districts={districts}
-          selectedDistrictId={selectedDistrictId}
-          gpsAvailable={!geoError && latitude != null}
-          isNearMeActive={isNearMeMode && !geoError}
+          selectedDistrictId={activeDistrictId}
+          gpsAvailable={gpsAvailable}
+          isNearMeActive={isNearMeMode}
           onSelectDistrict={handleSelectDistrict}
           onSelectNearMe={handleSelectNearMe}
         />
