@@ -31,7 +31,7 @@ class VibeService:
         lat: float | None = None,
         lng: float | None = None,
         radius_km: float = 5.0,
-        district_id: str | None = None,
+        district_ids: list[str] | None = None,
     ) -> VibeShopsResponse:
         """Return shops matching a vibe, ranked by tag overlap score."""
         vibe = self._fetch_vibe(slug)
@@ -41,7 +41,7 @@ class VibeService:
             return VibeShopsResponse(vibe=vibe, shops=[], total_count=0)
 
         shop_rows = self._fetch_shop_details(
-            list(shop_matches.keys()), lat, lng, radius_km, district_id
+            list(shop_matches.keys()), lat, lng, radius_km, district_ids
         )
 
         total_tags = len(vibe.tag_ids)
@@ -120,7 +120,7 @@ class VibeService:
         lat: float | None,
         lng: float | None,
         radius_km: float,
-        district_id: str | None = None,
+        district_ids: list[str] | None = None,
     ) -> list[dict[str, Any]]:
         _cols = (
             "id, name, slug, latitude, longitude, rating, "
@@ -141,6 +141,6 @@ class VibeService:
                 .gte("longitude", lng_min)
                 .lte("longitude", lng_max)
             )
-        if district_id is not None:
-            builder = builder.eq("district_id", district_id)
+        if district_ids:
+            builder = builder.in_("district_id", district_ids)
         return cast("list[dict[str, Any]]", builder.limit(200).execute().data or [])

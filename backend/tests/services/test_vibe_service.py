@@ -251,7 +251,51 @@ def test_get_shops_for_vibe_filters_by_district():
     )
 
     service = VibeService(db)
-    result = service.get_shops_for_vibe("first-date", district_id="daan-uuid")
+    result = service.get_shops_for_vibe("first-date", district_ids=["daan-uuid"])
 
     assert len(result.shops) == 1
     assert result.shops[0].name == "Daan Cafe"
+
+
+def test_get_shops_for_vibe_filters_by_multiple_districts():
+    """Given multiple district IDs, shops from all selected districts are returned."""
+    db = _make_db_mock_for_vibes(
+        [make_vibe_row(slug="first-date", tag_ids=["cozy"])],
+        [
+            make_shop_tag_row("shop-1", "cozy"),
+            make_shop_tag_row("shop-2", "cozy"),
+        ],
+        [
+            {
+                "id": "shop-1",
+                "name": "Daan Cafe",
+                "slug": "daan-cafe",
+                "latitude": 25.026,
+                "longitude": 121.543,
+                "district_id": "daan-uuid",
+                "rating": 4.2,
+                "review_count": 5,
+                "processing_status": "live",
+                "shop_photos": [],
+            },
+            {
+                "id": "shop-2",
+                "name": "Xinyi Cafe",
+                "slug": "xinyi-cafe",
+                "latitude": 25.033,
+                "longitude": 121.565,
+                "district_id": "xinyi-uuid",
+                "rating": 4.5,
+                "review_count": 8,
+                "processing_status": "live",
+                "shop_photos": [],
+            },
+        ],
+    )
+
+    service = VibeService(db)
+    result = service.get_shops_for_vibe(
+        "first-date", district_ids=["daan-uuid", "xinyi-uuid"]
+    )
+
+    assert len(result.shops) == 2
