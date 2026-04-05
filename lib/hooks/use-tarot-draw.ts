@@ -56,6 +56,7 @@ export function useTarotDraw(
     isLoading,
     error,
     redraw,
+    radiusKm,
     setRadiusKm,
   };
 }

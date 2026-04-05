@@ -38,4 +38,4 @@ Bundled consent is the right fit because:
 - **Advantage**: Consent version tracking allows future consent text updates without re-consent friction
 - **Disadvantage**: If consent text changes significantly, existing users may need to re-consent (minor UX disruption)
 - **Disadvantage**: Bundled consent is slightly less defensible than a dedicated checkbox if challenged — but the aggregate-only data principle and k-anonymity make a challenge unlikely
-- **Note**: This decision covers free analytics sharing only. Commercial sale of analytics (DEV-89) may require a stronger consent basis or separate disclosure
+- **Update (2026-04-05, DEV-89)**: Commercial analytics audit confirmed that bundled consent is sufficient for paid tiers as well. The Premium tier subscription gates dashboard access (B2B pricing), not user data processing — the data processing purpose is identical to free analytics sharing. No stronger consent basis or separate disclosure is needed. See `docs/legal/2026-04-03-pdpa-owner-analytics-compliance.md` Section 10.

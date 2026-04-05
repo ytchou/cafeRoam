@@ -42,6 +42,74 @@ beforeEach(() => {
   });
 });
 
+describe('ExplorePage — GPS status feedback', () => {
+  const DAAN_DISTRICT = {
+    id: 'd1',
+    slug: 'daan',
+    nameZh: '大安',
+    nameEn: 'Da-an',
+    city: 'Taipei',
+    shopCount: 25,
+    sortOrder: 1,
+    descriptionEn: null,
+    descriptionZh: null,
+  };
+
+  it('shows "Finding your location" when GPS is loading', () => {
+    mockUseGeolocation.mockReturnValue({
+      latitude: null,
+      longitude: null,
+      error: null,
+      loading: true,
+      requestLocation: vi.fn(),
+    });
+    mockUseDistricts.mockReturnValue({
+      districts: [DAAN_DISTRICT],
+      isLoading: false,
+      error: null,
+    });
+    setupSwrMock();
+    render(<ExplorePage />);
+    expect(screen.getByText(/finding your location/i)).toBeInTheDocument();
+  });
+
+  it('shows "Within 3 km" when Near Me is active with GPS', () => {
+    mockUseGeolocation.mockReturnValue({
+      latitude: 25.033,
+      longitude: 121.565,
+      error: null,
+      loading: false,
+      requestLocation: vi.fn(),
+    });
+    mockUseDistricts.mockReturnValue({
+      districts: [DAAN_DISTRICT],
+      isLoading: false,
+      error: null,
+    });
+    setupSwrMock();
+    render(<ExplorePage />);
+    expect(screen.getByText(/within 3 km of you/i)).toBeInTheDocument();
+  });
+
+  it('shows location unavailable message when GPS is denied', () => {
+    mockUseGeolocation.mockReturnValue({
+      latitude: null,
+      longitude: null,
+      error: 'User denied Geolocation',
+      loading: false,
+      requestLocation: vi.fn(),
+    });
+    mockUseDistricts.mockReturnValue({
+      districts: [DAAN_DISTRICT],
+      isLoading: false,
+      error: null,
+    });
+    setupSwrMock();
+    render(<ExplorePage />);
+    expect(screen.getByText(/location unavailable/i)).toBeInTheDocument();
+  });
+});
+
 const MOCK_COMMUNITY = [
   makeCommunityNote(),
   makeCommunityNote({ checkinId: 'ci-2' }),

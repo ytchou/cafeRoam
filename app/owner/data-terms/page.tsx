@@ -24,7 +24,10 @@ export default function OwnerDataTermsPage() {
             All analytics data provided through the CafeRoam owner dashboard is
             aggregate and anonymized. Individual user identities are never
             disclosed. Demographic breakdowns are only surfaced when at least 10
-            distinct users contribute to a slice (k-anonymity, k≥10).
+            distinct users contribute to a slice (k-anonymity, k≥10). These data
+            principles apply equally across all access tiers — the depth of
+            analytics available may vary by subscription level, but the
+            anonymization and aggregation standards remain identical.
           </p>
         </div>
 

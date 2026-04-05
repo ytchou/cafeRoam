@@ -35,6 +35,8 @@ describe('DistrictPicker', () => {
         selectedDistrictIds={[]}
         gpsAvailable={true}
         isNearMeActive={true}
+        gpsStatus="active"
+        radiusKm={3}
         onToggleDistrict={vi.fn()}
         onSelectNearMe={vi.fn()}
       />
@@ -53,6 +55,8 @@ describe('DistrictPicker', () => {
         selectedDistrictIds={['d1']}
         gpsAvailable={false}
         isNearMeActive={false}
+        gpsStatus="denied"
+        radiusKm={3}
         onToggleDistrict={vi.fn()}
         onSelectNearMe={vi.fn()}
       />
@@ -67,6 +71,8 @@ describe('DistrictPicker', () => {
         selectedDistrictIds={['d1']}
         gpsAvailable={true}
         isNearMeActive={false}
+        gpsStatus="district-selected"
+        radiusKm={3}
         onToggleDistrict={vi.fn()}
         onSelectNearMe={vi.fn()}
       />
@@ -82,6 +88,8 @@ describe('DistrictPicker', () => {
         selectedDistrictIds={['d1', 'd2']}
         gpsAvailable={true}
         isNearMeActive={false}
+        gpsStatus="district-selected"
+        radiusKm={3}
         onToggleDistrict={vi.fn()}
         onSelectNearMe={vi.fn()}
       />
@@ -100,6 +108,8 @@ describe('DistrictPicker', () => {
         selectedDistrictIds={[]}
         gpsAvailable={true}
         isNearMeActive={true}
+        gpsStatus="active"
+        radiusKm={3}
         onToggleDistrict={onToggleDistrict}
         onSelectNearMe={vi.fn()}
       />
@@ -116,11 +126,112 @@ describe('DistrictPicker', () => {
         selectedDistrictIds={['d1']}
         gpsAvailable={true}
         isNearMeActive={false}
+        gpsStatus="district-selected"
+        radiusKm={3}
         onToggleDistrict={vi.fn()}
         onSelectNearMe={onNearMe}
       />
     );
     await userEvent.click(screen.getByRole('button', { name: /near me/i }));
     expect(onNearMe).toHaveBeenCalled();
+  });
+
+  it('shows pulsing animation on Near Me pill during GPS loading', () => {
+    render(
+      <DistrictPicker
+        districts={mockDistricts}
+        selectedDistrictIds={[]}
+        gpsAvailable={false}
+        isNearMeActive={false}
+        gpsStatus="loading"
+        radiusKm={3}
+        onToggleDistrict={vi.fn()}
+        onSelectNearMe={vi.fn()}
+      />
+    );
+    const nearMeBtn = screen.getByRole('button', { name: /near me/i });
+    expect(nearMeBtn).toHaveClass('animate-pulse');
+    expect(screen.getByText(/finding your location/i)).toBeInTheDocument();
+  });
+
+  it('shows radius label when Near Me is active', () => {
+    render(
+      <DistrictPicker
+        districts={mockDistricts}
+        selectedDistrictIds={[]}
+        gpsAvailable={true}
+        isNearMeActive={true}
+        gpsStatus="active"
+        radiusKm={3}
+        onToggleDistrict={vi.fn()}
+        onSelectNearMe={vi.fn()}
+      />
+    );
+    expect(screen.getByText(/within 3 km of you/i)).toBeInTheDocument();
+  });
+
+  it('updates radius label when radius changes', () => {
+    render(
+      <DistrictPicker
+        districts={mockDistricts}
+        selectedDistrictIds={[]}
+        gpsAvailable={true}
+        isNearMeActive={true}
+        gpsStatus="active"
+        radiusKm={10}
+        onToggleDistrict={vi.fn()}
+        onSelectNearMe={vi.fn()}
+      />
+    );
+    expect(screen.getByText(/within 10 km of you/i)).toBeInTheDocument();
+  });
+
+  it('shows denied message when GPS is unavailable', () => {
+    render(
+      <DistrictPicker
+        districts={mockDistricts}
+        selectedDistrictIds={['d1']}
+        gpsAvailable={false}
+        isNearMeActive={false}
+        gpsStatus="denied"
+        radiusKm={3}
+        onToggleDistrict={vi.fn()}
+        onSelectNearMe={vi.fn()}
+      />
+    );
+    expect(screen.getByText(/location unavailable/i)).toBeInTheDocument();
+  });
+
+  it('hides status message when a district is selected', () => {
+    render(
+      <DistrictPicker
+        districts={mockDistricts}
+        selectedDistrictIds={['d1']}
+        gpsAvailable={true}
+        isNearMeActive={false}
+        gpsStatus="district-selected"
+        radiusKm={3}
+        onToggleDistrict={vi.fn()}
+        onSelectNearMe={vi.fn()}
+      />
+    );
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+  });
+
+  it('status line has aria-live polite for accessibility', () => {
+    render(
+      <DistrictPicker
+        districts={mockDistricts}
+        selectedDistrictIds={[]}
+        gpsAvailable={true}
+        isNearMeActive={true}
+        gpsStatus="active"
+        radiusKm={3}
+        onToggleDistrict={vi.fn()}
+        onSelectNearMe={vi.fn()}
+      />
+    );
+    const statusEl = screen.getByRole('status');
+    expect(statusEl).toHaveAttribute('aria-live', 'polite');
   });
 });

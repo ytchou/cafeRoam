@@ -37,6 +37,14 @@ export default function ExplorePage() {
   const [selectedDistrictIds, setSelectedDistrictIds] = useState<string[]>([]);
   const gpsAvailable = !geoError && latitude != null;
   const isNearMeMode = gpsAvailable && selectedDistrictIds.length === 0;
+  const gpsStatus: 'loading' | 'active' | 'denied' | 'district-selected' =
+    geoLoading
+      ? 'loading'
+      : geoError || latitude == null
+        ? 'denied'
+        : selectedDistrictIds.length > 0
+          ? 'district-selected'
+          : 'active';
   const [firstDistrict] = districts;
   const activeDistrictIds = useMemo(
     () =>
@@ -58,11 +66,8 @@ export default function ExplorePage() {
           : null,
     [isNearMeMode, activeDistrictIds]
   );
-  const { cards, isLoading, error, redraw, setRadiusKm } = useTarotDraw(
-    effectiveLat,
-    effectiveLng,
-    effectiveDistrictIds
-  );
+  const { cards, isLoading, error, redraw, radiusKm, setRadiusKm } =
+    useTarotDraw(effectiveLat, effectiveLng, effectiveDistrictIds);
   const { vibes } = useVibes();
   const previewVibes = useMemo(() => vibes.slice(0, 6), [vibes]);
   const previewDistricts = useMemo(() => districts.slice(0, 6), [districts]);
@@ -121,6 +126,8 @@ export default function ExplorePage() {
           selectedDistrictIds={activeDistrictIds}
           gpsAvailable={gpsAvailable}
           isNearMeActive={isNearMeMode}
+          gpsStatus={gpsStatus}
+          radiusKm={radiusKm}
           onToggleDistrict={handleToggleDistrict}
           onSelectNearMe={handleSelectNearMe}
         />
