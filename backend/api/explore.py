@@ -15,16 +15,29 @@ router = APIRouter(prefix="/explore", tags=["explore"])
 
 @router.get("/tarot-draw")
 async def tarot_draw(
-    lat: float = Query(..., ge=-90.0, le=90.0),
-    lng: float = Query(..., ge=-180.0, le=180.0),
+    lat: float | None = Query(default=None, ge=-90.0, le=90.0),
+    lng: float | None = Query(default=None, ge=-180.0, le=180.0),
     radius_km: float = Query(default=3.0, ge=0.5, le=20.0),
     excluded_ids: str = Query(default=""),
+    district_id: str | None = Query(default=None),
 ) -> list[dict[str, Any]]:
-    """Draw 3 tarot cards from nearby open shops. Public — no auth required."""
+    """Draw 3 tarot cards from nearby open shops or by district. Public — no auth required."""
+    has_coords = lat is not None and lng is not None
+    if not has_coords and not district_id:
+        raise HTTPException(
+            status_code=422,
+            detail="Either lat+lng or district_id must be provided",
+        )
     parsed_excluded = [s.strip() for s in excluded_ids.split(",") if s.strip()]
     db = get_anon_client()
     service = TarotService(db)
-    cards = await service.draw(lat=lat, lng=lng, radius_km=radius_km, excluded_ids=parsed_excluded)
+    cards = await service.draw(
+        lat=lat,
+        lng=lng,
+        radius_km=radius_km,
+        excluded_ids=parsed_excluded,
+        district_id=district_id,
+    )
     return [c.model_dump(by_alias=True) for c in cards]
 
 
