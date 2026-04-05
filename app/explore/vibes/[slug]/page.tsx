@@ -11,6 +11,7 @@ import {
   type VibeFilter,
 } from '@/components/explore/district-chips';
 import { CollapsibleMapPanel } from '@/components/map/collapsible-map-panel';
+import { useDistricts } from '@/lib/hooks/use-districts';
 import { useGeolocation } from '@/lib/hooks/use-geolocation';
 import { useIsDesktop } from '@/lib/hooks/use-media-query';
 import { useVibeShops } from '@/lib/hooks/use-vibe-shops';
@@ -26,6 +27,7 @@ export default function VibePage() {
   const { slug } = useParams<{ slug: string }>();
   const isDesktop = useIsDesktop();
   const { vibes } = useVibes();
+  const { districts } = useDistricts();
   const otherVibes = vibes.filter((v) => v.slug !== slug).slice(0, 6);
   const { latitude, longitude, requestLocation } = useGeolocation();
 
@@ -46,6 +48,22 @@ export default function VibePage() {
   }, [activeFilter, latitude, longitude]);
 
   const { response, isLoading, error } = useVibeShops(slug, vibeShopsFilter);
+
+  const subtitleChips = useMemo(
+    () => (response?.vibe.subtitle ? response.vibe.subtitle.split(' · ').filter(Boolean) : []),
+    [response]
+  );
+
+  const mapShops = useMemo(
+    () =>
+      (response?.shops ?? []).map((shop) => ({
+        id: shop.shopId,
+        name: shop.name,
+        latitude: shop.latitude ?? null,
+        longitude: shop.longitude ?? null,
+      })),
+    [response]
+  );
 
   const handleFilterChange = useCallback(
     async (filter: VibeFilter) => {
@@ -106,19 +124,10 @@ export default function VibePage() {
   }
 
   const { vibe, shops, totalCount } = response;
-  const subtitleChips = vibe.subtitle
-    ? vibe.subtitle.split(' · ').filter(Boolean)
-    : [];
   const badgeText =
     activeFilter.type === 'nearby'
       ? `${totalCount} ${totalCount === 1 ? 'shop' : 'shops'} nearby`
       : `${totalCount} ${totalCount === 1 ? 'shop' : 'shops'}`;
-  const mapShops = shops.map((shop) => ({
-    id: shop.shopId,
-    name: shop.name,
-    latitude: shop.latitude ?? null,
-    longitude: shop.longitude ?? null,
-  }));
 
   return (
     <main className="bg-surface-warm min-h-screen px-5 pt-6 pb-24">
@@ -165,7 +174,7 @@ export default function VibePage() {
       </div>
 
       <DistrictChips
-        districts={[]}
+        districts={districts}
         activeFilter={activeFilter}
         onFilterChange={handleFilterChange}
         isLoading={isLoading}
@@ -191,6 +200,7 @@ export default function VibePage() {
               ref={(el) => {
                 cardRefs.current[shop.shopId] = el;
               }}
+              onClick={() => setSelectedShopId(shop.shopId)}
             >
               <div className="flex items-center gap-3 rounded-xl bg-white px-4 py-3 shadow-sm">
                 <Link

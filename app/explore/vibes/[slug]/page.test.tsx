@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import useSWR from 'swr';
 import { toast } from 'sonner';
+import { useDistricts } from '@/lib/hooks/use-districts';
 import VibePage from './page';
 
 const mockUseGeolocation = vi.fn();
@@ -22,8 +23,13 @@ vi.mock('@/lib/hooks/use-media-query', () => ({
 vi.mock('@/lib/hooks/use-vibes', () => ({
   useVibes: vi.fn(() => ({ vibes: [] })),
 }));
+vi.mock('@/lib/hooks/use-districts', () => ({
+  useDistricts: vi.fn(() => ({ districts: [], isLoading: false, error: null })),
+}));
 vi.mock('@/components/map/map-view', () => ({
-  MapView: () => <div data-testid="mock-map-view" />,
+  MapView: ({ selectedShopId }: { selectedShopId: string | null }) => (
+    <div data-testid="mock-map-view" data-selected-shop-id={selectedShopId ?? ''} />
+  ),
 }));
 vi.mock('sonner', () => ({ toast: { error: vi.fn() } }));
 
@@ -215,5 +221,31 @@ describe('VibePage — /explore/vibes/[slug]', () => {
     mockVibeShopsEmpty();
     render(<VibePage />);
     expect(screen.getByText(/此區域尚無符合的咖啡廳/)).toBeInTheDocument();
+  });
+
+  it('When districts are available, their names appear as filter chips alongside 全部 and 附近', () => {
+    vi.mocked(useDistricts).mockReturnValue({
+      districts: [
+        { id: 'district-daan', nameZh: '大安區' },
+        { id: 'district-zhongzheng', nameZh: '中正區' },
+      ],
+      isLoading: false,
+      error: null,
+    });
+    mockVibeShopsLoaded();
+    render(<VibePage />);
+    expect(screen.getByRole('button', { name: '大安區' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '中正區' })).toBeInTheDocument();
+  });
+
+  it('When a user clicks a shop card, that shop becomes the selected pin on the map', async () => {
+    const user = userEvent.setup();
+    mockVibeShopsLoaded();
+    render(<VibePage />);
+    const shopCard = screen.getByText('森日咖啡').closest('li');
+    expect(shopCard).toBeTruthy();
+    await user.click(shopCard!);
+    const mapView = screen.getByTestId('mock-map-view');
+    expect(mapView).toHaveAttribute('data-selected-shop-id', 'shop-a');
   });
 });
