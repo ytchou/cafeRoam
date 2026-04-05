@@ -5,7 +5,7 @@ import type { ReactNode } from 'react';
 export type VibeFilter =
   | { type: 'all' }
   | { type: 'nearby' }
-  | { type: 'district'; districtId: string };
+  | { type: 'districts'; districtIds: string[] };
 
 interface DistrictChipsProps {
   districts: { id: string; nameZh: string }[];
@@ -22,8 +22,8 @@ export function DistrictChips({
 }: DistrictChipsProps) {
   const isActive = (type: string, districtId?: string) => {
     if (activeFilter.type !== type) return false;
-    if (type === 'district' && 'districtId' in activeFilter) {
-      return activeFilter.districtId === districtId;
+    if (type === 'districts' && 'districtIds' in activeFilter) {
+      return activeFilter.districtIds.includes(districtId!);
     }
     return true;
   };
@@ -47,8 +47,27 @@ export function DistrictChips({
       {districts.map((d) => (
         <ChipButton
           key={d.id}
-          active={isActive('district', d.id)}
-          onClick={() => onFilterChange({ type: 'district', districtId: d.id })}
+          active={isActive('districts', d.id)}
+          onClick={() => {
+            const currentIds =
+              activeFilter.type === 'districts' ? activeFilter.districtIds : [];
+            const isSelected = currentIds.includes(d.id);
+
+            if (isSelected) {
+              const next = currentIds.filter((id) => id !== d.id);
+              onFilterChange(
+                next.length === 0
+                  ? { type: 'all' }
+                  : { type: 'districts', districtIds: next }
+              );
+              return;
+            }
+
+            onFilterChange({
+              type: 'districts',
+              districtIds: [...currentIds, d.id],
+            });
+          }}
           disabled={isLoading}
         >
           {d.nameZh}

@@ -9,7 +9,7 @@ interface VibeShopsFilter {
   lat?: number | null;
   lng?: number | null;
   radiusKm?: number;
-  districtId?: string | null;
+  districtIds?: string[] | null;
 }
 
 export function useVibeShops(

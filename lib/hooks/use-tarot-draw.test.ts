@@ -156,29 +156,36 @@ describe('useTarotDraw', () => {
     expect(lastKey).not.toContain('s2');
   });
 
-  describe('useTarotDraw with districtId', () => {
-    it('fetches by district_id when districtId is provided and lat/lng are null', () => {
+  describe('useTarotDraw with districtIds', () => {
+    it('fetches by district_ids when districtIds is provided and lat/lng are null', () => {
       mockUseSWR.mockReturnValue(swrReturning([], { isLoading: false }));
-      renderHook(() => useTarotDraw(null, null, 'district-123'));
+      renderHook(() => useTarotDraw(null, null, ['district-123']));
       const key = mockUseSWR.mock.calls[0][0] as string;
-      expect(key).toContain('district_id=district-123');
+      expect(key).toContain('district_ids=district-123');
     });
 
-    it('uses null key when both coords and districtId are null', () => {
+    it('uses null key when both coords and districtIds are empty', () => {
       mockUseSWR.mockReturnValue(swrReturning(undefined, { isLoading: false }));
-      const { result } = renderHook(() => useTarotDraw(null, null));
+      const { result } = renderHook(() => useTarotDraw(null, null, []));
       const key = mockUseSWR.mock.calls[0][0];
       expect(key).toBeNull();
       expect(result.current.cards).toEqual([]);
       expect(result.current.isLoading).toBe(false);
     });
 
-    it('prefers lat/lng over districtId when both are provided', () => {
+    it('prefers lat/lng over districtIds when both are provided', () => {
       mockUseSWR.mockReturnValue(swrReturning([], { isLoading: false }));
-      renderHook(() => useTarotDraw(25.033, 121.565, 'district-123'));
+      renderHook(() => useTarotDraw(25.033, 121.565, ['district-123']));
       const key = mockUseSWR.mock.calls[0][0] as string;
       expect(key).toContain('lat=25.033');
-      expect(key).not.toContain('district_id=');
+      expect(key).not.toContain('district_ids=');
+    });
+
+    it('sorts district IDs in cache key for stability', () => {
+      mockUseSWR.mockReturnValue(swrReturning([], { isLoading: false }));
+      renderHook(() => useTarotDraw(null, null, ['z-district', 'a-district']));
+      const key = mockUseSWR.mock.calls[0][0] as string;
+      expect(key).toContain('district_ids=a-district,z-district');
     });
   });
 });

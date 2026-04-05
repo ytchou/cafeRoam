@@ -6,12 +6,12 @@ type GpsStatus = 'loading' | 'active' | 'denied' | 'district-selected';
 
 interface DistrictPickerProps {
   districts: District[];
-  selectedDistrictId: string | null;
+  selectedDistrictIds: string[];
   gpsAvailable: boolean;
   isNearMeActive: boolean;
   gpsStatus: GpsStatus;
   radiusKm: number;
-  onSelectDistrict: (districtId: string) => void;
+  onToggleDistrict: (districtId: string) => void;
   onSelectNearMe: () => void;
 }
 
@@ -40,12 +40,12 @@ function getStatusMessage(
 
 export function DistrictPicker({
   districts,
-  selectedDistrictId,
+  selectedDistrictIds,
   gpsAvailable,
   isNearMeActive,
   gpsStatus,
   radiusKm,
-  onSelectDistrict,
+  onToggleDistrict,
   onSelectNearMe,
 }: DistrictPickerProps) {
   const statusMessage = getStatusMessage(gpsStatus, radiusKm);
@@ -77,9 +77,9 @@ export function DistrictPicker({
           <button
             key={district.id}
             type="button"
-            onClick={() => onSelectDistrict(district.id)}
+            onClick={() => onToggleDistrict(district.id)}
             className={`shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-medium transition-colors ${
-              selectedDistrictId === district.id && !isNearMeActive
+              selectedDistrictIds.includes(district.id) && !isNearMeActive
                 ? activePill
                 : inactivePill
             }`}

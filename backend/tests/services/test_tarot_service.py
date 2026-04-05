@@ -17,6 +17,7 @@ def _make_db_mock(rows: list[dict]) -> MagicMock:
     mock.table.return_value = mock
     mock.select.return_value = mock
     mock.eq.return_value = mock
+    mock.in_.return_value = mock
     mock.not_ = mock  # property access, not call — mirrors supabase-py chaining
     mock.is_.return_value = mock
     mock.gte.return_value = mock
@@ -182,7 +183,7 @@ class TestTarotServiceDrawByDistrict:
             lng=None,
             radius_km=3.0,
             excluded_ids=[],
-            district_id="district-123",
+            district_ids=["district-123"],
         )
         assert len(cards) <= 3
         assert all(c.distance_km == 0.0 for c in cards)
@@ -200,7 +201,7 @@ class TestTarotServiceDrawByDistrict:
             lng=None,
             radius_km=3.0,
             excluded_ids=["s1"],
-            district_id="district-123",
+            district_ids=["district-123"],
         )
         assert all(c.shop_id != "s1" for c in cards)
 
@@ -216,6 +217,24 @@ class TestTarotServiceDrawByDistrict:
             lng=None,
             radius_km=3.0,
             excluded_ids=[],
-            district_id="district-123",
+            district_ids=["district-123"],
         )
         assert cards[0].distance_km == 0.0
+
+    async def test_draw_by_multiple_district_ids(self):
+        """Given multiple district IDs, when drawing by districts, then returns cards from the pool."""
+        rows = [
+            make_tarot_shop_row(id="s1", tarot_title="The Wanderer"),
+            make_tarot_shop_row(id="s2", tarot_title="The Artisan"),
+        ]
+        db = _make_db_mock(rows)
+        service = TarotService(db)
+        cards = await service.draw(
+            lat=None,
+            lng=None,
+            radius_km=3.0,
+            excluded_ids=[],
+            district_ids=["district-111", "district-222"],
+        )
+        assert len(cards) <= 3
+        assert all(c.distance_km == 0.0 for c in cards)

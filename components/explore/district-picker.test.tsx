@@ -32,12 +32,12 @@ describe('DistrictPicker', () => {
     render(
       <DistrictPicker
         districts={mockDistricts}
-        selectedDistrictId={null}
+        selectedDistrictIds={[]}
         gpsAvailable={true}
         isNearMeActive={true}
         gpsStatus="active"
         radiusKm={3}
-        onSelectDistrict={vi.fn()}
+        onToggleDistrict={vi.fn()}
         onSelectNearMe={vi.fn()}
       />
     );
@@ -52,12 +52,12 @@ describe('DistrictPicker', () => {
     render(
       <DistrictPicker
         districts={mockDistricts}
-        selectedDistrictId="d1"
+        selectedDistrictIds={['d1']}
         gpsAvailable={false}
         isNearMeActive={false}
         gpsStatus="denied"
         radiusKm={3}
-        onSelectDistrict={vi.fn()}
+        onToggleDistrict={vi.fn()}
         onSelectNearMe={vi.fn()}
       />
     );
@@ -68,12 +68,12 @@ describe('DistrictPicker', () => {
     render(
       <DistrictPicker
         districts={mockDistricts}
-        selectedDistrictId="d1"
+        selectedDistrictIds={['d1']}
         gpsAvailable={true}
         isNearMeActive={false}
         gpsStatus="district-selected"
         radiusKm={3}
-        onSelectDistrict={vi.fn()}
+        onToggleDistrict={vi.fn()}
         onSelectNearMe={vi.fn()}
       />
     );
@@ -81,22 +81,41 @@ describe('DistrictPicker', () => {
     expect(daanBtn).toHaveClass('bg-amber-700');
   });
 
-  it('calls onSelectDistrict when a district is clicked', async () => {
-    const onSelect = vi.fn();
+  it('highlights multiple selected districts', () => {
     render(
       <DistrictPicker
         districts={mockDistricts}
-        selectedDistrictId={null}
+        selectedDistrictIds={['d1', 'd2']}
+        gpsAvailable={true}
+        isNearMeActive={false}
+        gpsStatus="district-selected"
+        radiusKm={3}
+        onToggleDistrict={vi.fn()}
+        onSelectNearMe={vi.fn()}
+      />
+    );
+    const daanBtn = screen.getByRole('button', { name: /大安/i });
+    const xinyiBtn = screen.getByRole('button', { name: /信義/i });
+    expect(daanBtn).toHaveClass('bg-amber-700');
+    expect(xinyiBtn).toHaveClass('bg-amber-700');
+  });
+
+  it('calls onToggleDistrict when a district is clicked', async () => {
+    const onToggleDistrict = vi.fn();
+    render(
+      <DistrictPicker
+        districts={mockDistricts}
+        selectedDistrictIds={[]}
         gpsAvailable={true}
         isNearMeActive={true}
         gpsStatus="active"
         radiusKm={3}
-        onSelectDistrict={onSelect}
+        onToggleDistrict={onToggleDistrict}
         onSelectNearMe={vi.fn()}
       />
     );
     await userEvent.click(screen.getByRole('button', { name: /大安/i }));
-    expect(onSelect).toHaveBeenCalledWith('d1');
+    expect(onToggleDistrict).toHaveBeenCalledWith('d1');
   });
 
   it('calls onSelectNearMe when Near Me is clicked', async () => {
@@ -104,12 +123,12 @@ describe('DistrictPicker', () => {
     render(
       <DistrictPicker
         districts={mockDistricts}
-        selectedDistrictId="d1"
+        selectedDistrictIds={['d1']}
         gpsAvailable={true}
         isNearMeActive={false}
         gpsStatus="district-selected"
         radiusKm={3}
-        onSelectDistrict={vi.fn()}
+        onToggleDistrict={vi.fn()}
         onSelectNearMe={onNearMe}
       />
     );
@@ -121,12 +140,12 @@ describe('DistrictPicker', () => {
     render(
       <DistrictPicker
         districts={mockDistricts}
-        selectedDistrictId={null}
+        selectedDistrictIds={[]}
         gpsAvailable={false}
         isNearMeActive={false}
         gpsStatus="loading"
         radiusKm={3}
-        onSelectDistrict={vi.fn()}
+        onToggleDistrict={vi.fn()}
         onSelectNearMe={vi.fn()}
       />
     );
@@ -139,12 +158,12 @@ describe('DistrictPicker', () => {
     render(
       <DistrictPicker
         districts={mockDistricts}
-        selectedDistrictId={null}
+        selectedDistrictIds={[]}
         gpsAvailable={true}
         isNearMeActive={true}
         gpsStatus="active"
         radiusKm={3}
-        onSelectDistrict={vi.fn()}
+        onToggleDistrict={vi.fn()}
         onSelectNearMe={vi.fn()}
       />
     );
@@ -155,12 +174,12 @@ describe('DistrictPicker', () => {
     render(
       <DistrictPicker
         districts={mockDistricts}
-        selectedDistrictId={null}
+        selectedDistrictIds={[]}
         gpsAvailable={true}
         isNearMeActive={true}
         gpsStatus="active"
         radiusKm={10}
-        onSelectDistrict={vi.fn()}
+        onToggleDistrict={vi.fn()}
         onSelectNearMe={vi.fn()}
       />
     );
@@ -171,12 +190,12 @@ describe('DistrictPicker', () => {
     render(
       <DistrictPicker
         districts={mockDistricts}
-        selectedDistrictId="d1"
+        selectedDistrictIds={['d1']}
         gpsAvailable={false}
         isNearMeActive={false}
         gpsStatus="denied"
         radiusKm={3}
-        onSelectDistrict={vi.fn()}
+        onToggleDistrict={vi.fn()}
         onSelectNearMe={vi.fn()}
       />
     );
@@ -187,12 +206,12 @@ describe('DistrictPicker', () => {
     render(
       <DistrictPicker
         districts={mockDistricts}
-        selectedDistrictId="d1"
+        selectedDistrictIds={['d1']}
         gpsAvailable={true}
         isNearMeActive={false}
         gpsStatus="district-selected"
         radiusKm={3}
-        onSelectDistrict={vi.fn()}
+        onToggleDistrict={vi.fn()}
         onSelectNearMe={vi.fn()}
       />
     );
@@ -203,12 +222,12 @@ describe('DistrictPicker', () => {
     render(
       <DistrictPicker
         districts={mockDistricts}
-        selectedDistrictId={null}
+        selectedDistrictIds={[]}
         gpsAvailable={true}
         isNearMeActive={true}
         gpsStatus="active"
         radiusKm={3}
-        onSelectDistrict={vi.fn()}
+        onToggleDistrict={vi.fn()}
         onSelectNearMe={vi.fn()}
       />
     );
