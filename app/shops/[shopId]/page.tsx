@@ -17,6 +17,5 @@ export default async function ShopRedirectPage({
     notFound();
   }
 
-  // When a shop has no slug, fall back to shopId to keep the URL valid.
-  redirect(`/shops/${shopId}/${shop.slug ?? shopId}`);
+  redirect(`/shops/${shopId}/${shop.slug ?? '_'}`);
 }

@@ -59,7 +59,7 @@ describe('app/shops/[shopId]/page — redirect route', () => {
     expect(mockRedirect).not.toHaveBeenCalled();
   });
 
-  it('a user navigating to a shop without a slug is redirected using the shop ID as the path', async () => {
+  it('a user navigating to a shop without a slug is redirected to a stable path when the shop has no slug', async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
       status: 200,
@@ -71,7 +71,7 @@ describe('app/shops/[shopId]/page — redirect route', () => {
     ).rejects.toThrow('NEXT_REDIRECT');
 
     expect(mockRedirect).toHaveBeenCalledWith(
-      `/shops/${SLUGLESS_ID}/${SLUGLESS_ID}`
+      `/shops/${SLUGLESS_ID}/_`
     );
     expect(mockNotFound).not.toHaveBeenCalled();
   });
