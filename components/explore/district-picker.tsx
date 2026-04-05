@@ -22,7 +22,10 @@ const disabledPill =
 const loadingPill =
   'border-gray-200 bg-gray-100 text-gray-600 cursor-wait animate-pulse';
 
-function getStatusMessage(gpsStatus: GpsStatus, radiusKm: number): string | null {
+function getStatusMessage(
+  gpsStatus: GpsStatus,
+  radiusKm: number
+): string | null {
   switch (gpsStatus) {
     case 'loading':
       return 'Finding your location…';

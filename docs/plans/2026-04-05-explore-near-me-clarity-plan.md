@@ -15,6 +15,7 @@
 **Tech Stack:** React, TypeScript, Tailwind CSS (animate-pulse), Vitest + Testing Library
 
 **Acceptance Criteria:**
+
 - [ ] When GPS is loading, the Near Me pill pulses and shows "Finding your location…"
 - [ ] When Near Me is active, a subtitle shows "Within 3 km of you" (updates to 10 km after expansion)
 - [ ] When GPS is denied, an inline message shows "Location unavailable — pick a district to explore"
@@ -25,6 +26,7 @@
 ### Task 1: Expose `radiusKm` from `useTarotDraw`
 
 **Files:**
+
 - Modify: `lib/hooks/use-tarot-draw.ts:51-56`
 - Test: `app/explore/page.test.tsx` (verified via Task 3 integration — no isolated hook test needed; `useTarotDraw` is tested through page-level mocks)
 
@@ -35,14 +37,14 @@ No test needed — additive return field, verified through downstream Task 3 tes
 In `lib/hooks/use-tarot-draw.ts`, change the return block:
 
 ```ts
-  return {
-    cards: data ?? [],
-    isLoading,
-    error,
-    redraw,
-    radiusKm,
-    setRadiusKm,
-  };
+return {
+  cards: data ?? [],
+  isLoading,
+  error,
+  redraw,
+  radiusKm,
+  setRadiusKm,
+};
 ```
 
 **Step 2: Verify no type errors**
@@ -62,12 +64,14 @@ git commit -m "feat(DEV-257): expose radiusKm from useTarotDraw hook"
 ### Task 2: Add GPS status feedback to DistrictPicker
 
 **Files:**
+
 - Modify: `components/explore/district-picker.tsx`
 - Test: `components/explore/district-picker.test.tsx`
 
 **Step 1: Write failing tests**
 
 Add these tests to `components/explore/district-picker.test.tsx`. First, update ALL existing test renders to include the two new required props (`gpsStatus` and `radiusKm`). The default values for existing tests should be:
+
 - Tests with `gpsAvailable={true}` and `isNearMeActive={true}`: add `gpsStatus="active"` and `radiusKm={3}`
 - Tests with `gpsAvailable={true}` and `isNearMeActive={false}`: add `gpsStatus="district-selected"` and `radiusKm={3}`
 - Tests with `gpsAvailable={false}`: add `gpsStatus="denied"` and `radiusKm={3}`
@@ -75,104 +79,104 @@ Add these tests to `components/explore/district-picker.test.tsx`. First, update 
 Then add these new test cases:
 
 ```tsx
-  it('shows pulsing animation on Near Me pill during GPS loading', () => {
-    render(
-      <DistrictPicker
-        districts={mockDistricts}
-        selectedDistrictId={null}
-        gpsAvailable={false}
-        isNearMeActive={false}
-        gpsStatus="loading"
-        radiusKm={3}
-        onSelectDistrict={vi.fn()}
-        onSelectNearMe={vi.fn()}
-      />
-    );
-    const nearMeBtn = screen.getByRole('button', { name: /near me/i });
-    expect(nearMeBtn).toHaveClass('animate-pulse');
-    expect(screen.getByText(/finding your location/i)).toBeInTheDocument();
-  });
+it('shows pulsing animation on Near Me pill during GPS loading', () => {
+  render(
+    <DistrictPicker
+      districts={mockDistricts}
+      selectedDistrictId={null}
+      gpsAvailable={false}
+      isNearMeActive={false}
+      gpsStatus="loading"
+      radiusKm={3}
+      onSelectDistrict={vi.fn()}
+      onSelectNearMe={vi.fn()}
+    />
+  );
+  const nearMeBtn = screen.getByRole('button', { name: /near me/i });
+  expect(nearMeBtn).toHaveClass('animate-pulse');
+  expect(screen.getByText(/finding your location/i)).toBeInTheDocument();
+});
 
-  it('shows radius label when Near Me is active', () => {
-    render(
-      <DistrictPicker
-        districts={mockDistricts}
-        selectedDistrictId={null}
-        gpsAvailable={true}
-        isNearMeActive={true}
-        gpsStatus="active"
-        radiusKm={3}
-        onSelectDistrict={vi.fn()}
-        onSelectNearMe={vi.fn()}
-      />
-    );
-    expect(screen.getByText(/within 3 km of you/i)).toBeInTheDocument();
-  });
+it('shows radius label when Near Me is active', () => {
+  render(
+    <DistrictPicker
+      districts={mockDistricts}
+      selectedDistrictId={null}
+      gpsAvailable={true}
+      isNearMeActive={true}
+      gpsStatus="active"
+      radiusKm={3}
+      onSelectDistrict={vi.fn()}
+      onSelectNearMe={vi.fn()}
+    />
+  );
+  expect(screen.getByText(/within 3 km of you/i)).toBeInTheDocument();
+});
 
-  it('updates radius label when radius changes', () => {
-    render(
-      <DistrictPicker
-        districts={mockDistricts}
-        selectedDistrictId={null}
-        gpsAvailable={true}
-        isNearMeActive={true}
-        gpsStatus="active"
-        radiusKm={10}
-        onSelectDistrict={vi.fn()}
-        onSelectNearMe={vi.fn()}
-      />
-    );
-    expect(screen.getByText(/within 10 km of you/i)).toBeInTheDocument();
-  });
+it('updates radius label when radius changes', () => {
+  render(
+    <DistrictPicker
+      districts={mockDistricts}
+      selectedDistrictId={null}
+      gpsAvailable={true}
+      isNearMeActive={true}
+      gpsStatus="active"
+      radiusKm={10}
+      onSelectDistrict={vi.fn()}
+      onSelectNearMe={vi.fn()}
+    />
+  );
+  expect(screen.getByText(/within 10 km of you/i)).toBeInTheDocument();
+});
 
-  it('shows denied message when GPS is unavailable', () => {
-    render(
-      <DistrictPicker
-        districts={mockDistricts}
-        selectedDistrictId="d1"
-        gpsAvailable={false}
-        isNearMeActive={false}
-        gpsStatus="denied"
-        radiusKm={3}
-        onSelectDistrict={vi.fn()}
-        onSelectNearMe={vi.fn()}
-      />
-    );
-    expect(screen.getByText(/location unavailable/i)).toBeInTheDocument();
-  });
+it('shows denied message when GPS is unavailable', () => {
+  render(
+    <DistrictPicker
+      districts={mockDistricts}
+      selectedDistrictId="d1"
+      gpsAvailable={false}
+      isNearMeActive={false}
+      gpsStatus="denied"
+      radiusKm={3}
+      onSelectDistrict={vi.fn()}
+      onSelectNearMe={vi.fn()}
+    />
+  );
+  expect(screen.getByText(/location unavailable/i)).toBeInTheDocument();
+});
 
-  it('hides status message when a district is selected', () => {
-    render(
-      <DistrictPicker
-        districts={mockDistricts}
-        selectedDistrictId="d1"
-        gpsAvailable={true}
-        isNearMeActive={false}
-        gpsStatus="district-selected"
-        radiusKm={3}
-        onSelectDistrict={vi.fn()}
-        onSelectNearMe={vi.fn()}
-      />
-    );
-    expect(screen.queryByRole('status')).not.toBeInTheDocument();
-  });
+it('hides status message when a district is selected', () => {
+  render(
+    <DistrictPicker
+      districts={mockDistricts}
+      selectedDistrictId="d1"
+      gpsAvailable={true}
+      isNearMeActive={false}
+      gpsStatus="district-selected"
+      radiusKm={3}
+      onSelectDistrict={vi.fn()}
+      onSelectNearMe={vi.fn()}
+    />
+  );
+  expect(screen.queryByRole('status')).not.toBeInTheDocument();
+});
 
-  it('status line has aria-live polite for accessibility', () => {
-    render(
-      <DistrictPicker
-        districts={mockDistricts}
-        selectedDistrictId={null}
-        gpsAvailable={true}
-        isNearMeActive={true}
-        gpsStatus="active"
-        radiusKm={3}
-        onSelectDistrict={vi.fn()}
-        onSelectNearMe={vi.fn()}
-      />
-    );
-    const statusEl = screen.getByRole('status');
-    expect(statusEl).toHaveAttribute('aria-live', 'polite');
-  });
+it('status line has aria-live polite for accessibility', () => {
+  render(
+    <DistrictPicker
+      districts={mockDistricts}
+      selectedDistrictId={null}
+      gpsAvailable={true}
+      isNearMeActive={true}
+      gpsStatus="active"
+      radiusKm={3}
+      onSelectDistrict={vi.fn()}
+      onSelectNearMe={vi.fn()}
+    />
+  );
+  const statusEl = screen.getByRole('status');
+  expect(statusEl).toHaveAttribute('aria-live', 'polite');
+});
 ```
 
 **Step 2: Run tests to verify they fail**
@@ -209,7 +213,10 @@ const disabledPill =
 const loadingPill =
   'border-gray-200 bg-gray-100 text-gray-400 cursor-wait animate-pulse';
 
-function getStatusMessage(gpsStatus: GpsStatus, radiusKm: number): string | null {
+function getStatusMessage(
+  gpsStatus: GpsStatus,
+  radiusKm: number
+): string | null {
   switch (gpsStatus) {
     case 'loading':
       return 'Finding your location\u2026';
@@ -303,6 +310,7 @@ git commit -m "feat(DEV-257): add GPS status feedback to DistrictPicker"
 ### Task 3: Wire GPS status from ExplorePage to DistrictPicker
 
 **Files:**
+
 - Modify: `app/explore/page.tsx`
 - Test: `app/explore/page.test.tsx`
 
@@ -392,39 +400,39 @@ In `app/explore/page.tsx`, make these changes:
 1. Destructure `radiusKm` from `useTarotDraw` (line ~47):
 
 ```ts
-  const { cards, isLoading, error, redraw, radiusKm, setRadiusKm } = useTarotDraw(
-    effectiveLat,
-    effectiveLng,
-    effectiveDistrictId
-  );
+const { cards, isLoading, error, redraw, radiusKm, setRadiusKm } = useTarotDraw(
+  effectiveLat,
+  effectiveLng,
+  effectiveDistrictId
+);
 ```
 
 2. Add `gpsStatus` derivation after `isNearMeMode` (after line ~41):
 
 ```ts
-  const gpsStatus: 'loading' | 'active' | 'denied' | 'district-selected' =
-    geoLoading
-      ? 'loading'
-      : geoError || latitude == null
-        ? 'denied'
-        : selectedDistrictId !== null
-          ? 'district-selected'
-          : 'active';
+const gpsStatus: 'loading' | 'active' | 'denied' | 'district-selected' =
+  geoLoading
+    ? 'loading'
+    : geoError || latitude == null
+      ? 'denied'
+      : selectedDistrictId !== null
+        ? 'district-selected'
+        : 'active';
 ```
 
 3. Pass new props to `<DistrictPicker>` (around line ~91):
 
 ```tsx
-        <DistrictPicker
-          districts={districts}
-          selectedDistrictId={activeDistrictId}
-          gpsAvailable={gpsAvailable}
-          isNearMeActive={isNearMeMode}
-          gpsStatus={gpsStatus}
-          radiusKm={radiusKm}
-          onSelectDistrict={handleSelectDistrict}
-          onSelectNearMe={handleSelectNearMe}
-        />
+<DistrictPicker
+  districts={districts}
+  selectedDistrictId={activeDistrictId}
+  gpsAvailable={gpsAvailable}
+  isNearMeActive={isNearMeMode}
+  gpsStatus={gpsStatus}
+  radiusKm={radiusKm}
+  onSelectDistrict={handleSelectDistrict}
+  onSelectNearMe={handleSelectNearMe}
+/>
 ```
 
 **Step 4: Run tests to verify they pass**
@@ -454,6 +462,7 @@ git commit -m "feat(DEV-257): wire GPS status and radius to DistrictPicker from 
 ### Task 4: Update SPEC.md geolocation fallback rule
 
 **Files:**
+
 - Modify: `SPEC.md` (§9 Business Rules — Geolocation fallback)
 - Modify: `SPEC_CHANGELOG.md`
 
@@ -466,6 +475,7 @@ Find the geolocation fallback rule and update it to include the new UX states:
 > When geolocation is unavailable, the Explore page defaults to a district picker. Users can select any Taipei district to scope Tarot Draw results. The district picker is always visible regardless of GPS state, with "Near Me" as the default when GPS is available.
 >
 > **GPS status feedback (Explore page):**
+>
 > - **Loading:** Near Me pill pulses; subtitle shows "Finding your location…"
 > - **Active:** Subtitle shows "Within {radius} km of you" (default 3 km, expandable to 10 km)
 > - **Denied/unavailable:** Near Me pill disabled; subtitle shows "Location unavailable — pick a district to explore"; first district auto-selected
@@ -507,11 +517,14 @@ graph TD
 ```
 
 **Wave 1** (parallel — no dependencies):
+
 - Task 1: Expose `radiusKm` from `useTarotDraw`
 - Task 2: Add GPS status feedback to DistrictPicker + tests
 
 **Wave 2** (depends on Wave 1):
+
 - Task 3: Wire GPS status from ExplorePage → DistrictPicker + page tests
 
 **Wave 3** (depends on Wave 2):
+
 - Task 4: Update SPEC.md geolocation fallback rule

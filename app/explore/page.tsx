@@ -52,11 +52,8 @@ export default function ExplorePage() {
   const effectiveLat = isNearMeMode ? latitude : null;
   const effectiveLng = isNearMeMode ? longitude : null;
   const effectiveDistrictId = isNearMeMode ? null : activeDistrictId;
-  const { cards, isLoading, error, redraw, radiusKm, setRadiusKm } = useTarotDraw(
-    effectiveLat,
-    effectiveLng,
-    effectiveDistrictId
-  );
+  const { cards, isLoading, error, redraw, radiusKm, setRadiusKm } =
+    useTarotDraw(effectiveLat, effectiveLng, effectiveDistrictId);
   const { vibes } = useVibes();
   const previewVibes = useMemo(() => vibes.slice(0, 6), [vibes]);
   const previewDistricts = useMemo(() => districts.slice(0, 6), [districts]);
