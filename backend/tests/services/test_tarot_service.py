@@ -163,3 +163,50 @@ class TestTarotServiceDraw:
         assert card.flavor_text == "For those who seek quiet in an unquiet world."
         assert card.name == "森日咖啡"
         assert card.neighborhood == "台北市"
+
+
+class TestTarotServiceDrawByDistrict:
+    """Given shops in a district, draw tarot cards filtered by district_id FK."""
+
+    async def test_draw_by_district_id_returns_cards(self):
+        """Given shops in a district, when drawing by district_id, then returns up to 3 cards."""
+        rows = [
+            make_tarot_shop_row(id="s1", tarot_title="The Wanderer"),
+            make_tarot_shop_row(id="s2", tarot_title="The Artisan"),
+            make_tarot_shop_row(id="s3", tarot_title="The Scholar"),
+        ]
+        db = _make_db_mock(rows)
+        service = TarotService(db)
+        cards = await service.draw(
+            lat=None, lng=None, radius_km=3.0,
+            excluded_ids=[], district_id="district-123",
+        )
+        assert len(cards) <= 3
+        assert all(c.distance_km == 0.0 for c in cards)
+
+    async def test_draw_by_district_id_excludes_ids(self):
+        """Given excluded IDs, when drawing by district, then those shops are skipped."""
+        rows = [
+            make_tarot_shop_row(id="s1", tarot_title="The Wanderer"),
+            make_tarot_shop_row(id="s2", tarot_title="The Artisan"),
+        ]
+        db = _make_db_mock(rows)
+        service = TarotService(db)
+        cards = await service.draw(
+            lat=None, lng=None, radius_km=3.0,
+            excluded_ids=["s1"], district_id="district-123",
+        )
+        assert all(c.shop_id != "s1" for c in cards)
+
+    async def test_draw_district_mode_distance_is_zero(self):
+        """When drawing by district (no lat/lng), distance_km is always 0.0."""
+        rows = [
+            make_tarot_shop_row(id="s1", tarot_title="The Wanderer"),
+        ]
+        db = _make_db_mock(rows)
+        service = TarotService(db)
+        cards = await service.draw(
+            lat=None, lng=None, radius_km=3.0,
+            excluded_ids=[], district_id="district-123",
+        )
+        assert cards[0].distance_km == 0.0
