@@ -1,9 +1,10 @@
 'use client';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Navigation } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import type { TaxonomyTag } from '@/lib/types';
+import { getGoogleMapsUrl, getAppleMapsUrl } from '@/lib/utils/maps';
 import { ShopHero } from '@/components/shops/shop-hero';
 import { ShopIdentity } from '@/components/shops/shop-identity';
 import { AttributeChips } from '@/components/shops/attribute-chips';
@@ -18,11 +19,8 @@ import { RecentCheckinsStrip } from '@/components/shops/recent-checkins-strip';
 import { ShopMapThumbnail } from '@/components/shops/shop-map-thumbnail';
 import { ShopReviews } from '@/components/shops/shop-reviews';
 import { CommunitySummary } from '@/components/shops/community-summary';
-import { DirectionsSheet } from '@/components/shops/directions-sheet';
-import { DirectionsInline } from '@/components/shops/directions-inline';
 import { useShopReviews } from '@/lib/hooks/use-shop-reviews';
 import { useUser } from '@/lib/hooks/use-user';
-import { useGeolocation } from '@/lib/hooks/use-geolocation';
 import { useSearchParams } from 'next/navigation';
 import { useAnalytics } from '@/lib/posthog/use-analytics';
 import { trackShopDetailView } from '@/lib/analytics/ga4-events';
@@ -46,7 +44,7 @@ interface ShopData {
   longitude?: number;
   openNow?: boolean;
   distance?: string;
-  address?: string;
+  address?: string | null;
   communitySummary?: string | null;
   paymentMethods?: Record<string, boolean | null>;
   checkinPreview?: { count: number; previewPhotoUrl: string | null };
@@ -67,6 +65,7 @@ interface ShopData {
     updated_at: string;
   } | null;
   district?: { slug: string; nameZh: string } | null;
+  googlePlaceId?: string | null;
 }
 
 interface ShopDetailClientProps {
@@ -77,9 +76,7 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
   const { capture } = useAnalytics();
   const searchParams = useSearchParams();
   const { user } = useUser();
-  const { latitude, longitude, requestLocation } = useGeolocation();
   const router = useRouter();
-  const [directionsOpen, setDirectionsOpen] = useState(false);
   const photos = shop.photoUrls ?? [];
   const tags = shop.taxonomyTags ?? [];
   const shopPath = `/shops/${shop.id}/${shop.slug ?? shop.id}`;
@@ -122,23 +119,62 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
 
   const hasMap = shop.latitude != null && shop.longitude != null;
 
-  const directionsShop = useMemo(
+  const googleMapsUrl = useMemo(
     () =>
       hasMap
-        ? {
-            id: shop.id,
+        ? getGoogleMapsUrl({
             name: shop.name,
             latitude: shop.latitude!,
             longitude: shop.longitude!,
-          }
+            googlePlaceId: shop.googlePlaceId ?? null,
+            address: shop.address ?? null,
+          })
         : null,
-    [hasMap, shop.id, shop.name, shop.latitude, shop.longitude]
+    [
+      hasMap,
+      shop.name,
+      shop.latitude,
+      shop.longitude,
+      shop.googlePlaceId,
+      shop.address,
+    ]
   );
 
-  function openDirections() {
-    requestLocation();
-    setDirectionsOpen(true);
-  }
+  const appleMapsUrl = useMemo(
+    () =>
+      hasMap
+        ? getAppleMapsUrl({
+            latitude: shop.latitude!,
+            longitude: shop.longitude!,
+            address: shop.address ?? null,
+          })
+        : null,
+    [hasMap, shop.latitude, shop.longitude, shop.address]
+  );
+
+  const navigationLinks =
+    googleMapsUrl && appleMapsUrl ? (
+      <>
+        <a
+          href={googleMapsUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="border-border-warm text-text-body hover:bg-surface-section flex min-h-[44px] items-center gap-1.5 rounded-full border px-4 py-2 text-sm"
+        >
+          <Navigation size={14} />
+          Google Maps
+        </a>
+        <a
+          href={appleMapsUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="border-border-warm text-text-body hover:bg-surface-section flex min-h-[44px] items-center gap-1.5 rounded-full border px-4 py-2 text-sm"
+        >
+          <Navigation size={14} />
+          Apple Maps
+        </a>
+      </>
+    ) : null;
 
   return (
     <div className="min-h-screen bg-white">
@@ -158,7 +194,7 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
           reviewCount={shop.reviewCount}
           openNow={shop.openNow}
           distance={shop.distance}
-          address={shop.address}
+          address={shop.address ?? undefined}
         />
         {shop.claimStatus === 'approved' && <VerifiedBadge />}
         <ShopActionsRow
@@ -168,10 +204,8 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
         />
 
         {/* Inline directions — desktop only */}
-        {hasMap && directionsShop && (
-          <div className="hidden lg:block">
-            <DirectionsInline shop={directionsShop} />
-          </div>
+        {hasMap && (
+          <div className="hidden gap-2 lg:flex">{navigationLinks}</div>
         )}
 
         <div className="border-border-warm mx-5 border-t" />
@@ -200,16 +234,8 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
               longitude={shop.longitude!}
               shopName={shop.name}
             />
-            <div className="px-5 py-3 lg:hidden">
-              <button
-                type="button"
-                onClick={openDirections}
-                className="border-border-warm text-text-body hover:bg-surface-section flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm"
-                aria-label="Get There"
-              >
-                <Navigation size={14} />
-                Get There
-              </button>
+            <div className="flex gap-2 px-5 py-3 lg:hidden">
+              {navigationLinks}
             </div>
           </div>
         )}
@@ -253,16 +279,6 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
           claimStatus={shop.claimStatus ?? null}
         />
       </div>
-
-      {hasMap && directionsShop && (
-        <DirectionsSheet
-          open={directionsOpen}
-          onClose={() => setDirectionsOpen(false)}
-          shop={directionsShop}
-          userLat={latitude ?? undefined}
-          userLng={longitude ?? undefined}
-        />
-      )}
     </div>
   );
 }

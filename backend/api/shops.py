@@ -53,7 +53,9 @@ _SHOP_LIST_COLUMNS = (
     "created_at"
 )
 
-_SHOP_DETAIL_COLUMNS = f"{_SHOP_LIST_COLUMNS}, phone, website, price_range, updated_at"
+_SHOP_DETAIL_COLUMNS = (
+    f"{_SHOP_LIST_COLUMNS}, phone, website, price_range, google_place_id, updated_at"
+)
 
 
 @limiter.limit(settings.rate_limit_shops_list)
