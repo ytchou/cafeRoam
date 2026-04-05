@@ -144,12 +144,12 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
     () =>
       hasMap
         ? getAppleMapsUrl({
+            name: shop.name,
             latitude: shop.latitude!,
             longitude: shop.longitude!,
-            address: shop.address ?? null,
           })
         : null,
-    [hasMap, shop.latitude, shop.longitude, shop.address]
+    [hasMap, shop.name, shop.latitude, shop.longitude]
   );
 
   const navigationLinks =
