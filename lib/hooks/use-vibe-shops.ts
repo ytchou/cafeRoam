@@ -5,20 +5,20 @@ import { fetchPublic } from '@/lib/api/fetch';
 import { buildVibeShopsUrl } from '@/lib/api/vibes';
 import type { VibeShopsResponse } from '@/types/vibes';
 
-export function useVibeShops(
-  slug: string | undefined,
-  lat: number | null = null,
-  lng: number | null = null,
-  radiusKm = 5,
-  geoLoading = false
-) {
-  const key =
-    slug && !geoLoading ? buildVibeShopsUrl(slug, lat, lng, radiusKm) : null;
+interface VibeShopsFilter {
+  lat?: number | null;
+  lng?: number | null;
+  radiusKm?: number;
+  districtId?: string | null;
+}
+
+export function useVibeShops(slug: string | undefined, filter?: VibeShopsFilter) {
+  const key = slug ? buildVibeShopsUrl(slug, filter) : null;
 
   const { data, error, isLoading } = useSWR<VibeShopsResponse>(
     key,
     fetchPublic,
-    { revalidateOnFocus: false }
+    { revalidateOnFocus: false },
   );
 
   return {
