@@ -12,7 +12,7 @@ import type { TarotCardData } from '@/types/tarot';
 export function useTarotDraw(
   lat: number | null,
   lng: number | null,
-  districtId?: string | null
+  districtIds?: string[] | null
 ) {
   const [radiusKm, setRadiusKm] = useState(3);
   const [excludedIds, setExcludedIds] = useState<string[]>(() =>
@@ -24,8 +24,11 @@ export function useTarotDraw(
     if (lat != null && lng != null) {
       return `/api/explore/tarot-draw?lat=${lat}&lng=${lng}&radius_km=${radiusKm}&excluded_ids=${excludedParam}`;
     }
-    if (districtId) {
-      return `/api/explore/tarot-draw?district_id=${districtId}&radius_km=${radiusKm}&excluded_ids=${excludedParam}`;
+    if (districtIds && districtIds.length > 0) {
+      return `/api/explore/tarot-draw?district_ids=${districtIds
+        .slice()
+        .sort()
+        .join(',')}&radius_km=${radiusKm}&excluded_ids=${excludedParam}`;
     }
     return null;
   })();
