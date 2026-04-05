@@ -155,4 +155,30 @@ describe('useTarotDraw', () => {
     expect(lastKey).not.toContain('s1');
     expect(lastKey).not.toContain('s2');
   });
+
+  describe('useTarotDraw with districtId', () => {
+    it('fetches by district_id when districtId is provided and lat/lng are null', () => {
+      mockUseSWR.mockReturnValue(swrReturning([], { isLoading: false }));
+      renderHook(() => useTarotDraw(null, null, 'district-123'));
+      const key = mockUseSWR.mock.calls[0][0] as string;
+      expect(key).toContain('district_id=district-123');
+    });
+
+    it('uses null key when both coords and districtId are null', () => {
+      mockUseSWR.mockReturnValue(swrReturning(undefined, { isLoading: false }));
+      const { result } = renderHook(() => useTarotDraw(null, null));
+      const key = mockUseSWR.mock.calls[0][0];
+      expect(key).toBeNull();
+      expect(result.current.cards).toEqual([]);
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    it('prefers lat/lng over districtId when both are provided', () => {
+      mockUseSWR.mockReturnValue(swrReturning([], { isLoading: false }));
+      renderHook(() => useTarotDraw(25.033, 121.565, 'district-123'));
+      const key = mockUseSWR.mock.calls[0][0] as string;
+      expect(key).toContain('lat=25.033');
+      expect(key).not.toContain('district_id=');
+    });
+  });
 });
