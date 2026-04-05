@@ -17,7 +17,7 @@ interface ReviewsData {
 }
 
 export function useShopReviews(shopId: string) {
-  const { data, isLoading } = useSWR<ReviewsData>(
+  const { data, isLoading, error } = useSWR<ReviewsData>(
     `/api/shops/${shopId}/reviews`,
     fetchPublic,
     {
@@ -30,5 +30,6 @@ export function useShopReviews(shopId: string) {
     totalCount: data?.totalCount ?? 0,
     averageRating: data?.averageRating ?? 0,
     isLoading,
+    error,
   };
 }
