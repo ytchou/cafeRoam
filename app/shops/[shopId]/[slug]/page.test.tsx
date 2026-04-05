@@ -49,7 +49,6 @@ vi.mock('@/lib/hooks/use-shop-reviews', () => ({
     total: 0,
     averageRating: 0,
     isLoading: false,
-    isAuthError: false,
   }),
 }));
 

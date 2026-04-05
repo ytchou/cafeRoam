@@ -7,7 +7,6 @@ interface ShopReviewsProps {
   totalCount: number;
   averageRating: number;
   isLoading: boolean;
-  isAuthError: boolean;
   shopId: string;
 }
 
@@ -45,28 +44,8 @@ export function ShopReviews({
   totalCount,
   averageRating,
   isLoading,
-  isAuthError,
   shopId,
 }: ShopReviewsProps) {
-  if (isAuthError) {
-    return (
-      <div className="px-5 py-4">
-        <h2 className="text-text-primary mb-2 text-sm font-semibold">
-          打卡評價
-        </h2>
-        <p className="text-text-secondary text-sm">
-          <Link
-            href="/login"
-            className="text-brand underline underline-offset-2"
-          >
-            登入
-          </Link>{' '}
-          後可查看其他人的評價
-        </p>
-      </div>
-    );
-  }
-
   if (isLoading) {
     return (
       <div className="px-5 py-4">

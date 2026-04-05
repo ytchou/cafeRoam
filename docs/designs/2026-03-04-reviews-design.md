@@ -11,7 +11,7 @@ Reviews are optional metadata on check-ins. Each check-in can have a 1-5 star ra
 - One review per check-in (not one per shop). Multiple visits = multiple reviews.
 - Stars required for a review; text optional. Tag confirmation optional.
 - User reviews displayed separately from Google scraper reviews.
-- Auth-gated: reviews visible to logged-in users only.
+- ~~Auth-gated: reviews visible to logged-in users only.~~ **Updated 2026-04-05 (DEV-237):** Reviews are now publicly visible to unauthenticated users, consistent with the auth wall spec (shop detail content is public).
 
 ## Data Model
 
@@ -79,7 +79,7 @@ class UpdateReviewRequest(BaseModel):
 
 Returns check-ins that have reviews (`stars IS NOT NULL`) for a shop.
 
-**Auth:** Returns 401 for unauthenticated users.
+**Auth:** Public — no auth required. ~~Returns 401 for unauthenticated users.~~ Updated 2026-04-05 (DEV-237).
 
 **Query params:** `limit` (default 10), `offset` (default 0)
 
@@ -176,11 +176,11 @@ Reviews section appears below the check-in photos section:
 | ---------------------------------- | ---------------------------- |
 | Submit review (during check-in)    | Yes (inherits from check-in) |
 | Add review later                   | Yes + must own the check-in  |
-| View reviews on shop detail        | Yes                          |
-| View review count + average rating | Yes                          |
+| View reviews on shop detail        | No (public — DEV-237)        |
+| View review count + average rating | No (public — DEV-237)        |
 | Edit own review                    | Yes + must own the check-in  |
 
-Unauthenticated visitors see check-in count + representative photo only (existing behavior). They do **not** see the reviews section.
+**Updated 2026-04-05 (DEV-237):** Unauthenticated visitors now see the reviews section (DEV-237 changed reviews from auth-gated to public). They still do not see check-in details (photos, notes) which remain auth-gated.
 
 ## PDPA Cascade
 
@@ -191,7 +191,7 @@ Already handled — reviews are columns on `check_ins`, and `check_ins` has `ON 
 ### Backend (pytest)
 
 - CheckInService: create with review fields, create without, update review on existing check-in
-- Reviews API: GET reviews for shop (auth-gated), PATCH review (ownership validation)
+- Reviews API: GET reviews for shop (public — DEV-237), PATCH review (ownership validation)
 - Edge cases: stars without text (valid), text without stars (invalid), confirmed_tags with invalid tag IDs
 
 ### Frontend (vitest)
