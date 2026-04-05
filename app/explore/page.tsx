@@ -34,20 +34,23 @@ export default function ExplorePage() {
     requestLocation,
   } = useGeolocation();
   const { districts } = useDistricts();
-  const [selectedDistrictId, setSelectedDistrictId] = useState<string | null>(
-    null
-  );
+  const [selectedDistrictIds, setSelectedDistrictIds] = useState<string[]>([]);
   const gpsAvailable = !geoError && latitude != null;
-  const isNearMeMode = gpsAvailable && selectedDistrictId === null;
-  const activeDistrictId =
-    selectedDistrictId ?? (!gpsAvailable ? (districts[0]?.id ?? null) : null);
+  const isNearMeMode = gpsAvailable && selectedDistrictIds.length === 0;
+  const activeDistrictIds =
+    selectedDistrictIds.length > 0
+      ? selectedDistrictIds
+      : !gpsAvailable && districts[0]
+        ? [districts[0].id]
+        : [];
   const effectiveLat = isNearMeMode ? latitude : null;
   const effectiveLng = isNearMeMode ? longitude : null;
-  const effectiveDistrictId = isNearMeMode ? null : activeDistrictId;
+  const effectiveDistrictIds =
+    isNearMeMode ? null : activeDistrictIds.length > 0 ? activeDistrictIds : null;
   const { cards, isLoading, error, redraw, setRadiusKm } = useTarotDraw(
     effectiveLat,
     effectiveLng,
-    effectiveDistrictId
+    effectiveDistrictIds
   );
   const { vibes } = useVibes();
   const previewVibes = useMemo(() => vibes.slice(0, 6), [vibes]);
@@ -59,12 +62,16 @@ export default function ExplorePage() {
   }, [requestLocation]);
 
   useEffect(() => {
-    if (cards.length > 0 && ((latitude && longitude) || effectiveDistrictId)) {
+    if (
+      cards.length > 0 &&
+      ((latitude && longitude) ||
+        (effectiveDistrictIds && effectiveDistrictIds.length > 0))
+    ) {
       capture('tarot_draw_loaded', {
         card_count: cards.length,
       });
     }
-  }, [cards.length, latitude, longitude, effectiveDistrictId, capture]);
+  }, [cards.length, latitude, longitude, effectiveDistrictIds, capture]);
 
   const handleExpandRadius = useCallback(() => {
     capture('tarot_empty_state', {
@@ -74,15 +81,24 @@ export default function ExplorePage() {
   }, [capture, setRadiusKm]);
 
   const handleTryDifferentDistrict = useCallback(() => {
-    setSelectedDistrictId(null);
+    setSelectedDistrictIds([]);
   }, []);
 
-  const handleSelectDistrict = useCallback((districtId: string) => {
-    setSelectedDistrictId(districtId);
-  }, []);
+  const handleToggleDistrict = useCallback(
+    (districtId: string) => {
+      setSelectedDistrictIds((prev) => {
+        const next = prev.includes(districtId)
+          ? prev.filter((id) => id !== districtId)
+          : [...prev, districtId];
+        if (next.length === 0 && !gpsAvailable) return prev;
+        return next;
+      });
+    },
+    [gpsAvailable]
+  );
 
   const handleSelectNearMe = useCallback(() => {
-    setSelectedDistrictId(null);
+    setSelectedDistrictIds([]);
   }, []);
 
   const tarotAndVibes = (
@@ -90,10 +106,10 @@ export default function ExplorePage() {
       {districts.length > 0 && (
         <DistrictPicker
           districts={districts}
-          selectedDistrictId={activeDistrictId}
+          selectedDistrictIds={activeDistrictIds}
           gpsAvailable={gpsAvailable}
           isNearMeActive={isNearMeMode}
-          onSelectDistrict={handleSelectDistrict}
+          onToggleDistrict={handleToggleDistrict}
           onSelectNearMe={handleSelectNearMe}
         />
       )}
@@ -117,7 +133,9 @@ export default function ExplorePage() {
 
       {(geoLoading ||
         isLoading ||
-        (effectiveLat == null && !geoError && !effectiveDistrictId)) && (
+        (effectiveLat == null &&
+          !geoError &&
+          (!effectiveDistrictIds || effectiveDistrictIds.length === 0))) && (
         <div className="flex flex-col gap-3">
           {[0, 1, 2].map((i) => (
             <div
@@ -147,13 +165,18 @@ export default function ExplorePage() {
       {!isLoading &&
         !error &&
         cards.length === 0 &&
-        (effectiveLat != null || effectiveDistrictId != null) && (
+        (effectiveLat != null ||
+          (effectiveDistrictIds && effectiveDistrictIds.length > 0)) && (
           <TarotEmptyState
             onExpandRadius={
-              effectiveDistrictId ? undefined : handleExpandRadius
+              effectiveDistrictIds && effectiveDistrictIds.length > 0
+                ? undefined
+                : handleExpandRadius
             }
             onTryDifferentDistrict={
-              effectiveDistrictId ? handleTryDifferentDistrict : undefined
+              effectiveDistrictIds && effectiveDistrictIds.length > 0
+                ? handleTryDifferentDistrict
+                : undefined
             }
           />
         )}
