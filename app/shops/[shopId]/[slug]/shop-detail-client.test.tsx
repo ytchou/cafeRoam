@@ -22,7 +22,6 @@ vi.mock('@/lib/hooks/use-shop-reviews', () => ({
     total: 0,
     averageRating: null,
     isLoading: false,
-    isAuthError: false,
   }),
 }));
 vi.mock('@/lib/hooks/use-user-lists', () => ({

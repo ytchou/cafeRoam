@@ -1,6 +1,6 @@
 'use client';
 import useSWR from 'swr';
-import { fetchWithAuth } from '@/lib/api/fetch';
+import { fetchPublic } from '@/lib/api/fetch';
 
 export interface ShopReview {
   id: string;
@@ -16,21 +16,12 @@ interface ReviewsData {
   averageRating: number;
 }
 
-export function useShopReviews(shopId: string, enabled: boolean) {
-  const { data, isLoading, error } = useSWR<ReviewsData>(
-    enabled ? `/api/shops/${shopId}/reviews` : null,
-    fetchWithAuth,
+export function useShopReviews(shopId: string) {
+  const { data, isLoading } = useSWR<ReviewsData>(
+    `/api/shops/${shopId}/reviews`,
+    fetchPublic,
     {
       revalidateOnFocus: false,
-      onErrorRetry: (err, _key, _config, revalidate, { retryCount }) => {
-        if (
-          err.message.includes('401') ||
-          err.message.includes('Not authenticated')
-        )
-          return;
-        if (retryCount >= 2) return;
-        revalidate({ retryCount });
-      },
     }
   );
 
@@ -39,9 +30,5 @@ export function useShopReviews(shopId: string, enabled: boolean) {
     totalCount: data?.totalCount ?? 0,
     averageRating: data?.averageRating ?? 0,
     isLoading,
-    isAuthError:
-      error != null &&
-      (error.message.includes('Not authenticated') ||
-        error.message.includes('401')),
   };
 }

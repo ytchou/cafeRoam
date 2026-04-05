@@ -20,7 +20,6 @@ function renderReviews(
       totalCount={0}
       averageRating={0}
       isLoading={false}
-      isAuthError={false}
       shopId="shop-123"
       {...overrides}
     />
@@ -28,22 +27,6 @@ function renderReviews(
 }
 
 describe('ShopReviews', () => {
-  describe('when the user is not authenticated', () => {
-    it('shows a login prompt instead of reviews', () => {
-      renderReviews({ isAuthError: true });
-      expect(screen.getByText('登入')).toBeInTheDocument();
-      expect(screen.getByText(/後可查看其他人的評價/)).toBeInTheDocument();
-    });
-
-    it('links the login prompt to the login page', () => {
-      renderReviews({ isAuthError: true });
-      expect(screen.getByRole('link', { name: '登入' })).toHaveAttribute(
-        'href',
-        '/login'
-      );
-    });
-  });
-
   describe('while reviews are loading', () => {
     it('shows a loading skeleton', () => {
       renderReviews({ isLoading: true });
