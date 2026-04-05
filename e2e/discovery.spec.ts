@@ -473,14 +473,11 @@ test.describe('J29 — Mobile: mini card on pin tap', () => {
   });
 });
 
-test.describe('@critical J36 — Shop detail: tap Get Directions → DirectionsSheet opens', () => {
-  test('tapping the Directions button on a shop detail page opens the DirectionsSheet with route options', async ({
+test.describe('@critical J36 — Shop detail: navigation links open Google Maps and Apple Maps directly', () => {
+  test('J36 — shop detail: navigation links open Google Maps and Apple Maps directly', async ({
     page,
-    context,
   }) => {
-    await grantGeolocation(context, TAIPEI_COORDS);
-
-    // Fetch a seeded shop with coordinates
+    // Fetch a seeded shop
     const response = await page.request.get('/api/shops?featured=true&limit=1');
     const shops = await response.json();
     const shop = first(shops);
@@ -490,38 +487,14 @@ test.describe('@critical J36 — Shop detail: tap Get Directions → DirectionsS
     await page.goto(`/shops/${shop.id}/${shop.slug || ''}`);
     await page.waitForLoadState('networkidle');
 
-    // "Get There" button should be visible (only renders if shop has lat/lng)
-    const getThereBtn = page.getByRole('button', { name: /get there/i });
-    test.skip(
-      !(await getThereBtn.isVisible({ timeout: 5_000 }).catch(() => false)),
-      'Shop has no coordinates — Get There button not rendered'
-    );
+    // Google Maps link should be present and open in a new tab
+    const googleMapsLink = page.locator('a[href*="google.com/maps"]').first();
+    await expect(googleMapsLink).toBeVisible({ timeout: 10_000 });
+    await expect(googleMapsLink).toHaveAttribute('target', '_blank');
 
-    // Dismiss cookie consent banner if present — the fixed bottom banner (z-50)
-    // intercepts pointer events and prevents the Get There button from being clicked.
-    const rejectBtn = page.getByRole('button', { name: 'Reject' });
-    if (await rejectBtn.isVisible({ timeout: 2_000 }).catch(() => false)) {
-      await rejectBtn.click();
-    }
-
-    // Tap "Get There"
-    await getThereBtn.click();
-
-    // DirectionsSheet should open with "Directions" heading
-    await expect(page.getByText('Directions')).toBeVisible({ timeout: 10_000 });
-
-    // At least one route info row should appear.
-    // Walking/Driving rows load from the directions API (Mapbox); if unavailable locally
-    // the component falls back to "Route times unavailable. Try again later."
-    const routeRow = page
-      .getByText(/Walking|Driving|Route times unavailable/i)
-      .first();
-    await expect(routeRow).toBeVisible({ timeout: 15_000 });
-
-    // Google Maps and Apple Maps deep links should be present
-    await expect(
-      page.getByRole('link', { name: /Google Maps/i })
-    ).toBeVisible();
-    await expect(page.getByRole('link', { name: /Apple Maps/i })).toBeVisible();
+    // Apple Maps link should be present and open in a new tab
+    const appleMapsLink = page.locator('a[href*="maps.apple.com"]').first();
+    await expect(appleMapsLink).toBeVisible({ timeout: 10_000 });
+    await expect(appleMapsLink).toHaveAttribute('target', '_blank');
   });
 });

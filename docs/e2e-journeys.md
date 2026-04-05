@@ -71,7 +71,7 @@ This is the **source of truth** for all e2e test journeys. Each journey has:
 | J32 | Community feed: like toggle increments count     | High     | `feed.spec.ts`       | Implemented |
 | J33 | Community feed: MRT filter scopes results        | Medium   | `feed.spec.ts`       | Implemented |
 | J34 | Explore: Tarot draw → 3 café cards revealed      | Medium   | `explore.spec.ts`    | Implemented |
-| J36 | Shop detail: Get Directions → DirectionsSheet    | High     | `discovery.spec.ts`  | Implemented |
+| J36 | Shop detail: Google Maps + Apple Maps navigation links | High | `discovery.spec.ts` | Implemented |
 | J38 | Account deletion: cancel during grace period     | High     | `profile.spec.ts`    | Implemented |
 | J39 | Check-in with review text → appears on shop page | High     | `checkin.spec.ts`    | Implemented |
 
