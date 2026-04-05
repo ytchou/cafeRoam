@@ -56,12 +56,19 @@ def vibe_shops(
     lat: float | None = Query(default=None, ge=-90.0, le=90.0),
     lng: float | None = Query(default=None, ge=-180.0, le=180.0),
     radius_km: float = Query(default=5.0, ge=0.5, le=20.0),
+    district_id: str | None = Query(default=None),
 ) -> dict[str, object]:
     """Return shops matching a vibe, ranked by tag overlap. Public — no auth required."""
     db = get_anon_client()
     service = VibeService(db)
     try:
-        result = service.get_shops_for_vibe(slug=slug, lat=lat, lng=lng, radius_km=radius_km)
+        result = service.get_shops_for_vibe(
+            slug=slug,
+            lat=lat,
+            lng=lng,
+            radius_km=radius_km,
+            district_id=district_id,
+        )
     except ValueError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     return result.model_dump(by_alias=True)

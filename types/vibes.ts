@@ -20,6 +20,8 @@ export interface VibeShopResult {
   distanceKm: number | null;
   overlapScore: number;
   matchedTagLabels: string[];
+  latitude: number | null;
+  longitude: number | null;
 }
 
 export interface VibeShopsResponse {

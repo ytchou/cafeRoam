@@ -1,44 +1,102 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
+import { useParams, useRouter } from 'next/navigation';
+import { ArrowLeft, Bookmark, MapPin, Star } from 'lucide-react';
+
+import {
+  DistrictChips,
+  type VibeFilter,
+} from '@/components/explore/district-chips';
+import { CollapsibleMapPanel } from '@/components/map/collapsible-map-panel';
+import { useDistricts } from '@/lib/hooks/use-districts';
+import { useGeolocation } from '@/lib/hooks/use-geolocation';
+import { useIsDesktop } from '@/lib/hooks/use-media-query';
+import { useVibeShops } from '@/lib/hooks/use-vibe-shops';
+import { useVibes } from '@/lib/hooks/use-vibes';
+import { toast } from 'sonner';
 
 const BRICOLAGE_STYLE = {
   fontFamily: 'var(--font-bricolage), sans-serif',
 } as const;
-import Image from 'next/image';
-import Link from 'next/link';
-import { useRouter, useParams } from 'next/navigation';
-import { ArrowLeft, Star, MapPin, Bookmark } from 'lucide-react';
-import { useGeolocation } from '@/lib/hooks/use-geolocation';
-import { useVibeShops } from '@/lib/hooks/use-vibe-shops';
-import { useVibes } from '@/lib/hooks/use-vibes';
-import { useIsDesktop } from '@/lib/hooks/use-media-query';
 
 export default function VibePage() {
   const router = useRouter();
   const { slug } = useParams<{ slug: string }>();
   const isDesktop = useIsDesktop();
   const { vibes } = useVibes();
+  const { districts } = useDistricts();
   const otherVibes = vibes.filter((v) => v.slug !== slug).slice(0, 6);
+  const { latitude, longitude, requestLocation } = useGeolocation();
 
-  const {
-    latitude,
-    longitude,
-    loading: geoLoading,
-    requestLocation,
-  } = useGeolocation();
+  const [activeFilter, setActiveFilter] = useState<VibeFilter>({ type: 'all' });
+  const [selectedShopId, setSelectedShopId] = useState<string | null>(null);
+  const cardRefs = useRef<Record<string, HTMLElement | null>>({});
 
-  useEffect(() => {
-    requestLocation();
-  }, [requestLocation]);
+  const vibeShopsFilter = useMemo(() => {
+    if (
+      activeFilter.type === 'nearby' &&
+      latitude != null &&
+      longitude != null
+    ) {
+      return { lat: latitude, lng: longitude };
+    }
 
-  const { response, isLoading, error } = useVibeShops(
-    slug,
-    latitude,
-    longitude,
-    5,
-    geoLoading
+    if (activeFilter.type === 'district') {
+      return { districtId: activeFilter.districtId };
+    }
+
+    return {};
+  }, [activeFilter, latitude, longitude]);
+
+  const { response, isLoading, error } = useVibeShops(slug, vibeShopsFilter);
+
+  const subtitleChips = useMemo(
+    () =>
+      response?.vibe.subtitle
+        ? response.vibe.subtitle.split(' · ').filter(Boolean)
+        : [],
+    [response]
   );
+
+  const mapShops = useMemo(
+    () =>
+      (response?.shops ?? []).map((shop) => ({
+        id: shop.shopId,
+        name: shop.name,
+        latitude: shop.latitude ?? null,
+        longitude: shop.longitude ?? null,
+      })),
+    [response]
+  );
+
+  const handleFilterChange = useCallback(
+    async (filter: VibeFilter) => {
+      if (filter.type === 'nearby') {
+        const coords = await requestLocation();
+        if (!coords) {
+          toast.error('無法取得位置，已切換回全部');
+          setActiveFilter({ type: 'all' });
+        } else {
+          setActiveFilter({ type: 'nearby' });
+        }
+        return;
+      }
+
+      setActiveFilter(filter);
+    },
+    [requestLocation]
+  );
+
+  const handlePinClick = useCallback((shopId: string) => {
+    setSelectedShopId(shopId);
+    const el = cardRefs.current[shopId];
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, []);
 
   if (isLoading) {
     return (
@@ -73,13 +131,13 @@ export default function VibePage() {
   }
 
   const { vibe, shops, totalCount } = response;
-  const subtitleChips = vibe.subtitle
-    ? vibe.subtitle.split(' · ').filter(Boolean)
-    : [];
+  const badgeText =
+    activeFilter.type === 'nearby'
+      ? `${totalCount} ${totalCount === 1 ? 'shop' : 'shops'} nearby`
+      : `${totalCount} ${totalCount === 1 ? 'shop' : 'shops'}`;
 
   return (
     <main className="bg-surface-warm min-h-screen px-5 pt-6 pb-24">
-      {/* Header row: back button + emoji + vibe name */}
       <div className="mb-5">
         <div className="flex items-center gap-3">
           <button
@@ -102,7 +160,6 @@ export default function VibePage() {
           </div>
         </div>
 
-        {/* Subtitle chips */}
         {subtitleChips.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-1.5 pl-12">
             {subtitleChips.map((chip) => (
@@ -116,17 +173,29 @@ export default function VibePage() {
           </div>
         )}
 
-        {/* Shop count badge */}
         <div className="mt-3 pl-12">
           <span className="bg-link-green inline-flex items-center rounded-full px-3 py-1 text-xs font-medium text-white">
-            {totalCount} {totalCount === 1 ? 'shop' : 'shops'} nearby
+            {badgeText}
           </span>
         </div>
       </div>
 
+      <DistrictChips
+        districts={districts}
+        activeFilter={activeFilter}
+        onFilterChange={handleFilterChange}
+        isLoading={isLoading}
+      />
+
+      <CollapsibleMapPanel
+        shops={mapShops}
+        selectedShopId={selectedShopId}
+        onPinClick={handlePinClick}
+      />
+
       {shops.length === 0 ? (
-        <div className="rounded-xl bg-white/60 px-6 py-10 text-center">
-          <p className="text-sm text-gray-500">No shops found for this vibe.</p>
+        <div className="py-12 text-center text-gray-400">
+          此區域尚無符合的咖啡廳
         </div>
       ) : (
         <ul
@@ -135,7 +204,13 @@ export default function VibePage() {
           }
         >
           {shops.map((shop) => (
-            <li key={shop.shopId}>
+            <li
+              key={shop.shopId}
+              ref={(el) => {
+                cardRefs.current[shop.shopId] = el;
+              }}
+              onClick={() => setSelectedShopId(shop.shopId)}
+            >
               <div className="flex items-center gap-3 rounded-xl bg-white px-4 py-3 shadow-sm">
                 <Link
                   href={`/shops/${shop.slug ?? shop.shopId}`}
@@ -170,19 +245,18 @@ export default function VibePage() {
                         </span>
                       )}
                     </div>
-                    {shop.matchedTagLabels &&
-                      shop.matchedTagLabels.length > 0 && (
-                        <div className="mt-1 flex flex-wrap gap-1">
-                          {shop.matchedTagLabels.map((label: string) => (
-                            <span
-                              key={label}
-                              className="rounded-full bg-gray-50 px-2 py-0.5 text-[10px] text-gray-400"
-                            >
-                              {label}
-                            </span>
-                          ))}
-                        </div>
-                      )}
+                    {shop.matchedTagLabels.length > 0 && (
+                      <div className="mt-1 flex flex-wrap gap-1">
+                        {shop.matchedTagLabels.map((label) => (
+                          <span
+                            key={label}
+                            className="rounded-full bg-gray-50 px-2 py-0.5 text-[10px] text-gray-400"
+                          >
+                            {label}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </Link>
                 <span
