@@ -163,6 +163,80 @@ describe('Community Notes section', () => {
   });
 });
 
+describe('ExplorePage — district-mode empty state', () => {
+  const DAAN_DISTRICT = {
+    id: 'd1',
+    slug: 'daan',
+    nameZh: '大安',
+    nameEn: 'Da-an',
+    city: 'Taipei',
+    shopCount: 25,
+    sortOrder: 1,
+    descriptionEn: null,
+    descriptionZh: null,
+  };
+
+  function setupSwrWithEmptyTarot() {
+    vi.mocked(useSWR).mockImplementation((key) => {
+      if (typeof key === 'string' && key.includes('/api/explore/tarot-draw')) {
+        return { data: [], error: null, isLoading: false } as ReturnType<typeof useSWR>;
+      }
+      if (key === '/api/explore/vibes') {
+        return { data: MOCK_VIBES, error: null, isLoading: false } as ReturnType<typeof useSWR>;
+      }
+      if (key === '/api/explore/community/preview') {
+        return { data: MOCK_COMMUNITY, error: null, isLoading: false } as ReturnType<typeof useSWR>;
+      }
+      return { data: undefined, error: null, isLoading: false } as ReturnType<typeof useSWR>;
+    });
+  }
+
+  it('shows "Try a different district" CTA and hides "Expand radius" when GPS is denied and district draw returns empty', () => {
+    mockUseGeolocation.mockReturnValue({
+      latitude: null,
+      longitude: null,
+      error: 'User denied Geolocation',
+      loading: false,
+      requestLocation: vi.fn(),
+    });
+    mockUseDistricts.mockReturnValue({
+      districts: [DAAN_DISTRICT],
+      isLoading: false,
+      error: null,
+    });
+    setupSwrWithEmptyTarot();
+    render(<ExplorePage />);
+    expect(
+      screen.getByRole('button', { name: /try a different district/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /expand radius/i })
+    ).not.toBeInTheDocument();
+  });
+
+  it('tapping "Try a different district" invokes the handler without throwing', async () => {
+    mockUseGeolocation.mockReturnValue({
+      latitude: null,
+      longitude: null,
+      error: 'User denied Geolocation',
+      loading: false,
+      requestLocation: vi.fn(),
+    });
+    mockUseDistricts.mockReturnValue({
+      districts: [DAAN_DISTRICT],
+      isLoading: false,
+      error: null,
+    });
+    setupSwrWithEmptyTarot();
+    render(<ExplorePage />);
+    const button = screen.getByRole('button', { name: /try a different district/i });
+    await userEvent.click(button);
+    // Handler fired without errors — GPS-denied users always have a fallback district,
+    // so the empty state remains visible after reset (expected behavior)
+    expect(screen.getByText(/No cafes open nearby/i)).toBeInTheDocument();
+  });
+});
+
 describe('ExplorePage with district picker', () => {
   it('shows district picker above daily draw section', () => {
     setupSwrMock();

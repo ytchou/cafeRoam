@@ -1,7 +1,7 @@
 'use client';
 
 interface TarotEmptyStateProps {
-  onExpandRadius: () => void;
+  onExpandRadius?: () => void;
   onTryDifferentDistrict?: () => void;
 }
 
@@ -27,13 +27,15 @@ export function TarotEmptyState({
             Try a different district
           </button>
         ) : null}
-        <button
-          type="button"
-          onClick={onExpandRadius}
-          className="rounded-full border border-gray-300 px-5 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50"
-        >
-          Expand radius
-        </button>
+        {onExpandRadius ? (
+          <button
+            type="button"
+            onClick={onExpandRadius}
+            className="rounded-full border border-gray-300 px-5 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50"
+          >
+            Expand radius
+          </button>
+        ) : null}
       </div>
     </div>
   );

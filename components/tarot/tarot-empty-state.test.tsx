@@ -47,4 +47,16 @@ describe('TarotEmptyState with district CTA', () => {
     );
     expect(onTry).toHaveBeenCalled();
   });
+
+  it('hides Expand radius button in district mode (onExpandRadius not provided)', () => {
+    render(
+      <TarotEmptyState onTryDifferentDistrict={vi.fn()} />
+    );
+    expect(
+      screen.queryByRole('button', { name: /expand radius/i })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /try a different district/i })
+    ).toBeInTheDocument();
+  });
 });

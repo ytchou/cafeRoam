@@ -59,12 +59,12 @@ export default function ExplorePage() {
   }, [requestLocation]);
 
   useEffect(() => {
-    if (cards.length > 0 && latitude && longitude) {
+    if (cards.length > 0 && (latitude && longitude || effectiveDistrictId)) {
       capture('tarot_draw_loaded', {
         card_count: cards.length,
       });
     }
-  }, [cards.length, latitude, longitude, capture]);
+  }, [cards.length, latitude, longitude, effectiveDistrictId, capture]);
 
   const handleExpandRadius = useCallback(() => {
     capture('tarot_empty_state', {
@@ -72,6 +72,10 @@ export default function ExplorePage() {
     });
     setRadiusKm(10);
   }, [capture, setRadiusKm]);
+
+  const handleTryDifferentDistrict = useCallback(() => {
+    setSelectedDistrictId(null);
+  }, []);
 
   const handleSelectDistrict = useCallback((districtId: string) => {
     setSelectedDistrictId(districtId);
@@ -144,7 +148,10 @@ export default function ExplorePage() {
         !error &&
         cards.length === 0 &&
         (effectiveLat != null || effectiveDistrictId != null) && (
-          <TarotEmptyState onExpandRadius={handleExpandRadius} />
+          <TarotEmptyState
+            onExpandRadius={effectiveDistrictId ? undefined : handleExpandRadius}
+            onTryDifferentDistrict={effectiveDistrictId ? handleTryDifferentDistrict : undefined}
+          />
         )}
 
       {cards.length > 0 && (
