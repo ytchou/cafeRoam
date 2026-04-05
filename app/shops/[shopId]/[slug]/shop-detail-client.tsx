@@ -118,6 +118,58 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
 
   const hasMap = shop.latitude != null && shop.longitude != null;
 
+  const googleMapsUrl = useMemo(
+    () =>
+      hasMap
+        ? getGoogleMapsUrl({
+            name: shop.name,
+            latitude: shop.latitude!,
+            longitude: shop.longitude!,
+            googlePlaceId: shop.googlePlaceId ?? null,
+            address: shop.address ?? null,
+          })
+        : null,
+    [hasMap, shop.name, shop.latitude, shop.longitude, shop.googlePlaceId, shop.address]
+  );
+
+  const appleMapsUrl = useMemo(
+    () =>
+      hasMap
+        ? getAppleMapsUrl({
+            latitude: shop.latitude!,
+            longitude: shop.longitude!,
+            address: shop.address ?? null,
+          })
+        : null,
+    [hasMap, shop.latitude, shop.longitude, shop.address]
+  );
+
+  function NavigationLinks() {
+    if (!googleMapsUrl || !appleMapsUrl) return null;
+    return (
+      <>
+        <a
+          href={googleMapsUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="border-border-warm text-text-body hover:bg-surface-section flex min-h-[44px] items-center gap-1.5 rounded-full border px-4 py-2 text-sm"
+        >
+          <Navigation size={14} />
+          Google Maps
+        </a>
+        <a
+          href={appleMapsUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="border-border-warm text-text-body hover:bg-surface-section flex min-h-[44px] items-center gap-1.5 rounded-full border px-4 py-2 text-sm"
+        >
+          <Navigation size={14} />
+          Apple Maps
+        </a>
+      </>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-white">
       {/* Hero — full width, taller on desktop */}
@@ -148,34 +200,7 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
         {/* Inline directions — desktop only */}
         {hasMap && (
           <div className="hidden lg:flex gap-2">
-            <a
-              href={getGoogleMapsUrl({
-                name: shop.name,
-                latitude: shop.latitude!,
-                longitude: shop.longitude!,
-                googlePlaceId: shop.googlePlaceId ?? null,
-                address: shop.address ?? null,
-              })}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="border-border-warm text-text-body hover:bg-surface-section flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm"
-            >
-              <Navigation size={14} />
-              Google Maps
-            </a>
-            <a
-              href={getAppleMapsUrl({
-                latitude: shop.latitude!,
-                longitude: shop.longitude!,
-                address: shop.address ?? null,
-              })}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="border-border-warm text-text-body hover:bg-surface-section flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm"
-            >
-              <Navigation size={14} />
-              Apple Maps
-            </a>
+            <NavigationLinks />
           </div>
         )}
 
@@ -206,34 +231,7 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
               shopName={shop.name}
             />
             <div className="flex gap-2 px-5 py-3 lg:hidden">
-              <a
-                href={getGoogleMapsUrl({
-                  name: shop.name,
-                  latitude: shop.latitude!,
-                  longitude: shop.longitude!,
-                  googlePlaceId: shop.googlePlaceId ?? null,
-                  address: shop.address ?? null,
-                })}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="border-border-warm text-text-body hover:bg-surface-section flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm"
-              >
-                <Navigation size={14} />
-                Google Maps
-              </a>
-              <a
-                href={getAppleMapsUrl({
-                  latitude: shop.latitude!,
-                  longitude: shop.longitude!,
-                  address: shop.address ?? null,
-                })}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="border-border-warm text-text-body hover:bg-surface-section flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm"
-              >
-                <Navigation size={14} />
-                Apple Maps
-              </a>
+              <NavigationLinks />
             </div>
           </div>
         )}
