@@ -36,7 +36,11 @@ export default function VibePage() {
   const cardRefs = useRef<Record<string, HTMLElement | null>>({});
 
   const vibeShopsFilter = useMemo(() => {
-    if (activeFilter.type === 'nearby' && latitude != null && longitude != null) {
+    if (
+      activeFilter.type === 'nearby' &&
+      latitude != null &&
+      longitude != null
+    ) {
       return { lat: latitude, lng: longitude };
     }
 
@@ -50,7 +54,10 @@ export default function VibePage() {
   const { response, isLoading, error } = useVibeShops(slug, vibeShopsFilter);
 
   const subtitleChips = useMemo(
-    () => (response?.vibe.subtitle ? response.vibe.subtitle.split(' · ').filter(Boolean) : []),
+    () =>
+      response?.vibe.subtitle
+        ? response.vibe.subtitle.split(' · ').filter(Boolean)
+        : [],
     [response]
   );
 
@@ -187,7 +194,9 @@ export default function VibePage() {
       />
 
       {shops.length === 0 ? (
-        <div className="py-12 text-center text-gray-400">此區域尚無符合的咖啡廳</div>
+        <div className="py-12 text-center text-gray-400">
+          此區域尚無符合的咖啡廳
+        </div>
       ) : (
         <ul
           className={

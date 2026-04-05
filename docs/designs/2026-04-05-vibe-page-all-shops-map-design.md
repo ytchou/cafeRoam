@@ -13,6 +13,7 @@ Improve discovery on `/explore/vibes/[slug]` by removing the implicit "nearby on
 **Approach B — Reusable components.** Extract `DistrictChips` and `CollapsibleMapPanel` as shared components. VibePage composes them. DEV-245 (GPS fallback district picker) can reuse `DistrictChips`.
 
 Backend already supports all-shops mode (no lat/lng = no bounding box filter), but needs:
+
 1. `latitude`/`longitude` added to `VibeShopResult` response model
 2. New optional `district_id` query param for district filtering
 
@@ -20,12 +21,12 @@ Frontend removes geo-gating from `useVibeShops` and composes the new components 
 
 ## Components
 
-| Component | Location | Responsibility |
-|---|---|---|
-| `DistrictChips` | `components/explore/district-chips.tsx` | Horizontal chip row: 全部, ⊙ 附近, district names. Single-select. |
-| `CollapsibleMapPanel` | `components/map/collapsible-map-panel.tsx` | MapView wrapper with expand/collapse toggle, height animation. |
-| `VibePage` (modified) | `app/explore/vibes/[slug]/page.tsx` | Composes CollapsibleMapPanel + DistrictChips + shop list. Manages filter state. |
-| `useVibeShops` (modified) | `lib/hooks/use-vibe-shops.ts` | Accepts optional filter object (districtId, lat, lng). No longer blocks on geo. |
+| Component                 | Location                                   | Responsibility                                                                  |
+| ------------------------- | ------------------------------------------ | ------------------------------------------------------------------------------- |
+| `DistrictChips`           | `components/explore/district-chips.tsx`    | Horizontal chip row: 全部, ⊙ 附近, district names. Single-select.               |
+| `CollapsibleMapPanel`     | `components/map/collapsible-map-panel.tsx` | MapView wrapper with expand/collapse toggle, height animation.                  |
+| `VibePage` (modified)     | `app/explore/vibes/[slug]/page.tsx`        | Composes CollapsibleMapPanel + DistrictChips + shop list. Manages filter state. |
+| `useVibeShops` (modified) | `lib/hooks/use-vibe-shops.ts`              | Accepts optional filter object (districtId, lat, lng). No longer blocks on geo. |
 
 ## Data Flow
 
@@ -73,5 +74,6 @@ User taps "大安" district chip:
 ## SPEC Impact
 
 Requires SPEC.md update:
+
 - §2 System Modules: document new map surface on `/explore/vibes/[slug]`
 - §9 Business Rules: add responsive layout entry for VibePage collapsible map

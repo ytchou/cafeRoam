@@ -12,13 +12,16 @@ interface VibeShopsFilter {
   districtId?: string | null;
 }
 
-export function useVibeShops(slug: string | undefined, filter?: VibeShopsFilter) {
+export function useVibeShops(
+  slug: string | undefined,
+  filter?: VibeShopsFilter
+) {
   const key = slug ? buildVibeShopsUrl(slug, filter) : null;
 
   const { data, error, isLoading } = useSWR<VibeShopsResponse>(
     key,
     fetchPublic,
-    { revalidateOnFocus: false },
+    { revalidateOnFocus: false }
   );
 
   return {

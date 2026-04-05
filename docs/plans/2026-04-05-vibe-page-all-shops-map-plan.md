@@ -15,6 +15,7 @@
 **Tech Stack:** FastAPI + Pydantic (backend), Next.js + SWR + react-map-gl/mapbox (frontend), Tailwind CSS + shadcn/ui (styling)
 
 **Acceptance Criteria:**
+
 - [ ] A user visiting `/explore/vibes/first-date` sees all matching shops immediately without a location prompt
 - [ ] A user can tap district chips to filter shops by district, or tap "附近" to see nearby shops only
 - [ ] A user sees a map at the top showing pins for all visible shops, and can collapse/expand it
@@ -26,6 +27,7 @@
 ### Task 1: Add `latitude`/`longitude` to VibeShopResult backend model + response
 
 **Files:**
+
 - Modify: `backend/models/types.py` — `VibeShopResult` class
 - Modify: `backend/services/vibe_service.py` — `_build_shop_result()` or equivalent dict construction
 - Test: `backend/tests/services/test_vibe_service.py`
@@ -69,6 +71,7 @@ Expected: FAIL — `VibeShopResult` has no `latitude`/`longitude` fields
 **Step 3: Write minimal implementation**
 
 In `backend/models/types.py`, add to `VibeShopResult`:
+
 ```python
 class VibeShopResult(CamelModel):
     shop_id: str
@@ -85,6 +88,7 @@ class VibeShopResult(CamelModel):
 ```
 
 In `backend/services/vibe_service.py`, in the dict construction inside `_fetch_shop_details` (or wherever `VibeShopResult` dicts are built), add:
+
 ```python
 "latitude": shop["latitude"],
 "longitude": shop["longitude"],
@@ -107,23 +111,25 @@ git commit -m "feat(DEV-247): add latitude/longitude to VibeShopResult response 
 ### Task 2: Add `district_id` filter to vibe shops backend endpoint + service
 
 **Files:**
+
 - Modify: `backend/services/vibe_service.py` — `get_shops_for_vibe()` + `_fetch_shop_details()`
 - Modify: `backend/api/explore.py` — vibe shops endpoint
 - Test: `backend/tests/services/test_vibe_service.py`
 - Test: `backend/tests/api/test_explore.py`
 
 **API Contract:**
+
 ```yaml
 endpoint: GET /explore/vibes/{slug}/shops
 request:
-  slug: string  # path param — vibe slug
-  lat: float | null  # optional GPS latitude
-  lng: float | null  # optional GPS longitude
-  radius_km: float  # default 5.0, range 0.5-20.0
-  district_id: string | null  # NEW — optional UUID district filter
+  slug: string # path param — vibe slug
+  lat: float | null # optional GPS latitude
+  lng: float | null # optional GPS longitude
+  radius_km: float # default 5.0, range 0.5-20.0
+  district_id: string | null # NEW — optional UUID district filter
 response:
   vibe: VibeCollection
-  shops: VibeShopResult[]  # now includes latitude, longitude
+  shops: VibeShopResult[] # now includes latitude, longitude
   total_count: number
 ```
 
@@ -183,6 +189,7 @@ Expected: FAIL — `district_id` param not accepted
 **Step 3: Write minimal implementation**
 
 In `backend/api/explore.py`:
+
 ```python
 @router.get("/vibes/{slug}/shops")
 async def vibe_shops(
@@ -199,6 +206,7 @@ async def vibe_shops(
 ```
 
 In `backend/services/vibe_service.py`:
+
 ```python
 def get_shops_for_vibe(
     self, slug: str, lat: float | None = None, lng: float | None = None,
@@ -246,6 +254,7 @@ git commit -m "feat(DEV-247): add district_id filter to vibe shops endpoint"
 ### Task 3: Update frontend types + API client + remove geo-gating from hook
 
 **Files:**
+
 - Modify: `types/vibes.ts` — add `latitude`, `longitude` to `VibeShopResult`
 - Modify: `lib/api/vibes.ts` — add `districtId` param to `buildVibeShopsUrl`
 - Modify: `lib/hooks/use-vibe-shops.ts` — remove `geoLoading` gate, accept filter object
@@ -256,35 +265,33 @@ git commit -m "feat(DEV-247): add district_id filter to vibe shops endpoint"
 ```typescript
 // use-vibe-shops.test.ts — add/modify tests
 
-it("fetches immediately without waiting for geolocation", () => {
+it('fetches immediately without waiting for geolocation', () => {
   // Previously: geoLoading=true blocked the fetch (SWR key was null)
   // New: should fetch immediately with no location params
-  const { result } = renderHook(() => useVibeShops("first-date"));
+  const { result } = renderHook(() => useVibeShops('first-date'));
 
   // SWR should have been called with a non-null key
   expect(mockUseSWR).toHaveBeenCalledWith(
-    expect.stringContaining("/api/explore/vibes/first-date/shops"),
-    expect.any(Function),
+    expect.stringContaining('/api/explore/vibes/first-date/shops'),
+    expect.any(Function)
   );
 });
 
-it("passes districtId to URL when provided", () => {
-  renderHook(() => useVibeShops("first-date", { districtId: "daan-uuid" }));
+it('passes districtId to URL when provided', () => {
+  renderHook(() => useVibeShops('first-date', { districtId: 'daan-uuid' }));
 
   expect(mockUseSWR).toHaveBeenCalledWith(
-    expect.stringContaining("district_id=daan-uuid"),
-    expect.any(Function),
+    expect.stringContaining('district_id=daan-uuid'),
+    expect.any(Function)
   );
 });
 
-it("passes lat/lng to URL when provided", () => {
-  renderHook(() =>
-    useVibeShops("first-date", { lat: 25.033, lng: 121.565 }),
-  );
+it('passes lat/lng to URL when provided', () => {
+  renderHook(() => useVibeShops('first-date', { lat: 25.033, lng: 121.565 }));
 
   expect(mockUseSWR).toHaveBeenCalledWith(
-    expect.stringContaining("lat=25.033"),
-    expect.any(Function),
+    expect.stringContaining('lat=25.033'),
+    expect.any(Function)
   );
 });
 ```
@@ -297,6 +304,7 @@ Expected: FAIL — hook still requires `geoLoading` param, no `districtId` suppo
 **Step 3: Write minimal implementation**
 
 In `types/vibes.ts`:
+
 ```typescript
 export interface VibeShopResult {
   shopId: string;
@@ -308,12 +316,13 @@ export interface VibeShopResult {
   distanceKm: number | null;
   overlapScore: number;
   matchedTagLabels: string[];
-  latitude: number | null;   // NEW
-  longitude: number | null;  // NEW
+  latitude: number | null; // NEW
+  longitude: number | null; // NEW
 }
 ```
 
 In `lib/api/vibes.ts`:
+
 ```typescript
 export function buildVibeShopsUrl(
   slug: string,
@@ -322,23 +331,24 @@ export function buildVibeShopsUrl(
     lng?: number | null;
     radiusKm?: number;
     districtId?: string | null;
-  },
+  }
 ): string {
   const params = new URLSearchParams();
   if (options?.lat != null && options?.lng != null) {
-    params.set("lat", String(options.lat));
-    params.set("lng", String(options.lng));
-    params.set("radius_km", String(options?.radiusKm ?? 5));
+    params.set('lat', String(options.lat));
+    params.set('lng', String(options.lng));
+    params.set('radius_km', String(options?.radiusKm ?? 5));
   }
   if (options?.districtId) {
-    params.set("district_id", options.districtId);
+    params.set('district_id', options.districtId);
   }
   const qs = params.toString();
-  return `/api/explore/vibes/${slug}/shops${qs ? `?${qs}` : ""}`;
+  return `/api/explore/vibes/${slug}/shops${qs ? `?${qs}` : ''}`;
 }
 ```
 
 In `lib/hooks/use-vibe-shops.ts`:
+
 ```typescript
 interface VibeShopsFilter {
   lat?: number | null;
@@ -347,9 +357,15 @@ interface VibeShopsFilter {
   districtId?: string | null;
 }
 
-export function useVibeShops(slug: string | undefined, filter?: VibeShopsFilter) {
+export function useVibeShops(
+  slug: string | undefined,
+  filter?: VibeShopsFilter
+) {
   const key = slug ? buildVibeShopsUrl(slug, filter) : null;
-  const { data, error, isLoading, mutate } = useSWR<VibeShopsResponse>(key, fetcher);
+  const { data, error, isLoading, mutate } = useSWR<VibeShopsResponse>(
+    key,
+    fetcher
+  );
 
   return {
     vibe: data?.vibe ?? null,
@@ -379,6 +395,7 @@ git commit -m "feat(DEV-247): update frontend types, add districtId to API clien
 ### Task 4: Create `DistrictChips` component
 
 **Files:**
+
 - Create: `components/explore/district-chips.tsx`
 - Create: `components/explore/__tests__/district-chips.test.tsx`
 
@@ -386,61 +403,61 @@ git commit -m "feat(DEV-247): update frontend types, add districtId to API clien
 
 ```tsx
 // district-chips.test.tsx
-import { render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
-import { DistrictChips } from "@/components/explore/district-chips";
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { DistrictChips } from '@/components/explore/district-chips';
 
 const mockDistricts = [
-  { id: "d1", slug: "daan", nameZh: "大安", nameEn: "Daan", shopCount: 20 },
-  { id: "d2", slug: "xinyi", nameZh: "信義", nameEn: "Xinyi", shopCount: 15 },
+  { id: 'd1', slug: 'daan', nameZh: '大安', nameEn: 'Daan', shopCount: 20 },
+  { id: 'd2', slug: 'xinyi', nameZh: '信義', nameEn: 'Xinyi', shopCount: 15 },
 ];
 
-describe("DistrictChips", () => {
-  it("renders 全部, 附近, and district chips", () => {
+describe('DistrictChips', () => {
+  it('renders 全部, 附近, and district chips', () => {
     render(
       <DistrictChips
         districts={mockDistricts}
-        activeFilter={{ type: "all" }}
+        activeFilter={{ type: 'all' }}
         onFilterChange={vi.fn()}
-      />,
+      />
     );
 
-    expect(screen.getByRole("button", { name: "全部" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /附近/ })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "大安" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "信義" })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '全部' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /附近/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '大安' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '信義' })).toBeInTheDocument();
   });
 
   it("highlights 全部 chip when filter type is 'all'", () => {
     render(
       <DistrictChips
         districts={mockDistricts}
-        activeFilter={{ type: "all" }}
+        activeFilter={{ type: 'all' }}
         onFilterChange={vi.fn()}
-      />,
+      />
     );
 
-    const allChip = screen.getByRole("button", { name: "全部" });
-    expect(allChip).toHaveAttribute("data-active", "true");
+    const allChip = screen.getByRole('button', { name: '全部' });
+    expect(allChip).toHaveAttribute('data-active', 'true');
   });
 
-  it("calls onFilterChange with district when district chip is tapped", async () => {
+  it('calls onFilterChange with district when district chip is tapped', async () => {
     const user = userEvent.setup();
     const onFilterChange = vi.fn();
 
     render(
       <DistrictChips
         districts={mockDistricts}
-        activeFilter={{ type: "all" }}
+        activeFilter={{ type: 'all' }}
         onFilterChange={onFilterChange}
-      />,
+      />
     );
 
-    await user.click(screen.getByRole("button", { name: "大安" }));
+    await user.click(screen.getByRole('button', { name: '大安' }));
 
     expect(onFilterChange).toHaveBeenCalledWith({
-      type: "district",
-      districtId: "d1",
+      type: 'district',
+      districtId: 'd1',
     });
   });
 
@@ -451,14 +468,14 @@ describe("DistrictChips", () => {
     render(
       <DistrictChips
         districts={mockDistricts}
-        activeFilter={{ type: "all" }}
+        activeFilter={{ type: 'all' }}
         onFilterChange={onFilterChange}
-      />,
+      />
     );
 
-    await user.click(screen.getByRole("button", { name: /附近/ }));
+    await user.click(screen.getByRole('button', { name: /附近/ }));
 
-    expect(onFilterChange).toHaveBeenCalledWith({ type: "nearby" });
+    expect(onFilterChange).toHaveBeenCalledWith({ type: 'nearby' });
   });
 });
 ```
@@ -472,12 +489,12 @@ Expected: FAIL — component does not exist
 
 ```tsx
 // components/explore/district-chips.tsx
-"use client";
+'use client';
 
 export type VibeFilter =
-  | { type: "all" }
-  | { type: "nearby" }
-  | { type: "district"; districtId: string };
+  | { type: 'all' }
+  | { type: 'nearby' }
+  | { type: 'district'; districtId: string };
 
 interface DistrictChipsProps {
   districts: { id: string; nameZh: string }[];
@@ -494,7 +511,7 @@ export function DistrictChips({
 }: DistrictChipsProps) {
   const isActive = (type: string, districtId?: string) => {
     if (activeFilter.type !== type) return false;
-    if (type === "district" && "districtId" in activeFilter) {
+    if (type === 'district' && 'districtId' in activeFilter) {
       return activeFilter.districtId === districtId;
     }
     return true;
@@ -503,15 +520,15 @@ export function DistrictChips({
   return (
     <div className="scrollbar-hide flex gap-2 overflow-x-auto px-4 py-2">
       <ChipButton
-        active={isActive("all")}
-        onClick={() => onFilterChange({ type: "all" })}
+        active={isActive('all')}
+        onClick={() => onFilterChange({ type: 'all' })}
         disabled={isLoading}
       >
         全部
       </ChipButton>
       <ChipButton
-        active={isActive("nearby")}
-        onClick={() => onFilterChange({ type: "nearby" })}
+        active={isActive('nearby')}
+        onClick={() => onFilterChange({ type: 'nearby' })}
         disabled={isLoading}
       >
         ⊙ 附近
@@ -519,8 +536,8 @@ export function DistrictChips({
       {districts.map((d) => (
         <ChipButton
           key={d.id}
-          active={isActive("district", d.id)}
-          onClick={() => onFilterChange({ type: "district", districtId: d.id })}
+          active={isActive('district', d.id)}
+          onClick={() => onFilterChange({ type: 'district', districtId: d.id })}
           disabled={isLoading}
         >
           {d.nameZh}
@@ -547,11 +564,11 @@ function ChipButton({
       data-active={active}
       disabled={disabled}
       onClick={onClick}
-      className={`whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
+      className={`rounded-full px-3 py-1.5 text-sm font-medium whitespace-nowrap transition-colors ${
         active
-          ? "bg-amber-800 text-white shadow-sm"
-          : "bg-white text-gray-600 shadow-sm hover:bg-gray-50"
-      } ${disabled ? "opacity-50" : ""}`}
+          ? 'bg-amber-800 text-white shadow-sm'
+          : 'bg-white text-gray-600 shadow-sm hover:bg-gray-50'
+      } ${disabled ? 'opacity-50' : ''}`}
     >
       {children}
     </button>
@@ -576,6 +593,7 @@ git commit -m "feat(DEV-247): create reusable DistrictChips component"
 ### Task 5: Create `CollapsibleMapPanel` component
 
 **Files:**
+
 - Create: `components/map/collapsible-map-panel.tsx`
 - Create: `components/map/__tests__/collapsible-map-panel.test.tsx`
 
@@ -583,36 +601,40 @@ git commit -m "feat(DEV-247): create reusable DistrictChips component"
 
 ```tsx
 // collapsible-map-panel.test.tsx
-import { render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
-import { CollapsibleMapPanel } from "@/components/map/collapsible-map-panel";
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { CollapsibleMapPanel } from '@/components/map/collapsible-map-panel';
 
 // Mock MapView since it requires Mapbox token
-vi.mock("@/components/map/map-view", () => ({
+vi.mock('@/components/map/map-view', () => ({
   MapView: ({ shops, selectedShopId }: any) => (
-    <div data-testid="map-view" data-shop-count={shops.length} data-selected={selectedShopId} />
+    <div
+      data-testid="map-view"
+      data-shop-count={shops.length}
+      data-selected={selectedShopId}
+    />
   ),
 }));
 
 const mockShops = [
-  { id: "s1", name: "Cafe A", latitude: 25.033, longitude: 121.565 },
-  { id: "s2", name: "Cafe B", latitude: 25.040, longitude: 121.550 },
+  { id: 's1', name: 'Cafe A', latitude: 25.033, longitude: 121.565 },
+  { id: 's2', name: 'Cafe B', latitude: 25.04, longitude: 121.55 },
 ];
 
-describe("CollapsibleMapPanel", () => {
-  it("renders map expanded by default", () => {
+describe('CollapsibleMapPanel', () => {
+  it('renders map expanded by default', () => {
     render(
       <CollapsibleMapPanel
         shops={mockShops}
         selectedShopId={null}
         onPinClick={vi.fn()}
-      />,
+      />
     );
 
-    expect(screen.getByTestId("map-view")).toBeInTheDocument();
+    expect(screen.getByTestId('map-view')).toBeInTheDocument();
   });
 
-  it("collapses map when toggle is clicked", async () => {
+  it('collapses map when toggle is clicked', async () => {
     const user = userEvent.setup();
 
     render(
@@ -620,20 +642,20 @@ describe("CollapsibleMapPanel", () => {
         shops={mockShops}
         selectedShopId={null}
         onPinClick={vi.fn()}
-      />,
+      />
     );
 
-    const toggle = screen.getByRole("button", { name: /收起地圖|hide map/i });
+    const toggle = screen.getByRole('button', { name: /收起地圖|hide map/i });
     await user.click(toggle);
 
     // Map should be hidden (height 0 or not visible)
-    expect(screen.getByTestId("map-container")).toHaveAttribute(
-      "data-collapsed",
-      "true",
+    expect(screen.getByTestId('map-container')).toHaveAttribute(
+      'data-collapsed',
+      'true'
     );
   });
 
-  it("expands map when toggle is clicked again", async () => {
+  it('expands map when toggle is clicked again', async () => {
     const user = userEvent.setup();
 
     render(
@@ -641,29 +663,34 @@ describe("CollapsibleMapPanel", () => {
         shops={mockShops}
         selectedShopId={null}
         onPinClick={vi.fn()}
-      />,
+      />
     );
 
-    const toggle = screen.getByRole("button", { name: /收起地圖|hide map/i });
+    const toggle = screen.getByRole('button', { name: /收起地圖|hide map/i });
     await user.click(toggle); // collapse
-    await user.click(screen.getByRole("button", { name: /顯示地圖|show map/i })); // expand
+    await user.click(
+      screen.getByRole('button', { name: /顯示地圖|show map/i })
+    ); // expand
 
-    expect(screen.getByTestId("map-container")).toHaveAttribute(
-      "data-collapsed",
-      "false",
+    expect(screen.getByTestId('map-container')).toHaveAttribute(
+      'data-collapsed',
+      'false'
     );
   });
 
-  it("passes selectedShopId to MapView", () => {
+  it('passes selectedShopId to MapView', () => {
     render(
       <CollapsibleMapPanel
         shops={mockShops}
         selectedShopId="s1"
         onPinClick={vi.fn()}
-      />,
+      />
     );
 
-    expect(screen.getByTestId("map-view")).toHaveAttribute("data-selected", "s1");
+    expect(screen.getByTestId('map-view')).toHaveAttribute(
+      'data-selected',
+      's1'
+    );
   });
 });
 ```
@@ -677,16 +704,21 @@ Expected: FAIL — component does not exist
 
 ```tsx
 // components/map/collapsible-map-panel.tsx
-"use client";
+'use client';
 
-import { useState } from "react";
-import { ChevronDown, ChevronUp, Map } from "lucide-react";
-import dynamic from "next/dynamic";
+import { useState } from 'react';
+import { ChevronDown, ChevronUp, Map } from 'lucide-react';
+import dynamic from 'next/dynamic';
 
-const MapView = dynamic(() => import("@/components/map/map-view").then((m) => m.MapView), {
-  ssr: false,
-  loading: () => <div className="h-[250px] animate-pulse bg-gray-100 rounded-xl" />,
-});
+const MapView = dynamic(
+  () => import('@/components/map/map-view').then((m) => m.MapView),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-[250px] animate-pulse rounded-xl bg-gray-100" />
+    ),
+  }
+);
 
 interface Shop {
   id: string;
@@ -714,7 +746,7 @@ export function CollapsibleMapPanel({
         data-testid="map-container"
         data-collapsed={collapsed}
         className={`overflow-hidden rounded-xl transition-all duration-300 ${
-          collapsed ? "h-0" : "h-[250px]"
+          collapsed ? 'h-0' : 'h-[250px]'
         }`}
       >
         <MapView
@@ -765,6 +797,7 @@ git commit -m "feat(DEV-247): create CollapsibleMapPanel component"
 This is the integration task — composes `CollapsibleMapPanel`, `DistrictChips`, and the refactored `useVibeShops` into VibePage.
 
 **Files:**
+
 - Modify: `app/explore/vibes/[slug]/page.tsx` — major restructure
 - Test: `app/explore/vibes/[slug]/page.test.tsx`
 
@@ -773,7 +806,7 @@ This is the integration task — composes `CollapsibleMapPanel`, `DistrictChips`
 ```tsx
 // page.test.tsx — add/modify tests
 
-it("renders all shops immediately without waiting for geolocation", async () => {
+it('renders all shops immediately without waiting for geolocation', async () => {
   // Mock useVibeShops to return shops
   mockUseVibeShops.mockReturnValue({
     vibe: mockVibe,
@@ -790,7 +823,7 @@ it("renders all shops immediately without waiting for geolocation", async () => 
   expect(screen.queryByText(/nearby/i)).not.toBeInTheDocument();
 });
 
-it("renders collapsible map panel with shop pins", async () => {
+it('renders collapsible map panel with shop pins', async () => {
   mockUseVibeShops.mockReturnValue({
     vibe: mockVibe,
     shops: mockShopsWithCoords,
@@ -801,11 +834,14 @@ it("renders collapsible map panel with shop pins", async () => {
 
   render(<VibePage />);
 
-  expect(screen.getByTestId("map-container")).toBeInTheDocument();
-  expect(screen.getByTestId("map-container")).toHaveAttribute("data-collapsed", "false");
+  expect(screen.getByTestId('map-container')).toBeInTheDocument();
+  expect(screen.getByTestId('map-container')).toHaveAttribute(
+    'data-collapsed',
+    'false'
+  );
 });
 
-it("renders district filter chips", async () => {
+it('renders district filter chips', async () => {
   mockUseVibeShops.mockReturnValue({
     vibe: mockVibe,
     shops: mockShops,
@@ -814,34 +850,36 @@ it("renders district filter chips", async () => {
     error: null,
   });
   mockUseDistricts.mockReturnValue({
-    districts: [{ id: "d1", nameZh: "大安" }],
+    districts: [{ id: 'd1', nameZh: '大安' }],
     isLoading: false,
     error: null,
   });
 
   render(<VibePage />);
 
-  expect(screen.getByRole("button", { name: "全部" })).toBeInTheDocument();
-  expect(screen.getByRole("button", { name: "大安" })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: '全部' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: '大安' })).toBeInTheDocument();
 });
 
-it("filters by district when district chip is tapped", async () => {
+it('filters by district when district chip is tapped', async () => {
   const user = userEvent.setup();
   // ... mock setup ...
 
   render(<VibePage />);
-  await user.click(screen.getByRole("button", { name: "大安" }));
+  await user.click(screen.getByRole('button', { name: '大安' }));
 
   // useVibeShops should have been called with districtId
   expect(mockUseVibeShops).toHaveBeenCalledWith(
-    "first-date",
-    expect.objectContaining({ districtId: "d1" }),
+    'first-date',
+    expect.objectContaining({ districtId: 'd1' })
   );
 });
 
-it("requests geolocation when 附近 chip is tapped", async () => {
+it('requests geolocation when 附近 chip is tapped', async () => {
   const user = userEvent.setup();
-  const mockRequestLocation = vi.fn().mockResolvedValue({ lat: 25.0, lng: 121.5 });
+  const mockRequestLocation = vi
+    .fn()
+    .mockResolvedValue({ lat: 25.0, lng: 121.5 });
   mockUseGeolocation.mockReturnValue({
     latitude: null,
     longitude: null,
@@ -851,12 +889,12 @@ it("requests geolocation when 附近 chip is tapped", async () => {
   });
 
   render(<VibePage />);
-  await user.click(screen.getByRole("button", { name: /附近/ }));
+  await user.click(screen.getByRole('button', { name: /附近/ }));
 
   expect(mockRequestLocation).toHaveBeenCalled();
 });
 
-it("scrolls to shop card when map pin is clicked", async () => {
+it('scrolls to shop card when map pin is clicked', async () => {
   // Test bidirectional sync: pin click → card highlight
   // Implementation: check that selectedShopId state updates
   // and the corresponding card has a highlight class/attribute
@@ -884,6 +922,7 @@ Expected: FAIL — VibePage still has old structure (geo-gated, no map, no chips
 **Step 3: Write minimal implementation**
 
 Restructure `VibePage` to:
+
 1. Remove the `useEffect` that calls `requestLocation()` on mount
 2. Call `useVibeShops(slug, filter)` immediately with no location params
 3. Add `useDistricts()` to get district list
@@ -896,6 +935,7 @@ Restructure `VibePage` to:
 10. Change badge from "X shops nearby" to "X shops" (or "X shops in 大安" when district filtered)
 
 Key implementation details:
+
 - Use `useRef<Record<string, HTMLLIElement | null>>({})` for card refs (for scrollIntoView)
 - Map `VibeShopResult[]` to `Shop[]` for MapView: `shops.map(s => ({ id: s.shopId, name: s.name, latitude: s.latitude, longitude: s.longitude }))`
 - On "附近" filter: call `requestLocation()`, on resolve set filter to `{ lat, lng }`
@@ -924,30 +964,41 @@ git commit -m "feat(DEV-247): compose CollapsibleMapPanel + DistrictChips into V
 ### Task 7: Edge cases — geo denied toast, empty district, map load failure
 
 **Files:**
+
 - Modify: `app/explore/vibes/[slug]/page.tsx` — add error handling
 - Test: `app/explore/vibes/[slug]/page.test.tsx` — add edge case tests
 
 **Step 1: Write the failing tests**
 
 ```tsx
-it("shows toast and reverts to 全部 when geolocation is denied", async () => {
+it('shows toast and reverts to 全部 when geolocation is denied', async () => {
   const user = userEvent.setup();
   const mockRequestLocation = vi.fn().mockResolvedValue(null);
   mockUseGeolocation.mockReturnValue({
-    latitude: null, longitude: null, error: "denied", loading: false,
+    latitude: null,
+    longitude: null,
+    error: 'denied',
+    loading: false,
     requestLocation: mockRequestLocation,
   });
 
   render(<VibePage />);
-  await user.click(screen.getByRole("button", { name: /附近/ }));
+  await user.click(screen.getByRole('button', { name: /附近/ }));
 
   // Should revert to "全部" active
-  expect(screen.getByRole("button", { name: "全部" })).toHaveAttribute("data-active", "true");
+  expect(screen.getByRole('button', { name: '全部' })).toHaveAttribute(
+    'data-active',
+    'true'
+  );
 });
 
-it("shows empty state when no shops match a district filter", async () => {
+it('shows empty state when no shops match a district filter', async () => {
   mockUseVibeShops.mockReturnValue({
-    vibe: mockVibe, shops: [], totalCount: 0, isLoading: false, error: null,
+    vibe: mockVibe,
+    shops: [],
+    totalCount: 0,
+    isLoading: false,
+    error: null,
   });
 
   render(<VibePage />);
@@ -984,6 +1035,7 @@ git commit -m "feat(DEV-247): handle geo denied, empty district results, map loa
 ### Task 8: Update SPEC.md + SPEC_CHANGELOG.md
 
 **Files:**
+
 - Modify: `SPEC.md` — §2 System Modules, §9 Business Rules
 - Modify: `SPEC_CHANGELOG.md`
 - No test needed — documentation only
@@ -991,9 +1043,11 @@ git commit -m "feat(DEV-247): handle geo denied, empty district results, map loa
 **Step 1: Update SPEC.md**
 
 In §2 System Modules, under Explore section, add:
+
 > `/explore/vibes/[slug]` — Vibe category page with collapsible map panel (expanded by default), district filter chips, and "Near Me" toggle. Shows all matching shops by default (no geo-gating). Map uses existing Mapbox integration with bidirectional pin-list sync.
 
 In §9 Business Rules, under Responsive layouts, add:
+
 > Explore vibes `/explore/vibes/[slug]` (collapsible map panel at top, expanded by default; collapses to toggle button)
 
 **Step 2: Update SPEC_CHANGELOG.md**
@@ -1047,21 +1101,27 @@ graph TD
 ```
 
 **Wave 1** (parallel — no dependencies):
+
 - Task 1: Add lat/lng to VibeShopResult backend model
 - Task 2: Add district_id filter to backend endpoint
 
 **Wave 2** (depends on Wave 1):
+
 - Task 3: Update FE types + API client + remove geo-gating ← Tasks 1, 2
 
 **Wave 3** (parallel — depends on Wave 2):
+
 - Task 4: Create DistrictChips component ← Task 3 (needs VibeFilter type)
 - Task 5: Create CollapsibleMapPanel component ← Task 3 (needs updated types)
 
 **Wave 4** (depends on Wave 3):
+
 - Task 6: Compose into VibePage ← Tasks 4, 5
 
 **Wave 5** (depends on Wave 4):
+
 - Task 7: Edge cases ← Task 6
 
 **Wave 6** (depends on Wave 5):
+
 - Task 8: SPEC update ← Task 7 (all implementation complete)

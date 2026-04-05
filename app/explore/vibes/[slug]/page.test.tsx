@@ -28,7 +28,10 @@ vi.mock('@/lib/hooks/use-districts', () => ({
 }));
 vi.mock('@/components/map/map-view', () => ({
   MapView: ({ selectedShopId }: { selectedShopId: string | null }) => (
-    <div data-testid="mock-map-view" data-selected-shop-id={selectedShopId ?? ''} />
+    <div
+      data-testid="mock-map-view"
+      data-selected-shop-id={selectedShopId ?? ''}
+    />
   ),
 }));
 vi.mock('sonner', () => ({ toast: { error: vi.fn() } }));
@@ -180,7 +183,10 @@ describe('VibePage — /explore/vibes/[slug]', () => {
     mockVibeShopsLoaded();
     render(<VibePage />);
     expect(screen.getByTestId('map-container')).toBeInTheDocument();
-    expect(screen.getByTestId('map-container')).toHaveAttribute('data-collapsed', 'false');
+    expect(screen.getByTestId('map-container')).toHaveAttribute(
+      'data-collapsed',
+      'false'
+    );
   });
 
   it('When a user opens a vibe page, district filter chips are rendered with a 全部 option', () => {

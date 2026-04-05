@@ -67,7 +67,7 @@ describe('useVibeShops', () => {
     expect(mockUseSWR).toHaveBeenCalledWith(
       expect.stringContaining('/api/explore/vibes/first-date/shops'),
       expect.any(Function),
-      expect.anything(),
+      expect.anything()
     );
   });
 
@@ -78,20 +78,18 @@ describe('useVibeShops', () => {
     expect(mockUseSWR).toHaveBeenCalledWith(
       expect.stringContaining('district_id=daan-uuid'),
       expect.any(Function),
-      expect.anything(),
+      expect.anything()
     );
   });
 
   it('passes lat/lng to URL when provided via filter object', () => {
     mockUseSWR.mockReturnValue(swrReturning(undefined));
-    renderHook(() =>
-      useVibeShops('first-date', { lat: 25.033, lng: 121.565 }),
-    );
+    renderHook(() => useVibeShops('first-date', { lat: 25.033, lng: 121.565 }));
 
     expect(mockUseSWR).toHaveBeenCalledWith(
       expect.stringContaining('lat=25.033'),
       expect.any(Function),
-      expect.anything(),
+      expect.anything()
     );
   });
 });

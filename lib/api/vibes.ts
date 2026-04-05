@@ -12,7 +12,7 @@ export function buildVibeShopsUrl(
     lng?: number | null;
     radiusKm?: number;
     districtId?: string | null;
-  },
+  }
 ): string {
   const params = new URLSearchParams();
   if (options?.lat != null && options?.lng != null) {
@@ -30,7 +30,7 @@ export function buildVibeShopsUrl(
 export async function fetchVibeShops(
   slug: string,
   lat?: number | null,
-  lng?: number | null,
+  lng?: number | null
 ): Promise<VibeShopsResponse> {
   return fetchPublic<VibeShopsResponse>(buildVibeShopsUrl(slug, { lat, lng }));
 }

@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import type { ReactNode } from "react";
+import type { ReactNode } from 'react';
 
 export type VibeFilter =
-  | { type: "all" }
-  | { type: "nearby" }
-  | { type: "district"; districtId: string };
+  | { type: 'all' }
+  | { type: 'nearby' }
+  | { type: 'district'; districtId: string };
 
 interface DistrictChipsProps {
   districts: { id: string; nameZh: string }[];
@@ -22,7 +22,7 @@ export function DistrictChips({
 }: DistrictChipsProps) {
   const isActive = (type: string, districtId?: string) => {
     if (activeFilter.type !== type) return false;
-    if (type === "district" && "districtId" in activeFilter) {
+    if (type === 'district' && 'districtId' in activeFilter) {
       return activeFilter.districtId === districtId;
     }
     return true;
@@ -31,15 +31,15 @@ export function DistrictChips({
   return (
     <div className="scrollbar-hide flex gap-2 overflow-x-auto px-4 py-2">
       <ChipButton
-        active={isActive("all")}
-        onClick={() => onFilterChange({ type: "all" })}
+        active={isActive('all')}
+        onClick={() => onFilterChange({ type: 'all' })}
         disabled={isLoading}
       >
         全部
       </ChipButton>
       <ChipButton
-        active={isActive("nearby")}
-        onClick={() => onFilterChange({ type: "nearby" })}
+        active={isActive('nearby')}
+        onClick={() => onFilterChange({ type: 'nearby' })}
         disabled={isLoading}
       >
         ⊙ 附近
@@ -47,8 +47,8 @@ export function DistrictChips({
       {districts.map((d) => (
         <ChipButton
           key={d.id}
-          active={isActive("district", d.id)}
-          onClick={() => onFilterChange({ type: "district", districtId: d.id })}
+          active={isActive('district', d.id)}
+          onClick={() => onFilterChange({ type: 'district', districtId: d.id })}
           disabled={isLoading}
         >
           {d.nameZh}
@@ -75,11 +75,11 @@ function ChipButton({
       data-active={active}
       disabled={disabled}
       onClick={onClick}
-      className={`whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
+      className={`rounded-full px-3 py-1.5 text-sm font-medium whitespace-nowrap transition-colors ${
         active
-          ? "bg-[#2c1810] text-white shadow-sm"
-          : "bg-white text-gray-600 shadow-sm hover:bg-gray-50"
-      } ${disabled ? "opacity-50" : ""}`}
+          ? 'bg-[#2c1810] text-white shadow-sm'
+          : 'bg-white text-gray-600 shadow-sm hover:bg-gray-50'
+      } ${disabled ? 'opacity-50' : ''}`}
     >
       {children}
     </button>

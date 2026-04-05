@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { ChevronDown, ChevronUp, Map } from "lucide-react";
-import { MapView } from "@/components/map/map-view";
+import { useState } from 'react';
+import { ChevronDown, ChevronUp, Map } from 'lucide-react';
+import { MapView } from '@/components/map/map-view';
 
 interface Shop {
   id: string;
@@ -30,7 +30,7 @@ export function CollapsibleMapPanel({
         data-testid="map-container"
         data-collapsed={collapsed}
         className={`overflow-hidden rounded-xl transition-all duration-300 ${
-          collapsed ? "h-0" : "h-[250px]"
+          collapsed ? 'h-0' : 'h-[250px]'
         }`}
       >
         <MapView
