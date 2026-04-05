@@ -136,7 +136,7 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
           reviewCount={shop.reviewCount}
           openNow={shop.openNow}
           distance={shop.distance}
-          address={shop.address}
+          address={shop.address ?? undefined}
         />
         {shop.claimStatus === 'approved' && <VerifiedBadge />}
         <ShopActionsRow

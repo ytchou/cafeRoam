@@ -31,7 +31,6 @@ describe('getGoogleMapsUrl', () => {
 describe('getAppleMapsUrl', () => {
   it('uses address when available', () => {
     const url = getAppleMapsUrl({
-      name: 'Cafe Roam',
       latitude: 25.033,
       longitude: 121.565,
       address: '台北市大安區信義路三段',
@@ -42,7 +41,6 @@ describe('getAppleMapsUrl', () => {
 
   it('falls back to lat/lng when address is missing', () => {
     const url = getAppleMapsUrl({
-      name: 'Cafe Roam',
       latitude: 25.033,
       longitude: 121.565,
       address: null,
