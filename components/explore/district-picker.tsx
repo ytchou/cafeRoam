@@ -4,10 +4,10 @@ import type { District } from '@/types/districts';
 
 interface DistrictPickerProps {
   districts: District[];
-  selectedDistrictId: string | null;
+  selectedDistrictIds: string[];
   gpsAvailable: boolean;
   isNearMeActive: boolean;
-  onSelectDistrict: (districtId: string) => void;
+  onToggleDistrict: (districtId: string) => void;
   onSelectNearMe: () => void;
 }
 
@@ -18,10 +18,10 @@ const disabledPill =
 
 export function DistrictPicker({
   districts,
-  selectedDistrictId,
+  selectedDistrictIds,
   gpsAvailable,
   isNearMeActive,
-  onSelectDistrict,
+  onToggleDistrict,
   onSelectNearMe,
 }: DistrictPickerProps) {
   return (
@@ -48,9 +48,9 @@ export function DistrictPicker({
         <button
           key={district.id}
           type="button"
-          onClick={() => onSelectDistrict(district.id)}
+          onClick={() => onToggleDistrict(district.id)}
           className={`shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-medium transition-colors ${
-            selectedDistrictId === district.id && !isNearMeActive
+            selectedDistrictIds.includes(district.id) && !isNearMeActive
               ? activePill
               : inactivePill
           }`}
