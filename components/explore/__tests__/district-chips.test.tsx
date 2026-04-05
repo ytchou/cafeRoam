@@ -73,4 +73,91 @@ describe('DistrictChips', () => {
 
     expect(onFilterChange).toHaveBeenCalledWith({ type: 'nearby' });
   });
+
+  it('highlights active district chips when multiple districts are selected', () => {
+    render(
+      <DistrictChips
+        districts={mockDistricts}
+        activeFilter={{ type: 'districts', districtIds: ['d1', 'd2'] }}
+        onFilterChange={vi.fn()}
+      />
+    );
+
+    expect(screen.getByRole('button', { name: '大安' })).toHaveAttribute('data-active', 'true');
+    expect(screen.getByRole('button', { name: '信義' })).toHaveAttribute('data-active', 'true');
+  });
+
+  it('adds to existing district selection when a second district chip is tapped', async () => {
+    const user = userEvent.setup();
+    const onFilterChange = vi.fn();
+
+    render(
+      <DistrictChips
+        districts={mockDistricts}
+        activeFilter={{ type: 'districts', districtIds: ['d1'] }}
+        onFilterChange={onFilterChange}
+      />
+    );
+
+    await user.click(screen.getByRole('button', { name: '信義' }));
+
+    expect(onFilterChange).toHaveBeenCalledWith({
+      type: 'districts',
+      districtIds: ['d1', 'd2'],
+    });
+  });
+
+  it('removes a district from selection when an active chip is tapped again', async () => {
+    const user = userEvent.setup();
+    const onFilterChange = vi.fn();
+
+    render(
+      <DistrictChips
+        districts={mockDistricts}
+        activeFilter={{ type: 'districts', districtIds: ['d1', 'd2'] }}
+        onFilterChange={onFilterChange}
+      />
+    );
+
+    await user.click(screen.getByRole('button', { name: '大安' }));
+
+    expect(onFilterChange).toHaveBeenCalledWith({
+      type: 'districts',
+      districtIds: ['d2'],
+    });
+  });
+
+  it("reverts to 'all' filter when the last active district chip is deselected", async () => {
+    const user = userEvent.setup();
+    const onFilterChange = vi.fn();
+
+    render(
+      <DistrictChips
+        districts={mockDistricts}
+        activeFilter={{ type: 'districts', districtIds: ['d1'] }}
+        onFilterChange={onFilterChange}
+      />
+    );
+
+    await user.click(screen.getByRole('button', { name: '大安' }));
+
+    expect(onFilterChange).toHaveBeenCalledWith({ type: 'all' });
+  });
+
+  it("calls onFilterChange with 'all' when 全部 chip is tapped while districts are active", async () => {
+    const user = userEvent.setup();
+    const onFilterChange = vi.fn();
+
+    render(
+      <DistrictChips
+        districts={mockDistricts}
+        activeFilter={{ type: 'districts', districtIds: ['d1'] }}
+        onFilterChange={onFilterChange}
+      />
+    );
+
+    await user.click(screen.getByRole('button', { name: '全部' }));
+
+    expect(onFilterChange).toHaveBeenCalledWith({ type: 'all' });
+  });
 });
