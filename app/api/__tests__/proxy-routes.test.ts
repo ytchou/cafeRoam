@@ -629,7 +629,6 @@ describe('shops/[shopId]/followers/count route', () => {
   });
 });
 
-
 describe('admin/shops/bulk-approve route', () => {
   it('admin submits bulk-approve and request is forwarded to backend', async () => {
     await bulkApprovePOST(makeRequest());

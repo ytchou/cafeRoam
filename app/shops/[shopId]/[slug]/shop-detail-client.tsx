@@ -129,7 +129,14 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
             address: shop.address ?? null,
           })
         : null,
-    [hasMap, shop.name, shop.latitude, shop.longitude, shop.googlePlaceId, shop.address]
+    [
+      hasMap,
+      shop.name,
+      shop.latitude,
+      shop.longitude,
+      shop.googlePlaceId,
+      shop.address,
+    ]
   );
 
   const appleMapsUrl = useMemo(
@@ -197,9 +204,7 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
 
         {/* Inline directions — desktop only */}
         {hasMap && (
-          <div className="hidden lg:flex gap-2">
-            {navigationLinks}
-          </div>
+          <div className="hidden gap-2 lg:flex">{navigationLinks}</div>
         )}
 
         <div className="border-border-warm mx-5 border-t" />

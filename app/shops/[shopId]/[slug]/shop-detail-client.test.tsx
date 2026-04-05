@@ -100,7 +100,9 @@ describe('ShopDetailClient — community summary', () => {
 
 describe('navigation links', () => {
   it('renders Google Maps link with place_id when available', () => {
-    render(<ShopDetailClient shop={{ ...mockShop, googlePlaceId: 'ChIJtest' }} />);
+    render(
+      <ShopDetailClient shop={{ ...mockShop, googlePlaceId: 'ChIJtest' }} />
+    );
     const links = screen.getAllByRole('link', { name: /google maps/i });
     expect(links.length).toBeGreaterThanOrEqual(1);
     expect(links[0]).toHaveAttribute(
@@ -108,21 +110,30 @@ describe('navigation links', () => {
       expect.stringContaining('destination_place_id=ChIJtest')
     );
     expect(links[0]).toHaveAttribute('target', '_blank');
-    expect(links[0]).toHaveAttribute('rel', expect.stringContaining('noopener'));
+    expect(links[0]).toHaveAttribute(
+      'rel',
+      expect.stringContaining('noopener')
+    );
   });
 
   it('renders Google Maps link with lat/lng fallback when no place_id', () => {
     render(<ShopDetailClient shop={{ ...mockShop, googlePlaceId: null }} />);
     const links = screen.getAllByRole('link', { name: /google maps/i });
     expect(links.length).toBeGreaterThanOrEqual(1);
-    expect(links[0]).toHaveAttribute('href', expect.stringContaining('destination='));
+    expect(links[0]).toHaveAttribute(
+      'href',
+      expect.stringContaining('destination=')
+    );
   });
 
   it('renders Apple Maps link', () => {
     render(<ShopDetailClient shop={mockShop} />);
     const links = screen.getAllByRole('link', { name: /apple maps/i });
     expect(links.length).toBeGreaterThanOrEqual(1);
-    expect(links[0]).toHaveAttribute('href', expect.stringContaining('maps.apple.com'));
+    expect(links[0]).toHaveAttribute(
+      'href',
+      expect.stringContaining('maps.apple.com')
+    );
     expect(links[0]).toHaveAttribute('target', '_blank');
   });
 });

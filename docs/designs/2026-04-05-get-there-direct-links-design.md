@@ -11,6 +11,7 @@ Replace the multi-step "Get There" directions flow (button → geolocation → M
 ## Architecture
 
 ### Current Flow (to be removed)
+
 1. User taps "Get There" button
 2. Browser requests geolocation permission
 3. DirectionsSheet drawer opens
@@ -19,32 +20,39 @@ Replace the multi-step "Get There" directions flow (button → geolocation → M
 6. User taps Google Maps or Apple Maps link at bottom
 
 ### New Flow
+
 1. User taps "Google Maps" or "Apple Maps" link
 2. External app/tab opens immediately
 
 ### URL Strategy
 
 **Google Maps:**
+
 - With `google_place_id`: `https://www.google.com/maps/dir/?api=1&destination={name}&destination_place_id={place_id}`
 - Fallback: `https://www.google.com/maps/dir/?api=1&destination={lat},{lng}`
 
 **Apple Maps:**
+
 - With address: `https://maps.apple.com/?daddr={encoded_address}`
 - Fallback: `https://maps.apple.com/?daddr={lat},{lng}`
 
 ### Layout
+
 Two side-by-side pill-style `<a>` links replacing the single "Get There" button. Same `border-border-warm` styling. Visible on both mobile (`lg:hidden` row) and desktop (`hidden lg:flex` row).
 
 ## Components
 
 ### Backend (1 line change)
+
 Add `google_place_id` to `_SHOP_DETAIL_COLUMNS` in `backend/api/shops.py`. Already in DB and Pydantic model — just not returned by the API.
 
 ### Frontend
+
 - New `lib/utils/maps.ts` — URL builder helpers (`getGoogleMapsUrl`, `getAppleMapsUrl`)
 - Modified `shop-detail-client.tsx` — replace button with two `<a>` links, remove all directions state/imports
 
 ### Full Cleanup (deleted)
+
 - `components/shops/directions-sheet.tsx` + test
 - `components/shops/directions-inline.tsx`
 - `app/api/maps/directions/route.ts`
@@ -53,6 +61,7 @@ Add `google_place_id` to `_SHOP_DETAIL_COLUMNS` in `backend/api/shops.py`. Alrea
 - `DirectionsResult` model
 
 ## Error Handling
+
 - No `google_place_id` → lat/lng fallback (always works)
 - No address → lat/lng fallback for Apple Maps
 - No lat/lng → hide links entirely (defensive, shouldn't happen)

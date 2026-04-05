@@ -15,6 +15,7 @@
 **Tech Stack:** Next.js (frontend), FastAPI (backend), vitest + RTL (frontend tests), pytest (backend tests)
 
 **Acceptance Criteria:**
+
 - [ ] Shop detail page shows two side-by-side navigation links: "Google Maps" and "Apple Maps"
 - [ ] Google Maps link uses `destination_place_id` when `googlePlaceId` is available, falls back to lat/lng
 - [ ] Apple Maps link uses address when available, falls back to lat/lng
@@ -26,6 +27,7 @@
 ### Task 1: Backend — add google_place_id to shop detail API response
 
 **Files:**
+
 - Modify: `backend/api/shops.py:56` — add `google_place_id` to `_SHOP_DETAIL_COLUMNS`
 - Test: `backend/tests/api/test_shops.py` — add test verifying `googlePlaceId` in response
 
@@ -50,10 +52,13 @@ Expected: FAIL — `googlePlaceId` not in response
 **Step 3: Write minimal implementation**
 
 In `backend/api/shops.py` line 56, change:
+
 ```python
 _SHOP_DETAIL_COLUMNS = f"{_SHOP_LIST_COLUMNS}, phone, website, price_range, updated_at"
 ```
+
 to:
+
 ```python
 _SHOP_DETAIL_COLUMNS = f"{_SHOP_LIST_COLUMNS}, phone, website, price_range, google_place_id, updated_at"
 ```
@@ -75,6 +80,7 @@ git commit -m "feat(DEV-238): expose google_place_id in shop detail API response
 ### Task 2: Frontend — create maps URL helper utility + tests
 
 **Files:**
+
 - Create: `lib/utils/maps.ts`
 - Test: `lib/utils/maps.test.ts`
 
@@ -188,12 +194,14 @@ git commit -m "feat(DEV-238): add Google Maps and Apple Maps URL helper utilitie
 ### Task 3: Frontend — replace "Get There" button with navigation links + update tests
 
 **Files:**
+
 - Modify: `app/shops/[shopId]/[slug]/shop-detail-client.tsx` — replace button, remove directions imports/state
 - Modify: `app/shops/[shopId]/[slug]/shop-detail-client.test.tsx` — rewrite directions tests
 
 **Step 1: Update tests for new behavior**
 
 Rewrite the "Get There" test block in `shop-detail-client.test.tsx`:
+
 - Remove `vi.mock` for `DirectionsSheet`, `DirectionsInline`, `useGeolocation`
 - Remove `directionsSheet` mock references
 - Add new tests:
@@ -285,6 +293,7 @@ git commit -m "feat(DEV-238): replace Get There button with direct Google Maps +
 ### Task 4: Delete frontend directions infrastructure
 
 **Files:**
+
 - Delete: `components/shops/directions-sheet.tsx`
 - Delete: `components/shops/directions-sheet.test.tsx`
 - Delete: `components/shops/directions-inline.tsx`
@@ -318,6 +327,7 @@ git commit -m "refactor(DEV-238): delete DirectionsSheet, DirectionsInline, and 
 ### Task 5: Clean up backend directions infrastructure
 
 **Files:**
+
 - Delete: `backend/api/maps.py`
 - Delete: `backend/tests/api/test_maps.py`
 - Delete: `backend/tests/models/test_directions_result.py`
@@ -371,6 +381,7 @@ git commit -m "refactor(DEV-238): remove backend directions endpoint, provider m
 ### Task 6: Update E2E, coverage rules, and docs
 
 **Files:**
+
 - Modify: `e2e/discovery.spec.ts:476-527` — rewrite J36 for navigation links
 - Modify: `scripts/ci/coverage-rules.json:21,78` — remove directions entries
 - Modify: `docs/e2e-journeys.md:74` — update J36 description
@@ -380,6 +391,7 @@ No test needed — E2E and docs updates only.
 **Step 1: Update E2E test J36**
 
 Rewrite J36 in `e2e/discovery.spec.ts` (lines 476-527) to:
+
 - Navigate to a shop detail page
 - Verify a link with `href` containing `google.com/maps` exists
 - Verify a link with `href` containing `maps.apple.com` exists
@@ -388,16 +400,20 @@ Rewrite J36 in `e2e/discovery.spec.ts` (lines 476-527) to:
 **Step 2: Update coverage rules**
 
 In `scripts/ci/coverage-rules.json`:
+
 - Remove `app/api/maps/directions/route.ts` from `frontend.critical_paths` (line 21)
 - Remove `api/maps.py` from `backend.critical_paths` (line 78)
 
 **Step 3: Update docs/e2e-journeys.md**
 
 Change J36 row from:
+
 ```
 | J36 | Shop detail: Get Directions -> DirectionsSheet | High | discovery.spec.ts | Implemented |
 ```
+
 to:
+
 ```
 | J36 | Shop detail: Google Maps + Apple Maps navigation links | High | discovery.spec.ts | Implemented |
 ```
@@ -416,6 +432,7 @@ git commit -m "test(DEV-238): update E2E J36 for direct navigation links, remove
 No test needed — Linear ticket creation only.
 
 **Step 1:** Create a new Linear ticket:
+
 - Title: "Backfill google_place_id for existing shops via enrichment worker"
 - Description: Reference DEV-238, note that the shop detail page now uses google_place_id for Google Maps deep-links but many shops may have null values. The enrichment worker should query the Google Places API to populate missing google_place_ids.
 - Labels: M, Improvement
@@ -457,18 +474,23 @@ graph TD
 ```
 
 **Wave 1** (parallel — no dependencies):
+
 - Task 1: Backend — add google_place_id to API response
 - Task 2: Frontend — create maps URL helper utility
 
 **Wave 2** (depends on Wave 1):
+
 - Task 3: Frontend — replace button with navigation links
 
 **Wave 3** (parallel — depends on Wave 2):
+
 - Task 4: Delete frontend directions infrastructure
 - Task 5: Clean up backend directions infrastructure
 
 **Wave 4** (depends on Wave 3):
+
 - Task 6: Update E2E, coverage rules, docs
 
 **Wave 5** (depends on Wave 4):
+
 - Task 7: Create follow-up enrichment ticket
