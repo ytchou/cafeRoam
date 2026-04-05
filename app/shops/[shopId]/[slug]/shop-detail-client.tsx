@@ -229,6 +229,11 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
 
         {hasMap && (
           <div>
+            <div className="px-5 py-4">
+              <h2 className="text-text-primary mb-2 text-sm font-semibold">
+                Location
+              </h2>
+            </div>
             <ShopMapThumbnail
               latitude={shop.latitude!}
               longitude={shop.longitude!}
