@@ -1,9 +1,12 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, it, expect, vi } from 'vitest';
 import useSWR from 'swr';
 import ExplorePage from './page';
 import { makeCommunityNote } from '@/lib/test-utils/factories';
 import { useIsDesktop } from '@/lib/hooks/use-media-query';
+import { useGeolocation } from '@/lib/hooks/use-geolocation';
+import { useDistricts } from '@/lib/hooks/use-districts';
 
 vi.mock('@/lib/tarot/share-card', () => ({ shareCard: vi.fn() }));
 vi.mock('swr', () => ({ default: vi.fn() }));
@@ -13,12 +16,30 @@ vi.mock('@/lib/posthog/use-analytics', () => ({
 vi.mock('@/lib/hooks/use-media-query', () => ({
   useIsDesktop: vi.fn(() => false),
 }));
+vi.mock('@/lib/hooks/use-geolocation', () => ({
+  useGeolocation: vi.fn(),
+}));
+vi.mock('@/lib/hooks/use-districts', () => ({
+  useDistricts: vi.fn(),
+}));
 
 beforeEach(() => {
   vi.stubGlobal(
     'IntersectionObserver',
     vi.fn(() => ({ observe: vi.fn(), disconnect: vi.fn() }))
   );
+  mockUseGeolocation.mockReturnValue({
+    latitude: null,
+    longitude: null,
+    error: null,
+    loading: false,
+    requestLocation: vi.fn(),
+  });
+  mockUseDistricts.mockReturnValue({
+    districts: [],
+    isLoading: false,
+    error: null,
+  });
 });
 
 const MOCK_COMMUNITY = [
@@ -46,6 +67,9 @@ const MOCK_VIBES = [
     sortOrder: 2,
   },
 ];
+
+const mockUseGeolocation = vi.mocked(useGeolocation);
+const mockUseDistricts = vi.mocked(useDistricts);
 
 function setupSwrMock() {
   vi.mocked(useSWR).mockImplementation((key) => {
@@ -136,5 +160,193 @@ describe('Community Notes section', () => {
     );
     expect(link).toBeInTheDocument();
     expect(link).toHaveTextContent(/See all/);
+  });
+});
+
+describe('ExplorePage — district-mode empty state', () => {
+  const DAAN_DISTRICT = {
+    id: 'd1',
+    slug: 'daan',
+    nameZh: '大安',
+    nameEn: 'Da-an',
+    city: 'Taipei',
+    shopCount: 25,
+    sortOrder: 1,
+    descriptionEn: null,
+    descriptionZh: null,
+  };
+
+  function setupSwrWithEmptyTarot() {
+    vi.mocked(useSWR).mockImplementation((key) => {
+      if (typeof key === 'string' && key.includes('/api/explore/tarot-draw')) {
+        return { data: [], error: null, isLoading: false } as ReturnType<
+          typeof useSWR
+        >;
+      }
+      if (key === '/api/explore/vibes') {
+        return {
+          data: MOCK_VIBES,
+          error: null,
+          isLoading: false,
+        } as ReturnType<typeof useSWR>;
+      }
+      if (key === '/api/explore/community/preview') {
+        return {
+          data: MOCK_COMMUNITY,
+          error: null,
+          isLoading: false,
+        } as ReturnType<typeof useSWR>;
+      }
+      return { data: undefined, error: null, isLoading: false } as ReturnType<
+        typeof useSWR
+      >;
+    });
+  }
+
+  it('shows "Try a different district" CTA and hides "Expand radius" when GPS is denied and district draw returns empty', () => {
+    mockUseGeolocation.mockReturnValue({
+      latitude: null,
+      longitude: null,
+      error: 'User denied Geolocation',
+      loading: false,
+      requestLocation: vi.fn(),
+    });
+    mockUseDistricts.mockReturnValue({
+      districts: [DAAN_DISTRICT],
+      isLoading: false,
+      error: null,
+    });
+    setupSwrWithEmptyTarot();
+    render(<ExplorePage />);
+    expect(
+      screen.getByRole('button', { name: /try a different district/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /expand radius/i })
+    ).not.toBeInTheDocument();
+  });
+
+  it('tapping "Try a different district" invokes the handler without throwing', async () => {
+    mockUseGeolocation.mockReturnValue({
+      latitude: null,
+      longitude: null,
+      error: 'User denied Geolocation',
+      loading: false,
+      requestLocation: vi.fn(),
+    });
+    mockUseDistricts.mockReturnValue({
+      districts: [DAAN_DISTRICT],
+      isLoading: false,
+      error: null,
+    });
+    setupSwrWithEmptyTarot();
+    render(<ExplorePage />);
+    const button = screen.getByRole('button', {
+      name: /try a different district/i,
+    });
+    await userEvent.click(button);
+    // Handler fired without errors — GPS-denied users always have a fallback district,
+    // so the empty state remains visible after reset (expected behavior)
+    expect(screen.getByText(/No cafes open nearby/i)).toBeInTheDocument();
+  });
+});
+
+describe('ExplorePage with district picker', () => {
+  it('shows district picker above daily draw section', () => {
+    setupSwrMock();
+    mockUseGeolocation.mockReturnValue({
+      latitude: 25.033,
+      longitude: 121.565,
+      error: null,
+      loading: false,
+      requestLocation: vi.fn(),
+    });
+    mockUseDistricts.mockReturnValue({
+      districts: [
+        {
+          id: 'd1',
+          slug: 'daan',
+          nameZh: '大安',
+          nameEn: 'Da-an',
+          city: 'Taipei',
+          shopCount: 25,
+          sortOrder: 1,
+          descriptionEn: null,
+          descriptionZh: null,
+        },
+      ],
+      isLoading: false,
+      error: null,
+    });
+    render(<ExplorePage />);
+    expect(
+      screen.getByRole('group', { name: /location filter/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /near me/i })
+    ).toBeInTheDocument();
+  });
+
+  it('defaults to first district when GPS is denied', () => {
+    setupSwrMock();
+    mockUseGeolocation.mockReturnValue({
+      latitude: null,
+      longitude: null,
+      error: 'User denied Geolocation',
+      loading: false,
+      requestLocation: vi.fn(),
+    });
+    mockUseDistricts.mockReturnValue({
+      districts: [
+        {
+          id: 'd1',
+          slug: 'daan',
+          nameZh: '大安',
+          nameEn: 'Da-an',
+          city: 'Taipei',
+          shopCount: 25,
+          sortOrder: 1,
+          descriptionEn: null,
+          descriptionZh: null,
+        },
+      ],
+      isLoading: false,
+      error: null,
+    });
+    render(<ExplorePage />);
+    expect(screen.getByRole('button', { name: /near me/i })).toBeDisabled();
+    expect(screen.queryByText(/enable location/i)).not.toBeInTheDocument();
+  });
+
+  it('switches from Near Me to district when district pill is clicked', async () => {
+    setupSwrMock();
+    mockUseGeolocation.mockReturnValue({
+      latitude: 25.033,
+      longitude: 121.565,
+      error: null,
+      loading: false,
+      requestLocation: vi.fn(),
+    });
+    mockUseDistricts.mockReturnValue({
+      districts: [
+        {
+          id: 'd1',
+          slug: 'daan',
+          nameZh: '大安',
+          nameEn: 'Da-an',
+          city: 'Taipei',
+          shopCount: 25,
+          sortOrder: 1,
+          descriptionEn: null,
+          descriptionZh: null,
+        },
+      ],
+      isLoading: false,
+      error: null,
+    });
+    render(<ExplorePage />);
+    await userEvent.click(screen.getByRole('button', { name: /大安/i }));
+    const nearMeBtn = screen.getByRole('button', { name: /near me/i });
+    expect(nearMeBtn).not.toHaveClass('bg-amber-700');
   });
 });

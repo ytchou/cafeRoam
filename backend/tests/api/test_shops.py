@@ -21,6 +21,7 @@ SHOP_ROW = {
     "mode_social": 0.3,
     "processing_status": "live",
     "community_summary": None,
+    "google_place_id": "ChIJx7x7x7x7",
 }
 
 
@@ -386,6 +387,18 @@ class TestShopsAPI:
             }
         ]
         assert shop["isOpen"] is True
+
+    def test_get_shop_returns_google_place_id(self):
+        """Shop detail response includes googlePlaceId field."""
+        shop_chain = _simple_select_chain([{**SHOP_ROW, "shop_photos": [], "shop_tags": []}])
+
+        with patch("api.shops.get_anon_client") as mock_sb:
+            mock_sb.return_value = MagicMock(table=MagicMock(return_value=shop_chain))
+            response = client.get("/shops/shop-001")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert "googlePlaceId" in data
 
 
 @pytest.fixture

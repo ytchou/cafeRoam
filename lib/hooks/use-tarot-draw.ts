@@ -9,16 +9,26 @@ import {
 } from '@/lib/tarot/recently-seen';
 import type { TarotCardData } from '@/types/tarot';
 
-export function useTarotDraw(lat: number | null, lng: number | null) {
+export function useTarotDraw(
+  lat: number | null,
+  lng: number | null,
+  districtId?: string | null
+) {
   const [radiusKm, setRadiusKm] = useState(3);
   const [excludedIds, setExcludedIds] = useState<string[]>(() =>
     getRecentlySeenIds()
   );
 
-  const key =
-    lat != null && lng != null
-      ? `/api/explore/tarot-draw?lat=${lat}&lng=${lng}&radius_km=${radiusKm}&excluded_ids=${excludedIds.join(',')}`
-      : null;
+  const key = (() => {
+    const excludedParam = excludedIds.join(',');
+    if (lat != null && lng != null) {
+      return `/api/explore/tarot-draw?lat=${lat}&lng=${lng}&radius_km=${radiusKm}&excluded_ids=${excludedParam}`;
+    }
+    if (districtId) {
+      return `/api/explore/tarot-draw?district_id=${districtId}&radius_km=${radiusKm}&excluded_ids=${excludedParam}`;
+    }
+    return null;
+  })();
 
   const { data, error, isLoading } = useSWR<TarotCardData[]>(key, fetchPublic, {
     revalidateOnFocus: false,

@@ -23,12 +23,11 @@ describe('useShopReviews', () => {
 
   it('returns empty defaults while loading', () => {
     mockUseSWR.mockReturnValue(swrReturning(undefined, { isLoading: true }));
-    const { result } = renderHook(() => useShopReviews(SHOP_ID, true));
+    const { result } = renderHook(() => useShopReviews(SHOP_ID));
     expect(result.current.reviews).toEqual([]);
     expect(result.current.totalCount).toBe(0);
     expect(result.current.averageRating).toBe(0);
     expect(result.current.isLoading).toBe(true);
-    expect(result.current.isAuthError).toBe(false);
   });
 
   it('returns reviews and stats from a successful fetch', () => {
@@ -46,39 +45,24 @@ describe('useShopReviews', () => {
       averageRating: 4.0,
     };
     mockUseSWR.mockReturnValue(swrReturning(mockData));
-    const { result } = renderHook(() => useShopReviews(SHOP_ID, true));
+    const { result } = renderHook(() => useShopReviews(SHOP_ID));
     expect(result.current.reviews).toEqual(mockData.reviews);
     expect(result.current.totalCount).toBe(1);
     expect(result.current.averageRating).toBe(4.0);
-    expect(result.current.isAuthError).toBe(false);
   });
 
-  it('sets isAuthError when error contains "401"', () => {
-    const authError = new Error('Request failed with status 401');
-    mockUseSWR.mockReturnValue(swrReturning(undefined, { error: authError }));
-    const { result } = renderHook(() => useShopReviews(SHOP_ID, true));
-    expect(result.current.isAuthError).toBe(true);
-    expect(result.current.reviews).toEqual([]);
-  });
-
-  it('sets isAuthError when error contains "Not authenticated"', () => {
-    const authError = new Error('Not authenticated');
-    mockUseSWR.mockReturnValue(swrReturning(undefined, { error: authError }));
-    const { result } = renderHook(() => useShopReviews(SHOP_ID, true));
-    expect(result.current.isAuthError).toBe(true);
-  });
-
-  it('passes null key to SWR when disabled, preventing any fetch', () => {
+  it('always passes the shop reviews URL as key to SWR', () => {
     mockUseSWR.mockReturnValue(swrReturning(undefined));
-    renderHook(() => useShopReviews(SHOP_ID, false));
-    const [key] = mockUseSWR.mock.calls[0];
-    expect(key).toBeNull();
-  });
-
-  it('passes the shop URL as key when enabled', () => {
-    mockUseSWR.mockReturnValue(swrReturning(undefined));
-    renderHook(() => useShopReviews(SHOP_ID, true));
+    renderHook(() => useShopReviews(SHOP_ID));
     const [key] = mockUseSWR.mock.calls[0];
     expect(key).toBe(`/api/shops/${SHOP_ID}/reviews`);
+  });
+
+  it('returns empty reviews when fetch returns no data', () => {
+    mockUseSWR.mockReturnValue(swrReturning(undefined));
+    const { result } = renderHook(() => useShopReviews(SHOP_ID));
+    expect(result.current.reviews).toEqual([]);
+    expect(result.current.totalCount).toBe(0);
+    expect(result.current.averageRating).toBe(0);
   });
 });

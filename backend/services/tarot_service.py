@@ -19,17 +19,22 @@ class TarotService:
 
     async def draw(
         self,
-        lat: float,
-        lng: float,
+        lat: float | None,
+        lng: float | None,
         radius_km: float,
         excluded_ids: list[str],
         now: datetime | None = None,
+        district_id: str | None = None,
     ) -> list[TarotCard]:
         """Draw up to 3 tarot cards from nearby open shops with unique titles."""
         if now is None:
             now = datetime.now(TW)
 
-        rows = await self._query_nearby_shops(lat, lng, radius_km)
+        if district_id:
+            rows = await self._query_district_shops(district_id)
+        else:
+            assert lat is not None and lng is not None
+            rows = await self._query_nearby_shops(lat, lng, radius_km)
 
         excluded_set = set(excluded_ids)
         candidates: list[dict[str, Any]] = []
@@ -80,22 +85,47 @@ class TarotService:
 
         return await asyncio.to_thread(_query)
 
+    async def _query_district_shops(self, district_id: str) -> list[dict[str, Any]]:
+        """Query shops within a district using FK filter."""
+
+        def _query() -> list[dict[str, Any]]:
+            response = (
+                self._db.table("shops")
+                .select(
+                    "id, name, slug, address, city, latitude, longitude, "
+                    "rating, review_count, opening_hours, tarot_title, flavor_text, "
+                    "processing_status, shop_photos(url)"
+                )
+                .eq("processing_status", "live")
+                .not_.is_("tarot_title", "null")
+                .eq("district_id", district_id)
+                .limit(200)
+                .execute()
+            )
+            return cast("list[dict[str, Any]]", response.data or [])
+
+        return await asyncio.to_thread(_query)
+
     def _to_card(
-        self, row: dict[str, Any], user_lat: float, user_lng: float, now: datetime
+        self, row: dict[str, Any], user_lat: float | None, user_lng: float | None, now: datetime
     ) -> TarotCard:
         photos = row.get("shop_photos") or []
         first_photo = next(iter(photos), None)
         cover = first_photo["url"] if first_photo else None
+
+        distance = 0.0
+        if user_lat is not None and user_lng is not None:
+            distance = round(
+                haversine(user_lat, user_lng, row["latitude"], row["longitude"]),
+                1,
+            )
 
         return TarotCard(
             shop_id=row["id"],
             tarot_title=row["tarot_title"],
             flavor_text=row.get("flavor_text") or "",
             is_open_now=is_open_now(row.get("opening_hours"), now) is True,
-            distance_km=round(
-                haversine(user_lat, user_lng, row["latitude"], row["longitude"]),
-                1,
-            ),
+            distance_km=distance,
             name=row["name"],
             neighborhood=row.get("city") or "",
             cover_photo_url=cover,

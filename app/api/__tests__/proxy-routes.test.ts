@@ -68,7 +68,6 @@ import {
   GET as communityLikeGET,
   POST as communityLikePOST,
 } from '../explore/community/[checkinId]/like/route';
-import { GET as mapsDirectionsGET } from '../maps/directions/route';
 import {
   GET as submissionsGET,
   POST as submissionsPOST,
@@ -626,16 +625,6 @@ describe('shops/[shopId]/followers/count route', () => {
     expect(mockProxy).toHaveBeenCalledWith(
       expect.any(NextRequest),
       '/shops/shop-1/followers/count'
-    );
-  });
-});
-
-describe('maps/directions route', () => {
-  it('GET proxies to /maps/directions', async () => {
-    await mapsDirectionsGET(makeRequest());
-    expect(mockProxy).toHaveBeenCalledWith(
-      expect.any(NextRequest),
-      '/maps/directions'
     );
   });
 });

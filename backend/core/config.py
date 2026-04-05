@@ -72,7 +72,6 @@ class Settings(BaseSettings):
     # Anti-crawling / rate limiting
     rate_limit_default: str = "60/minute"
     rate_limit_search: str = "10/minute"
-    rate_limit_maps_directions: str = "30/minute"
     rate_limit_shops_list: str = "30/minute"
     bot_detection_enabled: bool = True
     bot_ua_blocklist: list[str] = [

@@ -103,6 +103,45 @@ class TestTarotDrawEndpoint:
             call_kwargs = instance.draw.call_args.kwargs
             assert call_kwargs["excluded_ids"] == []
 
+    def test_tarot_draw_with_district_id(self):
+        """Given a district_id, when calling tarot-draw without lat/lng, then returns cards."""
+        with (
+            patch("api.explore.get_anon_client", return_value=MagicMock()),
+            patch("api.explore.TarotService") as mock_service,
+        ):
+            instance = mock_service.return_value
+            instance.draw = AsyncMock(return_value=MOCK_CARDS)
+            response = client.get("/explore/tarot-draw?district_id=district-123")
+        assert response.status_code == 200
+        call_kwargs = instance.draw.call_args.kwargs
+        assert call_kwargs["lat"] is None
+        assert call_kwargs["lng"] is None
+        assert call_kwargs["radius_km"] == 3.0
+        assert call_kwargs["excluded_ids"] == []
+        assert call_kwargs["district_id"] == "district-123"
+
+    def test_tarot_draw_rejects_no_location_params(self):
+        """When neither lat/lng nor district_id provided, then returns 422."""
+        response = client.get("/explore/tarot-draw")
+        assert response.status_code == 422
+
+    def test_tarot_draw_lat_lng_still_works(self):
+        """Given lat/lng without district_id, existing behavior is preserved."""
+        with (
+            patch("api.explore.get_anon_client", return_value=MagicMock()),
+            patch("api.explore.TarotService") as mock_service,
+        ):
+            instance = mock_service.return_value
+            instance.draw = AsyncMock(return_value=MOCK_CARDS)
+            response = client.get("/explore/tarot-draw?lat=25.033&lng=121.565")
+        assert response.status_code == 200
+        call_kwargs = instance.draw.call_args.kwargs
+        assert call_kwargs["lat"] == pytest.approx(25.033)
+        assert call_kwargs["lng"] == pytest.approx(121.565)
+        assert call_kwargs["radius_km"] == 3.0
+        assert call_kwargs["excluded_ids"] == []
+        assert call_kwargs["district_id"] is None
+
 
 # ── Vibe Collections ──────────────────────────────────────────────────────────
 

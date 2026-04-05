@@ -432,12 +432,6 @@ class GeocodingResult(BaseModel):
     formatted_address: str
 
 
-class DirectionsResult(CamelModel):
-    duration_min: int
-    distance_m: int
-    profile: Literal["walking", "driving-traffic"]
-
-
 class EmailMessage(BaseModel):
     to: str
     subject: str
