@@ -19,14 +19,15 @@ async def tarot_draw(
     lng: float | None = Query(default=None, ge=-180.0, le=180.0),
     radius_km: float = Query(default=3.0, ge=0.5, le=20.0),
     excluded_ids: str = Query(default=""),
-    district_id: str | None = Query(default=None),
+    district_ids: str = Query(default=""),
 ) -> list[dict[str, Any]]:
     """Draw 3 tarot cards from nearby open shops or by district. Public — no auth required."""
     has_coords = lat is not None and lng is not None
-    if not has_coords and not district_id:
+    parsed_district_ids = [s.strip() for s in district_ids.split(",") if s.strip()]
+    if not has_coords and not parsed_district_ids:
         raise HTTPException(
             status_code=422,
-            detail="Either lat+lng or district_id must be provided",
+            detail="Either lat+lng or district_ids must be provided",
         )
     parsed_excluded = [s.strip() for s in excluded_ids.split(",") if s.strip()]
     db = get_anon_client()
@@ -36,7 +37,7 @@ async def tarot_draw(
         lng=lng,
         radius_km=radius_km,
         excluded_ids=parsed_excluded,
-        district_id=district_id,
+        district_ids=parsed_district_ids or None,
     )
     return [c.model_dump(by_alias=True) for c in cards]
 
@@ -56,18 +57,19 @@ def vibe_shops(
     lat: float | None = Query(default=None, ge=-90.0, le=90.0),
     lng: float | None = Query(default=None, ge=-180.0, le=180.0),
     radius_km: float = Query(default=5.0, ge=0.5, le=20.0),
-    district_id: str | None = Query(default=None),
+    district_ids: str = Query(default=""),
 ) -> dict[str, object]:
     """Return shops matching a vibe, ranked by tag overlap. Public — no auth required."""
     db = get_anon_client()
     service = VibeService(db)
+    parsed_district_ids = [s.strip() for s in district_ids.split(",") if s.strip()]
     try:
         result = service.get_shops_for_vibe(
             slug=slug,
             lat=lat,
             lng=lng,
             radius_km=radius_km,
-            district_id=district_id,
+            district_ids=parsed_district_ids or None,
         )
     except ValueError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
