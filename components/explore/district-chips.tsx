@@ -77,7 +77,7 @@ function ChipButton({
       onClick={onClick}
       className={`whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
         active
-          ? "bg-amber-800 text-white shadow-sm"
+          ? "bg-[#2c1810] text-white shadow-sm"
           : "bg-white text-gray-600 shadow-sm hover:bg-gray-50"
       } ${disabled ? "opacity-50" : ""}`}
     >
