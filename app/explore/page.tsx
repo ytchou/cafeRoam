@@ -2,18 +2,19 @@
 
 import Link from 'next/link';
 import { Bell } from 'lucide-react';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { CommunityCard } from '@/components/community/community-card';
+import { DistrictPicker } from '@/components/explore/district-picker';
 import { TarotEmptyState } from '@/components/tarot/tarot-empty-state';
 import { TarotSpread } from '@/components/tarot/tarot-spread';
 import { useAnalytics } from '@/lib/posthog/use-analytics';
 import { useCommunityPreview } from '@/lib/hooks/use-community-preview';
+import { useDistricts } from '@/lib/hooks/use-districts';
 import { useGeolocation } from '@/lib/hooks/use-geolocation';
 import { useIsDesktop } from '@/lib/hooks/use-media-query';
 import { useTarotDraw } from '@/lib/hooks/use-tarot-draw';
 import { useVibes } from '@/lib/hooks/use-vibes';
-import { useDistricts } from '@/lib/hooks/use-districts';
 
 const BRICOLAGE_STYLE = {
   fontFamily: 'var(--font-bricolage), var(--font-geist-sans), sans-serif',
@@ -32,19 +33,39 @@ export default function ExplorePage() {
     loading: geoLoading,
     requestLocation,
   } = useGeolocation();
+  const { districts } = useDistricts();
+  const [selectedDistrictId, setSelectedDistrictId] = useState<string | null>(
+    null
+  );
+  const [isNearMeMode, setIsNearMeMode] = useState(true);
+  const effectiveLat = isNearMeMode ? latitude : null;
+  const effectiveLng = isNearMeMode ? longitude : null;
+  const effectiveDistrictId = isNearMeMode ? null : selectedDistrictId;
   const { cards, isLoading, error, redraw, setRadiusKm } = useTarotDraw(
-    latitude,
-    longitude
+    effectiveLat,
+    effectiveLng,
+    effectiveDistrictId
   );
   const { vibes } = useVibes();
   const previewVibes = useMemo(() => vibes.slice(0, 6), [vibes]);
-  const { districts } = useDistricts();
   const previewDistricts = useMemo(() => districts.slice(0, 6), [districts]);
   const { notes: communityNotes } = useCommunityPreview();
 
   useEffect(() => {
     requestLocation();
   }, [requestLocation]);
+
+  useEffect(() => {
+    if (geoError && districts.length > 0 && !selectedDistrictId) {
+      const firstDistrict = districts[0];
+      if (firstDistrict) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setSelectedDistrictId(firstDistrict.id);
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setIsNearMeMode(false);
+      }
+    }
+  }, [geoError, districts, selectedDistrictId]);
 
   useEffect(() => {
     if (cards.length > 0 && latitude && longitude) {
@@ -61,8 +82,29 @@ export default function ExplorePage() {
     setRadiusKm(10);
   }, [capture, setRadiusKm]);
 
+  const handleSelectDistrict = useCallback((districtId: string) => {
+    setSelectedDistrictId(districtId);
+    setIsNearMeMode(false);
+  }, []);
+
+  const handleSelectNearMe = useCallback(() => {
+    setIsNearMeMode(true);
+    setSelectedDistrictId(null);
+  }, []);
+
   const tarotAndVibes = (
     <>
+      {districts.length > 0 && (
+        <DistrictPicker
+          districts={districts}
+          selectedDistrictId={selectedDistrictId}
+          gpsAvailable={!geoError && latitude != null}
+          isNearMeActive={isNearMeMode && !geoError}
+          onSelectDistrict={handleSelectDistrict}
+          onSelectNearMe={handleSelectNearMe}
+        />
+      )}
+
       <div className="mb-3 flex items-center justify-between">
         <h2
           className="text-text-primary text-lg font-bold"
@@ -80,22 +122,9 @@ export default function ExplorePage() {
         </button>
       </div>
 
-      {geoError && (
-        <div className="rounded-xl bg-white/60 px-6 py-10 text-center">
-          <p className="text-sm text-gray-600">
-            Enable location to discover nearby cafes.
-          </p>
-          <button
-            type="button"
-            onClick={requestLocation}
-            className="mt-3 rounded-full border border-gray-300 px-5 py-2 text-sm text-gray-700"
-          >
-            Enable Location
-          </button>
-        </div>
-      )}
-
-      {(geoLoading || isLoading || (latitude == null && !geoError)) && (
+      {(geoLoading ||
+        isLoading ||
+        (effectiveLat == null && !geoError && !effectiveDistrictId)) && (
         <div className="flex flex-col gap-3">
           {[0, 1, 2].map((i) => (
             <div
@@ -124,9 +153,8 @@ export default function ExplorePage() {
 
       {!isLoading &&
         !error &&
-        !geoError &&
         cards.length === 0 &&
-        latitude != null && (
+        (effectiveLat != null || effectiveDistrictId != null) && (
           <TarotEmptyState onExpandRadius={handleExpandRadius} />
         )}
 
