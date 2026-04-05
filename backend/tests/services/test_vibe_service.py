@@ -294,8 +294,6 @@ def test_get_shops_for_vibe_filters_by_multiple_districts():
     )
 
     service = VibeService(db)
-    result = service.get_shops_for_vibe(
-        "first-date", district_ids=["daan-uuid", "xinyi-uuid"]
-    )
+    result = service.get_shops_for_vibe("first-date", district_ids=["daan-uuid", "xinyi-uuid"])
 
     assert len(result.shops) == 2
