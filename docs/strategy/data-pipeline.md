@@ -12,58 +12,58 @@ Shops enter through 4 sources, pass through a scrape-enrich-embed pipeline, and 
 
 ### How a Shop Gets Added
 
-| Step | What happens | Status after |
-|---|---|---|
-| 1. Ingest | Shop enters via import, manual creation, or user submission | `pending_url_check` or `pending` |
-| 2. URL Check | HTTP HEAD validates the Google Maps URL is alive | `pending_review` or `filtered_dead_url` |
-| 3. Admin Review | Admin approves shop for scraping (bulk or individual) | `pending` --> `scraping` |
-| 4. Scrape | Apify fetches Google Maps data (name, address, reviews, photos, hours, etc.) | `enriching` |
-| 5. Enrich | Claude LLM generates summary, tags, mode scores, menu highlights | `embedding` |
-| 6. Embed | OpenAI creates 1536-dim vector from description + menu + community text | `publishing` |
-| 7. Publish | Auto-publish (admin sources) or route to review (user submissions) | `live` or `pending_review` |
+| Step            | What happens                                                                 | Status after                            |
+| --------------- | ---------------------------------------------------------------------------- | --------------------------------------- |
+| 1. Ingest       | Shop enters via import, manual creation, or user submission                  | `pending_url_check` or `pending`        |
+| 2. URL Check    | HTTP HEAD validates the Google Maps URL is alive                             | `pending_review` or `filtered_dead_url` |
+| 3. Admin Review | Admin approves shop for scraping (bulk or individual)                        | `pending` --> `scraping`                |
+| 4. Scrape       | Apify fetches Google Maps data (name, address, reviews, photos, hours, etc.) | `enriching`                             |
+| 5. Enrich       | Claude LLM generates summary, tags, mode scores, menu highlights             | `embedding`                             |
+| 6. Embed        | OpenAI creates 1536-dim vector from description + menu + community text      | `publishing`                            |
+| 7. Publish      | Auto-publish (admin sources) or route to review (user submissions)           | `live` or `pending_review`              |
 
 User submissions have an extra review gate: they go `publishing --> pending_review --> live` (admin must approve).
 
 ### Pipeline at a Glance
 
-| Stage | Provider | Model / Actor | Input | Output |
-|---|---|---|---|---|
-| Scrape | Apify | `compass/crawler-google-places` | Google Maps URL | Name, address, coords, reviews, photos, hours, phone, website, rating |
-| Enrich | Anthropic | `claude-sonnet-4-6` | Shop metadata + reviews | Summary (zh-TW), tags, mode scores, menu highlights, coffee origins |
-| Tarot | Anthropic | `claude-sonnet-4-6` | Shop metadata + reviews | Tarot title + flavor text |
-| Classify photos | Anthropic | `claude-haiku-4-5` | Photo thumbnails | MENU / VIBE / SKIP per photo |
-| Summarize check-ins | Anthropic | `claude-haiku-4-5` | User check-in texts | Community snapshot (zh-TW, max 200 chars) |
-| Embed | OpenAI | `text-embedding-3-small` | Description + menu + community | 1536-dim vector |
+| Stage               | Provider  | Model / Actor                   | Input                          | Output                                                                |
+| ------------------- | --------- | ------------------------------- | ------------------------------ | --------------------------------------------------------------------- |
+| Scrape              | Apify     | `compass/crawler-google-places` | Google Maps URL                | Name, address, coords, reviews, photos, hours, phone, website, rating |
+| Enrich              | Anthropic | `claude-sonnet-4-6`             | Shop metadata + reviews        | Summary (zh-TW), tags, mode scores, menu highlights, coffee origins   |
+| Tarot               | Anthropic | `claude-sonnet-4-6`             | Shop metadata + reviews        | Tarot title + flavor text                                             |
+| Classify photos     | Anthropic | `claude-haiku-4-5`              | Photo thumbnails               | MENU / VIBE / SKIP per photo                                          |
+| Summarize check-ins | Anthropic | `claude-haiku-4-5`              | User check-in texts            | Community snapshot (zh-TW, max 200 chars)                             |
+| Embed               | OpenAI    | `text-embedding-3-small`        | Description + menu + community | 1536-dim vector                                                       |
 
 ### Ingestion Sources
 
-| Source | Endpoint | Trigger | Volume | Initial status |
-|---|---|---|---|---|
-| Cafe Nomad | `POST /admin/shops/import/cafe-nomad` | Admin | Bulk (region) | `pending_url_check` |
-| Google Takeout | `POST /admin/shops/import/google-takeout` | Admin | Bulk (file upload) | `pending_url_check` |
-| Manual creation | `POST /admin/shops` | Admin | Single | `pending` |
-| User submission | `POST /submissions` | Public | Single (rate-limited) | `pending` |
+| Source          | Endpoint                                  | Trigger | Volume                | Initial status      |
+| --------------- | ----------------------------------------- | ------- | --------------------- | ------------------- |
+| Cafe Nomad      | `POST /admin/shops/import/cafe-nomad`     | Admin   | Bulk (region)         | `pending_url_check` |
+| Google Takeout  | `POST /admin/shops/import/google-takeout` | Admin   | Bulk (file upload)    | `pending_url_check` |
+| Manual creation | `POST /admin/shops`                       | Admin   | Single                | `pending`           |
+| User submission | `POST /submissions`                       | Public  | Single (rate-limited) | `pending`           |
 
 ### Queue System Summary
 
-| Property | Value |
-|---|---|
-| Storage | Supabase `job_queue` table |
-| Claim | Atomic `FOR UPDATE SKIP LOCKED` via RPC |
-| Priority | Integer, higher = processed first |
-| Retries | 3 attempts, exponential backoff (60s / 120s / 240s) |
-| Stuck detection | Jobs claimed > 10 min are reclaimed |
-| Polling | Every 5 minutes |
+| Property        | Value                                               |
+| --------------- | --------------------------------------------------- |
+| Storage         | Supabase `job_queue` table                          |
+| Claim           | Atomic `FOR UPDATE SKIP LOCKED` via RPC             |
+| Priority        | Integer, higher = processed first                   |
+| Retries         | 3 attempts, exponential backoff (60s / 120s / 240s) |
+| Stuck detection | Jobs claimed > 10 min are reclaimed                 |
+| Polling         | Every 5 minutes                                     |
 
-| Job type | Concurrency | Priority (typical) |
-|---|---|---|
-| `SCRAPE_SHOP` / `SCRAPE_BATCH` | 1 | -- |
-| `ENRICH_SHOP` | 3 | 5 |
-| `GENERATE_EMBEDDING` | 20 | 5 (pipeline) / 2 (re-embed) |
-| `PUBLISH_SHOP` | 20 | 5 |
-| `CLASSIFY_SHOP_PHOTOS` | 1 | 2 |
-| `SUMMARIZE_REVIEWS` | 1 | 2 |
-| All others | 1 | -- |
+| Job type                       | Concurrency | Priority (typical)          |
+| ------------------------------ | ----------- | --------------------------- |
+| `SCRAPE_SHOP` / `SCRAPE_BATCH` | 1           | --                          |
+| `ENRICH_SHOP`                  | 3           | 5                           |
+| `GENERATE_EMBEDDING`           | 20          | 5 (pipeline) / 2 (re-embed) |
+| `PUBLISH_SHOP`                 | 20          | 5                           |
+| `CLASSIFY_SHOP_PHOTOS`         | 1           | 2                           |
+| `SUMMARIZE_REVIEWS`            | 1           | 2                           |
+| All others                     | 1           | --                          |
 
 ---
 
@@ -96,15 +96,16 @@ Maintenance (daily cron):
 
 ### Cafe Nomad Import
 
-| | |
-|---|---|
-| Endpoint | `POST /admin/shops/import/cafe-nomad` |
-| Handler | `backend/importers/cafe_nomad.py` |
-| Data source | `cafenomad.tw/api/v1.2/cafes` |
+|                 |                                                                 |
+| --------------- | --------------------------------------------------------------- |
+| Endpoint        | `POST /admin/shops/import/cafe-nomad`                           |
+| Handler         | `backend/importers/cafe_nomad.py`                               |
+| Data source     | `cafenomad.tw/api/v1.2/cafes`                                   |
 | Fields received | `name`, `address`, `latitude`, `longitude`, `website`, `closed` |
-| Initial status | `pending_url_check` |
+| Initial status  | `pending_url_check`                                             |
 
 Pre-filters applied:
+
 1. Skip closed shops
 2. Geo-bounding box (Taiwan region)
 3. Name validation (min 2 chars, no control chars)
@@ -114,34 +115,34 @@ Pre-filters applied:
 
 ### Google Takeout Import
 
-| | |
-|---|---|
-| Endpoint | `POST /admin/shops/import/google-takeout` |
-| Handler | `backend/importers/google_takeout.py` |
-| Formats | GeoJSON (`.json`/`.geojson`) or CSV |
-| Initial status | `pending_url_check` |
+|                |                                           |
+| -------------- | ----------------------------------------- |
+| Endpoint       | `POST /admin/shops/import/google-takeout` |
+| Handler        | `backend/importers/google_takeout.py`     |
+| Formats        | GeoJSON (`.json`/`.geojson`) or CSV       |
+| Initial status | `pending_url_check`                       |
 
 - GeoJSON provides coordinates; CSV does not (scraper fills them later)
 - Same pre-filters as Cafe Nomad + URL pattern validation
 
 ### Manual Shop Creation (Admin)
 
-| | |
-|---|---|
-| Endpoint | `POST /admin/shops` |
-| Handler | `backend/api/admin_shops.py` |
-| Fields | `name`, `address`, `latitude`, `longitude`, `google_maps_url` |
-| Initial status | `pending` |
-| Source tag | `"manual"` |
+|                |                                                               |
+| -------------- | ------------------------------------------------------------- |
+| Endpoint       | `POST /admin/shops`                                           |
+| Handler        | `backend/api/admin_shops.py`                                  |
+| Fields         | `name`, `address`, `latitude`, `longitude`, `google_maps_url` |
+| Initial status | `pending`                                                     |
+| Source tag     | `"manual"`                                                    |
 
 ### User Submission (Public)
 
-| | |
-|---|---|
-| Endpoint | `POST /submissions` |
-| Handler | `backend/api/submissions.py` |
-| Input | Single Google Maps URL |
-| Rate limits | 10/hour global, 5 active/day per user |
+|                |                                           |
+| -------------- | ----------------------------------------- |
+| Endpoint       | `POST /submissions`                       |
+| Handler        | `backend/api/submissions.py`              |
+| Input          | Single Google Maps URL                    |
+| Rate limits    | 10/hour global, 5 active/day per user     |
 | Initial status | `pending` (shop) + `pending` (submission) |
 
 Immediately enqueues `SCRAPE_SHOP` with submission context.
@@ -167,6 +168,7 @@ class ProcessingStatus(StrEnum):
 ### State Transitions
 
 **Import path (Cafe Nomad / Google Takeout):**
+
 ```
 pending_url_check --> pending_review  (URL check passes)
 pending_url_check --> filtered_dead_url  (URL check fails)
@@ -174,16 +176,19 @@ pending_review --> scraping  (admin bulk-approve)
 ```
 
 **Scrape-to-live path:**
+
 ```
 scraping --> enriching --> embedding --> publishing --> live
 ```
 
 **User submission path (extra review gate):**
+
 ```
 pending --> scraping --> enriching --> embedding --> publishing --> pending_review --> live
 ```
 
 **Re-enrichment (live shops):**
+
 ```
 live --> (re-embed, stays live) --> live
 ```
@@ -196,13 +201,13 @@ Live shops never lose their `live` status during re-embedding.
 
 **Implementation:** `backend/workers/queue.py`
 
-| Property | Value |
-|---|---|
-| Storage | Supabase `job_queue` table |
-| Claim mechanism | `FOR UPDATE SKIP LOCKED` via RPC |
-| Priority | Higher number = higher priority |
-| Max retries | 3 attempts with exponential backoff (60s, 120s, 240s) |
-| Stuck timeout | 10 minutes --> reclaim |
+| Property        | Value                                                 |
+| --------------- | ----------------------------------------------------- |
+| Storage         | Supabase `job_queue` table                            |
+| Claim mechanism | `FOR UPDATE SKIP LOCKED` via RPC                      |
+| Priority        | Higher number = higher priority                       |
+| Max retries     | 3 attempts with exponential backoff (60s, 120s, 240s) |
+| Stuck timeout   | 10 minutes --> reclaim                                |
 
 ### Job Types
 
@@ -224,24 +229,24 @@ class JobType(StrEnum):
 
 ### Concurrency Limits
 
-| Job type | Concurrency | Why |
-|---|---|---|
-| `SCRAPE_SHOP` / `SCRAPE_BATCH` | 1 | Apify rate limits |
-| `ENRICH_SHOP` | 3 | Claude API throughput |
-| `GENERATE_EMBEDDING` | 20 | OpenAI batch-friendly |
-| `PUBLISH_SHOP` | 20 | DB writes only |
-| Everything else | 1 | Default |
+| Job type                       | Concurrency | Why                   |
+| ------------------------------ | ----------- | --------------------- |
+| `SCRAPE_SHOP` / `SCRAPE_BATCH` | 1           | Apify rate limits     |
+| `ENRICH_SHOP`                  | 3           | Claude API throughput |
+| `GENERATE_EMBEDDING`           | 20          | OpenAI batch-friendly |
+| `PUBLISH_SHOP`                 | 20          | DB writes only        |
+| Everything else                | 1           | Default               |
 
 **Polling interval:** 5 minutes (configurable via `worker_poll_interval_seconds`)
 
 ### Scheduled Cron Jobs
 
-| Job | Schedule | Handler |
-|---|---|---|
-| Staleness sweep | Daily 3:00 AM | `staleness_sweep.py` |
-| Re-embed reviewed shops | Daily 3:01 AM | `reembed_reviewed_shops.py` |
-| Delete expired accounts | Daily 3:02 AM | `account_deletion.py` |
-| Weekly email digest | Monday 9:00 AM | `weekly_email.py` |
+| Job                     | Schedule       | Handler                     |
+| ----------------------- | -------------- | --------------------------- |
+| Staleness sweep         | Daily 3:00 AM  | `staleness_sweep.py`        |
+| Re-embed reviewed shops | Daily 3:01 AM  | `reembed_reviewed_shops.py` |
+| Delete expired accounts | Daily 3:02 AM  | `account_deletion.py`       |
+| Weekly email digest     | Monday 9:00 AM | `weekly_email.py`           |
 
 All times in `Asia/Taipei`. Idempotent cron locks prevent double-execution.
 
@@ -254,12 +259,14 @@ All times in `Asia/Taipei`. Idempotent cron locks prevent double-execution.
 **Files:** `backend/workers/handlers/scrape_shop.py`, `scrape_batch.py`
 
 **What it does:**
+
 1. Sets shop status to `scraping`
 2. Calls Apify `compass/crawler-google-places` actor
 3. On success: calls `persist_scraped_data()`
 4. On failure (shop not found): sets status `failed`
 
 **Apify actor configuration:**
+
 ```python
 {
     "startUrls": [{"url": google_maps_url}],
@@ -273,33 +280,33 @@ All times in `Asia/Taipei`. Idempotent cron locks prevent double-execution.
 
 **Fields scraped from Google Maps:**
 
-| Field | Stored in | Notes |
-|---|---|---|
-| `title` | `shops.name` | |
-| `address` | `shops.address` | |
-| `location.lat/lng` | `shops.latitude/longitude` | |
-| `placeId` | `shops.google_place_id` | |
-| `totalScore` | `shops.rating` | |
-| `reviewsCount` | `shops.review_count` | |
-| `openingHours` | `shops.opening_hours` | Normalized to structured format |
-| `phone` | `shops.phone` | |
-| `website` | `shops.website` | Whatever the business lists on Google Maps |
-| `menu` | `shops.menu_url` | Google Maps menu link |
-| `price` | `shops.price_range` | |
-| `permanentlyClosed` | triggers `failed` status | |
-| `countryCode` | geo-gate check | Must be `TW` |
-| `categoryName` | `shops.categories` | |
-| `reviews[]` | `shop_reviews` table | text, stars, published_at |
-| `images[]` | `shop_photos` table | URL + uploaded_at, max 30, <5 years old |
+| Field               | Stored in                  | Notes                                      |
+| ------------------- | -------------------------- | ------------------------------------------ |
+| `title`             | `shops.name`               |                                            |
+| `address`           | `shops.address`            |                                            |
+| `location.lat/lng`  | `shops.latitude/longitude` |                                            |
+| `placeId`           | `shops.google_place_id`    |                                            |
+| `totalScore`        | `shops.rating`             |                                            |
+| `reviewsCount`      | `shops.review_count`       |                                            |
+| `openingHours`      | `shops.opening_hours`      | Normalized to structured format            |
+| `phone`             | `shops.phone`              |                                            |
+| `website`           | `shops.website`            | Whatever the business lists on Google Maps |
+| `menu`              | `shops.menu_url`           | Google Maps menu link                      |
+| `price`             | `shops.price_range`        |                                            |
+| `permanentlyClosed` | triggers `failed` status   |                                            |
+| `countryCode`       | geo-gate check             | Must be `TW`                               |
+| `categoryName`      | `shops.categories`         |                                            |
+| `reviews[]`         | `shop_reviews` table       | text, stars, published_at                  |
+| `images[]`          | `shop_photos` table        | URL + uploaded_at, max 30, <5 years old    |
 
 **Fields NOT scraped (gaps):**
 
-| Field | Status | Notes |
-|---|---|---|
-| `instagram` | Not in DB, not scraped | Google Maps may expose social links but actor response is not checked |
-| `facebook` | Not in DB, not scraped | Same |
-| `line_url` | Not in DB, not scraped | Not a Google Maps field |
-| Social links | Unknown | Apify actor may return them in raw response -- needs investigation |
+| Field        | Status                 | Notes                                                                 |
+| ------------ | ---------------------- | --------------------------------------------------------------------- |
+| `instagram`  | Not in DB, not scraped | Google Maps may expose social links but actor response is not checked |
+| `facebook`   | Not in DB, not scraped | Same                                                                  |
+| `line_url`   | Not in DB, not scraped | Not a Google Maps field                                               |
+| Social links | Unknown                | Apify actor may return them in raw response -- needs investigation    |
 
 ### PERSIST_SCRAPED_DATA
 
@@ -319,12 +326,14 @@ Shared by both scrape handlers. Steps:
 **File:** `backend/workers/handlers/enrich_shop.py`
 
 **Input to LLM:**
+
 - Shop: name, description, categories, price_range, socket, limited_time, rating, review_count
 - All review texts from `shop_reviews`
 
 **LLM provider:** Claude Sonnet (`claude-sonnet-4-6`) via `backend/providers/llm/anthropic_adapter.py`
 
 **Prompt instructs the LLM to:**
+
 - Select tags from a fixed taxonomy (with confidence 0.0-1.0)
 - Write a 2-3 sentence Traditional Chinese summary
 - Pick 3-5 top review excerpts
@@ -333,14 +342,14 @@ Shared by both scrape handlers. Steps:
 
 **Fields produced:**
 
-| Field | Stored in |
-|---|---|
-| Summary | `shops.description` |
-| Mode scores | `shops.mode_work`, `shops.mode_rest`, `shops.mode_social` |
-| Menu highlights | `shops.menu_highlights` |
-| Coffee origins | `shops.coffee_origins` |
-| Tags + confidence | `shop_tags` table |
-| Enriched timestamp | `shops.enriched_at` |
+| Field              | Stored in                                                 |
+| ------------------ | --------------------------------------------------------- |
+| Summary            | `shops.description`                                       |
+| Mode scores        | `shops.mode_work`, `shops.mode_rest`, `shops.mode_social` |
+| Menu highlights    | `shops.menu_highlights`                                   |
+| Coffee origins     | `shops.coffee_origins`                                    |
+| Tags + confidence  | `shop_tags` table                                         |
+| Enriched timestamp | `shops.enriched_at`                                       |
 
 **Then:** Calls `assign_tarot()` (non-fatal) to set `tarot_title` + `flavor_text`.
 
@@ -351,6 +360,7 @@ Shared by both scrape handlers. Steps:
 **File:** `backend/workers/handlers/generate_embedding.py`
 
 **Embedding text format:**
+
 ```
 {name}. {description} | {menu_items} || {community_summary}
 ```
@@ -369,6 +379,7 @@ Shared by both scrape handlers. Steps:
 **File:** `backend/workers/handlers/publish_shop.py`
 
 Routes based on source:
+
 - **User submissions:** Sets status to `pending_review` (admin must approve)
 - **All other sources:** Sets status to `live` immediately
 
@@ -429,13 +440,13 @@ This avoids wasting Apify credits + LLM tokens on shops with no new data.
 
 ## 6. External Providers
 
-| Provider | Service | Model/Actor | Used by |
-|---|---|---|---|
-| Apify | Google Maps scraping | `compass/crawler-google-places` | SCRAPE_SHOP, SCRAPE_BATCH, staleness reviews-only |
-| Anthropic | Shop enrichment | `claude-sonnet-4-6` | ENRICH_SHOP, ENRICH_MENU_PHOTO, ASSIGN_TAROT |
-| Anthropic | Photo classification | `claude-haiku-4-5-20251001` | CLASSIFY_SHOP_PHOTOS |
-| Anthropic | Review summarization | `claude-haiku-4-5-20251001` | SUMMARIZE_REVIEWS |
-| OpenAI | Text embeddings | `text-embedding-3-small` (1536d) | GENERATE_EMBEDDING |
+| Provider  | Service              | Model/Actor                      | Used by                                           |
+| --------- | -------------------- | -------------------------------- | ------------------------------------------------- |
+| Apify     | Google Maps scraping | `compass/crawler-google-places`  | SCRAPE_SHOP, SCRAPE_BATCH, staleness reviews-only |
+| Anthropic | Shop enrichment      | `claude-sonnet-4-6`              | ENRICH_SHOP, ENRICH_MENU_PHOTO, ASSIGN_TAROT      |
+| Anthropic | Photo classification | `claude-haiku-4-5-20251001`      | CLASSIFY_SHOP_PHOTOS                              |
+| Anthropic | Review summarization | `claude-haiku-4-5-20251001`      | SUMMARIZE_REVIEWS                                 |
+| OpenAI    | Text embeddings      | `text-embedding-3-small` (1536d) | GENERATE_EMBEDDING                                |
 
 All providers accessed through protocol interfaces in `backend/providers/`. Business logic never imports provider SDKs directly.
 
@@ -445,57 +456,57 @@ All providers accessed through protocol interfaces in `backend/providers/`. Busi
 
 ### Import & Bulk Operations
 
-| Action | Endpoint |
-|---|---|
-| Import from Cafe Nomad | `POST /admin/shops/import/cafe-nomad` |
-| Import from Google Takeout | `POST /admin/shops/import/google-takeout` |
-| Create shop manually | `POST /admin/shops` |
-| Bulk approve (triggers scrape) | `POST /admin/shops/bulk-approve` |
+| Action                         | Endpoint                                  |
+| ------------------------------ | ----------------------------------------- |
+| Import from Cafe Nomad         | `POST /admin/shops/import/cafe-nomad`     |
+| Import from Google Takeout     | `POST /admin/shops/import/google-takeout` |
+| Create shop manually           | `POST /admin/shops`                       |
+| Bulk approve (triggers scrape) | `POST /admin/shops/bulk-approve`          |
 
 ### Per-Shop Pipeline Controls
 
-| Action | Endpoint |
-|---|---|
+| Action             | Endpoint                                                                        |
+| ------------------ | ------------------------------------------------------------------------------- |
 | Manual enqueue job | `POST /admin/shops/{id}/enqueue` (ENRICH_SHOP, GENERATE_EMBEDDING, SCRAPE_SHOP) |
-| Approve submission | `POST /admin/pipeline/approve/{submission_id}` |
-| Reject submission | `POST /admin/pipeline/reject/{submission_id}` |
+| Approve submission | `POST /admin/pipeline/approve/{submission_id}`                                  |
+| Reject submission  | `POST /admin/pipeline/reject/{submission_id}`                                   |
 
 ### Job Management
 
-| Action | Endpoint |
-|---|---|
-| List jobs (filterable) | `GET /admin/pipeline/jobs` |
-| Pipeline overview | `GET /admin/pipeline/overview` |
-| Dead letter queue | `GET /admin/pipeline/dead-letter` |
-| Retry failed job | `POST /admin/pipeline/retry/{job_id}` |
-| Cancel job | `POST /admin/pipeline/jobs/{job_id}/cancel` |
-| List batches | `GET /admin/pipeline/batches` |
-| Batch detail | `GET /admin/pipeline/batches/{batch_id}` |
+| Action                 | Endpoint                                    |
+| ---------------------- | ------------------------------------------- |
+| List jobs (filterable) | `GET /admin/pipeline/jobs`                  |
+| Pipeline overview      | `GET /admin/pipeline/overview`              |
+| Dead letter queue      | `GET /admin/pipeline/dead-letter`           |
+| Retry failed job       | `POST /admin/pipeline/retry/{job_id}`       |
+| Cancel job             | `POST /admin/pipeline/jobs/{job_id}/cancel` |
+| List batches           | `GET /admin/pipeline/batches`               |
+| Batch detail           | `GET /admin/pipeline/batches/{batch_id}`    |
 
 ---
 
 ## 8. Key Constants
 
-| Constant | Value | Location | Used by |
-|---|---|---|---|
-| `CHECKIN_MIN_TEXT_LENGTH` | 15 chars | `models/types.py:454` | embedding, summarization, re-embed detection |
-| `MAX_COMMUNITY_TEXTS` | 20 | `models/types.py:458` | embedding, summarization |
-| Photo menu cap | 5 per shop | `classify_shop_photos.py:14` | photo classification |
-| Photo vibe cap | 10 per shop | `classify_shop_photos.py:15` | photo classification |
-| Photo max age | 5 years | `apify_adapter.py:20` | scraper photo filtering |
-| Photo total cap | 30 | `apify_adapter.py:21` | scraper photo filtering |
-| Staleness threshold | 90 days | `staleness_sweep.py` | staleness cron |
-| Fuzzy dedup threshold | 80% name + 200m | `prefilter.py:28,31` | import dedup |
-| Embedding warn threshold | 6000 chars | `generate_embedding.py:73` | embedding text budget |
-| Account deletion grace | 30 days | `account_deletion.py` | PDPA compliance |
+| Constant                  | Value           | Location                     | Used by                                      |
+| ------------------------- | --------------- | ---------------------------- | -------------------------------------------- |
+| `CHECKIN_MIN_TEXT_LENGTH` | 15 chars        | `models/types.py:454`        | embedding, summarization, re-embed detection |
+| `MAX_COMMUNITY_TEXTS`     | 20              | `models/types.py:458`        | embedding, summarization                     |
+| Photo menu cap            | 5 per shop      | `classify_shop_photos.py:14` | photo classification                         |
+| Photo vibe cap            | 10 per shop     | `classify_shop_photos.py:15` | photo classification                         |
+| Photo max age             | 5 years         | `apify_adapter.py:20`        | scraper photo filtering                      |
+| Photo total cap           | 30              | `apify_adapter.py:21`        | scraper photo filtering                      |
+| Staleness threshold       | 90 days         | `staleness_sweep.py`         | staleness cron                               |
+| Fuzzy dedup threshold     | 80% name + 200m | `prefilter.py:28,31`         | import dedup                                 |
+| Embedding warn threshold  | 6000 chars      | `generate_embedding.py:73`   | embedding text budget                        |
+| Account deletion grace    | 30 days         | `account_deletion.py`        | PDPA compliance                              |
 
 ---
 
 ## 9. Known Gaps
 
-| Gap | Impact | Notes |
-|---|---|---|
-| No social media fields (`instagram`, `facebook`, `line_url`) | DEV-209 blocked for social links | Columns don't exist in DB; Apify actor may return social data but it's not extracted |
-| `google_place_id` not in API response | Google Maps link not surfaceable in UI | Column exists and is populated; just missing from `_SHOP_DETAIL_COLUMNS` |
-| No secondary website scraping | Social handles can't be extracted from shop websites | Only Google Maps data is scraped |
-| Cafe Nomad URLs always pass URL check | Dead shops may reach `pending_review` | Constructed search URLs return 200; admin review is the quality gate |
+| Gap                                                          | Impact                                               | Notes                                                                                |
+| ------------------------------------------------------------ | ---------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| No social media fields (`instagram`, `facebook`, `line_url`) | DEV-209 blocked for social links                     | Columns don't exist in DB; Apify actor may return social data but it's not extracted |
+| `google_place_id` not in API response                        | Google Maps link not surfaceable in UI               | Column exists and is populated; just missing from `_SHOP_DETAIL_COLUMNS`             |
+| No secondary website scraping                                | Social handles can't be extracted from shop websites | Only Google Maps data is scraped                                                     |
+| Cafe Nomad URLs always pass URL check                        | Dead shops may reach `pending_review`                | Constructed search URLs return 200; admin review is the quality gate                 |
