@@ -178,8 +178,11 @@ class TestTarotServiceDrawByDistrict:
         db = _make_db_mock(rows)
         service = TarotService(db)
         cards = await service.draw(
-            lat=None, lng=None, radius_km=3.0,
-            excluded_ids=[], district_id="district-123",
+            lat=None,
+            lng=None,
+            radius_km=3.0,
+            excluded_ids=[],
+            district_id="district-123",
         )
         assert len(cards) <= 3
         assert all(c.distance_km == 0.0 for c in cards)
@@ -193,8 +196,11 @@ class TestTarotServiceDrawByDistrict:
         db = _make_db_mock(rows)
         service = TarotService(db)
         cards = await service.draw(
-            lat=None, lng=None, radius_km=3.0,
-            excluded_ids=["s1"], district_id="district-123",
+            lat=None,
+            lng=None,
+            radius_km=3.0,
+            excluded_ids=["s1"],
+            district_id="district-123",
         )
         assert all(c.shop_id != "s1" for c in cards)
 
@@ -206,7 +212,10 @@ class TestTarotServiceDrawByDistrict:
         db = _make_db_mock(rows)
         service = TarotService(db)
         cards = await service.draw(
-            lat=None, lng=None, radius_km=3.0,
-            excluded_ids=[], district_id="district-123",
+            lat=None,
+            lng=None,
+            radius_km=3.0,
+            excluded_ids=[],
+            district_id="district-123",
         )
         assert cards[0].distance_km == 0.0
