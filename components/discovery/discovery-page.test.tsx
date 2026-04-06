@@ -82,12 +82,12 @@ describe('DiscoveryPage', () => {
     vi.mocked(useRouter).mockReturnValue({
       push: vi.fn(),
       replace: vi.fn(),
-    } as ReturnType<typeof useRouter>);
+    } as unknown as ReturnType<typeof useRouter>);
 
     vi.mocked(useSearchParams).mockReturnValue({
       get: () => null,
       toString: () => '',
-    } as ReturnType<typeof useSearchParams>);
+    } as unknown as ReturnType<typeof useSearchParams>);
 
     vi.mocked(usePathname).mockReturnValue('/');
   });
