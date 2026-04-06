@@ -132,6 +132,14 @@ check "SEARCH_CACHE_PROVIDER is set in backend/.env" \
   "grep -q '^SEARCH_CACHE_PROVIDER=.' '${PROJECT_ROOT}/backend/.env'" \
   "Add SEARCH_CACHE_PROVIDER=supabase (or 'none' to disable) to backend/.env"
 
+check "LINEAR_API_KEY is set in backend/.env (required for shop data report worker)" \
+  "grep -q '^LINEAR_API_KEY=.' '${PROJECT_ROOT}/backend/.env'" \
+  "Add LINEAR_API_KEY=<key> to backend/.env (get from Linear → Settings → API)"
+
+check "LINEAR_TEAM_ID is set in backend/.env (required for shop data report worker)" \
+  "grep -q '^LINEAR_TEAM_ID=.' '${PROJECT_ROOT}/backend/.env'" \
+  "Add LINEAR_TEAM_ID=<team-id> to backend/.env (find in Linear team settings URL)"
+
 # GA4 is optional for local dev — warn if not set, don't fail
 if ! grep -q '^NEXT_PUBLIC_GA_MEASUREMENT_ID=.' "${PROJECT_ROOT}/.env.local" 2>/dev/null; then
   printf "${YELLOW}[WARN]${NC} NEXT_PUBLIC_GA_MEASUREMENT_ID not set in .env.local — GA4 analytics disabled\n"

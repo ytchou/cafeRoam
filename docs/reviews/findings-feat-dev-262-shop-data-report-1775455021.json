@@ -1,0 +1,68 @@
+{
+  "findings": [
+    {
+      "severity": "Critical",
+      "file": "backend/providers/issue_tracker/linear_adapter.py",
+      "line": "57",
+      "description": "`await response.json()` — httpx Response.json() is synchronous; `await` on a non-coroutine raises TypeError at runtime. Tests pass only because mock uses AsyncMock. Fix: remove `await` — use `data = response.json()`.",
+      "flagged_by": "Bug Hunter",
+      "status": "valid"
+    },
+    {
+      "severity": "Critical",
+      "file": "backend/workers/handlers/shop_data_report.py",
+      "line": "20",
+      "description": "`.order(\"created_at\")` references non-existent column — the shop_reports table defines `reported_at`, not `created_at`. PostgREST will return an error at runtime. Fix: change to `.order(\"reported_at\")`.",
+      "flagged_by": "Bug Hunter",
+      "status": "valid"
+    },
+    {
+      "severity": "Important",
+      "file": ".env.example",
+      "line": "0",
+      "description": "Missing `LINEAR_API_KEY` and `LINEAR_TEAM_ID` env vars. CLAUDE.md requires .env.example to document all required vars. Add an Issue Tracker section with both vars.",
+      "flagged_by": "Standards & Conventions",
+      "status": "valid"
+    },
+    {
+      "severity": "Important",
+      "file": "scripts/doctor.sh",
+      "line": "0",
+      "description": "No health check for new Linear/issue tracker integration. CLAUDE.md: 'When adding a new service, external dependency, or env var, update scripts/doctor.sh with a corresponding health check. The doctor script must grow with the project.'",
+      "flagged_by": "Standards & Conventions",
+      "status": "valid"
+    },
+    {
+      "severity": "Important",
+      "file": "backend/workers/handlers/shop_data_report.py",
+      "line": "38-47",
+      "description": "No error handling around `issue_tracker.create_issue()`. If Linear API fails, exception propagates, status update is skipped, and idempotent_cron lock prevents retry until next day. Reports stuck as 'pending' for 24h then re-sent as duplicates. Wrap in try/except, log the error, and let the cron retry next day without the lock preventing it (or catch and re-raise to avoid locking).",
+      "flagged_by": "Architecture & Design",
+      "status": "debatable"
+    },
+    {
+      "severity": "Minor",
+      "file": "backend/providers/issue_tracker/linear_adapter.py",
+      "line": "62",
+      "description": "Uses `errors[0]` instead of project's `first()` helper from `backend/core/db.py`. CLAUDE.md: 'Never use unsafe [0] array indexing. Use the project's first() helper function instead.' Guarded by `if errors else` but violates convention.",
+      "flagged_by": "Standards & Conventions",
+      "status": "valid"
+    },
+    {
+      "severity": "Minor",
+      "file": "components/shops/report-issue-dialog.tsx",
+      "line": "40-41",
+      "description": "Form state (field, description) not reset when dialog closes without submission. Old draft text persists on re-open. Add a reset effect or callback when `open` changes to false.",
+      "flagged_by": "Architecture & Design",
+      "status": "debatable"
+    }
+  ],
+  "active_agents": [
+    "Bug Hunter",
+    "Standards & Conventions",
+    "Architecture & Design"
+  ],
+  "skipped": [],
+  "head_sha": "7896abb33b54f7a8c43010ccb8ca741962d1d5a7",
+  "review_log_path": "docs/reviews/2026-04-06-feat-dev-262-shop-data-report.md"
+}

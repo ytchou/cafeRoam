@@ -74,6 +74,7 @@ CafeRoam is a mobile-first web directory for Taiwan's independent coffee shop sc
 - **Data pipeline** — Cafe Nomad import + Google Maps scraping via Apify + Claude Haiku enrichment → taxonomy tags + OpenAI embeddings
 - **Taxonomy system** — canonical tag database powering both filter UI and search ranking
 - **Mobile-first responsive web** — shareable URLs for Threads
+- **Shop data reports** — "回報錯誤" button on shop pages; any user can flag incorrect data (hours, wifi, name, other) with a free-text description; reports batched daily into Linear for ops triage
 
 ### Explicitly Out of Scope for V1
 

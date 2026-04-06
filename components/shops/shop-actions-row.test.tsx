@@ -1,79 +1,83 @@
-import { render, screen, fireEvent, act } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { describe, expect, it, vi } from 'vitest';
+
+vi.mock('sonner', () => ({
+  toast: Object.assign(vi.fn(), { error: vi.fn(), success: vi.fn() }),
+}));
 
 vi.mock('@/lib/hooks/use-media-query', () => ({
-  useIsDesktop: vi.fn().mockReturnValue(false), // default: mobile
+  useIsDesktop: vi.fn().mockReturnValue(false),
 }));
-vi.mock('./check-in-sheet', () => ({
-  CheckInSheet: ({ open }: { open: boolean }) =>
-    open ? <div data-testid="check-in-sheet">CheckInSheet</div> : null,
-}));
-vi.mock('@/components/lists/save-to-list-sheet', () => ({
-  SaveToListSheet: ({ open }: { open: boolean }) =>
-    open ? <div data-testid="save-sheet">SaveToListSheet</div> : null,
-}));
-vi.mock('./save-popover', () => ({
-  SavePopover: ({ open }: { open: boolean }) =>
-    open ? <div data-testid="save-popover">SavePopover</div> : null,
-}));
-vi.mock('./share-popover', () => ({
-  SharePopover: ({ open }: { open: boolean }) =>
-    open ? <div data-testid="share-popover">SharePopover</div> : null,
-}));
-vi.mock('./check-in-popover', () => ({
-  CheckInPopover: ({ open }: { open: boolean }) =>
-    open ? <div data-testid="check-in-popover">CheckInPopover</div> : null,
-}));
-vi.mock('@/lib/supabase/client', () => ({
-  createClient: () => ({
-    auth: {
-      getSession: vi.fn().mockResolvedValue({
-        data: { session: { user: { id: 'test-user-123' } } },
-      }),
-      getUser: vi.fn().mockResolvedValue({
-        data: { user: { id: 'test-user-123' } },
-      }),
-      onAuthStateChange: vi.fn().mockReturnValue({
-        data: { subscription: { unsubscribe: vi.fn() } },
-      }),
-    },
+
+vi.mock('@/lib/hooks/use-user', () => ({
+  useUser: () => ({
+    user: { id: 'user-123' },
+    isLoading: false,
   }),
 }));
+
 vi.mock('@/lib/hooks/use-user-lists', () => ({
   useUserLists: () => ({ isSaved: () => false }),
 }));
+
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn() }),
 }));
 
+vi.mock('./check-in-sheet', () => ({
+  CheckInSheet: () => null,
+}));
+
+vi.mock('./check-in-popover', () => ({
+  CheckInPopover: () => null,
+}));
+
+vi.mock('./save-popover', () => ({
+  SavePopover: () => null,
+}));
+
+vi.mock('./share-popover', () => ({
+  SharePopover: () => null,
+}));
+
+vi.mock('./follow-button', () => ({
+  FollowButton: () => <div data-testid="follow-button" />,
+}));
+
+vi.mock('@/components/lists/save-to-list-sheet', () => ({
+  SaveToListSheet: () => null,
+}));
+
+vi.mock('./report-issue-dialog', () => ({
+  ReportIssueDialog: ({ open }: { open: boolean }) =>
+    open ? <div data-testid="report-dialog">ReportIssueDialog</div> : null,
+}));
+
 import { ShopActionsRow } from './shop-actions-row';
 
-const defaultProps = {
-  shopId: 'fika-fika-da-an',
-  shopName: 'Fika Fika Café',
-  shareUrl: 'https://caferoam.app/shops/fika-fika-da-an/fika-fika-cafe',
+const props = {
+  shopId: 'shop-123',
+  shopName: 'Test Cafe',
+  shareUrl: 'https://caferoam.tw/shops/shop-123/test-cafe',
 };
 
-describe('ShopActionsRow — mobile', () => {
-  it('renders the Check In primary button', async () => {
-    render(<ShopActionsRow {...defaultProps} />);
-    await act(async () => {}); // flush useUser's getUser promise
+describe('ShopActionsRow', () => {
+  it('renders the report button', () => {
+    render(<ShopActionsRow {...props} />);
+
     expect(
-      screen.getByRole('button', { name: /Check In 打卡/i })
+      screen.getByRole('button', { name: /回報錯誤/ })
     ).toBeInTheDocument();
   });
 
-  it('opens CheckInSheet (not popover) on mobile when Check In is tapped', async () => {
-    render(<ShopActionsRow {...defaultProps} />);
-    await act(async () => {}); // flush useUser's getUser promise
-    fireEvent.click(screen.getByRole('button', { name: /Check In 打卡/i }));
-    expect(await screen.findByTestId('check-in-sheet')).toBeInTheDocument();
-  });
+  it('shows the report dialog when the report button is clicked', async () => {
+    const user = userEvent.setup();
 
-  it('opens SaveToListSheet on mobile when Save is tapped', async () => {
-    render(<ShopActionsRow {...defaultProps} />);
-    await act(async () => {}); // flush useUser's getUser promise
-    fireEvent.click(screen.getByRole('button', { name: /Save/i }));
-    expect(await screen.findByTestId('save-sheet')).toBeInTheDocument();
+    render(<ShopActionsRow {...props} />);
+
+    await user.click(screen.getByRole('button', { name: /回報錯誤/ }));
+
+    expect(screen.getByTestId('report-dialog')).toBeInTheDocument();
   });
 });

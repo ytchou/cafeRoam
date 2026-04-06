@@ -48,6 +48,7 @@
 | User profile          | Private profile page: check-in history, stamp collection, lists                                                                                                                                                                                                                      | 2     |
 | Retention             | Weekly curated email (fixed schedule), stamp collection display                                                                                                                                                                                                                      | 3     |
 | Shop followers        | `shop_followers` table: user_id + shop_id unique pair, created_at. Indexes on both FKs. Follow/unfollow toggle on shop page; follower count display (≥10 threshold).                                                                                                                 | 3     |
+| Shop data reports     | User-facing mechanism to flag incorrect shop data. Reports stored in `shop_reports` table, batched daily into a Linear issue via `IssueTrackerProvider` cron.                                                                                                                        | 3     |
 
 ---
 
@@ -114,6 +115,7 @@ Things that must exist for this product to ship. If any of these slip, the timel
 
 - **Compliance:** Taiwan PDPA (個人資料保護法). Key requirements: explicit consent at signup for data collection purposes; user right to delete account + all personal data within 30 days; purpose limitation — disclose that check-in photos may inform data enrichment; data retention policy for photos and check-in history. See [`docs/legal/data-retention-policy.md`](docs/legal/data-retention-policy.md) for full retention schedule.
 - **PDPA checkpoints during build:** Consent flow at signup (includes shop owner analytics disclosure), account deletion endpoint (cascades all user data: check-ins, photos, lists, polaroids, profile), privacy policy page (`/privacy`), photo usage disclosure on check-in flow, consent withdrawal toggle in profile settings.
+- `shop_reports.user_id` → ON DELETE SET NULL (anonymize report, preserve content for ops triage)
 - **Auth mechanism:** Supabase Auth (JWT-based sessions). Server-side session validation on all protected API routes.
 - **Secrets management:** Environment variables only. `.env` and `.env.local` are gitignored. `.env.example` documents all required vars with descriptions.
 - **Encryption:** In transit: TLS/HTTPS (Railway + Supabase enforce). At rest: Supabase Storage encrypts by default.
@@ -232,3 +234,13 @@ pnpm setup                     # Runs all steps automatically
   - **Denied/unavailable:** Near Me pill disabled; subtitle shows "Location unavailable — pick a district to explore"; first district auto-selected
   - **District selected:** No subtitle shown
     > **Note:** Public-facing CTAs (footer, home page, search no-results) link to `/submit`. Unauthenticated users are redirected to login via the `(protected)` route group before reaching the submission form.
+
+### Shop Data Reports
+
+- Any user (authenticated or anonymous) can report incorrect data on a published shop.
+- Reports include an optional field selector (hours, wifi, name, other) and a required free-text description (min 5 chars).
+- Rate-limited to 5 reports per day per IP address.
+- Reports stored in `shop_reports` with status lifecycle: pending → sent_to_linear → resolved.
+- Daily 9am Taiwan time cron batches all pending reports into a single Linear issue with a markdown checklist.
+- Each report row is marked `sent_to_linear` after batching — no double-sends.
+- PDPA: user_id (nullable) set to NULL on account deletion; report content preserved.
