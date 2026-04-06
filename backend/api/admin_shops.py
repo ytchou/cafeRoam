@@ -4,6 +4,7 @@ from uuid import uuid4
 
 import structlog
 from fastapi import APIRouter, BackgroundTasks, Depends, Form, HTTPException, Query, UploadFile
+from postgrest.exceptions import APIError
 from pydantic import BaseModel
 
 from api.deps import require_admin
@@ -448,7 +449,10 @@ async def enqueue_job(
 
     payload: dict[str, Any] = {"shop_id": shop_id}
     if body.job_type == JobType.SCRAPE_BATCH:
-        shop_row = db.table("shops").select("google_maps_url").eq("id", shop_id).single().execute()
+        try:
+            shop_row = db.table("shops").select("google_maps_url").eq("id", shop_id).single().execute()
+        except APIError:
+            raise HTTPException(status_code=404, detail=f"Shop {shop_id} not found")
         url = shop_row.data.get("google_maps_url") if shop_row.data else None
         if not url:
             raise HTTPException(

@@ -276,7 +276,7 @@ class TestAdminDeadLetter:
             select_rv.in_.return_value.order.return_value.limit.return_value.execute.return_value = MagicMock(
                 data=[
                     {"id": _JOB_10_ID, "status": "failed", "job_type": "enrich_shop"},
-                    {"id": _JOB_11_ID, "status": "dead_letter", "job_type": "scrape_shop"},
+                    {"id": _JOB_11_ID, "status": "dead_letter", "job_type": "scrape_batch"},
                 ]
             )
             with (
@@ -413,8 +413,8 @@ class TestAdminJobCancel:
 
 
 class TestAdminBatchListing:
-    def test_list_batches_only_queries_scrape_batch_job_type(self):
-        """list_batches endpoint must only query scrape_batch jobs, not the old scrape_shop type."""
+    def test_admin_batch_listing_only_shows_scrape_batch_jobs(self):
+        """When an admin views the batch listing, only scrape_batch jobs appear — not the legacy scrape_shop type."""
         app.dependency_overrides[get_current_user] = _admin_user
         try:
             mock_db = MagicMock()
@@ -458,8 +458,8 @@ class TestAdminBatchListing:
         finally:
             app.dependency_overrides.clear()
 
-    def test_collect_shop_ids_does_not_fall_back_to_scrape_shop_format(self):
-        """_collect_shop_ids_for_batch must not fall back to old scrape_shop job format."""
+    def test_admin_batch_shop_ids_excludes_legacy_scrape_shop_format(self):
+        """When collecting shop IDs for a batch, only the scrape_batch payload format is used — the old scrape_shop format is ignored."""
         from api.admin import _collect_shop_ids_for_batch
 
         mock_db = MagicMock()
