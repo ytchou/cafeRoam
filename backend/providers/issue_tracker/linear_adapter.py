@@ -60,7 +60,8 @@ class LinearIssueTrackerAdapter:
 
         if not result.get("success"):
             errors = data.get("errors", [])
-            error_msg = first(errors, "Linear errors").get("message", "Unknown error") if errors else "Unknown error"
+            first_error = first(errors, "Linear errors")
+            error_msg = first_error.get("message", "Unknown error") if errors else "Unknown error"
             logger.error("Linear API error", error=error_msg)
             raise RuntimeError(f"Linear API error: {error_msg}")
 
