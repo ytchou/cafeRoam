@@ -74,9 +74,7 @@ class ApifyScraperAdapter:
                 url_to_shop_id[s.google_maps_url] = s.shop_id
         start_urls = [{"url": url} for url in url_to_shop_id]
 
-        results = await self._run_actor(
-            {**_ACTOR_BASE_INPUT, "startUrls": start_urls}
-        )
+        results = await self._run_actor({**_ACTOR_BASE_INPUT, "startUrls": start_urls})
 
         matched: dict[str, ScrapedShopData] = {}
         for place in results:
