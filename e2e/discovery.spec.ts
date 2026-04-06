@@ -5,10 +5,7 @@
 // If any of the above files change routes, DOM structure, or visible text,
 // re-verify selectors and URL paths in this file.
 import { test, expect } from '@playwright/test';
-import {
-  grantGeolocation,
-  TAIPEI_COORDS,
-} from './fixtures/geolocation';
+import { grantGeolocation, TAIPEI_COORDS } from './fixtures/geolocation';
 import { first } from './fixtures/helpers';
 
 test.describe('@critical J01 — Near Me: grant geolocation → shops sorted by distance', () => {
