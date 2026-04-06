@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Bookmark, Share2 } from 'lucide-react';
+import { Bookmark, Flag, Share2 } from 'lucide-react';
 import { useIsDesktop } from '@/lib/hooks/use-media-query';
 import { useUser } from '@/lib/hooks/use-user';
 import { useUserLists } from '@/lib/hooks/use-user-lists';
@@ -11,6 +11,7 @@ import { CheckInPopover } from './check-in-popover';
 import { SavePopover } from './save-popover';
 import { SharePopover } from './share-popover';
 import { FollowButton } from './follow-button';
+import { ReportIssueDialog } from './report-issue-dialog';
 import { SaveToListSheet } from '@/components/lists/save-to-list-sheet';
 import { trackSignupCtaClick } from '@/lib/analytics/ga4-events';
 
@@ -34,6 +35,7 @@ export function ShopActionsRow({
   const [checkInOpen, setCheckInOpen] = useState(false);
   const [saveOpen, setSaveOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
 
   function requireAuth(then: () => void) {
     if (isUserLoading) return;
@@ -76,6 +78,18 @@ export function ShopActionsRow({
     </button>
   );
 
+  const reportBtn = (
+    <button
+      type="button"
+      onClick={() => setReportOpen(true)}
+      aria-label="回報錯誤"
+      className="border-border-warm text-text-primary flex items-center justify-center gap-2 rounded-full border bg-white px-4 py-3 text-sm font-semibold"
+    >
+      <Flag className="h-4 w-4" />
+      <span>回報</span>
+    </button>
+  );
+
   return (
     <div className="flex items-center gap-2 px-5 py-3">
       {isDesktop ? (
@@ -106,6 +120,12 @@ export function ShopActionsRow({
             isAuthenticated={!!user}
             onRequireAuth={() => requireAuth(() => {})}
           />
+          {reportBtn}
+          <ReportIssueDialog
+            shopId={shopId}
+            open={reportOpen}
+            onOpenChange={setReportOpen}
+          />
         </>
       ) : (
         <>
@@ -134,6 +154,12 @@ export function ShopActionsRow({
             shopId={shopId}
             open={saveOpen}
             onOpenChange={setSaveOpen}
+          />
+          {reportBtn}
+          <ReportIssueDialog
+            shopId={shopId}
+            open={reportOpen}
+            onOpenChange={setReportOpen}
           />
         </>
       )}
