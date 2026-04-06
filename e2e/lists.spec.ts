@@ -154,9 +154,7 @@ test.describe.serial('List cap tests (J12 + J13)', () => {
 
       // Cleanup: delete lists created by this test run (requires auth header)
       // No URL filter — staging cookies are set for the staging domain, not localhost.
-      const cleanupCookies = await page
-        .context()
-        .cookies();
+      const cleanupCookies = await page.context().cookies();
       const cleanupAuthCookie = cleanupCookies.find(
         (c) => c.name.startsWith('sb-') && c.name.endsWith('-auth-token')
       );

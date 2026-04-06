@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import type React from 'react';
 import Link from 'next/link';
 import { FaqPageJsonLd } from '@/components/seo/FaqPageJsonLd';
 
@@ -8,7 +9,13 @@ export const metadata: Metadata = {
     'CafeRoam 啡遊常見問題——什麼是啡遊、AI 搜尋怎麼用、資料怎麼來的、隱私保護等。',
 };
 
-const FAQ_ITEMS = [
+interface FaqItem {
+  question: string;
+  answer: string;
+  answerNode?: React.ReactNode;
+}
+
+const FAQ_ITEMS: FaqItem[] = [
   {
     question: '啡遊 CafeRoam 是什麼？',
     answer:
@@ -27,27 +34,39 @@ const FAQ_ITEMS = [
   {
     question: '店家資料是怎麼來的？',
     answer:
-      '我們結合公開資訊、AI 數據充實、以及使用者打卡回饋來建立店家資料。如果你發現資料有誤，歡迎透過店家頁面回報。',
+      '我們結合公開資訊、AI 數據充實、以及使用者打卡回饋來建立店家資料。如果你發現資料有誤，歡迎前往店家頁面，點擊「回報錯誤」按鈕回報。',
+    answerNode: (
+      <>
+        我們結合公開資訊、AI
+        數據充實、以及使用者打卡回饋來建立店家資料。如果你發現資料有誤，歡迎前往{' '}
+        <Link href="/explore" className="underline">
+          店家頁面
+        </Link>
+        ，點擊「回報錯誤」按鈕回報。
+      </>
+    ),
   },
   {
     question: '我可以提交新的咖啡廳嗎？',
-    answer: '可以！登入後你可以透過提交功能推薦咖啡廳，我們會審核後加入平台。',
+    answer:
+      '可以！點選頁面底部的「推薦咖啡廳」連結，登入後即可提交，我們審核後會加入平台。',
   },
   {
     question: '啡遊是免費的嗎？',
-    answer: '是的，啡遊完全免費使用。瀏覽、搜尋、建立清單、打卡都不需要付費。',
+    answer:
+      '目前完全免費使用。未來不排除推出付費方案，部分功能可能有使用限制；核心的瀏覽與店家探索功能將持續免費提供。',
   },
   {
     question: '我的個人資料安全嗎？',
     answer:
-      '我們依照台灣個人資料保護法（PDPA）處理你的資料。不會出售個人資料，刪除帳號後 30 天內會完全清除所有個人資料。詳情請參閱我們的隱私權政策。',
+      '我們依照台灣個人資料保護法（PDPA）處理你的資料，不會出售任何可識別個人身份的資料。分析與營運所使用的資料皆會事先去識別化處理；未來我們可能將去識別化的統整資料用於商業合作。刪除帳號後 30 天內會完全清除所有個人資料。詳情請參閱我們的隱私權政策。',
   },
   {
     question: '啡遊跟 Google Maps 有什麼不同？',
     answer:
       '啡遊專注在獨立咖啡廳，提供 AI 語意搜尋和工作/休息/社交三種模式——這些是通用地圖工具沒有的。我們的目標不是取代 Google Maps，而是在「找咖啡廳」這件事上做得更好。',
   },
-] as const;
+];
 
 export default function FaqPage() {
   return (
@@ -69,7 +88,9 @@ export default function FaqPage() {
                 ▾
               </span>
             </summary>
-            <p className="text-text-meta mt-2 text-base">{item.answer}</p>
+            <p className="text-text-meta mt-2 text-base">
+              {item.answerNode ?? item.answer}
+            </p>
           </details>
         ))}
       </section>
