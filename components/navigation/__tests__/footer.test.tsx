@@ -21,4 +21,10 @@ describe('Footer', () => {
     render(<Footer />);
     expect(screen.getByTestId('bmc-button')).toBeInTheDocument();
   });
+
+  it('renders submit café link', () => {
+    render(<Footer />);
+    const link = screen.getByRole('link', { name: '推薦咖啡廳' });
+    expect(link).toHaveAttribute('href', '/submit');
+  });
 });

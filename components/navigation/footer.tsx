@@ -5,6 +5,7 @@ const FOOTER_LINKS = [
   { href: '/about', label: '關於啡遊' },
   { href: '/faq', label: '常見問題' },
   { href: '/privacy', label: '隱私權政策' },
+  { href: '/submit', label: '推薦咖啡廳' },
 ] as const;
 
 export function Footer() {
