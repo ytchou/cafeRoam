@@ -19,23 +19,26 @@ _DISTRICT_COLS = (
 )
 
 # Address parsing — normal format: "103台灣臺北市大同區..."
-_CITY_RE = re.compile(r'\d{3}台灣([\u4e00-\u9fff]+?[市縣])')
+_CITY_RE = re.compile(r"\d{3}台灣([\u4e00-\u9fff]+?[市縣])")
 # Address parsing — reversed English format: "...大同區臺北市台灣 103"
-_REVERSED_CITY_RE = re.compile(r'([\u4e00-\u9fff]{2}[市縣])台灣')
+_REVERSED_CITY_RE = re.compile(r"([\u4e00-\u9fff]{2}[市縣])台灣")
 # District name immediately after city (or at end of before-city segment)
-_DISTRICT_RE = re.compile(r'([\u4e00-\u9fff]{1,4}[區鎮鄉市])')
+_DISTRICT_RE = re.compile(r"([\u4e00-\u9fff]{1,4}[區鎮鄉市])")
 
 _CITY_ZH_TO_EN: dict[str, str] = {
-    '臺北市': 'taipei',   '台北市': 'taipei',
-    '臺中市': 'taichung', '台中市': 'taichung',
-    '臺南市': 'tainan',   '台南市': 'tainan',
-    '新北市': 'new-taipei',
-    '高雄市': 'kaohsiung',
-    '嘉義市': 'chiayi',
-    '宜蘭縣': 'yilan',
-    '彰化縣': 'changhua',
-    '新竹市': 'hsinchu',
-    '新竹縣': 'hsinchu-county',
+    "臺北市": "taipei",
+    "台北市": "taipei",
+    "臺中市": "taichung",
+    "台中市": "taichung",
+    "臺南市": "tainan",
+    "台南市": "tainan",
+    "新北市": "new-taipei",
+    "高雄市": "kaohsiung",
+    "嘉義市": "chiayi",
+    "宜蘭縣": "yilan",
+    "彰化縣": "changhua",
+    "新竹市": "hsinchu",
+    "新竹縣": "hsinchu-county",
 }
 
 
@@ -47,7 +50,7 @@ def _parse_city_district(address: str) -> tuple[str, str] | None:
         city_zh = city_m.group(1)
         city_en = _CITY_ZH_TO_EN.get(city_zh)
         if city_en:
-            rest = address[city_m.end():]
+            rest = address[city_m.end() :]
             district_m = _DISTRICT_RE.match(rest)
             if district_m:
                 return city_en, district_m.group(1)
@@ -59,7 +62,7 @@ def _parse_city_district(address: str) -> tuple[str, str] | None:
         city_en = _CITY_ZH_TO_EN.get(city_zh)
         if city_en:
             before_city = address[: rev_m.start()]
-            district_m = re.search(r'([\u4e00-\u9fff]{2}[區鎮鄉市])$', before_city)
+            district_m = re.search(r"([\u4e00-\u9fff]{2}[區鎮鄉市])$", before_city)
             if district_m:
                 return city_en, district_m.group(1)
 

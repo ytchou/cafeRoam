@@ -48,8 +48,10 @@ async def persist_scraped_data(
     # Geo-gate: reject non-Taiwan shops before spending API budget on enrichment.
     # countryCode "TW" is the primary signal; 台灣/臺灣 in the address is a fallback
     # for any scraper that omits countryCode.
-    is_taiwan = (data.country_code == "TW") if data.country_code else (
-        "台灣" in data.address or "臺灣" in data.address
+    is_taiwan = (
+        (data.country_code == "TW")
+        if data.country_code
+        else ("台灣" in data.address or "臺灣" in data.address)
     )
     if not is_taiwan:
         country = data.country_code or "unknown"

@@ -46,9 +46,7 @@ def main(dry_run: bool = False) -> None:
 
         city_en, district_zh = parsed
         if (city_en, district_zh) not in key_to_id:
-            unmatched.append(
-                f"  {shop['name']} — no district row for ({city_en}, {district_zh})"
-            )
+            unmatched.append(f"  {shop['name']} — no district row for ({city_en}, {district_zh})")
             continue
 
         if not dry_run:
