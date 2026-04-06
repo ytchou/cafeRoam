@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -40,6 +40,13 @@ export function ReportIssueDialog({ shopId, open, onOpenChange }: ReportIssueDia
   const [field, setField] = useState<string>('');
   const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!open) {
+      setField('');
+      setDescription('');
+    }
+  }, [open]);
 
   const canSubmit = description.trim().length >= MIN_DESCRIPTION_LENGTH && !isSubmitting;
 
@@ -98,7 +105,7 @@ export function ReportIssueDialog({ shopId, open, onOpenChange }: ReportIssueDia
           <Textarea
             placeholder="請描述您發現的問題..."
             value={description}
-            onChange={(e) => setDescription(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setDescription(e.target.value)}
             rows={4}
           />
         </div>
