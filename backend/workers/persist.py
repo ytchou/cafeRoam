@@ -85,6 +85,8 @@ async def persist_scraped_data(
             "phone": data.phone,
             "website": data.website,
             "menu_url": data.menu_url,
+            "instagram_url": data.instagram_url,
+            "facebook_url": data.facebook_url,
             "price_range": data.price_range,
             "processing_status": "enriching",
             "updated_at": datetime.now(UTC).isoformat(),
