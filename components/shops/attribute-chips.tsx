@@ -67,7 +67,7 @@ export function AttributeChips({ tags }: AttributeChipsProps) {
   }
 
   for (const [dim, group] of grouped) {
-    grouped.set(dim, [...group].sort((a, b) => b.confidence - a.confidence));
+    grouped.set(dim, [...group].sort((a, b) => (b.confidence ?? 0) - (a.confidence ?? 0)));
   }
 
   const orderedDimensions = DIMENSION_ORDER.filter((d) => grouped.has(d));

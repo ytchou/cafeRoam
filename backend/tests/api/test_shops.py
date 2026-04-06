@@ -470,3 +470,82 @@ class TestGetShopSeoFields:
         assert data["name"] == "Café Flâneur"
         assert data["modeScores"]["work"] == 0.85
         assert len(data["taxonomyTags"]) == 1
+
+
+class TestExtractTaxonomyTags:
+    """Unit tests for confidence threshold filtering in _extract_taxonomy_tags."""
+
+    def setup_method(self):
+        from api.shops import _extract_taxonomy_tags
+        self._fn = _extract_taxonomy_tags
+
+    def test_given_shop_with_mixed_confidence_tags_only_high_confidence_tags_are_shown(self):
+        raw_tags = [
+            {
+                "confidence": 0.8,
+                "taxonomy_tags": {
+                    "id": "quiet_ambience",
+                    "dimension": "ambience",
+                    "label": "Quiet Ambience",
+                    "label_zh": "安靜氛圍",
+                },
+            },
+            {
+                "confidence": 0.3,
+                "taxonomy_tags": {
+                    "id": "good_wifi",
+                    "dimension": "functionality",
+                    "label": "Good WiFi",
+                    "label_zh": "穩定WiFi",
+                },
+            },
+        ]
+        result = self._fn(raw_tags)
+        assert len(result) == 1
+        assert result[0]["id"] == "quiet_ambience"
+
+    def test_given_tag_at_exactly_threshold_it_is_included(self):
+        raw_tags = [
+            {
+                "confidence": 0.5,
+                "taxonomy_tags": {
+                    "id": "laptop_friendly",
+                    "dimension": "functionality",
+                    "label": "Laptop Friendly",
+                    "label_zh": "適合帶筆電",
+                },
+            },
+        ]
+        result = self._fn(raw_tags)
+        assert len(result) == 1
+        assert result[0]["confidence"] == 0.5
+
+    def test_given_tag_with_none_confidence_it_is_filtered_out(self):
+        raw_tags = [
+            {
+                "confidence": None,
+                "taxonomy_tags": {
+                    "id": "pet_friendly",
+                    "dimension": "functionality",
+                    "label": "Pet Friendly",
+                    "label_zh": "寵物友善",
+                },
+            },
+        ]
+        result = self._fn(raw_tags)
+        assert result == []
+
+    def test_confidence_value_is_included_in_api_output(self):
+        raw_tags = [
+            {
+                "confidence": 0.75,
+                "taxonomy_tags": {
+                    "id": "cozy_seating",
+                    "dimension": "ambience",
+                    "label": "Cozy Seating",
+                    "label_zh": "舒適座位",
+                },
+            },
+        ]
+        result = self._fn(raw_tags)
+        assert result[0]["confidence"] == 0.75

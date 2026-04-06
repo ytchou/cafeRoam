@@ -41,7 +41,7 @@ export interface TaxonomyTag {
   dimension: TaxonomyDimension;
   label: string;
   labelZh: string;
-  confidence: number;
+  confidence?: number;
 }
 
 export type TaxonomyDimension = 'functionality' | 'time' | 'ambience' | 'mode' | 'coffee';
