@@ -176,7 +176,13 @@ class TestShopsAPI:
         assert "taxonomyTags" in data
         assert "tags" not in data
         assert data["taxonomyTags"] == [
-            {"id": "quiet", "dimension": "ambience", "label": "Quiet", "labelZh": "安靜", "confidence": 0.9}
+            {
+                "id": "quiet",
+                "dimension": "ambience",
+                "label": "Quiet",
+                "labelZh": "安靜",
+                "confidence": 0.9,
+            }
         ]
 
     def test_get_shop_detail_returns_camel_case_keys(self):
@@ -285,7 +291,13 @@ class TestShopsAPI:
         assert len(data) == 1
         assert "taxonomyTags" in data[0]
         assert data[0]["taxonomyTags"] == [
-            {"id": "quiet", "dimension": "ambience", "label": "Quiet", "labelZh": "安靜", "confidence": 0.8}
+            {
+                "id": "quiet",
+                "dimension": "ambience",
+                "label": "Quiet",
+                "labelZh": "安靜",
+                "confidence": 0.8,
+            }
         ]
 
     def test_user_browsing_shop_list_sees_empty_tags_when_shop_has_none(self):
@@ -482,6 +494,7 @@ class TestExtractTaxonomyTags:
 
     def setup_method(self):
         from api.shops import _extract_taxonomy_tags
+
         self._fn = _extract_taxonomy_tags
 
     def test_given_shop_with_mixed_confidence_tags_only_high_confidence_tags_are_shown(self):

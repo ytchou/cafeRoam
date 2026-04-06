@@ -67,7 +67,10 @@ export function AttributeChips({ tags }: AttributeChipsProps) {
   }
 
   for (const [dim, group] of grouped) {
-    grouped.set(dim, [...group].sort((a, b) => (b.confidence ?? 0) - (a.confidence ?? 0)));
+    grouped.set(
+      dim,
+      [...group].sort((a, b) => (b.confidence ?? 0) - (a.confidence ?? 0))
+    );
   }
 
   const orderedDimensions = DIMENSION_ORDER.filter((d) => grouped.has(d));
@@ -78,7 +81,11 @@ export function AttributeChips({ tags }: AttributeChipsProps) {
     <div className="px-5 py-4">
       <h2 className="text-text-primary mb-3 text-sm font-semibold">Tags</h2>
       {orderedDimensions.map((dimension) => (
-        <TagGroup key={dimension} dimension={dimension} tags={grouped.get(dimension)!} />
+        <TagGroup
+          key={dimension}
+          dimension={dimension}
+          tags={grouped.get(dimension)!}
+        />
       ))}
     </div>
   );

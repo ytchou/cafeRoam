@@ -44,7 +44,12 @@ export interface TaxonomyTag {
   confidence?: number;
 }
 
-export type TaxonomyDimension = 'functionality' | 'time' | 'ambience' | 'mode' | 'coffee';
+export type TaxonomyDimension =
+  | 'functionality'
+  | 'time'
+  | 'ambience'
+  | 'mode'
+  | 'coffee';
 
 export interface User {
   id: string;
