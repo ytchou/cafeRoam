@@ -296,7 +296,8 @@ describe('DiscoveryPage', () => {
     const noResultsContainer = screen.getByTestId('search-no-results');
     expect(noResultsContainer).toBeInTheDocument();
 
-    const noResultsSubmitLink = noResultsContainer.querySelector('a[href="/submit"]');
+    const noResultsSubmitLink =
+      noResultsContainer.querySelector('a[href="/submit"]');
     expect(noResultsSubmitLink).toBeInTheDocument();
     expect(screen.getByText(/找不到你想找的店/)).toBeInTheDocument();
   });

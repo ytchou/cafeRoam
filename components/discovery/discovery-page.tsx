@@ -110,9 +110,9 @@ export function DiscoveryPage() {
       </section>
 
       {/* Submit CTA banner */}
-      <div className="border-b border-[#e5e7eb] bg-surface-warm px-5 py-3">
+      <div className="bg-surface-warm border-b border-[#e5e7eb] px-5 py-3">
         <div className="mx-auto flex max-w-5xl items-center justify-between">
-          <p className="text-sm text-text-secondary">知道一間很棒的咖啡廳？</p>
+          <p className="text-text-secondary text-sm">知道一間很棒的咖啡廳？</p>
           <Link
             href="/submit"
             className="bg-brand inline-flex shrink-0 rounded-full px-4 py-2 text-sm font-semibold text-white"
@@ -155,12 +155,14 @@ export function DiscoveryPage() {
                   : '暫時沒有精選咖啡廳。'}
               </p>
               {isSearching && (
-                <p className="text-sm text-text-secondary">
+                <p className="text-text-secondary text-sm">
                   找不到你想找的店？{' '}
                   <Link
                     href="/submit"
                     className="text-brand font-medium hover:underline"
-                    onClick={() => trackSignupCtaClick('search_no_results_submit_cta')}
+                    onClick={() =>
+                      trackSignupCtaClick('search_no_results_submit_cta')
+                    }
                   >
                     推薦咖啡廳 →
                   </Link>
