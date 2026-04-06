@@ -109,6 +109,20 @@ export function DiscoveryPage() {
         </div>
       </section>
 
+      {/* Submit CTA banner */}
+      <div className="border-b border-[#e5e7eb] bg-surface-warm px-5 py-3">
+        <div className="mx-auto flex max-w-5xl items-center justify-between">
+          <p className="text-sm text-text-secondary">知道一間很棒的咖啡廳？</p>
+          <Link
+            href="/submit"
+            className="bg-brand inline-flex shrink-0 rounded-full px-4 py-2 text-sm font-semibold text-white"
+            onClick={() => trackSignupCtaClick('home_submit_cta')}
+          >
+            推薦咖啡廳
+          </Link>
+        </div>
+      </div>
+
       <section className="border-b border-[#e5e7eb] bg-white px-5 py-4">
         <div className="mx-auto max-w-5xl">
           <ModeChips activeMode={mode} onModeChange={setMode} />

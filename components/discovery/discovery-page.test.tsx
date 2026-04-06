@@ -260,4 +260,15 @@ describe('DiscoveryPage', () => {
       expect(localStorage.getItem('caferoam_free_search_used')).toBeNull();
     });
   });
+
+  it('renders submit café CTA banner on home page', () => {
+    render(
+      <Suspense fallback={null}>
+        <DiscoveryPage />
+      </Suspense>,
+    );
+    const ctaLink = screen.getByRole('link', { name: /推薦咖啡廳/ });
+    expect(ctaLink).toHaveAttribute('href', '/submit');
+    expect(screen.getByText(/知道一間很棒的咖啡廳/)).toBeInTheDocument();
+  });
 });
