@@ -1,19 +1,69 @@
 """Service for district-based shop discovery. Mirrors vibe_service.py pattern."""
 
+import re
 from typing import Any, cast
 
+import structlog
 from supabase import Client
 
 from core.db import first
 from models.types import District, DistrictShopResult, DistrictShopsResponse
 
-_DISTRICT_COLS = (
-    "id, slug, name_en, name_zh, description_en, description_zh, city, shop_count, sort_order"
-)
+logger = structlog.get_logger()
 
 _SHOP_COLS = (
     "id, name, slug, rating, review_count, address, mrt, processing_status, shop_photos(url)"
 )
+_DISTRICT_COLS = (
+    "id, slug, name_en, name_zh, description_en, description_zh, city, shop_count, sort_order"
+)
+
+# Address parsing — normal format: "103台灣臺北市大同區..."
+_CITY_RE = re.compile(r'\d{3}台灣([\u4e00-\u9fff]+?[市縣])')
+# Address parsing — reversed English format: "...大同區臺北市台灣 103"
+_REVERSED_CITY_RE = re.compile(r'([\u4e00-\u9fff]{2}[市縣])台灣')
+# District name immediately after city (or at end of before-city segment)
+_DISTRICT_RE = re.compile(r'([\u4e00-\u9fff]{1,4}[區鎮鄉市])')
+
+_CITY_ZH_TO_EN: dict[str, str] = {
+    '臺北市': 'taipei',   '台北市': 'taipei',
+    '臺中市': 'taichung', '台中市': 'taichung',
+    '臺南市': 'tainan',   '台南市': 'tainan',
+    '新北市': 'new-taipei',
+    '高雄市': 'kaohsiung',
+    '嘉義市': 'chiayi',
+    '宜蘭縣': 'yilan',
+    '彰化縣': 'changhua',
+    '新竹市': 'hsinchu',
+    '新竹縣': 'hsinchu-county',
+}
+
+
+def _parse_city_district(address: str) -> tuple[str, str] | None:
+    """Return (city_en, district_zh) parsed from a Taiwan address, or None."""
+    # Normal format: "103台灣臺北市大同區..."
+    city_m = _CITY_RE.search(address)
+    if city_m:
+        city_zh = city_m.group(1)
+        city_en = _CITY_ZH_TO_EN.get(city_zh)
+        if city_en:
+            rest = address[city_m.end():]
+            district_m = _DISTRICT_RE.match(rest)
+            if district_m:
+                return city_en, district_m.group(1)
+
+    # Reversed English format: "...大同區臺北市台灣 103"
+    rev_m = _REVERSED_CITY_RE.search(address)
+    if rev_m:
+        city_zh = rev_m.group(1)
+        city_en = _CITY_ZH_TO_EN.get(city_zh)
+        if city_en:
+            before_city = address[: rev_m.start()]
+            district_m = re.search(r'([\u4e00-\u9fff]{2}[區鎮鄉市])$', before_city)
+            if district_m:
+                return city_en, district_m.group(1)
+
+    return None
 
 
 class DistrictService:
@@ -21,17 +71,48 @@ class DistrictService:
         self._db = db
 
     def get_districts(self, min_shops: int = 3) -> list[District]:
-        """Return active districts with at least min_shops live shops."""
-        response = (
+        """Return active districts with at least min_shops live shops (live count via DB fn)."""
+        response = self._db.rpc("get_active_districts", {"min_shops": min_shops}).execute()
+        rows = cast("list[dict[str, Any]]", response.data or [])
+        return [District(**row) for row in rows]
+
+    def assign_district(self, shop_id: str, address: str) -> None:
+        """Parse address and assign district_id to the shop. Logs and returns if unparseable."""
+        parsed = _parse_city_district(address)
+        if not parsed:
+            logger.warning(
+                "assign_district: could not parse address",
+                shop_id=shop_id,
+                address=address[:80],
+            )
+            return
+
+        city_en, district_zh = parsed
+        district_resp = (
             self._db.table("districts")
-            .select(_DISTRICT_COLS)
-            .eq("is_active", True)
-            .gte("shop_count", min_shops)
-            .order("sort_order")
+            .select("id")
+            .eq("city", city_en)
+            .eq("name_zh", district_zh)
             .execute()
         )
-        rows = cast("list[dict[str, Any]]", response.data or [])
-        return [District(**row) for row in rows if row.get("shop_count", 0) >= min_shops]
+        rows = cast("list[dict[str, Any]]", district_resp.data or [])
+        if not rows:
+            logger.warning(
+                "assign_district: no district row found",
+                shop_id=shop_id,
+                city=city_en,
+                district=district_zh,
+            )
+            return
+
+        district_id = first(rows, f"district ({city_en}, {district_zh})")["id"]
+        self._db.table("shops").update({"district_id": district_id}).eq("id", shop_id).execute()
+        logger.info(
+            "assign_district: assigned",
+            shop_id=shop_id,
+            city=city_en,
+            district=district_zh,
+        )
 
     def get_shops_for_district(
         self,

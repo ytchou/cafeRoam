@@ -54,10 +54,13 @@ async def handle_enrich_shop(
 
     if result.summary and not is_zh_dominant(result.summary):
         logger.warning(
-            "Enrichment summary is not zh-TW dominant — skipping DB write",
+            "Enrichment summary is not zh-TW dominant — marking failed",
             shop_id=shop_id,
             summary_preview=result.summary[:80],
         )
+        db.table("shops").update(
+            {"processing_status": "failed", "updated_at": datetime.now(UTC).isoformat()}
+        ).eq("id", shop_id).execute()
         raise ValueError(f"Enrichment summary for shop {shop_id} is not in Traditional Chinese")
 
     mode = result.mode_scores

@@ -180,7 +180,7 @@ async def approve_submission(
             detail=f"Submission {submission_id} status changed concurrently — refresh and retry",
         )
 
-    # Set the associated shop to live — fetch name in same round-trip via .select()
+    # Set the associated shop to live
     shop_update = (
         db.table("shops")
         .update({"processing_status": "live", "updated_at": now})

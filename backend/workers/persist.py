@@ -6,6 +6,7 @@ from supabase import Client
 
 from models.types import JobType
 from providers.scraper.interface import ScrapedShopData
+from services.district_service import DistrictService
 from workers.queue import JobQueue
 
 logger = structlog.get_logger()
@@ -45,9 +46,11 @@ async def persist_scraped_data(
         return
 
     # Geo-gate: reject non-Taiwan shops before spending API budget on enrichment.
-    # countryCode "TW" is the primary signal; "台灣" in the address is a fallback
+    # countryCode "TW" is the primary signal; 台灣/臺灣 in the address is a fallback
     # for any scraper that omits countryCode.
-    is_taiwan = (data.country_code == "TW") if data.country_code else ("台灣" in data.address)
+    is_taiwan = (data.country_code == "TW") if data.country_code else (
+        "台灣" in data.address or "臺灣" in data.address
+    )
     if not is_taiwan:
         country = data.country_code or "unknown"
         reason = f"Out of region: country_code={country}, address={data.address[:80]}"
@@ -145,6 +148,8 @@ async def persist_scraped_data(
                 "updated_at": datetime.now(UTC).isoformat(),
             }
         ).eq("id", submission_id).execute()
+
+    DistrictService(db).assign_district(shop_id, data.address)
 
     # Queue enrichment — forward submission context + batch tracking
     enrich_payload: dict[str, Any] = {"shop_id": shop_id}
