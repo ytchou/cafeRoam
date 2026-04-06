@@ -9,9 +9,7 @@ from providers.issue_tracker.interface import IssueTrackerProvider
 logger = structlog.get_logger()
 
 
-async def handle_shop_data_report(
-    db: Client, issue_tracker: IssueTrackerProvider
-) -> None:
+async def handle_shop_data_report(db: Client, issue_tracker: IssueTrackerProvider) -> None:
     """Fetch pending shop_reports and create a single Linear issue as a digest."""
     response = (
         db.table("shop_reports")

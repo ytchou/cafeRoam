@@ -25,7 +25,7 @@ class Settings(BaseSettings):
     resend_api_key: str = ""
     email_from: str = "CafeRoam <noreply@caferoam.tw>"
     admin_email: str = "hello@caferoam.tw"
-    
+
     # Issue tracker (Linear)
     issue_tracker_provider: str = "linear"
     linear_api_key: str = ""

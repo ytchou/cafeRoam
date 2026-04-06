@@ -73,6 +73,4 @@ class TestLinearIssueTrackerAdapter:
             mock_client_cls.return_value = mock_client
 
             with pytest.raises(RuntimeError, match="Linear API error"):
-                await adapter.create_issue(
-                    IssueCreateRequest(title="Test", description="Test")
-                )
+                await adapter.create_issue(IssueCreateRequest(title="Test", description="Test"))

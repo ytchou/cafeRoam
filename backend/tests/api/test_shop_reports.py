@@ -50,9 +50,7 @@ class TestSubmitShopReport:
         assert response.json()["message"] == "Report submitted"
 
     @patch("api.shops.get_admin_db")
-    def test_authenticated_user_report_includes_user_id(
-        self, mock_get_db: MagicMock
-    ) -> None:
+    def test_authenticated_user_report_includes_user_id(self, mock_get_db: MagicMock) -> None:
         mock_db = MagicMock()
         mock_get_db.return_value = mock_db
         _mock_shop_exists(mock_db)
@@ -75,9 +73,7 @@ class TestSubmitShopReport:
         assert inserted_data["field"] == "hours"
 
     @patch("api.shops.get_admin_db")
-    def test_report_with_empty_description_returns_422(
-        self, mock_get_db: MagicMock
-    ) -> None:
+    def test_report_with_empty_description_returns_422(self, mock_get_db: MagicMock) -> None:
         response = client.post(
             f"/shops/{SHOP_ID}/report",
             json={"description": ""},
@@ -86,9 +82,7 @@ class TestSubmitShopReport:
         assert response.status_code == 422
 
     @patch("api.shops.get_admin_db")
-    def test_report_for_nonexistent_shop_returns_404(
-        self, mock_get_db: MagicMock
-    ) -> None:
+    def test_report_for_nonexistent_shop_returns_404(self, mock_get_db: MagicMock) -> None:
         mock_db = MagicMock()
         mock_get_db.return_value = mock_db
         _mock_shop_not_found(mock_db)

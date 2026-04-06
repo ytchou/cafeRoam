@@ -12,6 +12,4 @@ def get_issue_tracker_provider() -> IssueTrackerProvider:
                 team_id=settings.linear_team_id,
             )
         case _:
-            raise ValueError(
-                f"Unknown issue tracker provider: {settings.issue_tracker_provider}"
-            )
+            raise ValueError(f"Unknown issue tracker provider: {settings.issue_tracker_provider}")
