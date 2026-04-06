@@ -476,10 +476,8 @@ def main():
     )
     p_restore.add_argument(
         "--target-url",
-        default=os.environ.get(
-            "DATABASE_URL", "postgresql://postgres:postgres@127.0.0.1:54322/postgres"
-        ),
-        help="Target DB URL. Default: local Supabase",
+        default=os.environ.get("DATABASE_URL"),
+        help="Target DB URL (required — set DATABASE_URL or pass --target-url)",
     )
 
     args = parser.parse_args()
@@ -518,6 +516,12 @@ def main():
         cmd_promote(staging_url, prod_url)
 
     elif args.command == "restore":
+        if not args.target_url:
+            print(
+                "Error: --target-url or DATABASE_URL must be set.",
+                file=sys.stderr,
+            )
+            sys.exit(1)
         filepath = args.file
         # Resolve relative to snapshots dir if not absolute
         if not filepath.is_absolute() and not filepath.exists():

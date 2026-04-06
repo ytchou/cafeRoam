@@ -1,0 +1,51 @@
+{
+  "findings": [
+    {
+      "severity": "Important",
+      "file": "Makefile",
+      "line": "54",
+      "description": "`cut -d'=' -f2` truncates SERVICE_ROLE keys containing `=` padding characters. JWT service role keys often end with `=` or `==`. Should be `cut -d'=' -f2-` (with trailing dash) to capture the full value, matching the SUPABASE_URL extraction on line 53.",
+      "flagged_by": "Bug Hunter",
+      "status": "valid"
+    },
+    {
+      "severity": "Important",
+      "file": "scripts/sync_data.py",
+      "line": "480",
+      "description": "The `restore` subcommand still defaults to `postgresql://postgres:postgres@127.0.0.1:54322/postgres` when DATABASE_URL is not set. This contradicts the staging-only migration — direct script invocation bypasses the Makefile guard and silently connects to a non-existent local DB. Should require DATABASE_URL explicitly or remove the localhost default.",
+      "flagged_by": "Bug Hunter",
+      "status": "valid"
+    },
+    {
+      "severity": "Important",
+      "file": "ERROR-PREVENTION.md",
+      "line": "240",
+      "description": "The 'Environment Debugging Loops' entry still says `.env.local pointing to remote instance instead of 127.0.0.1:54321` — this is backwards for staging-first development. Should be updated to reflect that the correct target is now the staging Supabase project URL, not localhost.",
+      "flagged_by": "Bug Hunter",
+      "status": "valid"
+    },
+    {
+      "severity": "Minor",
+      "file": "Makefile",
+      "line": "32",
+      "description": "The `setup` target runs `supabase db push` without first checking if the Supabase CLI is linked (`.supabase/project-ref` exists). If the user skips the link step printed above, db push will fail with an unclear error. Consider adding a guard or making the link step mandatory.",
+      "flagged_by": "Architecture & Design",
+      "status": "debatable"
+    }
+  ],
+  "active_agents": ["Bug Hunter", "Architecture & Design"],
+  "skipped": [
+    {
+      "file": "backend/core/config.py",
+      "line": "7",
+      "reason": "Empty string default for supabase_url is consistent with existing pattern for other credential fields. Backend fails at first Supabase call which is adequate feedback."
+    },
+    {
+      "file": "scripts/doctor.sh",
+      "line": "80",
+      "reason": "Pre-existing pattern — apikey: placeholder works correctly for Supabase REST health check endpoints and is standard practice."
+    }
+  ],
+  "head_sha": "ffd7488687775f2cb9069ca50885c277bf827b17",
+  "review_log_path": "docs/reviews/2026-04-06-infra-dev-264-staging-only.md"
+}
