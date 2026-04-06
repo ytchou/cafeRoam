@@ -32,14 +32,21 @@ class ShopReportCreate(BaseModel):
     description: str = Field(..., min_length=5)
 
 
+_CONFIDENCE_THRESHOLD = 0.5
+
+
 def _extract_taxonomy_tags(raw_tags: list[dict[str, Any]]) -> list[dict[str, Any]]:
     result = []
     for tag_row in raw_tags:
+        if (tag_row.get("confidence") or 0) < _CONFIDENCE_THRESHOLD:
+            continue
         raw = tag_row.get("taxonomy_tags")
         if not raw:
             continue
         with contextlib.suppress(ValidationError):
-            result.append(TaxonomyTag(**raw).model_dump(by_alias=True))
+            tag_data = TaxonomyTag(**raw).model_dump(by_alias=True)
+            tag_data["confidence"] = float(tag_row.get("confidence") or 0)
+            result.append(tag_data)
     return result
 
 
@@ -75,7 +82,7 @@ async def list_shops(
     db = get_anon_client()
     query = db.table("shops").select(
         f"{_SHOP_LIST_COLUMNS}, shop_photos(url), shop_claims(status), "
-        "shop_tags(tag_id, taxonomy_tags(id, dimension, label, label_zh))"
+        "shop_tags(tag_id, confidence, taxonomy_tags(id, dimension, label, label_zh))"
     )
     if city:
         query = query.eq("city", city)
@@ -111,7 +118,7 @@ async def get_shop(shop_id: str) -> Any:
         db.table("shops")
         .select(
             f"{_SHOP_DETAIL_COLUMNS}, shop_photos(url), "
-            "shop_tags(tag_id, taxonomy_tags(id, dimension, label, label_zh)), "
+            "shop_tags(tag_id, confidence, taxonomy_tags(id, dimension, label, label_zh)), "
             "shop_claims(status, user_id), "
             "shop_content(id, title, body, photo_url, is_published, updated_at, content_type), "
             "districts(slug, name_zh)"

@@ -66,7 +66,27 @@ const MOCK_SHOP = {
   description: 'A cozy coffee shop',
   photoUrls: ['https://example.com/photo.jpg'],
   taxonomyTags: [
-    { id: 'quiet', dimension: 'ambience', label: 'Quiet', labelZh: '安靜' },
+    {
+      id: 'quiet',
+      dimension: 'ambience',
+      label: 'Quiet',
+      labelZh: '安靜',
+      confidence: 0.9,
+    },
+    {
+      id: 'cozy',
+      dimension: 'ambience',
+      label: 'Cozy',
+      labelZh: '溫馨',
+      confidence: 0.8,
+    },
+    {
+      id: 'natural_light',
+      dimension: 'ambience',
+      label: 'Natural Light',
+      labelZh: '採光好',
+      confidence: 0.7,
+    },
   ],
   modeScores: { work: 0.8, rest: 0.6, social: 0.3 },
 };
