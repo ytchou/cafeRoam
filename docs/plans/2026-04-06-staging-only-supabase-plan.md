@@ -63,16 +63,16 @@ Forces explicit env var — no silent fallback to dead local instance.
 
 ## Step 4: `Makefile` — Adapt targets for staging-first
 
-| Target | Change |
-|--------|--------|
-| `setup` | Remove `supabase start`. Add `supabase link` hint. Keep `supabase db push`. |
+| Target              | Change                                                                                              |
+| ------------------- | --------------------------------------------------------------------------------------------------- |
+| `setup`             | Remove `supabase start`. Add `supabase link` hint. Keep `supabase db push`.                         |
 | `restore-seed-user` | Use `$SUPABASE_URL` from env instead of hardcoded `127.0.0.1:54321`. Read keys from `backend/.env`. |
-| `seed-shops` | Change from `docker exec` to `psql "$DATABASE_URL"`. Require `DATABASE_URL` env var. |
-| `seed-kino` | Same as `seed-shops`. |
-| `seed-staging` | **Remove** — now redundant with `seed-shops`. |
-| `reset-db` | **Remove entirely** — too dangerous for shared staging. |
-| `restore-snapshot` | Update default TARGET from local postgres URL to require explicit `DATABASE_URL`. |
-| `help` | Update all descriptions. |
+| `seed-shops`        | Change from `docker exec` to `psql "$DATABASE_URL"`. Require `DATABASE_URL` env var.                |
+| `seed-kino`         | Same as `seed-shops`.                                                                               |
+| `seed-staging`      | **Remove** — now redundant with `seed-shops`.                                                       |
+| `reset-db`          | **Remove entirely** — too dangerous for shared staging.                                             |
+| `restore-snapshot`  | Update default TARGET from local postgres URL to require explicit `DATABASE_URL`.                   |
+| `help`              | Update all descriptions.                                                                            |
 
 ---
 
@@ -87,6 +87,7 @@ Forces explicit env var — no silent fallback to dead local instance.
 ## Step 6: `CLAUDE.md` — Update Database section
 
 Replace current "Database (Supabase)" section with staging-first workflow:
+
 - Remove `supabase start` and Docker references
 - Remove `make reset-db`
 - Update `make seed-shops` to show `DATABASE_URL=... make seed-shops`
@@ -104,14 +105,14 @@ Replace current "Database (Supabase)" section with staging-first workflow:
 
 ## Files Modified
 
-| File | Change |
-|------|--------|
-| `backend/core/config.py` | Remove localhost default for `supabase_url` |
-| `scripts/doctor.sh` | Rewrite Supabase checks for staging connectivity |
-| `Makefile` | Adapt seed/setup targets; remove `reset-db` and `seed-staging` |
-| `.env.example` | Update comments, add `DATABASE_URL` |
-| `CLAUDE.md` | Update Database section for staging-first |
-| `ERROR-PREVENTION.md` | Update Supabase safety entries |
+| File                     | Change                                                         |
+| ------------------------ | -------------------------------------------------------------- |
+| `backend/core/config.py` | Remove localhost default for `supabase_url`                    |
+| `scripts/doctor.sh`      | Rewrite Supabase checks for staging connectivity               |
+| `Makefile`               | Adapt seed/setup targets; remove `reset-db` and `seed-staging` |
+| `.env.example`           | Update comments, add `DATABASE_URL`                            |
+| `CLAUDE.md`              | Update Database section for staging-first                      |
+| `ERROR-PREVENTION.md`    | Update Supabase safety entries                                 |
 
 ## NOT Changing
 
