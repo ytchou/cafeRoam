@@ -36,7 +36,11 @@ const FIELD_OPTIONS = [
 
 const MIN_DESCRIPTION_LENGTH = 5;
 
-export function ReportIssueDialog({ shopId, open, onOpenChange }: ReportIssueDialogProps) {
+export function ReportIssueDialog({
+  shopId,
+  open,
+  onOpenChange,
+}: ReportIssueDialogProps) {
   const [field, setField] = useState<string>('');
   const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -49,7 +53,8 @@ export function ReportIssueDialog({ shopId, open, onOpenChange }: ReportIssueDia
     }
   }, [open]);
 
-  const canSubmit = description.trim().length >= MIN_DESCRIPTION_LENGTH && !isSubmitting;
+  const canSubmit =
+    description.trim().length >= MIN_DESCRIPTION_LENGTH && !isSubmitting;
 
   async function handleSubmit() {
     if (!canSubmit) return;
@@ -75,7 +80,9 @@ export function ReportIssueDialog({ shopId, open, onOpenChange }: ReportIssueDia
       setDescription('');
       onOpenChange(false);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : '送出失敗，請稍後再試');
+      toast.error(
+        error instanceof Error ? error.message : '送出失敗，請稍後再試'
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -86,7 +93,9 @@ export function ReportIssueDialog({ shopId, open, onOpenChange }: ReportIssueDia
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>回報錯誤</DialogTitle>
-          <DialogDescription>發現店家資訊有誤？請告訴我們，我們會盡快更正。</DialogDescription>
+          <DialogDescription>
+            發現店家資訊有誤？請告訴我們，我們會盡快更正。
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -106,7 +115,9 @@ export function ReportIssueDialog({ shopId, open, onOpenChange }: ReportIssueDia
           <Textarea
             placeholder="請描述您發現的問題..."
             value={description}
-            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setDescription(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+              setDescription(e.target.value)
+            }
             rows={4}
           />
         </div>

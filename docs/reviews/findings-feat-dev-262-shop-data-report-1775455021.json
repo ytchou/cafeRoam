@@ -57,7 +57,11 @@
       "status": "debatable"
     }
   ],
-  "active_agents": ["Bug Hunter", "Standards & Conventions", "Architecture & Design"],
+  "active_agents": [
+    "Bug Hunter",
+    "Standards & Conventions",
+    "Architecture & Design"
+  ],
   "skipped": [],
   "head_sha": "7896abb33b54f7a8c43010ccb8ca741962d1d5a7",
   "review_log_path": "docs/reviews/2026-04-06-feat-dev-262-shop-data-report.md"

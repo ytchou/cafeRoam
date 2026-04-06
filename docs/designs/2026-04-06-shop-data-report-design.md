@@ -36,15 +36,15 @@ User taps "回報錯誤" in ShopActionsRow
 
 ### 1. Database — `shop_reports` table
 
-| Column | Type | Notes |
-|--------|------|-------|
-| `id` | uuid, PK | gen_random_uuid() |
-| `shop_id` | uuid, FK → shops | ON DELETE CASCADE |
-| `user_id` | uuid, FK → auth.users, nullable | ON DELETE SET NULL (PDPA anonymize) |
-| `field` | text, nullable | e.g. "hours", "wifi", "name", "other" |
-| `description` | text, NOT NULL | free-text, min 5 chars |
-| `status` | text, default 'pending' | pending → sent_to_linear → resolved |
-| `reported_at` | timestamptz, default now() | |
+| Column        | Type                            | Notes                                 |
+| ------------- | ------------------------------- | ------------------------------------- |
+| `id`          | uuid, PK                        | gen_random_uuid()                     |
+| `shop_id`     | uuid, FK → shops                | ON DELETE CASCADE                     |
+| `user_id`     | uuid, FK → auth.users, nullable | ON DELETE SET NULL (PDPA anonymize)   |
+| `field`       | text, nullable                  | e.g. "hours", "wifi", "name", "other" |
+| `description` | text, NOT NULL                  | free-text, min 5 chars                |
+| `status`      | text, default 'pending'         | pending → sent_to_linear → resolved   |
+| `reported_at` | timestamptz, default now()      |                                       |
 
 RLS: public INSERT, no SELECT for non-admin. Index on (status, reported_at).
 

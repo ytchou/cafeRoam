@@ -15,6 +15,7 @@
 **Tech Stack:** FastAPI, Supabase (Postgres + RLS), shadcn/ui Dialog, Linear GraphQL API, httpx, APScheduler, slowapi
 
 **Acceptance Criteria:**
+
 - [ ] A user can tap "回報錯誤" on any shop detail page, fill out the form, and see a success confirmation
 - [ ] Reports from both logged-in and anonymous users are saved to the database
 - [ ] A daily cron creates exactly one Linear issue summarizing all pending reports (or skips if none)
@@ -26,6 +27,7 @@
 ### Task 1: Database Migration — `shop_reports` table
 
 **Files:**
+
 - Create: `supabase/migrations/20260406000001_create_shop_reports.sql`
 - No test needed — SQL migration, verified by `supabase db push`
 
@@ -82,6 +84,7 @@ git commit -m "feat(DEV-262): add shop_reports table migration"
 ### Task 2: Config Settings + JobType Enum
 
 **Files:**
+
 - Modify: `backend/core/config.py` (add 2 settings)
 - Modify: `backend/models/types.py` (add enum value)
 - No test needed — config values and enum extension, no logic
@@ -122,6 +125,7 @@ git commit -m "feat(DEV-262): add issue tracker config and SHOP_DATA_REPORT job 
 ### Task 3: IssueTrackerProvider — Protocol + LinearAdapter + Factory
 
 **Files:**
+
 - Create: `backend/providers/issue_tracker/interface.py`
 - Create: `backend/providers/issue_tracker/linear_adapter.py`
 - Create: `backend/providers/issue_tracker/__init__.py`
@@ -359,6 +363,7 @@ git commit -m "feat(DEV-262): add IssueTrackerProvider with Linear adapter"
 ### Task 4: Backend API — POST /shops/{shop_id}/report
 
 **Files:**
+
 - Modify: `backend/api/shops.py` (add endpoint + Pydantic model)
 - Test: `backend/tests/api/test_shop_reports.py`
 
@@ -565,6 +570,7 @@ git commit -m "feat(DEV-262): add POST /shops/{shop_id}/report endpoint"
 ### Task 5: Cron Handler — Daily Linear Digest
 
 **Files:**
+
 - Create: `backend/workers/handlers/shop_data_report.py`
 - Modify: `backend/workers/scheduler.py` (register cron + dispatch case)
 - Test: `backend/tests/workers/test_shop_data_report_handler.py`
@@ -757,16 +763,19 @@ Expected: 3 passed
 In `backend/workers/scheduler.py`:
 
 1. Add import at top (with other handler imports):
+
 ```python
 from workers.handlers.shop_data_report import handle_shop_data_report
 ```
 
 2. Add import for issue tracker provider (with other provider imports):
+
 ```python
 from providers.issue_tracker import get_issue_tracker_provider
 ```
 
 3. Add dispatch case in `_dispatch_job()` (inside the match statement):
+
 ```python
         case JobType.SHOP_DATA_REPORT:
             issue_tracker = get_issue_tracker_provider()
@@ -774,6 +783,7 @@ from providers.issue_tracker import get_issue_tracker_provider
 ```
 
 4. Add cron wrapper function (near other cron wrappers like `run_weekly_email`):
+
 ```python
 @idempotent_cron("shop_data_report", window="day")
 async def run_shop_data_report() -> None:
@@ -783,6 +793,7 @@ async def run_shop_data_report() -> None:
 ```
 
 5. Add job in `create_scheduler()` (inside the function, with other add_job calls):
+
 ```python
     scheduler.add_job(
         run_shop_data_report,
@@ -809,6 +820,7 @@ git commit -m "feat(DEV-262): add daily shop data report cron handler with Linea
 ### Task 6: Next.js Proxy Route
 
 **Files:**
+
 - Create: `app/api/shops/[shopId]/report/route.ts`
 - No test needed — thin proxy with no logic, follows established pattern in `app/api/shops/[shopId]/follow/route.ts`
 
@@ -842,6 +854,7 @@ git commit -m "feat(DEV-262): add Next.js proxy for shop report endpoint"
 ### Task 7: ReportIssueDialog Component
 
 **Files:**
+
 - Create: `components/shops/report-issue-dialog.tsx`
 - Test: `components/shops/report-issue-dialog.test.tsx`
 
@@ -998,7 +1011,8 @@ export function ReportIssueDialog({
   const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const canSubmit = description.trim().length >= MIN_DESCRIPTION_LENGTH && !isSubmitting;
+  const canSubmit =
+    description.trim().length >= MIN_DESCRIPTION_LENGTH && !isSubmitting;
 
   async function handleSubmit() {
     if (!canSubmit) return;
@@ -1024,7 +1038,9 @@ export function ReportIssueDialog({
       setDescription('');
       onOpenChange(false);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : '送出失敗，請稍後再試');
+      toast.error(
+        error instanceof Error ? error.message : '送出失敗，請稍後再試'
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -1063,10 +1079,7 @@ export function ReportIssueDialog({
         </div>
 
         <DialogFooter>
-          <Button
-            onClick={handleSubmit}
-            disabled={!canSubmit}
-          >
+          <Button onClick={handleSubmit} disabled={!canSubmit}>
             {isSubmitting ? '送出中...' : '送出'}
           </Button>
         </DialogFooter>
@@ -1093,6 +1106,7 @@ git commit -m "feat(DEV-262): add ReportIssueDialog component"
 ### Task 8: Add Report Button to ShopActionsRow
 
 **Files:**
+
 - Modify: `components/shops/shop-actions-row.tsx`
 - Test: `components/shops/shop-actions-row.test.tsx` (modify existing or create)
 
@@ -1150,17 +1164,20 @@ Expected: FAIL — no element with label "回報錯誤"
 In `components/shops/shop-actions-row.tsx`:
 
 1. Add import at top:
+
 ```tsx
 import { Flag } from 'lucide-react';
 import { ReportIssueDialog } from './report-issue-dialog';
 ```
 
 2. Add state inside the component:
+
 ```tsx
 const [reportOpen, setReportOpen] = useState(false);
 ```
 
 3. Add report button in the JSX (after the last action button, before the closing `</div>`):
+
 ```tsx
 <button
   type="button"
@@ -1203,6 +1220,7 @@ git commit -m "feat(DEV-262): add report button to ShopActionsRow"
 ### Task 9: Spec/PRD Updates
 
 **Files:**
+
 - Modify: `SPEC.md` (§2, §5, §9)
 - Modify: `SPEC_CHANGELOG.md`
 - Modify: `PRD.md` (§7)
@@ -1212,18 +1230,22 @@ git commit -m "feat(DEV-262): add report button to ShopActionsRow"
 **Step 1: Update SPEC.md**
 
 Add to §2 (System Modules), under the appropriate subsection:
+
 ```markdown
 **Shop Data Reports** — User-facing mechanism to flag incorrect shop data. Reports stored in `shop_reports` table, batched daily into a Linear issue via `IssueTrackerProvider` cron.
 ```
 
 Add to §5 (Compliance & Security), PDPA section:
+
 ```markdown
 - `shop_reports.user_id` → ON DELETE SET NULL (anonymize report, preserve content for ops triage)
 ```
 
 Add to §9 (Business Rules), new subsection:
+
 ```markdown
 ### Shop Data Reports
+
 - Any user (authenticated or anonymous) can report incorrect data on a published shop.
 - Reports include an optional field selector (hours, wifi, name, other) and a required free-text description (min 5 chars).
 - Rate-limited to 5 reports per day per IP address.
@@ -1296,20 +1318,25 @@ graph TD
 ```
 
 **Wave 1** (parallel — no dependencies):
+
 - Task 1: DB Migration
 - Task 2: Config + JobType
 
 **Wave 2** (parallel — depends on Wave 1):
+
 - Task 3: IssueTrackerProvider ← Task 2
 - Task 4: Backend API ← Task 1, Task 2
 
 **Wave 3** (parallel — depends on Wave 2):
+
 - Task 5: Cron Handler ← Task 1, Task 3
 - Task 6: Next.js Proxy ← Task 4
 - Task 7: ReportIssueDialog ← Task 4
 
 **Wave 4** (depends on Wave 3):
+
 - Task 8: ShopActionsRow Button ← Task 6, Task 7
 
 **Wave 5** (depends on all):
+
 - Task 9: Spec/PRD Updates ← Task 5, Task 8

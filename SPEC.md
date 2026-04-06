@@ -48,7 +48,7 @@
 | User profile          | Private profile page: check-in history, stamp collection, lists                                                                                                                                                                                                                      | 2     |
 | Retention             | Weekly curated email (fixed schedule), stamp collection display                                                                                                                                                                                                                      | 3     |
 | Shop followers        | `shop_followers` table: user_id + shop_id unique pair, created_at. Indexes on both FKs. Follow/unfollow toggle on shop page; follower count display (≥10 threshold).                                                                                                                 | 3     |
-| Shop data reports     | User-facing mechanism to flag incorrect shop data. Reports stored in `shop_reports` table, batched daily into a Linear issue via `IssueTrackerProvider` cron.                                                                                                                       | 3     |
+| Shop data reports     | User-facing mechanism to flag incorrect shop data. Reports stored in `shop_reports` table, batched daily into a Linear issue via `IssueTrackerProvider` cron.                                                                                                                        | 3     |
 
 ---
 
@@ -235,6 +235,7 @@ pnpm setup                     # Runs all steps automatically
   - **District selected:** No subtitle shown
 
 ### Shop Data Reports
+
 - Any user (authenticated or anonymous) can report incorrect data on a published shop.
 - Reports include an optional field selector (hours, wifi, name, other) and a required free-text description (min 5 chars).
 - Rate-limited to 5 reports per day per IP address.
