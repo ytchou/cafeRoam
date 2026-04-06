@@ -1,4 +1,4 @@
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -18,7 +18,7 @@ class TestLinearIssueTrackerAdapter:
     async def test_create_issue_sends_graphql_mutation(
         self, adapter: LinearIssueTrackerAdapter
     ) -> None:
-        mock_response = AsyncMock()
+        mock_response = MagicMock()
         mock_response.status_code = 200
         mock_response.json.return_value = {
             "data": {
@@ -58,7 +58,7 @@ class TestLinearIssueTrackerAdapter:
     async def test_create_issue_raises_on_api_error(
         self, adapter: LinearIssueTrackerAdapter
     ) -> None:
-        mock_response = AsyncMock()
+        mock_response = MagicMock()
         mock_response.status_code = 200
         mock_response.json.return_value = {
             "data": {"issueCreate": {"success": False, "issue": None}},
