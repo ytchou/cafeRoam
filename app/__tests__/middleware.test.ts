@@ -8,7 +8,7 @@ vi.mock('@/lib/supabase/middleware', () => ({
   updateSession: mockUpdateSession,
 }));
 
-import { middleware } from '../../middleware';
+import { proxy } from '../../proxy';
 
 function makeRequest(pathname: string): NextRequest {
   return new NextRequest(`http://localhost${pathname}`);
@@ -49,7 +49,7 @@ describe('middleware route guards', () => {
         user: null,
         supabaseResponse: passThroughResponse,
       });
-      const res = await middleware(makeRequest(pathname));
+      const res = await proxy(makeRequest(pathname));
       expect(res).toBe(passThroughResponse);
     });
 
@@ -58,12 +58,12 @@ describe('middleware route guards', () => {
         user: null,
         supabaseResponse: passThroughResponse,
       });
-      const res = await middleware(makeRequest('/shops/cafe-abc'));
+      const res = await proxy(makeRequest('/shops/cafe-abc'));
       expect(res).toBe(passThroughResponse);
     });
 
     it('/api/auth/consent (public prefix) passes through without session', async () => {
-      const res = await middleware(makeRequest('/api/auth/consent'));
+      const res = await proxy(makeRequest('/api/auth/consent'));
       expect(res.status).toBe(200);
     });
 
@@ -71,7 +71,7 @@ describe('middleware route guards', () => {
       const request = new NextRequest(
         new URL('/api/shops/123/follow', 'http://localhost')
       );
-      await middleware(request);
+      await proxy(request);
       expect(mockUpdateSession).not.toHaveBeenCalled();
     });
   });
@@ -82,7 +82,7 @@ describe('middleware route guards', () => {
         user: null,
         supabaseResponse: passThroughResponse,
       });
-      const res = await middleware(makeRequest('/settings'));
+      const res = await proxy(makeRequest('/settings'));
       const location = res.headers.get('location') ?? '';
       expect(location).toContain('/login');
       expect(location).toContain('returnTo=%2Fsettings');
@@ -95,7 +95,7 @@ describe('middleware route guards', () => {
         user: makeUser({ pdpa_consented: false }),
         supabaseResponse: passThroughResponse,
       });
-      const res = await middleware(makeRequest('/settings'));
+      const res = await proxy(makeRequest('/settings'));
       const location = res.headers.get('location') ?? '';
       expect(location).toContain('/onboarding/consent');
       expect(location).toContain('returnTo=%2Fsettings');
@@ -106,7 +106,7 @@ describe('middleware route guards', () => {
         user: makeUser({ pdpa_consented: false }),
         supabaseResponse: passThroughResponse,
       });
-      const res = await middleware(makeRequest('/onboarding/consent'));
+      const res = await proxy(makeRequest('/onboarding/consent'));
       expect(res).toBe(passThroughResponse);
     });
   });
@@ -117,7 +117,7 @@ describe('middleware route guards', () => {
         user: makeUser({ deletion_requested: true }),
         supabaseResponse: passThroughResponse,
       });
-      const res = await middleware(makeRequest('/settings'));
+      const res = await proxy(makeRequest('/settings'));
       expect(res.headers.get('location')).toContain('/account/recover');
     });
 
@@ -126,7 +126,7 @@ describe('middleware route guards', () => {
         user: makeUser({ deletion_requested: true }),
         supabaseResponse: passThroughResponse,
       });
-      const res = await middleware(makeRequest('/account/recover'));
+      const res = await proxy(makeRequest('/account/recover'));
       expect(res).toBe(passThroughResponse);
     });
 
@@ -135,14 +135,14 @@ describe('middleware route guards', () => {
         user: makeUser({ deletion_requested: true }),
         supabaseResponse: passThroughResponse,
       });
-      const res = await middleware(makeRequest('/onboarding/consent'));
+      const res = await proxy(makeRequest('/onboarding/consent'));
       expect(res.headers.get('location')).toContain('/account/recover');
     });
   });
 
   describe('fully authenticated and consented users', () => {
     it('passes through to protected routes', async () => {
-      const res = await middleware(makeRequest('/settings'));
+      const res = await proxy(makeRequest('/settings'));
       expect(res).toBe(passThroughResponse);
     });
   });

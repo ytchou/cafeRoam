@@ -4,7 +4,7 @@ help:
 	@echo "CafeRoam — Available commands:"
 	@echo "  make setup               Run full dev environment setup (install → supabase start → migrate → dev)"
 	@echo "  make dev                 Start Next.js dev server on :3000"
-	@echo "  make dev-all             Start frontend + backend concurrently (Supabase must already be running)"
+	@echo "  make dev-all             Start frontend + backend concurrently (runs make doctor first — requires Docker + supabase start)"
 	@echo "  make migrate             Apply Supabase migrations"
 	@echo "  make seed-shops          Restore full scraped shop data (710 shops, 164 live) from supabase/seeds/shops_data.sql"
 	@echo "  make seed-kino           Seed test data for 木下庵 Kino (check-ins, menu items, payment votes, replies, followers)"
@@ -41,6 +41,7 @@ dev:
 dev-all:
 	@lsof -ti:8000 | xargs kill -9 2>/dev/null || true
 	@lsof -ti:3000 | xargs kill -9 2>/dev/null || true
+	@$(MAKE) doctor
 	pnpm dev:all
 
 migrate:
