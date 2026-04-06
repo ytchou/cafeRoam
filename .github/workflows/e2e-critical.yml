@@ -1,8 +1,7 @@
 name: E2E Critical Paths
 
 on:
-  pull_request:
-    branches: [main]
+  workflow_dispatch:
 
 concurrency:
   group: e2e-critical-${{ github.ref }}
