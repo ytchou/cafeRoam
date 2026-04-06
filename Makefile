@@ -25,10 +25,13 @@ doctor:
 
 setup:
 	pnpm install
-	@echo ""
-	@echo "One-time: link to staging Supabase (if not already done):"
-	@echo "  supabase link --project-ref <your-project-ref>"
-	@echo ""
+	@if [ ! -f .supabase/project-ref ]; then \
+		echo ""; \
+		echo "Supabase CLI is not linked to a project."; \
+		echo "Run: supabase link --project-ref <your-project-ref>"; \
+		echo "Then re-run: make setup"; \
+		exit 1; \
+	fi
 	supabase db push
 	@echo ""
 	@echo "Setup complete. Next steps:"
@@ -51,7 +54,7 @@ migrate:
 restore-seed-user:
 	@echo "Restoring dev admin user (caferoam.tw@gmail.com)..."
 	@SUPABASE_URL=$$(grep -E "^SUPABASE_URL" backend/.env | cut -d'=' -f2-); \
-	SERVICE_ROLE=$$(grep -E "^SUPABASE_SERVICE_ROLE_KEY" backend/.env | cut -d'=' -f2); \
+	SERVICE_ROLE=$$(grep -E "^SUPABASE_SERVICE_ROLE_KEY" backend/.env | cut -d'=' -f2-); \
 	if [ -z "$$SUPABASE_URL" ]; then echo "Error: SUPABASE_URL not set in backend/.env"; exit 1; fi; \
 	if [ -z "$$SERVICE_ROLE" ]; then echo "Error: SUPABASE_SERVICE_ROLE_KEY not set in backend/.env"; exit 1; fi; \
 	curl -s -o /tmp/seed_user_result.json -w "%{http_code}" \

@@ -237,7 +237,7 @@ mock_db.table.side_effect = lambda name: table_map[name]
 
 **Symptom:** Repeated trial-and-error debugging of env vars, Supabase connectivity, migration state, or service availability. Multiple fix-retry cycles before landing on the right configuration.
 
-**Root cause:** Starting environment-dependent work without verifying environment health first. Common triggers: Supabase not running, `.env.local` pointing to remote instance instead of `127.0.0.1:54321`, `.env` vs `.env.local` confusion, migrations out of sync.
+**Root cause:** Starting environment-dependent work without verifying environment health first. Common triggers: `.env.local` or `backend/.env` missing Supabase URL, `.env` vs `.env.local` confusion, migrations out of sync, staging project not linked.
 
 **Fix:**
 
