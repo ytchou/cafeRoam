@@ -3,6 +3,7 @@ import uuid
 from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime, timedelta
 from functools import wraps
+from typing import Any, cast
 
 import sentry_sdk
 import structlog
@@ -268,16 +269,12 @@ async def run_daily_batch_scrape() -> None:
         .not_.is_("google_maps_url", "null")
         .execute()
     )
-    shops: list[dict[str, str]] = [
-        {"id": str(row["id"]), "google_maps_url": str(row["google_maps_url"])}
-        for row in (response.data or [])
-    ]
-
-    if not shops:
+    shop_rows = cast("list[dict[str, Any]]", response.data or [])
+    if not shop_rows:
         logger.info("daily_batch_scrape: no pending shops, skipping")
         return
 
-    shop_ids = [s["id"] for s in shops]
+    shop_ids = [str(row["id"]) for row in shop_rows]
     sub_response = (
         db.table("shop_submissions")
         .select("shop_id, id, submitted_by")
@@ -285,22 +282,18 @@ async def run_daily_batch_scrape() -> None:
         .eq("status", "pending")
         .execute()
     )
-    sub_by_shop: dict[str, dict[str, str]] = {
-        str(row["shop_id"]): {
-            "id": str(row["id"]),
-            "submitted_by": str(row["submitted_by"]),
-        }
-        for row in (sub_response.data or [])
-    }
+    sub_rows = cast("list[dict[str, Any]]", sub_response.data or [])
+    sub_by_shop: dict[str, dict[str, Any]] = {str(row["shop_id"]): row for row in sub_rows}
 
     batch_id = str(uuid.uuid4())
-    batch_shops: list[dict[str, str]] = []
-    for s in shops:
-        entry: dict[str, str] = {"shop_id": s["id"], "google_maps_url": s["google_maps_url"]}
-        sub = sub_by_shop.get(s["id"])
+    batch_shops: list[dict[str, Any]] = []
+    for row in shop_rows:
+        shop_id = str(row["id"])
+        entry: dict[str, Any] = {"shop_id": shop_id, "google_maps_url": str(row["google_maps_url"])}
+        sub = sub_by_shop.get(shop_id)
         if sub:
-            entry["submission_id"] = sub["id"]
-            entry["submitted_by"] = sub["submitted_by"]
+            entry["submission_id"] = str(sub["id"])
+            entry["submitted_by"] = str(sub["submitted_by"])
         batch_shops.append(entry)
 
     await queue.enqueue(
