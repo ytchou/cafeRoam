@@ -8,8 +8,18 @@ logger = structlog.get_logger()
 LINEAR_GRAPHQL_URL = "https://api.linear.app/graphql"
 
 CREATE_ISSUE_MUTATION = """
-mutation IssueCreate($title: String!, $description: String!, $teamId: String!, $labelIds: [String!]) {
-    issueCreate(input: {title: $title, description: $description, teamId: $teamId, labelIds: $labelIds}) {
+mutation IssueCreate(
+    $title: String!,
+    $description: String!,
+    $teamId: String!,
+    $labelIds: [String!]
+) {
+    issueCreate(input: {
+        title: $title,
+        description: $description,
+        teamId: $teamId,
+        labelIds: $labelIds
+    }) {
         success
         issue {
             id

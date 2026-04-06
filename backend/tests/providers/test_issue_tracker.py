@@ -2,7 +2,7 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from models.issue_tracker_types import IssueCreateRequest, IssueCreateResult
+from models.issue_tracker_types import IssueCreateRequest
 from providers.issue_tracker.linear_adapter import LinearIssueTrackerAdapter
 
 

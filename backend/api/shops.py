@@ -291,7 +291,7 @@ async def submit_shop_report(
     try:
         db.table("shops").select("id").eq("id", shop_id).single().execute()
     except APIError:
-        raise HTTPException(status_code=404, detail="Shop not found")
+        raise HTTPException(status_code=404, detail="Shop not found") from None
 
     report_data: dict[str, Any] = {
         "shop_id": shop_id,
