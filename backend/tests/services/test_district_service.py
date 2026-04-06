@@ -13,6 +13,7 @@ def _chain_mock() -> MagicMock:
     """Return a mock that supports Supabase query chaining."""
     mock = MagicMock()
     mock.table.return_value = mock
+    mock.rpc.return_value = mock
     mock.select.return_value = mock
     mock.eq.return_value = mock
     mock.gte.return_value = mock
@@ -51,18 +52,14 @@ class TestDistrictServiceGetDistricts:
         assert result[0].slug == "da-an"
         assert result[0].shop_count == 10
 
-    def test_excludes_districts_below_threshold(self) -> None:
+    def test_passes_min_shops_to_rpc(self) -> None:
         from services.district_service import DistrictService
 
         db = _chain_mock()
-        db.execute.return_value = MagicMock(
-            data=[
-                make_district_row(shop_count=2),
-            ]
-        )
+        db.execute.return_value = MagicMock(data=[])
         service = DistrictService(db)
-        result = service.get_districts(min_shops=3)
-        assert len(result) == 0
+        service.get_districts(min_shops=5)
+        db.rpc.assert_called_once_with("get_active_districts", {"min_shops": 5})
 
     def test_returns_empty_list_when_no_districts(self) -> None:
         from services.district_service import DistrictService
