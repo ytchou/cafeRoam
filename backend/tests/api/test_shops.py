@@ -156,6 +156,7 @@ class TestShopsAPI:
                 {
                     "tag_id": "quiet",
                     "tag_name": "quiet",
+                    "confidence": 0.9,
                     "taxonomy_tags": {
                         "id": "quiet",
                         "dimension": "ambience",
@@ -175,7 +176,7 @@ class TestShopsAPI:
         assert "taxonomyTags" in data
         assert "tags" not in data
         assert data["taxonomyTags"] == [
-            {"id": "quiet", "dimension": "ambience", "label": "Quiet", "labelZh": "安靜"}
+            {"id": "quiet", "dimension": "ambience", "label": "Quiet", "labelZh": "安靜", "confidence": 0.9}
         ]
 
     def test_get_shop_detail_returns_camel_case_keys(self):
@@ -262,6 +263,7 @@ class TestShopsAPI:
                 "shop_tags": [
                     {
                         "tag_id": "quiet",
+                        "confidence": 0.8,
                         "taxonomy_tags": {
                             "id": "quiet",
                             "dimension": "ambience",
@@ -283,7 +285,7 @@ class TestShopsAPI:
         assert len(data) == 1
         assert "taxonomyTags" in data[0]
         assert data[0]["taxonomyTags"] == [
-            {"id": "quiet", "dimension": "ambience", "label": "Quiet", "labelZh": "安靜"}
+            {"id": "quiet", "dimension": "ambience", "label": "Quiet", "labelZh": "安靜", "confidence": 0.8}
         ]
 
     def test_user_browsing_shop_list_sees_empty_tags_when_shop_has_none(self):
@@ -359,6 +361,7 @@ class TestShopsAPI:
             "shop_tags": [
                 {
                     "tag_id": "wifi_available",
+                    "confidence": 0.75,
                     "taxonomy_tags": {
                         "id": "wifi_available",
                         "dimension": "functionality",
@@ -384,6 +387,7 @@ class TestShopsAPI:
                 "dimension": "functionality",
                 "label": "WiFi Available",
                 "labelZh": "提供 WiFi",
+                "confidence": 0.75,
             }
         ]
         assert shop["isOpen"] is True
@@ -430,6 +434,7 @@ def mock_shop_row():
         "shop_tags": [
             {
                 "tag_id": "laptop_friendly",
+                "confidence": 0.85,
                 "taxonomy_tags": {
                     "id": "laptop_friendly",
                     "dimension": "functionality",
