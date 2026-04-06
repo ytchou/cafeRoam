@@ -1,4 +1,5 @@
 import asyncio
+import uuid
 from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime, timedelta
 from functools import wraps
@@ -274,6 +275,52 @@ async def run_shop_data_report() -> None:
     await handle_shop_data_report(db=db, issue_tracker=issue_tracker)
 
 
+@idempotent_cron("daily_batch_scrape", window="day")
+async def run_daily_batch_scrape() -> None:
+    """Query all pending shops with google_maps_url, enqueue as SCRAPE_BATCH."""
+    db = get_service_role_client()
+    queue = JobQueue(db=db)
+
+    response = (
+        db.table("shops")
+        .select("id, google_maps_url")
+        .eq("processing_status", "pending")
+        .not_.is_("google_maps_url", "null")
+        .execute()
+    )
+    shops = response.data or []
+
+    if not shops:
+        logger.info("daily_batch_scrape: no pending shops, skipping")
+        return
+
+    shop_ids = [s["id"] for s in shops]
+    sub_response = (
+        db.table("shop_submissions")
+        .select("shop_id, id, submitted_by")
+        .in_("shop_id", shop_ids)
+        .eq("status", "pending")
+        .execute()
+    )
+    sub_by_shop = {s["shop_id"]: s for s in (sub_response.data or [])}
+
+    batch_id = str(uuid.uuid4())
+    batch_shops = []
+    for s in shops:
+        entry: dict[str, str] = {"shop_id": s["id"], "google_maps_url": s["google_maps_url"]}
+        sub = sub_by_shop.get(s["id"])
+        if sub:
+            entry["submission_id"] = sub["id"]
+            entry["submitted_by"] = sub["submitted_by"]
+        batch_shops.append(entry)
+
+    await queue.enqueue(
+        job_type=JobType.SCRAPE_BATCH,
+        payload={"batch_id": batch_id, "shops": batch_shops},
+    )
+    logger.info("daily_batch_scrape: enqueued", batch_id=batch_id, count=len(batch_shops))
+
+
 async def poll_pending_job_types() -> None:
     """Single-poll loop: one DB query to find pending types, then dispatch each."""
     global _last_poll_at, _poll_failure_count, _poll_connected, _poll_backoff_until
@@ -414,6 +461,13 @@ def create_scheduler() -> AsyncIOScheduler:
         "cron",
         hour=9,
         id="shop_data_report",
+    )
+    scheduler.add_job(
+        run_daily_batch_scrape,
+        "cron",
+        hour=3,
+        minute=10,
+        id="daily_batch_scrape",
     )
 
     scheduler.add_job(
