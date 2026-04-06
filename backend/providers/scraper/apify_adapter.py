@@ -19,6 +19,16 @@ logger = structlog.get_logger()
 _ACTOR_ID = "compass/crawler-google-places"
 _PHOTO_MAX_AGE = timedelta(days=365 * 5)
 _PHOTO_CAP = 30
+_ACTOR_BASE_INPUT: dict[str, Any] = {
+    "maxCrawledPlacesPerSearch": 1,
+    "maxReviews": 20,
+    "maxImages": 10,
+    "language": "zh-TW",
+    "skipClosedPlaces": True,
+    "scrapeReviewerName": False,
+    "scrapeReviewsPersonalData": False,
+    "scrapeSocialMediaProfiles": {"instagrams": True, "facebooks": True},
+}
 
 
 class ApifyScraperAdapter:
@@ -29,14 +39,7 @@ class ApifyScraperAdapter:
 
     async def scrape_by_url(self, google_maps_url: str) -> ScrapedShopData | None:
         results = await self._run_actor(
-            {
-                "startUrls": [{"url": google_maps_url}],
-                "maxCrawledPlacesPerSearch": 1,
-                "maxReviews": 20,
-                "maxImages": 10,
-                "language": "zh-TW",
-                "scrapeReviewerName": False,
-            }
+            {**_ACTOR_BASE_INPUT, "startUrls": [{"url": google_maps_url}]}
         )
 
         if not results:
@@ -72,14 +75,7 @@ class ApifyScraperAdapter:
         start_urls = [{"url": url} for url in url_to_shop_id]
 
         results = await self._run_actor(
-            {
-                "startUrls": start_urls,
-                "maxCrawledPlacesPerSearch": 1,
-                "maxReviews": 20,
-                "maxImages": 10,
-                "language": "zh-TW",
-                "scrapeReviewerName": False,
-            }
+            {**_ACTOR_BASE_INPUT, "startUrls": start_urls}
         )
 
         matched: dict[str, ScrapedShopData] = {}
@@ -137,6 +133,8 @@ class ApifyScraperAdapter:
             phone=place.get("phone"),
             website=place.get("website"),
             menu_url=place.get("menu"),
+            instagram_url=next(iter(place.get("instagrams") or []), None),
+            facebook_url=next(iter(place.get("facebooks") or []), None),
             country_code=place.get("countryCode"),
             price_range=place.get("price"),
             permanently_closed=bool(place.get("permanentlyClosed", False)),
