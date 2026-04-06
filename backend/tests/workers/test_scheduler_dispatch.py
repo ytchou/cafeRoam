@@ -22,23 +22,6 @@ def _make_job(job_type: JobType, payload: dict) -> Job:
 
 
 @pytest.mark.asyncio
-async def test_dispatch_routes_scrape_shop_to_handler():
-    """When a SCRAPE_SHOP job is dispatched, the scrape_shop handler is called."""
-    job = _make_job(
-        JobType.SCRAPE_SHOP,
-        {"shop_id": "s-1", "google_maps_url": "https://maps.google.com/?cid=123"},
-    )
-
-    with (
-        patch("workers.scheduler.get_scraper_provider") as mock_get_scraper,
-        patch("workers.scheduler.handle_scrape_shop", new_callable=AsyncMock) as mock_handler,
-    ):
-        mock_get_scraper.return_value = MagicMock()
-        await _dispatch_job(job, MagicMock(), MagicMock())
-        mock_handler.assert_called_once()
-
-
-@pytest.mark.asyncio
 async def test_dispatch_routes_publish_shop_to_handler():
     """When a PUBLISH_SHOP job is dispatched, the publish_shop handler is called."""
     job = _make_job(JobType.PUBLISH_SHOP, {"shop_id": "s-1"})

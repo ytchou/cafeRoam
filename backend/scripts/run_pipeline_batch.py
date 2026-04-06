@@ -1,7 +1,7 @@
-"""Run the full pipeline for N random pending shops.
+"""Run the full pipeline for all pending shops.
 
 Usage (run from backend/):
-    uv run python scripts/run_pipeline_batch.py [--count 15] [--dry-run] [--seed N]
+    uv run python scripts/run_pipeline_batch.py [--dry-run]
 
 Speed:  all shops scraped in one Apify run (single cold start).
         enrich/embed/publish run concurrently (semaphore = worker_concurrency_enrich).
@@ -10,7 +10,6 @@ DB:     each run is tracked in batch_runs + batch_run_shops for admin dashboard.
 """
 
 import asyncio
-import random
 import sys
 import time
 import uuid
@@ -176,16 +175,15 @@ def db_complete_batch(db, batch_run_id: str, counts: dict) -> None:
 # ── Shop selection ─────────────────────────────────────────────────────────────
 
 
-def pick_shops(db, count: int, seed: int) -> list[dict]:
+def pick_shops(db) -> list[dict]:
     rows = (
         db.table("shops")
         .select("id,name,google_maps_url")
         .eq("processing_status", "pending")
+        .not_.is_("google_maps_url", "null")
         .execute()
     )
-    with_url = [s for s in rows.data if s.get("google_maps_url")]
-    random.seed(seed)
-    return random.sample(with_url, min(count, len(with_url)))
+    return rows.data or []
 
 
 # ── Per-shop pipeline ──────────────────────────────────────────────────────────
@@ -285,9 +283,9 @@ async def run_shop_pipeline(
 # ── Main ───────────────────────────────────────────────────────────────────────
 
 
-async def main(count: int, dry_run: bool, seed: int) -> None:
+async def main(dry_run: bool) -> None:
     run_start = time.monotonic()
-    print(f"\n=== CafeRoam Pipeline Batch Runner  (seed={seed}) ===\n")
+    print("\n=== CafeRoam Pipeline Batch Runner ===\n")
 
     # Pre-flight
     print("Pre-flight…", end=" ", flush=True)
@@ -302,7 +300,7 @@ async def main(count: int, dry_run: bool, seed: int) -> None:
     print("ok\n")
 
     # Shop selection
-    shops = pick_shops(db, count, seed)
+    shops = pick_shops(db)
     live_count = len(db.table("shops").select("id").eq("processing_status", "live").execute().data)
     pending_count = len(
         db.table("shops").select("id").eq("processing_status", "pending").execute().data
@@ -502,8 +500,6 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--count", type=int, default=15)
     parser.add_argument("--dry-run", action="store_true")
-    parser.add_argument("--seed", type=int, default=99)
     args = parser.parse_args()
-    asyncio.run(main(count=args.count, dry_run=args.dry_run, seed=args.seed))
+    asyncio.run(main(dry_run=args.dry_run))

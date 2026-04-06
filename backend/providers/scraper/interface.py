@@ -47,16 +47,8 @@ class BatchScrapeResult(BaseModel):
 
 @runtime_checkable
 class ScraperProvider(Protocol):
-    async def scrape_by_url(self, google_maps_url: str) -> ScrapedShopData | None:
-        """Scrape a shop by Google Maps URL. Returns None if not found."""
-        ...
-
     async def scrape_batch(self, shops: list[BatchScrapeInput]) -> list[BatchScrapeResult]:
         """Scrape multiple shops in a single Apify actor run."""
-        ...
-
-    async def scrape_reviews_only(self, google_place_id: str) -> list[dict[str, str | int | None]]:
-        """Scrape only reviews for a known place (for staleness check)."""
         ...
 
     async def close(self) -> None:

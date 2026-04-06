@@ -7,8 +7,8 @@ Expected CSV columns (Google Maps export format):
     Title, Note, URL, Tags, Comment
 
 Shops are inserted as pending_url_check. The background URL checker
-then transitions them to pending_review, after which an admin approves
-and queues SCRAPE_SHOP to begin the enrichment chain.
+then transitions them to pending_review, after which the daily batch
+cron picks them up for scraping and enrichment.
 """
 
 import asyncio

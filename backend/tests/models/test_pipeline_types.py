@@ -7,7 +7,6 @@ from models.types import (
 
 
 def test_new_job_types_exist():
-    assert JobType.SCRAPE_SHOP.value == "scrape_shop"
     assert JobType.PUBLISH_SHOP.value == "publish_shop"
     assert JobType.ADMIN_DIGEST_EMAIL.value == "admin_digest_email"
 

@@ -4,6 +4,7 @@ from uuid import uuid4
 
 import structlog
 from fastapi import APIRouter, BackgroundTasks, Depends, Form, HTTPException, Query, UploadFile
+from postgrest.exceptions import APIError
 from pydantic import BaseModel
 
 from api.deps import require_admin
@@ -424,38 +425,47 @@ async def enqueue_job(
     user: dict[str, Any] = Depends(require_admin),  # noqa: B008
 ) -> dict[str, Any]:
     """Manually enqueue a pipeline job for a shop."""
-    if body.job_type not in (JobType.ENRICH_SHOP, JobType.GENERATE_EMBEDDING, JobType.SCRAPE_SHOP):
+    if body.job_type not in (JobType.ENRICH_SHOP, JobType.GENERATE_EMBEDDING, JobType.SCRAPE_BATCH):
         raise HTTPException(
             status_code=400, detail=f"Cannot manually enqueue {body.job_type.value}"
         )
 
     db = get_service_role_client()
 
-    existing = (
-        db.table("job_queue")
-        .select("id")
-        .eq("job_type", body.job_type.value)
-        .eq("status", JobStatus.PENDING.value)
-        .eq("payload->>shop_id", shop_id)
-        .execute()
-    )
-    if existing.data:
-        raise HTTPException(
-            status_code=409,
-            detail=f"A pending {body.job_type.value} job already exists for shop {shop_id}",
+    if body.job_type != JobType.SCRAPE_BATCH:
+        existing = (
+            db.table("job_queue")
+            .select("id")
+            .eq("job_type", body.job_type.value)
+            .eq("status", JobStatus.PENDING.value)
+            .eq("payload->>shop_id", shop_id)
+            .execute()
         )
+        if existing.data:
+            raise HTTPException(
+                status_code=409,
+                detail=f"A pending {body.job_type.value} job already exists for shop {shop_id}",
+            )
 
-    # scrape_shop handler requires google_maps_url in payload — fetch it from the shop row
     payload: dict[str, Any] = {"shop_id": shop_id}
-    if body.job_type == JobType.SCRAPE_SHOP:
-        shop_row = db.table("shops").select("google_maps_url").eq("id", shop_id).single().execute()
-        shop_row_data = cast("dict[str, Any]", shop_row.data) if shop_row.data else None
-        if not shop_row_data or not shop_row_data.get("google_maps_url"):
+    if body.job_type == JobType.SCRAPE_BATCH:
+        try:
+            shop_row = (
+                db.table("shops").select("google_maps_url").eq("id", shop_id).single().execute()
+            )
+        except APIError as exc:
+            raise HTTPException(status_code=404, detail=f"Shop {shop_id} not found") from exc
+        url = shop_row.data.get("google_maps_url") if shop_row.data else None
+        if not url:
             raise HTTPException(
                 status_code=422,
-                detail=f"Shop {shop_id} has no google_maps_url — cannot enqueue scrape job",
+                detail=f"Shop {shop_id} has no google_maps_url",
             )
-        payload["google_maps_url"] = shop_row_data["google_maps_url"]
+        batch_id = str(uuid4())
+        payload = {
+            "batch_id": batch_id,
+            "shops": [{"shop_id": str(shop_id), "google_maps_url": url}],
+        }
 
     queue = JobQueue(db=db)
     job_id = await queue.enqueue(

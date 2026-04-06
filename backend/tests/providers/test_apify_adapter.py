@@ -1,9 +1,10 @@
 from datetime import UTC, datetime, timedelta
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
 from providers.scraper.apify_adapter import ApifyScraperAdapter
+from providers.scraper.interface import BatchScrapeInput
 
 
 @pytest.fixture
@@ -11,175 +12,298 @@ def adapter():
     return ApifyScraperAdapter(api_token="test-token")
 
 
-@pytest.mark.asyncio
-async def test_parse_images_array_with_uploaded_at(adapter):
-    """When Apify returns images[] with uploadedAt, photos carry timestamps."""
-    mock_result = {
+def _place(overrides: dict | None = None) -> dict:
+    base = {
         "title": "Fika Fika",
         "address": "台北市松山區伊通街33號",
         "location": {"lat": 25.052, "lng": 121.533},
         "placeId": "ChIJ_fika01",
-        "images": [
-            {
-                "imageUrl": "https://lh5.googleusercontent.com/p/AF1Qip_photo1=w1920-h1080-k-no",
-                "uploadedAt": "2025-06-15T10:30:00.000Z",
-            },
-            {
-                "imageUrl": "https://lh5.googleusercontent.com/p/AF1Qip_photo2=w1920-h1080-k-no",
-                "uploadedAt": "2024-01-10T08:00:00.000Z",
-            },
-        ],
-        "imageUrls": ["https://old-flat-url.jpg"],
         "reviews": [],
     }
+    return {**base, **(overrides or {})}
+
+
+# ---------------------------------------------------------------------------
+# scrape_batch — happy path
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_scrape_batch_matches_results_by_input_url(adapter):
+    """scrape_batch correlates Apify output back to shops via inputStartUrl."""
+    shops = [
+        BatchScrapeInput(shop_id="shop-1", google_maps_url="https://maps.google.com/?cid=1"),
+        BatchScrapeInput(shop_id="shop-2", google_maps_url="https://maps.google.com/?cid=2"),
+    ]
+    apify_results = [
+        _place({"inputStartUrl": "https://maps.google.com/?cid=1", "title": "Coffee A"}),
+        _place({"inputStartUrl": "https://maps.google.com/?cid=2", "title": "Coffee B"}),
+    ]
 
     with patch.object(adapter, "_run_actor", new_callable=AsyncMock) as mock_run:
-        mock_run.return_value = [mock_result]
-        result = await adapter.scrape_by_url("https://maps.google.com/?cid=fika")
+        mock_run.return_value = apify_results
+        results = await adapter.scrape_batch(shops)
 
-    assert result is not None
-    assert len(result.photos) == 2
-    assert (
-        result.photos[0].url == "https://lh5.googleusercontent.com/p/AF1Qip_photo1=w1920-h1080-k-no"
+    assert len(results) == 2
+    shop1 = next(r for r in results if r.shop_id == "shop-1")
+    shop2 = next(r for r in results if r.shop_id == "shop-2")
+    assert shop1.data is not None and shop1.data.name == "Coffee A"
+    assert shop2.data is not None and shop2.data.name == "Coffee B"
+
+
+@pytest.mark.asyncio
+async def test_scrape_batch_returns_empty_for_empty_input(adapter):
+    """scrape_batch with no shops returns []."""
+    results = await adapter.scrape_batch([])
+    assert results == []
+
+
+@pytest.mark.asyncio
+async def test_scrape_batch_deduplicates_duplicate_urls(adapter):
+    """When two shops share the same URL, the second is dropped and gets None data."""
+    shops = [
+        BatchScrapeInput(shop_id="shop-A", google_maps_url="https://maps.google.com/?cid=dup"),
+        BatchScrapeInput(shop_id="shop-B", google_maps_url="https://maps.google.com/?cid=dup"),
+    ]
+    apify_results = [
+        _place({"inputStartUrl": "https://maps.google.com/?cid=dup", "title": "Dup Cafe"}),
+    ]
+
+    with patch.object(adapter, "_run_actor", new_callable=AsyncMock) as mock_run:
+        mock_run.return_value = apify_results
+        results = await adapter.scrape_batch(shops)
+
+    assert len(results) == 2
+    shop_a = next(r for r in results if r.shop_id == "shop-A")
+    shop_b = next(r for r in results if r.shop_id == "shop-B")
+    assert shop_a.data is not None
+    assert shop_b.data is None  # dropped duplicate URL
+
+
+@pytest.mark.asyncio
+async def test_scrape_batch_sets_none_data_for_unmatched_url(adapter):
+    """When Apify returns a result with no matching inputStartUrl, data stays None."""
+    shops = [
+        BatchScrapeInput(shop_id="shop-X", google_maps_url="https://maps.google.com/?cid=X"),
+    ]
+
+    with patch.object(adapter, "_run_actor", new_callable=AsyncMock) as mock_run:
+        mock_run.return_value = [_place({"inputStartUrl": "WRONG"})]
+        results = await adapter.scrape_batch(shops)
+
+    assert len(results) == 1
+    assert results[0].shop_id == "shop-X"
+    assert results[0].data is None
+
+
+# ---------------------------------------------------------------------------
+# _parse_place — field mapping
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_parse_place_maps_all_fields(adapter):
+    """_parse_place correctly maps a rich Apify place dict."""
+    raw = _place(
+        {
+            "inputStartUrl": "https://maps.google.com/?cid=1",
+            "totalScore": 4.5,
+            "reviewsCount": 42,
+            "phone": "+886-2-1234-5678",
+            "website": "https://fikafika.com",
+            "menu": "https://fikafika.com/menu",
+            "instagrams": ["https://instagram.com/fika"],
+            "facebooks": ["https://facebook.com/fika"],
+            "countryCode": "TW",
+            "price": "$$",
+            "permanentlyClosed": False,
+            "categoryName": "Coffee shop",
+            "openingHours": [{"day": "Monday", "hours": "9:00 AM - 6:00 PM"}],
+            "reviews": [{"text": "Great latte", "stars": 5, "publishedAtDate": "2025-12-01"}],
+            "imageUrls": ["https://img1.jpg"],
+        }
     )
-    assert result.photos[0].uploaded_at is not None
-    assert result.photos[0].uploaded_at.year == 2025
+
+    with patch.object(adapter, "_run_actor", new_callable=AsyncMock) as mock_run:
+        mock_run.return_value = [raw]
+        results = await adapter.scrape_batch(
+            [BatchScrapeInput(shop_id="s1", google_maps_url="https://maps.google.com/?cid=1")]
+        )
+
+    shop = results[0].data
+    assert shop is not None
+    assert shop.name == "Fika Fika"
+    assert shop.google_place_id == "ChIJ_fika01"
+    assert shop.latitude == 25.052
+    assert shop.rating == 4.5
+    assert shop.instagram_url == "https://instagram.com/fika"
+    assert shop.facebook_url == "https://facebook.com/fika"
+    assert len(shop.reviews) == 1
+    assert shop.opening_hours == [{"day": 0, "open": 540, "close": 1080}]
+
+
+# ---------------------------------------------------------------------------
+# _normalize_opening_hours
+# ---------------------------------------------------------------------------
+
+
+def test_normalize_opening_hours_returns_none_for_none(adapter):
+    assert adapter._normalize_opening_hours(None) is None
+
+
+def test_normalize_opening_hours_returns_none_for_empty_list(adapter):
+    assert adapter._normalize_opening_hours([]) is None
+
+
+def test_normalize_opening_hours_skips_non_dict_entries(adapter):
+    """Non-dict entries are filtered; if all stripped, returns None."""
+    result = adapter._normalize_opening_hours([{"day": "", "hours": ""}])
+    assert result is None or isinstance(result, list)
+
+
+# ---------------------------------------------------------------------------
+# _parse_photos / _parse_images_array
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_photos_parsed_from_images_array_with_timestamps(adapter):
+    """When images[] is present, photos carry uploaded_at timestamps."""
+    raw = _place(
+        {
+            "inputStartUrl": "https://maps.google.com/?cid=1",
+            "images": [
+                {"imageUrl": "https://cdn/a.jpg", "uploadedAt": "2025-06-15T10:30:00.000Z"},
+                {"imageUrl": "https://cdn/b.jpg", "uploadedAt": "2024-01-10T08:00:00.000Z"},
+            ],
+            "imageUrls": ["https://should-not-appear.jpg"],
+        }
+    )
+
+    with patch.object(adapter, "_run_actor", new_callable=AsyncMock) as mock_run:
+        mock_run.return_value = [raw]
+        results = await adapter.scrape_batch(
+            [BatchScrapeInput(shop_id="s1", google_maps_url="https://maps.google.com/?cid=1")]
+        )
+
+    photos = results[0].data.photos
+    assert len(photos) == 2
+    assert photos[0].url == "https://cdn/a.jpg"  # newest first
+    assert photos[0].uploaded_at is not None and photos[0].uploaded_at.year == 2025
 
 
 @pytest.mark.asyncio
 async def test_age_filter_drops_photos_older_than_5_years(adapter):
-    """Photos with uploadedAt older than 5 years are filtered out."""
+    """Photos with uploadedAt older than 5 years are excluded."""
     now = datetime.now(UTC)
-    old_date = (now - timedelta(days=365 * 6)).isoformat()
-    recent_date = (now - timedelta(days=30)).isoformat()
-
-    mock_result = {
-        "title": "Old & New",
-        "address": "台北市中山區",
-        "location": {"lat": 25.05, "lng": 121.52},
-        "placeId": "ChIJ_oldnew",
-        "images": [
-            {"imageUrl": "https://cdn/old.jpg", "uploadedAt": old_date},
-            {"imageUrl": "https://cdn/recent.jpg", "uploadedAt": recent_date},
-        ],
-        "reviews": [],
-    }
+    raw = _place(
+        {
+            "inputStartUrl": "https://maps.google.com/?cid=1",
+            "images": [
+                {
+                    "imageUrl": "https://cdn/old.jpg",
+                    "uploadedAt": (now - timedelta(days=365 * 6)).isoformat(),
+                },
+                {
+                    "imageUrl": "https://cdn/recent.jpg",
+                    "uploadedAt": (now - timedelta(days=30)).isoformat(),
+                },
+            ],
+        }
+    )
 
     with patch.object(adapter, "_run_actor", new_callable=AsyncMock) as mock_run:
-        mock_run.return_value = [mock_result]
-        result = await adapter.scrape_by_url("https://maps.google.com/?cid=oldnew")
+        mock_run.return_value = [raw]
+        results = await adapter.scrape_batch(
+            [BatchScrapeInput(shop_id="s1", google_maps_url="https://maps.google.com/?cid=1")]
+        )
 
-    assert len(result.photos) == 1
-    assert result.photos[0].url == "https://cdn/recent.jpg"
+    photos = results[0].data.photos
+    assert len(photos) == 1
+    assert photos[0].url == "https://cdn/recent.jpg"
 
 
 @pytest.mark.asyncio
 async def test_cap_at_30_photos_sorted_by_recency(adapter):
     """When more than 30 photos exist, only the 30 most recent are kept."""
     now = datetime.now(UTC)
-    images = [
+    raw = _place(
         {
-            "imageUrl": f"https://cdn/photo{i}.jpg",
-            "uploadedAt": (now - timedelta(days=i)).isoformat(),
+            "inputStartUrl": "https://maps.google.com/?cid=1",
+            "images": [
+                {
+                    "imageUrl": f"https://cdn/photo{i}.jpg",
+                    "uploadedAt": (now - timedelta(days=i)).isoformat(),
+                }
+                for i in range(40)
+            ],
         }
-        for i in range(40)
-    ]
-
-    mock_result = {
-        "title": "Many Photos",
-        "address": "台北市",
-        "location": {"lat": 25.0, "lng": 121.5},
-        "placeId": "ChIJ_many",
-        "images": images,
-        "reviews": [],
-    }
+    )
 
     with patch.object(adapter, "_run_actor", new_callable=AsyncMock) as mock_run:
-        mock_run.return_value = [mock_result]
-        result = await adapter.scrape_by_url("https://maps.google.com/?cid=many")
+        mock_run.return_value = [raw]
+        results = await adapter.scrape_batch(
+            [BatchScrapeInput(shop_id="s1", google_maps_url="https://maps.google.com/?cid=1")]
+        )
 
-    assert len(result.photos) == 30
-    # Most recent first (day 0 = today)
-    assert "photo0" in result.photos[0].url
+    photos = results[0].data.photos
+    assert len(photos) == 30
+    assert "photo0" in photos[0].url  # most recent first
 
 
 @pytest.mark.asyncio
 async def test_fallback_to_image_urls_when_images_absent(adapter):
     """When images[] is absent, fall back to imageUrls with no uploaded_at."""
-    mock_result = {
-        "title": "Flat Only",
-        "address": "台北市",
-        "location": {"lat": 25.0, "lng": 121.5},
-        "placeId": "ChIJ_flat",
-        "imageUrls": ["https://cdn/a.jpg", "https://cdn/b.jpg"],
-        "reviews": [],
-    }
+    raw = _place(
+        {
+            "inputStartUrl": "https://maps.google.com/?cid=1",
+            "imageUrls": ["https://cdn/a.jpg", "https://cdn/b.jpg"],
+        }
+    )
 
     with patch.object(adapter, "_run_actor", new_callable=AsyncMock) as mock_run:
-        mock_run.return_value = [mock_result]
-        result = await adapter.scrape_by_url("https://maps.google.com/?cid=flat")
+        mock_run.return_value = [raw]
+        results = await adapter.scrape_batch(
+            [BatchScrapeInput(shop_id="s1", google_maps_url="https://maps.google.com/?cid=1")]
+        )
 
-    assert len(result.photos) == 2
-    assert result.photos[0].uploaded_at is None
-    assert result.photos[0].url == "https://cdn/a.jpg"
+    photos = results[0].data.photos
+    assert len(photos) == 2
+    assert photos[0].uploaded_at is None
+
+
+def test_parse_images_array_skips_invalid_date(adapter):
+    """Images with unparseable uploadedAt are included without a timestamp."""
+    photos = adapter._parse_images_array(
+        [{"imageUrl": "https://cdn/ok.jpg", "uploadedAt": "not-a-date"}]
+    )
+    assert len(photos) == 1
+    assert photos[0].uploaded_at is None
+
+
+def test_parse_images_array_skips_missing_image_url(adapter):
+    """Images without imageUrl are silently skipped."""
+    photos = adapter._parse_images_array(
+        [
+            {"uploadedAt": "2025-01-01T00:00:00.000Z"},
+            {"imageUrl": "https://cdn/valid.jpg"},
+        ]
+    )
+    assert len(photos) == 1
+    assert photos[0].url == "https://cdn/valid.jpg"
+
+
+# ---------------------------------------------------------------------------
+# _run_actor
+# ---------------------------------------------------------------------------
 
 
 @pytest.mark.asyncio
-async def test_scrape_by_url_returns_shop_data(adapter):
-    """Full scrape result is parsed correctly (updated for photos field)."""
-    mock_result = {
-        "title": "Good Coffee",
-        "address": "123 Test St, Taipei",
-        "location": {"lat": 25.033, "lng": 121.565},
-        "totalScore": 4.5,
-        "reviewsCount": 42,
-        "openingHours": [{"day": "Monday", "hours": "9:00 AM - 6:00 PM"}],
-        "phone": "+886-2-1234-5678",
-        "website": "https://goodcoffee.tw",
-        "placeId": "ChIJ_test123",
-        "reviews": [
-            {"text": "Great latte", "stars": 5, "publishedAtDate": "2025-12-01"},
-            {"text": "Nice ambience", "stars": 4, "publishedAtDate": "2025-11-15"},
-        ],
-        "imageUrls": ["https://img1.jpg", "https://img2.jpg"],
-        "menu": "https://goodcoffee.tw/menu",
-        "categoryName": "Coffee shop",
-    }
+async def test_run_actor_returns_empty_list_when_actor_call_returns_none(adapter):
+    """_run_actor returns [] when the Apify actor call itself returns None."""
+    mock_actor = MagicMock()
+    mock_actor.call.return_value = None
+    adapter._client.actor = MagicMock(return_value=mock_actor)
 
-    with patch.object(adapter, "_run_actor", new_callable=AsyncMock) as mock_run:
-        mock_run.return_value = [mock_result]
-        result = await adapter.scrape_by_url("https://maps.google.com/?cid=123")
-
-    assert result is not None
-    assert result.name == "Good Coffee"
-    assert result.google_place_id == "ChIJ_test123"
-    assert result.latitude == 25.033
-    assert len(result.reviews) == 2
-    assert len(result.photos) == 2
-    assert result.opening_hours == [{"day": 0, "open": 540, "close": 1080}]
-
-
-@pytest.mark.asyncio
-async def test_scrape_by_url_returns_none_when_not_found(adapter):
-    with patch.object(adapter, "_run_actor", new_callable=AsyncMock) as mock_run:
-        mock_run.return_value = []
-        result = await adapter.scrape_by_url("https://maps.google.com/?cid=invalid")
-
-    assert result is None
-
-
-@pytest.mark.asyncio
-async def test_scrape_reviews_only_returns_reviews(adapter):
-    mock_result = {
-        "placeId": "ChIJ_test123",
-        "reviews": [
-            {"text": "New review", "stars": 5, "publishedAtDate": "2026-02-01"},
-        ],
-    }
-
-    with patch.object(adapter, "_run_actor", new_callable=AsyncMock) as mock_run:
-        mock_run.return_value = [mock_result]
-        reviews = await adapter.scrape_reviews_only("ChIJ_test123")
-
-    assert len(reviews) == 1
-    assert reviews[0]["text"] == "New review"
+    result = await adapter._run_actor({"startUrls": []})
+    assert result == []

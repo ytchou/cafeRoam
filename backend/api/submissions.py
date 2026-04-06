@@ -13,8 +13,6 @@ from api.deps import get_current_user, get_user_db
 from core.db import first
 from db.supabase_client import get_service_role_client
 from middleware.rate_limit import limiter
-from models.types import JobType
-from workers.queue import JobQueue
 
 logger = structlog.get_logger()
 
@@ -101,7 +99,7 @@ async def submit_shop(
     sub_data = cast("list[dict[str, Any]]", sub_response.data)
     submission_id = first(sub_data, "create submission")["id"]
 
-    # Create pending shop + enqueue job atomically (compensate on failure)
+    # Create pending shop and link it to the submission atomically (compensate on failure)
     svc_db = get_service_role_client()
     shop_id: str | None = None
     try:
@@ -116,6 +114,7 @@ async def submit_shop(
                     "review_count": 0,
                     "processing_status": "pending",
                     "source": "user_submission",
+                    "google_maps_url": body.google_maps_url,
                 }
             )
             .execute()
@@ -123,17 +122,9 @@ async def submit_shop(
         shop_data = cast("list[dict[str, Any]]", shop_response.data)
         shop_id = first(shop_data, "create shop")["id"]
 
-        queue = JobQueue(db=svc_db)
-        await queue.enqueue(
-            job_type=JobType.SCRAPE_SHOP,
-            payload={
-                "shop_id": shop_id,
-                "google_maps_url": body.google_maps_url,
-                "submission_id": submission_id,
-                "submitted_by": user_id,
-            },
-            priority=2,
-        )
+        svc_db.table("shop_submissions").update(
+            {"shop_id": shop_id, "updated_at": datetime.now(UTC).isoformat()}
+        ).eq("id", submission_id).execute()
     except Exception as e:
         logger.error("Submission setup failed, cleaning up", error=str(e))
         if shop_id:
@@ -147,7 +138,10 @@ async def submit_shop(
 
     return SubmitShopResponse(
         submission_id=submission_id,
-        message="Thanks! We're adding this shop to CafeRoam.",
+        message=(
+            "Thanks! We're adding this shop to CafeRoam. "
+            "Processing typically completes within 24 hours."
+        ),
     )
 
 

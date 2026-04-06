@@ -7,7 +7,7 @@ class TestScheduler:
         """All background maintenance jobs are registered so they run without manual intervention."""
         scheduler = create_scheduler()
         job_ids = [job.id for job in scheduler.get_jobs()]
-        assert "staleness_sweep" in job_ids
+        assert "daily_batch_scrape" in job_ids
         assert "weekly_email" in job_ids
         assert "delete_expired_accounts" in job_ids
 
@@ -55,6 +55,6 @@ class TestSchedulerStatus:
             job_ids = {j["id"] for j in status["jobs"]}
             assert "poll_pending_jobs" in job_ids
             assert "reclaim_stuck_jobs" in job_ids
-            assert "staleness_sweep" in job_ids
+            assert "daily_batch_scrape" in job_ids
         finally:
             scheduler.shutdown()

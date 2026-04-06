@@ -290,17 +290,16 @@ async def list_batches(
 ) -> dict[str, Any]:
     """List batch runs grouped by batch_id with per-status shop counts.
 
-    Handles both old format (one scrape_shop job per shop, each with batch_id in payload)
-    and new format (one scrape_batch job per batch, shops in payload.shops[]).
+    Uses scrape_batch format: one job per batch with shops in payload.shops[].
     """
     db = get_service_role_client()
 
     batch_job_cap = 5000
-    # Fetch both job types — capped to prevent full table scan at scale
+    # Fetch scrape_batch jobs only — capped to prevent full table scan at scale
     response = (
         db.table("job_queue")
         .select("job_type, payload, created_at")
-        .in_("job_type", [JobType.SCRAPE_SHOP.value, JobType.SCRAPE_BATCH.value])
+        .eq("job_type", JobType.SCRAPE_BATCH.value)
         .order("created_at", desc=True)
         .limit(batch_job_cap)
         .execute()
@@ -311,23 +310,13 @@ async def list_batches(
     # Group by batch_id — skip jobs without one
     batch_map: dict[str, dict[str, Any]] = {}
     for row in cast("list[dict[str, Any]]", response.data or []):
-        job_type = row["job_type"]
         payload = row["payload"]
         created_at = row["created_at"]
 
-        if job_type == JobType.SCRAPE_BATCH.value:
-            # New format: batch_id + shops[] in single job
-            bid = payload.get("batch_id")
-            if not bid:
-                continue
-            shop_ids = [s["shop_id"] for s in payload.get("shops", []) if s.get("shop_id")]
-        else:
-            # Old format: one job per shop, batch_id in payload
-            bid = payload.get("batch_id")
-            if not bid:
-                continue
-            shop_id = payload.get("shop_id")
-            shop_ids = [shop_id] if shop_id else []
+        bid = payload.get("batch_id")
+        if not bid:
+            continue
+        shop_ids = [s["shop_id"] for s in payload.get("shops", []) if s.get("shop_id")]
 
         if bid not in batch_map:
             batch_map[bid] = {"shop_ids": [], "created_at": created_at}
@@ -371,8 +360,7 @@ async def list_batches(
 
 
 def _collect_shop_ids_for_batch(batch_id: str, db: Any) -> list[str]:
-    """Collect all shop IDs for a batch from both old and new job formats."""
-    # New format: single scrape_batch job
+    """Collect all shop IDs for a batch from the scrape_batch job."""
     batch_job_resp = (
         db.table("job_queue")
         .select("payload")
@@ -385,22 +373,6 @@ def _collect_shop_ids_for_batch(batch_id: str, db: Any) -> list[str]:
         for s in row["payload"].get("shops", []):
             if s.get("shop_id"):
                 shop_ids.append(s["shop_id"])
-
-    if shop_ids:
-        return list(dict.fromkeys(shop_ids))  # dedup, preserve order
-
-    # Old format: multiple scrape_shop jobs each with batch_id
-    old_jobs_resp = (
-        db.table("job_queue")
-        .select("payload")
-        .eq("job_type", JobType.SCRAPE_SHOP.value)
-        .eq("payload->>batch_id", batch_id)
-        .execute()
-    )
-    for row in cast("list[dict[str, Any]]", old_jobs_resp.data or []):
-        sid = row["payload"].get("shop_id")
-        if sid:
-            shop_ids.append(sid)
 
     return list(dict.fromkeys(shop_ids))  # dedup, preserve order
 

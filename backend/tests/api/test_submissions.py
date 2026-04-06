@@ -1,4 +1,4 @@
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 from fastapi.testclient import TestClient
 
@@ -10,7 +10,6 @@ client = TestClient(app)
 _USER_ID = "a1b2c3d4-0001-0001-0001-000000000001"
 _SUBMISSION_ID = "b2c3d4e5-0002-0002-0002-000000000002"
 _SHOP_ID = "c3d4e5f6-0003-0003-0003-000000000003"
-_JOB_ID = "d4e5f6a7-0004-0004-0004-000000000004"
 
 
 def test_unauthenticated_user_cannot_submit_a_shop():
@@ -34,8 +33,8 @@ def test_submitting_a_non_google_maps_url_returns_422():
         app.dependency_overrides.clear()
 
 
-def test_failed_enqueue_triggers_cleanup_and_returns_500():
-    """If queue.enqueue raises, the shop should be deleted and submission marked failed."""
+def test_failed_shop_insert_triggers_cleanup_and_returns_500():
+    """If shop creation fails, the shop should be deleted and submission marked failed."""
     mock_user_db = MagicMock()
     # Rate limit check: 0 active submissions today
     mock_user_db.table.return_value.select.return_value.eq.return_value.gte.return_value.not_.in_.return_value.execute.return_value = MagicMock(
@@ -53,21 +52,17 @@ def test_failed_enqueue_triggers_cleanup_and_returns_500():
     app.dependency_overrides[get_user_db] = lambda: mock_user_db
     try:
         mock_svc_db = MagicMock()
-        mock_svc_db.table.return_value.insert.return_value.execute.return_value = MagicMock(
-            data=[{"id": _SHOP_ID}]
+        mock_svc_db.table.return_value.insert.return_value.execute.side_effect = RuntimeError(
+            "DB down"
         )
-        with (
-            patch("api.submissions.get_service_role_client", return_value=mock_svc_db),
-            patch("api.submissions.JobQueue") as mock_queue_cls,
-        ):
-            mock_queue_cls.return_value.enqueue = AsyncMock(side_effect=RuntimeError("DB down"))
+        with patch("api.submissions.get_service_role_client", return_value=mock_svc_db):
             response = client.post(
                 "/submissions",
                 json={"google_maps_url": "https://maps.google.com/?cid=123"},
             )
 
         assert response.status_code == 500
-        mock_svc_db.table.return_value.delete.return_value.eq.assert_called()
+        # shop insert failed before shop_id was set, so no delete — but submission is marked failed
         mock_svc_db.table.return_value.update.return_value.eq.assert_called()
     finally:
         app.dependency_overrides.clear()
@@ -94,11 +89,7 @@ def test_user_can_submit_a_valid_google_maps_url():
         mock_svc_db.table.return_value.insert.return_value.execute.return_value = MagicMock(
             data=[{"id": _SHOP_ID}]
         )
-        with (
-            patch("api.submissions.get_service_role_client", return_value=mock_svc_db),
-            patch("api.submissions.JobQueue") as mock_queue_cls,
-        ):
-            mock_queue_cls.return_value.enqueue = AsyncMock(return_value=_JOB_ID)
+        with patch("api.submissions.get_service_role_client", return_value=mock_svc_db):
             response = client.post(
                 "/submissions",
                 json={"google_maps_url": "https://maps.google.com/?cid=123"},
@@ -106,7 +97,10 @@ def test_user_can_submit_a_valid_google_maps_url():
 
         assert response.status_code == 201
         data = response.json()
-        assert "submission_id" in data
+        shop_insert_payload = mock_svc_db.table.return_value.insert.call_args.args[0]
+        assert shop_insert_payload["google_maps_url"] == "https://maps.google.com/?cid=123"
+        assert mock_svc_db.table.return_value.update.called
+        assert "24 hours" in data["message"]
     finally:
         app.dependency_overrides.clear()
 

@@ -1,7 +1,9 @@
 import asyncio
+import uuid
 from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime, timedelta
 from functools import wraps
+from typing import Any, cast
 
 import sentry_sdk
 import structlog
@@ -24,9 +26,7 @@ from workers.handlers.generate_embedding import handle_generate_embedding
 from workers.handlers.publish_shop import handle_publish_shop
 from workers.handlers.reembed_reviewed_shops import handle_reembed_reviewed_shops
 from workers.handlers.scrape_batch import handle_scrape_batch
-from workers.handlers.scrape_shop import handle_scrape_shop
 from workers.handlers.shop_data_report import handle_shop_data_report
-from workers.handlers.staleness_sweep import handle_smart_staleness_sweep
 from workers.handlers.summarize_reviews import handle_summarize_reviews
 from workers.handlers.weekly_email import handle_weekly_email
 from workers.queue import JobQueue
@@ -111,7 +111,7 @@ def _get_job_concurrency(job_type: JobType) -> int:
             return settings.worker_concurrency_embed
         case JobType.PUBLISH_SHOP:
             return settings.worker_concurrency_publish
-        case JobType.SCRAPE_BATCH | JobType.SCRAPE_SHOP:
+        case JobType.SCRAPE_BATCH:
             return settings.worker_concurrency_scrape
         case _:
             return settings.worker_concurrency_default
@@ -144,20 +144,9 @@ async def _dispatch_job(job: Job, db: Client, queue: JobQueue) -> None:
                 embeddings=embeddings,
                 queue=queue,
             )
-        case JobType.STALENESS_SWEEP:
-            scraper = get_scraper_provider()
-            await handle_smart_staleness_sweep(db=db, scraper=scraper, queue=queue)
         case JobType.WEEKLY_EMAIL:
             email = get_email_provider()
             await handle_weekly_email(db=db, email=email)
-        case JobType.SCRAPE_SHOP:
-            scraper = get_scraper_provider()
-            await handle_scrape_shop(
-                payload=job.payload,
-                db=db,
-                scraper=scraper,
-                queue=queue,
-            )
         case JobType.SCRAPE_BATCH:
             scraper = get_scraper_provider()
             await handle_scrape_batch(
@@ -246,13 +235,6 @@ async def process_job_type(job_type: JobType) -> None:
         task.add_done_callback(_tasks.discard)
 
 
-@idempotent_cron("staleness_sweep", window="day")
-async def run_staleness_sweep() -> None:
-    db = get_service_role_client()
-    queue = JobQueue(db=db)
-    await queue.enqueue(job_type=JobType.STALENESS_SWEEP, payload={})
-
-
 @idempotent_cron("weekly_email", window="week")
 async def run_weekly_email() -> None:
     db = get_service_role_client()
@@ -272,6 +254,53 @@ async def run_shop_data_report() -> None:
     db = get_service_role_client()
     issue_tracker = get_issue_tracker_provider()
     await handle_shop_data_report(db=db, issue_tracker=issue_tracker)
+
+
+@idempotent_cron("daily_batch_scrape", window="day")
+async def run_daily_batch_scrape() -> None:
+    """Query all pending shops with google_maps_url, enqueue as SCRAPE_BATCH."""
+    db = get_service_role_client()
+    queue = JobQueue(db=db)
+
+    response = (
+        db.table("shops")
+        .select("id, google_maps_url")
+        .eq("processing_status", "pending")
+        .not_.is_("google_maps_url", "null")
+        .execute()
+    )
+    shop_rows = cast("list[dict[str, Any]]", response.data or [])
+    if not shop_rows:
+        logger.info("daily_batch_scrape: no pending shops, skipping")
+        return
+
+    shop_ids = [str(row["id"]) for row in shop_rows]
+    sub_response = (
+        db.table("shop_submissions")
+        .select("shop_id, id, submitted_by")
+        .in_("shop_id", shop_ids)
+        .eq("status", "pending")
+        .execute()
+    )
+    sub_rows = cast("list[dict[str, Any]]", sub_response.data or [])
+    sub_by_shop: dict[str, dict[str, Any]] = {str(row["shop_id"]): row for row in sub_rows}
+
+    batch_id = str(uuid.uuid4())
+    batch_shops: list[dict[str, Any]] = []
+    for row in shop_rows:
+        shop_id = str(row["id"])
+        entry: dict[str, Any] = {"shop_id": shop_id, "google_maps_url": str(row["google_maps_url"])}
+        sub = sub_by_shop.get(shop_id)
+        if sub:
+            entry["submission_id"] = str(sub["id"])
+            entry["submitted_by"] = str(sub["submitted_by"])
+        batch_shops.append(entry)
+
+    await queue.enqueue(
+        job_type=JobType.SCRAPE_BATCH,
+        payload={"batch_id": batch_id, "shops": batch_shops},
+    )
+    logger.info("daily_batch_scrape: enqueued", batch_id=batch_id, count=len(batch_shops))
 
 
 async def poll_pending_job_types() -> None:
@@ -383,12 +412,6 @@ def create_scheduler() -> AsyncIOScheduler:
     scheduler = AsyncIOScheduler(timezone="Asia/Taipei")
 
     scheduler.add_job(
-        run_staleness_sweep,
-        "cron",
-        hour=3,
-        id="staleness_sweep",
-    )
-    scheduler.add_job(
         run_weekly_email,
         "cron",
         day_of_week="mon",
@@ -414,6 +437,13 @@ def create_scheduler() -> AsyncIOScheduler:
         "cron",
         hour=9,
         id="shop_data_report",
+    )
+    scheduler.add_job(
+        run_daily_batch_scrape,
+        "cron",
+        hour=3,
+        minute=10,
+        id="daily_batch_scrape",
     )
 
     scheduler.add_job(

@@ -187,6 +187,39 @@ class TestAdminShopEnqueue:
         finally:
             test_app.dependency_overrides.clear()
 
+    def test_admin_can_trigger_scrape_batch_job(self):
+        """Admin can manually trigger a SCRAPE_BATCH job for a single shop."""
+        test_app.dependency_overrides[get_current_user] = _admin_user
+        try:
+            mock_db = MagicMock()
+            # No duplicate check for SCRAPE_BATCH (skipped)
+            # Shop row lookup for google_maps_url
+            shop_row_mock = MagicMock()
+            shop_row_mock.data = {"google_maps_url": "https://maps.google.com/?cid=42"}
+            (
+                mock_db.table.return_value.select.return_value.eq.return_value.single.return_value.execute.return_value
+            ) = shop_row_mock
+            # JobQueue.enqueue inserts and returns job id
+            mock_db.table.return_value.insert.return_value.execute.return_value = MagicMock(
+                data=[{"id": "batch-job-1"}]
+            )
+            with (
+                patch("api.admin_shops.get_service_role_client", return_value=mock_db),
+                patch("middleware.admin_audit.get_service_role_client", return_value=mock_db),
+                patch("api.deps.settings") as mock_settings,
+            ):
+                mock_settings.admin_user_ids = [_ADMIN_ID]
+                response = client.post(
+                    "/admin/shops/shop-1/enqueue",
+                    json={"job_type": "scrape_batch"},
+                )
+            assert response.status_code == 200
+            data = response.json()
+            assert data["job_id"] == "batch-job-1"
+            assert data["job_type"] == "scrape_batch"
+        finally:
+            test_app.dependency_overrides.clear()
+
     def test_duplicate_pending_job_returns_409(self):
         """If a pending job of the same type already exists, return 409."""
         test_app.dependency_overrides[get_current_user] = _admin_user
@@ -205,6 +238,24 @@ class TestAdminShopEnqueue:
                     json={"job_type": "enrich_shop"},
                 )
             assert response.status_code == 409
+        finally:
+            test_app.dependency_overrides.clear()
+
+    def test_scrape_shop_job_type_is_not_allowed(self):
+        """Sending scrape_shop job type to admin enqueue returns 400."""
+        test_app.dependency_overrides[get_current_user] = _admin_user
+        try:
+            mock_db = MagicMock()
+            with (
+                patch("api.admin_shops.get_service_role_client", return_value=mock_db),
+                patch("api.deps.settings") as mock_settings,
+            ):
+                mock_settings.admin_user_ids = [_ADMIN_ID]
+                response = client.post(
+                    "/admin/shops/shop-1/enqueue",
+                    json={"job_type": "scrape_shop"},
+                )
+            assert response.status_code == 422
         finally:
             test_app.dependency_overrides.clear()
 
