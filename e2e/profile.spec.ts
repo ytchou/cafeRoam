@@ -28,7 +28,8 @@ test.describe('@critical J14 — Profile: stamp collection + check-in history', 
 
 test.describe('@critical J15 — Account deletion: request → grace period state', () => {
   test.skip(
-    !process.env.SUPABASE_SERVICE_ROLE_KEY || !process.env.NEXT_PUBLIC_SUPABASE_URL,
+    !process.env.SUPABASE_SERVICE_ROLE_KEY ||
+      !process.env.NEXT_PUBLIC_SUPABASE_URL,
     'Deletion tests require SUPABASE_SERVICE_ROLE_KEY and NEXT_PUBLIC_SUPABASE_URL'
   );
   test('requesting account deletion shows 30-day grace period confirmation', async ({
@@ -92,7 +93,8 @@ test.describe('J25 — Display name update', () => {
 test.describe
   .serial('@critical J38 — Account deletion: cancel during grace period', () => {
   test.skip(
-    !process.env.SUPABASE_SERVICE_ROLE_KEY || !process.env.NEXT_PUBLIC_SUPABASE_URL,
+    !process.env.SUPABASE_SERVICE_ROLE_KEY ||
+      !process.env.NEXT_PUBLIC_SUPABASE_URL,
     'Deletion tests require SUPABASE_SERVICE_ROLE_KEY and NEXT_PUBLIC_SUPABASE_URL'
   );
   test('a user in the 30-day grace period can cancel deletion from the recovery page', async ({

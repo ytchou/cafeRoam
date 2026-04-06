@@ -4,7 +4,7 @@ help:
 	@echo "CafeRoam — Available commands:"
 	@echo "  make setup               Run full dev environment setup (install → link → migrate)"
 	@echo "  make dev                 Start Next.js dev server on :3000"
-	@echo "  make dev-all             Start frontend + backend concurrently"
+	@echo "  make dev-all             Start frontend + backend concurrently (runs make doctor first)"
 	@echo "  make migrate             Apply Supabase migrations (to linked staging project)"
 	@echo "  make seed-shops          Seed shop data (requires DATABASE_URL)"
 	@echo "  make seed-kino           Seed test data for Kino shop (requires DATABASE_URL)"
@@ -45,6 +45,7 @@ dev:
 dev-all:
 	@lsof -ti:8000 | xargs kill -9 2>/dev/null || true
 	@lsof -ti:3000 | xargs kill -9 2>/dev/null || true
+	@$(MAKE) doctor
 	pnpm dev:all
 
 migrate:
