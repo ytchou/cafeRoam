@@ -6,16 +6,17 @@ import pytest
 
 from models.types import JobType
 
+_SHOP_1 = "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+_SHOP_2 = "b2c3d4e5-f6a7-8901-bcde-f12345678901"
+_SHOP_3 = "c3d4e5f6-a7b8-9012-cdef-123456789012"
+_SUB_1 = "d4e5f6a7-b8c9-0123-defa-234567890123"
+_USER_1 = "e5f6a7b8-c9d0-1234-efab-345678901234"
+
 
 @pytest.mark.asyncio
 async def test_daily_batch_scrape_enqueues_pending_shops():
     """Given 3 pending shops with URLs, enqueues a single SCRAPE_BATCH job."""
     mock_db = MagicMock()
-    _SHOP_1 = "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
-    _SHOP_2 = "b2c3d4e5-f6a7-8901-bcde-f12345678901"
-    _SHOP_3 = "c3d4e5f6-a7b8-9012-cdef-123456789012"
-    _SUB_1 = "d4e5f6a7-b8c9-0123-defa-234567890123"
-    _USER_1 = "e5f6a7b8-c9d0-1234-efab-345678901234"
     mock_shops = [
         {"id": _SHOP_1, "google_maps_url": "https://maps.google.com/?cid=1"},
         {"id": _SHOP_2, "google_maps_url": "https://maps.google.com/?cid=2"},

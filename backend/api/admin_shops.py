@@ -450,9 +450,11 @@ async def enqueue_job(
     payload: dict[str, Any] = {"shop_id": shop_id}
     if body.job_type == JobType.SCRAPE_BATCH:
         try:
-            shop_row = db.table("shops").select("google_maps_url").eq("id", shop_id).single().execute()
-        except APIError:
-            raise HTTPException(status_code=404, detail=f"Shop {shop_id} not found")
+            shop_row = (
+                db.table("shops").select("google_maps_url").eq("id", shop_id).single().execute()
+            )
+        except APIError as exc:
+            raise HTTPException(status_code=404, detail=f"Shop {shop_id} not found") from exc
         url = shop_row.data.get("google_maps_url") if shop_row.data else None
         if not url:
             raise HTTPException(
