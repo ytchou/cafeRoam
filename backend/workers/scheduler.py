@@ -13,6 +13,7 @@ from db.supabase_client import get_service_role_client
 from models.types import Job, JobType, TaxonomyTag
 from providers.email import get_email_provider
 from providers.embeddings import get_embeddings_provider
+from providers.issue_tracker import get_issue_tracker_provider
 from providers.llm import get_llm_provider
 from providers.scraper import get_scraper_provider
 from workers.handlers.account_deletion import delete_expired_accounts
@@ -24,6 +25,7 @@ from workers.handlers.publish_shop import handle_publish_shop
 from workers.handlers.reembed_reviewed_shops import handle_reembed_reviewed_shops
 from workers.handlers.scrape_batch import handle_scrape_batch
 from workers.handlers.scrape_shop import handle_scrape_shop
+from workers.handlers.shop_data_report import handle_shop_data_report
 from workers.handlers.staleness_sweep import handle_smart_staleness_sweep
 from workers.handlers.summarize_reviews import handle_summarize_reviews
 from workers.handlers.weekly_email import handle_weekly_email
@@ -265,6 +267,13 @@ async def run_reembed_reviewed_shops() -> None:
     await queue.enqueue(job_type=JobType.REEMBED_REVIEWED_SHOPS, payload={})
 
 
+@idempotent_cron("shop_data_report", window="day")
+async def run_shop_data_report() -> None:
+    db = get_service_role_client()
+    issue_tracker = get_issue_tracker_provider()
+    await handle_shop_data_report(db=db, issue_tracker=issue_tracker)
+
+
 async def poll_pending_job_types() -> None:
     """Single-poll loop: one DB query to find pending types, then dispatch each."""
     global _last_poll_at, _poll_failure_count, _poll_connected, _poll_backoff_until
@@ -399,6 +408,12 @@ def create_scheduler() -> AsyncIOScheduler:
         hour=3,
         minute=1,
         id="reembed_reviewed_shops",
+    )
+    scheduler.add_job(
+        run_shop_data_report,
+        "cron",
+        hour=9,
+        id="shop_data_report",
     )
 
     scheduler.add_job(
