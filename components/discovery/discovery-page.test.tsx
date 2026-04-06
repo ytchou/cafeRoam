@@ -271,4 +271,42 @@ describe('DiscoveryPage', () => {
     expect(ctaLink).toHaveAttribute('href', '/submit');
     expect(screen.getByText(/知道一間很棒的咖啡廳/)).toBeInTheDocument();
   });
+
+  it('renders submit café CTA when search returns no results', async () => {
+    vi.mocked(useSearchState).mockReturnValue({
+      query: '安靜有插座的咖啡廳',
+      mode: null,
+      setQuery: vi.fn(),
+      setMode: vi.fn(),
+      filters: [],
+      view: 'list',
+      toggleFilter: vi.fn(),
+      setFilters: vi.fn(),
+      setView: vi.fn(),
+      clearAll: vi.fn(),
+    });
+    vi.mocked(useSearch).mockReturnValue({
+      results: [],
+      queryType: 'semantic',
+      resultCount: 0,
+      isLoading: false,
+      error: null,
+    });
+
+    render(
+      <Suspense fallback={null}>
+        <DiscoveryPage />
+      </Suspense>,
+    );
+
+    await screen.findByText(/找不到你想找的店/);
+
+    const noResultsContainer = screen.getByTestId('search-no-results');
+    expect(noResultsContainer).toBeInTheDocument();
+
+    const noResultsSubmitLink = noResultsContainer.querySelector('a[href="/submit"]');
+    expect(noResultsSubmitLink).toBeInTheDocument();
+    expect(noResultsSubmitLink).toHaveAttribute('href', '/submit');
+    expect(screen.getByText(/找不到你想找的店/)).toBeInTheDocument();
+  });
 });

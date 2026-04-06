@@ -148,11 +148,25 @@ export function DiscoveryPage() {
           ) : error ? (
             <p className="text-sm text-red-600">暫時無法載入資料。</p>
           ) : shopsToRender.length === 0 ? (
-            <p className="text-sm text-gray-600">
-              {isSearching
-                ? '目前沒有符合條件的咖啡廳。'
-                : '暫時沒有精選咖啡廳。'}
-            </p>
+            <div data-testid="search-no-results" className="space-y-3">
+              <p className="text-sm text-gray-600">
+                {isSearching
+                  ? '目前沒有符合條件的咖啡廳。'
+                  : '暫時沒有精選咖啡廳。'}
+              </p>
+              {isSearching && (
+                <p className="text-sm text-text-secondary">
+                  找不到你想找的店？{' '}
+                  <Link
+                    href="/submit"
+                    className="text-brand font-medium hover:underline"
+                    onClick={() => trackSignupCtaClick('search_no_results_submit_cta')}
+                  >
+                    推薦咖啡廳 →
+                  </Link>
+                </p>
+              )}
+            </div>
           ) : (
             <div className="overflow-hidden rounded-3xl border border-[#e5e7eb] bg-white shadow-sm">
               {shopsToRender.map((shop) => (
