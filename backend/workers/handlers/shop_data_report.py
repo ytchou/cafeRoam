@@ -17,7 +17,7 @@ async def handle_shop_data_report(
         db.table("shop_reports")
         .select("id, shop_id, field, description, shops(name)")
         .eq("status", "pending")
-        .order("created_at")
+        .order("reported_at")
         .execute()
     )
     reports = cast("list[dict[str, Any]]", response.data)
@@ -35,12 +35,17 @@ async def handle_shop_data_report(
 
     issue_body = "\n".join(lines)
 
-    result = await issue_tracker.create_issue(
-        IssueCreateRequest(
-            title=f"Shop data reports ({len(reports)} pending)",
-            description=issue_body,
+    try:
+        result = await issue_tracker.create_issue(
+            IssueCreateRequest(
+                title=f"Shop data reports ({len(reports)} pending)",
+                description=issue_body,
+            )
         )
-    )
+    except Exception:
+        logger.exception("Failed to create Linear issue for shop reports — will retry next run")
+        return
+
     logger.info("Created Linear issue for shop reports", issue_id=result.id, count=len(reports))
 
     report_ids = [r["id"] for r in reports]
