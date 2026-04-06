@@ -1,0 +1,40 @@
+{
+  "findings": [
+    {
+      "severity": "Important",
+      "file": "backend/api/admin_shops.py",
+      "line": "451",
+      "description": "enqueue_job SCRAPE_BATCH path calls .single().execute() to fetch shop google_maps_url. If shop_id doesn't exist, .single() raises an unhandled APIError resulting in a 500 instead of a clean 404/422. Should wrap in try/except and return a proper HTTP error.",
+      "flagged_by": "Bug Hunter",
+      "status": "valid"
+    },
+    {
+      "severity": "Minor",
+      "file": "backend/tests/api/test_admin.py",
+      "line": "279",
+      "description": "Dead letter queue test mock data references 'scrape_shop' job_type string which no longer exists in the JobType enum. Stale reference that could confuse future developers.",
+      "flagged_by": "Bug Hunter",
+      "status": "debatable"
+    },
+    {
+      "severity": "Minor",
+      "file": "backend/tests/workers/test_daily_batch_scrape.py",
+      "line": "14-18",
+      "description": "Test data uses placeholder IDs ('shop-1', 'sub-1', 'user-1') instead of realistic UUIDs per testing philosophy.",
+      "flagged_by": "Test Philosophy",
+      "status": "debatable"
+    },
+    {
+      "severity": "Minor",
+      "file": "backend/tests/api/test_admin.py",
+      "line": "416,461",
+      "description": "Test names framed around implementation details ('only_queries_scrape_batch_job_type', 'does_not_fall_back_to_scrape_shop_format') rather than user actions/outcomes per testing philosophy.",
+      "flagged_by": "Test Philosophy",
+      "status": "debatable"
+    }
+  ],
+  "active_agents": ["Bug Hunter", "Test Philosophy"],
+  "skipped": [],
+  "head_sha": "dabddbadbecfdf7f7f13697e8432112cea840068",
+  "review_log_path": "docs/reviews/2026-04-06-ytchou-dev-276-consolidate-scraping-to-batch-only.md"
+}
