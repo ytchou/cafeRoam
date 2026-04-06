@@ -457,6 +457,7 @@ class TestGenerateEmbeddingHandler:
         assert "超好喝的拿鐵" in embed_text
         assert " || " in embed_text
 
+
 class TestEnrichMenuPhotoHandler:
     async def test_replaces_menu_items_and_queues_reembed_when_items_extracted(self):
         """When a menu photo is processed, existing items are replaced and a re-embed is queued."""

@@ -285,7 +285,7 @@ async def run_shop_pipeline(
 
 async def main(dry_run: bool) -> None:
     run_start = time.monotonic()
-    print(f"\n=== CafeRoam Pipeline Batch Runner ===\n")
+    print("\n=== CafeRoam Pipeline Batch Runner ===\n")
 
     # Pre-flight
     print("Pre-flight…", end=" ", flush=True)

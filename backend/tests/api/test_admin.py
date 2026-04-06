@@ -433,11 +433,13 @@ class TestAdminBatchListing:
                     }
                 ]
             )
-            mock_db.table.return_value.select.return_value.in_.return_value.execute.return_value = MagicMock(
-                data=[
-                    {"id": _SHOP_1_ID, "processing_status": "live"},
-                    {"id": _SHOP_2_ID, "processing_status": "pending"},
-                ]
+            mock_db.table.return_value.select.return_value.in_.return_value.execute.return_value = (
+                MagicMock(
+                    data=[
+                        {"id": _SHOP_1_ID, "processing_status": "live"},
+                        {"id": _SHOP_2_ID, "processing_status": "pending"},
+                    ]
+                )
             )
             with (
                 patch("api.admin.get_service_role_client", return_value=mock_db),

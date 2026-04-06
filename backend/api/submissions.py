@@ -138,7 +138,10 @@ async def submit_shop(
 
     return SubmitShopResponse(
         submission_id=submission_id,
-        message="Thanks! We're adding this shop to CafeRoam. Processing typically completes within 24 hours.",
+        message=(
+            "Thanks! We're adding this shop to CafeRoam. "
+            "Processing typically completes within 24 hours."
+        ),
     )
 
 

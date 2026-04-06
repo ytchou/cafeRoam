@@ -1,6 +1,7 @@
 """Tests for the daily batch scrape cron."""
 
 from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
 
 from models.types import JobType
@@ -29,9 +30,12 @@ async def test_daily_batch_scrape_enqueues_pending_shops():
 
     mock_queue = AsyncMock()
 
-    with patch("workers.scheduler.get_service_role_client", return_value=mock_db), \
-         patch("workers.scheduler.JobQueue", return_value=mock_queue):
+    with (
+        patch("workers.scheduler.get_service_role_client", return_value=mock_db),
+        patch("workers.scheduler.JobQueue", return_value=mock_queue),
+    ):
         from workers.scheduler import run_daily_batch_scrape
+
         await run_daily_batch_scrape.__wrapped__()
 
     mock_queue.enqueue.assert_called_once()
@@ -57,9 +61,12 @@ async def test_daily_batch_scrape_skips_when_no_pending_shops():
 
     mock_queue = AsyncMock()
 
-    with patch("workers.scheduler.get_service_role_client", return_value=mock_db), \
-         patch("workers.scheduler.JobQueue", return_value=mock_queue):
+    with (
+        patch("workers.scheduler.get_service_role_client", return_value=mock_db),
+        patch("workers.scheduler.JobQueue", return_value=mock_queue),
+    ):
         from workers.scheduler import run_daily_batch_scrape
+
         await run_daily_batch_scrape.__wrapped__()
 
     mock_queue.enqueue.assert_not_called()
