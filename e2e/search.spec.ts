@@ -4,21 +4,16 @@ test.describe('@critical J07 — Semantic search returns ranked results', () => 
   test('searching "想找安靜可以工作的地方" returns at least one result', async ({
     authedPage: page,
   }) => {
-    // Navigate directly with query param — bypasses mobile form submit quirks
-    // (press('Enter') in mobile viewport doesn't always trigger form onSubmit)
+    // Navigate to /find (search lives here after DEV-197 restructure) in list view
+    // so article cards are visible without scrolling a carousel.
     await page.goto(
-      '/search?q=' + encodeURIComponent('想找安靜可以工作的地方')
+      '/find?q=' + encodeURIComponent('想找安靜可以工作的地方') + '&view=list'
     );
+    await page.waitForLoadState('networkidle');
 
-    // Wait for results to load (not "搜尋中…" loading state)
-    await expect(page.getByText('搜尋中…')).toBeHidden({ timeout: 15_000 });
-
-    // Should show at least one result (not the "no results" message)
-    await expect(page.getByText('沒有找到結果')).toBeHidden();
-
-    // At least one shop card should be visible
-    const results = page.locator('[data-slot="card"], article, .space-y-4 > a');
-    await expect(results.first()).toBeVisible({ timeout: 10_000 });
+    // At least one shop card (article) should be visible in list view
+    const results = page.locator('article');
+    await expect(results.first()).toBeVisible({ timeout: 15_000 });
   });
 });
 

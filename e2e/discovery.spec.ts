@@ -113,8 +113,8 @@ test.describe('@critical J03 — Text search → login gate for unauthenticated 
     await page.goto('/');
     await page.waitForLoadState('networkidle');
 
-    const searchForm = page.locator('form').first();
-    const searchInput = searchForm.getByRole('textbox');
+    // Home page has a bare <input id="discovery-search"> — no <form> wrapper
+    const searchInput = page.locator('#discovery-search');
     await searchInput.fill('coffee');
     await searchInput.press('Enter');
 
@@ -478,13 +478,14 @@ test.describe('@critical J36 — Shop detail: navigation links open Google Maps 
     await page.goto(`/shops/${shop.id}/${shop.slug || ''}`);
     await page.waitForLoadState('networkidle');
 
-    // Google Maps link should be present and open in a new tab
-    const googleMapsLink = page.locator('a[href*="google.com/maps"]').first();
+    // The shop detail page renders nav links twice: desktop (hidden on mobile, first in DOM)
+    // and mobile (visible on mobile, second in DOM). Use nth(1) to target the mobile link.
+    const googleMapsLink = page.locator('a[href*="google.com/maps"]').nth(1);
     await expect(googleMapsLink).toBeVisible({ timeout: 10_000 });
     await expect(googleMapsLink).toHaveAttribute('target', '_blank');
 
     // Apple Maps link should be present and open in a new tab
-    const appleMapsLink = page.locator('a[href*="maps.apple.com"]').first();
+    const appleMapsLink = page.locator('a[href*="maps.apple.com"]').nth(1);
     await expect(appleMapsLink).toBeVisible({ timeout: 10_000 });
     await expect(appleMapsLink).toHaveAttribute('target', '_blank');
   });

@@ -26,8 +26,9 @@ authedTest.describe(
         await page.waitForURL(/\/explore\/vibes\//, { timeout: 10_000 });
         expect(page.url()).toContain('/explore/vibes/');
 
-        // Shop count badge and at least one shop row should appear
-        await expect(page.getByText(/shops? nearby/i)).toBeVisible({
+        // Shop count badge should appear — text is "X shops" (default 'all' filter)
+        // or "X shops nearby" (when nearby filter is active). Match both forms.
+        await expect(page.getByText(/\d+\s+shops?/i)).toBeVisible({
           timeout: 15_000,
         });
       }
