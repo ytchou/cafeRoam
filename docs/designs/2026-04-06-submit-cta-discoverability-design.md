@@ -16,28 +16,29 @@ The `/submit` route exists and is functional under the `(protected)` route group
 
 ### Touchpoints
 
-| Location | Component | Pattern |
-|----------|-----------|---------|
-| **Footer** | `components/navigation/footer.tsx` | Append to `FOOTER_LINKS` array — renders automatically |
-| **Home page banner** | `components/discovery/discovery-page.tsx` | `bg-surface-warm` strip between hero and mode chips with brand pill button |
+| Location              | Component                                 | Pattern                                                                               |
+| --------------------- | ----------------------------------------- | ------------------------------------------------------------------------------------- |
+| **Footer**            | `components/navigation/footer.tsx`        | Append to `FOOTER_LINKS` array — renders automatically                                |
+| **Home page banner**  | `components/discovery/discovery-page.tsx` | `bg-surface-warm` strip between hero and mode chips with brand pill button            |
 | **Search no-results** | `components/discovery/discovery-page.tsx` | Inline text link below existing "no results" message, only when `isSearching` is true |
 
 ### Analytics
 
 All CTAs tracked via existing `trackSignupCtaClick(ctaLocation)`:
+
 - Footer: N/A (static link, no JS handler)
 - Home banner: `'home_submit_cta'`
 - Search no-results: `'search_no_results_submit_cta'`
 
 ## Alternatives Rejected
 
-| Option | Reason |
-|--------|--------|
-| **Bottom nav placement** | DEV-225 already updating to 5 tabs — 6 would be too crowded on mobile |
+| Option                   | Reason                                                                         |
+| ------------------------ | ------------------------------------------------------------------------------ |
+| **Bottom nav placement** | DEV-225 already updating to 5 tabs — 6 would be too crowded on mobile          |
 | **Auth-only visibility** | Limits discoverability for new visitors. Login redirect is acceptable friction |
-| **Desktop header link** | Header already has 5 nav items. Footer covers persistent availability |
-| **Explore empty state** | Search no-results is higher-intent moment |
-| **"新增店家" copy** | Admin/builder framing doesn't match CafeRoam's community vibe |
+| **Desktop header link**  | Header already has 5 nav items. Footer covers persistent availability          |
+| **Explore empty state**  | Search no-results is higher-intent moment                                      |
+| **"新增店家" copy**      | Admin/builder framing doesn't match CafeRoam's community vibe                  |
 
 ## Testing Classification
 
@@ -46,14 +47,14 @@ All CTAs tracked via existing `trackSignupCtaClick(ctaLocation)`:
 
 ## Components Touched
 
-| File | Change |
-|------|--------|
-| `components/navigation/footer.tsx` | +1 entry to `FOOTER_LINKS` array |
-| `components/discovery/discovery-page.tsx` | +home banner CTA, +search no-results CTA |
-| `components/discovery/discovery-page.test.tsx` | +2 test cases |
-| `components/navigation/__tests__/footer.test.tsx` | +1 test case |
-| `SPEC.md` | §9 auth wall addendum |
-| `SPEC_CHANGELOG.md` | Log entry |
+| File                                              | Change                                   |
+| ------------------------------------------------- | ---------------------------------------- |
+| `components/navigation/footer.tsx`                | +1 entry to `FOOTER_LINKS` array         |
+| `components/discovery/discovery-page.tsx`         | +home banner CTA, +search no-results CTA |
+| `components/discovery/discovery-page.test.tsx`    | +2 test cases                            |
+| `components/navigation/__tests__/footer.test.tsx` | +1 test case                             |
+| `SPEC.md`                                         | §9 auth wall addendum                    |
+| `SPEC_CHANGELOG.md`                               | Log entry                                |
 
 ## SPEC Impact
 

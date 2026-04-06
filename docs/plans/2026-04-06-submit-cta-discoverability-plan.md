@@ -15,6 +15,7 @@
 **Tech Stack:** Next.js, TypeScript, Tailwind CSS, Vitest + Testing Library
 
 **Acceptance Criteria:**
+
 - [ ] Footer shows a "推薦咖啡廳" link that navigates to `/submit`
 - [ ] Home page shows a banner CTA between hero and mode chips that links to `/submit`
 - [ ] Searching with no results shows a "推薦咖啡廳" CTA linking to `/submit`
@@ -26,6 +27,7 @@
 ### Task 1: Add "推薦咖啡廳" link to footer
 
 **Files:**
+
 - Modify: `components/navigation/footer.tsx:4-8` (FOOTER_LINKS array)
 - Test: `components/navigation/__tests__/footer.test.tsx`
 
@@ -76,6 +78,7 @@ git commit -m "feat(DEV-263): add submit café link to footer"
 ### Task 2: Add home page banner CTA between hero and mode chips
 
 **Files:**
+
 - Modify: `components/discovery/discovery-page.tsx:108-112` (between hero and mode chips)
 - Test: `components/discovery/discovery-page.test.tsx`
 
@@ -88,7 +91,7 @@ it('renders submit café CTA banner on home page', () => {
   render(
     <Suspense fallback={null}>
       <DiscoveryPage />
-    </Suspense>,
+    </Suspense>
   );
   const ctaLink = screen.getByRole('link', { name: /推薦咖啡廳/ });
   expect(ctaLink).toHaveAttribute('href', '/submit');
@@ -106,10 +109,12 @@ Expected: FAIL — no link with name matching /推薦咖啡廳/ found
 In `components/discovery/discovery-page.tsx`, after the hero `</section>` closing tag (line ~110) and before the mode chips section, insert:
 
 ```tsx
-{/* Submit CTA banner */}
-<div className="border-b border-[#e5e7eb] bg-surface-warm px-5 py-3">
+{
+  /* Submit CTA banner */
+}
+<div className="bg-surface-warm border-b border-[#e5e7eb] px-5 py-3">
   <div className="mx-auto flex max-w-5xl items-center justify-between">
-    <p className="text-sm text-text-secondary">知道一間很棒的咖啡廳？</p>
+    <p className="text-text-secondary text-sm">知道一間很棒的咖啡廳？</p>
     <Link
       href="/submit"
       className="bg-brand inline-flex shrink-0 rounded-full px-4 py-2 text-sm font-semibold text-white"
@@ -118,7 +123,7 @@ In `components/discovery/discovery-page.tsx`, after the hero `</section>` closin
       推薦咖啡廳
     </Link>
   </div>
-</div>
+</div>;
 ```
 
 **Step 4: Run test to verify it passes**
@@ -138,6 +143,7 @@ git commit -m "feat(DEV-263): add submit café CTA banner on home page"
 ### Task 3: Add submit CTA to search no-results state
 
 **Files:**
+
 - Modify: `components/discovery/discovery-page.tsx:136-141` (empty state)
 - Test: `components/discovery/discovery-page.test.tsx`
 
@@ -153,14 +159,16 @@ it('renders submit café CTA when search returns no results', async () => {
   render(
     <Suspense fallback={null}>
       <DiscoveryPage />
-    </Suspense>,
+    </Suspense>
   );
 
   const noResultsSubmitLink = await screen.findByRole('link', {
     name: /推薦咖啡廳/,
   });
   // Ensure this is the no-results CTA, not the banner CTA
-  expect(noResultsSubmitLink.closest('[data-testid="search-no-results"]')).toBeInTheDocument();
+  expect(
+    noResultsSubmitLink.closest('[data-testid="search-no-results"]')
+  ).toBeInTheDocument();
   expect(noResultsSubmitLink).toHaveAttribute('href', '/submit');
   expect(screen.getByText(/找不到你想找的店/)).toBeInTheDocument();
 });
@@ -178,12 +186,10 @@ Replace the empty state block (lines ~136-141) in `components/discovery/discover
 ```tsx
 <div data-testid="search-no-results" className="space-y-3">
   <p className="text-sm text-gray-600">
-    {isSearching
-      ? '目前沒有符合條件的咖啡廳。'
-      : '暫時沒有精選咖啡廳。'}
+    {isSearching ? '目前沒有符合條件的咖啡廳。' : '暫時沒有精選咖啡廳。'}
   </p>
   {isSearching && (
-    <p className="text-sm text-text-secondary">
+    <p className="text-text-secondary text-sm">
       找不到你想找的店？{' '}
       <Link
         href="/submit"
@@ -214,6 +220,7 @@ git commit -m "feat(DEV-263): add submit CTA to search no-results state"
 ### Task 4: Update SPEC.md and changelog
 
 **Files:**
+
 - Modify: `SPEC.md` (§9 auth wall section)
 - Modify: `SPEC_CHANGELOG.md`
 - No test needed — documentation only
@@ -262,13 +269,16 @@ graph TD
 ```
 
 **Wave 1** (parallel — no dependencies, no file overlap):
+
 - Task 1: Footer link (`footer.tsx` + `footer.test.tsx`)
 - Task 2: Home banner CTA (`discovery-page.tsx` + `discovery-page.test.tsx`)
 
 **Wave 2** (sequential — same files as Task 2):
+
 - Task 3: Search no-results CTA ← Task 2 (`discovery-page.tsx` + `discovery-page.test.tsx`)
 
 **Wave 3** (sequential — docs after all code):
+
 - Task 4: SPEC update ← Task 1, Task 3
 
 ---
@@ -276,6 +286,7 @@ graph TD
 ## Final Verification
 
 After all tasks:
+
 1. `pnpm build` — no type errors
 2. `pnpm lint` — no lint errors
 3. `pnpm test` — all tests pass (including new ones)

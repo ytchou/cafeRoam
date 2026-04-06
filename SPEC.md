@@ -231,4 +231,4 @@ pnpm setup                     # Runs all steps automatically
   - **Active:** Subtitle shows "Within {radius} km of you" (default 3 km, expandable to 10 km)
   - **Denied/unavailable:** Near Me pill disabled; subtitle shows "Location unavailable — pick a district to explore"; first district auto-selected
   - **District selected:** No subtitle shown
-> **Note:** Public-facing CTAs (footer, home page, search no-results) link to `/submit`. Unauthenticated users are redirected to login via the `(protected)` route group before reaching the submission form.
+    > **Note:** Public-facing CTAs (footer, home page, search no-results) link to `/submit`. Unauthenticated users are redirected to login via the `(protected)` route group before reaching the submission form.
