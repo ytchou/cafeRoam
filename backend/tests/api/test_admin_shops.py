@@ -255,7 +255,7 @@ class TestAdminShopEnqueue:
                     "/admin/shops/shop-1/enqueue",
                     json={"job_type": "scrape_shop"},
                 )
-            assert response.status_code == 400
+            assert response.status_code == 422
         finally:
             test_app.dependency_overrides.clear()
 

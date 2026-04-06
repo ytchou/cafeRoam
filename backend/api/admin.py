@@ -300,7 +300,7 @@ async def list_batches(
     response = (
         db.table("job_queue")
         .select("job_type, payload, created_at")
-        .in_("job_type", [JobType.SCRAPE_SHOP.value, JobType.SCRAPE_BATCH.value])
+        .in_("job_type", ["scrape_shop", JobType.SCRAPE_BATCH.value])
         .order("created_at", desc=True)
         .limit(batch_job_cap)
         .execute()
@@ -393,7 +393,7 @@ def _collect_shop_ids_for_batch(batch_id: str, db: Any) -> list[str]:
     old_jobs_resp = (
         db.table("job_queue")
         .select("payload")
-        .eq("job_type", JobType.SCRAPE_SHOP.value)
+        .eq("job_type", "scrape_shop")
         .eq("payload->>batch_id", batch_id)
         .execute()
     )
