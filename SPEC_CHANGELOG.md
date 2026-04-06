@@ -4,6 +4,7 @@ Every change to SPEC.md must be logged here immediately after the edit is made.
 
 **Format:** `YYYY-MM-DD | Section changed | What changed | Why`
 
+| 2026-04-06 | §2, §5, §9 | Added shop data reports: user-facing error reporting, IssueTrackerProvider, PDPA SET NULL cascade, daily Linear digest cron | DEV-262 |
 | 2026-04-05 | §9 Geolocation fallback, §2 Explore module | District filter changed from single-select to multi-select | DEV-258: users can now select multiple districts simultaneously |
 | 2026-04-05 | §9 Business Rules — Geolocation fallback | Added GPS status feedback UX states (loading, active, denied, district-selected) | DEV-257 |
 | 2026-04-05 | §2 System Modules, §9 Business Rules | Added collapsible map + district filter to VibePage (/explore/vibes/[slug]) | DEV-247: improve vibe discovery with all-shops default, optional geo/district filters, map panel |
