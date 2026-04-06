@@ -1,3 +1,8 @@
+// @source app/explore/vibes/[slug]/page.tsx  (badge text, default filter)
+// @source app/explore/page.tsx               (vibe grid links)
+// @source app/find/page.tsx                  (tarot draw, geolocation)
+// If any of the above files change routes, DOM structure, or visible text,
+// re-verify selectors and URL paths in this file.
 import { expect } from '@playwright/test';
 import { test as authedTest } from './fixtures/auth';
 import { grantGeolocation } from './fixtures/geolocation';

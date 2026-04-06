@@ -1,3 +1,9 @@
+// @source app/(protected)/lists/page.tsx
+// @source components/lists/favorites-mobile-layout.tsx
+// @source components/lists/favorites-desktop-layout.tsx
+// @source app/(protected)/lists/[listId]/page.tsx
+// If any of the above files change routes, button text, or DOM structure,
+// re-verify selectors in this file.
 import { test, expect } from './fixtures/auth';
 import { first } from './fixtures/helpers';
 

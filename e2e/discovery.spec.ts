@@ -1,3 +1,9 @@
+// @source app/find/page.tsx
+// @source components/discovery/discovery-page.tsx
+// @source app/shops/[shopId]/[slug]/shop-detail-client.tsx
+// @source lib/hooks/use-search-state.ts
+// If any of the above files change routes, DOM structure, or visible text,
+// re-verify selectors and URL paths in this file.
 import { test, expect } from '@playwright/test';
 import {
   grantGeolocation,

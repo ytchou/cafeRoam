@@ -1,3 +1,9 @@
+// @source app/find/page.tsx                       (search lives here post-DEV-197)
+// @source lib/hooks/use-search-state.ts           (URL param 'q' and 'view')
+// @source components/shops/shop-card-compact.tsx  (article selector)
+// @source components/map/list-mobile-layout.tsx   (list view layout)
+// If any of the above files change routes, DOM structure, or visible text,
+// re-verify selectors and URL paths in this file.
 import { test, expect } from './fixtures/auth';
 
 test.describe('@critical J07 — Semantic search returns ranked results', () => {

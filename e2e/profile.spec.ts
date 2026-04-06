@@ -1,3 +1,9 @@
+// @source app/(protected)/profile/page.tsx        (profile heading, My Memories)
+// @source app/(protected)/settings/page.tsx       (delete account button)
+// @source e2e/fixtures/auth.ts:deletionPage       (requires SUPABASE_SERVICE_ROLE_KEY)
+// If any of the above files change routes, button text, or DOM structure,
+// re-verify selectors in this file. Deletion tests (J15, J38) skip when
+// SUPABASE_SERVICE_ROLE_KEY is absent from the environment.
 import { test, expect } from './fixtures/auth';
 
 test.describe('@critical J14 — Profile: stamp collection + check-in history', () => {

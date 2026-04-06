@@ -26,6 +26,7 @@
 - [ ] No `any` types (strict TypeScript)
 - [ ] Tailwind only (no CSS files)
 - [ ] RLS policies updated if new tables added
+- [ ] If routes, page structure, or visible text changed — `e2e/` tests updated or confirmed unaffected (`grep -r '<route-or-selector>' e2e/`)
 
 ## Test Quality (for PRs that add/modify tests)
 
