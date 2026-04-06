@@ -37,17 +37,6 @@ class ApifyScraperAdapter:
     def __init__(self, api_token: str):
         self._client = ApifyClient(api_token)
 
-    async def scrape_by_url(self, google_maps_url: str) -> ScrapedShopData | None:
-        results = await self._run_actor(
-            {**_ACTOR_BASE_INPUT, "startUrls": [{"url": google_maps_url}]}
-        )
-
-        if not results:
-            logger.warning("Apify returned no results", url=google_maps_url)
-            return None
-
-        return self._parse_place(results[0])
-
     async def scrape_batch(self, shops: list[BatchScrapeInput]) -> list[BatchScrapeResult]:
         """Scrape multiple shops in a single Apify actor run.
 
@@ -89,32 +78,6 @@ class ApifyScraperAdapter:
                 logger.warning("scrape_batch: no match for inputStartUrl", url=input_url[:80])
 
         return [BatchScrapeResult(shop_id=s.shop_id, data=matched.get(s.shop_id)) for s in shops]
-
-    async def scrape_reviews_only(self, google_place_id: str) -> list[dict[str, str | int | None]]:
-        results = await self._run_actor(
-            {
-                "startUrls": [
-                    {"url": f"https://www.google.com/maps/place/?q=place_id:{google_place_id}"}
-                ],
-                "maxCrawledPlacesPerSearch": 1,
-                "maxReviews": 5,
-                "maxImages": 0,
-                "scrapeReviewerName": False,
-            }
-        )
-
-        if not results:
-            return []
-
-        return [
-            {
-                "text": r.get("text", ""),
-                "stars": r.get("stars"),
-                "published_at": r.get("publishedAtDate"),
-            }
-            for r in results[0].get("reviews", [])
-            if r.get("text")
-        ]
 
     def _parse_place(self, place: dict[str, Any]) -> ScrapedShopData:
         """Parse a raw Apify place dict into ScrapedShopData."""
