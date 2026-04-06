@@ -1,6 +1,7 @@
 import httpx
 import structlog
 
+from core.db import first
 from models.issue_tracker_types import IssueCreateRequest, IssueCreateResult
 
 logger = structlog.get_logger()
@@ -54,12 +55,12 @@ class LinearIssueTrackerAdapter:
                 },
             )
 
-        data = await response.json()
+        data = response.json()
         result = data.get("data", {}).get("issueCreate", {})
 
         if not result.get("success"):
-            errors = data.get("errors", [{"message": "Unknown error"}])
-            error_msg = errors[0].get("message", "Unknown error") if errors else "Unknown error"
+            errors = data.get("errors", [])
+            error_msg = first(errors, "Linear errors").get("message", "Unknown error") if errors else "Unknown error"
             logger.error("Linear API error", error=error_msg)
             raise RuntimeError(f"Linear API error: {error_msg}")
 
