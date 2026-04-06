@@ -41,7 +41,9 @@ export default function AboutPage() {
       <section className="mt-10 space-y-10">
         {/* 誰在做這件事 — first, establishes identity and credibility */}
         <div className="bg-muted/40 rounded-xl px-5 py-6">
-          <h2 className="text-base font-semibold tracking-wide">誰在做這件事</h2>
+          <h2 className="text-base font-semibold tracking-wide">
+            誰在做這件事
+          </h2>
           <p className="mt-3 text-base leading-relaxed">
             啡遊是一個獨立開發的專案，由一位同樣熱愛咖啡廳的開發者打造。我們沒有大團隊，但有一個簡單的信念：好的工具應該讓探索變得更容易、更有趣。
           </p>
@@ -49,7 +51,9 @@ export default function AboutPage() {
 
         {/* 我們在做什麼 */}
         <div>
-          <h2 className="text-base font-semibold tracking-wide">我們在做什麼</h2>
+          <h2 className="text-base font-semibold tracking-wide">
+            我們在做什麼
+          </h2>
           <p className="mt-3 text-base leading-relaxed">
             啡遊 (CafeRoam)
             是一個為台灣咖啡愛好者打造的探索平台。我們相信，找到一間好咖啡廳不該靠運氣——不管你是想找個安靜角落專心工作、跟朋友聊天的舒服空間、還是一個人放空的好地方，啡遊都能幫你找到。
