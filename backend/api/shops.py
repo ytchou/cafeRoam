@@ -4,7 +4,7 @@ from typing import Any, cast
 from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import ValidationError
+from pydantic import BaseModel, Field, ValidationError
 from pydantic.alias_generators import to_camel
 from starlette.requests import Request
 
@@ -25,6 +25,11 @@ from models.types import (
 _TW = ZoneInfo("Asia/Taipei")
 
 router = APIRouter(prefix="/shops", tags=["shops"])
+
+
+class ShopReportCreate(BaseModel):
+    field: str | None = None
+    description: str = Field(..., min_length=5)
 
 
 def _extract_taxonomy_tags(raw_tags: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -268,3 +273,35 @@ async def get_shop_reviews(
         total_count=total_count,
         average_rating=round(average_rating, 1),
     ).model_dump(by_alias=True)
+
+
+@limiter.limit(settings.rate_limit_shop_report)
+@router.post("/{shop_id}/report", status_code=201)
+async def submit_shop_report(
+    request: Request,
+    shop_id: str,
+    body: ShopReportCreate,
+) -> dict[str, str]:
+    """Submit a report about incorrect shop data."""
+    from postgrest.exceptions import APIError
+
+    db = get_admin_db()
+    user = get_optional_user(request)
+
+    try:
+        db.table("shops").select("id").eq("id", shop_id).single().execute()
+    except APIError:
+        raise HTTPException(status_code=404, detail="Shop not found")
+
+    report_data: dict[str, Any] = {
+        "shop_id": shop_id,
+        "description": body.description,
+    }
+    if body.field:
+        report_data["field"] = body.field
+    if user:
+        report_data["user_id"] = user["id"]
+
+    db.table("shop_reports").insert(report_data).execute()
+
+    return {"message": "Report submitted"}
