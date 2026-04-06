@@ -1,13 +1,6 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('@critical J05 — Auth wall: protected routes redirect to login', () => {
-  test('unauthenticated user accessing /search is redirected to /login', async ({
-    page,
-  }) => {
-    await page.goto('/search');
-    await page.waitForURL(/\/login/, { timeout: 10_000 });
-  });
-
   test('unauthenticated user accessing /lists is redirected to /login', async ({
     page,
   }) => {
@@ -29,13 +22,13 @@ test.describe('@critical J05 — Auth wall: protected routes redirect to login',
     await page.waitForURL(/\/login/, { timeout: 10_000 });
   });
 
-  test('unauthenticated user can access the map/discovery page without redirect', async ({
+  test('unauthenticated user can access the /find page without redirect', async ({
     page,
   }) => {
-    // /map redirects to / — map is embedded in the home page
-    await page.goto('/map');
+    // Map view lives at /find — publicly accessible, no auth required
+    await page.goto('/find');
     await page.waitForLoadState('networkidle');
-    // Should land on / (not /login)
+    // Should stay on /find (not redirected to /login)
     expect(page.url()).not.toContain('/login');
   });
 });

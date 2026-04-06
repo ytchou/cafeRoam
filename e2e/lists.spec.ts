@@ -1,3 +1,9 @@
+// @source app/(protected)/lists/page.tsx
+// @source components/lists/favorites-mobile-layout.tsx
+// @source components/lists/favorites-desktop-layout.tsx
+// @source app/(protected)/lists/[listId]/page.tsx
+// If any of the above files change routes, button text, or DOM structure,
+// re-verify selectors in this file.
 import { test, expect } from './fixtures/auth';
 import { first } from './fixtures/helpers';
 
@@ -17,7 +23,8 @@ test.describe.serial('List cap tests (J12 + J13)', () => {
       // The proxy only forwards the Authorization header (not cookies), so we extract
       // the JWT from the Supabase session cookie (sb-*-auth-token) via Playwright's
       // context.cookies() API and pass it explicitly.
-      const cookies = await page.context().cookies('http://localhost:3000');
+      // No URL filter — staging cookies are set for the staging domain, not localhost.
+      const cookies = await page.context().cookies();
       const authCookie = cookies.find(
         (c) => c.name.startsWith('sb-') && c.name.endsWith('-auth-token')
       );
@@ -146,9 +153,10 @@ test.describe.serial('List cap tests (J12 + J13)', () => {
       }
 
       // Cleanup: delete lists created by this test run (requires auth header)
+      // No URL filter — staging cookies are set for the staging domain, not localhost.
       const cleanupCookies = await page
         .context()
-        .cookies('http://localhost:3000');
+        .cookies();
       const cleanupAuthCookie = cleanupCookies.find(
         (c) => c.name.startsWith('sb-') && c.name.endsWith('-auth-token')
       );
@@ -198,7 +206,8 @@ test.describe.serial('List cap tests (J12 + J13)', () => {
 
       // J13 (serial predecessor) leaves the account at the 3-list cap.
       // Delete down to 2 lists so the "New List" button is available.
-      const cookies = await page.context().cookies('http://localhost:3000');
+      // No URL filter — staging cookies are set for the staging domain, not localhost.
+      const cookies = await page.context().cookies();
       const authCookie = cookies.find(
         (c) => c.name.startsWith('sb-') && c.name.endsWith('-auth-token')
       );

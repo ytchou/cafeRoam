@@ -1,3 +1,8 @@
+// @source app/explore/vibes/[slug]/page.tsx  (badge text, default filter)
+// @source app/explore/page.tsx               (vibe grid links)
+// @source app/find/page.tsx                  (tarot draw, geolocation)
+// If any of the above files change routes, DOM structure, or visible text,
+// re-verify selectors and URL paths in this file.
 import { expect } from '@playwright/test';
 import { test as authedTest } from './fixtures/auth';
 import { grantGeolocation } from './fixtures/geolocation';
@@ -26,8 +31,9 @@ authedTest.describe(
         await page.waitForURL(/\/explore\/vibes\//, { timeout: 10_000 });
         expect(page.url()).toContain('/explore/vibes/');
 
-        // Shop count badge and at least one shop row should appear
-        await expect(page.getByText(/shops? nearby/i)).toBeVisible({
+        // Shop count badge should appear — text is "X shops" (default 'all' filter)
+        // or "X shops nearby" (when nearby filter is active). Match both forms.
+        await expect(page.getByText(/\d+\s+shops?/i)).toBeVisible({
           timeout: 15_000,
         });
       }

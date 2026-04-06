@@ -1,7 +1,12 @@
+// @source app/find/page.tsx
+// @source components/discovery/discovery-page.tsx
+// @source app/shops/[shopId]/[slug]/shop-detail-client.tsx
+// @source lib/hooks/use-search-state.ts
+// If any of the above files change routes, DOM structure, or visible text,
+// re-verify selectors and URL paths in this file.
 import { test, expect } from '@playwright/test';
 import {
   grantGeolocation,
-  denyGeolocation,
   TAIPEI_COORDS,
 } from './fixtures/geolocation';
 import { first } from './fixtures/helpers';
@@ -11,14 +16,14 @@ test.describe('@critical J01 — Near Me: grant geolocation → shops sorted by 
     page,
     context,
   }) => {
-    // My location button is only in the map view — click it before switching to list
+    // My location button is only in the map view (/find) — click it before switching to list
     test.skip(
       !!page.viewportSize() && (page.viewportSize()?.width ?? 0) >= 1024,
       'My location button is mobile-only — not rendered on desktop'
     );
 
     await grantGeolocation(context, TAIPEI_COORDS);
-    await page.goto('/');
+    await page.goto('/find');
     await page.waitForLoadState('networkidle');
 
     // Dismiss cookie consent banner if present — it sits at z-50 and blocks clicks
@@ -44,8 +49,8 @@ test.describe('@critical J01 — Near Me: grant geolocation → shops sorted by 
       timeout: 10_000,
     });
 
-    // URL stays on /
-    expect(new URL(page.url()).pathname).toBe('/');
+    // URL stays on /find
+    expect(new URL(page.url()).pathname).toBe('/find');
   });
 });
 
@@ -58,7 +63,7 @@ test.describe('@critical J02 — Near Me: deny geolocation → error toast', () 
       'My location button is mobile-only — not rendered on desktop'
     );
 
-    await page.goto('/');
+    await page.goto('/find');
     await page.waitForLoadState('networkidle');
 
     // Dismiss cookie consent banner if present
@@ -114,8 +119,8 @@ test.describe('@critical J03 — Text search → login gate for unauthenticated 
     await page.goto('/');
     await page.waitForLoadState('networkidle');
 
-    const searchForm = page.locator('form').first();
-    const searchInput = searchForm.getByRole('textbox');
+    // Home page has a bare <input id="discovery-search"> — no <form> wrapper
+    const searchInput = page.locator('#discovery-search');
     await searchInput.fill('coffee');
     await searchInput.press('Enter');
 
@@ -132,7 +137,7 @@ test.describe('J04 — Browse map → tap pin → shop detail sheet', () => {
     page,
   }) => {
     // Navigate to the map page
-    await page.goto('/map');
+    await page.goto('/find');
     await page.waitForLoadState('networkidle');
 
     // Dismiss cookie consent banner — fixed z-50 overlay intercepts pointer events
@@ -277,7 +282,7 @@ test.describe('J22 — Map ↔ List view toggle', () => {
   test('clicking the list/map toggle button switches between map and list views', async ({
     page,
   }) => {
-    await page.goto('/map');
+    await page.goto('/find');
     await page.waitForLoadState('networkidle');
 
     // Both view toggle buttons come from view-toggle.tsx
@@ -305,7 +310,7 @@ test.describe('J23 — List view: shops sorted by distance', () => {
     context,
   }) => {
     await grantGeolocation(context, TAIPEI_COORDS);
-    await page.goto('/map');
+    await page.goto('/find');
     await page.waitForLoadState('networkidle');
 
     // Switch to list view
@@ -400,7 +405,7 @@ test.describe('J29 — Mobile: mini card on pin tap', () => {
   }) => {
     await page.setViewportSize({ width: 390, height: 844 });
 
-    await page.goto('/map');
+    await page.goto('/find');
     await page.waitForLoadState('networkidle');
 
     // Dismiss cookie consent banner — fixed z-50 overlay intercepts pointer events
@@ -479,13 +484,14 @@ test.describe('@critical J36 — Shop detail: navigation links open Google Maps 
     await page.goto(`/shops/${shop.id}/${shop.slug || ''}`);
     await page.waitForLoadState('networkidle');
 
-    // Google Maps link should be present and open in a new tab
-    const googleMapsLink = page.locator('a[href*="google.com/maps"]').first();
+    // The shop detail page renders nav links twice: desktop (hidden on mobile, first in DOM)
+    // and mobile (visible on mobile, second in DOM). Use nth(1) to target the mobile link.
+    const googleMapsLink = page.locator('a[href*="google.com/maps"]').nth(1);
     await expect(googleMapsLink).toBeVisible({ timeout: 10_000 });
     await expect(googleMapsLink).toHaveAttribute('target', '_blank');
 
     // Apple Maps link should be present and open in a new tab
-    const appleMapsLink = page.locator('a[href*="maps.apple.com"]').first();
+    const appleMapsLink = page.locator('a[href*="maps.apple.com"]').nth(1);
     await expect(appleMapsLink).toBeVisible({ timeout: 10_000 });
     await expect(appleMapsLink).toHaveAttribute('target', '_blank');
   });

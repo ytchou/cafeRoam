@@ -1,3 +1,9 @@
+// @source app/(protected)/profile/page.tsx        (profile heading, My Memories)
+// @source app/(protected)/settings/page.tsx       (delete account button)
+// @source e2e/fixtures/auth.ts:deletionPage       (requires SUPABASE_SERVICE_ROLE_KEY)
+// If any of the above files change routes, button text, or DOM structure,
+// re-verify selectors in this file. Deletion tests (J15, J38) skip when
+// SUPABASE_SERVICE_ROLE_KEY is absent from the environment.
 import { test, expect } from './fixtures/auth';
 
 test.describe('@critical J14 — Profile: stamp collection + check-in history', () => {
@@ -21,6 +27,10 @@ test.describe('@critical J14 — Profile: stamp collection + check-in history', 
 });
 
 test.describe('@critical J15 — Account deletion: request → grace period state', () => {
+  test.skip(
+    !process.env.SUPABASE_SERVICE_ROLE_KEY || !process.env.NEXT_PUBLIC_SUPABASE_URL,
+    'Deletion tests require SUPABASE_SERVICE_ROLE_KEY and NEXT_PUBLIC_SUPABASE_URL'
+  );
   test('requesting account deletion shows 30-day grace period confirmation', async ({
     deletionPage: page,
   }) => {
@@ -81,6 +91,10 @@ test.describe('J25 — Display name update', () => {
 
 test.describe
   .serial('@critical J38 — Account deletion: cancel during grace period', () => {
+  test.skip(
+    !process.env.SUPABASE_SERVICE_ROLE_KEY || !process.env.NEXT_PUBLIC_SUPABASE_URL,
+    'Deletion tests require SUPABASE_SERVICE_ROLE_KEY and NEXT_PUBLIC_SUPABASE_URL'
+  );
   test('a user in the 30-day grace period can cancel deletion from the recovery page', async ({
     deletionPage: page,
   }) => {
