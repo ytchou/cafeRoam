@@ -43,6 +43,10 @@ jobs:
             echo "::error::E2E_STAGING_URL secret is not set — nightly cannot run without a staging target"
             exit 1
           fi
+          if [ -z "$E2E_USER_EMAIL" ] || [ -z "$E2E_USER_PASSWORD" ]; then
+            echo "::error::E2E_USER_EMAIL and E2E_USER_PASSWORD secrets are not set — authenticated tests will fail"
+            exit 1
+          fi
           pnpm e2e
 
       - name: Upload test results
