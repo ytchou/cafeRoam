@@ -268,7 +268,10 @@ async def run_daily_batch_scrape() -> None:
         .not_.is_("google_maps_url", "null")
         .execute()
     )
-    shops = response.data or []
+    shops: list[dict[str, str]] = [
+        {"id": str(row["id"]), "google_maps_url": str(row["google_maps_url"])}
+        for row in (response.data or [])
+    ]
 
     if not shops:
         logger.info("daily_batch_scrape: no pending shops, skipping")
@@ -282,10 +285,16 @@ async def run_daily_batch_scrape() -> None:
         .eq("status", "pending")
         .execute()
     )
-    sub_by_shop = {s["shop_id"]: s for s in (sub_response.data or [])}
+    sub_by_shop: dict[str, dict[str, str]] = {
+        str(row["shop_id"]): {
+            "id": str(row["id"]),
+            "submitted_by": str(row["submitted_by"]),
+        }
+        for row in (sub_response.data or [])
+    }
 
     batch_id = str(uuid.uuid4())
-    batch_shops = []
+    batch_shops: list[dict[str, str]] = []
     for s in shops:
         entry: dict[str, str] = {"shop_id": s["id"], "google_maps_url": s["google_maps_url"]}
         sub = sub_by_shop.get(s["id"])
