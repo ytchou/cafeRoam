@@ -34,11 +34,16 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium webkit
 
       - name: Run full e2e suite
-        run: pnpm e2e
         env:
           E2E_BASE_URL: ${{ secrets.E2E_STAGING_URL }}
           E2E_USER_EMAIL: ${{ secrets.E2E_USER_EMAIL }}
           E2E_USER_PASSWORD: ${{ secrets.E2E_USER_PASSWORD }}
+        run: |
+          if [ -z "$E2E_BASE_URL" ]; then
+            echo "::error::E2E_STAGING_URL secret is not set — nightly cannot run without a staging target"
+            exit 1
+          fi
+          pnpm e2e
 
       - name: Upload test results
         if: ${{ !cancelled() }}
