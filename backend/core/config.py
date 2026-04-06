@@ -25,6 +25,11 @@ class Settings(BaseSettings):
     resend_api_key: str = ""
     email_from: str = "CafeRoam <noreply@caferoam.tw>"
     admin_email: str = "hello@caferoam.tw"
+    
+    # Issue tracker (Linear)
+    issue_tracker_provider: str = "linear"
+    linear_api_key: str = ""
+    linear_team_id: str = ""
 
     # Analytics
     analytics_provider: str = "posthog"
@@ -73,6 +78,7 @@ class Settings(BaseSettings):
     rate_limit_default: str = "60/minute"
     rate_limit_search: str = "10/minute"
     rate_limit_shops_list: str = "30/minute"
+    rate_limit_shop_report: str = "5/day"
     bot_detection_enabled: bool = True
     bot_ua_blocklist: list[str] = [
         "curl",

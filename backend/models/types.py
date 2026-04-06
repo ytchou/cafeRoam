@@ -473,6 +473,7 @@ class JobType(StrEnum):
     ADMIN_DIGEST_EMAIL = "admin_digest_email"
     CLASSIFY_SHOP_PHOTOS = "classify_shop_photos"
     SUMMARIZE_REVIEWS = "summarize_reviews"
+    SHOP_DATA_REPORT = "shop_data_report"
 
 
 class JobStatus(StrEnum):
