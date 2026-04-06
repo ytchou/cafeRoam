@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 const EFFECTIVE_DATE = '2026-04-03';
 
 const COLLECTION_ITEMS = [
-  { label: '帳號資訊', detail: 'Email、社群帳號 ID（Google / Apple）' },
+  { label: '帳號資訊', detail: 'Email' },
   {
     label: '打卡記錄',
     detail: '打卡照片、評分、文字心得、打卡時間與地點（店家）',
@@ -27,7 +27,7 @@ const COLLECTION_ITEMS = [
 
 const PURPOSE_ITEMS = [
   '提供個人化的咖啡廳推薦與 AI 語意搜尋服務',
-  '運作核心功能：打卡、極拍牆（Polaroid Wall）、清單',
+  '運作核心功能：打卡、拍立得牆、清單',
   '商家資訊數據充實（菜單照片可能被用於更新店家菜單資訊）',
   '可能以匿名、彙總方式提供驗證店家店主經營數據參考（僅限匿名彙總資料，如瀏覽次數、熱門時段等，不包含任何可辨識個人之資訊）',
 ];
@@ -44,7 +44,7 @@ const RETENTION_ROWS = [
     trigger: '申請刪除帳號後 30 天內完全刪除',
   },
   {
-    type: '極拍牆（Polaroid）',
+    type: '拍立得牆',
     period: '帳號存續期間',
     trigger: '申請刪除帳號後 30 天內完全刪除',
   },
@@ -131,13 +131,10 @@ export default function PrivacyPage() {
           <h2 className="text-lg font-semibold">4. 匿名化與資料保護措施</h2>
           <ul className="mt-2 list-disc space-y-1.5 pl-5 text-sm">
             <li>
-              使用行為分析事件採用 SHA-256 雜湊後的使用者
-              ID，不記錄原始帳號資訊。
+              行為分析數據採用匿名化識別碼，無法回溯至您的帳號或個人資訊。
             </li>
             <li>
-              提供給店主的數據僅為彙總計數，並採用 k-匿名性（k≥10）：
-              當特定族群的使用者人數少於 10
-              人時，該項數據將顯示「資料不足」，不予揭露。
+              提供給店主的數據僅為彙總計數。當族群人數過少時，相關數據將不予揭露，確保個別使用者無從被辨識。
             </li>
             <li>
               人口統計數據（年齡層、性別）採週/月級別彙總，不提供逐日數據。
@@ -223,8 +220,7 @@ export default function PrivacyPage() {
           <p className="mt-2 text-sm">
             您在打卡時上傳的菜單照片，可能被用於改善平台上的店家資訊（例如更新菜單品項與價格）。
             此用途已包含在您簽署個人資料同意書時所揭露的目的範圍內。
-            您可隨時申請刪除帳號，所有打卡照片將在 30 天內自 Supabase Storage
-            完全刪除。
+            您可隨時申請刪除帳號，所有打卡照片將在 30 天內自資料庫完全刪除。
           </p>
         </div>
 
@@ -237,7 +233,7 @@ export default function PrivacyPage() {
           <p className="mt-1 text-sm font-medium">
             CafeRoam 啡遊 — 資料保護窗口
             <br />
-            Email：privacy@caferoam.tw
+            Email：caferoam.tw@gmail.com
           </p>
         </div>
       </section>
