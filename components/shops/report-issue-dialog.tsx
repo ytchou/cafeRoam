@@ -45,6 +45,7 @@ export function ReportIssueDialog({ shopId, open, onOpenChange }: ReportIssueDia
     if (!open) {
       setField('');
       setDescription('');
+      setIsSubmitting(false);
     }
   }, [open]);
 
