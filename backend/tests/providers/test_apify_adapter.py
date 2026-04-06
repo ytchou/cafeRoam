@@ -200,8 +200,14 @@ async def test_age_filter_drops_photos_older_than_5_years(adapter):
         {
             "inputStartUrl": "https://maps.google.com/?cid=1",
             "images": [
-                {"imageUrl": "https://cdn/old.jpg", "uploadedAt": (now - timedelta(days=365 * 6)).isoformat()},
-                {"imageUrl": "https://cdn/recent.jpg", "uploadedAt": (now - timedelta(days=30)).isoformat()},
+                {
+                    "imageUrl": "https://cdn/old.jpg",
+                    "uploadedAt": (now - timedelta(days=365 * 6)).isoformat(),
+                },
+                {
+                    "imageUrl": "https://cdn/recent.jpg",
+                    "uploadedAt": (now - timedelta(days=30)).isoformat(),
+                },
             ],
         }
     )
@@ -268,17 +274,21 @@ async def test_fallback_to_image_urls_when_images_absent(adapter):
 
 def test_parse_images_array_skips_invalid_date(adapter):
     """Images with unparseable uploadedAt are included without a timestamp."""
-    photos = adapter._parse_images_array([{"imageUrl": "https://cdn/ok.jpg", "uploadedAt": "not-a-date"}])
+    photos = adapter._parse_images_array(
+        [{"imageUrl": "https://cdn/ok.jpg", "uploadedAt": "not-a-date"}]
+    )
     assert len(photos) == 1
     assert photos[0].uploaded_at is None
 
 
 def test_parse_images_array_skips_missing_image_url(adapter):
     """Images without imageUrl are silently skipped."""
-    photos = adapter._parse_images_array([
-        {"uploadedAt": "2025-01-01T00:00:00.000Z"},
-        {"imageUrl": "https://cdn/valid.jpg"},
-    ])
+    photos = adapter._parse_images_array(
+        [
+            {"uploadedAt": "2025-01-01T00:00:00.000Z"},
+            {"imageUrl": "https://cdn/valid.jpg"},
+        ]
+    )
     assert len(photos) == 1
     assert photos[0].url == "https://cdn/valid.jpg"
 
