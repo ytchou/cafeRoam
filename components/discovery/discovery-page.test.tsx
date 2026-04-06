@@ -262,11 +262,7 @@ describe('DiscoveryPage', () => {
   });
 
   it('renders submit café CTA banner on home page', () => {
-    render(
-      <Suspense fallback={null}>
-        <DiscoveryPage />
-      </Suspense>,
-    );
+    renderDiscoveryPage();
     const ctaLink = screen.getByRole('link', { name: /推薦咖啡廳/ });
     expect(ctaLink).toHaveAttribute('href', '/submit');
     expect(screen.getByText(/知道一間很棒的咖啡廳/)).toBeInTheDocument();
@@ -293,11 +289,7 @@ describe('DiscoveryPage', () => {
       error: null,
     });
 
-    render(
-      <Suspense fallback={null}>
-        <DiscoveryPage />
-      </Suspense>,
-    );
+    renderDiscoveryPage();
 
     await screen.findByText(/找不到你想找的店/);
 
@@ -306,7 +298,6 @@ describe('DiscoveryPage', () => {
 
     const noResultsSubmitLink = noResultsContainer.querySelector('a[href="/submit"]');
     expect(noResultsSubmitLink).toBeInTheDocument();
-    expect(noResultsSubmitLink).toHaveAttribute('href', '/submit');
     expect(screen.getByText(/找不到你想找的店/)).toBeInTheDocument();
   });
 });
