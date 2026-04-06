@@ -37,7 +37,8 @@ const FAQ_ITEMS: FaqItem[] = [
       '我們結合公開資訊、AI 數據充實、以及使用者打卡回饋來建立店家資料。如果你發現資料有誤，歡迎前往店家頁面回報。',
     answerNode: (
       <>
-        我們結合公開資訊、AI 數據充實、以及使用者打卡回饋來建立店家資料。如果你發現資料有誤，歡迎前往{' '}
+        我們結合公開資訊、AI
+        數據充實、以及使用者打卡回饋來建立店家資料。如果你發現資料有誤，歡迎前往{' '}
         <Link href="/explore" className="underline">
           店家頁面
         </Link>{' '}
@@ -95,7 +96,9 @@ export default function FaqPage() {
                 ▾
               </span>
             </summary>
-            <p className="text-text-meta mt-2 text-base">{item.answerNode ?? item.answer}</p>
+            <p className="text-text-meta mt-2 text-base">
+              {item.answerNode ?? item.answer}
+            </p>
           </details>
         ))}
       </section>
