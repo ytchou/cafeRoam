@@ -53,15 +53,16 @@ ruff format .                  # Format Python code
 mypy .                         # Type check Python code
 ```
 
-### Database (Supabase)
+### Database (Supabase — staging-first)
+
+Development uses the staging Supabase project directly. No local Supabase instance needed.
 
 ```bash
-supabase start                 # Start local Supabase (requires Docker)
-supabase db diff               # Check migration state BEFORE pushing
-supabase db push               # Apply migrations to local
-make restore-seed-user         # Restore local dev admin user (safe — no data loss)
-make seed-shops                # Restore 164 live shops from supabase/seeds/shops_data.sql
-make reset-db                  # !! DESTRUCTIVE — wipes all data. Has a 5s warning prompt.
+supabase link --project-ref <ref>  # One-time: link CLI to staging project
+supabase db diff                    # Check migration state BEFORE pushing
+supabase db push                    # Apply migrations to staging (linked)
+make restore-seed-user              # Restore dev admin user on staging
+DATABASE_URL=postgresql://... make seed-shops  # Seed shop data to staging
 ```
 
 **See [ERROR-PREVENTION.md](ERROR-PREVENTION.md)** for common migration errors.
@@ -71,8 +72,9 @@ make reset-db                  # !! DESTRUCTIVE — wipes all data. Has a 5s war
 ## Environment Preflight
 
 - **Before any environment-dependent work** (DB queries, migrations, running dev servers), run `make doctor` and fix all failures before proceeding.
-- Never assume Supabase is running or `.env.local` is correct — verify with `make doctor`.
+- Never assume `.env.local` and `backend/.env` point to the correct Supabase project — verify with `make doctor`.
 - **When adding a new service, external dependency, or env var**, update `scripts/doctor.sh` with a corresponding health check. The doctor script must grow with the project.
+- **Before any destructive operation on staging**, run `make snapshot-staging` first.
 
 ---
 

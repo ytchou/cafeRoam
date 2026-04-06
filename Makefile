@@ -1,16 +1,14 @@
-.PHONY: help doctor setup dev dev-all migrate seed-shops seed-kino seed-staging restore-seed-user reset-db workers-enrich workers-embed test validate-supabase lint audit-staging snapshot-staging promote-to-prod restore-snapshot
+.PHONY: help doctor setup dev dev-all migrate seed-shops seed-kino restore-seed-user workers-enrich workers-embed test validate-supabase lint audit-staging snapshot-staging promote-to-prod restore-snapshot
 
 help:
 	@echo "CafeRoam — Available commands:"
-	@echo "  make setup               Run full dev environment setup (install → supabase start → migrate → dev)"
+	@echo "  make setup               Run full dev environment setup (install → link → migrate)"
 	@echo "  make dev                 Start Next.js dev server on :3000"
-	@echo "  make dev-all             Start frontend + backend concurrently (Supabase must already be running)"
-	@echo "  make migrate             Apply Supabase migrations"
-	@echo "  make seed-shops          Restore full scraped shop data (710 shops, 164 live) from supabase/seeds/shops_data.sql"
-	@echo "  make seed-kino           Seed test data for 木下庵 Kino (check-ins, menu items, payment votes, replies, followers)"
-	@echo "  make seed-staging        Seed shops + payment methods to staging (requires DATABASE_URL)"
-	@echo "  make restore-seed-user   Restore the local dev admin user via Supabase Admin API (safe — no data loss)"
-	@echo "  make reset-db            !! DESTRUCTIVE: wipes all data. Use only on a fresh clone. Run 'make seed-shops' after."
+	@echo "  make dev-all             Start frontend + backend concurrently"
+	@echo "  make migrate             Apply Supabase migrations (to linked staging project)"
+	@echo "  make seed-shops          Seed shop data (requires DATABASE_URL)"
+	@echo "  make seed-kino           Seed test data for Kino shop (requires DATABASE_URL)"
+	@echo "  make restore-seed-user   Restore the dev admin user via Supabase Admin API"
 	@echo "  make workers-enrich      Run data enrichment worker locally"
 	@echo "  make workers-embed       Run embedding generation worker locally"
 	@echo "  make test                Run Vitest tests"
@@ -20,19 +18,22 @@ help:
 	@echo "  make audit-staging       Audit staging Supabase data quality (requires DATABASE_URL)"
 	@echo "  make snapshot-staging    Snapshot staging shop data to supabase/snapshots/ (requires DATABASE_URL)"
 	@echo "  make promote-to-prod     Promote staging → prod (requires STAGING_DATABASE_URL + PROD_DATABASE_URL)"
-	@echo "  make restore-snapshot    Restore a snapshot to local dev (FILE=..., TARGET=...)"
+	@echo "  make restore-snapshot    Restore a snapshot (requires FILE + DATABASE_URL)"
 
 doctor:
 	@bash scripts/doctor.sh
 
 setup:
 	pnpm install
-	supabase start
+	@echo ""
+	@echo "One-time: link to staging Supabase (if not already done):"
+	@echo "  supabase link --project-ref <your-project-ref>"
+	@echo ""
 	supabase db push
 	@echo ""
 	@echo "Setup complete. Next steps:"
 	@echo "  make restore-seed-user   — create admin user (caferoam.tw@gmail.com / 00000000)"
-	@echo "  make seed-shops          — restore 164 live shops from supabase/seeds/shops_data.sql"
+	@echo "  make seed-shops          — seed shop data (requires DATABASE_URL)"
 	@echo "  make dev-all             — start frontend + backend"
 
 dev:
@@ -48,10 +49,13 @@ migrate:
 	supabase db push
 
 restore-seed-user:
-	@echo "Restoring local dev admin user (caferoam.tw@gmail.com)..."
-	@SERVICE_ROLE=$$(grep -E "^SUPABASE_SERVICE_ROLE_KEY" backend/.env | cut -d'=' -f2); \
+	@echo "Restoring dev admin user (caferoam.tw@gmail.com)..."
+	@SUPABASE_URL=$$(grep -E "^SUPABASE_URL" backend/.env | cut -d'=' -f2-); \
+	SERVICE_ROLE=$$(grep -E "^SUPABASE_SERVICE_ROLE_KEY" backend/.env | cut -d'=' -f2); \
+	if [ -z "$$SUPABASE_URL" ]; then echo "Error: SUPABASE_URL not set in backend/.env"; exit 1; fi; \
+	if [ -z "$$SERVICE_ROLE" ]; then echo "Error: SUPABASE_SERVICE_ROLE_KEY not set in backend/.env"; exit 1; fi; \
 	curl -s -o /tmp/seed_user_result.json -w "%{http_code}" \
-	  -X POST "http://127.0.0.1:54321/auth/v1/admin/users" \
+	  -X POST "$$SUPABASE_URL/auth/v1/admin/users" \
 	  -H "apikey: $$SERVICE_ROLE" \
 	  -H "Authorization: Bearer $$SERVICE_ROLE" \
 	  -H "Content-Type: application/json" \
@@ -65,36 +69,24 @@ restore-seed-user:
 	      || (echo "Failed:" && cat /tmp/seed_user_result.json && exit 1))
 
 seed-kino:
+	@if [ -z "$$DATABASE_URL" ]; then \
+		echo "Usage: DATABASE_URL=postgresql://... make seed-kino"; \
+		exit 1; \
+	fi
 	@echo "Seeding test data for 木下庵 Kino..."
-	@docker exec -i supabase_db_caferoam psql -U postgres -d postgres < supabase/seeds/kino_test_data.sql
+	@psql "$$DATABASE_URL" < supabase/seeds/kino_test_data.sql
 	@echo "Done — Kino test data seeded."
 
 seed-shops:
-	@echo "Restoring scraped shop data from supabase/seeds/shops_data.sql..."
-	@docker exec -i supabase_db_caferoam psql -U postgres -d postgres < supabase/seeds/shops_data.sql
-	@echo "Applying payment methods seed..."
-	@docker exec -i supabase_db_caferoam psql -U postgres -d postgres < supabase/seeds/payment_methods_seed.sql
-	@echo "Done — shop data restored."
-
-seed-staging:
 	@if [ -z "$$DATABASE_URL" ]; then \
-		echo "Usage: DATABASE_URL=postgresql://... make seed-staging"; \
+		echo "Usage: DATABASE_URL=postgresql://... make seed-shops"; \
 		exit 1; \
 	fi
-	@echo "Seeding shops data to staging..."
+	@echo "Restoring scraped shop data from supabase/seeds/shops_data.sql..."
 	@psql "$$DATABASE_URL" < supabase/seeds/shops_data.sql
-	@echo "Seeding payment methods to staging..."
+	@echo "Applying payment methods seed..."
 	@psql "$$DATABASE_URL" < supabase/seeds/payment_methods_seed.sql
-	@echo "Done — staging seeded."
-
-reset-db:
-	@echo "!! WARNING: This will wipe ALL local data (shops, users, check-ins, lists)."
-	@echo "   Use 'make restore-seed-user' to restore just the admin user without data loss."
-	@echo "   Press Ctrl+C to cancel, or wait 5 seconds to continue..."
-	@sleep 5
-	supabase db reset
-	@echo ""
-	@echo "Database reset. Run 'make restore-seed-user && make seed-shops' to restore data."
+	@echo "Done — shop data restored."
 
 workers-enrich:
 	pnpm workers:enrich
@@ -108,7 +100,6 @@ test:
 validate-supabase:
 	@if [ -z "$$DATABASE_URL" ]; then \
 		echo "Usage: DATABASE_URL=postgresql://... make validate-supabase"; \
-		echo "Local: DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres make validate-supabase"; \
 		exit 1; \
 	fi
 	uv run scripts/validate_supabase.py
@@ -135,10 +126,12 @@ promote-to-prod:
 	STAGING_DATABASE_URL=$$STAGING_DATABASE_URL PROD_DATABASE_URL=$$PROD_DATABASE_URL uv run scripts/sync_data.py promote
 
 restore-snapshot:
-	@FILE=$${FILE:-supabase/snapshots/latest.sql}; \
-	TARGET=$${TARGET:-postgresql://postgres:postgres@127.0.0.1:54322/postgres}; \
-	echo "Restoring $$FILE → target DB"; \
-	uv run scripts/sync_data.py restore --file "$$FILE" --target-url "$$TARGET"
+	@if [ -z "$$FILE" ] || [ -z "$$DATABASE_URL" ]; then \
+		echo "Usage: FILE=supabase/snapshots/latest.sql DATABASE_URL=postgresql://... make restore-snapshot"; \
+		exit 1; \
+	fi
+	@echo "Restoring $$FILE → target DB"
+	@uv run scripts/sync_data.py restore --file "$$FILE" --target-url "$$DATABASE_URL"
 
 lint:
 	pnpm lint && pnpm format:check && pnpm type-check

@@ -272,38 +272,22 @@ cd backend && uv run uvicorn main:app --reload --port 8000
 
 ---
 
-## `supabase db reset --local` Wipes All Live Data
+## Destructive Operations on Staging Database
 
-**Symptom:** All shops, check-ins, lists, and user-generated data vanish. `GET /shops/` returns `[]`. API endpoints return 500 because columns added by recent migrations (e.g. `slug`, `city`) no longer exist in the schema.
+**Symptom:** All shops, check-ins, lists, and user-generated data vanish. `GET /shops/` returns `[]`.
 
-**Root cause:** `supabase db reset --local` drops the entire `public` schema and recreates it from scratch. It wipes every row in every table — shops, users, check-ins, lists, stamps, embeddings. It is not a targeted seed restore.
-
-This was triggered in a session because `pnpm db:seed` (referenced in CLAUDE.md) didn't exist in `package.json`, and `supabase db reset` was incorrectly used as a fallback to restore the seed admin user.
-
-**Fix (after it runs and schema is missing recent columns):**
-
-```bash
-# 1. Apply the pending migrations that were not re-applied:
-supabase db push --local
-# If duplicate key errors in supabase_migrations, use psycopg2 on port 54322
-# to delete the offending tracking rows, then retry db push.
-
-# 2. Restore admin seed user (no data loss):
-make restore-seed-user
-
-# 3. Restore shop data from SQL dump:
-make seed-shops
-```
+**Root cause:** Running `supabase db reset` or destructive SQL directly against the staging Supabase project. Since we use staging-first development (no local Supabase), all data lives on staging — there is no local copy to fall back on.
 
 **Prevention:**
 
-- **Never use `supabase db reset` to restore the admin user.** Use `make restore-seed-user` instead — it calls the Supabase Admin API and has zero data loss.
-- `make reset-db` now has a 5-second warning prompt before running reset. Do not bypass it.
-- If `pnpm db:seed` or any Makefile target fails with "command not found", stop and investigate — do not reach for `supabase db reset` as a fallback.
+- **`make reset-db` has been removed.** There is no one-command wipe available.
+- **Before any destructive operation**, always snapshot first: `DATABASE_URL=... make snapshot-staging`
+- **Never use `supabase db reset` against the linked staging project.** Use targeted seed restores instead.
+- If `pnpm db:seed` or any Makefile target fails with "command not found", stop and investigate — do not reach for destructive commands as a fallback.
 - The canonical safe alternatives:
   - Restore admin user only → `make restore-seed-user`
-  - Restore shop data only → `make seed-shops`
-  - Full wipe + rebuild (fresh clone scenario only) → `make reset-db` then `make restore-seed-user && make seed-shops`
+  - Restore shop data only → `DATABASE_URL=... make seed-shops`
+  - Restore from snapshot → `FILE=... DATABASE_URL=... make restore-snapshot`
 
 ## DB Column Name Masked by Mock Test
 

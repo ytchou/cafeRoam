@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# CafeRoam Doctor — Local environment preflight check
+# CafeRoam Doctor — Environment preflight check (staging-first)
 # Checks all required services and environment variables before dev work.
 #
 # Usage: make doctor (or bash scripts/doctor.sh)
@@ -45,23 +45,21 @@ check() {
   fi
 }
 
-check_env_var_localhost() {
+check_env_var_set() {
   local file="$1"
   local var_name="$2"
   local description="$3"
+  local fix_hint="$4"
 
   if [ ! -f "$file" ]; then
     _fail "$description" "File $file does not exist"
     return
   fi
 
-  local value
-  value=$(grep "^${var_name}=" "$file" 2>/dev/null | head -1 | cut -d'=' -f2- || true)
-
-  if echo "$value" | grep -qE '(127\.0\.0\.1|localhost)'; then
+  if grep -q "^${var_name}=.\+" "$file" 2>/dev/null; then
     _pass "$description"
   else
-    _fail "$description" "Update $var_name in $file to http://127.0.0.1:54321"
+    _fail "$description" "$fix_hint"
   fi
 }
 
@@ -71,19 +69,23 @@ PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 printf "\n${BOLD}CafeRoam Doctor${NC}\n"
 printf "────────────────────────────────\n\n"
 
-# ─── Infrastructure ───────────────────────────────────────────────────────────
-printf "${BOLD}Infrastructure${NC}\n"
-check "Docker running" \
-  "docker info" \
-  "Start Docker Desktop"
+# ─── Supabase Connectivity ────────────────────────────────────────────────────
+printf "${BOLD}Supabase (staging)${NC}\n"
 
-check "Supabase DB healthy (127.0.0.1:54321)" \
-  "curl -sf http://127.0.0.1:54321/rest/v1/ -H 'apikey: placeholder' -o /dev/null" \
-  "Run: supabase start"
+# Extract SUPABASE_URL from .env.local for connectivity check
+SUPABASE_URL=$(grep "^NEXT_PUBLIC_SUPABASE_URL=" "${PROJECT_ROOT}/.env.local" 2>/dev/null | cut -d'=' -f2- || true)
 
-check "Supabase Auth healthy" \
-  "curl -sf http://127.0.0.1:54321/auth/v1/health" \
-  "Run: supabase stop && supabase start"
+if [ -n "$SUPABASE_URL" ]; then
+  check "Supabase REST API reachable" \
+    "curl -sf '${SUPABASE_URL}/rest/v1/' -H 'apikey: placeholder' -o /dev/null" \
+    "Check NEXT_PUBLIC_SUPABASE_URL in .env.local — is the staging project running?"
+
+  check "Supabase Auth reachable" \
+    "curl -sf '${SUPABASE_URL}/auth/v1/health'" \
+    "Check Supabase dashboard — is Auth enabled on the staging project?"
+else
+  _fail "NEXT_PUBLIC_SUPABASE_URL is set" "Add NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co to .env.local"
+fi
 
 printf "\n"
 
@@ -93,8 +95,9 @@ check ".env.local exists" \
   "test -f '${PROJECT_ROOT}/.env.local'" \
   "Copy from .env.example: cp .env.example .env.local"
 
-check_env_var_localhost "${PROJECT_ROOT}/.env.local" "NEXT_PUBLIC_SUPABASE_URL" \
-  ".env.local SUPABASE_URL points to localhost"
+check_env_var_set "${PROJECT_ROOT}/.env.local" "NEXT_PUBLIC_SUPABASE_URL" \
+  "NEXT_PUBLIC_SUPABASE_URL is set in .env.local" \
+  "Add NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co to .env.local"
 
 check "NEXT_PUBLIC_MAPBOX_TOKEN is set" \
   "grep -q '^NEXT_PUBLIC_MAPBOX_TOKEN=.' '${PROJECT_ROOT}/.env.local'" \
@@ -106,10 +109,11 @@ check "MAPBOX_ACCESS_TOKEN is set in backend/.env (required for directions + geo
 
 check "backend/.env exists" \
   "test -f '${PROJECT_ROOT}/backend/.env'" \
-  "Create backend/.env with SUPABASE_URL=http://127.0.0.1:54321"
+  "Create backend/.env with SUPABASE_URL=https://xxx.supabase.co"
 
-check_env_var_localhost "${PROJECT_ROOT}/backend/.env" "SUPABASE_URL" \
-  "backend/.env SUPABASE_URL points to localhost"
+check_env_var_set "${PROJECT_ROOT}/backend/.env" "SUPABASE_URL" \
+  "SUPABASE_URL is set in backend/.env" \
+  "Add SUPABASE_URL=https://xxx.supabase.co to backend/.env"
 
 check "ANON_SALT is set" \
   "grep -q '^ANON_SALT=.' '${PROJECT_ROOT}/backend/.env'" \
@@ -190,6 +194,10 @@ printf "\n"
 
 # ─── Data ─────────────────────────────────────────────────────────────────────
 printf "${BOLD}Data${NC}\n"
+check "Supabase CLI linked to staging" \
+  "test -f '${PROJECT_ROOT}/.supabase/project-ref'" \
+  "Run: supabase link --project-ref <your-project-ref>"
+
 check "Migrations in sync" \
   "cd '${PROJECT_ROOT}' && test -z \"\$(supabase db diff 2>/dev/null)\"" \
   "Run: supabase db push"
