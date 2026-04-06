@@ -25,9 +25,7 @@ from workers.handlers.generate_embedding import handle_generate_embedding
 from workers.handlers.publish_shop import handle_publish_shop
 from workers.handlers.reembed_reviewed_shops import handle_reembed_reviewed_shops
 from workers.handlers.scrape_batch import handle_scrape_batch
-from workers.handlers.scrape_shop import handle_scrape_shop
 from workers.handlers.shop_data_report import handle_shop_data_report
-from workers.handlers.staleness_sweep import handle_smart_staleness_sweep
 from workers.handlers.summarize_reviews import handle_summarize_reviews
 from workers.handlers.weekly_email import handle_weekly_email
 from workers.queue import JobQueue
@@ -112,7 +110,7 @@ def _get_job_concurrency(job_type: JobType) -> int:
             return settings.worker_concurrency_embed
         case JobType.PUBLISH_SHOP:
             return settings.worker_concurrency_publish
-        case JobType.SCRAPE_BATCH | JobType.SCRAPE_SHOP:
+        case JobType.SCRAPE_BATCH:
             return settings.worker_concurrency_scrape
         case _:
             return settings.worker_concurrency_default
@@ -145,20 +143,9 @@ async def _dispatch_job(job: Job, db: Client, queue: JobQueue) -> None:
                 embeddings=embeddings,
                 queue=queue,
             )
-        case JobType.STALENESS_SWEEP:
-            scraper = get_scraper_provider()
-            await handle_smart_staleness_sweep(db=db, scraper=scraper, queue=queue)
         case JobType.WEEKLY_EMAIL:
             email = get_email_provider()
             await handle_weekly_email(db=db, email=email)
-        case JobType.SCRAPE_SHOP:
-            scraper = get_scraper_provider()
-            await handle_scrape_shop(
-                payload=job.payload,
-                db=db,
-                scraper=scraper,
-                queue=queue,
-            )
         case JobType.SCRAPE_BATCH:
             scraper = get_scraper_provider()
             await handle_scrape_batch(
@@ -245,13 +232,6 @@ async def process_job_type(job_type: JobType) -> None:
         task = asyncio.create_task(_run_job(job))
         _tasks.add(task)
         task.add_done_callback(_tasks.discard)
-
-
-@idempotent_cron("staleness_sweep", window="day")
-async def run_staleness_sweep() -> None:
-    db = get_service_role_client()
-    queue = JobQueue(db=db)
-    await queue.enqueue(job_type=JobType.STALENESS_SWEEP, payload={})
 
 
 @idempotent_cron("weekly_email", window="week")
@@ -429,12 +409,6 @@ def get_scheduler_status(scheduler: AsyncIOScheduler) -> dict[str, object]:
 def create_scheduler() -> AsyncIOScheduler:
     scheduler = AsyncIOScheduler(timezone="Asia/Taipei")
 
-    scheduler.add_job(
-        run_staleness_sweep,
-        "cron",
-        hour=3,
-        id="staleness_sweep",
-    )
     scheduler.add_job(
         run_weekly_email,
         "cron",
