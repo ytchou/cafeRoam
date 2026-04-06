@@ -2,7 +2,13 @@
   "head_sha": "ea16b5c82fb988bf2f2a6afd71fcf9f6c2b56621",
   "review_log_path": "docs/reviews/2026-04-06-feat-dev-279-280-taxonomy-confidence.md",
   "active_agents": ["Inline Review"],
-  "skipped": ["Plan Alignment", "Design Quality", "Test Philosophy", "Architecture", "Adversarial Review"],
+  "skipped": [
+    "Plan Alignment",
+    "Design Quality",
+    "Test Philosophy",
+    "Architecture",
+    "Adversarial Review"
+  ],
   "findings": [
     {
       "id": 1,
