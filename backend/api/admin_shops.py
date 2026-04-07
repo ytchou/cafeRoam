@@ -1,5 +1,5 @@
 from datetime import UTC, datetime
-from typing import Any, Literal, cast
+from typing import Any, cast
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile
@@ -311,6 +311,7 @@ async def bulk_approve(
     eligible_ids = [row["id"] for row in eligible]
 
     approved = 0
+    updated_ids: set[str] = set()
     if eligible_ids:
         # Batch UPDATE — conditional on status to guard against concurrent changes
         update_resp = (
@@ -321,10 +322,9 @@ async def bulk_approve(
             .execute()
         )
         approved = len(update_resp.data or [])
-
-    # Build batch_shops from UPDATE result to stay consistent with approved count —
-    # concurrent updates between SELECT and UPDATE could otherwise inflate queued vs approved.
-    updated_ids = {row["id"] for row in (update_resp.data or [])} if eligible_ids else set()
+        # Build from UPDATE result to stay consistent with approved count —
+        # concurrent updates between SELECT and UPDATE could otherwise inflate queued vs approved.
+        updated_ids = {row["id"] for row in (update_resp.data or [])}
     batch_shops = [
         {"shop_id": row["id"], "google_maps_url": row["google_maps_url"]}
         for row in eligible
