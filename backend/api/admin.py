@@ -246,8 +246,7 @@ async def approve_submissions_bulk(
         .execute()
     )
     subs_by_id: dict[str, dict[str, Any]] = {
-        row["id"]: row
-        for row in cast("list[dict[str, Any]]", all_subs_res.data or [])
+        row["id"]: row for row in cast("list[dict[str, Any]]", all_subs_res.data or [])
     }
 
     for submission_id in body.submission_ids:
@@ -324,8 +323,7 @@ async def reject_submissions_bulk(
         .execute()
     )
     subs_by_id: dict[str, dict[str, Any]] = {
-        row["id"]: row
-        for row in cast("list[dict[str, Any]]", all_subs_res.data or [])
+        row["id"]: row for row in cast("list[dict[str, Any]]", all_subs_res.data or [])
     }
 
     for submission_id in body.submission_ids:

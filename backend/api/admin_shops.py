@@ -361,9 +361,7 @@ async def retry_shops(
     retryable_values = [s.value for s in RETRYABLE_STATUSES]
 
     query = db.table("shops").select("id").in_("processing_status", retryable_values)
-    query = (
-        query.in_("id", body.shop_ids) if body.shop_ids is not None else query.limit(200)
-    )
+    query = query.in_("id", body.shop_ids) if body.shop_ids is not None else query.limit(200)
 
     eligible_res = query.execute()
     eligible_ids = [r["id"] for r in (eligible_res.data or [])]
@@ -443,10 +441,10 @@ async def bulk_reject_shops(
         action="POST /admin/shops/bulk-reject",
         target_type="shop",
         payload={
-                "rejected": rejected_count,
-                "skipped": skipped_count,
-                "reason": body.rejection_reason,
-            },
+            "rejected": rejected_count,
+            "skipped": skipped_count,
+            "reason": body.rejection_reason,
+        },
     )
     return {"rejected": rejected_count, "skipped": skipped_count}
 

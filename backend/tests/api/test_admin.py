@@ -375,8 +375,17 @@ class TestBulkApproveSubmissions:
         try:
             mock_db = MagicMock()
             # Batch-fetch submissions via IN() query
-            mock_db.table.return_value.select.return_value.in_.return_value.execute.return_value = MagicMock(
-                data=[{"id": "sub-1", "status": "pending", "shop_id": "shop-1", "submitted_by": None}]
+            mock_db.table.return_value.select.return_value.in_.return_value.execute.return_value = (
+                MagicMock(
+                    data=[
+                        {
+                            "id": "sub-1",
+                            "status": "pending",
+                            "shop_id": "shop-1",
+                            "submitted_by": None,
+                        }
+                    ]
+                )
             )
             # UPDATE submission succeeds
             mock_db.table.return_value.update.return_value.eq.return_value.in_.return_value.execute.return_value = MagicMock(
@@ -408,8 +417,12 @@ class TestBulkApproveSubmissions:
         try:
             mock_db = MagicMock()
             # Batch-fetch submissions via IN() query — returns live submission
-            mock_db.table.return_value.select.return_value.in_.return_value.execute.return_value = MagicMock(
-                data=[{"id": "sub-1", "status": "live", "shop_id": "shop-1", "submitted_by": None}]
+            mock_db.table.return_value.select.return_value.in_.return_value.execute.return_value = (
+                MagicMock(
+                    data=[
+                        {"id": "sub-1", "status": "live", "shop_id": "shop-1", "submitted_by": None}
+                    ]
+                )
             )
             with (
                 patch("api.admin.get_service_role_client", return_value=mock_db),
@@ -448,8 +461,8 @@ class TestBulkRejectSubmissions:
         try:
             mock_db = MagicMock()
             # Batch-fetch submissions via IN() query
-            mock_db.table.return_value.select.return_value.in_.return_value.execute.return_value = MagicMock(
-                data=[{"id": "sub-1", "status": "pending", "shop_id": "shop-1"}]
+            mock_db.table.return_value.select.return_value.in_.return_value.execute.return_value = (
+                MagicMock(data=[{"id": "sub-1", "status": "pending", "shop_id": "shop-1"}])
             )
             # UPDATE submission
             mock_db.table.return_value.update.return_value.eq.return_value.not_.return_value.in_.return_value.execute.return_value = MagicMock(
@@ -457,8 +470,8 @@ class TestBulkRejectSubmissions:
             )
             mock_db.rpc.return_value.execute.return_value = MagicMock(data=None)
             # UPDATE shop
-            mock_db.table.return_value.update.return_value.eq.return_value.execute.return_value = MagicMock(
-                data=[]
+            mock_db.table.return_value.update.return_value.eq.return_value.execute.return_value = (
+                MagicMock(data=[])
             )
             with (
                 patch("api.admin.get_service_role_client", return_value=mock_db),
@@ -482,8 +495,8 @@ class TestBulkRejectSubmissions:
         try:
             mock_db = MagicMock()
             # Batch-fetch submissions via IN() query — returns rejected submission
-            mock_db.table.return_value.select.return_value.in_.return_value.execute.return_value = MagicMock(
-                data=[{"id": "sub-1", "status": "rejected", "shop_id": "shop-1"}]
+            mock_db.table.return_value.select.return_value.in_.return_value.execute.return_value = (
+                MagicMock(data=[{"id": "sub-1", "status": "rejected", "shop_id": "shop-1"}])
             )
             with (
                 patch("api.admin.get_service_role_client", return_value=mock_db),
