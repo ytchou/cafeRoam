@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
@@ -19,114 +19,125 @@ function renderImportSection() {
   );
 }
 
+function createCsvFile() {
+  return new File(
+    ['name,google_maps_url\nTest Cafe,https://maps.google.com/?cid=123'],
+    'shops.csv',
+    { type: 'text/csv' }
+  );
+}
+
 describe('ImportSection', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockGetToken.mockResolvedValue('test-token-abc');
   });
 
-  it('renders all three import action buttons', () => {
+  it('renders Seed Shops button and Run Pipeline button', () => {
     renderImportSection();
+
     expect(
-      screen.getByRole('button', { name: /import from cafe nomad/i })
+      screen.getByRole('button', { name: /seed shops/i })
     ).toBeInTheDocument();
     expect(
-      screen.getByRole('button', { name: /import google takeout/i })
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: /check urls/i })
+      screen.getByRole('button', { name: /run pipeline/i })
     ).toBeInTheDocument();
   });
 
-  it('calls the cafe-nomad import endpoint and notifies parent on success', async () => {
+  it('shows error toast and does not call fetch when no file is selected', async () => {
+    const user = userEvent.setup();
+    renderImportSection();
+
+    await user.click(screen.getByRole('button', { name: /seed shops/i }));
+
+    expect(mockGetToken).not.toHaveBeenCalled();
+    expect(mockFetch).not.toHaveBeenCalled();
+    expect(mockOnImportComplete).not.toHaveBeenCalled();
+  });
+
+  it('does not call fetch when session token is missing', async () => {
+    mockGetToken.mockResolvedValue(null);
+
+    const user = userEvent.setup();
+    renderImportSection();
+
+    const fileInput = document.getElementById('csv-file') as HTMLInputElement;
+    await user.upload(fileInput, createCsvFile());
+    await user.click(screen.getByRole('button', { name: /seed shops/i }));
+
+    await waitFor(() => {
+      expect(mockGetToken).toHaveBeenCalled();
+    });
+
+    expect(mockFetch).not.toHaveBeenCalled();
+    expect(mockOnImportComplete).not.toHaveBeenCalled();
+  });
+
+  it('calls manual-csv endpoint with FormData and auth header on success, shows summary card', async () => {
     mockFetch.mockResolvedValue({
       ok: true,
       json: async () => ({
-        imported: 12,
-        flagged_duplicates: 2,
-        filtered: {
-          invalid_url: 0,
-          invalid_name: 0,
-          known_failed: 0,
-          closed: 0,
-        },
-        pending_url_check: 0,
-        region: 'taipei',
+        imported: 5,
+        skipped_duplicate: 1,
+        invalid_url: 0,
+        duplicate_in_file: 0,
+        total: 6,
       }),
     });
 
     const user = userEvent.setup();
     renderImportSection();
 
-    await user.click(
-      screen.getByRole('button', { name: /import from cafe nomad/i })
-    );
+    const fileInput = document.getElementById('csv-file') as HTMLInputElement;
+    await user.upload(fileInput, createCsvFile());
+    await user.click(screen.getByRole('button', { name: /seed shops/i }));
 
     await waitFor(() => {
       expect(mockFetch).toHaveBeenCalledWith(
-        '/api/admin/shops/import/cafe-nomad',
+        '/api/admin/shops/import/manual-csv',
         expect.objectContaining({
           method: 'POST',
-          headers: expect.objectContaining({
+          headers: {
             Authorization: 'Bearer test-token-abc',
-          }),
+          },
+          body: expect.any(FormData),
         })
       );
     });
-    expect(mockOnImportComplete).toHaveBeenCalled();
+
+    expect(await screen.findByText('Imported: 5')).toBeInTheDocument();
+    expect(
+      screen.getByText('Skipped (duplicate in DB): 1')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('Skipped (duplicate in file): 0')
+    ).toBeInTheDocument();
+    expect(screen.getByText('Invalid URL: 0')).toBeInTheDocument();
+    expect(screen.getByText('Total: 6')).toBeInTheDocument();
+    expect(mockOnImportComplete).toHaveBeenCalledTimes(1);
   });
 
-  it('does not call the endpoint when the session token is missing', async () => {
-    mockGetToken.mockResolvedValue(null);
-
-    const user = userEvent.setup();
-    renderImportSection();
-
-    await user.click(
-      screen.getByRole('button', { name: /import from cafe nomad/i })
-    );
-
-    await waitFor(() => {
-      expect(mockGetToken).toHaveBeenCalled();
-    });
-    expect(mockFetch).not.toHaveBeenCalled();
-    expect(mockOnImportComplete).not.toHaveBeenCalled();
-  });
-
-  it('calls the check-urls endpoint on success', async () => {
+  it('calls run-batch endpoint with auth header and shows queued toast on success', async () => {
     mockFetch.mockResolvedValue({
       ok: true,
-      json: async () => ({ checking: 5 }),
+      json: async () => ({ queued: true }),
     });
 
     const user = userEvent.setup();
     renderImportSection();
 
-    await user.click(screen.getByRole('button', { name: /check urls/i }));
+    await user.click(screen.getByRole('button', { name: /run pipeline/i }));
 
     await waitFor(() => {
-      expect(mockFetch).toHaveBeenCalledWith(
-        '/api/admin/shops/import/check-urls',
-        expect.objectContaining({
-          method: 'POST',
-          headers: expect.objectContaining({
-            Authorization: 'Bearer test-token-abc',
-          }),
-        })
-      );
+      expect(mockFetch).toHaveBeenCalledWith('/api/admin/pipeline/run-batch', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer test-token-abc',
+        },
+      });
     });
-  });
 
-  it('shows uploading state while the google-takeout import is in progress', async () => {
-    // Simulate no file selected — should not call fetch
-    const user = userEvent.setup();
-    renderImportSection();
-
-    await user.click(
-      screen.getByRole('button', { name: /import google takeout/i })
-    );
-
-    // No file selected — fetch should not be called
-    expect(mockFetch).not.toHaveBeenCalled();
+    expect(mockOnImportComplete).not.toHaveBeenCalled();
   });
 });

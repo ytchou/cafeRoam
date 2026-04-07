@@ -1,8 +1,7 @@
 """TDD tests for admin import trigger routes."""
 
-import json
-from io import BytesIO
-from unittest.mock import AsyncMock, MagicMock, patch
+from typing import Any
+from unittest.mock import MagicMock, patch
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -21,214 +20,154 @@ def _admin_user():
     return {"id": _ADMIN_ID}
 
 
-def _admin_patches(extra: list | None = None):
-    """Context manager that sets up common admin patches."""
-    from contextlib import ExitStack
-
-    stack = ExitStack()
-    stack.enter_context(patch("api.deps.settings", **{"admin_user_ids": [_ADMIN_ID]}))
-    if extra:
-        for p in extra:
-            stack.enter_context(p)
-    return stack
+def _make_csv(rows: list[tuple[str, str]]) -> bytes:
+    """Build a UTF-8 CSV bytes object with name,google_maps_url columns."""
+    lines = ["name,google_maps_url"] + [f"{name},{url}" for name, url in rows]
+    return "\n".join(lines).encode("utf-8")
 
 
-class TestCafeNomadImport:
+class TestImportManualCsv:
+    """Tests for POST /admin/shops/import/manual-csv."""
+
     def setup_method(self):
         test_app.dependency_overrides[get_current_user] = _admin_user
 
     def teardown_method(self):
         test_app.dependency_overrides.clear()
 
-    def test_admin_triggers_cafenomad_import_and_receives_summary(self):
-        """Admin triggers Cafe Nomad import and gets a 202 with summary."""
-        mock_result = {
-            "imported": 42,
-            "filtered": {"invalid_url": 0, "invalid_name": 2, "known_failed": 1, "closed": 5},
-            "pending_url_check": 42,
-            "flagged_duplicates": 3,
-            "region": "greater_taipei",
-        }
-        mock_db = MagicMock()
-        mock_db.table.return_value.insert.return_value.execute.return_value = MagicMock(data=[])
+    def _post_csv(self, content: bytes, mock_db: MagicMock) -> Any:
+        from io import BytesIO
 
         with (
             patch("api.admin_shops.get_service_role_client", return_value=mock_db),
             patch("middleware.admin_audit.get_service_role_client", return_value=mock_db),
             patch("api.deps.settings") as mock_settings,
-            patch(
-                "importers.cafe_nomad.fetch_and_import_cafenomad",
-                new=AsyncMock(return_value=mock_result),
-            ),
         ):
             mock_settings.admin_user_ids = [_ADMIN_ID]
-            response = client.post(
-                "/admin/shops/import/cafe-nomad",
-                json={"region": "greater_taipei"},
+            return client.post(
+                "/admin/shops/import/manual-csv",
+                files={"file": ("cafes.csv", BytesIO(content), "text/csv")},
             )
+
+    def test_admin_uploads_valid_csv_and_new_shops_are_imported(self):
+        """An admin uploads a CSV with two new cafes; both are inserted and counted as imported."""
+        csv_bytes = _make_csv(
+            [
+                ("珈琲時光", "https://maps.google.com/?cid=11111111111111111"),
+                ("碳佐麻里咖啡", "https://maps.google.com/?cid=22222222222222222"),
+            ]
+        )
+        mock_db = MagicMock()
+        # No existing shops in DB
+        mock_db.table.return_value.select.return_value.in_.return_value.execute.return_value = (
+            MagicMock(data=[])
+        )
+        mock_db.table.return_value.insert.return_value.execute.return_value = MagicMock(
+            data=[{}, {}]
+        )
+
+        response = self._post_csv(csv_bytes, mock_db)
 
         assert response.status_code == 202
         data = response.json()
-        assert data["imported"] == 42
-        assert data["region"] == "greater_taipei"
-        assert "filtered" in data
+        assert data["imported"] == 2
+        assert data["skipped_duplicate"] == 0
+        assert data["invalid_url"] == 0
+        assert data["duplicate_in_file"] == 0
+        assert data["total"] == 2
 
-    def test_import_cafe_nomad_unknown_region_returns_400(self):
-        """Unknown region name returns 400."""
+    def test_admin_reuploads_same_csv_and_all_rows_are_skipped_as_duplicates(self):
+        """When all CSV URLs already exist in the DB, imported=0 and skipped_duplicate matches row count."""
+        csv_bytes = _make_csv(
+            [
+                ("珈琲時光", "https://maps.google.com/?cid=11111111111111111"),
+            ]
+        )
         mock_db = MagicMock()
-        with (
-            patch("api.admin_shops.get_service_role_client", return_value=mock_db),
-            patch("api.deps.settings") as mock_settings,
-        ):
-            mock_settings.admin_user_ids = [_ADMIN_ID]
-            response = client.post(
-                "/admin/shops/import/cafe-nomad",
-                json={"region": "mars"},
-            )
-        assert response.status_code == 400
+        # URL already in DB
+        mock_db.table.return_value.select.return_value.in_.return_value.execute.return_value = (
+            MagicMock(data=[{"google_maps_url": "https://maps.google.com/?cid=11111111111111111"}])
+        )
 
-    def test_import_cafe_nomad_api_down_returns_502(self):
-        """When Cafe Nomad API is down, returns 502."""
-        mock_db = MagicMock()
-        with (
-            patch("api.admin_shops.get_service_role_client", return_value=mock_db),
-            patch("middleware.admin_audit.get_service_role_client", return_value=mock_db),
-            patch("api.deps.settings") as mock_settings,
-            patch(
-                "importers.cafe_nomad.fetch_and_import_cafenomad",
-                new=AsyncMock(side_effect=Exception("Connection refused")),
-            ),
-        ):
-            mock_settings.admin_user_ids = [_ADMIN_ID]
-            response = client.post(
-                "/admin/shops/import/cafe-nomad",
-                json={"region": "greater_taipei"},
-            )
-        assert response.status_code == 502
-
-    def test_non_admin_cannot_import(self):
-        """Non-admin user cannot trigger import."""
-        test_app.dependency_overrides[get_current_user] = lambda: {"id": "regular-user"}
-        try:
-            with patch("api.deps.settings") as mock_settings:
-                mock_settings.admin_user_ids = [_ADMIN_ID]
-                response = client.post(
-                    "/admin/shops/import/cafe-nomad",
-                    json={"region": "greater_taipei"},
-                )
-            assert response.status_code == 403
-        finally:
-            test_app.dependency_overrides[get_current_user] = _admin_user
-
-
-class TestGoogleTakeoutImport:
-    def setup_method(self):
-        test_app.dependency_overrides[get_current_user] = _admin_user
-
-    def teardown_method(self):
-        test_app.dependency_overrides.clear()
-
-    def _valid_geojson(self) -> bytes:
-        return json.dumps(
-            {
-                "type": "FeatureCollection",
-                "features": [
-                    {
-                        "type": "Feature",
-                        "geometry": {"coordinates": [121.565, 25.033]},
-                        "properties": {
-                            "Title": "慢靜岸咖啡",
-                            "Google Maps URL": "https://maps.google.com/?cid=12345678901234567",
-                            "Location": {"Address": "台北市大安區仁愛路四段300巷12號"},
-                        },
-                    }
-                ],
-            }
-        ).encode()
-
-    def test_import_google_takeout_returns_202_with_summary(self):
-        """Admin uploads a valid GeoJSON and gets a 202 with summary."""
-        mock_result = {
-            "imported": 1,
-            "filtered": {"invalid_url": 0, "invalid_name": 0, "known_failed": 0, "closed": 0},
-            "pending_url_check": 1,
-            "flagged_duplicates": 0,
-            "region": "greater_taipei",
-        }
-        mock_db = MagicMock()
-        mock_db.table.return_value.insert.return_value.execute.return_value = MagicMock(data=[])
-
-        with (
-            patch("api.admin_shops.get_service_role_client", return_value=mock_db),
-            patch("middleware.admin_audit.get_service_role_client", return_value=mock_db),
-            patch("api.deps.settings") as mock_settings,
-            patch(
-                "importers.google_takeout.import_takeout_to_queue",
-                new=AsyncMock(return_value=mock_result),
-            ),
-        ):
-            mock_settings.admin_user_ids = [_ADMIN_ID]
-            response = client.post(
-                "/admin/shops/import/google-takeout",
-                files={
-                    "file": (
-                        "saved_places.json",
-                        BytesIO(self._valid_geojson()),
-                        "application/json",
-                    )
-                },  # noqa: E501
-                data={"region": "greater_taipei"},
-            )
+        response = self._post_csv(csv_bytes, mock_db)
 
         assert response.status_code == 202
         data = response.json()
+        assert data["imported"] == 0
+        assert data["skipped_duplicate"] == 1
+        assert data["total"] == 1
+
+    def test_admin_uploads_csv_with_invalid_url_rows_are_counted_but_skipped(self):
+        """Rows with non-Google-Maps URLs are counted as invalid_url and not inserted."""
+        csv_bytes = _make_csv(
+            [
+                ("不知名咖啡", "https://www.facebook.com/somecafe"),
+                ("木子良咖啡", "https://maps.google.com/?cid=33333333333333333"),
+            ]
+        )
+        mock_db = MagicMock()
+        # Only one valid URL; no existing shops
+        mock_db.table.return_value.select.return_value.in_.return_value.execute.return_value = (
+            MagicMock(data=[])
+        )
+        mock_db.table.return_value.insert.return_value.execute.return_value = MagicMock(data=[{}])
+
+        response = self._post_csv(csv_bytes, mock_db)
+
+        assert response.status_code == 202
+        data = response.json()
+        assert data["invalid_url"] == 1
         assert data["imported"] == 1
+        assert data["total"] == 2
 
-    def test_invalid_json_returns_422(self):
-        """Malformed file content returns 422."""
+    def test_admin_uploads_csv_with_duplicate_urls_within_the_file(self):
+        """Duplicate URLs within the same CSV are deduplicated; extras counted as duplicate_in_file."""
+        url = "https://maps.google.com/?cid=44444444444444444"
+        csv_bytes = _make_csv(
+            [
+                ("店A", url),
+                ("店B", url),  # same URL — should be skipped
+            ]
+        )
         mock_db = MagicMock()
-        with (
-            patch("api.admin_shops.get_service_role_client", return_value=mock_db),
-            patch("api.deps.settings") as mock_settings,
-        ):
-            mock_settings.admin_user_ids = [_ADMIN_ID]
-            response = client.post(
-                "/admin/shops/import/google-takeout",
-                files={"file": ("bad.json", BytesIO(b"not valid json"), "application/json")},
-                data={"region": "greater_taipei"},
-            )
-        assert response.status_code == 422
+        mock_db.table.return_value.select.return_value.in_.return_value.execute.return_value = (
+            MagicMock(data=[])
+        )
+        mock_db.table.return_value.insert.return_value.execute.return_value = MagicMock(data=[{}])
 
-    def test_non_feature_collection_returns_422(self):
-        """GeoJSON without FeatureCollection type returns 422."""
-        bad_geojson = json.dumps({"type": "Feature", "geometry": {}}).encode()
-        mock_db = MagicMock()
-        with (
-            patch("api.admin_shops.get_service_role_client", return_value=mock_db),
-            patch("api.deps.settings") as mock_settings,
-        ):
-            mock_settings.admin_user_ids = [_ADMIN_ID]
-            response = client.post(
-                "/admin/shops/import/google-takeout",
-                files={"file": ("bad.json", BytesIO(bad_geojson), "application/json")},
-                data={"region": "greater_taipei"},
-            )
-        assert response.status_code == 422
+        response = self._post_csv(csv_bytes, mock_db)
 
-    def test_unknown_region_returns_400(self):
-        """Unknown region returns 400."""
+        assert response.status_code == 202
+        data = response.json()
+        assert data["duplicate_in_file"] == 1
+        assert data["imported"] == 1
+        assert data["total"] == 2
+
+    def test_admin_uploads_file_exceeding_10mb_limit_returns_413(self):
+        """A file larger than 10 MB is rejected with HTTP 413 before any DB access."""
+        oversized = b"x" * (10 * 1024 * 1024 + 1)
         mock_db = MagicMock()
-        with (
-            patch("api.admin_shops.get_service_role_client", return_value=mock_db),
-            patch("api.deps.settings") as mock_settings,
-        ):
-            mock_settings.admin_user_ids = [_ADMIN_ID]
-            response = client.post(
-                "/admin/shops/import/google-takeout",
-                files={"file": ("data.json", BytesIO(self._valid_geojson()), "application/json")},
-                data={"region": "narnia"},
-            )
-        assert response.status_code == 400
+
+        response = self._post_csv(oversized, mock_db)
+
+        assert response.status_code == 413
+        mock_db.table.assert_not_called()
+
+    def test_admin_uploads_empty_csv_returns_zeros(self):
+        """An empty CSV (header only) returns all-zero counts without error."""
+        csv_bytes = b"name,google_maps_url\n"
+        mock_db = MagicMock()
+
+        response = self._post_csv(csv_bytes, mock_db)
+
+        assert response.status_code == 202
+        assert response.json() == {
+            "imported": 0,
+            "skipped_duplicate": 0,
+            "invalid_url": 0,
+            "duplicate_in_file": 0,
+            "total": 0,
+        }
 
 
 class TestBulkApprove:
@@ -353,31 +292,3 @@ class TestBulkApprove:
             response = client.post("/admin/shops/bulk-approve", json={})
         assert response.status_code == 200
         assert response.json() == {"approved": 0, "queued": 0}
-
-
-class TestCheckUrls:
-    def setup_method(self):
-        test_app.dependency_overrides[get_current_user] = _admin_user
-
-    def teardown_method(self):
-        test_app.dependency_overrides.clear()
-
-    def test_admin_triggers_url_check_and_sees_shops_queued_for_validation(self):
-        """Triggering URL check returns 202 with count of shops queued for checking."""
-        mock_db = MagicMock()
-        mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value = (
-            MagicMock(count=15)
-        )
-        mock_db.table.return_value.insert.return_value.execute.return_value = MagicMock(data=[])
-
-        with (
-            patch("api.admin_shops.get_service_role_client", return_value=mock_db),
-            patch("middleware.admin_audit.get_service_role_client", return_value=mock_db),
-            patch("api.deps.settings") as mock_settings,
-            patch("workers.handlers.check_urls.check_urls_for_region", new=AsyncMock()),
-        ):
-            mock_settings.admin_user_ids = [_ADMIN_ID]
-            response = client.post("/admin/shops/import/check-urls", json={})
-
-        assert response.status_code == 202
-        assert response.json()["checking"] == 15

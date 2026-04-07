@@ -3,26 +3,13 @@
 import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { REGIONS } from '../_constants';
 
-interface ImportSummary {
+interface CsvSummary {
   imported: number;
-  filtered: {
-    invalid_url: number;
-    invalid_name: number;
-    known_failed: number;
-    closed: number;
-  };
-  pending_url_check: number;
-  flagged_duplicates: number;
-  region: string;
+  skipped_duplicate: number;
+  invalid_url: number;
+  duplicate_in_file: number;
+  total: number;
 }
 
 interface ImportSectionProps {
@@ -34,54 +21,19 @@ export function ImportSection({
   getToken,
   onImportComplete,
 }: ImportSectionProps) {
-  const [selectedRegion, setSelectedRegion] = useState<string>(
-    REGIONS[0].value
-  );
-  const [importingCafeNomad, setImportingCafeNomad] = useState(false);
-  const [importingTakeout, setImportingTakeout] = useState(false);
-  const [checkingUrls, setCheckingUrls] = useState(false);
-  const takeoutFileRef = useRef<HTMLInputElement>(null);
+  const csvFileRef = useRef<HTMLInputElement>(null);
+  const [seedingCsv, setSeedingCsv] = useState(false);
+  const [csvSummary, setCsvSummary] = useState<CsvSummary | null>(null);
+  const [runningPipeline, setRunningPipeline] = useState(false);
 
-  async function handleImportCafeNomad() {
-    setImportingCafeNomad(true);
-    try {
-      const token = await getToken();
-      if (!token) {
-        toast.error('Session expired — please refresh the page');
-        return;
-      }
-      const res = await fetch('/api/admin/shops/import/cafe-nomad', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ region: selectedRegion }),
-      });
-      const data: ImportSummary = await res.json();
-      if (!res.ok) {
-        toast.error((data as { detail?: string }).detail || 'Import failed');
-        return;
-      }
-      toast.success(
-        `Imported ${data.imported} shops (${data.flagged_duplicates} flagged as duplicates)`
-      );
-      onImportComplete();
-    } catch {
-      toast.error('Network error');
-    } finally {
-      setImportingCafeNomad(false);
-    }
-  }
-
-  async function handleImportTakeout() {
-    const file = takeoutFileRef.current?.files?.[0];
+  async function handleSeedCsv() {
+    const file = csvFileRef.current?.files?.[0];
     if (!file) {
-      toast.error('Please select a GeoJSON or CSV file first');
+      toast.error('Please select a CSV file first');
       return;
     }
-
-    setImportingTakeout(true);
+    setSeedingCsv(true);
+    setCsvSummary(null);
     try {
       const token = await getToken();
       if (!token) {
@@ -90,115 +42,96 @@ export function ImportSection({
       }
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('region', selectedRegion);
-
-      const res = await fetch('/api/admin/shops/import/google-takeout', {
+      const res = await fetch('/api/admin/shops/import/manual-csv', {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
       });
-      const data: ImportSummary = await res.json();
+      const data: CsvSummary = await res.json();
       if (!res.ok) {
         toast.error((data as { detail?: string }).detail || 'Upload failed');
         return;
       }
-      toast.success(
-        `Imported ${data.imported} shops from Google Takeout (${data.flagged_duplicates} flagged as duplicates)`
-      );
-      if (takeoutFileRef.current) takeoutFileRef.current.value = '';
+      setCsvSummary(data);
+      toast.success('CSV imported successfully');
+      if (csvFileRef.current) csvFileRef.current.value = '';
       onImportComplete();
     } catch {
       toast.error('Network error');
     } finally {
-      setImportingTakeout(false);
+      setSeedingCsv(false);
     }
   }
 
-  async function handleCheckUrls() {
-    setCheckingUrls(true);
+  async function handleRunPipeline() {
+    setRunningPipeline(true);
     try {
       const token = await getToken();
       if (!token) {
         toast.error('Session expired — please refresh the page');
         return;
       }
-      const res = await fetch('/api/admin/shops/import/check-urls', {
+      const res = await fetch('/api/admin/pipeline/run-batch', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({}),
       });
       const data = await res.json();
       if (!res.ok) {
-        toast.error(data.detail || 'URL check failed');
+        toast.error(data.detail || 'Failed to queue pipeline run');
         return;
       }
-      toast.success(`URL check started for ${data.checking} shops`);
+      toast.success(
+        'Pipeline batch run queued — shops will process in the background'
+      );
     } catch {
       toast.error('Network error');
     } finally {
-      setCheckingUrls(false);
+      setRunningPipeline(false);
     }
   }
 
   return (
-    <div className="space-y-3 rounded-lg border p-4">
-      <h2 className="text-sm font-semibold text-gray-700">Import Shops</h2>
-      <div className="flex flex-wrap items-center gap-3">
-        <div>
-          <label htmlFor="region-select" className="sr-only">
-            Region
-          </label>
-          <Select
-            value={selectedRegion}
-            onValueChange={(value) => setSelectedRegion(value)}
-          >
-            <SelectTrigger id="region-select">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {REGIONS.map((r) => (
-                <SelectItem key={r.value} value={r.value}>
-                  {r.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <Button
-          onClick={handleImportCafeNomad}
-          disabled={importingCafeNomad}
-          variant="default"
-        >
-          {importingCafeNomad ? 'Importing...' : 'Import from Cafe Nomad'}
-        </Button>
-
-        <div className="flex items-center gap-2">
+    <div className="space-y-4">
+      <div className="space-y-3 rounded-lg border p-4">
+        <h2 className="text-sm font-semibold text-gray-700">Manual CSV Seed</h2>
+        <div className="flex flex-wrap items-center gap-3">
           <input
-            ref={takeoutFileRef}
+            ref={csvFileRef}
             type="file"
-            accept=".json,.geojson,.csv"
+            accept=".csv"
             className="text-sm"
-            id="takeout-file"
+            id="csv-file"
           />
           <Button
-            onClick={handleImportTakeout}
-            disabled={importingTakeout}
+            onClick={handleSeedCsv}
+            disabled={seedingCsv}
             variant="default"
           >
-            {importingTakeout ? 'Uploading...' : 'Import Google Takeout'}
+            {seedingCsv ? 'Uploading...' : 'Seed Shops'}
           </Button>
         </div>
+        {csvSummary && (
+          <div className="rounded-md bg-gray-50 p-3 text-sm text-gray-700">
+            <p>Imported: {csvSummary.imported}</p>
+            <p>Skipped (duplicate in DB): {csvSummary.skipped_duplicate}</p>
+            <p>Skipped (duplicate in file): {csvSummary.duplicate_in_file}</p>
+            <p>Invalid URL: {csvSummary.invalid_url}</p>
+            <p className="font-medium">Total: {csvSummary.total}</p>
+          </div>
+        )}
+      </div>
 
+      <div className="space-y-3 rounded-lg border p-4">
+        <h2 className="text-sm font-semibold text-gray-700">Run Pipeline</h2>
         <Button
-          onClick={handleCheckUrls}
-          disabled={checkingUrls}
+          onClick={handleRunPipeline}
+          disabled={runningPipeline}
           variant="outline"
         >
-          {checkingUrls ? 'Checking...' : 'Check URLs'}
+          {runningPipeline ? 'Queuing...' : 'Run Pipeline'}
         </Button>
       </div>
     </div>

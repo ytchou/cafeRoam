@@ -1,0 +1,62 @@
+{
+  "findings": [
+    {
+      "severity": "Critical",
+      "file": "backend/api/admin_shops.py",
+      "line": "163",
+      "description": "result.is_valid should be result.passed -- FilterResult dataclass has attribute 'passed', not 'is_valid'. Will raise AttributeError at runtime on every CSV upload attempt.",
+      "flagged_by": "Bug Hunter",
+      "status": "valid"
+    },
+    {
+      "severity": "Important",
+      "file": "backend/api/admin.py",
+      "line": "550-557",
+      "description": "run_pipeline_batch endpoint missing log_admin_action call. Every other admin endpoint in the file logs admin actions for audit trail consistency.",
+      "flagged_by": "Standards & Conventions",
+      "status": "valid"
+    },
+    {
+      "severity": "Important",
+      "file": "backend/api/admin_shops.py",
+      "line": "209",
+      "description": "log_admin_action is only called inside 'if candidates:' block. If all CSV rows have invalid URLs (candidates is empty), the admin action goes unaudited. Move audit logging outside the conditional.",
+      "flagged_by": "Bug Hunter",
+      "status": "valid"
+    },
+    {
+      "severity": "Important",
+      "file": "backend/tests/api/test_admin_shops_import.py",
+      "line": "1",
+      "description": "No tests for the new import_manual_csv endpoint. Old tests for import_cafe_nomad and trigger_url_check were deleted but no replacement tests were added. CLAUDE.md requires tests for all API route handlers.",
+      "flagged_by": "Plan Alignment, Test Philosophy",
+      "status": "valid"
+    },
+    {
+      "severity": "Minor",
+      "file": "app/(admin)/admin/shops/_components/ImportSection.tsx",
+      "line": "7-12",
+      "description": "CsvSummary interface missing duplicate_in_file field that the backend returns. The value is silently dropped by TypeScript. Consider adding it to display the full breakdown.",
+      "flagged_by": "Architecture & Design",
+      "status": "debatable"
+    },
+    {
+      "severity": "Minor",
+      "file": "backend/scripts/seed_shops_csv.py",
+      "line": "45-47",
+      "description": "No batching for the .in_() query on candidate_urls. If the CSV has thousands of rows, this single query could hit Supabase/PostgREST URL length limits. Same pattern exists in the API endpoint (admin_shops.py:184). Low risk for current usage volumes.",
+      "flagged_by": "Architecture & Design",
+      "status": "debatable"
+    }
+  ],
+  "active_agents": [
+    "Bug Hunter",
+    "Standards & Conventions",
+    "Architecture & Design",
+    "Plan Alignment",
+    "Test Philosophy"
+  ],
+  "skipped": [],
+  "head_sha": "c655e468f8165aa0cf31ef0e752eed331fca279f",
+  "review_log_path": "docs/reviews/2026-04-07-feat-dev-277-seed-csv.md"
+}

@@ -2,21 +2,17 @@ from datetime import UTC, datetime
 from typing import Any, cast
 from uuid import uuid4
 
-import structlog
-from fastapi import APIRouter, BackgroundTasks, Depends, Form, HTTPException, Query, UploadFile
+from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile
 from postgrest.exceptions import APIError
 from pydantic import BaseModel
 
 from api.deps import require_admin
 from core.db import escape_ilike, first
-from core.regions import DEFAULT_REGION, REGIONS
 from db.supabase_client import get_service_role_client
 from middleware.admin_audit import log_admin_action
 from models.types import JobStatus, JobType, ProcessingStatus
 from providers.embeddings import EmbeddingsProvider, get_embeddings_provider
 from workers.queue import JobQueue
-
-logger = structlog.get_logger()
 
 router = APIRouter(prefix="/admin/shops", tags=["admin"])
 
@@ -45,16 +41,8 @@ class EnqueueRequest(BaseModel):
     job_type: JobType
 
 
-class CafeNomadImportRequest(BaseModel):
-    region: str = DEFAULT_REGION
-
-
 class BulkApproveRequest(BaseModel):
     shop_ids: list[str] | None = None
-
-
-class CheckUrlsRequest(BaseModel):
-    pass
 
 
 @router.get("/pipeline-status")
@@ -139,111 +127,102 @@ async def create_shop(
     return shop
 
 
-@router.post("/import/cafe-nomad", status_code=202)
-async def import_cafe_nomad(
-    body: CafeNomadImportRequest,
-    background_tasks: BackgroundTasks,
-    user: dict[str, Any] = Depends(require_admin),  # noqa: B008
-) -> dict[str, Any]:
-    """Trigger a Cafe Nomad import for the given region.
-
-    Automatically kicks off URL validation as a background task when shops are imported.
-    """
-    from importers.cafe_nomad import fetch_and_import_cafenomad
-    from workers.handlers.check_urls import check_urls_for_region
-
-    if body.region not in REGIONS:
-        raise HTTPException(status_code=400, detail=f"Unknown region: {body.region}")
-
-    region = REGIONS[body.region]
-    db = get_service_role_client()
-
-    try:
-        result = await fetch_and_import_cafenomad(db=db, region=region)
-    except Exception as exc:
-        raise HTTPException(status_code=502, detail=f"Cafe Nomad API error: {exc}") from exc
-
-    if result.get("pending_url_check", 0) > 0:
-        background_tasks.add_task(check_urls_for_region, db=db)
-
-    log_admin_action(
-        admin_user_id=user["id"],
-        action="POST /admin/shops/import/cafe-nomad",
-        target_type="import",
-        payload={"region": body.region, "imported": result.get("imported", 0)},
-    )
-    return result
-
-
-@router.post("/import/google-takeout", status_code=202)
-async def import_google_takeout(
+@router.post("/import/manual-csv", status_code=202)
+async def import_manual_csv(
     file: UploadFile,
-    background_tasks: BackgroundTasks,
-    region: str = Form(DEFAULT_REGION),
     user: dict[str, Any] = Depends(require_admin),  # noqa: B008
 ) -> dict[str, Any]:
-    """Upload a Google Takeout GeoJSON or CSV and import shops.
+    """Upload a CSV with name,google_maps_url columns and batch-import shops.
 
-    Accepts:
-    - GeoJSON FeatureCollection (.json/.geojson) — includes coordinates, filtered to region bounds.
-    - CSV with columns Title, Note, URL, Tags, Comment (.csv) — no coordinates;
-      scraper fills them in.
+    Accepts a UTF-8 CSV file (max 10 MB). Columns beyond name and google_maps_url
+    are ignored. Rows with invalid Google Maps URLs or duplicate URLs within the
+    file are silently skipped and counted in the response.
     """
-    import json
+    import csv
+    import io
 
-    from importers.google_takeout import (
-        import_takeout_to_queue,
-        parse_takeout_csv,
-        parse_takeout_geojson,
-    )
-    from workers.handlers.check_urls import check_urls_for_region
-
-    if region not in REGIONS:
-        raise HTTPException(status_code=400, detail=f"Unknown region: {region}")
-
-    region_obj = REGIONS[region]
+    from importers.prefilter import validate_google_maps_url
 
     content = await file.read(10 * 1024 * 1024 + 1)
     if len(content) > 10 * 1024 * 1024:
-        raise HTTPException(status_code=413, detail="File exceeds 10MB limit")
+        raise HTTPException(status_code=413, detail="File exceeds 10 MB limit")
 
-    filename = (file.filename or "").lower()
-    is_csv = filename.endswith(".csv")
+    text = content.decode("utf-8")
+    reader = csv.DictReader(io.StringIO(text))
 
-    if is_csv:
-        places = parse_takeout_csv(content.decode("utf-8-sig"))  # utf-8-sig strips Excel BOM
-    else:
-        try:
-            geojson = json.loads(content)
-        except json.JSONDecodeError as exc:
-            raise HTTPException(status_code=422, detail=f"Invalid JSON: {exc}") from exc
-        if not isinstance(geojson, dict) or geojson.get("type") != "FeatureCollection":
-            raise HTTPException(status_code=422, detail="File must be a GeoJSON FeatureCollection")
-        places = parse_takeout_geojson(geojson, bounds=region_obj.bounds)
+    invalid_url = 0
+    duplicate_in_file = 0
+    seen_urls: set[str] = set()
+    candidates: list[dict[str, str]] = []
 
-    db = get_service_role_client()
+    for row in reader:
+        name = (row.get("name") or "").strip()
+        url = (row.get("google_maps_url") or "").strip()
 
-    result = await import_takeout_to_queue(
-        places=places,
-        db=db,
-        bounds=region_obj.bounds,
-        region_name=region,
-    )
+        result = validate_google_maps_url(url)
+        if not result.passed:
+            invalid_url += 1
+            continue
 
-    if result.get("pending_url_check", 0) > 0:
-        background_tasks.add_task(check_urls_for_region, db=db)
+        if url in seen_urls:
+            duplicate_in_file += 1
+            continue
+
+        seen_urls.add(url)
+        candidates.append({"name": name, "google_maps_url": url})
+
+    imported = 0
+    skipped_duplicate = 0
+
+    if candidates:
+        db = get_service_role_client()
+        candidate_urls = [c["google_maps_url"] for c in candidates]
+
+        existing_resp = (
+            db.table("shops")
+            .select("google_maps_url")
+            .in_("google_maps_url", candidate_urls)
+            .execute()
+        )
+        existing_urls: set[str] = {row["google_maps_url"] for row in (existing_resp.data or [])}
+
+        new_rows = [
+            {
+                "name": c["name"],
+                "google_maps_url": c["google_maps_url"],
+                "source": "manual",
+                "processing_status": "pending",
+                "address": "",
+                "review_count": 0,
+            }
+            for c in candidates
+            if c["google_maps_url"] not in existing_urls
+        ]
+        skipped_duplicate = len(candidates) - len(new_rows)
+
+        if new_rows:
+            db.table("shops").insert(new_rows).execute()
+            imported = len(new_rows)
 
     log_admin_action(
         admin_user_id=user["id"],
-        action="POST /admin/shops/import/google-takeout",
+        action="POST /admin/shops/import/manual-csv",
         target_type="import",
         payload={
-            "region": region,
-            "imported": result.get("imported", 0),
-            "format": "csv" if is_csv else "geojson",
+            "imported": imported,
+            "skipped_duplicate": skipped_duplicate,
+            "invalid_url": invalid_url,
+            "duplicate_in_file": duplicate_in_file,
         },
     )
-    return result
+
+    return {
+        "imported": imported,
+        "skipped_duplicate": skipped_duplicate,
+        "invalid_url": invalid_url,
+        "duplicate_in_file": duplicate_in_file,
+        "total": imported + skipped_duplicate + invalid_url + duplicate_in_file,
+    }
 
 
 @router.post("/bulk-approve")
@@ -326,39 +305,6 @@ async def bulk_approve(
         payload={"approved": approved, "queued": queued, "batch_id": batch_id},
     )
     return {"approved": approved, "queued": queued, "batch_id": batch_id}
-
-
-@router.post("/import/check-urls", status_code=202)
-async def trigger_url_check(
-    background_tasks: BackgroundTasks,
-    body: CheckUrlsRequest,
-    user: dict[str, Any] = Depends(require_admin),  # noqa: B008
-) -> dict[str, Any]:
-    """Kick off background HTTP HEAD validation for shops in pending_url_check status."""
-    from workers.handlers.check_urls import check_urls_for_region
-
-    db = get_service_role_client()
-
-    # Count shops awaiting check
-    count_resp = (
-        db.table("shops")
-        .select("id", count="exact")  # type: ignore[arg-type]
-        .eq("processing_status", "pending_url_check")
-        .execute()
-    )
-    checking = count_resp.count or 0
-    logger.info("url_check: trigger received", checking=checking)
-
-    background_tasks.add_task(check_urls_for_region, db=db)
-    logger.info("url_check: background task queued")
-
-    log_admin_action(
-        admin_user_id=user["id"],
-        action="POST /admin/shops/import/check-urls",
-        target_type="import",
-        payload={"checking": checking},
-    )
-    return {"checking": checking}
 
 
 @router.get("/{shop_id}")
