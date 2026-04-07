@@ -310,7 +310,6 @@ async def run_sweep_timed_out() -> None:
 
     active_statuses = [
         "pending",
-        "pending_url_check",
         "scraping",
         "enriching",
         "embedding",

@@ -7,7 +7,6 @@ export const REGIONS = [
 export const STATUS_OPTIONS = [
   'all',
   'pending',
-  'pending_url_check',
   'pending_review',
   'scraping',
   'enriching',
@@ -22,7 +21,6 @@ export const STATUS_OPTIONS = [
 export const STATUS_LABELS: Record<string, string> = {
   all: 'All statuses',
   pending: 'Queued',
-  pending_url_check: 'URL Check',
   pending_review: 'Awaiting Approval',
   scraping: 'Scraping',
   enriching: 'Enriching',
@@ -35,7 +33,6 @@ export const STATUS_LABELS: Record<string, string> = {
 };
 
 export const STATUS_COLORS: Record<string, string> = {
-  pending_url_check: 'bg-yellow-100 text-yellow-800 border-yellow-300',
   pending_review: 'bg-blue-100 text-blue-800 border-blue-300',
   pending: 'bg-gray-100 text-gray-700 border-gray-300',
   scraping: 'bg-orange-100 text-orange-800 border-orange-300',

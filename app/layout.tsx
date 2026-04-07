@@ -96,7 +96,9 @@ export default function RootLayout({ children }: RootLayoutProps) {
             <PostHogProvider>
               <SessionTracker />
               <AppShell>{children}</AppShell>
-              {process.env.NEXT_PUBLIC_AGENTATION_ENABLED === 'true' && <Agentation />}
+              {process.env.NEXT_PUBLIC_AGENTATION_ENABLED === 'true' && (
+                <Agentation />
+              )}
               <Toaster position="bottom-center" />
             </PostHogProvider>
           </SWRProvider>
