@@ -59,10 +59,12 @@ class TestImportManualCsv:
         )
         mock_db = MagicMock()
         # No existing shops in DB
-        mock_db.table.return_value.select.return_value.in_.return_value.execute.return_value = MagicMock(
-            data=[]
+        mock_db.table.return_value.select.return_value.in_.return_value.execute.return_value = (
+            MagicMock(data=[])
         )
-        mock_db.table.return_value.insert.return_value.execute.return_value = MagicMock(data=[{}, {}])
+        mock_db.table.return_value.insert.return_value.execute.return_value = MagicMock(
+            data=[{}, {}]
+        )
 
         response = self._post_csv(csv_bytes, mock_db)
 
@@ -83,8 +85,8 @@ class TestImportManualCsv:
         )
         mock_db = MagicMock()
         # URL already in DB
-        mock_db.table.return_value.select.return_value.in_.return_value.execute.return_value = MagicMock(
-            data=[{"google_maps_url": "https://maps.google.com/?cid=11111111111111111"}]
+        mock_db.table.return_value.select.return_value.in_.return_value.execute.return_value = (
+            MagicMock(data=[{"google_maps_url": "https://maps.google.com/?cid=11111111111111111"}])
         )
 
         response = self._post_csv(csv_bytes, mock_db)
@@ -105,8 +107,8 @@ class TestImportManualCsv:
         )
         mock_db = MagicMock()
         # Only one valid URL; no existing shops
-        mock_db.table.return_value.select.return_value.in_.return_value.execute.return_value = MagicMock(
-            data=[]
+        mock_db.table.return_value.select.return_value.in_.return_value.execute.return_value = (
+            MagicMock(data=[])
         )
         mock_db.table.return_value.insert.return_value.execute.return_value = MagicMock(data=[{}])
 
@@ -128,8 +130,8 @@ class TestImportManualCsv:
             ]
         )
         mock_db = MagicMock()
-        mock_db.table.return_value.select.return_value.in_.return_value.execute.return_value = MagicMock(
-            data=[]
+        mock_db.table.return_value.select.return_value.in_.return_value.execute.return_value = (
+            MagicMock(data=[])
         )
         mock_db.table.return_value.insert.return_value.execute.return_value = MagicMock(data=[{}])
 

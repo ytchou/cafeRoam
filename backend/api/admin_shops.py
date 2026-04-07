@@ -184,9 +184,7 @@ async def import_manual_csv(
             .in_("google_maps_url", candidate_urls)
             .execute()
         )
-        existing_urls: set[str] = {
-            row["google_maps_url"] for row in (existing_resp.data or [])
-        }
+        existing_urls: set[str] = {row["google_maps_url"] for row in (existing_resp.data or [])}
 
         new_rows = [
             {
