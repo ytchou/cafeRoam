@@ -1,28 +1,762 @@
 [
   {
-    "id": "q1",
-    "query": "有插座可以工作的安靜咖啡廳",
-    "category": "attribute",
-    "maps_results": [
-      {"rank": 1, "name": "Example Cafe", "relevance_score": 4, "notes": "Has outlets, quiet area mentioned in reviews"},
-      {"rank": 2, "name": "Another Cafe", "relevance_score": 3, "notes": "Has outlets but noisy"},
-      {"rank": 3, "name": "Third Cafe", "relevance_score": 2, "notes": "Chain cafe, no outlet info"},
-      {"rank": 4, "name": "Fourth Cafe", "relevance_score": 1, "notes": "Restaurant, not a cafe"},
-      {"rank": 5, "name": "Fifth Cafe", "relevance_score": 1, "notes": "Irrelevant result"}
-    ],
-    "maps_avg_score": 2.2
-  },
-  {
     "id": "q2",
     "query": "溫馨有特色的咖啡廳",
     "category": "vibe",
     "maps_results": [
-      {"rank": 1, "name": "Example Cafe 2", "relevance_score": 5, "notes": "Unique decor, cozy atmosphere"},
-      {"rank": 2, "name": "Another Cafe 2", "relevance_score": 4, "notes": "Nice interior"},
-      {"rank": 3, "name": "Third Cafe 2", "relevance_score": 3, "notes": "OK but standard"},
-      {"rank": 4, "name": "Fourth Cafe 2", "relevance_score": 2, "notes": "Chain, no character"},
-      {"rank": 5, "name": "Fifth Cafe 2", "relevance_score": 1, "notes": "Not a cafe"}
+      {
+        "rank": 1,
+        "name": "Example Cafe 2",
+        "relevance_score": 5,
+        "notes": "Unique decor, cozy atmosphere"
+      },
+      {
+        "rank": 2,
+        "name": "Another Cafe 2",
+        "relevance_score": 4,
+        "notes": "Nice interior"
+      },
+      {
+        "rank": 3,
+        "name": "Third Cafe 2",
+        "relevance_score": 3,
+        "notes": "OK but standard"
+      },
+      {
+        "rank": 4,
+        "name": "Fourth Cafe 2",
+        "relevance_score": 2,
+        "notes": "Chain, no character"
+      },
+      {
+        "rank": 5,
+        "name": "Fifth Cafe 2",
+        "relevance_score": 1,
+        "notes": "Not a cafe"
+      }
     ],
     "maps_avg_score": 3.0
+  },
+  {
+    "id": "q1",
+    "query": "有插座可以工作的安靜咖啡廳",
+    "category": "attribute",
+    "maps_results": [
+      {
+        "rank": 1,
+        "name": "CAFE RACO",
+        "relevance_score": 3,
+        "notes": "Cafe with unknown work amenities"
+      },
+      {
+        "rank": 2,
+        "name": "齊文藝室共享辦公咖啡廳-The Singularity Co-Working Cafe",
+        "relevance_score": 5,
+        "notes": "Co-working cafe explicitly designed for work"
+      },
+      {
+        "rank": 3,
+        "name": "Homey's cafe",
+        "relevance_score": 3,
+        "notes": "Casual cafe, work-friendliness unclear"
+      },
+      {
+        "rank": 4,
+        "name": "IEAT Cafe 咖啡空間",
+        "relevance_score": 3,
+        "notes": "Coffee space, outlets/quiet not confirmed"
+      },
+      {
+        "rank": 5,
+        "name": "風潮咖啡Agitation coffee",
+        "relevance_score": 2,
+        "notes": "Coffee shop, no clear work accommodation"
+      }
+    ],
+    "maps_avg_score": 3.2
+  },
+  {
+    "id": "q3",
+    "query": "大安區文青咖啡廳",
+    "category": "vibe",
+    "maps_results": [
+      {
+        "rank": 1,
+        "name": "noon",
+        "relevance_score": 4,
+        "notes": "Indie aesthetic café, missing explicit Da An confirmation"
+      },
+      {
+        "rank": 2,
+        "name": "Congrats Café",
+        "relevance_score": 4,
+        "notes": "Literary vibe café, location unclear but matches aesthetic"
+      },
+      {
+        "rank": 3,
+        "name": "2730café 貳柒參零咖啡",
+        "relevance_score": 3,
+        "notes": "Da An café, minimal branding suggests indie but vibe unclear"
+      },
+      {
+        "rank": 4,
+        "name": "有kaffe冇/台北手沖咖啡 台北咖啡豆 大安區咖啡廳 大安區咖啡豆 忠孝復興咖啡廳 忠孝復興咖啡豆",
+        "relevance_score": 5,
+        "notes": "Perfect match: explicitly Da An, specialty coffee, indie focus"
+      },
+      {
+        "rank": 5,
+        "name": "lil Drop coffee 小水滴咖啡",
+        "relevance_score": 3,
+        "notes": "Indie specialty coffee, location/Da An status uncertain"
+      }
+    ],
+    "maps_avg_score": 3.8
+  },
+  {
+    "id": "q4",
+    "query": "不限時可以久坐的咖啡廳",
+    "category": "attribute",
+    "maps_results": [
+      {
+        "rank": 1,
+        "name": "鬧咖啡 NOW coffee（無預約服務）",
+        "relevance_score": 4,
+        "notes": "No reservation needed, likely supports long stays"
+      },
+      {
+        "rank": 2,
+        "name": "好人好室 x 七二聚場",
+        "relevance_score": 3,
+        "notes": "Venue name suggests comfort but no clear time policy info"
+      },
+      {
+        "rank": 3,
+        "name": "Tzubi coffee",
+        "relevance_score": 2,
+        "notes": "Coffee shop but no indication of no time limit policy"
+      },
+      {
+        "rank": 4,
+        "name": "Homey's cafe",
+        "relevance_score": 2,
+        "notes": "Cafe name suggests comfort but unclear on time restrictions"
+      },
+      {
+        "rank": 5,
+        "name": "Congrats Café",
+        "relevance_score": 2,
+        "notes": "Cafe but insufficient information about stay duration policy"
+      }
+    ],
+    "maps_avg_score": 2.6
+  },
+  {
+    "id": "q5",
+    "query": "信義區附近咖啡廳",
+    "category": "mixed",
+    "maps_results": [
+      {
+        "rank": 1,
+        "name": "布納咖啡館 信義館",
+        "relevance_score": 5,
+        "notes": "Cafe with explicit Xinyi location"
+      },
+      {
+        "rank": 2,
+        "name": "旅人日誌咖啡-信義店",
+        "relevance_score": 5,
+        "notes": "Cafe with explicit Xinyi location"
+      },
+      {
+        "rank": 3,
+        "name": "Museum Coffee 50年代博物館咖啡",
+        "relevance_score": 4,
+        "notes": "Cafe with museum theme, location unclear"
+      },
+      {
+        "rank": 4,
+        "name": "鳥咖啡",
+        "relevance_score": 3,
+        "notes": "Cafe name only, no location info"
+      },
+      {
+        "rank": 5,
+        "name": "Woolloomooloo",
+        "relevance_score": 1,
+        "notes": "Restaurant, not a cafe"
+      }
+    ],
+    "maps_avg_score": 3.6
+  },
+  {
+    "id": "q6",
+    "query": "適合讀書準備考試的咖啡廳",
+    "category": "mode",
+    "maps_results": [
+      {
+        "rank": 1,
+        "name": "齊文藝室共享辦公咖啡廳-The Singularity Co-Working Cafe",
+        "relevance_score": 5,
+        "notes": "Co-working cafe explicitly designed for study and work"
+      },
+      {
+        "rank": 2,
+        "name": "Homey's cafe",
+        "relevance_score": 3,
+        "notes": "Cafe with cozy atmosphere, limited study-specific indicators"
+      },
+      {
+        "rank": 3,
+        "name": "Congrats Café",
+        "relevance_score": 3,
+        "notes": "Casual cafe, no explicit mention of study-friendly features"
+      },
+      {
+        "rank": 4,
+        "name": "Block & Cafe. 町咖啡",
+        "relevance_score": 3,
+        "notes": "Block-style cafe setup, moderate study potential"
+      },
+      {
+        "rank": 5,
+        "name": "潘寓 Pan's Haunt(安靜工作咖啡廳）",
+        "relevance_score": 5,
+        "notes": "Explicitly marketed as quiet work cafe, perfect match"
+      }
+    ],
+    "maps_avg_score": 3.8
+  },
+  {
+    "id": "q7",
+    "query": "招牌拿鐵好喝的咖啡廳",
+    "category": "specific",
+    "maps_results": [
+      {
+        "rank": 1,
+        "name": "蹭蹭Tseng Tseng 咖啡甜點工作室",
+        "relevance_score": 3,
+        "notes": "Cafe with desserts, but no clear latte specialty indicator"
+      },
+      {
+        "rank": 2,
+        "name": "放空咖啡 Fine Cafe",
+        "relevance_score": 3,
+        "notes": "Cafe focused on relaxation, unclear on signature latte"
+      },
+      {
+        "rank": 3,
+        "name": "NEDA COFFEE",
+        "relevance_score": 4,
+        "notes": "Specialty coffee roaster, likely has quality lattes"
+      },
+      {
+        "rank": 4,
+        "name": "鄰咖逼Neighbor-Gabee",
+        "relevance_score": 4,
+        "notes": "Specialty cafe brand known for quality coffee drinks"
+      },
+      {
+        "rank": 5,
+        "name": "Attracafe'-Taipei 爾淬咖啡",
+        "relevance_score": 4,
+        "notes": "Specialty coffee brand, strong reputation for crafted beverages"
+      }
+    ],
+    "maps_avg_score": 3.6
+  },
+  {
+    "id": "q8",
+    "query": "有自然光落地窗的咖啡廳",
+    "category": "vibe",
+    "maps_results": [
+      {
+        "rank": 1,
+        "name": "dateless",
+        "relevance_score": 3,
+        "notes": "Cafe with some aesthetic appeal, unclear on natural light features"
+      },
+      {
+        "rank": 2,
+        "name": "時差",
+        "relevance_score": 4,
+        "notes": "Known for bright, airy atmosphere with good windows"
+      },
+      {
+        "rank": 3,
+        "name": "蚓珈琲(mimizu_coffeeshop)",
+        "relevance_score": 4,
+        "notes": "Popular cafe with natural light and window seating highlighted"
+      },
+      {
+        "rank": 4,
+        "name": "Congrats Café",
+        "relevance_score": 3,
+        "notes": "Cafe venue, natural light factor not distinctly featured"
+      },
+      {
+        "rank": 5,
+        "name": "汩咖啡 gu coffee ( 營運時間以ig公告為準 ）",
+        "relevance_score": 3,
+        "notes": "Casual coffee shop, limited information on natural light/windows"
+      }
+    ],
+    "maps_avg_score": 3.4
+  },
+  {
+    "id": "q9",
+    "query": "有包廂或隔間的咖啡廳",
+    "category": "attribute",
+    "maps_results": [
+      {
+        "rank": 1,
+        "name": "小房間cafe",
+        "relevance_score": 4,
+        "notes": "Private room concept, name suggests enclosed spaces"
+      },
+      {
+        "rank": 2,
+        "name": "昇咖啡敦化店｜會議包廂・空間租借（包廂預約制）",
+        "relevance_score": 5,
+        "notes": "Explicitly offers private booths and space rental"
+      },
+      {
+        "rank": 3,
+        "name": "齊文藝室共享辦公咖啡廳-The Singularity Co-Working Cafe",
+        "relevance_score": 4,
+        "notes": "Co-working cafe with shared spaces, likely has partitioned areas"
+      },
+      {
+        "rank": 4,
+        "name": "CAFE RACO",
+        "relevance_score": 2,
+        "notes": "Generic cafe name, no clear indication of private seating"
+      },
+      {
+        "rank": 5,
+        "name": "翌日咖啡店",
+        "relevance_score": 1,
+        "notes": "No information suggesting private spaces or booths"
+      }
+    ],
+    "maps_avg_score": 3.2
+  },
+  {
+    "id": "q10",
+    "query": "台北東區 specialty coffee",
+    "category": "mixed",
+    "maps_results": [
+      {
+        "rank": 1,
+        "name": "COFFEE LAW 敦南概念店 (不提供訂位服務/平日最後點餐16:30）",
+        "relevance_score": 4,
+        "notes": "Specialty coffee cafe in Dunnan (East Taipei area), strong match"
+      },
+      {
+        "rank": 2,
+        "name": "Coffee Space 咖啡空間",
+        "relevance_score": 4,
+        "notes": "Coffee shop with specialty focus, location fits East Taipei"
+      },
+      {
+        "rank": 3,
+        "name": "HOOD COFFEE",
+        "relevance_score": 4,
+        "notes": "Specialty coffee roaster/cafe in East Taipei area"
+      },
+      {
+        "rank": 4,
+        "name": "Ratio Coffee Roasters小巨蛋門市 18號店舖",
+        "relevance_score": 3,
+        "notes": "Coffee roaster with dine-in, slightly outside core East Taipei"
+      },
+      {
+        "rank": 5,
+        "name": "(beanroom) - 咖啡豆 Coffee Beans / 咖啡內用 Dine-in coffee",
+        "relevance_score": 3,
+        "notes": "Bean shop with dine-in option, less prominent specialty cafe focus"
+      }
+    ],
+    "maps_avg_score": 3.6
+  },
+  {
+    "id": "q11",
+    "query": "安靜適合工作的咖啡廳",
+    "category": "mode",
+    "maps_results": [
+      {
+        "rank": 1,
+        "name": "齊文藝室共享辦公咖啡廳-The Singularity Co-Working Cafe",
+        "relevance_score": 5,
+        "notes": "Co-working cafe explicitly designed for work and focus"
+      },
+      {
+        "rank": 2,
+        "name": "CAFE RACO",
+        "relevance_score": 3,
+        "notes": "Cafe with no clear work-focused amenities"
+      },
+      {
+        "rank": 3,
+        "name": "Homey's cafe",
+        "relevance_score": 3,
+        "notes": "Homey atmosphere may not guarantee quiet work environment"
+      },
+      {
+        "rank": 4,
+        "name": "IEAT Cafe 咖啡空間",
+        "relevance_score": 4,
+        "notes": "Dedicated coffee space likely suitable for deep focus work"
+      },
+      {
+        "rank": 5,
+        "name": "風潮咖啡Agitation coffee",
+        "relevance_score": 2,
+        "notes": "Name suggests vibrant/agitated atmosphere, opposite of quiet"
+      }
+    ],
+    "maps_avg_score": 3.4
+  },
+  {
+    "id": "q12",
+    "query": "適合約會的咖啡廳",
+    "category": "mode",
+    "maps_results": [
+      {
+        "rank": 1,
+        "name": "CAFE RACO",
+        "relevance_score": 4,
+        "notes": "Likely cozy cafe, unclear date-specific amenities"
+      },
+      {
+        "rank": 2,
+        "name": "Cafe insomnie",
+        "relevance_score": 3,
+        "notes": "Cafe atmosphere but name suggests late-night focus"
+      },
+      {
+        "rank": 3,
+        "name": "COFFEE LAW 敦南概念店 (不提供訂位服務/平日最後點餐16:30）",
+        "relevance_score": 2,
+        "notes": "No reservations, early closing limits date suitability"
+      },
+      {
+        "rank": 4,
+        "name": "W2cafe",
+        "relevance_score": 4,
+        "notes": "Trendy cafe, probable romantic ambiance"
+      },
+      {
+        "rank": 5,
+        "name": "Little M cafe",
+        "relevance_score": 3,
+        "notes": "Small cafe, limited information on date features"
+      }
+    ],
+    "maps_avg_score": 3.2
+  },
+  {
+    "id": "q13",
+    "query": "有插座不限時",
+    "category": "attribute",
+    "maps_results": [
+      {
+        "rank": 1,
+        "name": "齊文藝室共享辦公咖啡廳-The Singularity Co-Working Cafe",
+        "relevance_score": 5,
+        "notes": "Co-working cafe explicitly designed for outlets and long stays"
+      },
+      {
+        "rank": 2,
+        "name": "CAFE RACO",
+        "relevance_score": 3,
+        "notes": "Cafe with limited information about outlets or time policies"
+      },
+      {
+        "rank": 3,
+        "name": "Congrats Café",
+        "relevance_score": 3,
+        "notes": "Cafe with unclear outlet and time limit details"
+      },
+      {
+        "rank": 4,
+        "name": "NOTCH咖啡 本町店(重慶南路)",
+        "relevance_score": 2,
+        "notes": "Standard cafe, no clear indication of outlets or no time limit"
+      },
+      {
+        "rank": 5,
+        "name": "鄰咖逼Neighbor-Gabee",
+        "relevance_score": 2,
+        "notes": "Cafe name suggests social focus, unclear on work-friendly amenities"
+      }
+    ],
+    "maps_avg_score": 3.0
+  },
+  {
+    "id": "q14",
+    "query": "寵物友善",
+    "category": "attribute",
+    "maps_results": [
+      {
+        "rank": 1,
+        "name": "朝暮商行-寵物友善餐廳",
+        "relevance_score": 5,
+        "notes": "Explicitly labeled pet-friendly restaurant"
+      },
+      {
+        "rank": 2,
+        "name": "大稻埕貴賓 寵物友善餐廳 standard poodle coffee",
+        "relevance_score": 5,
+        "notes": "Explicitly labeled pet-friendly restaurant with cafe"
+      },
+      {
+        "rank": 3,
+        "name": "找餐約會嗎",
+        "relevance_score": 1,
+        "notes": "Generic dining query, no pet-friendly indication"
+      },
+      {
+        "rank": 4,
+        "name": "鼠皮soopi cafe（休假以IG公告為主）",
+        "relevance_score": 2,
+        "notes": "Cafe name only, no clear pet-friendly confirmation"
+      },
+      {
+        "rank": 5,
+        "name": "HOUSE OF PG",
+        "relevance_score": 2,
+        "notes": "Cafe/venue name only, no pet-friendly information"
+      }
+    ],
+    "maps_avg_score": 3.0
+  },
+  {
+    "id": "q15",
+    "query": "有巴斯克蛋糕的咖啡廳",
+    "category": "specific",
+    "maps_results": [
+      {
+        "rank": 1,
+        "name": "藥師館巴斯克專賣 4/5公休🙏 訂購及評價詳見 ig:pharmacist_food 中山站甜點 台北巴斯克乳酪蛋糕 焦糖布蕾 減糖蛋黃酥 彌月蛋糕 生日蛋糕 招牌芋泥蛋糕 巧克力蛋糕 提拉米蘇巴斯克",
+        "relevance_score": 4,
+        "notes": "有巴斯克蛋糕但不確定是咖啡廳"
+      },
+      {
+        "rank": 2,
+        "name": "提拉米蘇 巴斯克乳酪蛋糕 水果千層蛋糕 BorgesPlace熱銷商品 預訂自取",
+        "relevance_score": 3,
+        "notes": "有巴斯克蛋糕但未確認咖啡廳屬性"
+      },
+      {
+        "rank": 3,
+        "name": "Little M cafe",
+        "relevance_score": 2,
+        "notes": "咖啡廳但無巴斯克蛋糕資訊"
+      },
+      {
+        "rank": 4,
+        "name": "起飛降落 cheesewithjam（假日不提供訂位）",
+        "relevance_score": 2,
+        "notes": "咖啡廳但無巴斯克蛋糕資訊"
+      },
+      {
+        "rank": 5,
+        "name": "甜DD工作室",
+        "relevance_score": 1,
+        "notes": "甜點工作室非咖啡廳"
+      }
+    ],
+    "maps_avg_score": 2.4
+  },
+  {
+    "id": "q16",
+    "query": "手沖咖啡推薦",
+    "category": "specific",
+    "maps_results": [
+      {
+        "rank": 1,
+        "name": "暖窩咖啡 台北教室",
+        "relevance_score": 4,
+        "notes": "Pour over coffee school, lacks clear specialty coffee indication"
+      },
+      {
+        "rank": 2,
+        "name": "蹭蹭Tseng Tseng 咖啡甜點工作室",
+        "relevance_score": 3,
+        "notes": "Coffee and pastry studio, limited pour over focus"
+      },
+      {
+        "rank": 3,
+        "name": "鑠咖啡/甜點 晴光取貨點 中秋月餅禮盒 蛋黃酥 芋頭酥 鳳梨酥請先來電 難哄蛋糕 自家烘焙 甜點外燴 客製化蛋糕 咖啡豆 手沖咖啡教室 甜點 外帶 生日蛋糕",
+        "relevance_score": 5,
+        "notes": "Explicitly mentions pour over coffee classes and specialty roasting"
+      },
+      {
+        "rank": 4,
+        "name": "Fellow Coffee 啡樂咖啡",
+        "relevance_score": 4,
+        "notes": "Specialty coffee café, no explicit pour over mention"
+      },
+      {
+        "rank": 5,
+        "name": "興波咖啡 華山旗艦店",
+        "relevance_score": 4,
+        "notes": "Specialty coffee flagship, likely serves pour over"
+      }
+    ],
+    "maps_avg_score": 4.0
+  },
+  {
+    "id": "q17",
+    "query": "中山站附近安靜咖啡廳",
+    "category": "mixed",
+    "maps_results": [
+      {
+        "rank": 1,
+        "name": "Instil Coffee - Zhongshan（中山店）",
+        "relevance_score": 5,
+        "notes": "Explicitly near Zhongshan, cafe specialty"
+      },
+      {
+        "rank": 2,
+        "name": "libo Cafe.咖啡.coffee",
+        "relevance_score": 2,
+        "notes": "Cafe but location unclear relative to Zhongshan"
+      },
+      {
+        "rank": 3,
+        "name": "黑露咖啡館 OLO Coffee Roasters",
+        "relevance_score": 3,
+        "notes": "Coffee roastery, quiet potential, location unconfirmed"
+      },
+      {
+        "rank": 4,
+        "name": "附近咖啡",
+        "relevance_score": 1,
+        "notes": "Generic name, no identifying information"
+      },
+      {
+        "rank": 5,
+        "name": "Middle Name coffee & space",
+        "relevance_score": 3,
+        "notes": "Cafe/space hybrid, quiet atmosphere possible, location unknown"
+      }
+    ],
+    "maps_avg_score": 2.8
+  },
+  {
+    "id": "q18",
+    "query": "quiet cafe with outlets near Zhongshan",
+    "category": "mixed",
+    "maps_results": [
+      {
+        "rank": 1,
+        "name": "libo Cafe.咖啡.coffee",
+        "relevance_score": 3,
+        "notes": "Cafe match, location/outlets unclear"
+      },
+      {
+        "rank": 2,
+        "name": "TWATUTIAN Coffee & Co.",
+        "relevance_score": 3,
+        "notes": "Coffee shop, no location/outlet info"
+      },
+      {
+        "rank": 3,
+        "name": "Instil Coffee - Zhongshan（中山店）",
+        "relevance_score": 4,
+        "notes": "Explicitly in Zhongshan, cafe type confirmed"
+      },
+      {
+        "rank": 4,
+        "name": "Coffee Sweet",
+        "relevance_score": 2,
+        "notes": "Cafe but no Zhongshan location indicated"
+      },
+      {
+        "rank": 5,
+        "name": "The Cup Coffee House 台北",
+        "relevance_score": 1,
+        "notes": "Taipei location, not near Zhongshan"
+      }
+    ],
+    "maps_avg_score": 2.6
+  },
+  {
+    "id": "q19",
+    "query": "有戶外座位的咖啡廳",
+    "category": "attribute",
+    "maps_results": [
+      {
+        "rank": 1,
+        "name": "Homey's cafe",
+        "relevance_score": 3,
+        "notes": "Cafe with unknown outdoor seating details"
+      },
+      {
+        "rank": 2,
+        "name": "敘‧XHALE",
+        "relevance_score": 3,
+        "notes": "Cafe name suggests modern venue, seating unclear"
+      },
+      {
+        "rank": 3,
+        "name": "早秋咖啡 Cafe Macho",
+        "relevance_score": 3,
+        "notes": "Cafe with no explicit outdoor seating mention"
+      },
+      {
+        "rank": 4,
+        "name": "Always Day One Cafe",
+        "relevance_score": 3,
+        "notes": "Cafe lacking outdoor seating confirmation"
+      },
+      {
+        "rank": 5,
+        "name": "小島慢遊 Let it Slow 咖啡廳｜輕食｜文創｜選物 ｜展覽（wifi ｜插座｜未能接待4位以上｜歡迎在LINE或IG私訊訂位）",
+        "relevance_score": 4,
+        "notes": "Cafe with detailed amenities but no outdoor seating listed"
+      }
+    ],
+    "maps_avg_score": 3.2
+  },
+  {
+    "id": "q20",
+    "query": "適合帶筆電工作一整天的咖啡廳",
+    "category": "mode",
+    "maps_results": [
+      {
+        "rank": 1,
+        "name": "咖啡優先 (18:00最後點餐)",
+        "relevance_score": 2,
+        "notes": "Early closing time (18:00) unsuitable for all-day work"
+      },
+      {
+        "rank": 2,
+        "name": "pLats work&coffee (台電大樓分店)",
+        "relevance_score": 4,
+        "notes": "Work-focused cafe with explicit laptop accommodation"
+      },
+      {
+        "rank": 3,
+        "name": "齊文藝室共享辦公咖啡廳-The Singularity Co-Working Cafe",
+        "relevance_score": 5,
+        "notes": "Co-working cafe designed for all-day work with outlets"
+      },
+      {
+        "rank": 4,
+        "name": "小島慢遊 Let it Slow 咖啡廳｜輕食｜文創｜選物 ｜展覽（wifi ｜插座｜未能接待4位以上｜歡迎在LINE或IG私訊訂位）",
+        "relevance_score": 4,
+        "notes": "Has wifi and outlets, supports work but limited seating (no 4+ groups)"
+      },
+      {
+        "rank": 5,
+        "name": "象座咖啡",
+        "relevance_score": 3,
+        "notes": "Cafe with no explicit work amenities mentioned"
+      }
+    ],
+    "maps_avg_score": 3.6
   }
 ]
