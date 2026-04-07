@@ -234,8 +234,6 @@ async def approve_submissions_bulk(
 
     db = get_service_role_client()
     now = datetime.now(tz=UTC).isoformat()
-    approved = 0
-    skipped = 0
     failed: list[str] = []
 
     # Batch-fetch all submissions in one IN() query to avoid N+1 reads
@@ -249,47 +247,69 @@ async def approve_submissions_bulk(
         row["id"]: row for row in cast("list[dict[str, Any]]", all_subs_res.data or [])
     }
 
-    for submission_id in body.submission_ids:
-        sub = subs_by_id.get(submission_id)
-        if sub is None:
-            skipped += 1
-            continue
-        if sub["status"] not in ("pending", "processing", "pending_review"):
-            skipped += 1
-            continue
+    # Filter to submissions in approvable states
+    valid_subs = [
+        sub
+        for sid in body.submission_ids
+        if (sub := subs_by_id.get(sid))
+        and sub["status"] in ("pending", "processing", "pending_review")
+    ]
+    skipped = len(body.submission_ids) - len(valid_subs)
 
-        update_res = (
-            db.table("shop_submissions")
-            .update({"status": "live", "reviewed_at": now})
-            .eq("id", submission_id)
-            .in_("status", ["pending", "processing", "pending_review"])
-            .execute()
+    if not valid_subs:
+        log_admin_action(
+            admin_user_id=user["id"],
+            action="POST /admin/pipeline/approve-bulk",
+            target_type="submission",
+            payload={"approved": 0, "skipped": skipped},
         )
-        if not (update_res.data or []):
-            skipped += 1
-            continue
+        return {"approved": 0, "skipped": skipped, "failed": failed}
 
+    valid_ids = [sub["id"] for sub in valid_subs]
+
+    # Bulk UPDATE shop_submissions — .select("id") required so supabase-py returns updated rows
+    updated_res = (
+        db.table("shop_submissions")
+        .update({"status": "live", "reviewed_at": now})
+        .in_("id", valid_ids)
+        .in_("status", ["pending", "processing", "pending_review"])
+        .select("id")
+        .execute()
+    )
+    updated_ids = {row["id"] for row in cast("list[dict[str, Any]]", updated_res.data or [])}
+    updated_subs = [sub for sub in valid_subs if sub["id"] in updated_ids]
+    updated_shop_ids = [sub["shop_id"] for sub in updated_subs]
+    approved = len(updated_ids)
+    skipped = len(body.submission_ids) - approved
+
+    # Bulk UPDATE shops — fetch names in the same round-trip via .select("id, name")
+    shop_name_by_id: dict[str, str] = {}
+    if updated_shop_ids:
         shop_update = (
             db.table("shops")
             .update({"processing_status": "live", "updated_at": now})
-            .eq("id", sub["shop_id"])
-            .select("name")
+            .in_("id", updated_shop_ids)
+            .select("id, name")
             .execute()
         )
-        shop_rows = cast("list[dict[str, Any]]", shop_update.data or [])
-        shop_name = first(shop_rows).get("name", "Unknown") if shop_rows else "Unknown"
+        shop_name_by_id = {
+            row["id"]: row.get("name", "Unknown")
+            for row in cast("list[dict[str, Any]]", shop_update.data or [])
+        }
 
-        if sub.get("submitted_by"):
-            db.table("activity_feed").insert(
-                {
-                    "event_type": "shop_added",
-                    "actor_id": sub["submitted_by"],
-                    "shop_id": sub["shop_id"],
-                    "metadata": {"shop_name": shop_name},
-                }
-            ).execute()
-
-        approved += 1
+    # Batch INSERT activity_feed for user-submitted shops in one call
+    activity_rows = [
+        {
+            "event_type": "shop_added",
+            "actor_id": sub["submitted_by"],
+            "shop_id": sub["shop_id"],
+            "metadata": {"shop_name": shop_name_by_id.get(sub["shop_id"], "Unknown")},
+        }
+        for sub in updated_subs
+        if sub.get("submitted_by")
+    ]
+    if activity_rows:
+        db.table("activity_feed").insert(activity_rows).execute()
 
     log_admin_action(
         admin_user_id=user["id"],
@@ -312,8 +332,6 @@ async def reject_submissions_bulk(
 
     db = get_service_role_client()
     now = datetime.now(tz=UTC).isoformat()
-    rejected = 0
-    skipped = 0
 
     # Batch-fetch all submissions in one IN() query to avoid N+1 reads
     all_subs_res = (
@@ -326,40 +344,58 @@ async def reject_submissions_bulk(
         row["id"]: row for row in cast("list[dict[str, Any]]", all_subs_res.data or [])
     }
 
-    for submission_id in body.submission_ids:
-        sub = subs_by_id.get(submission_id)
-        if sub is None:
-            skipped += 1
-            continue
-        if sub["status"] in ("live", "rejected"):
-            skipped += 1
-            continue
+    # Filter to submissions in rejectable states (exclude already live/rejected)
+    valid_subs = [
+        sub
+        for sid in body.submission_ids
+        if (sub := subs_by_id.get(sid)) and sub["status"] not in ("live", "rejected")
+    ]
+    skipped = len(body.submission_ids) - len(valid_subs)
 
-        update_res = (
-            db.table("shop_submissions")
-            .update(
-                {
-                    "status": "rejected",
-                    "rejection_reason": body.rejection_reason,
-                    "reviewed_at": now,
-                }
-            )
-            .eq("id", submission_id)
-            .not_.in_("status", ["live", "rejected"])
-            .execute()
+    if not valid_subs:
+        log_admin_action(
+            admin_user_id=user["id"],
+            action="POST /admin/pipeline/reject-bulk",
+            target_type="submission",
+            payload={"rejected": 0, "skipped": skipped, "reason": body.rejection_reason},
         )
-        if not (update_res.data or []):
-            skipped += 1
-            continue
+        return {"rejected": 0, "skipped": skipped}
 
+    valid_ids = [sub["id"] for sub in valid_subs]
+
+    # Bulk UPDATE shop_submissions — .select("id") required so supabase-py returns updated rows
+    updated_res = (
+        db.table("shop_submissions")
+        .update(
+            {
+                "status": "rejected",
+                "rejection_reason": body.rejection_reason,
+                "reviewed_at": now,
+            }
+        )
+        .in_("id", valid_ids)
+        .not_.in_("status", ["live", "rejected"])
+        .select("id")
+        .execute()
+    )
+    updated_ids = {row["id"] for row in cast("list[dict[str, Any]]", updated_res.data or [])}
+    updated_subs = [sub for sub in valid_subs if sub["id"] in updated_ids]
+    updated_shop_ids = [sub["shop_id"] for sub in updated_subs]
+    rejected = len(updated_ids)
+    skipped = len(body.submission_ids) - rejected
+
+    # Bulk UPDATE shops processing_status
+    if updated_shop_ids:
+        db.table("shops").update({"processing_status": "rejected"}).in_(
+            "id", updated_shop_ids
+        ).execute()
+
+    # cancel_shop_jobs RPC — no bulk variant exists, call per shop
+    for sub in updated_subs:
         db.rpc(
             "cancel_shop_jobs",
             {"p_shop_id": sub["shop_id"], "p_reason": body.rejection_reason},
         ).execute()
-        db.table("shops").update({"processing_status": "rejected"}).eq(
-            "id", sub["shop_id"]
-        ).execute()
-        rejected += 1
 
     log_admin_action(
         admin_user_id=user["id"],
