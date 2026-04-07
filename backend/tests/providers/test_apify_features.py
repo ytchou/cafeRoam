@@ -1,14 +1,12 @@
 """Tests for ApifyScraperAdapter._extract_maps_features."""
 
-import pytest
-
 from providers.scraper.apify_adapter import ApifyScraperAdapter
 
 
 class TestExtractMapsFeatures:
     """Tests for _extract_maps_features static method."""
 
-    def test_extracts_known_features_from_standard_additionalInfo_structure(self):
+    def test_extracts_known_features_from_standard_additional_info_structure(self):
         """Given a standard Apify additionalInfo payload, returns matching tag ids for true values."""
         place = {
             "additionalInfo": {
@@ -62,7 +60,7 @@ class TestExtractMapsFeatures:
 
         assert result == {"outdoor_seating": True}
 
-    def test_returns_empty_dict_for_empty_additionalInfo(self):
+    def test_returns_empty_dict_for_empty_additional_info(self):
         """Given an empty additionalInfo dict, returns an empty dict."""
         place = {"additionalInfo": {}}
 
@@ -70,7 +68,7 @@ class TestExtractMapsFeatures:
 
         assert result == {}
 
-    def test_returns_empty_dict_when_additionalInfo_missing(self):
+    def test_returns_empty_dict_when_additional_info_missing(self):
         """Given a place dict with no additionalInfo key, returns an empty dict."""
         place = {"title": "Sunrise Coffee", "address": "台北市"}
 
@@ -78,7 +76,7 @@ class TestExtractMapsFeatures:
 
         assert result == {}
 
-    def test_returns_empty_dict_when_additionalInfo_is_none(self):
+    def test_returns_empty_dict_when_additional_info_is_none(self):
         """Given additionalInfo=None, returns an empty dict without errors."""
         place = {"additionalInfo": None}
 
