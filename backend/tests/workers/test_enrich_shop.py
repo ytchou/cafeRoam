@@ -151,7 +151,9 @@ class TestEnrichShopVibePhotos:
         shops_table.update.return_value.eq.return_value.execute.return_value = MagicMock(data=[])
 
         shop_tags_table = MagicMock()
-        shop_tags_table.delete.return_value.eq.return_value.execute.return_value = MagicMock(data=[])
+        shop_tags_table.delete.return_value.eq.return_value.execute.return_value = MagicMock(
+            data=[]
+        )
         shop_tags_table.insert.return_value.execute.return_value = MagicMock(data=[])
 
         shop_reviews_table = MagicMock()
@@ -286,7 +288,9 @@ class TestEnrichShopGoogleMapsFeatures:
         shops_table.update.return_value.eq.return_value.execute.return_value = MagicMock(data=[])
 
         shop_tags_table = MagicMock()
-        shop_tags_table.delete.return_value.eq.return_value.execute.return_value = MagicMock(data=[])
+        shop_tags_table.delete.return_value.eq.return_value.execute.return_value = MagicMock(
+            data=[]
+        )
         shop_tags_table.insert.return_value.execute.return_value = MagicMock(data=[])
 
         shop_reviews_table = MagicMock()
@@ -428,7 +432,10 @@ class TestEnrichShopLLMImageBlocks:
 
         # Find text block with context prefix
         text_blocks = [b for b in content if b.get("type") == "text"]
-        assert any("physical space" in b["text"].lower() or "vibe" in b["text"].lower() for b in text_blocks)
+        assert any(
+            "physical space" in b["text"].lower() or "vibe" in b["text"].lower()
+            for b in text_blocks
+        )
 
     def test_no_image_blocks_when_vibe_photos_empty(self):
         """Given vibe_photo_urls=[], _build_enrich_messages returns plain string content."""

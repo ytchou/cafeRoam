@@ -111,6 +111,8 @@ async def test_persist_stores_google_maps_features(mock_db, mock_queue):
     await persist_scraped_data(shop_id="shop-03", data=data, db=mock_db, queue=mock_queue)
 
     update_calls = mock_db.table.return_value.update.call_args_list
-    shop_updates = [c for c in update_calls if "google_maps_features" in (c.args[0] if c.args else {})]
+    shop_updates = [
+        c for c in update_calls if "google_maps_features" in (c.args[0] if c.args else {})
+    ]
     assert len(shop_updates) == 1
     assert shop_updates[0].args[0]["google_maps_features"] == features

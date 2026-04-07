@@ -379,9 +379,7 @@ class AnthropicLLMAdapter:
             }
         ]
         for url in shop.vibe_photo_urls:
-            content.append(
-                {"type": "image", "source": {"type": "url", "url": url}}
-            )
+            content.append({"type": "image", "source": {"type": "url", "url": url}})
         content.append({"type": "text", "text": text_prompt})
 
         return [{"role": "user", "content": content}]
@@ -436,9 +434,7 @@ class AnthropicLLMAdapter:
         )
 
         if shop.google_maps_features:
-            feature_list = ", ".join(
-                k for k, v in shop.google_maps_features.items() if v
-            )
+            feature_list = ", ".join(k for k, v in shop.google_maps_features.items() if v)
             if feature_list:
                 lines.append("")
                 lines.append(
