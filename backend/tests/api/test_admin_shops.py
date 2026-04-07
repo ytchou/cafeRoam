@@ -287,3 +287,30 @@ class TestAdminShopSearchRank:
             assert data["total_results"] == 3
         finally:
             test_app.dependency_overrides.clear()
+
+
+class TestAdminPipelineStatus:
+    def test_pipeline_status_includes_timed_out(self):
+        """Pipeline status endpoint includes timed_out in the counts."""
+        test_app.dependency_overrides[get_current_user] = _admin_user
+        try:
+            mock_db = MagicMock()
+            mock_db.table.return_value.select.return_value.execute.return_value.data = [
+                {"processing_status": "live"},
+                {"processing_status": "live"},
+                {"processing_status": "timed_out"},
+                {"processing_status": "pending"},
+            ]
+            with (
+                patch("api.admin_shops.get_service_role_client", return_value=mock_db),
+                patch("api.deps.settings") as mock_settings,
+            ):
+                mock_settings.admin_user_ids = [_ADMIN_ID]
+                response = client.get("/admin/shops/pipeline-status")
+            assert response.status_code == 200
+            data = response.json()
+            assert data["timed_out"] == 1
+            assert data["live"] == 2
+            assert data["pending"] == 1
+        finally:
+            test_app.dependency_overrides.clear()
