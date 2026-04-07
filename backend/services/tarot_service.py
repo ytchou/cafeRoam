@@ -92,7 +92,9 @@ class TarotService:
             name_resp = (
                 self._db.table("districts").select("name_zh").in_("id", district_ids).execute()
             )
-            district_names = [r["name_zh"] for r in (name_resp.data or [])]
+            district_names = [
+                r["name_zh"] for r in cast("list[dict[str, Any]]", name_resp.data or [])
+            ]
             if not district_names:
                 return []
             response = (
