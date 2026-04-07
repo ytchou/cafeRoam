@@ -45,6 +45,20 @@ class BulkApproveRequest(BaseModel):
     shop_ids: list[str] | None = None
 
 
+RETRYABLE_STATUSES = {
+    ProcessingStatus.SCRAPING,
+    ProcessingStatus.ENRICHING,
+    ProcessingStatus.EMBEDDING,
+    ProcessingStatus.PUBLISHING,
+    ProcessingStatus.TIMED_OUT,
+    ProcessingStatus.FAILED,
+}
+
+
+class RetryShopsRequest(BaseModel):
+    shop_ids: list[str] | None = None
+
+
 @router.get("/pipeline-status")
 async def pipeline_status(
     user: dict[str, Any] = Depends(require_admin),  # noqa: B008
@@ -327,6 +341,56 @@ async def bulk_approve(
         payload={"approved": approved, "queued": queued, "batch_id": batch_id},
     )
     return {"approved": approved, "queued": queued, "batch_id": batch_id}
+
+
+@router.post("/retry")
+async def retry_shops(
+    body: RetryShopsRequest,
+    user: dict[str, Any] = Depends(require_admin),
+) -> dict[str, Any]:
+    if body.shop_ids is not None and len(body.shop_ids) > 50:
+        raise HTTPException(status_code=400, detail="Maximum 50 shops per retry request")
+
+    db = get_service_role_client()
+    retryable_values = [s.value for s in RETRYABLE_STATUSES]
+
+    query = db.table("shops").select("id").in_("processing_status", retryable_values)
+    if body.shop_ids is not None:
+        query = query.in_("id", body.shop_ids)
+    else:
+        query = query.limit(200)
+
+    eligible_res = query.execute()
+    eligible_ids = [r["id"] for r in (eligible_res.data or [])]
+
+    requested_count = len(body.shop_ids) if body.shop_ids is not None else len(eligible_ids)
+
+    if not eligible_ids:
+        log_admin_action(
+            admin_user_id=user["id"],
+            action="POST /admin/shops/retry",
+            target_type="shop",
+            payload={"reset": 0, "skipped": requested_count},
+        )
+        return {"reset": 0, "skipped": requested_count}
+
+    update_res = (
+        db.table("shops")
+        .update({"processing_status": ProcessingStatus.PENDING.value})
+        .in_("id", eligible_ids)
+        .in_("processing_status", retryable_values)
+        .execute()
+    )
+    reset_count = len(update_res.data or [])
+    skipped_count = requested_count - reset_count
+
+    log_admin_action(
+        admin_user_id=user["id"],
+        action="POST /admin/shops/retry",
+        target_type="shop",
+        payload={"reset": reset_count, "skipped": skipped_count},
+    )
+    return {"reset": reset_count, "skipped": skipped_count}
 
 
 @router.get("/{shop_id}")
