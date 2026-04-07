@@ -23,9 +23,7 @@ _PHOTO_CAP = 30
 _FEATURE_MAP: dict[str, str] = {
     "Outdoor seating": "outdoor_seating",
     "Wheelchair-accessible entrance": "wheelchair_accessible",
-    "Wi-Fi": "wifi",
-    "Takeout": "takeout",
-    "Dine-in": "dine_in",
+    "Wi-Fi": "wifi_available",
 }
 _ACTOR_BASE_INPUT: dict[str, Any] = {
     "maxCrawledPlacesPerSearch": 1,
