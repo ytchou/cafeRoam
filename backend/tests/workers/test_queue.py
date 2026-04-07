@@ -258,3 +258,26 @@ class TestJobQueue:
         update_call = mock_supabase.table.return_value.update.call_args[0][0]
         assert update_call["status"] == JobStatus.FAILED.value
         assert "scheduled_at" not in update_call
+
+
+def test_acquire_cron_lock_hour_window():
+    '''Hour window truncates to start of current hour.'''
+    from datetime import UTC, datetime
+    from unittest.mock import MagicMock
+    from workers.queue import JobQueue
+
+    mock_db = MagicMock()
+    mock_db.table.return_value.upsert.return_value.execute.return_value.data = [
+        {'job_name': 'test_job', 'window_start': '2026-04-07T10:00:00+00:00'}
+    ]
+    queue = JobQueue(db=mock_db)
+
+    result = queue.acquire_cron_lock('test_job', window='hour')
+
+    assert result is True
+    call_args = mock_db.table.return_value.upsert.call_args
+    upsert_data = call_args[0][0]
+    window_start = datetime.fromisoformat(upsert_data['window_start'])
+    assert window_start.minute == 0
+    assert window_start.second == 0
+    assert window_start.microsecond == 0
