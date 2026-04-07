@@ -26,7 +26,7 @@ async def handle_enrich_shop(
         db.table("shops")
         .select(
             "id, name, description, categories, price_range, "
-            "socket, limited_time, rating, review_count"
+            "socket, limited_time, rating, review_count, google_maps_features"
         )
         .eq("id", shop_id)
         .single()
@@ -59,7 +59,7 @@ async def handle_enrich_shop(
         limited_time=shop.get("limited_time"),
         rating=shop.get("rating"),
         review_count=shop.get("review_count"),
-        google_maps_features=payload.get("google_maps_features", {}),
+        google_maps_features=shop.get("google_maps_features") or {},
         vibe_photo_urls=vibe_photo_urls,
     )
 

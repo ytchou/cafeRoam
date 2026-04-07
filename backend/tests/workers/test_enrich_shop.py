@@ -259,6 +259,134 @@ class TestEnrichShopVibePhotos:
         assert captured_input[0].vibe_photo_urls == []
 
 
+class TestEnrichShopGoogleMapsFeatures:
+    """Validate that google_maps_features is read from the DB and passed to the LLM."""
+
+    def _make_db(self, google_maps_features: dict) -> MagicMock:
+        db = MagicMock()
+
+        shop_data = {
+            "id": "shop-features-test",
+            "name": "戶外咖啡廳",
+            "description": None,
+            "categories": ["cafe"],
+            "price_range": "$",
+            "socket": None,
+            "limited_time": None,
+            "rating": 4.2,
+            "review_count": 50,
+            "google_maps_features": google_maps_features,
+        }
+        reviews_data: list = []
+
+        shops_table = MagicMock()
+        shops_table.select.return_value.eq.return_value.single.return_value.execute.return_value = (
+            MagicMock(data=shop_data)
+        )
+        shops_table.update.return_value.eq.return_value.execute.return_value = MagicMock(data=[])
+
+        shop_tags_table = MagicMock()
+        shop_tags_table.delete.return_value.eq.return_value.execute.return_value = MagicMock(data=[])
+        shop_tags_table.insert.return_value.execute.return_value = MagicMock(data=[])
+
+        shop_reviews_table = MagicMock()
+        shop_reviews_table.select.return_value.eq.return_value.execute.return_value = MagicMock(
+            data=reviews_data
+        )
+
+        shop_photos_table = MagicMock()
+        shop_photos_table.select.return_value.eq.return_value.eq.return_value.limit.return_value.execute.return_value = MagicMock(
+            data=[]
+        )
+
+        def table_router(name: str) -> MagicMock:
+            if name == "shops":
+                return shops_table
+            if name == "shop_tags":
+                return shop_tags_table
+            if name == "shop_reviews":
+                return shop_reviews_table
+            if name == "shop_photos":
+                return shop_photos_table
+            return MagicMock()
+
+        db.table.side_effect = table_router
+        return db
+
+    @pytest.mark.asyncio
+    async def test_google_maps_features_from_db_passed_to_llm(self):
+        """Given google_maps_features stored in DB, enrich_shop reads and passes them to LLM."""
+        features = {"outdoor_seating": True, "wifi_available": True}
+        db = self._make_db(google_maps_features=features)
+
+        captured_input: list = []
+
+        async def capture_enrich(shop_input):
+            captured_input.append(shop_input)
+            return EnrichmentResult(
+                tags=[],
+                tag_confidences={},
+                summary="寬敞的戶外咖啡廳，適合悠閒午後。",
+                confidence=0.75,
+                mode_scores=ShopModeScores(work=0.3, rest=0.7, social=0.2),
+                menu_highlights=[],
+                coffee_origins=[],
+            )
+
+        llm = AsyncMock()
+        llm.enrich_shop = capture_enrich
+        llm.assign_tarot = AsyncMock(
+            return_value=TarotEnrichmentResult(tarot_title=None, flavor_text="")
+        )
+        queue = AsyncMock()
+
+        await handle_enrich_shop(
+            payload={"shop_id": "shop-features-test"},
+            db=db,
+            llm=llm,
+            queue=queue,
+        )
+
+        assert len(captured_input) == 1
+        assert captured_input[0].google_maps_features == features
+
+    @pytest.mark.asyncio
+    async def test_missing_google_maps_features_column_defaults_to_empty_dict(self):
+        """When google_maps_features is absent from DB row (None), enrich_shop passes {}."""
+        db = self._make_db(google_maps_features=None)  # type: ignore[arg-type]
+
+        captured_input: list = []
+
+        async def capture_enrich(shop_input):
+            captured_input.append(shop_input)
+            return EnrichmentResult(
+                tags=[],
+                tag_confidences={},
+                summary="安靜的小咖啡廳，以手沖咖啡聞名。",
+                confidence=0.8,
+                mode_scores=ShopModeScores(work=0.6, rest=0.4, social=0.1),
+                menu_highlights=[],
+                coffee_origins=[],
+            )
+
+        llm = AsyncMock()
+        llm.enrich_shop = capture_enrich
+        llm.assign_tarot = AsyncMock(
+            return_value=TarotEnrichmentResult(tarot_title=None, flavor_text="")
+        )
+        queue = AsyncMock()
+
+        await handle_enrich_shop(
+            payload={"shop_id": "shop-features-test"},
+            db=db,
+            llm=llm,
+            queue=queue,
+        )
+
+        assert len(captured_input) == 1
+        assert captured_input[0].google_maps_features == {}
+
+
 class TestEnrichShopLLMImageBlocks:
     """Validate that AnthropicLLMAdapter builds image content blocks when vibe_photo_urls present."""
 
