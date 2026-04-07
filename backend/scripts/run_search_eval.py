@@ -186,9 +186,7 @@ def _normalize_score(s: int) -> float:
 
 def compare_query_scores(maps_avg: float, caferoam_scores: list[int]) -> dict:
     """Compare CafeRoam LLM-judge avg (normalized to 1-5) vs Maps human avg (1-5)."""
-    normalized_cr = sum(_normalize_score(s) for s in caferoam_scores) / max(
-        len(caferoam_scores), 1
-    )
+    normalized_cr = sum(_normalize_score(s) for s in caferoam_scores) / max(len(caferoam_scores), 1)
     if normalized_cr > maps_avg + 0.5:
         winner = "caferoam"
     elif maps_avg > normalized_cr + 0.5:
@@ -524,10 +522,7 @@ async def main(
             )
 
         shop_count_resp = (
-            db.table("shops")
-            .select("id", count="exact")
-            .eq("processing_status", "live")
-            .execute()
+            db.table("shops").select("id", count="exact").eq("processing_status", "live").execute()
         )
         total_shops = shop_count_resp.count or 0
 

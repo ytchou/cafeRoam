@@ -127,9 +127,7 @@ def score_results_with_llm(
     if not results:
         return []
 
-    results_text = "\n".join(
-        f"{r['rank']}. {r['name']}" for r in results
-    )
+    results_text = "\n".join(f"{r['rank']}. {r['name']}" for r in results)
     traits_text = ", ".join(expected_traits)
 
     prompt = f"""You are scoring Google Maps search results for relevance to a cafe search query.
@@ -181,12 +179,14 @@ Respond with JSON only, no explanation:
     scored_results = []
     for r in results:
         s = scores_by_rank.get(r["rank"], {"score": 1, "notes": "not scored"})
-        scored_results.append({
-            "rank": r["rank"],
-            "name": r["name"],
-            "relevance_score": s["score"],
-            "notes": s["notes"],
-        })
+        scored_results.append(
+            {
+                "rank": r["rank"],
+                "name": r["name"],
+                "relevance_score": s["score"],
+                "notes": s["notes"],
+            }
+        )
     return scored_results
 
 
@@ -242,10 +242,10 @@ async def scrape_baseline(
         for i, q in enumerate(queries):
             qid = q["id"]
             if qid in done_ids:
-                print(f"[{i+1}/{len(queries)}] Skipping {qid} (already done)")
+                print(f"[{i + 1}/{len(queries)}] Skipping {qid} (already done)")
                 continue
 
-            print(f"[{i+1}/{len(queries)}] Scraping: {q['query']}")
+            print(f"[{i + 1}/{len(queries)}] Scraping: {q['query']}")
             try:
                 maps_results = await scrape_maps_results(page, q["query"])
                 if not maps_results:
@@ -306,13 +306,15 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    asyncio.run(scrape_baseline(
-        queries_file=args.queries_file,
-        output_file=args.output,
-        delay_min=args.delay_min,
-        delay_max=args.delay_max,
-        headless=args.headless,
-    ))
+    asyncio.run(
+        scrape_baseline(
+            queries_file=args.queries_file,
+            output_file=args.output,
+            delay_min=args.delay_min,
+            delay_max=args.delay_max,
+            headless=args.headless,
+        )
+    )
 
 
 if __name__ == "__main__":

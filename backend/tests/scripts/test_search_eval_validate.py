@@ -3,16 +3,18 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
+from typing import TYPE_CHECKING
 
 import pytest
 
+if TYPE_CHECKING:
+    from pathlib import Path
+
 # The functions we'll add to run_search_eval.py
 from scripts.run_search_eval import (
-    load_maps_baseline,
     compare_query_scores,
     generate_validation_report,
+    load_maps_baseline,
 )
 
 
