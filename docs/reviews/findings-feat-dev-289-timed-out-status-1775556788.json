@@ -1,0 +1,80 @@
+{
+  "findings": [
+    {
+      "severity": "Important",
+      "file": "backend/workers/scheduler.py",
+      "line": "306-332",
+      "description": "Quoting style inconsistency: new run_sweep_timed_out function and its scheduler.add_job registration use single quotes while ALL existing code in the file uses double quotes. This includes the @idempotent_cron decorator, string literals inside the function body, and the scheduler.add_job call. ruff format enforces double quotes.",
+      "flagged_by": "Standards",
+      "status": "valid"
+    },
+    {
+      "severity": "Important",
+      "file": "backend/tests/workers/test_scheduler.py",
+      "line": "72-133",
+      "description": "Same single-quote inconsistency in test file — all new test code uses single quotes while existing tests use double quotes. ruff format will fix.",
+      "flagged_by": "Standards",
+      "status": "valid"
+    },
+    {
+      "severity": "Important",
+      "file": "backend/workers/scheduler.py",
+      "line": "306",
+      "description": "run_sweep_timed_out missing docstring — all other @idempotent_cron functions with nontrivial logic (run_daily_batch_scrape, run_shop_data_report) have docstrings. The plan doc specified one: 'Mark shops stuck in active pipeline states for 3+ days as timed_out.'",
+      "flagged_by": "Standards",
+      "status": "valid"
+    },
+    {
+      "severity": "Important",
+      "file": "backend/tests/workers/test_scheduler.py",
+      "line": "72",
+      "description": "Test test_sweep_timed_out_marks_stuck_shops lacks a descriptive docstring framed as a user journey. Plan doc had: 'Shops in active states with updated_at > 3 days ago are marked timed_out.' Other tests in this file have docstrings.",
+      "flagged_by": "Test Philosophy",
+      "status": "valid"
+    },
+    {
+      "severity": "Minor",
+      "file": "backend/workers/scheduler.py",
+      "line": "420",
+      "description": "get_scheduler_status return type changed from dict[str, object] to dict[str, Any] — unrelated to the timed_out feature (scope creep). Not harmful but a drive-by change.",
+      "flagged_by": "Architecture",
+      "status": "valid"
+    },
+    {
+      "severity": "Minor",
+      "file": "backend/tests/workers/test_scheduler.py",
+      "line": "75",
+      "description": "mock_execute.count = 5 is set but never asserted — dead test setup. The implementation uses len(response.data) not response.count, so this mock attribute serves no purpose.",
+      "flagged_by": "Bug Hunter",
+      "status": "valid"
+    },
+    {
+      "severity": "Minor",
+      "file": "backend/tests/workers/test_scheduler.py",
+      "line": "110",
+      "description": "test_sweep_timed_out_skips_when_lock_not_acquired also lacks a docstring. Plan doc had: 'Sweep is skipped if cron lock was already acquired this hour.'",
+      "flagged_by": "Test Philosophy",
+      "status": "valid"
+    }
+  ],
+  "active_agents": ["Standards", "Bug Hunter", "Architecture", "Test Philosophy"],
+  "skipped": [
+    {
+      "file": "backend/workers/scheduler.py",
+      "line": "328",
+      "reason": "Count logic using len(response.data) is functional and has a defensive else-0 fallback. Not a bug — works correctly with current Supabase SDK behavior."
+    },
+    {
+      "file": "app/explore/vibes/[slug]/page.test.tsx",
+      "line": "235",
+      "reason": "District fixture expansion is a legitimate fix for a type mismatch after upstream changes (DEV-246 added new fields to District type). Not a style issue."
+    },
+    {
+      "file": "backend/models/types.py",
+      "line": "516",
+      "reason": "ProcessingStatus enum missing OUT_OF_REGION and REJECTED values that exist in DB constraint — this is pre-existing (confirmed on main branch), not introduced by this PR."
+    }
+  ],
+  "head_sha": "cbdbb9bdf7cadb32a47f3a6c09332953fac28887",
+  "review_log_path": "docs/reviews/2026-04-07-feat-dev-289-timed-out-status.md"
+}
