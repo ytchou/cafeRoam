@@ -129,6 +129,98 @@ class TestEnrichShopLanguageGuard:
         queue.enqueue.assert_not_called()
 
 
+class TestEnrichShopErrorHandling:
+    """Validate that unhandled exceptions write rejection_reason before propagating."""
+
+    def _make_db(self) -> MagicMock:
+        db = MagicMock()
+        shop_data = {
+            "id": "shop-err-test",
+            "name": "錯誤測試咖啡",
+            "description": None,
+            "categories": ["cafe"],
+            "price_range": "$$",
+            "socket": "yes",
+            "limited_time": "no",
+            "rating": 4.0,
+            "review_count": 30,
+        }
+        shops_table = MagicMock()
+        shops_table.select.return_value.eq.return_value.single.return_value.execute.return_value = (
+            MagicMock(data=shop_data)
+        )
+        shops_table.update.return_value.eq.return_value.execute.return_value = MagicMock(data=[])
+
+        shop_reviews_table = MagicMock()
+        shop_reviews_table.select.return_value.eq.return_value.execute.return_value = MagicMock(
+            data=[]
+        )
+
+        def table_router(name: str) -> MagicMock:
+            if name == "shops":
+                return shops_table
+            if name == "shop_reviews":
+                return shop_reviews_table
+            return MagicMock()
+
+        db.table.side_effect = table_router
+        db._shops_table = shops_table
+        return db
+
+    @pytest.mark.asyncio
+    async def test_llm_failure_writes_rejection_reason_and_reraises(self):
+        """When the LLM call raises, the shop is marked failed with rejection_reason."""
+        db = self._make_db()
+        llm = AsyncMock()
+        llm.enrich_shop = AsyncMock(side_effect=RuntimeError("LLM API timeout"))
+        queue = AsyncMock()
+
+        with pytest.raises(RuntimeError, match="LLM API timeout"):
+            await handle_enrich_shop(
+                payload={"shop_id": "shop-err-test"},
+                db=db,
+                llm=llm,
+                queue=queue,
+            )
+
+        update_data = db._shops_table.update.call_args[0][0]
+        assert update_data["processing_status"] == "failed"
+        assert update_data["rejection_reason"].startswith("Enrichment error:")
+        queue.enqueue.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_zh_tw_rejection_reason_is_not_overwritten_by_outer_handler(self):
+        """The specific zh-TW rejection message must not be overwritten by the outer except."""
+        db = self._make_db()
+        llm = AsyncMock()
+        llm.enrich_shop = AsyncMock(
+            return_value=MagicMock(
+                summary="A hidden café with no Traditional Chinese summary.",
+                tags=[],
+                tag_confidences={},
+                mode_scores=None,
+                menu_highlights=[],
+                coffee_origins=[],
+            )
+        )
+        queue = AsyncMock()
+
+        with pytest.raises(ValueError, match="not in Traditional Chinese"):
+            await handle_enrich_shop(
+                payload={"shop_id": "shop-err-test"},
+                db=db,
+                llm=llm,
+                queue=queue,
+            )
+
+        # The last update should use the specific zh-TW message, not the generic one
+        update_data = db._shops_table.update.call_args[0][0]
+        assert (
+            update_data["rejection_reason"]
+            == "Enrichment failed: summary not in Traditional Chinese"
+        )
+
+
 class TestEnrichShopVibePhotos:
     """Validate that vibe photos are queried and passed as image blocks to the LLM."""
 
