@@ -331,6 +331,76 @@ class TestAdminShopsRetry:
             test_app.dependency_overrides.clear()
 
 
+class TestAdminShopsBulkReject:
+    def test_pending_review_shops_are_rejected_with_reason(self):
+        test_app.dependency_overrides[get_current_user] = _admin_user
+        try:
+            mock_db = MagicMock()
+            # UPDATE shops returns 1 rejected row
+            mock_db.table.return_value.update.return_value.in_.return_value.eq.return_value.execute.return_value = MagicMock(
+                data=[{"id": "shop-1"}]
+            )
+            # RPC cancel_shop_jobs
+            mock_db.rpc.return_value.execute.return_value = MagicMock(data=None)
+            with (
+                patch("api.admin_shops.get_service_role_client", return_value=mock_db),
+                patch("middleware.admin_audit.get_service_role_client", return_value=mock_db),
+                patch("api.deps.settings") as mock_settings,
+            ):
+                mock_settings.admin_user_ids = [_ADMIN_ID]
+                response = client.post(
+                    "/admin/shops/bulk-reject",
+                    json={"shop_ids": ["shop-1"], "rejection_reason": "not_a_cafe"},
+                )
+            assert response.status_code == 200
+            data = response.json()
+            assert data["rejected"] == 1
+            assert data["skipped"] == 0
+        finally:
+            test_app.dependency_overrides.clear()
+
+    def test_non_pending_review_shops_are_skipped(self):
+        test_app.dependency_overrides[get_current_user] = _admin_user
+        try:
+            mock_db = MagicMock()
+            # UPDATE returns empty (shops were not pending_review)
+            mock_db.table.return_value.update.return_value.in_.return_value.eq.return_value.execute.return_value = MagicMock(
+                data=[]
+            )
+            with (
+                patch("api.admin_shops.get_service_role_client", return_value=mock_db),
+                patch("middleware.admin_audit.get_service_role_client", return_value=mock_db),
+                patch("api.deps.settings") as mock_settings,
+            ):
+                mock_settings.admin_user_ids = [_ADMIN_ID]
+                response = client.post(
+                    "/admin/shops/bulk-reject",
+                    json={"shop_ids": ["shop-live-1"], "rejection_reason": "not_a_cafe"},
+                )
+            assert response.status_code == 200
+            data = response.json()
+            assert data["rejected"] == 0
+            assert data["skipped"] == 1
+        finally:
+            test_app.dependency_overrides.clear()
+
+    def test_returns_400_when_more_than_50_ids(self):
+        test_app.dependency_overrides[get_current_user] = _admin_user
+        try:
+            with patch("api.deps.settings") as mock_settings:
+                mock_settings.admin_user_ids = [_ADMIN_ID]
+                response = client.post(
+                    "/admin/shops/bulk-reject",
+                    json={
+                        "shop_ids": [f"shop-{i}" for i in range(51)],
+                        "rejection_reason": "not_a_cafe",
+                    },
+                )
+            assert response.status_code == 400
+        finally:
+            test_app.dependency_overrides.clear()
+
+
 class TestAdminShopSearchRank:
     def test_admin_can_check_shop_search_rank_for_a_query(self):
         """Admin can check where a shop ranks for a given search query."""

@@ -1,11 +1,22 @@
 from datetime import UTC, datetime
-from typing import Any, cast
+from typing import Any, Literal, cast
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile
 from postgrest.exceptions import APIError
 from pydantic import BaseModel
 
+try:
+    from api.admin import RejectionReasonType
+except ImportError:
+    RejectionReasonType = Literal[
+        "permanently_closed",
+        "not_a_cafe",
+        "duplicate",
+        "outside_coverage",
+        "invalid_url",
+        "other",
+    ]
 from api.deps import require_admin
 from core.db import escape_ilike, first
 from db.supabase_client import get_service_role_client
@@ -57,6 +68,11 @@ RETRYABLE_STATUSES = {
 
 class RetryShopsRequest(BaseModel):
     shop_ids: list[str] | None = None
+
+
+class BulkRejectShopsRequest(BaseModel):
+    shop_ids: list[str]
+    rejection_reason: RejectionReasonType
 
 
 @router.get("/pipeline-status")
@@ -391,6 +407,55 @@ async def retry_shops(
         payload={"reset": reset_count, "skipped": skipped_count},
     )
     return {"reset": reset_count, "skipped": skipped_count}
+
+
+@router.post("/bulk-reject")
+async def bulk_reject_shops(
+    body: BulkRejectShopsRequest,
+    user: dict[str, Any] = Depends(require_admin),
+) -> dict[str, Any]:
+    if len(body.shop_ids) > 50:
+        raise HTTPException(status_code=400, detail="Maximum 50 shops per bulk-reject request")
+
+    db = get_service_role_client()
+    now = datetime.now(tz=UTC).isoformat()
+
+    update_res = (
+        db.table("shops")
+        .update({"processing_status": "rejected"})
+        .in_("id", body.shop_ids)
+        .eq("processing_status", ProcessingStatus.PENDING_REVIEW.value)
+        .execute()
+    )
+    rejected_ids = [r["id"] for r in (update_res.data or [])]
+    rejected_count = len(rejected_ids)
+    skipped_count = len(body.shop_ids) - rejected_count
+
+    for shop_id in rejected_ids:
+        db.rpc(
+            "cancel_shop_jobs", {"p_shop_id": shop_id, "p_reason": body.rejection_reason}
+        ).execute()
+        (
+            db.table("shop_submissions")
+            .update(
+                {
+                    "status": "rejected",
+                    "rejection_reason": body.rejection_reason,
+                    "reviewed_at": now,
+                }
+            )
+            .eq("shop_id", shop_id)
+            .in_("status", ["pending", "processing", "pending_review"])
+            .execute()
+        )
+
+    log_admin_action(
+        admin_user_id=user["id"],
+        action="POST /admin/shops/bulk-reject",
+        target_type="shop",
+        payload={"rejected": rejected_count, "skipped": skipped_count, "reason": body.rejection_reason},
+    )
+    return {"rejected": rejected_count, "skipped": skipped_count}
 
 
 @router.get("/{shop_id}")
