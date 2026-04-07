@@ -167,7 +167,8 @@ class TestSoftDeleteGate:
 
             result = get_current_user("fake-jwt")
 
-        assert result == {"id": "active-user"}
+        assert result["id"] == "active-user"
+        assert "app_metadata" in result
 
 
 class TestCancelDeletionRoute:
