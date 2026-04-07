@@ -102,9 +102,16 @@ export function ImportSection({
             ref={csvFileRef}
             type="file"
             accept=".csv"
-            className="text-sm"
+            className="hidden"
             id="csv-file"
           />
+          <Button
+            onClick={() => csvFileRef.current?.click()}
+            disabled={seedingCsv}
+            variant="outline"
+          >
+            {seedingCsv ? 'Uploading...' : 'Choose CSV File'}
+          </Button>
           <Button
             onClick={handleSeedCsv}
             disabled={seedingCsv}
