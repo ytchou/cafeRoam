@@ -82,6 +82,7 @@ export function ShopTable({
     overrideIds?: string[];
   } | null>(null);
   const [retrying, setRetrying] = useState(false);
+  const [runningPipelineSelected, setRunningPipelineSelected] = useState(false);
   const [bulkRejecting, setBulkRejecting] = useState(false);
   const [rejectReason, setRejectReason] = useState<string>('not_a_cafe');
   const [showRejectDialog, setShowRejectDialog] = useState(false);
@@ -192,6 +193,36 @@ export function ShopTable({
     return handleRetry(Array.from(selectedShopIds));
   }
 
+  async function handleRunPipelineForSelected() {
+    setRunningPipelineSelected(true);
+    try {
+      const token = await getToken();
+      if (!token) {
+        toast.error('Session expired — please refresh the page');
+        return;
+      }
+      const res = await fetch('/api/admin/pipeline/run-batch', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ shop_ids: Array.from(selectedShopIds) }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.detail || 'Failed to queue pipeline run');
+        return;
+      }
+      toast.success(`Pipeline queued for ${selectedShopIds.size} shop(s)`);
+      setSelectedShopIds(new Set());
+    } catch {
+      toast.error('Network error');
+    } finally {
+      setRunningPipelineSelected(false);
+    }
+  }
+
   async function handleBulkReject(shopIds: Set<string>, reason: string) {
     setBulkRejecting(true);
     try {
@@ -259,11 +290,12 @@ export function ShopTable({
             Retry Selected
           </Button>
           <Button
-            onClick={() => setBulkConfirm({ approveAll: false })}
-            disabled={approvingBulk || selectedShopIds.size === 0}
+            onClick={handleRunPipelineForSelected}
+            disabled={runningPipelineSelected}
             variant="default"
+            data-testid="run-pipeline-selected"
           >
-            Approve Selected
+            {runningPipelineSelected ? 'Queuing…' : 'Run Pipeline'}
           </Button>
         </div>
       )}

@@ -175,15 +175,16 @@ def db_complete_batch(db, batch_run_id: str, counts: dict) -> None:
 # ── Shop selection ─────────────────────────────────────────────────────────────
 
 
-def pick_shops(db) -> list[dict]:
-    rows = (
+def pick_shops(db, shop_ids: list[str] | None = None) -> list[dict]:
+    query = (
         db.table("shops")
         .select("id,name,google_maps_url")
         .eq("processing_status", "pending")
         .not_.is_("google_maps_url", "null")
-        .execute()
     )
-    return rows.data or []
+    if shop_ids is not None:
+        query = query.in_("id", shop_ids)
+    return query.execute().data or []
 
 
 # ── Per-shop pipeline ──────────────────────────────────────────────────────────
@@ -283,7 +284,7 @@ async def run_shop_pipeline(
 # ── Main ───────────────────────────────────────────────────────────────────────
 
 
-async def main(dry_run: bool) -> None:
+async def main(dry_run: bool, shop_ids: list[str] | None = None) -> None:
     run_start = time.monotonic()
     print("\n=== CafeRoam Pipeline Batch Runner ===\n")
 
@@ -300,7 +301,7 @@ async def main(dry_run: bool) -> None:
     print("ok\n")
 
     # Shop selection
-    shops = pick_shops(db)
+    shops = pick_shops(db, shop_ids=shop_ids)
     live_count = len(db.table("shops").select("id").eq("processing_status", "live").execute().data)
     pending_count = len(
         db.table("shops").select("id").eq("processing_status", "pending").execute().data
