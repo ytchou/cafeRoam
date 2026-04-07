@@ -20,7 +20,9 @@ from importers.prefilter import validate_google_maps_url
 def main() -> None:
     parser = argparse.ArgumentParser(description="Filter and deduplicate a shops CSV.")
     parser.add_argument("input", help="Path to input CSV file")
-    parser.add_argument("--output", default="cleaned.csv", help="Path to output CSV file (default: cleaned.csv)")
+    parser.add_argument(
+        "--output", default="cleaned.csv", help="Path to output CSV file (default: cleaned.csv)"
+    )
     args = parser.parse_args()
 
     input_path = Path(args.input)
