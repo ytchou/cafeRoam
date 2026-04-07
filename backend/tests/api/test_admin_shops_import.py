@@ -72,21 +72,29 @@ class TestImportManualCsv:
         data = response.json()
         assert data["imported"] == 2
         assert data["skipped_duplicate"] == 0
+        assert data["reset_to_pending"] == 0
         assert data["invalid_url"] == 0
         assert data["duplicate_in_file"] == 0
         assert data["total"] == 2
 
     def test_admin_reuploads_same_csv_and_all_rows_are_skipped_as_duplicates(self):
-        """When all CSV URLs already exist in the DB, imported=0 and skipped_duplicate matches row count."""
+        """When all CSV URLs already exist in the DB with a live status, imported=0 and skipped_duplicate matches row count."""
         csv_bytes = _make_csv(
             [
                 ("珈琲時光", "https://maps.google.com/?cid=11111111111111111"),
             ]
         )
         mock_db = MagicMock()
-        # URL already in DB
+        # URL already in DB with live status — should be skipped, not reset
         mock_db.table.return_value.select.return_value.in_.return_value.execute.return_value = (
-            MagicMock(data=[{"google_maps_url": "https://maps.google.com/?cid=11111111111111111"}])
+            MagicMock(
+                data=[
+                    {
+                        "google_maps_url": "https://maps.google.com/?cid=11111111111111111",
+                        "processing_status": "live",
+                    }
+                ]
+            )
         )
 
         response = self._post_csv(csv_bytes, mock_db)
@@ -95,6 +103,7 @@ class TestImportManualCsv:
         data = response.json()
         assert data["imported"] == 0
         assert data["skipped_duplicate"] == 1
+        assert data["reset_to_pending"] == 0
         assert data["total"] == 1
 
     def test_admin_uploads_csv_with_invalid_url_rows_are_counted_but_skipped(self):
@@ -164,10 +173,79 @@ class TestImportManualCsv:
         assert response.json() == {
             "imported": 0,
             "skipped_duplicate": 0,
+            "reset_to_pending": 0,
             "invalid_url": 0,
             "duplicate_in_file": 0,
             "total": 0,
         }
+
+    def test_admin_reuploads_failed_shop_resets_to_pending(self):
+        """When a CSV URL exists in DB with failed status, it is reset to pending and counted as reset_to_pending."""
+        url = "https://maps.google.com/?cid=55555555555555555"
+        csv_bytes = _make_csv([("失敗咖啡", url)])
+        mock_db = MagicMock()
+        # URL exists in DB with failed status — should be reset, not skipped
+        mock_db.table.return_value.select.return_value.in_.return_value.execute.return_value = (
+            MagicMock(data=[{"google_maps_url": url, "processing_status": "failed"}])
+        )
+        mock_db.table.return_value.update.return_value.in_.return_value.execute.return_value = (
+            MagicMock(data=[{"google_maps_url": url}])
+        )
+
+        response = self._post_csv(csv_bytes, mock_db)
+
+        assert response.status_code == 202
+        data = response.json()
+        assert data["reset_to_pending"] == 1
+        assert data["imported"] == 0
+        assert data["skipped_duplicate"] == 0
+        assert data["total"] == 1
+        # Verify UPDATE was called (not just INSERT)
+        mock_db.table.return_value.update.assert_called_once_with({"processing_status": "pending"})
+
+    def test_admin_reuploads_timed_out_shop_resets_to_pending(self):
+        """When a CSV URL exists in DB with timed_out status, it is reset to pending and counted as reset_to_pending."""
+        url = "https://maps.google.com/?cid=66666666666666666"
+        csv_bytes = _make_csv([("逾時咖啡", url)])
+        mock_db = MagicMock()
+        # URL exists in DB with timed_out status — should be reset, not skipped
+        mock_db.table.return_value.select.return_value.in_.return_value.execute.return_value = (
+            MagicMock(data=[{"google_maps_url": url, "processing_status": "timed_out"}])
+        )
+        mock_db.table.return_value.update.return_value.in_.return_value.execute.return_value = (
+            MagicMock(data=[{"google_maps_url": url}])
+        )
+
+        response = self._post_csv(csv_bytes, mock_db)
+
+        assert response.status_code == 202
+        data = response.json()
+        assert data["reset_to_pending"] == 1
+        assert data["imported"] == 0
+        assert data["skipped_duplicate"] == 0
+        assert data["total"] == 1
+        mock_db.table.return_value.update.assert_called_once_with({"processing_status": "pending"})
+
+    def test_admin_reuploads_live_shop_is_skipped_not_reset(self):
+        """When a CSV URL exists in DB with live status, it is skipped (not reset) and counted as skipped_duplicate."""
+        url = "https://maps.google.com/?cid=77777777777777777"
+        csv_bytes = _make_csv([("在線咖啡", url)])
+        mock_db = MagicMock()
+        # URL exists in DB with live status — must be skipped, never reset
+        mock_db.table.return_value.select.return_value.in_.return_value.execute.return_value = (
+            MagicMock(data=[{"google_maps_url": url, "processing_status": "live"}])
+        )
+
+        response = self._post_csv(csv_bytes, mock_db)
+
+        assert response.status_code == 202
+        data = response.json()
+        assert data["skipped_duplicate"] == 1
+        assert data["reset_to_pending"] == 0
+        assert data["imported"] == 0
+        assert data["total"] == 1
+        # Verify UPDATE was NOT called
+        mock_db.table.return_value.update.assert_not_called()
 
 
 class TestBulkApprove:
