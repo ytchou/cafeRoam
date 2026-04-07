@@ -554,4 +554,9 @@ async def run_pipeline_batch(
 ) -> dict[str, Any]:
     """Queue a full pipeline batch run in the background."""
     background_tasks.add_task(_run_pipeline_safe)
+    log_admin_action(
+        admin_user_id=user["id"],
+        action="POST /admin/pipeline/run-batch",
+        target_type="pipeline",
+    )
     return {"message": "Pipeline batch run queued"}

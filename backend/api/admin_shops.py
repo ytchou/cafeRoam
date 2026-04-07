@@ -160,7 +160,7 @@ async def import_manual_csv(
         url = (row.get("google_maps_url") or "").strip()
 
         result = validate_google_maps_url(url)
-        if not result.is_valid:
+        if not result.passed:
             invalid_url += 1
             continue
 
@@ -206,17 +206,17 @@ async def import_manual_csv(
             db.table("shops").insert(new_rows).execute()
             imported = len(new_rows)
 
-        log_admin_action(
-            admin_user_id=user["id"],
-            action="POST /admin/shops/import/manual-csv",
-            target_type="import",
-            payload={
-                "imported": imported,
-                "skipped_duplicate": skipped_duplicate,
-                "invalid_url": invalid_url,
-                "duplicate_in_file": duplicate_in_file,
-            },
-        )
+    log_admin_action(
+        admin_user_id=user["id"],
+        action="POST /admin/shops/import/manual-csv",
+        target_type="import",
+        payload={
+            "imported": imported,
+            "skipped_duplicate": skipped_duplicate,
+            "invalid_url": invalid_url,
+            "duplicate_in_file": duplicate_in_file,
+        },
+    )
 
     return {
         "imported": imported,
