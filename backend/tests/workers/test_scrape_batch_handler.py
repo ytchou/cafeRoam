@@ -168,6 +168,12 @@ async def test_shop_not_found_on_google_maps_marks_failed_without_aborting_batch
     assert any(c.args == ("id", _SHOP_ID_A) for c in eq_calls), (
         f"Expected shop A ({_SHOP_ID_A}) to be targeted in failed update"
     )
+    failed_updates = [
+        c
+        for c in mock_db.table.return_value.update.call_args_list
+        if c.args and c.args[0].get("processing_status") == "failed"
+    ]
+    assert failed_updates[0].args[0]["rejection_reason"] == "Place not found on Google Maps"
 
 
 @pytest.mark.asyncio
@@ -212,6 +218,76 @@ async def test_persist_failure_marks_shop_failed_and_continues_remaining(
     ]
     assert len(enrich_calls) == 1
     assert enrich_calls[0].kwargs["payload"]["shop_id"] == _SHOP_ID_B
+    failed_updates = [
+        c
+        for c in mock_db.table.return_value.update.call_args_list
+        if c.args and c.args[0].get("processing_status") == "failed"
+    ]
+    assert failed_updates[0].args[0]["rejection_reason"].startswith("Scrape error:")
+
+
+@pytest.mark.asyncio
+async def test_scraper_provider_failure_marks_entire_batch_failed(mock_db, mock_queue):
+    """When the scrape provider itself raises, all shops in the batch are marked failed.
+
+    This covers the case where the Apify actor call fails entirely (network error,
+    provider outage, etc.) before any results are returned.
+    """
+    mock_scraper = AsyncMock()
+    mock_scraper.scrape_batch.side_effect = RuntimeError("Apify actor timed out")
+    payload = {
+        "batch_id": _BATCH_ID,
+        "shops": [
+            {"shop_id": _SHOP_ID_A, "google_maps_url": _URL_A},
+            {"shop_id": _SHOP_ID_B, "google_maps_url": _URL_B},
+        ],
+    }
+
+    with pytest.raises(RuntimeError, match="Apify actor timed out"):
+        await handle_scrape_batch(
+            payload=payload, db=mock_db, scraper=mock_scraper, queue=mock_queue
+        )
+
+    # Both shops should be bulk-updated to "failed" via .in_()
+    failed_bulk_updates = [
+        c
+        for c in mock_db.table.return_value.update.call_args_list
+        if c.args
+        and c.args[0].get("processing_status") == "failed"
+        and c.args[0].get("rejection_reason", "").startswith("Scrape batch error:")
+    ]
+    assert failed_bulk_updates, "Expected a bulk failed update with rejection_reason"
+    in_call = mock_db.table.return_value.update.return_value.in_
+    assert in_call.called, "Expected .in_() used for bulk update"
+
+    mock_queue.enqueue.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_scraper_provider_failure_updates_submissions(mock_db, mock_queue):
+    """When the scrape provider raises, submission records are also marked failed."""
+    mock_scraper = AsyncMock()
+    mock_scraper.scrape_batch.side_effect = RuntimeError("Connection reset")
+    payload = {
+        "batch_id": _BATCH_ID,
+        "shops": [
+            {
+                "shop_id": _SHOP_ID_A,
+                "google_maps_url": _URL_A,
+                "submission_id": "sub-00000001-0000-0000-0000-000000000001",
+            },
+        ],
+    }
+
+    with pytest.raises(RuntimeError):
+        await handle_scrape_batch(
+            payload=payload, db=mock_db, scraper=mock_scraper, queue=mock_queue
+        )
+
+    submission_updates = [
+        c for c in mock_db.table.call_args_list if c.args == ("shop_submissions",)
+    ]
+    assert submission_updates, "Expected shop_submissions to be updated on batch failure"
 
 
 @pytest.mark.asyncio

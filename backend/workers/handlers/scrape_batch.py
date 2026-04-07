@@ -48,7 +48,27 @@ async def handle_scrape_batch(
         for s in raw_shops
     ]
 
-    results = await scraper.scrape_batch(batch_inputs)
+    try:
+        results = await scraper.scrape_batch(batch_inputs)
+    except Exception as exc:
+        logger.error("Batch scrape provider failed entirely", batch_id=batch_id, error=str(exc))
+        db.table("shops").update(
+            {
+                "processing_status": "failed",
+                "rejection_reason": f"Scrape batch error: {exc}",
+                "updated_at": datetime.now(UTC).isoformat(),
+            }
+        ).in_("id", shop_ids).execute()
+        for s in raw_shops:
+            if s.get("submission_id"):
+                db.table("shop_submissions").update(
+                    {
+                        "status": "failed",
+                        "failure_reason": f"Scrape batch error: {exc}",
+                        "updated_at": datetime.now(UTC).isoformat(),
+                    }
+                ).eq("id", s["submission_id"]).execute()
+        raise
 
     # Build lookup for submission context
     meta: dict[str, dict[str, str | None]] = {
@@ -73,7 +93,11 @@ async def handle_scrape_batch(
                 batch_id=batch_id,
             )
             db.table("shops").update(
-                {"processing_status": "failed", "updated_at": datetime.now(UTC).isoformat()}
+                {
+                    "processing_status": "failed",
+                    "rejection_reason": "Place not found on Google Maps",
+                    "updated_at": datetime.now(UTC).isoformat(),
+                }
             ).eq("id", shop_id).execute()
 
             submission_id = shop_meta.get("submission_id")
@@ -108,7 +132,11 @@ async def handle_scrape_batch(
                 error=str(exc),
             )
             db.table("shops").update(
-                {"processing_status": "failed", "updated_at": datetime.now(UTC).isoformat()}
+                {
+                    "processing_status": "failed",
+                    "rejection_reason": f"Scrape error: {exc}",
+                    "updated_at": datetime.now(UTC).isoformat(),
+                }
             ).eq("id", shop_id).execute()
             submission_id = shop_meta.get("submission_id")
             if submission_id:
