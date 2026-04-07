@@ -56,8 +56,8 @@ def get_optional_user_db(request: Request) -> Client:
     return get_service_role_client()
 
 
-def _decode_jwt_user_id(token: str) -> str:
-    """Decode and verify a Supabase JWT, returning the user_id (sub claim).
+def _decode_jwt_claims(token: str) -> tuple[str, dict[str, Any]]:
+    """Decode and verify a Supabase JWT, returning (user_id, app_metadata).
 
     Raises HTTP 401 on any validation failure.
     """
@@ -75,7 +75,8 @@ def _decode_jwt_user_id(token: str) -> str:
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid token: missing user ID",
             )
-        return user_id
+        app_metadata: dict[str, Any] = payload.get("app_metadata") or {}
+        return user_id, app_metadata
     except HTTPException:
         raise
     except pyjwt.InvalidTokenError as exc:
@@ -98,7 +99,7 @@ def get_current_user(token: str = Depends(_get_bearer_token)) -> dict[str, Any]:
     Verifies the signature via Supabase's JWKS endpoint (cached). Supports
     ES256, RS256, and HS256 — whichever algorithm the Supabase instance uses.
     """
-    user_id = _decode_jwt_user_id(token)
+    user_id, app_metadata = _decode_jwt_claims(token)
     # Check deletion status from DB — JWT app_metadata.deletion_requested is
     # unreliable (local Supabase injects False defaults; prod claims can be stale).
     # DB check also blocks mid-session access, not just new logins.
@@ -115,7 +116,7 @@ def get_current_user(token: str = Depends(_get_bearer_token)) -> dict[str, Any]:
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Account is pending deletion",
         )
-    return {"id": user_id}
+    return {"id": user_id, "app_metadata": app_metadata}
 
 
 def get_current_user_allow_pending(token: str = Depends(_get_bearer_token)) -> dict[str, Any]:  # noqa: B008
@@ -124,12 +125,14 @@ def get_current_user_allow_pending(token: str = Depends(_get_bearer_token)) -> d
     Use only for the cancel-deletion endpoint, which must be reachable precisely
     when the account is in the deletion grace period.
     """
-    return {"id": _decode_jwt_user_id(token)}
+    user_id, app_metadata = _decode_jwt_claims(token)
+    return {"id": user_id, "app_metadata": app_metadata}
 
 
 def require_admin(user: dict[str, Any] = Depends(get_current_user)) -> dict[str, Any]:  # noqa: B008
-    """Raise 403 if the authenticated user is not in the admin allowlist."""
-    if user["id"] not in settings.admin_user_ids:
+    """Raise 403 if the user is neither in the admin allowlist nor has is_admin in JWT claims."""
+    is_admin_claim = user.get("app_metadata", {}).get("is_admin") is True
+    if user["id"] not in settings.admin_user_ids and not is_admin_claim:
         raise HTTPException(status_code=403, detail="Admin access required")
     return user
 
@@ -172,6 +175,7 @@ def get_optional_user(request: Request) -> dict[str, Any] | None:
     if not auth_header or not auth_header.startswith("Bearer "):
         return None
     try:
-        return {"id": _decode_jwt_user_id(auth_header.removeprefix("Bearer "))}
+        user_id, app_metadata = _decode_jwt_claims(auth_header.removeprefix("Bearer "))
+        return {"id": user_id, "app_metadata": app_metadata}
     except Exception:
         return None
