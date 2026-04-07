@@ -1,5 +1,4 @@
 from datetime import UTC, datetime
-from typing import Any
 
 import structlog
 from supabase import Client
@@ -154,19 +153,3 @@ async def persist_scraped_data(
         ).eq("id", submission_id).execute()
 
     DistrictService(db).assign_district(shop_id, data.address)
-
-    # Queue enrichment — forward submission context + batch tracking + features
-    enrich_payload: dict[str, Any] = {"shop_id": shop_id}
-    if submission_id:
-        enrich_payload["submission_id"] = submission_id
-    if submitted_by:
-        enrich_payload["submitted_by"] = submitted_by
-    if batch_id:
-        enrich_payload["batch_id"] = batch_id
-    if data.google_maps_features:
-        enrich_payload["google_maps_features"] = data.google_maps_features
-    await queue.enqueue(
-        job_type=JobType.ENRICH_SHOP,
-        payload=enrich_payload,
-        priority=5,
-    )

@@ -4,7 +4,7 @@ from typing import Any
 import structlog
 from supabase import Client
 
-from models.types import PhotoCategory
+from models.types import JobType, PhotoCategory
 from providers.llm.interface import LLMProvider
 from workers.queue import JobQueue
 
@@ -82,6 +82,13 @@ async def handle_classify_shop_photos(
         total=len(classified),
         menu=sum(1 for c in classified if c["category"] == PhotoCategory.MENU),
         vibe=sum(1 for c in classified if c["category"] == PhotoCategory.VIBE),
+    )
+
+    # Trigger enrichment now that photos are classified and VIBE photos are available
+    await queue.enqueue(
+        job_type=JobType.ENRICH_SHOP,
+        payload={"shop_id": shop_id},
+        priority=5,
     )
 
 

@@ -231,13 +231,13 @@ class AnthropicLLMAdapter:
         self._taxonomy_by_id: dict[str, TaxonomyTag] = {tag.id: tag for tag in taxonomy}
 
     async def enrich_shop(self, shop: ShopEnrichmentInput) -> EnrichmentResult:
-        user_prompt = self._build_enrich_prompt(shop)
+        messages = self._build_enrich_messages(shop)
 
         response = await self._client.messages.create(
             model=self._model,
             max_tokens=2048,
             system=SYSTEM_PROMPT,
-            messages=[{"role": "user", "content": user_prompt}],
+            messages=messages,
             tools=[CLASSIFY_SHOP_TOOL],
             tool_choice={"type": "tool", "name": "classify_shop"},
         )
@@ -356,6 +356,35 @@ class AnthropicLLMAdapter:
             if block.type == "text":
                 return block.text.strip()
         raise ValueError("No text block in summarize_reviews response")
+
+    def _build_enrich_messages(self, shop: ShopEnrichmentInput) -> list[dict]:
+        """Build the messages list for the enrich_shop API call.
+
+        When vibe_photo_urls is non-empty, returns a content list with image blocks
+        followed by the text prompt. Otherwise returns a plain string content message.
+        """
+        text_prompt = self._build_enrich_prompt(shop)
+
+        if not shop.vibe_photo_urls:
+            return [{"role": "user", "content": text_prompt}]
+
+        content: list[dict] = [
+            {
+                "type": "text",
+                "text": (
+                    "The following photos show the shop's physical space and vibe. "
+                    "Use them to assess visual attributes like aesthetic style, ambience, "
+                    "and physical features."
+                ),
+            }
+        ]
+        for url in shop.vibe_photo_urls:
+            content.append(
+                {"type": "image", "source": {"type": "url", "url": url}}
+            )
+        content.append({"type": "text", "text": text_prompt})
+
+        return [{"role": "user", "content": content}]
 
     def _build_enrich_prompt(self, shop: ShopEnrichmentInput) -> str:
         lines = [

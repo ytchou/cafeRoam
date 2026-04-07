@@ -123,3 +123,199 @@ class TestEnrichShopLanguageGuard:
         update_data = db._shops_table.update.call_args[0][0]
         assert update_data["processing_status"] == "failed"
         queue.enqueue.assert_not_called()
+
+
+class TestEnrichShopVibePhotos:
+    """Validate that vibe photos are queried and passed as image blocks to the LLM."""
+
+    def _make_db(self, vibe_photos: list[dict]) -> MagicMock:
+        db = MagicMock()
+
+        shop_data = {
+            "id": "shop-photo-test",
+            "name": "光合作用咖啡",
+            "description": None,
+            "categories": ["cafe"],
+            "price_range": "$$",
+            "socket": "yes",
+            "limited_time": "no",
+            "rating": 4.6,
+            "review_count": 85,
+        }
+        reviews_data = [{"text": "空間很舒適，適合閱讀"}]
+
+        shops_table = MagicMock()
+        shops_table.select.return_value.eq.return_value.single.return_value.execute.return_value = (
+            MagicMock(data=shop_data)
+        )
+        shops_table.update.return_value.eq.return_value.execute.return_value = MagicMock(data=[])
+
+        shop_tags_table = MagicMock()
+        shop_tags_table.delete.return_value.eq.return_value.execute.return_value = MagicMock(data=[])
+        shop_tags_table.insert.return_value.execute.return_value = MagicMock(data=[])
+
+        shop_reviews_table = MagicMock()
+        shop_reviews_table.select.return_value.eq.return_value.execute.return_value = MagicMock(
+            data=reviews_data
+        )
+
+        # shop_photos table: returns vibe photos when filtered by category='VIBE'
+        shop_photos_table = MagicMock()
+        shop_photos_table.select.return_value.eq.return_value.eq.return_value.limit.return_value.execute.return_value = MagicMock(
+            data=vibe_photos
+        )
+
+        def table_router(name: str) -> MagicMock:
+            if name == "shops":
+                return shops_table
+            if name == "shop_tags":
+                return shop_tags_table
+            if name == "shop_reviews":
+                return shop_reviews_table
+            if name == "shop_photos":
+                return shop_photos_table
+            return MagicMock()
+
+        db.table.side_effect = table_router
+        db._shops_table = shops_table
+        db._shop_photos_table = shop_photos_table
+        return db
+
+    def _make_enrichment_result(self) -> EnrichmentResult:
+        return EnrichmentResult(
+            tags=[],
+            tag_confidences={},
+            summary="光線充足的角落咖啡廳，適合安靜閱讀與工作。",
+            confidence=0.8,
+            mode_scores=ShopModeScores(work=0.7, rest=0.3, social=0.0),
+            menu_highlights=["拿鐵"],
+            coffee_origins=[],
+        )
+
+    @pytest.mark.asyncio
+    async def test_vibe_photos_are_queried_and_passed_to_llm(self):
+        """Given VIBE photos exist, enrich_shop queries them and passes vibe_photo_urls to LLM."""
+        vibe_photos = [
+            {"url": "https://cdn/vibe1.jpg"},
+            {"url": "https://cdn/vibe2.jpg"},
+            {"url": "https://cdn/vibe3.jpg"},
+        ]
+        db = self._make_db(vibe_photos)
+
+        captured_input: list = []
+
+        async def capture_enrich(shop_input):
+            captured_input.append(shop_input)
+            return self._make_enrichment_result()
+
+        llm = AsyncMock()
+        llm.enrich_shop = capture_enrich
+        llm.assign_tarot = AsyncMock(
+            return_value=TarotEnrichmentResult(tarot_title=None, flavor_text="")
+        )
+        queue = AsyncMock()
+
+        await handle_enrich_shop(
+            payload={"shop_id": "shop-photo-test"},
+            db=db,
+            llm=llm,
+            queue=queue,
+        )
+
+        assert len(captured_input) == 1
+        enrichment_input = captured_input[0]
+        assert enrichment_input.vibe_photo_urls == [
+            "https://cdn/vibe1.jpg",
+            "https://cdn/vibe2.jpg",
+            "https://cdn/vibe3.jpg",
+        ]
+
+    @pytest.mark.asyncio
+    async def test_no_vibe_photos_passes_empty_list_to_llm(self):
+        """Given no VIBE photos, enrich_shop passes vibe_photo_urls=[] — backward compat."""
+        db = self._make_db(vibe_photos=[])
+
+        captured_input: list = []
+
+        async def capture_enrich(shop_input):
+            captured_input.append(shop_input)
+            return self._make_enrichment_result()
+
+        llm = AsyncMock()
+        llm.enrich_shop = capture_enrich
+        llm.assign_tarot = AsyncMock(
+            return_value=TarotEnrichmentResult(tarot_title=None, flavor_text="")
+        )
+        queue = AsyncMock()
+
+        await handle_enrich_shop(
+            payload={"shop_id": "shop-photo-test"},
+            db=db,
+            llm=llm,
+            queue=queue,
+        )
+
+        assert len(captured_input) == 1
+        assert captured_input[0].vibe_photo_urls == []
+
+
+class TestEnrichShopLLMImageBlocks:
+    """Validate that AnthropicLLMAdapter builds image content blocks when vibe_photo_urls present."""
+
+    def _make_adapter(self):
+        from providers.llm.anthropic_adapter import AnthropicLLMAdapter
+
+        return AnthropicLLMAdapter(
+            api_key="test-key",
+            model="claude-opus-4-5",
+            taxonomy=[],
+            classify_model="claude-haiku-3-5",
+        )
+
+    def test_image_blocks_included_when_vibe_photos_present(self):
+        """Given vibe_photo_urls, _build_enrich_messages returns image content blocks."""
+        from models.types import ShopEnrichmentInput
+
+        adapter = self._make_adapter()
+        shop = ShopEnrichmentInput(
+            name="光合作用咖啡",
+            reviews=["環境舒適"],
+            vibe_photo_urls=["https://cdn/v1.jpg", "https://cdn/v2.jpg"],
+        )
+
+        messages = adapter._build_enrich_messages(shop)
+
+        # Should be a list with a user message that has a list of content blocks
+        assert len(messages) == 1
+        user_message = messages[0]
+        assert user_message["role"] == "user"
+        content = user_message["content"]
+        assert isinstance(content, list)
+
+        # Find image blocks
+        image_blocks = [b for b in content if b.get("type") == "image"]
+        assert len(image_blocks) == 2
+        assert image_blocks[0]["source"]["url"] == "https://cdn/v1.jpg"
+        assert image_blocks[1]["source"]["url"] == "https://cdn/v2.jpg"
+
+        # Find text block with context prefix
+        text_blocks = [b for b in content if b.get("type") == "text"]
+        assert any("physical space" in b["text"].lower() or "vibe" in b["text"].lower() for b in text_blocks)
+
+    def test_no_image_blocks_when_vibe_photos_empty(self):
+        """Given vibe_photo_urls=[], _build_enrich_messages returns plain string content."""
+        from models.types import ShopEnrichmentInput
+
+        adapter = self._make_adapter()
+        shop = ShopEnrichmentInput(
+            name="光合作用咖啡",
+            reviews=["環境舒適"],
+            vibe_photo_urls=[],
+        )
+
+        messages = adapter._build_enrich_messages(shop)
+
+        assert len(messages) == 1
+        user_message = messages[0]
+        # Without photos, content should be a plain string (existing behavior)
+        assert isinstance(user_message["content"], str)

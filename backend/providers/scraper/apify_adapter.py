@@ -17,7 +17,7 @@ from providers.scraper.interface import (
 logger = structlog.get_logger()
 
 _ACTOR_ID = "compass/crawler-google-places"
-_PHOTO_MAX_AGE = timedelta(days=365 * 5)
+_PHOTO_MAX_AGE = timedelta(days=365 * 3)
 _PHOTO_CAP = 30
 
 _FEATURE_MAP: dict[str, str] = {
@@ -30,7 +30,7 @@ _FEATURE_MAP: dict[str, str] = {
 _ACTOR_BASE_INPUT: dict[str, Any] = {
     "maxCrawledPlacesPerSearch": 1,
     "maxReviews": 20,
-    "maxImages": 10,
+    "maxImages": 15,
     "language": "zh-TW",
     "skipClosedPlaces": True,
     "scrapeReviewerName": False,
@@ -179,8 +179,6 @@ class ApifyScraperAdapter:
                 continue
             photos.append(ScrapedPhotoData(url=url, uploaded_at=uploaded_at))
 
-        # Sort by recency (newest first); photos without dates go last
-        photos.sort(key=lambda p: p.uploaded_at or datetime.min.replace(tzinfo=UTC), reverse=True)
         return photos[:_PHOTO_CAP]
 
     async def _run_actor(self, run_input: dict[str, Any]) -> list[dict[str, Any]]:

@@ -402,6 +402,7 @@ class ShopEnrichmentInput(BaseModel):
     rating: float | None = None
     review_count: int | None = None
     google_maps_features: dict[str, bool] = {}
+    vibe_photo_urls: list[str] = []
 
 
 # --- Provider result types ---

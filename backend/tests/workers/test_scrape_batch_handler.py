@@ -74,14 +74,18 @@ def mock_queue():
 
 
 @pytest.mark.asyncio
-async def test_all_shops_scraped_successfully_enqueues_enrichment(
+async def test_all_shops_scraped_successfully_enqueues_classification(
     mock_db, mock_queue, scraped_data_a, scraped_data_b
 ):
-    """When all shops scrape successfully, each gets an ENRICH_SHOP job queued."""
+    """When shops with photos scrape successfully, CLASSIFY_SHOP_PHOTOS is queued (not ENRICH_SHOP).
+
+    The new pipeline is: scrape → classify_shop_photos → enrich_shop.
+    ENRICH_SHOP is now triggered by classify_shop_photos, not directly by scrape.
+    """
     mock_scraper = AsyncMock()
     mock_scraper.scrape_batch.return_value = [
-        BatchScrapeResult(shop_id=_SHOP_ID_A, data=scraped_data_a),
-        BatchScrapeResult(shop_id=_SHOP_ID_B, data=scraped_data_b),
+        BatchScrapeResult(shop_id=_SHOP_ID_A, data=scraped_data_a),  # has photos
+        BatchScrapeResult(shop_id=_SHOP_ID_B, data=scraped_data_b),  # no photos
     ]
     payload = {
         "batch_id": _BATCH_ID,
@@ -96,13 +100,22 @@ async def test_all_shops_scraped_successfully_enqueues_enrichment(
     # All shops initially set to "scraping" in a single batch UPDATE
     mock_db.table.return_value.update.return_value.in_.assert_called()
 
-    # ENRICH_SHOP enqueued for each shop (CLASSIFY_SHOP_PHOTOS may also fire for shops with photos)
+    # Shop A has photos → CLASSIFY_SHOP_PHOTOS enqueued; shop B has no photos → nothing
+    classify_calls = [
+        c
+        for c in mock_queue.enqueue.call_args_list
+        if c.kwargs.get("job_type") == JobType.CLASSIFY_SHOP_PHOTOS
+    ]
+    assert len(classify_calls) == 1
+    assert classify_calls[0].kwargs["payload"]["shop_id"] == _SHOP_ID_A
+
+    # ENRICH_SHOP is NOT enqueued here — it fires from classify_shop_photos
     enrich_calls = [
         c
         for c in mock_queue.enqueue.call_args_list
         if c.kwargs.get("job_type") == JobType.ENRICH_SHOP
     ]
-    assert len(enrich_calls) == 2
+    assert len(enrich_calls) == 0
 
     # Scraper was called once (one Apify actor run)
     mock_scraper.scrape_batch.assert_called_once()
@@ -115,11 +128,14 @@ async def test_all_shops_scraped_successfully_enqueues_enrichment(
 async def test_shop_not_found_on_google_maps_marks_failed_without_aborting_batch(
     mock_db, mock_queue, scraped_data_b
 ):
-    """A shop returning None from Apify is marked failed; remaining shops are still processed."""
+    """A shop returning None from Apify is marked failed; remaining shops are still processed.
+
+    scraped_data_b has no photos, so no queue calls expected for the successful shop.
+    """
     mock_scraper = AsyncMock()
     mock_scraper.scrape_batch.return_value = [
         BatchScrapeResult(shop_id=_SHOP_ID_A, data=None),  # not found
-        BatchScrapeResult(shop_id=_SHOP_ID_B, data=scraped_data_b),
+        BatchScrapeResult(shop_id=_SHOP_ID_B, data=scraped_data_b),  # no photos
     ]
     payload = {
         "batch_id": _BATCH_ID,
@@ -131,10 +147,8 @@ async def test_shop_not_found_on_google_maps_marks_failed_without_aborting_batch
 
     await handle_scrape_batch(payload=payload, db=mock_db, scraper=mock_scraper, queue=mock_queue)
 
-    # Only one ENRICH_SHOP job (shop B succeeded; shop A failed)
-    assert mock_queue.enqueue.call_count == 1
-    enrich_payload = mock_queue.enqueue.call_args.kwargs["payload"]
-    assert enrich_payload["shop_id"] == _SHOP_ID_B
+    # Shop B has no photos → no CLASSIFY_SHOP_PHOTOS enqueue; ENRICH_SHOP not enqueued here
+    mock_queue.enqueue.assert_not_called()
 
     # Shop A should be marked "failed"
     update_calls = mock_db.table.return_value.update.call_args_list
@@ -153,7 +167,10 @@ async def test_shop_not_found_on_google_maps_marks_failed_without_aborting_batch
 async def test_persist_failure_marks_shop_failed_and_continues_remaining(
     mock_db, mock_queue, scraped_data_a, scraped_data_b
 ):
-    """A persist error for one shop marks it failed; the batch still processes remaining shops."""
+    """A persist error for one shop marks it failed; the batch still processes remaining shops.
+
+    scraped_data_b has no photos, so no queue calls for shop B either.
+    """
     mock_scraper = AsyncMock()
     mock_scraper.scrape_batch.return_value = [
         BatchScrapeResult(shop_id=_SHOP_ID_A, data=scraped_data_a),
@@ -179,10 +196,8 @@ async def test_persist_failure_marks_shop_failed_and_continues_remaining(
     # Batch handler should NOT raise — it catches per-shop errors
     await handle_scrape_batch(payload=payload, db=mock_db, scraper=mock_scraper, queue=mock_queue)
 
-    # Shop B still enqueued for enrichment (shop A failed, shop B succeeded)
-    assert mock_queue.enqueue.call_count == 1
-    enrich_payload = mock_queue.enqueue.call_args.kwargs["payload"]
-    assert enrich_payload["shop_id"] == _SHOP_ID_B
+    # Shop A failed (review insert raised); shop B has no photos → no enqueue calls
+    mock_queue.enqueue.assert_not_called()
 
 
 @pytest.mark.asyncio
@@ -198,8 +213,15 @@ async def test_empty_batch_payload_is_a_no_op(mock_db, mock_queue):
 
 
 @pytest.mark.asyncio
-async def test_submission_context_forwarded_to_enrichment_job(mock_db, mock_queue, scraped_data_a):
-    """Submission ID and submitted_by are forwarded to the ENRICH_SHOP payload."""
+async def test_submission_context_stored_and_photos_classification_enqueued(
+    mock_db, mock_queue, scraped_data_a
+):
+    """Submission context is linked to the shop; CLASSIFY_SHOP_PHOTOS is enqueued for shops with photos.
+
+    With the new pipeline (scrape → classify → enrich), ENRICH_SHOP is no longer directly enqueued
+    from the scrape handler. Submission context (submission_id, submitted_by) is stored in DB
+    via persist_scraped_data, not forwarded through the queue chain.
+    """
     mock_scraper = AsyncMock()
     mock_scraper.scrape_batch.return_value = [
         BatchScrapeResult(shop_id=_SHOP_ID_A, data=scraped_data_a),
@@ -218,7 +240,8 @@ async def test_submission_context_forwarded_to_enrichment_job(mock_db, mock_queu
 
     await handle_scrape_batch(payload=payload, db=mock_db, scraper=mock_scraper, queue=mock_queue)
 
-    enrich_payload = mock_queue.enqueue.call_args.kwargs["payload"]
-    assert enrich_payload["submission_id"] == "sub-00000001-0000-0000-0000-000000000001"
-    assert enrich_payload["submitted_by"] == "user-00000001-0000-0000-0000-000000000001"
-    assert enrich_payload["batch_id"] == _BATCH_ID
+    # scraped_data_a has photos → CLASSIFY_SHOP_PHOTOS is enqueued
+    assert mock_queue.enqueue.call_count == 1
+    classify_payload = mock_queue.enqueue.call_args.kwargs
+    assert classify_payload["job_type"] == JobType.CLASSIFY_SHOP_PHOTOS
+    assert classify_payload["payload"]["shop_id"] == _SHOP_ID_A
