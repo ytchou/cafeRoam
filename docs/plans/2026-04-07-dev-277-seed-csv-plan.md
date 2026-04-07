@@ -23,6 +23,7 @@ ln -s /Users/ytchou/Project/caferoam/backend/.env .worktrees/feat/dev-277-seed-c
 ### 1. Remove legacy import endpoints from `backend/api/admin_shops.py`
 
 Delete the following three endpoint functions (and their imports, if no longer used elsewhere):
+
 - `async def import_google_takeout(...)` — `POST /import/google-takeout`
 - `async def import_cafe_nomad(...)` — `POST /import/cafe-nomad`
 - `async def check_shop_urls(...)` — `POST /import/check-urls`
@@ -42,6 +43,7 @@ async def import_manual_csv(
 ```
 
 **Logic:**
+
 1. Read up to 10MB (reject with 413 if exceeded)
 2. Decode as UTF-8 text, parse with `csv.DictReader`
 3. For each row: extract `name` and `google_maps_url` (strip whitespace, ignore all other columns)
@@ -53,6 +55,7 @@ async def import_manual_csv(
 9. Return: `{ "imported": N, "skipped_duplicate": N, "invalid_url": N, "duplicate_in_file": N, "total": N }`
 
 **Imports to reuse:**
+
 - `from importers.prefilter import validate_google_maps_url`
 - `from db.supabase_client import get_service_role_client`
 - Batch dedup pattern from `run_url_import.py` lines 115–121
@@ -70,6 +73,7 @@ async def run_pipeline_batch(
 ```
 
 **Logic:**
+
 ```python
 import contextlib
 from scripts.run_pipeline_batch import main as _run_pipeline
@@ -89,6 +93,7 @@ Note: `run_pipeline_batch.main()` calls `sys.exit(1)` on errors — the `context
 ### 4. Delete legacy Next.js proxy routes
 
 Delete these files entirely:
+
 - `app/api/admin/shops/import/google-takeout/route.ts`
 - `app/api/admin/shops/import/cafe-nomad/route.ts`
 - `app/api/admin/shops/import/check-urls/route.ts`
@@ -116,11 +121,13 @@ File: `app/(admin)/admin/shops/_components/ImportSection.tsx`
 **Replace with two sections:**
 
 **(a) Manual CSV Seed:**
+
 - `<input type="file" accept=".csv" />` with ref
 - "Seed Shops" button (loading state while uploading)
 - After success: show summary card — Imported / Skipped (duplicate) / Invalid URL / Total
 
 **(b) Run Pipeline:**
+
 - "Run Pipeline" button — POSTs to `/api/admin/pipeline/run-batch`
 - Shows success toast: "Pipeline batch run queued — shops will process in the background"
 - No result data (202 fire-and-forget)
@@ -134,6 +141,7 @@ Keep `useAdminAuth()` hook and toast pattern from existing code.
 **`backend/scripts/filter_shops_csv.py`**
 
 CLI: `uv run python scripts/filter_shops_csv.py <input.csv> [--output cleaned.csv]`
+
 - Read CSV via `csv.DictReader` — use `name` + `google_maps_url`, ignore extra columns
 - Validate with `validate_google_maps_url()` from `importers.prefilter`
 - Dedup by `google_maps_url` (keep first, strip whitespace)
@@ -143,6 +151,7 @@ CLI: `uv run python scripts/filter_shops_csv.py <input.csv> [--output cleaned.cs
 **`backend/scripts/seed_shops_csv.py`**
 
 CLI: `uv run python scripts/seed_shops_csv.py <cleaned.csv>`
+
 - Read CSV via `csv.DictReader`
 - Batch-fetch existing `google_maps_url` (`.in_()` pattern from `run_url_import.py:115-121`)
 - Insert: `source='manual'`, `processing_status='pending'`, `address=''`, `review_count=0`
@@ -153,18 +162,18 @@ CLI: `uv run python scripts/seed_shops_csv.py <cleaned.csv>`
 
 ## Critical Files
 
-| File | Action |
-|------|--------|
-| `backend/api/admin_shops.py` | **Modify** — remove 3 endpoints, add manual-csv endpoint |
-| `backend/api/admin.py` | **Modify** — add run-batch endpoint |
+| File                                                    | Action                                                   |
+| ------------------------------------------------------- | -------------------------------------------------------- |
+| `backend/api/admin_shops.py`                            | **Modify** — remove 3 endpoints, add manual-csv endpoint |
+| `backend/api/admin.py`                                  | **Modify** — add run-batch endpoint                      |
 | `app/(admin)/admin/shops/_components/ImportSection.tsx` | **Rewrite** — remove legacy, add CSV seed + run pipeline |
-| `app/api/admin/shops/import/manual-csv/route.ts` | **Create** |
-| `app/api/admin/pipeline/run-batch/route.ts` | **Create** |
-| `app/api/admin/shops/import/google-takeout/route.ts` | **Delete** |
-| `app/api/admin/shops/import/cafe-nomad/route.ts` | **Delete** |
-| `app/api/admin/shops/import/check-urls/route.ts` | **Delete** |
-| `backend/scripts/filter_shops_csv.py` | **Create** |
-| `backend/scripts/seed_shops_csv.py` | **Create** |
+| `app/api/admin/shops/import/manual-csv/route.ts`        | **Create**                                               |
+| `app/api/admin/pipeline/run-batch/route.ts`             | **Create**                                               |
+| `app/api/admin/shops/import/google-takeout/route.ts`    | **Delete**                                               |
+| `app/api/admin/shops/import/cafe-nomad/route.ts`        | **Delete**                                               |
+| `app/api/admin/shops/import/check-urls/route.ts`        | **Delete**                                               |
+| `backend/scripts/filter_shops_csv.py`                   | **Create**                                               |
+| `backend/scripts/seed_shops_csv.py`                     | **Create**                                               |
 
 **Do NOT delete** `backend/importers/google_takeout.py`, `backend/importers/cafe_nomad.py`, or `backend/workers/handlers/check_urls.py` — verify no other usages exist before touching.
 
