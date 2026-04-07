@@ -11,11 +11,10 @@ import { proxyToBackend } from '@/lib/api/proxy';
 import { POST as authPOST } from '../auth/route';
 // Admin shop import routes
 import { POST as bulkApprovePOST } from '../admin/shops/bulk-approve/route';
-import { POST as importCafeNomadPOST } from '../admin/shops/import/cafe-nomad/route';
-import { POST as importCheckUrlsPOST } from '../admin/shops/import/check-urls/route';
-import { POST as importGoogleTakeoutPOST } from '../admin/shops/import/google-takeout/route';
+import { POST as importManualCsvPOST } from '../admin/shops/import/manual-csv/route';
 // Admin proxy routes
 import { POST as approvePOST } from '../admin/pipeline/approve/[id]/route';
+import { POST as runBatchPOST } from '../admin/pipeline/run-batch/route';
 import { GET as pipelineJobsGET } from '../admin/pipeline/jobs/route';
 import { POST as cancelJobPOST } from '../admin/pipeline/jobs/[id]/cancel/route';
 import { GET as pipelineOverviewGET } from '../admin/pipeline/overview/route';
@@ -639,72 +638,6 @@ describe('admin/shops/bulk-approve route', () => {
   });
 });
 
-describe('admin/shops/import/cafe-nomad route', () => {
-  it('admin triggers Cafe Nomad import and request is forwarded to backend', async () => {
-    await importCafeNomadPOST(makeRequest());
-    expect(mockProxy).toHaveBeenCalledWith(
-      expect.any(NextRequest),
-      '/admin/shops/import/cafe-nomad'
-    );
-  });
-});
-
-describe('admin/shops/import/check-urls route', () => {
-  it('admin triggers URL check and request is forwarded to backend', async () => {
-    await importCheckUrlsPOST(makeRequest());
-    expect(mockProxy).toHaveBeenCalledWith(
-      expect.any(NextRequest),
-      '/admin/shops/import/check-urls'
-    );
-  });
-});
-
-describe('admin/shops/import/google-takeout route', () => {
-  it('admin uploads valid takeout file and it is forwarded to backend', async () => {
-    const mockFetch = vi
-      .fn()
-      .mockResolvedValue(new Response('{"imported":1}', { status: 202 }));
-    vi.stubGlobal('fetch', mockFetch);
-
-    const body = new Uint8Array([1, 2, 3]);
-    const req = new Request(
-      'http://localhost/api/admin/shops/import/google-takeout',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'multipart/form-data; boundary=abc',
-          Authorization: 'Bearer token',
-        },
-        body,
-      }
-    );
-
-    const res = await importGoogleTakeoutPOST(req);
-
-    expect(mockFetch).toHaveBeenCalledWith(
-      'http://localhost:8000/admin/shops/import/google-takeout',
-      expect.objectContaining({ method: 'POST' })
-    );
-    expect(res.status).toBe(202);
-    vi.unstubAllGlobals();
-  });
-
-  it('admin uploading a file over 10MB receives a 413 response', async () => {
-    const oversizedBody = new Uint8Array(10 * 1024 * 1024 + 1);
-    const req = new Request(
-      'http://localhost/api/admin/shops/import/google-takeout',
-      {
-        method: 'POST',
-        headers: { 'Content-Length': String(oversizedBody.byteLength) },
-        body: oversizedBody,
-      }
-    );
-
-    const res = await importGoogleTakeoutPOST(req);
-    expect(res.status).toBe(413);
-  });
-});
-
 describe('claims route', () => {
   it('POST submits a shop claim and forwards to backend', async () => {
     await claimsPOST(makeRequest());
@@ -774,6 +707,62 @@ describe('admin/claims/[id]/proof-url route', () => {
     expect(mockProxy).toHaveBeenCalledWith(
       expect.any(NextRequest),
       '/admin/claims/claim-1/proof-url'
+    );
+  });
+});
+
+describe('admin/shops/import/manual-csv route', () => {
+  it('admin uploads valid CSV file and it is forwarded to backend', async () => {
+    const mockFetch = vi
+      .fn()
+      .mockResolvedValue(new Response('{"imported":5}', { status: 202 }));
+    vi.stubGlobal('fetch', mockFetch);
+
+    const body = new Uint8Array([1, 2, 3]);
+    const req = new Request(
+      'http://localhost/api/admin/shops/import/manual-csv',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'multipart/form-data; boundary=abc',
+          Authorization: 'Bearer token',
+        },
+        body,
+      }
+    );
+
+    const res = await importManualCsvPOST(req);
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      'http://localhost:8000/admin/shops/import/manual-csv',
+      expect.objectContaining({ method: 'POST' })
+    );
+    expect(res.status).toBe(202);
+    vi.unstubAllGlobals();
+  });
+
+  it('admin uploading a file over 10MB receives a 413 response', async () => {
+    const oversizedBody = new Uint8Array(10 * 1024 * 1024 + 1);
+    const req = new Request(
+      'http://localhost/api/admin/shops/import/manual-csv',
+      {
+        method: 'POST',
+        headers: { 'Content-Length': String(oversizedBody.byteLength) },
+        body: oversizedBody,
+      }
+    );
+
+    const res = await importManualCsvPOST(req);
+    expect(res.status).toBe(413);
+  });
+});
+
+describe('admin/pipeline/run-batch route', () => {
+  it('POST proxies to /admin/pipeline/run-batch', async () => {
+    await runBatchPOST(makeRequest());
+    expect(mockProxy).toHaveBeenCalledWith(
+      expect.any(NextRequest),
+      '/admin/pipeline/run-batch'
     );
   });
 });
