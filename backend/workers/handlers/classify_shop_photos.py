@@ -1,5 +1,5 @@
 import re
-from typing import Any
+from typing import Any, cast
 
 import structlog
 from supabase import Client
@@ -98,7 +98,7 @@ async def handle_classify_shop_photos(
         .execute()
     )
     if submission_response.data:
-        sub = first(submission_response.data, "shop_submissions for classify->enrich")
+        sub = cast("dict[str, Any]", first(submission_response.data, "shop_submissions for classify->enrich"))
         enrich_payload["submission_id"] = sub["id"]
         enrich_payload["submitted_by"] = sub["submitted_by"]
 
