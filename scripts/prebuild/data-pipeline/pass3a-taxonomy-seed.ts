@@ -43,11 +43,19 @@ export function sampleReviews(
 export function flattenProposalToTags(
   proposal: TaxonomyProposal
 ): TaxonomyTag[] {
-  const dimensions = ['functionality', 'time', 'ambience', 'mode'] as const;
+  const dimensions = [
+    'functionality',
+    'time',
+    'ambience',
+    'mode',
+    'coffee',
+  ] as const;
   const tags: TaxonomyTag[] = [];
 
   for (const dim of dimensions) {
-    for (const entry of proposal[dim]) {
+    const entries = proposal[dim];
+    if (!entries) continue;
+    for (const entry of entries) {
       tags.push({
         id: entry.id,
         dimension: dim,
@@ -73,12 +81,13 @@ Requirements:
 
 function buildUserMessage(reviews: string[]): string {
   const reviewBlock = reviews.map((r, i) => `[${i + 1}] ${r}`).join('\n');
-  return `Analyze these ${reviews.length} reviews from Taipei coffee shops and propose taxonomy tags organized into 4 dimensions:
+  return `Analyze these ${reviews.length} reviews from Taipei coffee shops and propose taxonomy tags organized into 5 dimensions:
 
-1. **functionality** — What can you do there? (outlets, WiFi, laptop-friendly, reservations, pet-friendly, outdoor seating, etc.)
+1. **functionality** — What can you do or find there? (outlets, WiFi, laptop-friendly, reservations, pet-friendly, outdoor seating, natural light, window seats, private rooms, large tables, second floor, etc.)
 2. **time** — When should you go? (late night, early bird, no time limit, limited time, weekend-only, etc.)
-3. **ambience** — What does it feel like? (quiet, lively, photogenic, cozy, industrial, Japanese-style, vintage, has cats, etc.)
+3. **ambience** — What does it feel like? (quiet, lively, photogenic, cozy, industrial, Japanese-style, vintage, has cats, old house renovated, lush plants, healing vibe, etc.)
 4. **mode** — What's it best for? (deep work, casual work, reading, meeting friends, date, solo time, group hangout, etc.)
+5. **coffee** — What's special about the coffee? (pour over, self-roasted, espresso-focused, rare beans, competition lots, etc.)
 
 Reviews:
 ${reviewBlock}`;
@@ -145,6 +154,18 @@ const TAXONOMY_TOOL: Anthropic.Tool = {
           required: ['id', 'label', 'labelZh'],
         },
       },
+      coffee: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+            label: { type: 'string' },
+            labelZh: { type: 'string' },
+          },
+          required: ['id', 'label', 'labelZh'],
+        },
+      },
     },
     required: ['functionality', 'time', 'ambience', 'mode'],
   },
@@ -194,6 +215,7 @@ async function main() {
     time: proposal.time.length,
     ambience: proposal.ambience.length,
     mode: proposal.mode.length,
+    coffee: proposal.coffee?.length ?? 0,
   };
 
   console.log('[pass3a] Taxonomy proposed:');
@@ -201,6 +223,7 @@ async function main() {
   console.log(`  time:          ${counts.time} tags`);
   console.log(`  ambience:      ${counts.ambience} tags`);
   console.log(`  mode:          ${counts.mode} tags`);
+  console.log(`  coffee:        ${counts.coffee} tags`);
   console.log(`  TOTAL:         ${tags.length} tags`);
   console.log(
     `  Tokens:        ${result.usage.inputTokens} in / ${result.usage.outputTokens} out`
