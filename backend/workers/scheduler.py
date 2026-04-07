@@ -421,7 +421,7 @@ async def _run_delete_expired_accounts() -> None:
     await delete_expired_accounts()
 
 
-def get_scheduler_status(scheduler: AsyncIOScheduler) -> dict[str, object]:
+def get_scheduler_status(scheduler: AsyncIOScheduler) -> dict[str, Any]:
     """Return scheduler health status for the /health/scheduler endpoint."""
     jobs = scheduler.get_jobs()
     return {
