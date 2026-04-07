@@ -8,6 +8,7 @@ from models.types import (
     List,
     ListItem,
     PhotoCategory,
+    ProcessingStatus,
     SearchFilters,
     SearchQuery,
     Shop,
@@ -177,3 +178,8 @@ class TestJobStatus:
         db_statuses = {"pending", "claimed", "completed", "failed", "dead_letter"}
         enum_values = {s.value for s in JobStatus}
         assert db_statuses == enum_values
+
+
+def test_timed_out_is_valid_processing_status():
+    assert ProcessingStatus.TIMED_OUT == "timed_out"
+    assert ProcessingStatus("timed_out") == ProcessingStatus.TIMED_OUT
