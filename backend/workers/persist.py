@@ -5,7 +5,7 @@ from supabase import Client
 
 from models.types import JobType
 from providers.scraper.interface import ScrapedShopData
-from services.district_service import DistrictService
+from services.district_service import _parse_city_district
 from workers.queue import JobQueue
 
 logger = structlog.get_logger()
@@ -79,28 +79,35 @@ async def persist_scraped_data(
         ).eq("id", shop_id).execute()
         return
 
+    # Extract city and district from address string
+    geo = _parse_city_district(data.address)
+    city_en, district_zh = geo if geo else (None, None)
+
     # Update shop with scraped data; advance status to enriching
-    db.table("shops").update(
-        {
-            "name": data.name,
-            "address": data.address,
-            "latitude": data.latitude,
-            "longitude": data.longitude,
-            "google_place_id": data.google_place_id,
-            "rating": data.rating,
-            "review_count": data.review_count,
-            "opening_hours": data.opening_hours,
-            "phone": data.phone,
-            "website": data.website,
-            "menu_url": data.menu_url,
-            "instagram_url": data.instagram_url,
-            "facebook_url": data.facebook_url,
-            "price_range": data.price_range,
-            "google_maps_features": data.google_maps_features,
-            "processing_status": "enriching",
-            "updated_at": datetime.now(UTC).isoformat(),
-        }
-    ).eq("id", shop_id).execute()
+    shop_payload: dict[str, object] = {
+        "name": data.name,
+        "address": data.address,
+        "latitude": data.latitude,
+        "longitude": data.longitude,
+        "google_place_id": data.google_place_id,
+        "rating": data.rating,
+        "review_count": data.review_count,
+        "opening_hours": data.opening_hours,
+        "phone": data.phone,
+        "website": data.website,
+        "menu_url": data.menu_url,
+        "instagram_url": data.instagram_url,
+        "facebook_url": data.facebook_url,
+        "price_range": data.price_range,
+        "google_maps_features": data.google_maps_features,
+        "processing_status": "enriching",
+        "updated_at": datetime.now(UTC).isoformat(),
+    }
+    if city_en:
+        shop_payload["city"] = city_en
+    if district_zh:
+        shop_payload["district"] = district_zh
+    db.table("shops").update(shop_payload).eq("id", shop_id).execute()
 
     # Replace reviews: snapshot old rows, delete, insert fresh batch.
     # If insert fails, restore the snapshot to avoid losing existing reviews.
@@ -171,5 +178,3 @@ async def persist_scraped_data(
                 "updated_at": datetime.now(UTC).isoformat(),
             }
         ).eq("id", submission_id).execute()
-
-    DistrictService(db).assign_district(shop_id, data.address)

@@ -10,8 +10,13 @@ def _make_db_mock_for_vibes(
     vibe_rows: list[dict],
     tag_rows: list[dict],
     shop_rows: list[dict],
+    district_names: list[str] | None = None,
 ) -> MagicMock:
-    """Mock that sequences calls: first to vibe_collections, then shop_tags, then shops."""
+    """Mock that sequences calls: first to vibe_collections, then shop_tags, then shops.
+
+    When district_names is provided, inserts a districts UUID→name_zh lookup call
+    between the shop_tags query and the shops query.
+    """
     mock = MagicMock()
     mock.table.return_value = mock
     mock.select.return_value = mock
@@ -24,13 +29,23 @@ def _make_db_mock_for_vibes(
     mock.not_.return_value = mock
     mock.not_.is_.return_value = mock
 
-    # Sequence .execute() calls in order: vibes → tags → shops
     execute_mock = MagicMock()
-    execute_mock.side_effect = [
-        MagicMock(data=vibe_rows),  # 1st call: vibe_collections query
-        MagicMock(data=tag_rows),  # 2nd call: shop_tags query
-        MagicMock(data=shop_rows),  # 3rd call: shops query
-    ]
+    if district_names is not None:
+        district_rows = [{"name_zh": n} for n in district_names]
+        # Sequence: vibes → tags → districts lookup → shops
+        execute_mock.side_effect = [
+            MagicMock(data=vibe_rows),
+            MagicMock(data=tag_rows),
+            MagicMock(data=district_rows),
+            MagicMock(data=shop_rows),
+        ]
+    else:
+        # Sequence: vibes → tags → shops
+        execute_mock.side_effect = [
+            MagicMock(data=vibe_rows),
+            MagicMock(data=tag_rows),
+            MagicMock(data=shop_rows),
+        ]
     mock.execute = execute_mock
     return mock
 
@@ -241,13 +256,14 @@ def test_get_shops_for_vibe_filters_by_district():
                 "slug": "daan-cafe",
                 "latitude": 25.026,
                 "longitude": 121.543,
-                "district_id": "daan-uuid",
+                "district": "大安區",
                 "rating": 4.2,
                 "review_count": 5,
                 "processing_status": "live",
                 "shop_photos": [],
             }
         ],
+        district_names=["大安區"],
     )
 
     service = VibeService(db)
@@ -272,7 +288,7 @@ def test_get_shops_for_vibe_filters_by_multiple_districts():
                 "slug": "daan-cafe",
                 "latitude": 25.026,
                 "longitude": 121.543,
-                "district_id": "daan-uuid",
+                "district": "大安區",
                 "rating": 4.2,
                 "review_count": 5,
                 "processing_status": "live",
@@ -284,13 +300,14 @@ def test_get_shops_for_vibe_filters_by_multiple_districts():
                 "slug": "xinyi-cafe",
                 "latitude": 25.033,
                 "longitude": 121.565,
-                "district_id": "xinyi-uuid",
+                "district": "信義區",
                 "rating": 4.5,
                 "review_count": 8,
                 "processing_status": "live",
                 "shop_photos": [],
             },
         ],
+        district_names=["大安區", "信義區"],
     )
 
     service = VibeService(db)

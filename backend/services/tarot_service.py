@@ -86,9 +86,17 @@ class TarotService:
         return await asyncio.to_thread(_query)
 
     async def _query_district_shops(self, district_ids: list[str]) -> list[dict[str, Any]]:
-        """Query shops within one or more districts using FK filter."""
+        """Query shops within one or more districts using text district field."""
 
         def _query() -> list[dict[str, Any]]:
+            name_resp = (
+                self._db.table("districts").select("name_zh").in_("id", district_ids).execute()
+            )
+            district_names = [
+                r["name_zh"] for r in cast("list[dict[str, Any]]", name_resp.data or [])
+            ]
+            if not district_names:
+                return []
             response = (
                 self._db.table("shops")
                 .select(
@@ -98,7 +106,7 @@ class TarotService:
                 )
                 .eq("processing_status", "live")
                 .not_.is_("tarot_title", "null")
-                .in_("district_id", district_ids)
+                .in_("district", district_names)
                 .limit(200)
                 .execute()
             )

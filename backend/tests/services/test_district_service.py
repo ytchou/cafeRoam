@@ -6,6 +6,37 @@ import pytest
 
 from tests.factories import make_district_row, make_district_shop_row, make_shop_tag_row
 
+# ── TestParseCityDistrict ─────────────────────────────────────────
+
+
+class TestParseCityDistrict:
+    """_parse_city_district extracts (city_en, district_zh) from Taiwan address strings."""
+
+    def test_parses_taipei_address(self) -> None:
+        from services.district_service import _parse_city_district
+
+        result = _parse_city_district("106台灣台北市大安區復興南路二段79號")
+        assert result == ("taipei", "大安區")
+
+    def test_parses_taoyuan_address(self) -> None:
+        from services.district_service import _parse_city_district
+
+        result = _parse_city_district("330台灣桃園市桃園區縣府路1號")
+        assert result == ("taoyuan", "桃園區")
+
+    def test_parses_keelung_address(self) -> None:
+        from services.district_service import _parse_city_district
+
+        result = _parse_city_district("200台灣基隆市仁愛區港西街23號")
+        assert result == ("keelung", "仁愛區")
+
+    def test_returns_none_for_unparseable_address(self) -> None:
+        from services.district_service import _parse_city_district
+
+        result = _parse_city_district("123 Main Street, Springfield")
+        assert result is None
+
+
 # ── Helpers ──────────────────────────────────────────────────────
 
 

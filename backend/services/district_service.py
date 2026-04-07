@@ -3,13 +3,10 @@
 import re
 from typing import Any, cast
 
-import structlog
 from supabase import Client
 
 from core.db import first
 from models.types import District, DistrictShopResult, DistrictShopsResponse
-
-logger = structlog.get_logger()
 
 _SHOP_COLS = (
     "id, name, slug, rating, review_count, address, mrt, processing_status, shop_photos(url)"
@@ -39,6 +36,8 @@ _CITY_ZH_TO_EN: dict[str, str] = {
     "彰化縣": "changhua",
     "新竹市": "hsinchu",
     "新竹縣": "hsinchu-county",
+    "桃園市": "taoyuan",
+    "基隆市": "keelung",
 }
 
 
@@ -79,44 +78,6 @@ class DistrictService:
         rows = cast("list[dict[str, Any]]", response.data or [])
         return [District(**row) for row in rows]
 
-    def assign_district(self, shop_id: str, address: str) -> None:
-        """Parse address and assign district_id to the shop. Logs and returns if unparseable."""
-        parsed = _parse_city_district(address)
-        if not parsed:
-            logger.warning(
-                "assign_district: could not parse address",
-                shop_id=shop_id,
-                address=address[:80],
-            )
-            return
-
-        city_en, district_zh = parsed
-        district_resp = (
-            self._db.table("districts")
-            .select("id")
-            .eq("city", city_en)
-            .eq("name_zh", district_zh)
-            .execute()
-        )
-        rows = cast("list[dict[str, Any]]", district_resp.data or [])
-        if not rows:
-            logger.warning(
-                "assign_district: no district row found",
-                shop_id=shop_id,
-                city=city_en,
-                district=district_zh,
-            )
-            return
-
-        district_id = first(rows, f"district ({city_en}, {district_zh})")["id"]
-        self._db.table("shops").update({"district_id": district_id}).eq("id", shop_id).execute()
-        logger.info(
-            "assign_district: assigned",
-            shop_id=shop_id,
-            city=city_en,
-            district=district_zh,
-        )
-
     def get_shops_for_district(
         self,
         slug: str,
@@ -124,7 +85,7 @@ class DistrictService:
     ) -> DistrictShopsResponse:
         """Return live shops in a district, optionally filtered by vibe tags."""
         district = self._fetch_district(slug)
-        shop_rows = self._fetch_shops(district.id, vibe_slug)
+        shop_rows = self._fetch_shops(district.name_zh, vibe_slug)
 
         results: list[DistrictShopResult] = []
         for row in shop_rows:
@@ -164,24 +125,24 @@ class DistrictService:
 
     def _fetch_shops(
         self,
-        district_id: str,
+        district_zh: str,
         vibe_slug: str | None,
     ) -> list[dict[str, Any]]:
         """Fetch live shops in district. If vibe_slug, filter by vibe tags."""
         if vibe_slug:
-            return self._fetch_shops_with_vibe(district_id, vibe_slug)
+            return self._fetch_shops_with_vibe(district_zh, vibe_slug)
 
         response = (
             self._db.table("shops")
             .select(_SHOP_COLS)
-            .eq("district_id", district_id)
+            .eq("district", district_zh)
             .eq("processing_status", "live")
             .limit(200)
             .execute()
         )
         return cast("list[dict[str, Any]]", response.data or [])
 
-    def _fetch_shops_with_vibe(self, district_id: str, vibe_slug: str) -> list[dict[str, Any]]:
+    def _fetch_shops_with_vibe(self, district_zh: str, vibe_slug: str) -> list[dict[str, Any]]:
         """Fetch shops in district that match a vibe's tags."""
         # 1. Get vibe tag_ids
         vibe_resp = (
@@ -217,7 +178,7 @@ class DistrictService:
         shop_resp = (
             self._db.table("shops")
             .select(_SHOP_COLS)
-            .eq("district_id", district_id)
+            .eq("district", district_zh)
             .eq("processing_status", "live")
             .in_("id", list(shop_tag_map.keys()))
             .limit(200)
