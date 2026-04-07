@@ -3,7 +3,11 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from models.types import JobType
-from workers.scheduler import create_scheduler, get_scheduler_status
+from workers.scheduler import (
+    create_scheduler,
+    get_scheduler_status,
+    run_sweep_timed_out,
+)
 
 
 class TestScheduler:
@@ -78,8 +82,6 @@ async def test_sweep_timed_out_marks_stuck_shops():
         patch('workers.scheduler.get_service_role_client', return_value=mock_db),
         patch('workers.scheduler.JobQueue', return_value=mock_queue),
     ):
-        from workers.scheduler import run_sweep_timed_out
-
         await run_sweep_timed_out()
 
     mock_db.table.assert_called_with('shops')
@@ -114,8 +116,6 @@ async def test_sweep_timed_out_skips_when_lock_not_acquired():
         patch('workers.scheduler.get_service_role_client', return_value=mock_db),
         patch('workers.scheduler.JobQueue', return_value=mock_queue),
     ):
-        from workers.scheduler import run_sweep_timed_out
-
         await run_sweep_timed_out()
 
     mock_db.table.return_value.update.assert_not_called()
