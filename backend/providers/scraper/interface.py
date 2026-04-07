@@ -33,6 +33,7 @@ class ScrapedShopData(BaseModel):
     categories: list[str] = []
     reviews: list[dict[str, str | int | None]] = []
     photos: list[ScrapedPhotoData] = []
+    google_maps_features: dict[str, bool] = {}
 
 
 class BatchScrapeInput(BaseModel):

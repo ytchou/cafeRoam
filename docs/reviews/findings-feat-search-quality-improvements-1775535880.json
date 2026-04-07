@@ -1,0 +1,61 @@
+{
+  "findings": [
+    {
+      "severity": "Critical",
+      "file": "backend/workers/persist.py",
+      "line": "138-143",
+      "description": "Shops without photos are never enriched. persist_scraped_data only enqueues CLASSIFY_SHOP_PHOTOS when data.photos is non-empty (line 138-143). classify_shop_photos returns early when no unclassified photos exist (line 43-45). Since the old ENRICH_SHOP enqueue was removed from persist, shops with zero photos silently fall out of the pipeline entirely -- never enriched, never embedded, stuck in 'enriching' status forever. Fix: in persist_scraped_data, when data.photos is empty, enqueue ENRICH_SHOP directly (with submission context) instead of relying on the classify->enrich chain.",
+      "flagged_by": "Bug Hunter, Architecture",
+      "status": "valid"
+    },
+    {
+      "severity": "Important",
+      "file": "backend/workers/handlers/classify_shop_photos.py",
+      "line": "88-92",
+      "description": "Submission context (submission_id, submitted_by, batch_id) is lost in the new pipeline. classify_shop_photos enqueues ENRICH_SHOP with only {\"shop_id\": shop_id}. But enrich_shop forwards these fields to GENERATE_EMBEDDING, and downstream publish_shop uses them to update submission status and create activity records. Without them, submissions stay stuck in 'processing' status. Fix: persist_scraped_data should store google_maps_features and submission context to the DB (or a staging table), so downstream handlers can retrieve them without payload forwarding.",
+      "flagged_by": "Bug Hunter",
+      "status": "valid"
+    },
+    {
+      "severity": "Important",
+      "file": "backend/workers/handlers/enrich_shop.py",
+      "line": "62",
+      "description": "google_maps_features data is extracted by the scraper but never reaches enrichment. The features are stored in ScrapedShopData but persist_scraped_data doesn't persist them to the DB or pass them through the job payload. classify_shop_photos doesn't forward them either. enrich_shop reads payload.get('google_maps_features', {}) which is always {}. Track 3 (Physical Feature Tags) is effectively dead code. Fix: store google_maps_features as a JSON column on the shops table (or in a separate table), and have enrich_shop read it from DB instead of the payload.",
+      "flagged_by": "Bug Hunter, Architecture",
+      "status": "valid"
+    },
+    {
+      "severity": "Important",
+      "file": "backend/providers/scraper/apify_adapter.py",
+      "line": "23-29",
+      "description": "_FEATURE_MAP maps to IDs that don't match taxonomy. 'Wi-Fi' maps to 'wifi' but the taxonomy tag is 'wifi_available'. 'Takeout' maps to 'takeout' and 'Dine-in' maps to 'dine_in' -- neither exists in the taxonomy at all. Even when the features reach the prompt, these mismatched IDs will confuse the LLM or have no effect. Fix: update _FEATURE_MAP values to match actual taxonomy tag IDs (wifi_available, outdoor_seating, wheelchair_accessible) and remove takeout/dine_in entries that have no corresponding tags.",
+      "flagged_by": "Standards, Plan Alignment",
+      "status": "valid"
+    },
+    {
+      "severity": "Minor",
+      "file": "backend/workers/persist.py",
+      "line": "23",
+      "description": "Stale docstring: persist_scraped_data still says 'Persist scraped shop data and enqueue enrichment' but the enrichment enqueue was removed. Should reflect the new behavior (enqueue photo classification).",
+      "flagged_by": "Standards",
+      "status": "valid"
+    },
+    {
+      "severity": "Minor",
+      "file": "supabase/migrations/20260407000001_taxonomy_new_tags.sql",
+      "line": "8-12",
+      "description": "Inconsistent tag ID naming convention: 5 ambience tags use CJK characters as IDs (文青, 療癒系, 復古工業, 日系簡約, IG打卡) while all existing tags and the other new tags use ASCII snake_case. This breaks the established convention in taxonomy_tags and may complicate queries or code that assumes ASCII tag IDs.",
+      "flagged_by": "Standards",
+      "status": "debatable"
+    }
+  ],
+  "active_agents": [
+    "Bug Hunter",
+    "Standards & Conventions",
+    "Architecture & Design",
+    "Plan Alignment"
+  ],
+  "skipped": [],
+  "head_sha": "6af43d938748451530a93dd6495c061213f8d7c0",
+  "review_log_path": "docs/reviews/2026-04-07-feat-search-quality-improvements.md"
+}

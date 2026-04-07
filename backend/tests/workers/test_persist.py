@@ -75,3 +75,44 @@ async def test_persist_skips_classify_when_no_photos(mock_db, mock_queue):
         c for c in enqueue_calls if c.kwargs.get("job_type") == JobType.CLASSIFY_SHOP_PHOTOS
     ]
     assert len(classify_calls) == 0
+
+
+@pytest.mark.asyncio
+async def test_persist_enqueues_enrich_shop_when_no_photos(mock_db, mock_queue):
+    """When a shop has no photos, ENRICH_SHOP is enqueued directly so it is not stuck in enriching."""
+    data = _make_shop_data(photos=[])
+
+    await persist_scraped_data(
+        shop_id="shop-02",
+        data=data,
+        db=mock_db,
+        queue=mock_queue,
+        submission_id="sub-abc",
+        submitted_by="user-xyz",
+        batch_id="batch-001",
+    )
+
+    enqueue_calls = mock_queue.enqueue.call_args_list
+    enrich_calls = [c for c in enqueue_calls if c.kwargs.get("job_type") == JobType.ENRICH_SHOP]
+    assert len(enrich_calls) == 1
+    payload = enrich_calls[0].kwargs["payload"]
+    assert payload["shop_id"] == "shop-02"
+    assert payload["submission_id"] == "sub-abc"
+    assert payload["submitted_by"] == "user-xyz"
+    assert payload["batch_id"] == "batch-001"
+
+
+@pytest.mark.asyncio
+async def test_persist_stores_google_maps_features(mock_db, mock_queue):
+    """google_maps_features from ScrapedShopData is persisted to the shops table."""
+    features = {"outdoor_seating": True, "wifi_available": True}
+    data = _make_shop_data(google_maps_features=features)
+
+    await persist_scraped_data(shop_id="shop-03", data=data, db=mock_db, queue=mock_queue)
+
+    update_calls = mock_db.table.return_value.update.call_args_list
+    shop_updates = [
+        c for c in update_calls if "google_maps_features" in (c.args[0] if c.args else {})
+    ]
+    assert len(shop_updates) == 1
+    assert shop_updates[0].args[0]["google_maps_features"] == features

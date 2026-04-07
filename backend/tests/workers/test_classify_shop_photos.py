@@ -229,3 +229,99 @@ class TestClassifyShopPhotosHandler:
         # First photo classified (one batch update for VIBE), second skipped (stays NULL)
         update_calls = mock_db.table.return_value.update.call_args_list
         assert len(update_calls) == 1
+
+    @pytest.mark.asyncio
+    async def test_enqueue_shop_enrichment_after_all_photos_classified(
+        self, mock_db, mock_llm, mock_queue
+    ):
+        """After classifying all photos for a shop, ENRICH_SHOP is enqueued once."""
+        from models.types import JobType
+        from workers.handlers.classify_shop_photos import handle_classify_shop_photos
+
+        mock_db.table.return_value.select.return_value.eq.return_value.is_.return_value.execute.return_value = MagicMock(
+            data=[
+                {
+                    "id": "p1",
+                    "url": "https://cdn/interior.jpg=w800-h600-k-no",
+                    "uploaded_at": "2025-06-01T00:00:00+00:00",
+                },
+                {
+                    "id": "p2",
+                    "url": "https://cdn/menu.jpg=w800-h600-k-no",
+                    "uploaded_at": "2025-06-02T00:00:00+00:00",
+                },
+            ]
+        )
+        mock_db.table.return_value.update.return_value.in_.return_value.execute.return_value = (
+            MagicMock()
+        )
+        mock_llm.classify_photo = AsyncMock(side_effect=[PhotoCategory.VIBE, PhotoCategory.MENU])
+
+        await handle_classify_shop_photos(
+            payload={"shop_id": "shop-enrich-trigger"},
+            db=mock_db,
+            llm=mock_llm,
+            queue=mock_queue,
+        )
+
+        mock_queue.enqueue.assert_called_once()
+        enqueue_call = mock_queue.enqueue.call_args
+        assert enqueue_call.kwargs["job_type"] == JobType.ENRICH_SHOP
+        assert enqueue_call.kwargs["payload"]["shop_id"] == "shop-enrich-trigger"
+
+    @pytest.mark.asyncio
+    async def test_enrich_shop_not_enqueued_when_no_photos_to_classify(
+        self, mock_db, mock_llm, mock_queue
+    ):
+        """When there are no unclassified photos, ENRICH_SHOP is NOT enqueued."""
+        from workers.handlers.classify_shop_photos import handle_classify_shop_photos
+
+        mock_db.table.return_value.select.return_value.eq.return_value.is_.return_value.execute.return_value = MagicMock(
+            data=[]
+        )
+
+        await handle_classify_shop_photos(
+            payload={"shop_id": "shop-no-photos"},
+            db=mock_db,
+            llm=mock_llm,
+            queue=mock_queue,
+        )
+
+        mock_queue.enqueue.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_enrich_shop_enqueued_once_not_per_photo(self, mock_db, mock_llm, mock_queue):
+        """ENRICH_SHOP is enqueued once at the end, not once per photo classified."""
+        from models.types import JobType
+        from workers.handlers.classify_shop_photos import handle_classify_shop_photos
+
+        photos = [
+            {
+                "id": f"p{i}",
+                "url": f"https://cdn/photo{i}.jpg",
+                "uploaded_at": f"2025-06-0{i + 1}T00:00:00+00:00",
+            }
+            for i in range(5)
+        ]
+        mock_db.table.return_value.select.return_value.eq.return_value.is_.return_value.execute.return_value = MagicMock(
+            data=photos
+        )
+        mock_db.table.return_value.update.return_value.in_.return_value.execute.return_value = (
+            MagicMock()
+        )
+        mock_llm.classify_photo = AsyncMock(return_value=PhotoCategory.VIBE)
+
+        await handle_classify_shop_photos(
+            payload={"shop_id": "shop-multi-photo"},
+            db=mock_db,
+            llm=mock_llm,
+            queue=mock_queue,
+        )
+
+        # Exactly one ENRICH_SHOP enqueue despite 5 photos being classified
+        enrich_enqueue_calls = [
+            c
+            for c in mock_queue.enqueue.call_args_list
+            if c.kwargs.get("job_type") == JobType.ENRICH_SHOP
+        ]
+        assert len(enrich_enqueue_calls) == 1

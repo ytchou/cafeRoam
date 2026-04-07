@@ -26,7 +26,7 @@ async def handle_enrich_shop(
         db.table("shops")
         .select(
             "id, name, description, categories, price_range, "
-            "socket, limited_time, rating, review_count"
+            "socket, limited_time, rating, review_count, google_maps_features"
         )
         .eq("id", shop_id)
         .single()
@@ -38,6 +38,17 @@ async def handle_enrich_shop(
     review_rows = cast("list[dict[str, Any]]", reviews_response.data)
     reviews = [r["text"] for r in review_rows if r.get("text")]
 
+    vibe_photos_response = (
+        db.table("shop_photos")
+        .select("url")
+        .eq("shop_id", shop_id)
+        .eq("category", "VIBE")
+        .limit(3)
+        .execute()
+    )
+    vibe_photo_rows = cast("list[dict[str, Any]]", vibe_photos_response.data)
+    vibe_photo_urls = [r["url"] for r in vibe_photo_rows if r.get("url")]
+
     enrichment_input = ShopEnrichmentInput(
         name=shop["name"],
         reviews=reviews,
@@ -48,6 +59,8 @@ async def handle_enrich_shop(
         limited_time=shop.get("limited_time"),
         rating=shop.get("rating"),
         review_count=shop.get("review_count"),
+        google_maps_features=shop.get("google_maps_features") or {},
+        vibe_photo_urls=vibe_photo_urls,
     )
 
     result = await llm.enrich_shop(enrichment_input)

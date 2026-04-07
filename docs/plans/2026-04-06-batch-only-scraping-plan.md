@@ -15,6 +15,7 @@
 **Tech Stack:** Python 3.12+, FastAPI, Supabase (Postgres), APScheduler, pytest
 
 **Acceptance Criteria:**
+
 - [ ] Submitting a shop via API creates a pending shop with `google_maps_url` stored on the shop row — no `SCRAPE_SHOP` job is enqueued
 - [ ] Running `run_pipeline_batch.py` processes all pending shops without `--count`/`--seed` arguments
 - [ ] The daily batch cron enqueues all pending shops as a single `SCRAPE_BATCH` job at 03:10
@@ -26,12 +27,14 @@
 ### Task 1: Update submission flow — store URL, link submission, remove SCRAPE_SHOP enqueue
 
 **Files:**
+
 - Modify: `backend/api/submissions.py:108-150`
 - Test: `backend/tests/api/test_submissions.py`
 
 **Step 1: Update the test to assert new behavior**
 
 In `test_submissions.py`, find the test that asserts `SCRAPE_SHOP` is enqueued after submission. Update it to:
+
 1. Assert `queue.enqueue` is NOT called with `JobType.SCRAPE_SHOP`
 2. Assert the shop row insert includes `"google_maps_url": body.google_maps_url`
 3. Assert `shop_submissions` is updated with `shop_id` after shop creation
@@ -45,6 +48,7 @@ Expected: FAIL — current code still enqueues SCRAPE_SHOP
 **Step 3: Update submissions.py**
 
 In `submit_shop()`:
+
 1. Add `"google_maps_url": body.google_maps_url` to the shop insert dict (around line 110)
 2. After the shop insert, update the submission record with `shop_id`:
    ```python
@@ -72,6 +76,7 @@ git commit -m "feat(DEV-276): update submission flow — store URL on shop row, 
 ### Task 2: Add daily batch cron for pending shops
 
 **Files:**
+
 - Modify: `backend/workers/scheduler.py`
 - Create: `backend/tests/workers/test_daily_batch_scrape.py`
 
@@ -210,6 +215,7 @@ async def run_daily_batch_scrape() -> None:
 Add `import uuid` at the top of scheduler.py if not already present.
 
 Register in `create_scheduler()`:
+
 ```python
 scheduler.add_job(
     run_daily_batch_scrape,
@@ -237,12 +243,14 @@ git commit -m "feat(DEV-276): add daily batch cron for pending shops at 03:10"
 ### Task 3: Update admin re-scrape to use SCRAPE_BATCH
 
 **Files:**
+
 - Modify: `backend/api/admin_shops.py:420-475`
 - Test: `backend/tests/api/test_admin_shops.py`
 
 **Step 1: Update test to assert SCRAPE_BATCH routing**
 
 In `test_admin_shops.py`, find the test for `enqueue_job`. Update:
+
 1. Change the test to send `job_type: "scrape_batch"` instead of `"scrape_shop"`
 2. Assert the enqueued payload has `batch_id` and `shops: [{shop_id, google_maps_url}]` structure
 3. Assert `SCRAPE_SHOP` is rejected (add a test that sends `job_type: "scrape_shop"` and expects 422)
@@ -255,11 +263,13 @@ Expected: FAIL — current code accepts SCRAPE_SHOP, not SCRAPE_BATCH
 **Step 3: Update admin_shops.py enqueue_job()**
 
 1. Change allowed types (line 427):
+
    ```python
    allowed = (JobType.ENRICH_SHOP, JobType.GENERATE_EMBEDDING, JobType.SCRAPE_BATCH)
    ```
 
 2. Replace SCRAPE_SHOP payload building (lines 448-458) with SCRAPE_BATCH:
+
    ```python
    if body.job_type == JobType.SCRAPE_BATCH:
        shop_row = (
@@ -283,6 +293,7 @@ Expected: FAIL — current code accepts SCRAPE_SHOP, not SCRAPE_BATCH
    ```
 
 3. For the duplicate-check query (line 436-446): skip for SCRAPE_BATCH (admin force re-scrape is intentional):
+
    ```python
    if body.job_type != JobType.SCRAPE_BATCH:
        # existing duplicate check logic
@@ -308,6 +319,7 @@ git commit -m "feat(DEV-276): route admin re-scrape through SCRAPE_BATCH"
 ### Task 4: Remove SCRAPE_SHOP and STALENESS_SWEEP from scheduler
 
 **Files:**
+
 - Modify: `backend/workers/scheduler.py`
 - Modify: `backend/tests/workers/test_scheduler_dispatch.py`
 - Modify: `backend/tests/workers/test_scheduler.py`
@@ -315,10 +327,12 @@ git commit -m "feat(DEV-276): route admin re-scrape through SCRAPE_BATCH"
 **Step 1: Update scheduler tests**
 
 In `test_scheduler_dispatch.py`:
+
 - Remove `test_dispatch_routes_scrape_shop_to_handler` test entirely
 - Remove any STALENESS_SWEEP dispatch test
 
 In `test_scheduler.py`:
+
 - In `test_all_maintenance_tasks_are_scheduled`: replace `assert "staleness_sweep" in job_ids` with `assert "daily_batch_scrape" in job_ids`
 - Remove any standalone staleness_sweep cron test
 
@@ -332,6 +346,7 @@ Actually, since Task 2 already added daily_batch_scrape to the scheduler, the `d
 **Step 3: Remove old code from scheduler.py**
 
 1. Remove imports:
+
    ```python
    # DELETE: from workers.handlers.scrape_shop import handle_scrape_shop
    # DELETE: from workers.handlers.staleness_sweep import handle_smart_staleness_sweep
@@ -362,6 +377,7 @@ git commit -m "refactor(DEV-276): remove SCRAPE_SHOP + STALENESS_SWEEP from sche
 ### Task 5: Remove JobType enum values + delete handler files
 
 **Files:**
+
 - Modify: `backend/models/types.py`
 - Delete: `backend/workers/handlers/scrape_shop.py`
 - Delete: `backend/workers/handlers/staleness_sweep.py`
@@ -372,6 +388,7 @@ git commit -m "refactor(DEV-276): remove SCRAPE_SHOP + STALENESS_SWEEP from sche
 **Step 1: Update enum test**
 
 In `test_pipeline_types.py`:
+
 - Remove assertions for `JobType.SCRAPE_SHOP` and `JobType.STALENESS_SWEEP`
 - Keep all other JobType assertions
 
@@ -385,6 +402,7 @@ Expected: PASS (removing assertions doesn't cause failures — this confirms no 
 1. In `backend/models/types.py`: remove `SCRAPE_SHOP = "scrape_shop"` and `STALENESS_SWEEP = "staleness_sweep"` from JobType enum
 
 2. Delete handler files:
+
    ```bash
    rm backend/workers/handlers/scrape_shop.py
    rm backend/workers/handlers/staleness_sweep.py
@@ -413,6 +431,7 @@ git commit -m "refactor(DEV-276): remove SCRAPE_SHOP + STALENESS_SWEEP enum valu
 ### Task 6: Remove scrape_by_url + scrape_reviews_only from scraper provider
 
 **Files:**
+
 - Modify: `backend/providers/scraper/interface.py`
 - Modify: `backend/providers/scraper/apify_adapter.py`
 - Modify: `backend/tests/providers/test_apify_adapter.py`
@@ -420,6 +439,7 @@ git commit -m "refactor(DEV-276): remove SCRAPE_SHOP + STALENESS_SWEEP enum valu
 **Step 1: Update adapter tests**
 
 In `test_apify_adapter.py`:
+
 - Remove tests for `scrape_by_url` method
 - Remove tests for `scrape_reviews_only` method
 - Keep tests for `scrape_batch` and other methods
@@ -452,6 +472,7 @@ git commit -m "refactor(DEV-276): remove scrape_by_url + scrape_reviews_only fro
 ### Task 7: Update admin.py batch listing, scripts, and remaining references
 
 **Files:**
+
 - Modify: `backend/api/admin.py:303,392-401`
 - Modify: `backend/scripts/run_pipeline_batch.py`
 - Modify: `backend/scripts/run_csv_import.py`
@@ -460,6 +481,7 @@ git commit -m "refactor(DEV-276): remove scrape_by_url + scrape_reviews_only fro
 **Step 1: Update admin test**
 
 In `test_admin.py`:
+
 - Update mock data that references `scrape_shop` job_type to use `scrape_batch`
 - Remove any test assertions about the old SCRAPE_SHOP format fallback in `_collect_shop_ids_for_batch`
 
@@ -619,22 +641,28 @@ graph TD
 ```
 
 **Wave 1** (parallel — no dependencies):
+
 - Task 1: Update submission flow
 - Task 2: Add daily batch cron
 - Task 3: Update admin re-scrape
 
 **Wave 2** (depends on Wave 1):
+
 - Task 4: Remove old dispatch/cron from scheduler <- Tasks 1, 2, 3
 
 **Wave 3** (depends on Wave 2):
+
 - Task 5: Remove enum values + delete handler files <- Task 4
 
 **Wave 4** (parallel — depends on Wave 3):
+
 - Task 6: Remove scraper provider methods <- Task 5
 - Task 7: Update admin listing + scripts <- Task 5
 
 **Wave 5** (depends on Wave 4):
+
 - Task 8: Full verification sweep <- Tasks 6, 7
 
 **Wave 6** (depends on Wave 5):
+
 - Task 9: SPEC/PRD updates <- Task 8

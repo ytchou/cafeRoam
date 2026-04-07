@@ -169,6 +169,7 @@ export interface TaxonomyProposal {
   time: Array<{ id: string; label: string; labelZh: string }>;
   ambience: Array<{ id: string; label: string; labelZh: string }>;
   mode: Array<{ id: string; label: string; labelZh: string }>;
+  coffee?: Array<{ id: string; label: string; labelZh: string }>;
 }
 
 export interface EnrichmentData {

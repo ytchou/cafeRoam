@@ -15,6 +15,7 @@
 **Tech Stack:** Python (asyncio, argparse, json, pathlib), Anthropic Claude (LLM judge), OpenAI embeddings, Supabase pgvector
 
 **Acceptance Criteria:**
+
 - [ ] Running `python run_search_eval.py --validate` produces a side-by-side comparison report
 - [ ] The report contains per-query CafeRoam vs Maps scores with a clear PASS/FAIL verdict
 - [ ] All 20 queries (Chinese + English, all intent categories) are tested
@@ -25,6 +26,7 @@
 ### Task 1: Expand search-queries.json to 20 queries
 
 **Files:**
+
 - Modify: `backend/scripts/search-queries.json`
 - No test needed — data file, validated by Task 3 integration run
 
@@ -36,16 +38,66 @@ Add these 10 to cover all ticket categories:
 
 ```json
 [
-  {"id": "q11", "query": "安靜適合工作的咖啡廳", "category": "mode", "expectedTraits": ["quiet", "work", "deep_focus"]},
-  {"id": "q12", "query": "適合約會的咖啡廳", "category": "mode", "expectedTraits": ["date", "romantic", "cozy"]},
-  {"id": "q13", "query": "有插座不限時", "category": "attribute", "expectedTraits": ["has_outlets", "no_time_limit"]},
-  {"id": "q14", "query": "寵物友善", "category": "attribute", "expectedTraits": ["pet_friendly"]},
-  {"id": "q15", "query": "有巴斯克蛋糕的咖啡廳", "category": "specific", "expectedTraits": ["basque_cheesecake", "dessert"]},
-  {"id": "q16", "query": "手沖咖啡推薦", "category": "specific", "expectedTraits": ["pour_over", "specialty_coffee"]},
-  {"id": "q17", "query": "中山站附近安靜咖啡廳", "category": "mixed", "expectedTraits": ["near_zhongshan", "quiet"]},
-  {"id": "q18", "query": "quiet cafe with outlets near Zhongshan", "category": "mixed", "expectedTraits": ["quiet", "has_outlets", "near_zhongshan"]},
-  {"id": "q19", "query": "有戶外座位的咖啡廳", "category": "attribute", "expectedTraits": ["outdoor_seating"]},
-  {"id": "q20", "query": "適合帶筆電工作一整天的咖啡廳", "category": "mode", "expectedTraits": ["laptop_friendly", "all_day_work", "has_outlets"]}
+  {
+    "id": "q11",
+    "query": "安靜適合工作的咖啡廳",
+    "category": "mode",
+    "expectedTraits": ["quiet", "work", "deep_focus"]
+  },
+  {
+    "id": "q12",
+    "query": "適合約會的咖啡廳",
+    "category": "mode",
+    "expectedTraits": ["date", "romantic", "cozy"]
+  },
+  {
+    "id": "q13",
+    "query": "有插座不限時",
+    "category": "attribute",
+    "expectedTraits": ["has_outlets", "no_time_limit"]
+  },
+  {
+    "id": "q14",
+    "query": "寵物友善",
+    "category": "attribute",
+    "expectedTraits": ["pet_friendly"]
+  },
+  {
+    "id": "q15",
+    "query": "有巴斯克蛋糕的咖啡廳",
+    "category": "specific",
+    "expectedTraits": ["basque_cheesecake", "dessert"]
+  },
+  {
+    "id": "q16",
+    "query": "手沖咖啡推薦",
+    "category": "specific",
+    "expectedTraits": ["pour_over", "specialty_coffee"]
+  },
+  {
+    "id": "q17",
+    "query": "中山站附近安靜咖啡廳",
+    "category": "mixed",
+    "expectedTraits": ["near_zhongshan", "quiet"]
+  },
+  {
+    "id": "q18",
+    "query": "quiet cafe with outlets near Zhongshan",
+    "category": "mixed",
+    "expectedTraits": ["quiet", "has_outlets", "near_zhongshan"]
+  },
+  {
+    "id": "q19",
+    "query": "有戶外座位的咖啡廳",
+    "category": "attribute",
+    "expectedTraits": ["outdoor_seating"]
+  },
+  {
+    "id": "q20",
+    "query": "適合帶筆電工作一整天的咖啡廳",
+    "category": "mode",
+    "expectedTraits": ["laptop_friendly", "all_day_work", "has_outlets"]
+  }
 ]
 ```
 
@@ -66,6 +118,7 @@ git commit -m "data: expand search queries to 20 for validation gate (DEV-265)"
 ### Task 2: Create Google Maps baseline schema and instructions
 
 **Files:**
+
 - Create: `backend/scripts/google-maps-baseline.json` (template with 2 example entries)
 - Create: `docs/validation/MAPS_REVIEW_INSTRUCTIONS.md`
 - No test needed — documentation and data template
@@ -79,11 +132,36 @@ git commit -m "data: expand search queries to 20 for validation gate (DEV-265)"
     "query": "有插座可以工作的安靜咖啡廳",
     "category": "attribute",
     "maps_results": [
-      {"rank": 1, "name": "Example Cafe", "relevance_score": 4, "notes": "Has outlets, quiet area mentioned in reviews"},
-      {"rank": 2, "name": "Another Cafe", "relevance_score": 3, "notes": "Has outlets but noisy"},
-      {"rank": 3, "name": "Third Cafe", "relevance_score": 2, "notes": "Chain cafe, no outlet info"},
-      {"rank": 4, "name": "Fourth Cafe", "relevance_score": 1, "notes": "Restaurant, not a cafe"},
-      {"rank": 5, "name": "Fifth Cafe", "relevance_score": 1, "notes": "Irrelevant result"}
+      {
+        "rank": 1,
+        "name": "Example Cafe",
+        "relevance_score": 4,
+        "notes": "Has outlets, quiet area mentioned in reviews"
+      },
+      {
+        "rank": 2,
+        "name": "Another Cafe",
+        "relevance_score": 3,
+        "notes": "Has outlets but noisy"
+      },
+      {
+        "rank": 3,
+        "name": "Third Cafe",
+        "relevance_score": 2,
+        "notes": "Chain cafe, no outlet info"
+      },
+      {
+        "rank": 4,
+        "name": "Fourth Cafe",
+        "relevance_score": 1,
+        "notes": "Restaurant, not a cafe"
+      },
+      {
+        "rank": 5,
+        "name": "Fifth Cafe",
+        "relevance_score": 1,
+        "notes": "Irrelevant result"
+      }
     ],
     "maps_avg_score": 2.2
   }
@@ -98,27 +176,31 @@ Write `docs/validation/MAPS_REVIEW_INSTRUCTIONS.md`:
 # Google Maps Baseline Review Instructions
 
 ## Purpose
+
 Score the top 5 Google Maps results for each of 20 queries to create a baseline for comparing CafeRoam search quality.
 
 ## Process
+
 1. Open Google Maps (maps.google.com) on desktop
 2. Set location to Taipei, Taiwan
 3. For each query in `backend/scripts/search-queries.json`:
    a. Search the query text exactly as written
    b. Record the top 5 results (name only)
    c. Score each result 1-5 for relevance to the query intent:
-      - 5: Perfect match (exactly what the user wants)
-      - 4: Strong match (clearly relevant, minor gaps)
-      - 3: Moderate match (somewhat relevant)
-      - 2: Weak match (tangentially related)
-      - 1: Irrelevant (wrong type of place or no connection)
-   d. Add brief notes explaining the score
-   e. Compute maps_avg_score = mean of 5 scores
+   - 5: Perfect match (exactly what the user wants)
+   - 4: Strong match (clearly relevant, minor gaps)
+   - 3: Moderate match (somewhat relevant)
+   - 2: Weak match (tangentially related)
+   - 1: Irrelevant (wrong type of place or no connection)
+     d. Add brief notes explaining the score
+     e. Compute maps_avg_score = mean of 5 scores
 
 ## Output
+
 Fill in `backend/scripts/google-maps-baseline.json` with all 20 entries.
 
 ## Time estimate
+
 ~1 hour (3 minutes per query)
 ```
 
@@ -134,6 +216,7 @@ git commit -m "docs: add Google Maps baseline schema and review instructions (DE
 ### Task 3: Add --validate mode to run_search_eval.py
 
 **Files:**
+
 - Modify: `backend/scripts/run_search_eval.py`
 - Test: `backend/tests/scripts/test_search_eval_validate.py`
 
@@ -469,6 +552,7 @@ git commit -m "feat: add --validate mode to search eval with Maps comparison (DE
 ### Task 4: Check staging shop count and top up if needed
 
 **Files:**
+
 - No code changes — operational task
 - No test needed — manual pipeline run
 
@@ -484,6 +568,7 @@ print(f'Live enriched shops: {r.count}')
 **Step 2: If count < 50, trigger batch scrape**
 
 If needed, run the batch scrape pipeline to top up:
+
 ```bash
 cd backend && python -m scripts.run_pipeline_batch --target-count 100
 ```
@@ -499,6 +584,7 @@ Re-run the count query from Step 1. Must show ≥ 50 live shops.
 ### Task 5: Manual Google Maps review
 
 **Files:**
+
 - Modify: `backend/scripts/google-maps-baseline.json` (fill in all 20 entries)
 - No test needed — manual human review
 
@@ -530,6 +616,7 @@ git commit -m "data: add Google Maps baseline scores for 20 queries (DEV-265)"
 ### Task 6: Run full validation and generate report
 
 **Files:**
+
 - Create (generated): `docs/validation/search-quality-report.md`
 - No test needed — integration run producing the final artifact
 
@@ -542,6 +629,7 @@ cd backend && python scripts/run_search_eval.py --validate
 **Step 2: Review the report**
 
 Read `docs/validation/search-quality-report.md`. Check:
+
 - All 20 queries appear
 - Per-query scores look reasonable
 - PASS/FAIL verdict is correct (≥7/20 wins = PASS)
@@ -558,6 +646,7 @@ git commit -m "docs: search quality validation report — [PASS/FAIL] (DEV-265)"
 ### Task 7: Update ASSUMPTIONS.md with results
 
 **Files:**
+
 - Modify: `ASSUMPTIONS.md`
 - No test needed — documentation update
 
@@ -603,18 +692,22 @@ graph TD
 ```
 
 **Wave 1** (parallel — no dependencies):
+
 - Task 1: Expand search-queries.json to 20 queries
 - Task 2: Create Maps baseline schema + review instructions
 - Task 4: Check staging shop count, top up if needed
 
 **Wave 2** (parallel — depends on Wave 1):
+
 - Task 3: Add --validate mode to run_search_eval.py ← Task 1
 - Task 5: Manual Google Maps review ← Task 2
 
 **Wave 3** (sequential — depends on Wave 2):
+
 - Task 6: Run full validation ← Task 3, Task 4, Task 5
 
 **Wave 4** (sequential — depends on Wave 3):
+
 - Task 7: Update ASSUMPTIONS.md ← Task 6
 
 ## Verification

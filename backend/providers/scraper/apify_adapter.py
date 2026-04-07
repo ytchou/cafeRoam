@@ -17,12 +17,18 @@ from providers.scraper.interface import (
 logger = structlog.get_logger()
 
 _ACTOR_ID = "compass/crawler-google-places"
-_PHOTO_MAX_AGE = timedelta(days=365 * 5)
+_PHOTO_MAX_AGE = timedelta(days=365 * 3)
 _PHOTO_CAP = 30
+
+_FEATURE_MAP: dict[str, str] = {
+    "Outdoor seating": "outdoor_seating",
+    "Wheelchair-accessible entrance": "wheelchair_accessible",
+    "Wi-Fi": "wifi_available",
+}
 _ACTOR_BASE_INPUT: dict[str, Any] = {
     "maxCrawledPlacesPerSearch": 1,
     "maxReviews": 20,
-    "maxImages": 10,
+    "maxImages": 15,
     "language": "zh-TW",
     "skipClosedPlaces": True,
     "scrapeReviewerName": False,
@@ -110,6 +116,7 @@ class ApifyScraperAdapter:
                 if r.get("text")
             ],
             photos=self._parse_photos(place),
+            google_maps_features=self._extract_maps_features(place),
         )
 
     @staticmethod
@@ -128,6 +135,19 @@ class ApifyScraperAdapter:
             return None
         structured = parse_to_structured(strings)
         return [s.model_dump() for s in structured] if structured else None
+
+    @staticmethod
+    def _extract_maps_features(place: dict[str, Any]) -> dict[str, bool]:
+        """Extract physical features from Apify additionalInfo into tag-id-keyed dict."""
+        additional_info = place.get("additionalInfo") or {}
+        result: dict[str, bool] = {}
+        for category_values in additional_info.values():
+            if not isinstance(category_values, dict):
+                continue
+            for feature_name, feature_value in category_values.items():
+                if feature_value is True and feature_name in _FEATURE_MAP:
+                    result[_FEATURE_MAP[feature_name]] = True
+        return result
 
     def _parse_photos(self, place: dict[str, Any]) -> list[ScrapedPhotoData]:
         """Parse photos from images[] (preferred) or imageUrls[] (fallback)."""
@@ -157,8 +177,6 @@ class ApifyScraperAdapter:
                 continue
             photos.append(ScrapedPhotoData(url=url, uploaded_at=uploaded_at))
 
-        # Sort by recency (newest first); photos without dates go last
-        photos.sort(key=lambda p: p.uploaded_at or datetime.min.replace(tzinfo=UTC), reverse=True)
         return photos[:_PHOTO_CAP]
 
     async def _run_actor(self, run_input: dict[str, Any]) -> list[dict[str, Any]]:
