@@ -20,18 +20,6 @@ def _admin_user():
     return {"id": _ADMIN_ID}
 
 
-def _admin_patches(extra: list | None = None):
-    """Context manager that sets up common admin patches."""
-    from contextlib import ExitStack
-
-    stack = ExitStack()
-    stack.enter_context(patch("api.deps.settings", **{"admin_user_ids": [_ADMIN_ID]}))
-    if extra:
-        for p in extra:
-            stack.enter_context(p)
-    return stack
-
-
 def _make_csv(rows: list[tuple[str, str]]) -> bytes:
     """Build a UTF-8 CSV bytes object with name,google_maps_url columns."""
     lines = ["name,google_maps_url"] + [f"{name},{url}" for name, url in rows]
@@ -47,7 +35,7 @@ class TestImportManualCsv:
     def teardown_method(self):
         test_app.dependency_overrides.clear()
 
-    def _post_csv(self, content: bytes, mock_db: MagicMock) -> "Any":
+    def _post_csv(self, content: bytes, mock_db: MagicMock) -> Any:
         from io import BytesIO
 
         with (
