@@ -31,7 +31,7 @@ def _make_db_mock(rows: list[dict], district_names: list[str] | None = None) -> 
         district_rows = [{"name_zh": n} for n in district_names]
         mock.execute.side_effect = [
             MagicMock(data=district_rows),  # districts UUID→name_zh lookup
-            MagicMock(data=rows),           # shops query
+            MagicMock(data=rows),  # shops query
         ]
     else:
         mock.execute.return_value = MagicMock(data=rows)

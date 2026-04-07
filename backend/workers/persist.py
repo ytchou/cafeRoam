@@ -178,4 +178,3 @@ async def persist_scraped_data(
                 "updated_at": datetime.now(UTC).isoformat(),
             }
         ).eq("id", submission_id).execute()
-

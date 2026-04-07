@@ -36,6 +36,7 @@ class TestParseCityDistrict:
         result = _parse_city_district("123 Main Street, Springfield")
         assert result is None
 
+
 # ── Helpers ──────────────────────────────────────────────────────
 
 
