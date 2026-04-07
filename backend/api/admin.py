@@ -26,6 +26,10 @@ class RejectSubmissionRequest(BaseModel):
     rejection_reason: RejectionReasonType
 
 
+class BulkApproveSubmissionsRequest(BaseModel):
+    submission_ids: list[str]
+
+
 logger = structlog.get_logger()
 
 router = APIRouter(prefix="/admin/pipeline", tags=["admin"])
@@ -211,6 +215,78 @@ async def approve_submission(
         payload={"shop_id": str(shop_id) if shop_id else None},
     )
     return {"message": f"Submission {submission_id} approved"}
+
+
+@router.post("/approve-bulk")
+async def approve_submissions_bulk(
+    body: BulkApproveSubmissionsRequest,
+    user: dict[str, Any] = Depends(require_admin),  # noqa: B008
+) -> dict[str, Any]:
+    if len(body.submission_ids) > 50:
+        raise HTTPException(status_code=400, detail="Maximum 50 submissions per bulk-approve request")
+
+    db = get_service_role_client()
+    now = datetime.now(tz=UTC).isoformat()
+    approved = 0
+    skipped = 0
+    failed: list[str] = []
+
+    for submission_id in body.submission_ids:
+        sub_res = (
+            db.table("shop_submissions")
+            .select("id, status, shop_id, submitted_by")
+            .eq("id", submission_id)
+            .execute()
+        )
+        sub_rows = cast("list[dict[str, Any]]", sub_res.data or [])
+        if not sub_rows:
+            skipped += 1
+            continue
+        sub = sub_rows[0]
+        if sub["status"] not in ("pending", "processing", "pending_review"):
+            skipped += 1
+            continue
+
+        update_res = (
+            db.table("shop_submissions")
+            .update({"status": "live", "reviewed_at": now})
+            .eq("id", submission_id)
+            .in_("status", ["pending", "processing", "pending_review"])
+            .execute()
+        )
+        if not (update_res.data or []):
+            skipped += 1
+            continue
+
+        shop_update = (
+            db.table("shops")
+            .update({"processing_status": "live", "updated_at": now})
+            .eq("id", sub["shop_id"])
+            .select("name")
+            .execute()
+        )
+        shop_rows = cast("list[dict[str, Any]]", shop_update.data or [])
+        shop_name = shop_rows[0].get("name", "Unknown") if shop_rows else "Unknown"
+
+        if sub.get("submitted_by"):
+            db.table("activity_feed").insert(
+                {
+                    "event_type": "shop_added",
+                    "actor_id": sub["submitted_by"],
+                    "shop_id": sub["shop_id"],
+                    "metadata": {"shop_name": shop_name},
+                }
+            ).execute()
+
+        approved += 1
+
+    log_admin_action(
+        admin_user_id=user["id"],
+        action="POST /admin/pipeline/approve-bulk",
+        target_type="submission",
+        payload={"approved": approved, "skipped": skipped},
+    )
+    return {"approved": approved, "skipped": skipped, "failed": failed}
 
 
 @router.post("/reject/{submission_id}")
