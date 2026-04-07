@@ -80,6 +80,7 @@ describe('ImportSection', () => {
         imported: 5,
         skipped_duplicate: 1,
         invalid_url: 0,
+        duplicate_in_file: 0,
         total: 6,
       }),
     });
@@ -105,7 +106,8 @@ describe('ImportSection', () => {
     });
 
     expect(await screen.findByText('Imported: 5')).toBeInTheDocument();
-    expect(screen.getByText('Skipped (duplicate): 1')).toBeInTheDocument();
+    expect(screen.getByText('Skipped (duplicate in DB): 1')).toBeInTheDocument();
+    expect(screen.getByText('Skipped (duplicate in file): 0')).toBeInTheDocument();
     expect(screen.getByText('Invalid URL: 0')).toBeInTheDocument();
     expect(screen.getByText('Total: 6')).toBeInTheDocument();
     expect(mockOnImportComplete).toHaveBeenCalledTimes(1);
