@@ -401,6 +401,7 @@ class ShopEnrichmentInput(BaseModel):
     limited_time: str | None = None
     rating: float | None = None
     review_count: int | None = None
+    google_maps_features: dict[str, bool] = {}
 
 
 # --- Provider result types ---

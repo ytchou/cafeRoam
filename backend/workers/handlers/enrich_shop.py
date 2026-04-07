@@ -48,6 +48,7 @@ async def handle_enrich_shop(
         limited_time=shop.get("limited_time"),
         rating=shop.get("rating"),
         review_count=shop.get("review_count"),
+        google_maps_features=payload.get("google_maps_features", {}),
     )
 
     result = await llm.enrich_shop(enrichment_input)

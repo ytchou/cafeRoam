@@ -406,6 +406,17 @@ class AnthropicLLMAdapter:
             " (e.g. 手沖 not 'pour over', 可頌 not 'croissant')."
         )
 
+        if shop.google_maps_features:
+            feature_list = ", ".join(
+                k for k, v in shop.google_maps_features.items() if v
+            )
+            if feature_list:
+                lines.append("")
+                lines.append(
+                    f"Confirmed Google Maps features: {feature_list}."
+                    " Assign confidence >= 0.9 to tags matching confirmed features."
+                )
+
         return "\n".join(lines)
 
     @staticmethod
