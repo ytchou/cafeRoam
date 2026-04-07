@@ -719,7 +719,7 @@ describe('admin/shops/import/manual-csv route', () => {
     vi.stubGlobal('fetch', mockFetch);
 
     const body = new Uint8Array([1, 2, 3]);
-    const req = new Request(
+    const req = new NextRequest(
       'http://localhost/api/admin/shops/import/manual-csv',
       {
         method: 'POST',
@@ -743,7 +743,7 @@ describe('admin/shops/import/manual-csv route', () => {
 
   it('admin uploading a file over 10MB receives a 413 response', async () => {
     const oversizedBody = new Uint8Array(10 * 1024 * 1024 + 1);
-    const req = new Request(
+    const req = new NextRequest(
       'http://localhost/api/admin/shops/import/manual-csv',
       {
         method: 'POST',
