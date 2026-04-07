@@ -168,7 +168,21 @@ async def import_manual_csv(
         raise HTTPException(status_code=413, detail="File exceeds 10 MB limit")
 
     text = content.decode("utf-8")
-    reader = csv.DictReader(io.StringIO(text))
+    # Auto-detect delimiter (tab-separated exports from spreadsheets vs CSV)
+    sample = text[:4096]
+    delimiter = "\t" if sample.count("\t") > sample.count(",") else ","
+    reader = csv.DictReader(io.StringIO(text), delimiter=delimiter)
+
+    # Normalise header keys to lowercase for flexible column matching
+    name_keys = {"name", "title", "shop_name", "store_name"}
+    url_keys = {"google_maps_url", "url", "maps_url", "google_maps", "link"}
+
+    def _pick(row: dict, keys: set[str]) -> str:
+        normalised = {k.strip().lower(): v for k, v in row.items()}
+        for key in keys:
+            if key in normalised:
+                return (normalised[key] or "").strip()
+        return ""
 
     invalid_url = 0
     duplicate_in_file = 0
@@ -176,8 +190,8 @@ async def import_manual_csv(
     candidates: list[dict[str, str]] = []
 
     for row in reader:
-        name = (row.get("name") or "").strip()
-        url = (row.get("google_maps_url") or "").strip()
+        name = _pick(row, name_keys)
+        url = _pick(row, url_keys)
 
         result = validate_google_maps_url(url)
         if not result.passed:
