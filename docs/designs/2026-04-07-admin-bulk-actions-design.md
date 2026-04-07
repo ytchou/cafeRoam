@@ -12,14 +12,15 @@ Merges DEV-291 (Retry button for stuck shops) and DEV-288 (bulk approve/reject f
 
 ### Backend — 4 new endpoints
 
-| Endpoint | File | Description |
-|----------|------|-------------|
-| `POST /admin/shops/retry` | `backend/api/admin_shops.py` | Reset retryable shops → pending |
-| `POST /admin/shops/bulk-reject` | `backend/api/admin_shops.py` | Reject pending_review shops with reason |
-| `POST /admin/pipeline/approve-bulk` | `backend/api/admin.py` | Bulk approve community submissions |
-| `POST /admin/pipeline/reject-bulk` | `backend/api/admin.py` | Bulk reject community submissions with reason |
+| Endpoint                            | File                         | Description                                   |
+| ----------------------------------- | ---------------------------- | --------------------------------------------- |
+| `POST /admin/shops/retry`           | `backend/api/admin_shops.py` | Reset retryable shops → pending               |
+| `POST /admin/shops/bulk-reject`     | `backend/api/admin_shops.py` | Reject pending_review shops with reason       |
+| `POST /admin/pipeline/approve-bulk` | `backend/api/admin.py`       | Bulk approve community submissions            |
+| `POST /admin/pipeline/reject-bulk`  | `backend/api/admin.py`       | Bulk reject community submissions with reason |
 
 All endpoints follow the existing `bulk-approve` pattern:
+
 - Accept `shop_ids`/`submission_ids` list (max 50); some accept `None` = all eligible
 - Use conditional `.in_("processing_status", eligible)` updates as TOCTOU guard
 - Log all actions via `log_admin_action()`
@@ -28,12 +29,14 @@ All endpoints follow the existing `bulk-approve` pattern:
 ### Frontend — 2 component updates + 4 new proxy routes
 
 New proxy routes (passthrough via `proxyToBackend`):
+
 - `app/api/admin/shops/retry/route.ts`
 - `app/api/admin/shops/bulk-reject/route.ts`
 - `app/api/admin/pipeline/approve-bulk/route.ts`
 - `app/api/admin/pipeline/reject-bulk/route.ts`
 
 Component updates:
+
 - **ShopTable**: generalized multi-select (remove `isReviewFilter` gate) + row actions menu + bulk toolbar (Approve/Reject/Retry)
 - **SubmissionsTab**: add multi-select checkboxes + bulk approve/reject toolbar with shared rejection reason picker
 
@@ -77,6 +80,7 @@ Non-retryable (skip silently): `PENDING` (no-op), `PENDING_REVIEW` (awaiting rev
 ### Row Actions Menu (ShopTable)
 
 Context-sensitive 3-dot (`MoreHorizontal`) icon button at the end of each row:
+
 - `pending_review` → **Approve**, **Reject** (with reason picker)
 - Any status in `RETRYABLE_STATUSES` → **Retry**
 - Otherwise → button hidden
@@ -86,6 +90,7 @@ Per-row actions call the same handlers as bulk (with a single-item array).
 ## Data Flow
 
 **Retry (shops):**
+
 ```
 ShopTable toolbar/row menu
   → POST /api/admin/shops/retry { shop_ids: [id] | null }
@@ -98,6 +103,7 @@ ShopTable toolbar/row menu
 ```
 
 **Bulk reject (shops):**
+
 ```
 ShopTable toolbar/row menu → rejection reason picker (ConfirmDialog)
   → POST /api/admin/shops/bulk-reject { shop_ids, rejection_reason }
@@ -110,6 +116,7 @@ ShopTable toolbar/row menu → rejection reason picker (ConfirmDialog)
 ```
 
 **Bulk approve (submissions):**
+
 ```
 SubmissionsTab toolbar
   → POST /api/admin/pipeline/approve-bulk { submission_ids }
@@ -121,6 +128,7 @@ SubmissionsTab toolbar
 ```
 
 **Bulk reject (submissions):**
+
 ```
 SubmissionsTab toolbar → rejection reason picker
   → POST /api/admin/pipeline/reject-bulk { submission_ids, rejection_reason }
@@ -132,35 +140,39 @@ SubmissionsTab toolbar → rejection reason picker
 
 ## Error Handling
 
-| Scenario | Backend response | Frontend behavior |
-|----------|-----------------|-------------------|
-| `shop_ids.length > 50` | 400 `"Maximum 50 per request"` | `toast.error(data.detail)` |
-| Concurrent status change | Counted as skipped, not error | Shown in skipped count |
-| Network failure | — | `toast.error('Network error')` |
-| Non-200 response | `{ detail: string }` | `toast.error(data.detail \|\| 'Action failed')` |
-| Partial success | `{ N, skipped: M }` | `"3 reset to pending, 1 skipped"` |
+| Scenario                 | Backend response               | Frontend behavior                               |
+| ------------------------ | ------------------------------ | ----------------------------------------------- |
+| `shop_ids.length > 50`   | 400 `"Maximum 50 per request"` | `toast.error(data.detail)`                      |
+| Concurrent status change | Counted as skipped, not error  | Shown in skipped count                          |
+| Network failure          | —                              | `toast.error('Network error')`                  |
+| Non-200 response         | `{ detail: string }`           | `toast.error(data.detail \|\| 'Action failed')` |
+| Partial success          | `{ N, skipped: M }`            | `"3 reset to pending, 1 skipped"`               |
 
 ## Testing Strategy
 
 ### Backend (pytest + TestClient + MagicMock)
 
 **`test_admin_shops.py`** — new test class `TestAdminShopsRetry`:
+
 - Retryable shops reset to pending; count returned correctly
 - Non-retryable statuses (live, pending_review) counted as skipped
 - Empty result when all shops are skipped
 - 400 when `shop_ids` list exceeds 50
 
 **`test_admin_shops.py`** — new test class `TestAdminShopsBulkReject`:
+
 - `pending_review` shops rejected with reason persisted
 - Non-`pending_review` shops counted as skipped
 - 400 when list exceeds 50
 
 **`test_admin.py`** — new test class `TestBulkApproveSubmissions`:
+
 - Submissions approved; shop set to live; activity feed emitted for user-submitted
 - Already-live submissions skipped
 - 400 when list exceeds 50
 
 **`test_admin.py`** — new test class `TestBulkRejectSubmissions`:
+
 - Submissions rejected; `rejection_reason` persisted on submission; shop set to rejected
 - Already-rejected submissions skipped
 - 400 when list exceeds 50
@@ -173,9 +185,11 @@ SubmissionsTab toolbar → rejection reason picker
 ### Testing Classification
 
 **(a) New e2e journey?**
+
 - [ ] No — admin-only operational flow, not a critical user path
 
 **(b) Coverage gate impact?**
+
 - [ ] No — admin endpoints don't touch `search_service`, `checkin_service`, or `lists_service`
 
 ## Alternatives Rejected

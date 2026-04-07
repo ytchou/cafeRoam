@@ -15,6 +15,7 @@
 **Tech Stack:** Python/FastAPI (backend), Next.js App Router + TypeScript (frontend), Vitest + Testing Library (frontend tests), pytest + TestClient + MagicMock (backend tests)
 
 **Acceptance Criteria:**
+
 - [ ] Admin can select multiple stuck/failed shops and click "Retry Selected" — all reset to `pending`, toast shows count
 - [ ] Admin can select `pending_review` shops and bulk-reject them with a single rejection reason applied to all
 - [ ] Admin can select `pending_review` shops and bulk-approve them (existing approve-all extended to selected)
@@ -26,6 +27,7 @@
 ## Key Reference Patterns
 
 **Existing bulk-approve endpoint** (`backend/api/admin_shops.py`):
+
 ```python
 class BulkApproveRequest(BaseModel):
     shop_ids: list[str] | None = None
@@ -38,6 +40,7 @@ async def bulk_approve(body: BulkApproveRequest, user: dict[str, Any] = Depends(
 ```
 
 **Existing proxy pattern** (`app/api/admin/shops/bulk-approve/route.ts`):
+
 ```typescript
 import { proxyToBackend } from '@/lib/api/proxy';
 export async function POST(request: Request): Promise<Response> {
@@ -46,16 +49,19 @@ export async function POST(request: Request): Promise<Response> {
 ```
 
 **RejectionReasonType** (defined in `backend/api/admin.py`):
+
 ```python
 RejectionReasonType = Literal["permanently_closed", "not_a_cafe", "duplicate", "outside_coverage", "invalid_url", "other"]
 ```
 
 **cancel_shop_jobs RPC call pattern** (from `backend/api/admin.py`):
+
 ```python
 db.rpc("cancel_shop_jobs", {"p_shop_id": shop_id, "p_reason": rejection_reason}).execute()
 ```
 
 **log_admin_action pattern**:
+
 ```python
 log_admin_action(
     admin_user_id=user["id"],
@@ -66,6 +72,7 @@ log_admin_action(
 ```
 
 **Test mock pattern** (from `backend/tests/api/test_admin_shops.py`):
+
 ```python
 test_app.dependency_overrides[get_current_user] = _admin_user
 try:
@@ -83,24 +90,40 @@ finally:
 ```
 
 **handleBulkApprove pattern** (from `ShopTable.tsx` — copy for new handlers):
+
 ```typescript
 async function handleBulkApprove(approveAll: boolean) {
   setApprovingBulk(true);
   try {
     const token = await getToken();
-    if (!token) { toast.error('Session expired — please refresh the page'); return; }
+    if (!token) {
+      toast.error('Session expired — please refresh the page');
+      return;
+    }
     const body = approveAll ? {} : { shop_ids: Array.from(selectedShopIds) };
     const res = await fetch('/api/admin/shops/bulk-approve', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
       body: JSON.stringify(body),
     });
     const data = await res.json();
-    if (!res.ok) { toast.error(data.detail || 'Bulk approve failed'); return; }
-    toast.success(`Approved ${data.approved} shops, queued ${data.queued} scrape jobs`);
+    if (!res.ok) {
+      toast.error(data.detail || 'Bulk approve failed');
+      return;
+    }
+    toast.success(
+      `Approved ${data.approved} shops, queued ${data.queued} scrape jobs`
+    );
     setSelectedShopIds(new Set());
     onRefresh();
-  } catch { toast.error('Network error'); } finally { setApprovingBulk(false); }
+  } catch {
+    toast.error('Network error');
+  } finally {
+    setApprovingBulk(false);
+  }
 }
 ```
 
@@ -109,19 +132,21 @@ async function handleBulkApprove(approveAll: boolean) {
 ## Task 1: `POST /admin/shops/retry` — backend endpoint
 
 **Files:**
+
 - Modify: `backend/api/admin_shops.py`
 - Test: `backend/tests/api/test_admin_shops.py`
 
 **API Contract:**
+
 ```yaml
 endpoint: POST /admin/shops/retry
 request:
-  shop_ids: list[str] | null  # null = all eligible, capped at 200; max 50 if provided
+  shop_ids: list[str] | null # null = all eligible, capped at 200; max 50 if provided
 response:
-  reset: int   # shops whose status was flipped to pending
+  reset: int # shops whose status was flipped to pending
   skipped: int # shops that were not in a retryable status
 errors:
-  400: "Maximum 50 shops per retry request"
+  400: 'Maximum 50 shops per retry request'
   403: not an admin
 ```
 
@@ -295,20 +320,22 @@ git commit -m "feat(DEV-291): add POST /admin/shops/retry endpoint"
 ## Task 2: `POST /admin/pipeline/approve-bulk` — backend endpoint
 
 **Files:**
+
 - Modify: `backend/api/admin.py`
 - Test: `backend/tests/api/test_admin.py`
 
 **API Contract:**
+
 ```yaml
 endpoint: POST /admin/pipeline/approve-bulk
 request:
-  submission_ids: list[str]  # max 50
+  submission_ids: list[str] # max 50
 response:
   approved: int
   skipped: int
-  failed: list[str]  # submission IDs that errored (empty in practice)
+  failed: list[str] # submission IDs that errored (empty in practice)
 errors:
-  400: "Maximum 50 submissions per bulk-approve request"
+  400: 'Maximum 50 submissions per bulk-approve request'
   403: not an admin
 ```
 
@@ -502,20 +529,22 @@ git commit -m "feat(DEV-288): add POST /admin/pipeline/approve-bulk endpoint"
 > Depends on Task 1 (same file: `backend/api/admin_shops.py`)
 
 **Files:**
+
 - Modify: `backend/api/admin_shops.py`
 - Test: `backend/tests/api/test_admin_shops.py`
 
 **API Contract:**
+
 ```yaml
 endpoint: POST /admin/shops/bulk-reject
 request:
-  shop_ids: list[str]           # max 50
-  rejection_reason: string      # one of: permanently_closed | not_a_cafe | duplicate | outside_coverage | invalid_url | other
+  shop_ids: list[str] # max 50
+  rejection_reason: string # one of: permanently_closed | not_a_cafe | duplicate | outside_coverage | invalid_url | other
 response:
   rejected: int
-  skipped: int   # shops not in pending_review
+  skipped: int # shops not in pending_review
 errors:
-  400: "Maximum 50 shops per bulk-reject request"
+  400: 'Maximum 50 shops per bulk-reject request'
   403: not an admin
 ```
 
@@ -694,20 +723,22 @@ git commit -m "feat(DEV-291): add POST /admin/shops/bulk-reject endpoint"
 > Depends on Task 2 (same file: `backend/api/admin.py`)
 
 **Files:**
+
 - Modify: `backend/api/admin.py`
 - Test: `backend/tests/api/test_admin.py`
 
 **API Contract:**
+
 ```yaml
 endpoint: POST /admin/pipeline/reject-bulk
 request:
-  submission_ids: list[str]     # max 50
-  rejection_reason: string      # same Literal as single reject
+  submission_ids: list[str] # max 50
+  rejection_reason: string # same Literal as single reject
 response:
   rejected: int
   skipped: int
 errors:
-  400: "Maximum 50 submissions per bulk-reject request"
+  400: 'Maximum 50 submissions per bulk-reject request'
   403: not an admin
 ```
 
@@ -897,6 +928,7 @@ git commit -m "feat(DEV-288): add POST /admin/pipeline/reject-bulk endpoint"
 > No test needed — these are pure pass-through proxy files with zero business logic. Pattern verified by existing `bulk-approve/route.ts`.
 
 **Files:**
+
 - Create: `app/api/admin/shops/retry/route.ts`
 - Create: `app/api/admin/shops/bulk-reject/route.ts`
 - Create: `app/api/admin/pipeline/approve-bulk/route.ts`
@@ -905,6 +937,7 @@ git commit -m "feat(DEV-288): add POST /admin/pipeline/reject-bulk endpoint"
 **Step 1: Create all 4 files**
 
 `app/api/admin/shops/retry/route.ts`:
+
 ```typescript
 import { proxyToBackend } from '@/lib/api/proxy';
 
@@ -914,6 +947,7 @@ export async function POST(request: Request): Promise<Response> {
 ```
 
 `app/api/admin/shops/bulk-reject/route.ts`:
+
 ```typescript
 import { proxyToBackend } from '@/lib/api/proxy';
 
@@ -923,6 +957,7 @@ export async function POST(request: Request): Promise<Response> {
 ```
 
 `app/api/admin/pipeline/approve-bulk/route.ts`:
+
 ```typescript
 import { proxyToBackend } from '@/lib/api/proxy';
 
@@ -932,6 +967,7 @@ export async function POST(request: Request): Promise<Response> {
 ```
 
 `app/api/admin/pipeline/reject-bulk/route.ts`:
+
 ```typescript
 import { proxyToBackend } from '@/lib/api/proxy';
 
@@ -965,8 +1001,9 @@ git commit -m "feat(DEV-291/DEV-288): add proxy routes for retry, bulk-reject, a
 > Depends on Task 5 (proxy routes must exist for fetch calls to work in dev)
 
 **Files:**
+
 - Modify: `app/(admin)/admin/shops/_components/ShopTable.tsx`
-- Test: `app/(admin)/admin/shops/_components/__tests__/ShopTable.test.tsx` *(create)*
+- Test: `app/(admin)/admin/shops/_components/__tests__/ShopTable.test.tsx` _(create)_
 
 **Step 1: Write the failing tests**
 
@@ -1090,21 +1127,35 @@ async function handleBulkRetry() {
   setRetrying(true);
   try {
     const token = await getToken();
-    if (!token) { toast.error('Session expired — please refresh the page'); return; }
+    if (!token) {
+      toast.error('Session expired — please refresh the page');
+      return;
+    }
     const res = await fetch('/api/admin/shops/retry', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
       body: JSON.stringify({ shop_ids: Array.from(selectedShopIds) }),
     });
     const data = await res.json();
-    if (!res.ok) { toast.error(data.detail || 'Retry failed'); return; }
-    const msg = data.skipped > 0
-      ? `${data.reset} shop(s) reset to pending, ${data.skipped} skipped`
-      : `${data.reset} shop(s) reset to pending`;
+    if (!res.ok) {
+      toast.error(data.detail || 'Retry failed');
+      return;
+    }
+    const msg =
+      data.skipped > 0
+        ? `${data.reset} shop(s) reset to pending, ${data.skipped} skipped`
+        : `${data.reset} shop(s) reset to pending`;
     toast.success(msg);
     setSelectedShopIds(new Set());
     onRefresh();
-  } catch { toast.error('Network error'); } finally { setRetrying(false); }
+  } catch {
+    toast.error('Network error');
+  } finally {
+    setRetrying(false);
+  }
 }
 ```
 
@@ -1115,80 +1166,133 @@ async function handleBulkReject() {
   setBulkRejecting(true);
   try {
     const token = await getToken();
-    if (!token) { toast.error('Session expired — please refresh the page'); return; }
+    if (!token) {
+      toast.error('Session expired — please refresh the page');
+      return;
+    }
     const res = await fetch('/api/admin/shops/bulk-reject', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ shop_ids: Array.from(selectedShopIds), rejection_reason: rejectReason }),
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        shop_ids: Array.from(selectedShopIds),
+        rejection_reason: rejectReason,
+      }),
     });
     const data = await res.json();
-    if (!res.ok) { toast.error(data.detail || 'Bulk reject failed'); return; }
+    if (!res.ok) {
+      toast.error(data.detail || 'Bulk reject failed');
+      return;
+    }
     toast.success(`${data.rejected} shop(s) rejected`);
     setSelectedShopIds(new Set());
     setShowRejectDialog(false);
     onRefresh();
-  } catch { toast.error('Network error'); } finally { setBulkRejecting(false); }
+  } catch {
+    toast.error('Network error');
+  } finally {
+    setBulkRejecting(false);
+  }
 }
 ```
 
 **3e. Add bulk toolbar (when `selectedShopIds.size > 0`):**
 
 ```tsx
-{selectedShopIds.size > 0 && (
-  <div className="flex items-center gap-2 px-4 py-2 bg-amber-50 border-b border-amber-200">
-    <span className="text-sm text-amber-800">{selectedShopIds.size} selected</span>
-    <Button size="sm" variant="outline" onClick={() => handleBulkApprove(false)} disabled={approvingBulk}>
-      Approve Selected
-    </Button>
-    <Button size="sm" variant="outline" onClick={() => setShowRejectDialog(true)}>
-      Reject Selected
-    </Button>
-    <Button size="sm" variant="outline" onClick={handleBulkRetry} disabled={retrying}>
-      Retry Selected
-    </Button>
-  </div>
-)}
+{
+  selectedShopIds.size > 0 && (
+    <div className="flex items-center gap-2 border-b border-amber-200 bg-amber-50 px-4 py-2">
+      <span className="text-sm text-amber-800">
+        {selectedShopIds.size} selected
+      </span>
+      <Button
+        size="sm"
+        variant="outline"
+        onClick={() => handleBulkApprove(false)}
+        disabled={approvingBulk}
+      >
+        Approve Selected
+      </Button>
+      <Button
+        size="sm"
+        variant="outline"
+        onClick={() => setShowRejectDialog(true)}
+      >
+        Reject Selected
+      </Button>
+      <Button
+        size="sm"
+        variant="outline"
+        onClick={handleBulkRetry}
+        disabled={retrying}
+      >
+        Retry Selected
+      </Button>
+    </div>
+  );
+}
 ```
 
 **3f. Add row actions menu column:**
 
 ```tsx
 // In the table row, after existing cells:
-{hasRowActions(shop.processing_status) && (
-  <td className="px-2 py-2">
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" aria-label="row actions">
-          <MoreHorizontal className="h-4 w-4" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        {shop.processing_status === 'pending_review' && (
-          <>
-            <DropdownMenuItem onClick={() => handleBulkApprove(false) /* single via select */}>
-              Approve
+{
+  hasRowActions(shop.processing_status) && (
+    <td className="px-2 py-2">
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon" aria-label="row actions">
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          {shop.processing_status === 'pending_review' && (
+            <>
+              <DropdownMenuItem
+                onClick={() => handleBulkApprove(false) /* single via select */}
+              >
+                Approve
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  setSelectedShopIds(new Set([shop.id]));
+                  setShowRejectDialog(true);
+                }}
+              >
+                Reject
+              </DropdownMenuItem>
+            </>
+          )}
+          {RETRYABLE_STATUSES_SET.has(shop.processing_status) && (
+            <DropdownMenuItem
+              onClick={() => {
+                setSelectedShopIds(new Set([shop.id]));
+                handleBulkRetry();
+              }}
+            >
+              Retry
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => { setSelectedShopIds(new Set([shop.id])); setShowRejectDialog(true); }}>
-              Reject
-            </DropdownMenuItem>
-          </>
-        )}
-        {RETRYABLE_STATUSES_SET.has(shop.processing_status) && (
-          <DropdownMenuItem onClick={() => { setSelectedShopIds(new Set([shop.id])); handleBulkRetry(); }}>
-            Retry
-          </DropdownMenuItem>
-        )}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  </td>
-)}
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </td>
+  );
+}
 ```
 
 Add a helper constant at the top of the component file:
 
 ```typescript
 const RETRYABLE_STATUSES_SET = new Set([
-  'scraping', 'enriching', 'embedding', 'publishing', 'timed_out', 'failed',
+  'scraping',
+  'enriching',
+  'embedding',
+  'publishing',
+  'timed_out',
+  'failed',
 ]);
 
 function hasRowActions(status: string): boolean {
@@ -1214,7 +1318,9 @@ function hasRowActions(status: string): boolean {
     </SelectTrigger>
     <SelectContent>
       {ADMIN_REJECTION_REASONS.map((r) => (
-        <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+        <SelectItem key={r.value} value={r.value}>
+          {r.label}
+        </SelectItem>
       ))}
     </SelectContent>
   </Select>
@@ -1260,8 +1366,9 @@ git commit -m "feat(DEV-291): add row actions menu + bulk retry/reject to ShopTa
 > Depends on Task 5 (proxy routes must exist)
 
 **Files:**
+
 - Modify: `app/(admin)/admin/_components/SubmissionsTab.tsx`
-- Test: `app/(admin)/admin/_components/__tests__/SubmissionsTab.test.tsx` *(create)*
+- Test: `app/(admin)/admin/_components/__tests__/SubmissionsTab.test.tsx` _(create)_
 
 **Step 1: Write the failing tests**
 
@@ -1356,10 +1463,12 @@ const [showBulkRejectDialog, setShowBulkRejectDialog] = useState(false);
 **3b. Add selection helpers:**
 
 ```typescript
-const actionableSubmissions = (data?.submissions ?? []).filter(
-  (s) => ['pending', 'processing', 'pending_review'].includes(s.status)
+const actionableSubmissions = (data?.submissions ?? []).filter((s) =>
+  ['pending', 'processing', 'pending_review'].includes(s.status)
 );
-const isAllSelected = actionableSubmissions.length > 0 && actionableSubmissions.every((s) => selectedIds.has(s.id));
+const isAllSelected =
+  actionableSubmissions.length > 0 &&
+  actionableSubmissions.every((s) => selectedIds.has(s.id));
 
 function toggleSelection(id: string) {
   setSelectedIds((prev) => {
@@ -1370,7 +1479,9 @@ function toggleSelection(id: string) {
 }
 
 function handleSelectAll(checked: boolean) {
-  setSelectedIds(checked ? new Set(actionableSubmissions.map((s) => s.id)) : new Set());
+  setSelectedIds(
+    checked ? new Set(actionableSubmissions.map((s) => s.id)) : new Set()
+  );
 }
 ```
 
@@ -1381,18 +1492,31 @@ async function handleBulkApproveSelected() {
   setBulkApproving(true);
   try {
     const token = await getToken();
-    if (!token) { toast.error('Session expired — please refresh the page'); return; }
+    if (!token) {
+      toast.error('Session expired — please refresh the page');
+      return;
+    }
     const res = await fetch('/api/admin/pipeline/approve-bulk', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
       body: JSON.stringify({ submission_ids: Array.from(selectedIds) }),
     });
     const data = await res.json();
-    if (!res.ok) { toast.error(data.detail || 'Bulk approve failed'); return; }
+    if (!res.ok) {
+      toast.error(data.detail || 'Bulk approve failed');
+      return;
+    }
     toast.success(`${data.approved} submission(s) approved`);
     setSelectedIds(new Set());
     onRefresh();
-  } catch { toast.error('Network error'); } finally { setBulkApproving(false); }
+  } catch {
+    toast.error('Network error');
+  } finally {
+    setBulkApproving(false);
+  }
 }
 ```
 
@@ -1403,19 +1527,35 @@ async function handleBulkRejectSelected() {
   setBulkRejecting(true);
   try {
     const token = await getToken();
-    if (!token) { toast.error('Session expired — please refresh the page'); return; }
+    if (!token) {
+      toast.error('Session expired — please refresh the page');
+      return;
+    }
     const res = await fetch('/api/admin/pipeline/reject-bulk', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ submission_ids: Array.from(selectedIds), rejection_reason: bulkRejectReason }),
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        submission_ids: Array.from(selectedIds),
+        rejection_reason: bulkRejectReason,
+      }),
     });
     const data = await res.json();
-    if (!res.ok) { toast.error(data.detail || 'Bulk reject failed'); return; }
+    if (!res.ok) {
+      toast.error(data.detail || 'Bulk reject failed');
+      return;
+    }
     toast.success(`${data.rejected} submission(s) rejected`);
     setSelectedIds(new Set());
     setShowBulkRejectDialog(false);
     onRefresh();
-  } catch { toast.error('Network error'); } finally { setBulkRejecting(false); }
+  } catch {
+    toast.error('Network error');
+  } finally {
+    setBulkRejecting(false);
+  }
 }
 ```
 
@@ -1447,17 +1587,30 @@ async function handleBulkRejectSelected() {
 **3g. Add bulk toolbar** (above the table, when `selectedIds.size > 0`):
 
 ```tsx
-{selectedIds.size > 0 && (
-  <div className="flex items-center gap-2 px-4 py-2 bg-amber-50 border-b border-amber-200">
-    <span className="text-sm text-amber-800">{selectedIds.size} selected</span>
-    <Button size="sm" variant="outline" onClick={handleBulkApproveSelected} disabled={bulkApproving}>
-      Approve Selected
-    </Button>
-    <Button size="sm" variant="outline" onClick={() => setShowBulkRejectDialog(true)}>
-      Reject Selected
-    </Button>
-  </div>
-)}
+{
+  selectedIds.size > 0 && (
+    <div className="flex items-center gap-2 border-b border-amber-200 bg-amber-50 px-4 py-2">
+      <span className="text-sm text-amber-800">
+        {selectedIds.size} selected
+      </span>
+      <Button
+        size="sm"
+        variant="outline"
+        onClick={handleBulkApproveSelected}
+        disabled={bulkApproving}
+      >
+        Approve Selected
+      </Button>
+      <Button
+        size="sm"
+        variant="outline"
+        onClick={() => setShowBulkRejectDialog(true)}
+      >
+        Reject Selected
+      </Button>
+    </div>
+  );
+}
 ```
 
 **3h. Add rejection reason dialog:**
@@ -1478,7 +1631,9 @@ async function handleBulkRejectSelected() {
     </SelectTrigger>
     <SelectContent>
       {ADMIN_REJECTION_REASONS.map((r) => (
-        <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+        <SelectItem key={r.value} value={r.value}>
+          {r.label}
+        </SelectItem>
       ))}
     </SelectContent>
   </Select>
@@ -1542,17 +1697,21 @@ graph TD
 ```
 
 **Wave 1** (parallel — different files):
+
 - Task 1: `POST /admin/shops/retry` (admin_shops.py)
 - Task 2: `POST /admin/pipeline/approve-bulk` (admin.py)
 
 **Wave 2** (parallel — different files, extend Wave 1 files):
+
 - Task 3: `POST /admin/shops/bulk-reject` (admin_shops.py) ← Task 1
 - Task 4: `POST /admin/pipeline/reject-bulk` (admin.py) ← Task 2
 
 **Wave 3** (single task):
+
 - Task 5: 4 proxy routes ← Tasks 1–4
 
 **Wave 4** (parallel — different files):
+
 - Task 6: ShopTable.tsx ← Task 5
 - Task 7: SubmissionsTab.tsx ← Task 5
 
@@ -1576,6 +1735,7 @@ pnpm lint
 ```
 
 **Manual smoke test (requires running dev servers):**
+
 1. Navigate to `/admin/shops` → select a `timed_out` shop → click "Retry Selected" → confirm toast "1 shop(s) reset to pending", table refreshes with `pending` status
 2. Select a `pending_review` shop → click "Reject Selected" → pick "Not a café" → confirm → toast shows count, table refreshes
 3. Click the 3-dot menu on a single `timed_out` shop row → click "Retry" → toast "1 shop(s) reset to pending"
