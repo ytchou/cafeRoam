@@ -116,3 +116,33 @@ async def test_persist_stores_google_maps_features(mock_db, mock_queue):
     ]
     assert len(shop_updates) == 1
     assert shop_updates[0].args[0]["google_maps_features"] == features
+
+
+@pytest.mark.asyncio
+async def test_persist_extracts_city_and_district_from_address(mock_db, mock_queue):
+    """When address contains a parseable Taiwan city and district, both are written to the shop payload."""
+    data = _make_shop_data(address="106台灣台北市大安區復興南路二段79號")
+
+    await persist_scraped_data(shop_id="shop-04", data=data, db=mock_db, queue=mock_queue)
+
+    update_calls = mock_db.table.return_value.update.call_args_list
+    shop_updates = [c for c in update_calls if "city" in (c.args[0] if c.args else {})]
+    assert len(shop_updates) == 1
+    payload = shop_updates[0].args[0]
+    assert payload["city"] == "taipei"
+    assert payload["district"] == "大安區"
+
+
+@pytest.mark.asyncio
+async def test_persist_skips_city_and_district_when_address_unparseable(mock_db, mock_queue):
+    """When address cannot be parsed for city/district, those fields are omitted from the payload."""
+    data = _make_shop_data(address="台北市某咖啡廳")  # no postal code + 台灣 prefix
+
+    await persist_scraped_data(shop_id="shop-05", data=data, db=mock_db, queue=mock_queue)
+
+    update_calls = mock_db.table.return_value.update.call_args_list
+    shop_updates = [c for c in update_calls if "processing_status" in (c.args[0] if c.args else {})]
+    assert len(shop_updates) == 1
+    payload = shop_updates[0].args[0]
+    assert "city" not in payload
+    assert "district" not in payload

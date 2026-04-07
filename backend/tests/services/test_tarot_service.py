@@ -11,8 +11,12 @@ TW = ZoneInfo("Asia/Taipei")
 FIXED_NOW = datetime(2026, 3, 18, 14, 0, tzinfo=TW)
 
 
-def _make_db_mock(rows: list[dict]) -> MagicMock:
-    """Mock Supabase client that returns given rows from table select."""
+def _make_db_mock(rows: list[dict], district_names: list[str] | None = None) -> MagicMock:
+    """Mock Supabase client that returns given rows from table select.
+
+    When district_names is provided, the first execute() returns district name_zh rows
+    (for the UUID→name translation query) and the second returns the shop rows.
+    """
     mock = MagicMock()
     mock.table.return_value = mock
     mock.select.return_value = mock
@@ -23,7 +27,14 @@ def _make_db_mock(rows: list[dict]) -> MagicMock:
     mock.gte.return_value = mock
     mock.lte.return_value = mock
     mock.limit.return_value = mock
-    mock.execute.return_value = MagicMock(data=rows)
+    if district_names is not None:
+        district_rows = [{"name_zh": n} for n in district_names]
+        mock.execute.side_effect = [
+            MagicMock(data=district_rows),  # districts UUID→name_zh lookup
+            MagicMock(data=rows),           # shops query
+        ]
+    else:
+        mock.execute.return_value = MagicMock(data=rows)
     return mock
 
 
@@ -167,7 +178,7 @@ class TestTarotServiceDraw:
 
 
 class TestTarotServiceDrawByDistrict:
-    """Given shops in a district, draw tarot cards filtered by district_id FK."""
+    """Given shops in a district, draw tarot cards filtered by district text field."""
 
     async def test_draw_by_district_id_returns_cards(self):
         """Given shops in a district, when drawing by district_id, then returns up to 3 cards."""
@@ -176,7 +187,7 @@ class TestTarotServiceDrawByDistrict:
             make_tarot_shop_row(id="s2", tarot_title="The Artisan"),
             make_tarot_shop_row(id="s3", tarot_title="The Scholar"),
         ]
-        db = _make_db_mock(rows)
+        db = _make_db_mock(rows, district_names=["大安區"])
         service = TarotService(db)
         cards = await service.draw(
             lat=None,
@@ -194,7 +205,7 @@ class TestTarotServiceDrawByDistrict:
             make_tarot_shop_row(id="s1", tarot_title="The Wanderer"),
             make_tarot_shop_row(id="s2", tarot_title="The Artisan"),
         ]
-        db = _make_db_mock(rows)
+        db = _make_db_mock(rows, district_names=["大安區"])
         service = TarotService(db)
         cards = await service.draw(
             lat=None,
@@ -210,7 +221,7 @@ class TestTarotServiceDrawByDistrict:
         rows = [
             make_tarot_shop_row(id="s1", tarot_title="The Wanderer"),
         ]
-        db = _make_db_mock(rows)
+        db = _make_db_mock(rows, district_names=["大安區"])
         service = TarotService(db)
         cards = await service.draw(
             lat=None,
@@ -227,7 +238,7 @@ class TestTarotServiceDrawByDistrict:
             make_tarot_shop_row(id="s1", tarot_title="The Wanderer"),
             make_tarot_shop_row(id="s2", tarot_title="The Artisan"),
         ]
-        db = _make_db_mock(rows)
+        db = _make_db_mock(rows, district_names=["大安區", "信義區"])
         service = TarotService(db)
         cards = await service.draw(
             lat=None,
