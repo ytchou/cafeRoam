@@ -8,6 +8,7 @@ interface CsvSummary {
   imported: number;
   skipped_duplicate: number;
   invalid_url: number;
+  duplicate_in_file: number;
   total: number;
 }
 
@@ -111,7 +112,8 @@ export function ImportSection({
         {csvSummary && (
           <div className="rounded-md bg-gray-50 p-3 text-sm text-gray-700">
             <p>Imported: {csvSummary.imported}</p>
-            <p>Skipped (duplicate): {csvSummary.skipped_duplicate}</p>
+            <p>Skipped (duplicate in DB): {csvSummary.skipped_duplicate}</p>
+            <p>Skipped (duplicate in file): {csvSummary.duplicate_in_file}</p>
             <p>Invalid URL: {csvSummary.invalid_url}</p>
             <p className="font-medium">Total: {csvSummary.total}</p>
           </div>
