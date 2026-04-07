@@ -1,8 +1,9 @@
+import contextlib
 from datetime import UTC, datetime
 from typing import Any, Literal, cast
 
 import structlog
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from pydantic import BaseModel
 
 from api.deps import require_admin
@@ -537,3 +538,20 @@ async def cancel_job(
         target_id=job_id,
     )
     return {"message": f"Job {job_id} cancelled"}
+
+
+async def _run_pipeline_safe() -> None:
+    with contextlib.suppress(SystemExit):
+        from scripts.run_pipeline_batch import main as _run_pipeline
+
+        await _run_pipeline(dry_run=False)
+
+
+@router.post("/run-batch", status_code=202)
+async def run_pipeline_batch(
+    background_tasks: BackgroundTasks,
+    user: dict[str, Any] = Depends(require_admin),  # noqa: B008
+) -> dict[str, Any]:
+    """Queue a full pipeline batch run in the background."""
+    background_tasks.add_task(_run_pipeline_safe)
+    return {"message": "Pipeline batch run queued"}
