@@ -238,18 +238,23 @@ async def approve_submissions_bulk(
     skipped = 0
     failed: list[str] = []
 
+    # Batch-fetch all submissions in one IN() query to avoid N+1 reads
+    all_subs_res = (
+        db.table("shop_submissions")
+        .select("id, status, shop_id, submitted_by")
+        .in_("id", body.submission_ids)
+        .execute()
+    )
+    subs_by_id: dict[str, dict[str, Any]] = {
+        row["id"]: row
+        for row in cast("list[dict[str, Any]]", all_subs_res.data or [])
+    }
+
     for submission_id in body.submission_ids:
-        sub_res = (
-            db.table("shop_submissions")
-            .select("id, status, shop_id, submitted_by")
-            .eq("id", submission_id)
-            .execute()
-        )
-        sub_rows = cast("list[dict[str, Any]]", sub_res.data or [])
-        if not sub_rows:
+        sub = subs_by_id.get(submission_id)
+        if sub is None:
             skipped += 1
             continue
-        sub = sub_rows[0]
         if sub["status"] not in ("pending", "processing", "pending_review"):
             skipped += 1
             continue
@@ -273,7 +278,7 @@ async def approve_submissions_bulk(
             .execute()
         )
         shop_rows = cast("list[dict[str, Any]]", shop_update.data or [])
-        shop_name = shop_rows[0].get("name", "Unknown") if shop_rows else "Unknown"
+        shop_name = first(shop_rows).get("name", "Unknown") if shop_rows else "Unknown"
 
         if sub.get("submitted_by"):
             db.table("activity_feed").insert(
@@ -311,18 +316,23 @@ async def reject_submissions_bulk(
     rejected = 0
     skipped = 0
 
+    # Batch-fetch all submissions in one IN() query to avoid N+1 reads
+    all_subs_res = (
+        db.table("shop_submissions")
+        .select("id, status, shop_id")
+        .in_("id", body.submission_ids)
+        .execute()
+    )
+    subs_by_id: dict[str, dict[str, Any]] = {
+        row["id"]: row
+        for row in cast("list[dict[str, Any]]", all_subs_res.data or [])
+    }
+
     for submission_id in body.submission_ids:
-        sub_res = (
-            db.table("shop_submissions")
-            .select("id, status, shop_id")
-            .eq("id", submission_id)
-            .execute()
-        )
-        sub_rows = cast("list[dict[str, Any]]", sub_res.data or [])
-        if not sub_rows:
+        sub = subs_by_id.get(submission_id)
+        if sub is None:
             skipped += 1
             continue
-        sub = sub_rows[0]
         if sub["status"] in ("live", "rejected"):
             skipped += 1
             continue

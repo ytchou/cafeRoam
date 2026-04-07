@@ -6,17 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile
 from postgrest.exceptions import APIError
 from pydantic import BaseModel
 
-try:
-    from api.admin import RejectionReasonType
-except ImportError:
-    RejectionReasonType = Literal[
-        "permanently_closed",
-        "not_a_cafe",
-        "duplicate",
-        "outside_coverage",
-        "invalid_url",
-        "other",
-    ]
+from api.admin import RejectionReasonType
 from api.deps import require_admin
 from core.db import escape_ilike, first
 from db.supabase_client import get_service_role_client
