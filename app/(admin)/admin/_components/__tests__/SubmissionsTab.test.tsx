@@ -7,8 +7,22 @@ vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 global.fetch = vi.fn();
 
 const mockSubmissions = [
-  { id: 'sub-1', shop_id: 'shop-1', status: 'pending', submitted_by: 'user-1', created_at: '2026-01-01', google_maps_url: 'https://maps.google.com/1' },
-  { id: 'sub-2', shop_id: 'shop-2', status: 'pending_review', submitted_by: 'user-2', created_at: '2026-01-02', google_maps_url: 'https://maps.google.com/2' },
+  {
+    id: 'sub-1',
+    shop_id: 'shop-1',
+    status: 'pending',
+    submitted_by: 'user-1',
+    created_at: '2026-01-01',
+    google_maps_url: 'https://maps.google.com/1',
+  },
+  {
+    id: 'sub-2',
+    shop_id: 'shop-2',
+    status: 'pending_review',
+    submitted_by: 'user-2',
+    created_at: '2026-01-02',
+    google_maps_url: 'https://maps.google.com/2',
+  },
 ];
 
 const defaultProps = {

@@ -348,7 +348,7 @@ export function ShopTable({
                     : '—'}
                 </TableCell>
                 <TableCell
-                  className="px-2 py-2 w-10"
+                  className="w-10 px-2 py-2"
                   onClick={(e) => e.stopPropagation()}
                 >
                   {hasRowActions(shop.processing_status) && (
@@ -400,7 +400,10 @@ export function ShopTable({
             ))}
             {!loading && shops.length === 0 && (
               <TableRow>
-                <TableCell colSpan={9} className="py-8 text-center text-gray-400">
+                <TableCell
+                  colSpan={9}
+                  className="py-8 text-center text-gray-400"
+                >
                   No shops found
                 </TableCell>
               </TableRow>
@@ -440,7 +443,7 @@ export function ShopTable({
         description={
           bulkConfirm?.approveAll
             ? 'Approve ALL pending_review shops? This will queue scrape jobs for each.'
-            : `Approve ${(bulkConfirm?.overrideIds?.length ?? selectedShopIds.size)} selected shop(s)? This will queue scrape jobs for each.`
+            : `Approve ${bulkConfirm?.overrideIds?.length ?? selectedShopIds.size} selected shop(s)? This will queue scrape jobs for each.`
         }
         confirmLabel="Approve"
         loading={approvingBulk}

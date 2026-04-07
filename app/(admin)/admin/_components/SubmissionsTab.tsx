@@ -408,10 +408,7 @@ export function SubmissionsTab({
               Select a rejection reason to apply to all selected submissions.
             </DialogDescription>
           </DialogHeader>
-          <Select
-            value={bulkRejectReason}
-            onValueChange={setBulkRejectReason}
-          >
+          <Select value={bulkRejectReason} onValueChange={setBulkRejectReason}>
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
