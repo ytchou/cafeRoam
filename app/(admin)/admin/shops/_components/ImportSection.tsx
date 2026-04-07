@@ -105,7 +105,11 @@ export function ImportSection({
             className="text-sm"
             id="csv-file"
           />
-          <Button onClick={handleSeedCsv} disabled={seedingCsv} variant="default">
+          <Button
+            onClick={handleSeedCsv}
+            disabled={seedingCsv}
+            variant="default"
+          >
             {seedingCsv ? 'Uploading...' : 'Seed Shops'}
           </Button>
         </div>

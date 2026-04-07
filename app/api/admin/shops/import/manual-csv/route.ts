@@ -32,7 +32,10 @@ export async function POST(request: NextRequest): Promise<Response> {
       body,
     });
   } catch {
-    return NextResponse.json({ detail: 'Backend unavailable' }, { status: 503 });
+    return NextResponse.json(
+      { detail: 'Backend unavailable' },
+      { status: 503 }
+    );
   }
 
   return new Response(res.body, {

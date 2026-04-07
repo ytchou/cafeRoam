@@ -106,8 +106,12 @@ describe('ImportSection', () => {
     });
 
     expect(await screen.findByText('Imported: 5')).toBeInTheDocument();
-    expect(screen.getByText('Skipped (duplicate in DB): 1')).toBeInTheDocument();
-    expect(screen.getByText('Skipped (duplicate in file): 0')).toBeInTheDocument();
+    expect(
+      screen.getByText('Skipped (duplicate in DB): 1')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('Skipped (duplicate in file): 0')
+    ).toBeInTheDocument();
     expect(screen.getByText('Invalid URL: 0')).toBeInTheDocument();
     expect(screen.getByText('Total: 6')).toBeInTheDocument();
     expect(mockOnImportComplete).toHaveBeenCalledTimes(1);
@@ -125,16 +129,13 @@ describe('ImportSection', () => {
     await user.click(screen.getByRole('button', { name: /run pipeline/i }));
 
     await waitFor(() => {
-      expect(mockFetch).toHaveBeenCalledWith(
-        '/api/admin/pipeline/run-batch',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: 'Bearer test-token-abc',
-          },
-        }
-      );
+      expect(mockFetch).toHaveBeenCalledWith('/api/admin/pipeline/run-batch', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer test-token-abc',
+        },
+      });
     });
 
     expect(mockOnImportComplete).not.toHaveBeenCalled();
