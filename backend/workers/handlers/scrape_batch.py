@@ -73,7 +73,11 @@ async def handle_scrape_batch(
                 batch_id=batch_id,
             )
             db.table("shops").update(
-                {"processing_status": "failed", "updated_at": datetime.now(UTC).isoformat()}
+                {
+                    "processing_status": "failed",
+                    "rejection_reason": "Place not found on Google Maps",
+                    "updated_at": datetime.now(UTC).isoformat(),
+                }
             ).eq("id", shop_id).execute()
 
             submission_id = shop_meta.get("submission_id")
@@ -108,7 +112,11 @@ async def handle_scrape_batch(
                 error=str(exc),
             )
             db.table("shops").update(
-                {"processing_status": "failed", "updated_at": datetime.now(UTC).isoformat()}
+                {
+                    "processing_status": "failed",
+                    "rejection_reason": f"Scrape error: {exc}",
+                    "updated_at": datetime.now(UTC).isoformat(),
+                }
             ).eq("id", shop_id).execute()
             submission_id = shop_meta.get("submission_id")
             if submission_id:

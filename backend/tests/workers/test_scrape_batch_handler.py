@@ -168,6 +168,11 @@ async def test_shop_not_found_on_google_maps_marks_failed_without_aborting_batch
     assert any(c.args == ("id", _SHOP_ID_A) for c in eq_calls), (
         f"Expected shop A ({_SHOP_ID_A}) to be targeted in failed update"
     )
+    failed_updates = [
+        c for c in mock_db.table.return_value.update.call_args_list
+        if c.args and c.args[0].get("processing_status") == "failed"
+    ]
+    assert failed_updates[0].args[0]["rejection_reason"] == "Place not found on Google Maps"
 
 
 @pytest.mark.asyncio
@@ -212,6 +217,11 @@ async def test_persist_failure_marks_shop_failed_and_continues_remaining(
     ]
     assert len(enrich_calls) == 1
     assert enrich_calls[0].kwargs["payload"]["shop_id"] == _SHOP_ID_B
+    failed_updates = [
+        c for c in mock_db.table.return_value.update.call_args_list
+        if c.args and c.args[0].get("processing_status") == "failed"
+    ]
+    assert failed_updates[0].args[0]["rejection_reason"].startswith("Scrape error:")
 
 
 @pytest.mark.asyncio

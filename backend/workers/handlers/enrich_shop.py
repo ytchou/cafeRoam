@@ -72,7 +72,11 @@ async def handle_enrich_shop(
             summary_preview=result.summary[:80],
         )
         db.table("shops").update(
-            {"processing_status": "failed", "updated_at": datetime.now(UTC).isoformat()}
+            {
+                "processing_status": "failed",
+                "rejection_reason": "Enrichment failed: summary not in Traditional Chinese",
+                "updated_at": datetime.now(UTC).isoformat(),
+            }
         ).eq("id", shop_id).execute()
         raise ValueError(f"Enrichment summary for shop {shop_id} is not in Traditional Chinese")
 

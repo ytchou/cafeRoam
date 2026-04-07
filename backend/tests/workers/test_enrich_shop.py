@@ -122,6 +122,7 @@ class TestEnrichShopLanguageGuard:
 
         update_data = db._shops_table.update.call_args[0][0]
         assert update_data["processing_status"] == "failed"
+        assert update_data["rejection_reason"] == "Enrichment failed: summary not in Traditional Chinese"
         queue.enqueue.assert_not_called()
 
 
