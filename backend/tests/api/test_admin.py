@@ -374,8 +374,8 @@ class TestBulkApproveSubmissions:
         app.dependency_overrides[get_current_user] = _admin_user
         try:
             mock_db = MagicMock()
-            # GET submission returns pending submission with shop_id
-            mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(
+            # Batch-fetch submissions via IN() query
+            mock_db.table.return_value.select.return_value.in_.return_value.execute.return_value = MagicMock(
                 data=[{"id": "sub-1", "status": "pending", "shop_id": "shop-1", "submitted_by": None}]
             )
             # UPDATE submission succeeds
@@ -407,8 +407,8 @@ class TestBulkApproveSubmissions:
         app.dependency_overrides[get_current_user] = _admin_user
         try:
             mock_db = MagicMock()
-            # GET submission returns live submission
-            mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(
+            # Batch-fetch submissions via IN() query — returns live submission
+            mock_db.table.return_value.select.return_value.in_.return_value.execute.return_value = MagicMock(
                 data=[{"id": "sub-1", "status": "live", "shop_id": "shop-1", "submitted_by": None}]
             )
             with (
@@ -447,7 +447,8 @@ class TestBulkRejectSubmissions:
         app.dependency_overrides[get_current_user] = _admin_user
         try:
             mock_db = MagicMock()
-            mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(
+            # Batch-fetch submissions via IN() query
+            mock_db.table.return_value.select.return_value.in_.return_value.execute.return_value = MagicMock(
                 data=[{"id": "sub-1", "status": "pending", "shop_id": "shop-1"}]
             )
             # UPDATE submission
@@ -480,7 +481,8 @@ class TestBulkRejectSubmissions:
         app.dependency_overrides[get_current_user] = _admin_user
         try:
             mock_db = MagicMock()
-            mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(
+            # Batch-fetch submissions via IN() query — returns rejected submission
+            mock_db.table.return_value.select.return_value.in_.return_value.execute.return_value = MagicMock(
                 data=[{"id": "sub-1", "status": "rejected", "shop_id": "shop-1"}]
             )
             with (
