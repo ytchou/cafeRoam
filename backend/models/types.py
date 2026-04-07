@@ -504,7 +504,6 @@ class Job(BaseModel):
 
 class ProcessingStatus(StrEnum):
     PENDING = "pending"
-    PENDING_URL_CHECK = "pending_url_check"
     PENDING_REVIEW = "pending_review"
     SCRAPING = "scraping"
     ENRICHING = "enriching"

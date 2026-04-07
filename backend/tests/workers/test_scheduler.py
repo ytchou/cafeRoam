@@ -100,7 +100,7 @@ async def test_sweep_timed_out_marks_stuck_shops():
     assert "enriching" in active_statuses
     assert "embedding" in active_statuses
     assert "publishing" in active_statuses
-    assert "pending_url_check" in active_statuses
+    assert "pending_url_check" not in active_statuses
     assert "live" not in active_statuses
     assert "failed" not in active_statuses
     assert "timed_out" not in active_statuses
