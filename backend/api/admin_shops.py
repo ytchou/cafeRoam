@@ -174,8 +174,8 @@ async def import_manual_csv(
     reader = csv.DictReader(io.StringIO(text), delimiter=delimiter)
 
     # Normalise header keys to lowercase for flexible column matching
-    _NAME_KEYS = {"name", "title", "shop_name", "store_name"}
-    _URL_KEYS = {"google_maps_url", "url", "maps_url", "google_maps", "link"}
+    name_keys = {"name", "title", "shop_name", "store_name"}
+    url_keys = {"google_maps_url", "url", "maps_url", "google_maps", "link"}
 
     def _pick(row: dict, keys: set[str]) -> str:
         normalised = {k.strip().lower(): v for k, v in row.items()}
@@ -190,8 +190,8 @@ async def import_manual_csv(
     candidates: list[dict[str, str]] = []
 
     for row in reader:
-        name = _pick(row, _NAME_KEYS)
-        url = _pick(row, _URL_KEYS)
+        name = _pick(row, name_keys)
+        url = _pick(row, url_keys)
 
         result = validate_google_maps_url(url)
         if not result.passed:
