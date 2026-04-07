@@ -2,7 +2,7 @@ from datetime import UTC, datetime
 from typing import Any, cast
 from uuid import uuid4
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile
 from postgrest.exceptions import APIError
 from pydantic import BaseModel
 
@@ -125,6 +125,106 @@ async def create_shop(
         target_id=str(shop["id"]),
     )
     return shop
+
+
+@router.post("/import/manual-csv", status_code=202)
+async def import_manual_csv(
+    file: UploadFile,
+    user: dict[str, Any] = Depends(require_admin),  # noqa: B008
+) -> dict[str, Any]:
+    """Upload a CSV with name,google_maps_url columns and batch-import shops.
+
+    Accepts a UTF-8 CSV file (max 10 MB). Columns beyond name and google_maps_url
+    are ignored. Rows with invalid Google Maps URLs or duplicate URLs within the
+    file are silently skipped and counted in the response.
+    """
+    import csv
+    import io
+
+    from importers.prefilter import validate_google_maps_url
+
+    content = await file.read(10 * 1024 * 1024 + 1)
+    if len(content) > 10 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="File exceeds 10 MB limit")
+
+    text = content.decode("utf-8")
+    reader = csv.DictReader(io.StringIO(text))
+
+    invalid_url = 0
+    duplicate_in_file = 0
+    seen_urls: set[str] = set()
+    candidates: list[dict[str, str]] = []
+
+    for row in reader:
+        name = (row.get("name") or "").strip()
+        url = (row.get("google_maps_url") or "").strip()
+
+        result = validate_google_maps_url(url)
+        if not result.is_valid:
+            invalid_url += 1
+            continue
+
+        if url in seen_urls:
+            duplicate_in_file += 1
+            continue
+
+        seen_urls.add(url)
+        candidates.append({"name": name, "google_maps_url": url})
+
+    imported = 0
+    skipped_duplicate = 0
+
+    if candidates:
+        db = get_service_role_client()
+        candidate_urls = [c["google_maps_url"] for c in candidates]
+
+        existing_resp = (
+            db.table("shops")
+            .select("google_maps_url")
+            .in_("google_maps_url", candidate_urls)
+            .execute()
+        )
+        existing_urls: set[str] = {
+            row["google_maps_url"] for row in (existing_resp.data or [])
+        }
+
+        new_rows = [
+            {
+                "name": c["name"],
+                "google_maps_url": c["google_maps_url"],
+                "source": "manual",
+                "processing_status": "pending",
+                "address": "",
+                "review_count": 0,
+            }
+            for c in candidates
+            if c["google_maps_url"] not in existing_urls
+        ]
+        skipped_duplicate = len(candidates) - len(new_rows)
+
+        if new_rows:
+            db.table("shops").insert(new_rows).execute()
+            imported = len(new_rows)
+
+        log_admin_action(
+            admin_user_id=user["id"],
+            action="POST /admin/shops/import/manual-csv",
+            target_type="import",
+            payload={
+                "imported": imported,
+                "skipped_duplicate": skipped_duplicate,
+                "invalid_url": invalid_url,
+                "duplicate_in_file": duplicate_in_file,
+            },
+        )
+
+    return {
+        "imported": imported,
+        "skipped_duplicate": skipped_duplicate,
+        "invalid_url": invalid_url,
+        "duplicate_in_file": duplicate_in_file,
+        "total": imported + skipped_duplicate + invalid_url + duplicate_in_file,
+    }
 
 
 @router.post("/bulk-approve")
