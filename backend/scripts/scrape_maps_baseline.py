@@ -168,8 +168,15 @@ Respond with JSON only, no explanation:
         raw = raw.split("```")[1]
         if raw.startswith("json"):
             raw = raw[4:]
-    parsed = json.loads(raw.strip())
-    scores_by_rank = {s["rank"]: s for s in parsed["scores"]}
+    try:
+        parsed = json.loads(raw.strip())
+        scores_by_rank = {s["rank"]: s for s in parsed["scores"]}
+    except (json.JSONDecodeError, KeyError):
+        print(f"  WARNING: Failed to parse LLM score response: {raw[:200]}")
+        return [
+            {"rank": r["rank"], "name": r["name"], "relevance_score": 1, "notes": "parse_error"}
+            for r in results
+        ]
 
     scored_results = []
     for r in results:

@@ -179,9 +179,7 @@ def load_maps_baseline(path: Path) -> dict[str, dict]:
     return {entry["id"]: entry for entry in data}
 
 
-def compare_query_scores(
-    caferoam_avg: float, maps_avg: float, caferoam_scores: list[int]
-) -> dict:
+def compare_query_scores(maps_avg: float, caferoam_scores: list[int]) -> dict:
     """Compare CafeRoam LLM-judge avg (normalized to 1-5) vs Maps human avg (1-5)."""
     normalized_cr = sum(s * 2 + 1 for s in caferoam_scores) / max(len(caferoam_scores), 1)
     if normalized_cr > maps_avg + 0.5:
@@ -503,7 +501,6 @@ async def main(
             maps_entry = baseline_data[qid]
             cr_scores = [r["judge_score"] for r in qr["results"]]
             comparison = compare_query_scores(
-                caferoam_avg=sum(cr_scores) / max(len(cr_scores), 1),
                 maps_avg=maps_entry["maps_avg_score"],
                 caferoam_scores=cr_scores,
             )

@@ -1,43 +1,5 @@
 [
   {
-    "id": "q2",
-    "query": "溫馨有特色的咖啡廳",
-    "category": "vibe",
-    "maps_results": [
-      {
-        "rank": 1,
-        "name": "Example Cafe 2",
-        "relevance_score": 5,
-        "notes": "Unique decor, cozy atmosphere"
-      },
-      {
-        "rank": 2,
-        "name": "Another Cafe 2",
-        "relevance_score": 4,
-        "notes": "Nice interior"
-      },
-      {
-        "rank": 3,
-        "name": "Third Cafe 2",
-        "relevance_score": 3,
-        "notes": "OK but standard"
-      },
-      {
-        "rank": 4,
-        "name": "Fourth Cafe 2",
-        "relevance_score": 2,
-        "notes": "Chain, no character"
-      },
-      {
-        "rank": 5,
-        "name": "Fifth Cafe 2",
-        "relevance_score": 1,
-        "notes": "Not a cafe"
-      }
-    ],
-    "maps_avg_score": 3.0
-  },
-  {
     "id": "q1",
     "query": "有插座可以工作的安靜咖啡廳",
     "category": "attribute",
