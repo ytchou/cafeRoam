@@ -262,9 +262,6 @@ class TestJobQueue:
 
 def test_acquire_cron_lock_hour_window():
     '''Hour window truncates to start of current hour.'''
-    from datetime import UTC, datetime
-    from unittest.mock import MagicMock
-    from workers.queue import JobQueue
 
     mock_db = MagicMock()
     mock_db.table.return_value.upsert.return_value.execute.return_value.data = [

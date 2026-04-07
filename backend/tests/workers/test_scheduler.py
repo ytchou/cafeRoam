@@ -124,9 +124,9 @@ async def test_sweep_timed_out_skips_when_lock_not_acquired():
 def test_sweep_timed_out_registered_in_scheduler():
     from workers.scheduler import create_scheduler
 
-    with patch('workers.scheduler.AsyncIOScheduler') as MockScheduler:
+    with patch('workers.scheduler.AsyncIOScheduler') as mock_scheduler_cls:
         mock_instance = MagicMock()
-        MockScheduler.return_value = mock_instance
+        mock_scheduler_cls.return_value = mock_instance
         create_scheduler()
 
     job_ids = [call.kwargs.get('id') or call[1].get('id') for call in mock_instance.add_job.call_args_list]
