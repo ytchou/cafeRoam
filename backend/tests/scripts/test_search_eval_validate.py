@@ -48,18 +48,18 @@ class TestLoadMapsBaseline:
 
 class TestCompareQueryScores:
     def test_caferoam_beats_maps_when_normalized_score_is_higher(self) -> None:
-        # caferoam scores [2,2,1,1,0] normalize to avg 4.0 on 1-5 scale vs maps 2.5
-        result = compare_query_scores(maps_avg=2.5, caferoam_scores=[2, 2, 1, 1, 0])
+        # caferoam scores [4,4,3,2,0] normalize to avg 3.6 on 1-5 scale vs maps 2.5 (s+1 formula)
+        result = compare_query_scores(maps_avg=2.5, caferoam_scores=[4, 4, 3, 2, 0])
         assert result["winner"] == "caferoam"
 
     def test_maps_beats_caferoam_when_maps_score_is_higher(self) -> None:
-        # caferoam scores [0,0,1,0,0] normalize to avg 1.4 on 1-5 scale vs maps 4.0
+        # caferoam scores [0,0,1,0,0] normalize to avg 1.2 on 1-5 scale vs maps 4.0 (s+1 formula)
         result = compare_query_scores(maps_avg=4.0, caferoam_scores=[0, 0, 1, 0, 0])
         assert result["winner"] == "maps"
 
     def test_result_is_a_tie_when_scores_are_within_threshold(self) -> None:
-        # caferoam scores [1,1,1,1,0] normalize to avg 3.0 on 1-5 scale vs maps 3.0
-        result = compare_query_scores(maps_avg=3.0, caferoam_scores=[1, 1, 1, 1, 0])
+        # caferoam scores [2,2,2,2,2] normalize to avg 3.0 on 1-5 scale vs maps 3.0 (s+1 formula)
+        result = compare_query_scores(maps_avg=3.0, caferoam_scores=[2, 2, 2, 2, 2])
         assert result["winner"] == "tie"
 
 
@@ -90,8 +90,8 @@ class TestGenerateValidationReport:
                 "caferoam_avg": 4.0,
                 "maps_avg": 2.0,
                 "winner": "caferoam",
-                "caferoam_normalized": 4.0,
-                "caferoam_scores": [2, 2, 1, 1, 0],
+                "caferoam_normalized": 3.6,
+                "caferoam_scores": [4, 4, 3, 2, 0],
                 "ndcg5": 0.8,
                 "mrr": 1.0,
             }
@@ -104,7 +104,7 @@ class TestGenerateValidationReport:
                 "caferoam_avg": 1.0,
                 "maps_avg": 4.0,
                 "winner": "maps",
-                "caferoam_normalized": 1.4,
+                "caferoam_normalized": 1.2,
                 "caferoam_scores": [0, 0, 1, 0, 0],
                 "ndcg5": 0.2,
                 "mrr": 0.0,
@@ -141,8 +141,8 @@ class TestGenerateValidationReport:
                 "caferoam_avg": 4.0,
                 "maps_avg": 2.0,
                 "winner": "caferoam",
-                "caferoam_normalized": 4.0,
-                "caferoam_scores": [2, 2, 1, 1, 0],
+                "caferoam_normalized": 3.6,
+                "caferoam_scores": [4, 4, 3, 2, 0],
                 "ndcg5": 0.8,
                 "mrr": 1.0,
             }
@@ -155,7 +155,7 @@ class TestGenerateValidationReport:
                 "caferoam_avg": 1.0,
                 "maps_avg": 4.0,
                 "winner": "maps",
-                "caferoam_normalized": 1.4,
+                "caferoam_normalized": 1.2,
                 "caferoam_scores": [0, 0, 1, 0, 0],
                 "ndcg5": 0.2,
                 "mrr": 0.0,

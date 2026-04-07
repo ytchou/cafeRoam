@@ -120,14 +120,16 @@ def _load_shop_details(db, shop_ids: list[str]) -> dict[str, dict]:
 
 
 _JUDGE_SYSTEM = """You are a search quality evaluator for a Taiwanese coffee shop directory.
-Rate each search result's relevance to the query on a scale of 0-2:
+Rate each search result's relevance to the query on a scale of 0-4:
   0 = irrelevant (no relationship to query intent)
-  1 = partially relevant (some match but not ideal)
-  2 = highly relevant (strong match to query intent)
+  1 = marginal (very weak match, barely related)
+  2 = partial (some match but not ideal)
+  3 = relevant (good match to query intent)
+  4 = highly relevant (strong match to query intent)
 
 Consider: query intent, shop description, tags, and overall fit.
 Return ONLY valid JSON in this exact format (no markdown, no explanation):
-{"ratings": [{"rank": 1, "score": 2, "reason": "..."}, ...]}"""
+{"ratings": [{"rank": 1, "score": 4, "reason": "..."}, ...]}"""
 
 
 def _build_judge_prompt(query: str, expected_traits: list[str], results: list[dict]) -> str:
@@ -180,8 +182,8 @@ def load_maps_baseline(path: Path) -> dict[str, dict]:
 
 
 def _normalize_score(s: int) -> float:
-    """Convert 0-2 LLM judge score to 1-5 human-comparable scale."""
-    return s * 2 + 1
+    """Convert 0-4 LLM judge score to 1-5 human-comparable scale."""
+    return s + 1
 
 
 def compare_query_scores(maps_avg: float, caferoam_scores: list[int]) -> dict:
@@ -361,13 +363,13 @@ async def main(
         for i, res in enumerate(enriched_results):
             rating = ratings_by_rank.get(i + 1, {"score": 0, "reason": ""})
             raw_score = rating.get("score", 0)
-            res["judge_score"] = max(0, min(2, int(raw_score)))
+            res["judge_score"] = max(0, min(4, int(raw_score)))
             res["reason"] = rating.get("reason", "")
             judge_scores.append(float(res["judge_score"]))
 
         ndcg5 = _ndcg(judge_scores)
         mrr = _mrr(judge_scores)
-        top1_relevant = judge_scores[0] >= 1 if judge_scores else False
+        top1_relevant = judge_scores[0] >= 2 if judge_scores else False
 
         if not json_only:
             scores_str = " ".join(str(int(s)) for s in judge_scores)
