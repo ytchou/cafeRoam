@@ -16,6 +16,7 @@ export const STATUS_OPTIONS = [
   'live',
   'failed',
   'filtered_dead_url',
+  'timed_out',
 ] as const;
 
 export const STATUS_LABELS: Record<string, string> = {
@@ -30,6 +31,7 @@ export const STATUS_LABELS: Record<string, string> = {
   live: 'Live',
   failed: 'Failed',
   filtered_dead_url: 'Dead URL',
+  timed_out: 'Timed Out',
 };
 
 export const STATUS_COLORS: Record<string, string> = {
@@ -43,6 +45,7 @@ export const STATUS_COLORS: Record<string, string> = {
   live: 'bg-green-100 text-green-800 border-green-300',
   filtered_dead_url: 'bg-red-100 text-red-700 border-red-300',
   failed: 'bg-red-100 text-red-800 border-red-300',
+  timed_out: 'bg-amber-100 text-amber-800 border-amber-300',
 };
 
 export const SOURCE_OPTIONS = [
