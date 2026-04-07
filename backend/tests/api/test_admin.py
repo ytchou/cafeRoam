@@ -442,6 +442,81 @@ class TestBulkApproveSubmissions:
             app.dependency_overrides.clear()
 
 
+class TestBulkRejectSubmissions:
+    def test_rejects_pending_submissions_with_reason(self):
+        app.dependency_overrides[get_current_user] = _admin_user
+        try:
+            mock_db = MagicMock()
+            mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(
+                data=[{"id": "sub-1", "status": "pending", "shop_id": "shop-1"}]
+            )
+            # UPDATE submission
+            mock_db.table.return_value.update.return_value.eq.return_value.not_.return_value.in_.return_value.execute.return_value = MagicMock(
+                data=[{"id": "sub-1"}]
+            )
+            mock_db.rpc.return_value.execute.return_value = MagicMock(data=None)
+            # UPDATE shop
+            mock_db.table.return_value.update.return_value.eq.return_value.execute.return_value = MagicMock(
+                data=[]
+            )
+            with (
+                patch("api.admin.get_service_role_client", return_value=mock_db),
+                patch("middleware.admin_audit.get_service_role_client", return_value=mock_db),
+                patch("api.deps.settings") as mock_settings,
+            ):
+                mock_settings.admin_user_ids = [_ADMIN_ID]
+                response = client.post(
+                    "/admin/pipeline/reject-bulk",
+                    json={"submission_ids": ["sub-1"], "rejection_reason": "not_a_cafe"},
+                )
+            assert response.status_code == 200
+            data = response.json()
+            assert data["rejected"] == 1
+            assert data["skipped"] == 0
+        finally:
+            app.dependency_overrides.clear()
+
+    def test_already_rejected_submissions_are_skipped(self):
+        app.dependency_overrides[get_current_user] = _admin_user
+        try:
+            mock_db = MagicMock()
+            mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(
+                data=[{"id": "sub-1", "status": "rejected", "shop_id": "shop-1"}]
+            )
+            with (
+                patch("api.admin.get_service_role_client", return_value=mock_db),
+                patch("middleware.admin_audit.get_service_role_client", return_value=mock_db),
+                patch("api.deps.settings") as mock_settings,
+            ):
+                mock_settings.admin_user_ids = [_ADMIN_ID]
+                response = client.post(
+                    "/admin/pipeline/reject-bulk",
+                    json={"submission_ids": ["sub-1"], "rejection_reason": "not_a_cafe"},
+                )
+            assert response.status_code == 200
+            data = response.json()
+            assert data["rejected"] == 0
+            assert data["skipped"] == 1
+        finally:
+            app.dependency_overrides.clear()
+
+    def test_returns_400_when_more_than_50_ids(self):
+        app.dependency_overrides[get_current_user] = _admin_user
+        try:
+            with patch("api.deps.settings") as mock_settings:
+                mock_settings.admin_user_ids = [_ADMIN_ID]
+                response = client.post(
+                    "/admin/pipeline/reject-bulk",
+                    json={
+                        "submission_ids": [f"sub-{i}" for i in range(51)],
+                        "rejection_reason": "not_a_cafe",
+                    },
+                )
+            assert response.status_code == 400
+        finally:
+            app.dependency_overrides.clear()
+
+
 class TestAdminJobCancel:
     def test_admin_can_cancel_a_pending_job(self):
         """Admin can cancel a pending job."""
