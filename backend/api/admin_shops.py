@@ -173,6 +173,8 @@ async def import_manual_csv(
 
     imported = 0
     skipped_duplicate = 0
+    reset_to_pending = 0
+    resettable_statuses = {"failed", "timed_out"}
 
     if candidates:
         db = get_service_role_client()
@@ -180,11 +182,29 @@ async def import_manual_csv(
 
         existing_resp = (
             db.table("shops")
-            .select("google_maps_url")
+            .select("google_maps_url, processing_status")
             .in_("google_maps_url", candidate_urls)
             .execute()
         )
-        existing_urls: set[str] = {row["google_maps_url"] for row in (existing_resp.data or [])}
+        existing_rows = existing_resp.data or []
+        resettable_urls: set[str] = {
+            row["google_maps_url"]
+            for row in existing_rows
+            if row.get("processing_status") in resettable_statuses
+        }
+        skipped_urls: set[str] = {
+            row["google_maps_url"]
+            for row in existing_rows
+            if row.get("processing_status") not in resettable_statuses
+        }
+
+        if resettable_urls:
+            db.table("shops").update({"processing_status": "pending"}).in_(
+                "google_maps_url", list(resettable_urls)
+            ).execute()
+            reset_to_pending = len(resettable_urls)
+
+        skipped_duplicate = len(skipped_urls)
 
         new_rows = [
             {
@@ -196,9 +216,9 @@ async def import_manual_csv(
                 "review_count": 0,
             }
             for c in candidates
-            if c["google_maps_url"] not in existing_urls
+            if c["google_maps_url"] not in resettable_urls
+            and c["google_maps_url"] not in skipped_urls
         ]
-        skipped_duplicate = len(candidates) - len(new_rows)
 
         if new_rows:
             db.table("shops").insert(new_rows).execute()
@@ -211,6 +231,7 @@ async def import_manual_csv(
         payload={
             "imported": imported,
             "skipped_duplicate": skipped_duplicate,
+            "reset_to_pending": reset_to_pending,
             "invalid_url": invalid_url,
             "duplicate_in_file": duplicate_in_file,
         },
@@ -219,9 +240,10 @@ async def import_manual_csv(
     return {
         "imported": imported,
         "skipped_duplicate": skipped_duplicate,
+        "reset_to_pending": reset_to_pending,
         "invalid_url": invalid_url,
         "duplicate_in_file": duplicate_in_file,
-        "total": imported + skipped_duplicate + invalid_url + duplicate_in_file,
+        "total": imported + skipped_duplicate + reset_to_pending + invalid_url + duplicate_in_file,
     }
 
 
