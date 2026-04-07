@@ -37,14 +37,17 @@ APScheduler (every hour at :30)
 ### Sweep Scope
 
 **Active (non-terminal) statuses swept:**
+
 - `pending`, `pending_url_check`, `scraping`, `enriching`, `embedding`, `publishing`
 
 **Terminal statuses excluded:**
+
 - `live`, `failed`, `rejected`, `out_of_region`, `filtered_dead_url`, `timed_out`, `pending_review`
 
 ### Queue Guard
 
 `timed_out` shops are naturally excluded from the daily batch scrape (which filters `eq("processing_status", "pending")`). Recovery is admin-only via:
+
 - CSV re-import (DEV-290)
 - Retry button (DEV-291)
 

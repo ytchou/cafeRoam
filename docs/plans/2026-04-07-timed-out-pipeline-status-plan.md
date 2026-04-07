@@ -15,6 +15,7 @@
 **Tech Stack:** Supabase (Postgres), FastAPI, APScheduler, Next.js/TypeScript
 
 **Acceptance Criteria:**
+
 - [ ] Shops stuck in any active pipeline state for 3+ days are automatically marked `timed_out`
 - [ ] Admin dashboard displays `timed_out` count as an amber badge alongside other pipeline statuses
 - [ ] `timed_out` shops are not re-picked by the daily batch scrape cron
@@ -24,6 +25,7 @@
 ### Task 1: DB Migration — Add `timed_out` to constraint
 
 **Files:**
+
 - Create: `supabase/migrations/20260407000001_add_timed_out_to_shops_status.sql`
 
 No test needed — pure DDL migration, verified by `supabase db diff`.
@@ -60,6 +62,7 @@ git commit -m "feat(DEV-289): add timed_out to shops processing_status constrain
 ### Task 2: Backend Enum — Add `TIMED_OUT` to `ProcessingStatus`
 
 **Files:**
+
 - Modify: `backend/models/types.py` (ProcessingStatus enum, around line 505–516)
 - Test: `backend/tests/models/test_pipeline_types.py` (if exists, or inline verification)
 
@@ -117,6 +120,7 @@ git commit -m "feat(DEV-289): add TIMED_OUT to ProcessingStatus enum"
 ### Task 3: Add `hour` window to `acquire_cron_lock`
 
 **Files:**
+
 - Modify: `backend/workers/queue.py` (`acquire_cron_lock` method, around line 153–184)
 - Test: `backend/tests/workers/test_queue.py`
 
@@ -182,6 +186,7 @@ git commit -m "feat(DEV-289): add hour window support to acquire_cron_lock"
 ### Task 4: Implement `sweep_timed_out` cron job + register in scheduler
 
 **Files:**
+
 - Modify: `backend/workers/scheduler.py` (new cron function + registration in `create_scheduler`)
 - Test: `backend/tests/workers/test_scheduler.py`
 
@@ -354,6 +359,7 @@ git commit -m "feat(DEV-289): implement sweep_timed_out hourly cron job"
 ### Task 5: Frontend Constants — Add `timed_out` to admin dashboard
 
 **Files:**
+
 - Modify: `app/(admin)/admin/shops/_constants.ts`
 - Test: No test needed — pure data constants with no logic; verified by `pnpm type-check`
 
@@ -412,6 +418,7 @@ git commit -m "feat(DEV-289): add timed_out status to admin dashboard constants"
 ### Task 6: Integration Test — Pipeline status endpoint returns `timed_out`
 
 **Files:**
+
 - Modify: `backend/tests/api/test_admin_shops.py`
 
 **Step 1: Write the integration test**
@@ -476,15 +483,18 @@ graph TD
 ```
 
 **Wave 1** (parallel — no dependencies):
+
 - Task 1: DB Migration
 - Task 2: Backend Enum
 - Task 3: Hour Window Lock
 - Task 5: Frontend Constants
 
 **Wave 2** (depends on Wave 1):
+
 - Task 4: Sweep Cron Job ← Tasks 1, 2, 3
 
 **Wave 3** (depends on Wave 2):
+
 - Task 6: Integration Test ← Task 4
 
 ---

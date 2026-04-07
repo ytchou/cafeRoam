@@ -57,7 +57,12 @@
       "status": "valid"
     }
   ],
-  "active_agents": ["Standards", "Bug Hunter", "Architecture", "Test Philosophy"],
+  "active_agents": [
+    "Standards",
+    "Bug Hunter",
+    "Architecture",
+    "Test Philosophy"
+  ],
   "skipped": [
     {
       "file": "backend/workers/scheduler.py",
