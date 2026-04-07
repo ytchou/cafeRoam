@@ -18,7 +18,6 @@ import asyncio
 import json
 import random
 import sys
-import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -201,7 +200,8 @@ async def scrape_baseline(
             data = json.loads(output_file.read_text())
             # Only keep entries that have real results (not template placeholders)
             for entry in data:
-                if entry.get("maps_results") and entry["maps_results"][0].get("name") != "Example Cafe":
+                first = entry.get("maps_results", [{}])[0]
+                if entry.get("maps_results") and first.get("name") != "Example Cafe":
                     existing[entry["id"]] = entry
             print(f"Resuming: {len(existing)} queries already done")
         except Exception:
@@ -285,12 +285,18 @@ async def scrape_baseline(
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Scrape Google Maps baseline for search quality validation")
+    parser = argparse.ArgumentParser(
+        description="Scrape Google Maps baseline for search quality validation"
+    )
     parser.add_argument("--queries-file", type=Path, default=_QUERIES_FILE)
     parser.add_argument("--output", type=Path, default=_OUTPUT_FILE)
     parser.add_argument("--delay-min", type=int, default=30, help="Min seconds between queries")
     parser.add_argument("--delay-max", type=int, default=60, help="Max seconds between queries")
-    parser.add_argument("--headless", action="store_true", help="Run browser headless (not recommended for Maps)")
+    parser.add_argument(
+        "--headless",
+        action="store_true",
+        help="Run browser headless (not recommended for Maps)",
+    )
     args = parser.parse_args()
 
     asyncio.run(scrape_baseline(

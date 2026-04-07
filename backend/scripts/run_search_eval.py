@@ -495,7 +495,10 @@ async def main(
         for qr in all_query_results:
             qid = qr["id"]
             if qid not in baseline_data:
-                print(f"Warning: Query {qid} not found in Maps baseline — skipping", file=sys.stderr)
+                print(
+                    f"Warning: Query {qid} not found in Maps baseline — skipping",
+                    file=sys.stderr,
+                )
                 continue
             maps_entry = baseline_data[qid]
             cr_scores = [r["judge_score"] for r in qr["results"]]
