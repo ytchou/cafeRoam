@@ -232,8 +232,28 @@ describe('VibePage — /explore/vibes/[slug]', () => {
   it('When districts are available, their names appear as filter chips alongside 全部 and 附近', () => {
     vi.mocked(useDistricts).mockReturnValue({
       districts: [
-        { id: 'district-daan', nameZh: '大安區' },
-        { id: 'district-zhongzheng', nameZh: '中正區' },
+        {
+          id: 'district-daan',
+          slug: 'da-an',
+          nameEn: "Da'an",
+          nameZh: '大安區',
+          descriptionEn: null,
+          descriptionZh: null,
+          city: 'taipei',
+          shopCount: 10,
+          sortOrder: 1,
+        },
+        {
+          id: 'district-zhongzheng',
+          slug: 'zhongzheng',
+          nameEn: 'Zhongzheng',
+          nameZh: '中正區',
+          descriptionEn: null,
+          descriptionZh: null,
+          city: 'taipei',
+          shopCount: 5,
+          sortOrder: 2,
+        },
       ],
       isLoading: false,
       error: null,

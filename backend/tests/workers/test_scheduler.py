@@ -1,5 +1,13 @@
+from unittest.mock import MagicMock, patch
+
+import pytest
+
 from models.types import JobType
-from workers.scheduler import create_scheduler, get_scheduler_status
+from workers.scheduler import (
+    create_scheduler,
+    get_scheduler_status,
+    run_sweep_timed_out,
+)
 
 
 class TestScheduler:
@@ -58,3 +66,71 @@ class TestSchedulerStatus:
             assert "daily_batch_scrape" in job_ids
         finally:
             scheduler.shutdown()
+
+
+@pytest.mark.asyncio
+async def test_sweep_timed_out_marks_stuck_shops():
+    """Shops in active states with updated_at > 3 days ago are marked timed_out."""
+    mock_db = MagicMock()
+    mock_execute = MagicMock()
+    mock_db.table.return_value.update.return_value.in_.return_value.lt.return_value.execute.return_value = mock_execute
+
+    mock_queue = MagicMock()
+    mock_queue.acquire_cron_lock.return_value = True
+
+    with (
+        patch("workers.scheduler.get_service_role_client", return_value=mock_db),
+        patch("workers.scheduler.JobQueue", return_value=mock_queue),
+    ):
+        await run_sweep_timed_out()
+
+    mock_db.table.assert_called_with("shops")
+    update_call = mock_db.table.return_value.update
+    update_call.assert_called_once()
+    update_args = update_call.call_args[0][0]
+    assert update_args["processing_status"] == "timed_out"
+
+    in_call = mock_db.table.return_value.update.return_value.in_
+    in_call.assert_called_once()
+    in_args = in_call.call_args[0]
+    assert in_args[0] == "processing_status"
+    active_statuses = in_args[1]
+    assert "pending" in active_statuses
+    assert "scraping" in active_statuses
+    assert "enriching" in active_statuses
+    assert "embedding" in active_statuses
+    assert "publishing" in active_statuses
+    assert "pending_url_check" in active_statuses
+    assert "live" not in active_statuses
+    assert "failed" not in active_statuses
+    assert "timed_out" not in active_statuses
+
+
+@pytest.mark.asyncio
+async def test_sweep_timed_out_skips_when_lock_not_acquired():
+    """Sweep is skipped if cron lock was already acquired this hour."""
+    mock_db = MagicMock()
+    mock_queue = MagicMock()
+    mock_queue.acquire_cron_lock.return_value = False
+
+    with (
+        patch("workers.scheduler.get_service_role_client", return_value=mock_db),
+        patch("workers.scheduler.JobQueue", return_value=mock_queue),
+    ):
+        await run_sweep_timed_out()
+
+    mock_db.table.return_value.update.assert_not_called()
+
+
+def test_sweep_timed_out_registered_in_scheduler():
+    from workers.scheduler import create_scheduler
+
+    with patch("workers.scheduler.AsyncIOScheduler") as mock_scheduler_cls:
+        mock_instance = MagicMock()
+        mock_scheduler_cls.return_value = mock_instance
+        create_scheduler()
+
+    job_ids = [
+        call.kwargs.get("id") or call[1].get("id") for call in mock_instance.add_job.call_args_list
+    ]
+    assert "sweep_timed_out" in job_ids

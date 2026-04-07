@@ -303,6 +303,36 @@ async def run_daily_batch_scrape() -> None:
     logger.info("daily_batch_scrape: enqueued", batch_id=batch_id, count=len(batch_shops))
 
 
+@idempotent_cron("sweep_timed_out", window="hour")
+async def run_sweep_timed_out() -> None:
+    """Mark shops stuck in active pipeline states for 3+ days as timed_out."""
+    db = get_service_role_client()
+
+    active_statuses = [
+        "pending",
+        "pending_url_check",
+        "scraping",
+        "enriching",
+        "embedding",
+        "publishing",
+    ]
+    threshold = (datetime.now(UTC) - timedelta(days=3)).isoformat()
+
+    response = (
+        db.table("shops")
+        .update({"processing_status": "timed_out"})
+        .in_("processing_status", active_statuses)
+        .lt("updated_at", threshold)
+        .execute()
+    )
+
+    count = len(response.data) if response.data else 0
+    if count:
+        logger.info("Swept stuck shops to timed_out", count=count)
+    else:
+        logger.info("sweep_timed_out: no stuck shops found")
+
+
 async def poll_pending_job_types() -> None:
     """Single-poll loop: one DB query to find pending types, then dispatch each."""
     global _last_poll_at, _poll_failure_count, _poll_connected, _poll_backoff_until
@@ -391,7 +421,7 @@ async def _run_delete_expired_accounts() -> None:
     await delete_expired_accounts()
 
 
-def get_scheduler_status(scheduler: AsyncIOScheduler) -> dict[str, object]:
+def get_scheduler_status(scheduler: AsyncIOScheduler) -> dict[str, Any]:
     """Return scheduler health status for the /health/scheduler endpoint."""
     jobs = scheduler.get_jobs()
     return {
@@ -444,6 +474,12 @@ def create_scheduler() -> AsyncIOScheduler:
         hour=3,
         minute=10,
         id="daily_batch_scrape",
+    )
+    scheduler.add_job(
+        run_sweep_timed_out,
+        "cron",
+        minute=30,
+        id="sweep_timed_out",
     )
 
     scheduler.add_job(

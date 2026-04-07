@@ -513,6 +513,7 @@ class ProcessingStatus(StrEnum):
     LIVE = "live"
     FAILED = "failed"
     FILTERED_DEAD_URL = "filtered_dead_url"
+    TIMED_OUT = "timed_out"
 
 
 class ShopSubmission(BaseModel):

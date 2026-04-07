@@ -160,6 +160,8 @@ class JobQueue:
             )
         elif window == "day":
             window_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        elif window == "hour":
+            window_start = now.replace(minute=0, second=0, microsecond=0)
         else:
             raise ValueError(f"Unknown cron window: {window!r}")
 
