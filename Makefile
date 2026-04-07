@@ -52,32 +52,6 @@ migrate:
 	supabase db diff
 	supabase db push
 
-grant-admin:
-	@if [ -z "$$EMAIL" ]; then echo "Usage: EMAIL=user@example.com make grant-admin"; exit 1; fi
-	@echo "Granting admin to $$EMAIL..."
-	@SUPABASE_URL=$$(grep -E "^SUPABASE_URL" backend/.env | cut -d'=' -f2-); \
-	SERVICE_ROLE=$$(grep -E "^SUPABASE_SERVICE_ROLE_KEY" backend/.env | cut -d'=' -f2-); \
-	if [ -z "$$SUPABASE_URL" ]; then echo "Error: SUPABASE_URL not set in backend/.env"; exit 1; fi; \
-	if [ -z "$$SERVICE_ROLE" ]; then echo "Error: SUPABASE_SERVICE_ROLE_KEY not set in backend/.env"; exit 1; fi; \
-	USER_JSON=$$(curl -s \
-	  "$$SUPABASE_URL/auth/v1/admin/users?email=$$EMAIL&per_page=1" \
-	  -H "apikey: $$SERVICE_ROLE" \
-	  -H "Authorization: Bearer $$SERVICE_ROLE"); \
-	USER_ID=$$(echo "$$USER_JSON" | python3 -c "import sys,json; users=json.load(sys.stdin).get('users',[]); print(users[0]['id'] if users else '')" 2>/dev/null); \
-	if [ -z "$$USER_ID" ]; then echo "Error: user $$EMAIL not found"; exit 1; fi; \
-	RESULT=$$(curl -s -o /tmp/grant_admin_result.json -w "%{http_code}" \
-	  -X PUT "$$SUPABASE_URL/auth/v1/admin/users/$$USER_ID" \
-	  -H "apikey: $$SERVICE_ROLE" \
-	  -H "Authorization: Bearer $$SERVICE_ROLE" \
-	  -H "Content-Type: application/json" \
-	  -d "{\"app_metadata\":{\"is_admin\":true}}"); \
-	if [ "$$RESULT" = "200" ]; then \
-	  echo "Done — is_admin=true set for $$EMAIL (id: $$USER_ID)"; \
-	  echo "Note: user must sign out and back in for the new JWT claim to take effect."; \
-	else \
-	  echo "Failed (HTTP $$RESULT):" && cat /tmp/grant_admin_result.json && exit 1; \
-	fi
-
 restore-seed-user:
 	@echo "Restoring dev admin user (caferoam.tw@gmail.com)..."
 	@SUPABASE_URL=$$(grep -E "^SUPABASE_URL" backend/.env | cut -d'=' -f2-); \
