@@ -179,9 +179,16 @@ def load_maps_baseline(path: Path) -> dict[str, dict]:
     return {entry["id"]: entry for entry in data}
 
 
+def _normalize_score(s: int) -> float:
+    """Convert 0-2 LLM judge score to 1-5 human-comparable scale."""
+    return s * 2 + 1
+
+
 def compare_query_scores(maps_avg: float, caferoam_scores: list[int]) -> dict:
     """Compare CafeRoam LLM-judge avg (normalized to 1-5) vs Maps human avg (1-5)."""
-    normalized_cr = sum(s * 2 + 1 for s in caferoam_scores) / max(len(caferoam_scores), 1)
+    normalized_cr = sum(_normalize_score(s) for s in caferoam_scores) / max(
+        len(caferoam_scores), 1
+    )
     if normalized_cr > maps_avg + 0.5:
         winner = "caferoam"
     elif maps_avg > normalized_cr + 0.5:

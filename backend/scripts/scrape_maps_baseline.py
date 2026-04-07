@@ -280,7 +280,7 @@ async def scrape_baseline(
                 print(f"  ERROR on {qid}: {e}")
                 print("  Continuing to next query...")
 
-            if i < len(queries) - 1 and qid not in {q["id"] for q in queries[:i]}:
+            if i < len(queries) - 1:
                 delay = random.randint(delay_min, delay_max)
                 print(f"  Waiting {delay}s before next query...")
                 await asyncio.sleep(delay)
