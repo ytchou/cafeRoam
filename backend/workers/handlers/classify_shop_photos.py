@@ -4,6 +4,7 @@ from typing import Any
 import structlog
 from supabase import Client
 
+from core.db import first
 from models.types import JobType, PhotoCategory
 from providers.llm.interface import LLMProvider
 from workers.queue import JobQueue
@@ -84,10 +85,26 @@ async def handle_classify_shop_photos(
         vibe=sum(1 for c in classified if c["category"] == PhotoCategory.VIBE),
     )
 
-    # Trigger enrichment now that photos are classified and VIBE photos are available
+    # Trigger enrichment now that photos are classified and VIBE photos are available.
+    # Carry submission context forward so enrich->embed->publish can update submission
+    # status and create activity records correctly.
+    enrich_payload: dict[str, object] = {"shop_id": shop_id}
+    submission_response = (
+        db.table("shop_submissions")
+        .select("id, submitted_by")
+        .eq("shop_id", shop_id)
+        .eq("status", "processing")
+        .limit(1)
+        .execute()
+    )
+    if submission_response.data:
+        sub = first(submission_response.data, "shop_submissions for classify->enrich")
+        enrich_payload["submission_id"] = sub["id"]
+        enrich_payload["submitted_by"] = sub["submitted_by"]
+
     await queue.enqueue(
         job_type=JobType.ENRICH_SHOP,
-        payload={"shop_id": shop_id},
+        payload=enrich_payload,
         priority=5,
     )
 
