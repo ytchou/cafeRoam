@@ -362,7 +362,7 @@ async def bulk_approve(
 @router.post("/retry")
 async def retry_shops(
     body: RetryShopsRequest,
-    user: dict[str, Any] = Depends(require_admin),
+    user: dict[str, Any] = Depends(require_admin),  # noqa: B008
 ) -> dict[str, Any]:
     if body.shop_ids is not None and len(body.shop_ids) > 50:
         raise HTTPException(status_code=400, detail="Maximum 50 shops per retry request")
@@ -371,10 +371,9 @@ async def retry_shops(
     retryable_values = [s.value for s in RETRYABLE_STATUSES]
 
     query = db.table("shops").select("id").in_("processing_status", retryable_values)
-    if body.shop_ids is not None:
-        query = query.in_("id", body.shop_ids)
-    else:
-        query = query.limit(200)
+    query = (
+        query.in_("id", body.shop_ids) if body.shop_ids is not None else query.limit(200)
+    )
 
     eligible_res = query.execute()
     eligible_ids = [r["id"] for r in (eligible_res.data or [])]
@@ -412,7 +411,7 @@ async def retry_shops(
 @router.post("/bulk-reject")
 async def bulk_reject_shops(
     body: BulkRejectShopsRequest,
-    user: dict[str, Any] = Depends(require_admin),
+    user: dict[str, Any] = Depends(require_admin),  # noqa: B008
 ) -> dict[str, Any]:
     if len(body.shop_ids) > 50:
         raise HTTPException(status_code=400, detail="Maximum 50 shops per bulk-reject request")
@@ -453,7 +452,11 @@ async def bulk_reject_shops(
         admin_user_id=user["id"],
         action="POST /admin/shops/bulk-reject",
         target_type="shop",
-        payload={"rejected": rejected_count, "skipped": skipped_count, "reason": body.rejection_reason},
+        payload={
+                "rejected": rejected_count,
+                "skipped": skipped_count,
+                "reason": body.rejection_reason,
+            },
     )
     return {"rejected": rejected_count, "skipped": skipped_count}
 

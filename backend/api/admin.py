@@ -228,7 +228,9 @@ async def approve_submissions_bulk(
     user: dict[str, Any] = Depends(require_admin),  # noqa: B008
 ) -> dict[str, Any]:
     if len(body.submission_ids) > 50:
-        raise HTTPException(status_code=400, detail="Maximum 50 submissions per bulk-approve request")
+        raise HTTPException(
+            status_code=400, detail="Maximum 50 submissions per bulk-approve request"
+        )
 
     db = get_service_role_client()
     now = datetime.now(tz=UTC).isoformat()
@@ -297,10 +299,12 @@ async def approve_submissions_bulk(
 @router.post("/reject-bulk")
 async def reject_submissions_bulk(
     body: BulkRejectSubmissionsRequest,
-    user: dict[str, Any] = Depends(require_admin),
+    user: dict[str, Any] = Depends(require_admin),  # noqa: B008
 ) -> dict[str, Any]:
     if len(body.submission_ids) > 50:
-        raise HTTPException(status_code=400, detail="Maximum 50 submissions per bulk-reject request")
+        raise HTTPException(
+            status_code=400, detail="Maximum 50 submissions per bulk-reject request"
+        )
 
     db = get_service_role_client()
     now = datetime.now(tz=UTC).isoformat()
@@ -344,7 +348,9 @@ async def reject_submissions_bulk(
             "cancel_shop_jobs",
             {"p_shop_id": sub["shop_id"], "p_reason": body.rejection_reason},
         ).execute()
-        db.table("shops").update({"processing_status": "rejected"}).eq("id", sub["shop_id"]).execute()
+        db.table("shops").update({"processing_status": "rejected"}).eq(
+            "id", sub["shop_id"]
+        ).execute()
         rejected += 1
 
     log_admin_action(
