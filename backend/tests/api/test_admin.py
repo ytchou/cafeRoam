@@ -387,13 +387,13 @@ class TestBulkApproveSubmissions:
                     ]
                 )
             )
-            # UPDATE submission succeeds
-            mock_db.table.return_value.update.return_value.eq.return_value.in_.return_value.execute.return_value = MagicMock(
+            # Bulk UPDATE submissions via .in_().in_().select().execute()
+            mock_db.table.return_value.update.return_value.in_.return_value.in_.return_value.select.return_value.execute.return_value = MagicMock(
                 data=[{"id": "sub-1"}]
             )
-            # UPDATE shop succeeds
-            mock_db.table.return_value.update.return_value.eq.return_value.select.return_value.execute.return_value = MagicMock(
-                data=[{"name": "Test Cafe"}]
+            # Bulk UPDATE shops via .in_().select().execute()
+            mock_db.table.return_value.update.return_value.in_.return_value.select.return_value.execute.return_value = MagicMock(
+                data=[{"id": "shop-1", "name": "Test Cafe"}]
             )
             with (
                 patch("api.admin.get_service_role_client", return_value=mock_db),
@@ -454,6 +454,61 @@ class TestBulkApproveSubmissions:
         finally:
             app.dependency_overrides.clear()
 
+    def test_approves_all_N_submissions_not_just_one(self):
+        """When 3 pending submissions are bulk-approved, all 3 are approved — not just the first.
+
+        Regression for: supabase-py .update().execute() returns data=[] without .select(),
+        causing the per-item guard to skip every submission after the first.
+        """
+        app.dependency_overrides[get_current_user] = _admin_user
+        try:
+            mock_db = MagicMock()
+            sub_ids = ["sub-1", "sub-2", "sub-3"]
+            shop_ids = ["shop-1", "shop-2", "shop-3"]
+
+            # Batch-fetch returns all 3 pending submissions
+            mock_db.table.return_value.select.return_value.in_.return_value.execute.return_value = MagicMock(
+                data=[
+                    {"id": sub_ids[0], "status": "pending", "shop_id": shop_ids[0], "submitted_by": None},
+                    {"id": sub_ids[1], "status": "pending", "shop_id": shop_ids[1], "submitted_by": "user-42"},
+                    {"id": sub_ids[2], "status": "processing", "shop_id": shop_ids[2], "submitted_by": None},
+                ]
+            )
+            # Simulate real supabase-py behavior: .update()...execute() without .select() returns data=[]
+            # The buggy per-item path hits .eq().in_().execute() — make it return empty data
+            mock_db.table.return_value.update.return_value.eq.return_value.in_.return_value.execute.return_value = MagicMock(
+                data=[]
+            )
+            # The fixed bulk path hits .in_().in_().select().execute() — make it return all 3 IDs
+            mock_db.table.return_value.update.return_value.in_.return_value.in_.return_value.select.return_value.execute.return_value = MagicMock(
+                data=[{"id": "sub-1"}, {"id": "sub-2"}, {"id": "sub-3"}]
+            )
+            # Bulk UPDATE shops (via .in_("id", ...)) returns shop names
+            mock_db.table.return_value.update.return_value.in_.return_value.select.return_value.execute.return_value = MagicMock(
+                data=[
+                    {"id": "shop-1", "name": "Cafe Alpha"},
+                    {"id": "shop-2", "name": "Cafe Beta"},
+                    {"id": "shop-3", "name": "Cafe Gamma"},
+                ]
+            )
+
+            with (
+                patch("api.admin.get_service_role_client", return_value=mock_db),
+                patch("middleware.admin_audit.get_service_role_client", return_value=mock_db),
+                patch("api.deps.settings") as mock_settings,
+            ):
+                mock_settings.admin_user_ids = [_ADMIN_ID]
+                response = client.post(
+                    "/admin/pipeline/approve-bulk",
+                    json={"submission_ids": sub_ids},
+                )
+            assert response.status_code == 200
+            data = response.json()
+            assert data["approved"] == 3, f"Expected 3 approved, got {data['approved']} — bulk update bug?"
+            assert data["skipped"] == 0
+        finally:
+            app.dependency_overrides.clear()
+
 
 class TestBulkRejectSubmissions:
     def test_rejects_pending_submissions_with_reason(self):
@@ -464,13 +519,13 @@ class TestBulkRejectSubmissions:
             mock_db.table.return_value.select.return_value.in_.return_value.execute.return_value = (
                 MagicMock(data=[{"id": "sub-1", "status": "pending", "shop_id": "shop-1"}])
             )
-            # UPDATE submission
-            mock_db.table.return_value.update.return_value.eq.return_value.not_.return_value.in_.return_value.execute.return_value = MagicMock(
+            # Bulk UPDATE submissions via .in_().not_.in_().select().execute()
+            mock_db.table.return_value.update.return_value.in_.return_value.not_.in_.return_value.select.return_value.execute.return_value = MagicMock(
                 data=[{"id": "sub-1"}]
             )
             mock_db.rpc.return_value.execute.return_value = MagicMock(data=None)
-            # UPDATE shop
-            mock_db.table.return_value.update.return_value.eq.return_value.execute.return_value = (
+            # Bulk UPDATE shops via .in_().execute()
+            mock_db.table.return_value.update.return_value.in_.return_value.execute.return_value = (
                 MagicMock(data=[])
             )
             with (
@@ -528,6 +583,59 @@ class TestBulkRejectSubmissions:
                     },
                 )
             assert response.status_code == 400
+        finally:
+            app.dependency_overrides.clear()
+
+    def test_rejects_all_N_submissions_not_just_one(self):
+        """When 3 pending submissions are bulk-rejected, all 3 are rejected — not just the first.
+
+        Regression for: supabase-py .update().execute() returns data=[] without .select(),
+        causing the per-item guard to skip every submission after the first.
+        """
+        app.dependency_overrides[get_current_user] = _admin_user
+        try:
+            mock_db = MagicMock()
+            sub_ids = ["sub-1", "sub-2", "sub-3"]
+            shop_ids = ["shop-1", "shop-2", "shop-3"]
+
+            # Batch-fetch returns all 3 submissions in rejectable states
+            mock_db.table.return_value.select.return_value.in_.return_value.execute.return_value = MagicMock(
+                data=[
+                    {"id": sub_ids[0], "status": "pending", "shop_id": shop_ids[0]},
+                    {"id": sub_ids[1], "status": "processing", "shop_id": shop_ids[1]},
+                    {"id": sub_ids[2], "status": "pending_review", "shop_id": shop_ids[2]},
+                ]
+            )
+            # Simulate real supabase-py behavior: .update()...execute() without .select() returns data=[]
+            # The buggy per-item path hits .eq().not_.in_().execute() — make it return empty data
+            # Note: not_ is accessed as a property attribute (not called), so the chain is .not_.in_(), not .not_().in_()
+            mock_db.table.return_value.update.return_value.eq.return_value.not_.in_.return_value.execute.return_value = MagicMock(
+                data=[]
+            )
+            # The fixed bulk path hits .in_().not_.in_().select().execute() — make it return all 3 IDs
+            mock_db.table.return_value.update.return_value.in_.return_value.not_.in_.return_value.select.return_value.execute.return_value = MagicMock(
+                data=[{"id": "sub-1"}, {"id": "sub-2"}, {"id": "sub-3"}]
+            )
+            # Bulk UPDATE shops (via .in_("id", ...))
+            mock_db.table.return_value.update.return_value.in_.return_value.execute.return_value = MagicMock(
+                data=[]
+            )
+            mock_db.rpc.return_value.execute.return_value = MagicMock(data=None)
+
+            with (
+                patch("api.admin.get_service_role_client", return_value=mock_db),
+                patch("middleware.admin_audit.get_service_role_client", return_value=mock_db),
+                patch("api.deps.settings") as mock_settings,
+            ):
+                mock_settings.admin_user_ids = [_ADMIN_ID]
+                response = client.post(
+                    "/admin/pipeline/reject-bulk",
+                    json={"submission_ids": sub_ids, "rejection_reason": "not_a_cafe"},
+                )
+            assert response.status_code == 200
+            data = response.json()
+            assert data["rejected"] == 3, f"Expected 3 rejected, got {data['rejected']} — bulk update bug?"
+            assert data["skipped"] == 0
         finally:
             app.dependency_overrides.clear()
 
