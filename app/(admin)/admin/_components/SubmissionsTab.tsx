@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Select,
   SelectContent,
@@ -23,6 +24,14 @@ import {
 import { ADMIN_REJECTION_REASONS } from '@/lib/constants/rejection-reasons';
 import { getStatusVariant } from '../_lib/status-badge';
 import { ConfirmDialog } from './ConfirmDialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
 
 interface Submission {
   id: string;
@@ -55,6 +64,12 @@ export function SubmissionsTab({
     id: string;
     label: string;
   } | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkApproving, setBulkApproving] = useState(false);
+  const [bulkRejecting, setBulkRejecting] = useState(false);
+  const [bulkRejectReason, setBulkRejectReason] =
+    useState<string>('not_a_cafe');
+  const [showBulkRejectDialog, setShowBulkRejectDialog] = useState(false);
 
   async function handleSubmissionAction(
     submissionId: string,
@@ -124,16 +139,136 @@ export function SubmissionsTab({
     await executeApproveSubmission(confirmAction.id);
   }
 
+  const actionableSubmissions = (data?.recent_submissions ?? []).filter((s) =>
+    ['pending', 'processing', 'pending_review'].includes(s.status)
+  );
+  const isAllSelected =
+    actionableSubmissions.length > 0 &&
+    actionableSubmissions.every((s) => selectedIds.has(s.id));
+
+  function toggleSelection(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }
+
+  function handleSelectAll(checked: boolean) {
+    setSelectedIds(
+      checked ? new Set(actionableSubmissions.map((s) => s.id)) : new Set()
+    );
+  }
+
+  async function handleBulkApproveSelected() {
+    setBulkApproving(true);
+    try {
+      const token = await getToken();
+      if (!token) {
+        toast.error('Session expired — please refresh the page');
+        return;
+      }
+      const res = await fetch('/api/admin/pipeline/approve-bulk', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ submission_ids: Array.from(selectedIds) }),
+      });
+      const resData = await res.json();
+      if (!res.ok) {
+        toast.error(resData.detail || 'Bulk approve failed');
+        return;
+      }
+      toast.success(`${resData.approved} submission(s) approved`);
+      setSelectedIds(new Set());
+      onRefresh();
+    } catch {
+      toast.error('Network error');
+    } finally {
+      setBulkApproving(false);
+    }
+  }
+
+  async function handleBulkRejectSelected() {
+    setBulkRejecting(true);
+    try {
+      const token = await getToken();
+      if (!token) {
+        toast.error('Session expired — please refresh the page');
+        return;
+      }
+      const res = await fetch('/api/admin/pipeline/reject-bulk', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          submission_ids: Array.from(selectedIds),
+          rejection_reason: bulkRejectReason,
+        }),
+      });
+      const resData = await res.json();
+      if (!res.ok) {
+        toast.error(resData.detail || 'Bulk reject failed');
+        return;
+      }
+      toast.success(`${resData.rejected} submission(s) rejected`);
+      setSelectedIds(new Set());
+      setShowBulkRejectDialog(false);
+      onRefresh();
+    } catch {
+      toast.error('Network error');
+    } finally {
+      setBulkRejecting(false);
+    }
+  }
+
   return (
     <>
       <section>
         <h2 className="mb-4 text-lg font-semibold">Recent Submissions</h2>
+        {selectedIds.size > 0 && (
+          <div className="mb-2 flex items-center gap-2 rounded border-b border-amber-200 bg-amber-50 px-4 py-2">
+            <span className="text-sm text-amber-800">
+              {selectedIds.size} selected
+            </span>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleBulkApproveSelected}
+              disabled={bulkApproving}
+            >
+              Approve Selected
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setShowBulkRejectDialog(true)}
+            >
+              Reject Selected
+            </Button>
+          </div>
+        )}
         {data?.recent_submissions.length === 0 ? (
           <p className="text-gray-500">No submissions yet.</p>
         ) : (
           <Table className="w-full text-left text-sm">
             <TableHeader>
               <TableRow className="border-b text-gray-500">
+                <TableHead className="w-8 px-2">
+                  <Checkbox
+                    checked={isAllSelected}
+                    onCheckedChange={(checked) => handleSelectAll(!!checked)}
+                    aria-label="Select all"
+                  />
+                </TableHead>
                 <TableHead className="pb-2">URL</TableHead>
                 <TableHead className="pb-2">Submitted By</TableHead>
                 <TableHead className="pb-2">Status</TableHead>
@@ -144,6 +279,19 @@ export function SubmissionsTab({
             <TableBody>
               {data?.recent_submissions.map((sub) => (
                 <TableRow key={sub.id} className="border-b">
+                  <TableCell
+                    className="w-8 px-2"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {['pending', 'processing', 'pending_review'].includes(
+                      sub.status
+                    ) && (
+                      <Checkbox
+                        checked={selectedIds.has(sub.id)}
+                        onCheckedChange={() => toggleSelection(sub.id)}
+                      />
+                    )}
+                  </TableCell>
                   <TableCell className="max-w-xs truncate py-2">
                     <Link href={sub.google_maps_url}>
                       {sub.google_maps_url}
@@ -247,6 +395,48 @@ export function SubmissionsTab({
         confirmLabel="Approve"
         onConfirm={handleConfirmedAction}
       />
+      <Dialog
+        open={showBulkRejectDialog}
+        onOpenChange={(open) => {
+          if (!open) setShowBulkRejectDialog(false);
+        }}
+      >
+        <DialogContent showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>Reject {selectedIds.size} submission(s)</DialogTitle>
+            <DialogDescription>
+              Select a rejection reason to apply to all selected submissions.
+            </DialogDescription>
+          </DialogHeader>
+          <Select value={bulkRejectReason} onValueChange={setBulkRejectReason}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {ADMIN_REJECTION_REASONS.map((r) => (
+                <SelectItem key={r.value} value={r.value}>
+                  {r.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowBulkRejectDialog(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleBulkRejectSelected}
+              disabled={bulkRejecting}
+            >
+              {bulkRejecting ? 'Rejecting...' : 'Reject'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
