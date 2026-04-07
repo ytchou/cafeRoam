@@ -20,7 +20,11 @@ async def persist_scraped_data(
     submitted_by: str | None = None,
     batch_id: str | None = None,
 ) -> None:
-    """Persist scraped shop data and enqueue enrichment.
+    """Persist scraped shop data and enqueue the next pipeline step.
+
+    When photos are present: enqueues CLASSIFY_SHOP_PHOTOS, which enqueues
+    ENRICH_SHOP after classification. When no photos: enqueues ENRICH_SHOP
+    directly with submission context so shops are not left in 'enriching' status.
 
     Shared by single and batch scrape handlers.
     """
@@ -135,11 +139,26 @@ async def persist_scraped_data(
         ]
         db.table("shop_photos").upsert(photo_rows, on_conflict="shop_id,url").execute()
 
-        # Queue photo classification (low priority — runs after enrichment)
+        # Queue photo classification — classify handler enqueues ENRICH_SHOP afterward.
+        # Submission context is not forwarded here; classify reads it from the DB.
         await queue.enqueue(
             job_type=JobType.CLASSIFY_SHOP_PHOTOS,
             payload={"shop_id": shop_id},
             priority=2,
+        )
+    else:
+        # No photos: skip classification and go straight to enrichment with full context.
+        enrich_payload: dict[str, object] = {"shop_id": shop_id}
+        if submission_id:
+            enrich_payload["submission_id"] = submission_id
+        if submitted_by:
+            enrich_payload["submitted_by"] = submitted_by
+        if batch_id:
+            enrich_payload["batch_id"] = batch_id
+        await queue.enqueue(
+            job_type=JobType.ENRICH_SHOP,
+            payload=enrich_payload,
+            priority=5,
         )
 
     # Link submission to shop
