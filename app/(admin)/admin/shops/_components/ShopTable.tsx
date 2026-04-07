@@ -28,6 +28,14 @@ import {
 } from '@/components/ui/table';
 import { ADMIN_REJECTION_REASONS } from '@/lib/constants/rejection-reasons';
 import { ConfirmDialog } from '../../_components/ConfirmDialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
 import { PAGE_SIZE, Shop, SOURCE_LABELS, STATUS_LABELS } from '../_constants';
 
 const RETRYABLE_STATUSES_SET = new Set([
@@ -145,7 +153,7 @@ export function ShopTable({
     }
   }
 
-  async function handleBulkRetry() {
+  async function handleRetry(shopIds: string[]) {
     setRetrying(true);
     try {
       const token = await getToken();
@@ -159,7 +167,7 @@ export function ShopTable({
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ shop_ids: Array.from(selectedShopIds) }),
+        body: JSON.stringify({ shop_ids: shopIds }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -178,6 +186,10 @@ export function ShopTable({
     } finally {
       setRetrying(false);
     }
+  }
+
+  function handleBulkRetry() {
+    return handleRetry(Array.from(selectedShopIds));
   }
 
   async function handleBulkReject(shopIds: Set<string>, reason: string) {
@@ -375,49 +387,7 @@ export function ShopTable({
                         )}
                         {RETRYABLE_STATUSES_SET.has(shop.processing_status) && (
                           <DropdownMenuItem
-                            onClick={async () => {
-                              const saved = selectedShopIds;
-                              setSelectedShopIds(new Set([shop.id]));
-                              setRetrying(true);
-                              try {
-                                const token = await getToken();
-                                if (!token) {
-                                  toast.error(
-                                    'Session expired — please refresh the page'
-                                  );
-                                  return;
-                                }
-                                const res = await fetch(
-                                  '/api/admin/shops/retry',
-                                  {
-                                    method: 'POST',
-                                    headers: {
-                                      'Content-Type': 'application/json',
-                                      Authorization: `Bearer ${token}`,
-                                    },
-                                    body: JSON.stringify({
-                                      shop_ids: [shop.id],
-                                    }),
-                                  }
-                                );
-                                const data = await res.json();
-                                if (!res.ok) {
-                                  toast.error(data.detail || 'Retry failed');
-                                  return;
-                                }
-                                const msg =
-                                  data.skipped > 0
-                                    ? `${data.reset} shop(s) reset to pending, ${data.skipped} skipped`
-                                    : `${data.reset} shop(s) reset to pending`;
-                                toast.success(msg);
-                                setSelectedShopIds(saved);
-                                onRefresh();
-                              } catch {
-                                toast.error('Network error');
-                              } finally {
-                                setRetrying(false);
-                              }
-                            }}
+                            onClick={() => handleRetry([shop.id])}
                           >
                             Retry
                           </DropdownMenuItem>
@@ -483,58 +453,66 @@ export function ShopTable({
           }
         }}
       />
-      {showRejectDialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white rounded-lg p-6 w-96 shadow-xl">
-            <h2 className="text-lg font-semibold mb-2">
+      <Dialog
+        open={showRejectDialog}
+        onOpenChange={(open) => {
+          if (!open) {
+            setShowRejectDialog(false);
+            setRejectConfirmShopIds(new Set());
+          }
+        }}
+      >
+        <DialogContent showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>
               Reject{' '}
               {rejectConfirmShopIds.size > 0
                 ? rejectConfirmShopIds.size
                 : selectedShopIds.size}{' '}
               shop(s)
-            </h2>
-            <p className="text-sm text-gray-600 mb-4">
+            </DialogTitle>
+            <DialogDescription>
               Select a rejection reason to apply to all selected shops.
-            </p>
-            <Select value={rejectReason} onValueChange={setRejectReason}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {ADMIN_REJECTION_REASONS.map((r) => (
-                  <SelectItem key={r.value} value={r.value}>
-                    {r.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <div className="flex justify-end gap-2 mt-4">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setShowRejectDialog(false);
-                  setRejectConfirmShopIds(new Set());
-                }}
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="destructive"
-                onClick={() => {
-                  const ids =
-                    rejectConfirmShopIds.size > 0
-                      ? rejectConfirmShopIds
-                      : selectedShopIds;
-                  handleBulkReject(ids, rejectReason);
-                }}
-                disabled={bulkRejecting}
-              >
-                {bulkRejecting ? 'Rejecting...' : 'Reject'}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+            </DialogDescription>
+          </DialogHeader>
+          <Select value={rejectReason} onValueChange={setRejectReason}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {ADMIN_REJECTION_REASONS.map((r) => (
+                <SelectItem key={r.value} value={r.value}>
+                  {r.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowRejectDialog(false);
+                setRejectConfirmShopIds(new Set());
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                const ids =
+                  rejectConfirmShopIds.size > 0
+                    ? rejectConfirmShopIds
+                    : selectedShopIds;
+                handleBulkReject(ids, rejectReason);
+              }}
+              disabled={bulkRejecting}
+            >
+              {bulkRejecting ? 'Rejecting...' : 'Reject'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

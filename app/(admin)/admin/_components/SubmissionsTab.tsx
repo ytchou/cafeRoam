@@ -24,6 +24,14 @@ import {
 import { ADMIN_REJECTION_REASONS } from '@/lib/constants/rejection-reasons';
 import { getStatusVariant } from '../_lib/status-badge';
 import { ConfirmDialog } from './ConfirmDialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
 
 interface Submission {
   id: string;
@@ -387,48 +395,51 @@ export function SubmissionsTab({
         confirmLabel="Approve"
         onConfirm={handleConfirmedAction}
       />
-      {showBulkRejectDialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-96 rounded-lg bg-white p-6 shadow-xl">
-            <h2 className="mb-2 text-lg font-semibold">
-              Reject {selectedIds.size} submission(s)
-            </h2>
-            <p className="mb-4 text-sm text-gray-600">
+      <Dialog
+        open={showBulkRejectDialog}
+        onOpenChange={(open) => {
+          if (!open) setShowBulkRejectDialog(false);
+        }}
+      >
+        <DialogContent showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>Reject {selectedIds.size} submission(s)</DialogTitle>
+            <DialogDescription>
               Select a rejection reason to apply to all selected submissions.
-            </p>
-            <Select
-              value={bulkRejectReason}
-              onValueChange={setBulkRejectReason}
+            </DialogDescription>
+          </DialogHeader>
+          <Select
+            value={bulkRejectReason}
+            onValueChange={setBulkRejectReason}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {ADMIN_REJECTION_REASONS.map((r) => (
+                <SelectItem key={r.value} value={r.value}>
+                  {r.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowBulkRejectDialog(false)}
             >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {ADMIN_REJECTION_REASONS.map((r) => (
-                  <SelectItem key={r.value} value={r.value}>
-                    {r.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <div className="mt-4 flex justify-end gap-2">
-              <Button
-                variant="outline"
-                onClick={() => setShowBulkRejectDialog(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="destructive"
-                onClick={handleBulkRejectSelected}
-                disabled={bulkRejecting}
-              >
-                {bulkRejecting ? 'Rejecting...' : 'Reject'}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleBulkRejectSelected}
+              disabled={bulkRejecting}
+            >
+              {bulkRejecting ? 'Rejecting...' : 'Reject'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
