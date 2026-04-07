@@ -3,7 +3,7 @@ from datetime import UTC, datetime
 from typing import Any, Literal, cast
 
 import structlog
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
+from fastapi import APIRouter, BackgroundTasks, Body, Depends, HTTPException, Query
 from pydantic import BaseModel
 
 from api.deps import require_admin
@@ -733,23 +733,32 @@ async def cancel_job(
     return {"message": f"Job {job_id} cancelled"}
 
 
-async def _run_pipeline_safe() -> None:
+class RunBatchRequest(BaseModel):
+    shop_ids: list[str] | None = None
+
+
+async def _run_pipeline_safe(shop_ids: list[str] | None = None) -> None:
     with contextlib.suppress(SystemExit):
         from scripts.run_pipeline_batch import main as _run_pipeline
 
-        await _run_pipeline(dry_run=False)
+        await _run_pipeline(dry_run=False, shop_ids=shop_ids)
 
 
 @router.post("/run-batch", status_code=202)
 async def run_pipeline_batch(
     background_tasks: BackgroundTasks,
+    body: RunBatchRequest = Body(default_factory=RunBatchRequest),  # noqa: B008
     user: dict[str, Any] = Depends(require_admin),  # noqa: B008
 ) -> dict[str, Any]:
-    """Queue a full pipeline batch run in the background."""
-    background_tasks.add_task(_run_pipeline_safe)
+    """Queue a pipeline batch run in the background.
+
+    Pass shop_ids to run only for specific shops; omit to run for all pending shops.
+    """
+    background_tasks.add_task(_run_pipeline_safe, body.shop_ids)
     log_admin_action(
         admin_user_id=user["id"],
         action="POST /admin/pipeline/run-batch",
         target_type="pipeline",
+        payload={"shop_ids": body.shop_ids},
     )
     return {"message": "Pipeline batch run queued"}

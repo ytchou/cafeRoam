@@ -156,7 +156,7 @@ describe('AdminShopsList', () => {
     ).toBeInTheDocument();
   });
 
-  it('shows confirmation dialog before bulk approving selected shops', async () => {
+  it('queues pipeline run for selected shops when Run Pipeline is clicked', async () => {
     const shopsResponse = makePendingReviewShopsResponse(3);
 
     mockFetch.mockResolvedValue({
@@ -172,7 +172,7 @@ describe('AdminShopsList', () => {
       expect(screen.getByText('待審咖啡 1')).toBeInTheDocument();
     });
 
-    // Switch to pending_review filter to show the bulk approve bar
+    // Switch to pending_review filter
     const statusTrigger = screen.getByRole('combobox', {
       name: /filter by status/i,
     });
@@ -192,39 +192,19 @@ describe('AdminShopsList', () => {
     });
     await user.click(checkbox);
 
-    // Click "Approve Selected" — should NOT call fetch yet
-    const approveSelectedBtn = screen.getByRole('button', {
-      name: /approve selected/i,
-    });
-    await user.click(approveSelectedBtn);
-
-    // Confirmation dialog must appear
-    const dialog = await screen.findByRole('alertdialog');
-    expect(dialog).toBeInTheDocument();
-    expect(
-      within(dialog).getByText(/approve 1 selected shop\(s\)\?/i)
-    ).toBeInTheDocument();
-
-    // Set up mock for the bulk-approve call
+    // Set up mock for the run-batch call
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      json: () => Promise.resolve({ approved: 1, queued: 1 }),
-    });
-    // shops refetch after approve
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve(shopsResponse),
+      json: () => Promise.resolve({ message: 'Pipeline batch run queued' }),
     });
 
-    // Click confirm
-    const confirmBtn = within(dialog).getByRole('button', {
-      name: /^approve$/i,
-    });
-    await user.click(confirmBtn);
+    // Click "Run Pipeline" in selection bar — directly queues without confirmation dialog
+    const runPipelineBtn = screen.getByTestId('run-pipeline-selected');
+    await user.click(runPipelineBtn);
 
     await waitFor(() => {
       expect(mockFetch).toHaveBeenCalledWith(
-        '/api/admin/shops/bulk-approve',
+        '/api/admin/pipeline/run-batch',
         expect.objectContaining({ method: 'POST' })
       );
     });
