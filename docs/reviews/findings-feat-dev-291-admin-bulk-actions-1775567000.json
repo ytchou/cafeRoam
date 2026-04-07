@@ -1,0 +1,77 @@
+{
+  "findings": [
+    {
+      "severity": "Important",
+      "file": "backend/api/admin.py",
+      "line": "241-296",
+      "description": "N+1 DB queries in approve_submissions_bulk: per-submission SELECT + UPDATE + shop UPDATE in a loop (up to 50 iterations = 150+ DB round-trips). Violates CLAUDE.md 'No work in loops' and 'No N+1 queries'. Should batch-fetch all submissions in one query, then batch-update eligible ones, similar to how admin_shops.py bulk_approve does it.",
+      "flagged_by": "Architecture & Design",
+      "status": "valid"
+    },
+    {
+      "severity": "Important",
+      "file": "backend/api/admin.py",
+      "line": "314-354",
+      "description": "N+1 DB queries in reject_submissions_bulk: same per-item loop pattern with SELECT + UPDATE + RPC + shop UPDATE per iteration. Should batch-fetch, batch-update, then loop only for the RPC calls (which are inherently per-shop).",
+      "flagged_by": "Architecture & Design",
+      "status": "valid"
+    },
+    {
+      "severity": "Important",
+      "file": "backend/api/admin.py",
+      "line": "252",
+      "description": "Unsafe [0] array indexing: `sub = sub_rows[0]` after emptiness check. CLAUDE.md requires using the project's `first()` helper function instead of raw [0] indexing. The `first` function is already imported in this file.",
+      "flagged_by": "Standards & Conventions",
+      "status": "valid"
+    },
+    {
+      "severity": "Important",
+      "file": "backend/api/admin.py",
+      "line": "325",
+      "description": "Unsafe [0] array indexing: `sub = sub_rows[0]` in reject_submissions_bulk — same violation as line 252. Should use `first(sub_rows, 'fetch submission')`.",
+      "flagged_by": "Standards & Conventions",
+      "status": "valid"
+    },
+    {
+      "severity": "Important",
+      "file": "app/(admin)/admin/shops/_components/ShopTable.tsx",
+      "line": "378-419",
+      "description": "Duplicated inline retry logic in per-row dropdown handler. The full fetch/toast/error handling from handleBulkRetry is copy-pasted into the DropdownMenuItem onClick. Additionally, it temporarily mutates selectedShopIds state (save/restore pattern at lines 379, 413) which creates a race condition if the user triggers bulk retry while a single-row retry is in flight. Should extract to a reusable function that accepts shop IDs as a parameter.",
+      "flagged_by": "Bug Hunter",
+      "status": "valid"
+    },
+    {
+      "severity": "Important",
+      "file": "app/(admin)/admin/_components/SubmissionsTab.tsx",
+      "line": "391-431",
+      "description": "Custom div modal for bulk reject bypasses the existing ConfirmDialog component used elsewhere in this file (line 380). The raw div modal is missing: focus trapping (tab can escape to background), escape key dismissal, aria-modal/role='dialog' attributes, and scroll lock on body. Should use ConfirmDialog or a shadcn Dialog component for accessibility.",
+      "flagged_by": "Architecture & Design",
+      "status": "valid"
+    },
+    {
+      "severity": "Important",
+      "file": "app/(admin)/admin/shops/_components/ShopTable.tsx",
+      "line": "487-537",
+      "description": "Same custom div modal issue for shop bulk reject dialog. Missing focus trap, escape key, aria attributes. Inconsistent with the ConfirmDialog used for bulk approve in the same component (line 464).",
+      "flagged_by": "Architecture & Design",
+      "status": "valid"
+    },
+    {
+      "severity": "Minor",
+      "file": "backend/api/admin_shops.py",
+      "line": "9-19",
+      "description": "Defensive try/except ImportError with duplicated RejectionReasonType literal. The import from api.admin should always succeed in production. The duplicated Literal type risks silent drift if the source changes. Should use a direct import without the fallback, or extract the type to a shared module.",
+      "flagged_by": "Standards & Conventions",
+      "status": "debatable"
+    }
+  ],
+  "active_agents": [
+    "Bug Hunter",
+    "Standards & Conventions",
+    "Architecture & Design",
+    "Plan Alignment"
+  ],
+  "skipped": [],
+  "head_sha": "85cade492d93c9b8504b9b0a4d30c5bab7e5dec7",
+  "review_log_path": "docs/reviews/2026-04-07-feat-dev-291-admin-bulk-actions.md"
+}
