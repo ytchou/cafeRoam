@@ -1,22 +1,122 @@
 [
-  {"id": "q1", "query": "有插座可以工作的安靜咖啡廳", "category": "attribute", "expectedTraits": ["has_outlets", "quiet", "work_friendly"]},
-  {"id": "q2", "query": "溫馨有特色的咖啡廳", "category": "vibe", "expectedTraits": ["cozy", "unique", "charming"]},
-  {"id": "q3", "query": "大安區文青咖啡廳", "category": "vibe", "expectedTraits": ["da_an", "indie", "aesthetic"]},
-  {"id": "q4", "query": "不限時可以久坐的咖啡廳", "category": "attribute", "expectedTraits": ["no_time_limit", "comfortable_seating"]},
-  {"id": "q5", "query": "信義區附近咖啡廳", "category": "mixed", "expectedTraits": ["near_xinyi", "cafe"]},
-  {"id": "q6", "query": "適合讀書準備考試的咖啡廳", "category": "mode", "expectedTraits": ["quiet", "study", "work_friendly"]},
-  {"id": "q7", "query": "招牌拿鐵好喝的咖啡廳", "category": "specific", "expectedTraits": ["good_latte", "specialty_coffee"]},
-  {"id": "q8", "query": "有自然光落地窗的咖啡廳", "category": "vibe", "expectedTraits": ["natural_light", "large_windows", "bright"]},
-  {"id": "q9", "query": "有包廂或隔間的咖啡廳", "category": "attribute", "expectedTraits": ["private_space", "booth_seating"]},
-  {"id": "q10", "query": "台北東區 specialty coffee", "category": "mixed", "expectedTraits": ["east_taipei", "specialty_coffee"]},
-  {"id": "q11", "query": "安靜適合工作的咖啡廳", "category": "mode", "expectedTraits": ["quiet", "work", "deep_focus"]},
-  {"id": "q12", "query": "適合約會的咖啡廳", "category": "mode", "expectedTraits": ["date", "romantic", "cozy"]},
-  {"id": "q13", "query": "有插座不限時", "category": "attribute", "expectedTraits": ["has_outlets", "no_time_limit"]},
-  {"id": "q14", "query": "寵物友善", "category": "attribute", "expectedTraits": ["pet_friendly"]},
-  {"id": "q15", "query": "有巴斯克蛋糕的咖啡廳", "category": "specific", "expectedTraits": ["basque_cheesecake", "dessert"]},
-  {"id": "q16", "query": "手沖咖啡推薦", "category": "specific", "expectedTraits": ["pour_over", "specialty_coffee"]},
-  {"id": "q17", "query": "中山站附近安靜咖啡廳", "category": "mixed", "expectedTraits": ["near_zhongshan", "quiet"]},
-  {"id": "q18", "query": "quiet cafe with outlets near Zhongshan", "category": "mixed", "expectedTraits": ["quiet", "has_outlets", "near_zhongshan"]},
-  {"id": "q19", "query": "有戶外座位的咖啡廳", "category": "attribute", "expectedTraits": ["outdoor_seating"]},
-  {"id": "q20", "query": "適合帶筆電工作一整天的咖啡廳", "category": "mode", "expectedTraits": ["laptop_friendly", "all_day_work", "has_outlets"]}
+  {
+    "id": "q1",
+    "query": "有插座可以工作的安靜咖啡廳",
+    "category": "attribute",
+    "expectedTraits": ["has_outlets", "quiet", "work_friendly"]
+  },
+  {
+    "id": "q2",
+    "query": "溫馨有特色的咖啡廳",
+    "category": "vibe",
+    "expectedTraits": ["cozy", "unique", "charming"]
+  },
+  {
+    "id": "q3",
+    "query": "大安區文青咖啡廳",
+    "category": "vibe",
+    "expectedTraits": ["da_an", "indie", "aesthetic"]
+  },
+  {
+    "id": "q4",
+    "query": "不限時可以久坐的咖啡廳",
+    "category": "attribute",
+    "expectedTraits": ["no_time_limit", "comfortable_seating"]
+  },
+  {
+    "id": "q5",
+    "query": "信義區附近咖啡廳",
+    "category": "mixed",
+    "expectedTraits": ["near_xinyi", "cafe"]
+  },
+  {
+    "id": "q6",
+    "query": "適合讀書準備考試的咖啡廳",
+    "category": "mode",
+    "expectedTraits": ["quiet", "study", "work_friendly"]
+  },
+  {
+    "id": "q7",
+    "query": "招牌拿鐵好喝的咖啡廳",
+    "category": "specific",
+    "expectedTraits": ["good_latte", "specialty_coffee"]
+  },
+  {
+    "id": "q8",
+    "query": "有自然光落地窗的咖啡廳",
+    "category": "vibe",
+    "expectedTraits": ["natural_light", "large_windows", "bright"]
+  },
+  {
+    "id": "q9",
+    "query": "有包廂或隔間的咖啡廳",
+    "category": "attribute",
+    "expectedTraits": ["private_space", "booth_seating"]
+  },
+  {
+    "id": "q10",
+    "query": "台北東區 specialty coffee",
+    "category": "mixed",
+    "expectedTraits": ["east_taipei", "specialty_coffee"]
+  },
+  {
+    "id": "q11",
+    "query": "安靜適合工作的咖啡廳",
+    "category": "mode",
+    "expectedTraits": ["quiet", "work", "deep_focus"]
+  },
+  {
+    "id": "q12",
+    "query": "適合約會的咖啡廳",
+    "category": "mode",
+    "expectedTraits": ["date", "romantic", "cozy"]
+  },
+  {
+    "id": "q13",
+    "query": "有插座不限時",
+    "category": "attribute",
+    "expectedTraits": ["has_outlets", "no_time_limit"]
+  },
+  {
+    "id": "q14",
+    "query": "寵物友善",
+    "category": "attribute",
+    "expectedTraits": ["pet_friendly"]
+  },
+  {
+    "id": "q15",
+    "query": "有巴斯克蛋糕的咖啡廳",
+    "category": "specific",
+    "expectedTraits": ["basque_cheesecake", "dessert"]
+  },
+  {
+    "id": "q16",
+    "query": "手沖咖啡推薦",
+    "category": "specific",
+    "expectedTraits": ["pour_over", "specialty_coffee"]
+  },
+  {
+    "id": "q17",
+    "query": "中山站附近安靜咖啡廳",
+    "category": "mixed",
+    "expectedTraits": ["near_zhongshan", "quiet"]
+  },
+  {
+    "id": "q18",
+    "query": "quiet cafe with outlets near Zhongshan",
+    "category": "mixed",
+    "expectedTraits": ["quiet", "has_outlets", "near_zhongshan"]
+  },
+  {
+    "id": "q19",
+    "query": "有戶外座位的咖啡廳",
+    "category": "attribute",
+    "expectedTraits": ["outdoor_seating"]
+  },
+  {
+    "id": "q20",
+    "query": "適合帶筆電工作一整天的咖啡廳",
+    "category": "mode",
+    "expectedTraits": ["laptop_friendly", "all_day_work", "has_outlets"]
+  }
 ]

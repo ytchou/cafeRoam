@@ -49,7 +49,12 @@
       "status": "debatable"
     }
   ],
-  "active_agents": ["Bug Hunter", "Standards & Conventions", "Architecture & Design", "Plan Alignment"],
+  "active_agents": [
+    "Bug Hunter",
+    "Standards & Conventions",
+    "Architecture & Design",
+    "Plan Alignment"
+  ],
   "skipped": [],
   "head_sha": "6af43d938748451530a93dd6495c061213f8d7c0",
   "review_log_path": "docs/reviews/2026-04-07-feat-search-quality-improvements.md"

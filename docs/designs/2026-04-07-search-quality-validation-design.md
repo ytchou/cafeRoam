@@ -13,6 +13,7 @@ This is the FATAL assumption gate from ASSUMPTIONS.md. If semantic search doesn'
 Extend `backend/scripts/run_search_eval.py` with a `--validate` mode that produces a comprehensive quality report comparing CafeRoam semantic search against Google Maps.
 
 **Components:**
+
 1. **Data pipeline** (existing) — scrape → enrich → embed shops to staging
 2. **Query set** — expand `search-queries.json` from 10 → 20 queries
 3. **CafeRoam eval** (existing + extended) — LLM-as-judge scoring with NDCG@5, MRR
@@ -48,6 +49,7 @@ Extend `backend/scripts/run_search_eval.py` with a `--validate` mode that produc
 ## Query Expansion (10 new queries)
 
 Current 10 cover: attribute, vibe, mode, specific, mixed. New queries fill gaps:
+
 - Mode-based: "安靜適合工作的咖啡廳", "適合約會的咖啡廳", "適合帶筆電工作一整天的咖啡廳"
 - Attribute-based: "有插座不限時", "寵物友善", "有戶外座位的咖啡廳"
 - Menu/Specific: "有巴斯克蛋糕的咖啡廳", "手沖咖啡推薦"
@@ -56,6 +58,7 @@ Current 10 cover: attribute, vibe, mode, specific, mixed. New queries fill gaps:
 ## Score Normalization
 
 CafeRoam uses LLM-judge scores (0-2 integer). Maps uses human scores (1-5). To compare:
+
 - 0 → 1 (irrelevant)
 - 1 → 3 (moderate match)
 - 2 → 5 (perfect match)

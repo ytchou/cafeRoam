@@ -12,23 +12,24 @@ DEV-265 validated search quality (NDCG@5 0.706, 11/20 wins vs Google Maps). Win-
 
 **New tags to add to `data/prebuild/taxonomy.json`:**
 
-| Dimension | ID | labelZh |
-|-----------|-----|---------|
-| functionality | `natural_light` | 自然光充足 |
-| functionality | `private_rooms` | 有包廂/隔間 |
-| functionality | `window_seats` | 窗邊座位 |
-| functionality | `large_tables` | 大桌/共享桌 |
-| functionality | `second_floor` | 二樓/複層空間 |
-| ambience | `文青` | 文青風格 |
-| ambience | `療癒系` | 療癒系 |
-| ambience | `復古工業` | 復古工業風 |
-| ambience | `日系簡約` | 日系簡約 |
-| ambience | `IG打卡` | IG打卡熱點 |
-| ambience | `old_house_renovated` | 老屋改建 |
-| ambience | `tropical_plants` | 綠意盎然 |
-| coffee | `rare_beans` | 稀有豆/競標豆 |
+| Dimension     | ID                    | labelZh       |
+| ------------- | --------------------- | ------------- |
+| functionality | `natural_light`       | 自然光充足    |
+| functionality | `private_rooms`       | 有包廂/隔間   |
+| functionality | `window_seats`        | 窗邊座位      |
+| functionality | `large_tables`        | 大桌/共享桌   |
+| functionality | `second_floor`        | 二樓/複層空間 |
+| ambience      | `文青`                | 文青風格      |
+| ambience      | `療癒系`              | 療癒系        |
+| ambience      | `復古工業`            | 復古工業風    |
+| ambience      | `日系簡約`            | 日系簡約      |
+| ambience      | `IG打卡`              | IG打卡熱點    |
+| ambience      | `old_house_renovated` | 老屋改建      |
+| ambience      | `tropical_plants`     | 綠意盎然      |
+| coffee        | `rare_beans`          | 稀有豆/競標豆 |
 
 **Files:**
+
 - `data/prebuild/taxonomy.json` — add tags (curated directly, no re-generation needed)
 - `scripts/prebuild/data-pipeline/pass3a-taxonomy-seed.ts` — update generation prompt to include physical features in functionality guidance; update `flattenProposalToTags` to handle `coffee` dimension
 - `scripts/prebuild/data-pipeline/types.ts` — add optional `coffee` to `TaxonomyProposal` interface
@@ -48,11 +49,13 @@ After:  scrape → classify_shop_photos → enrich_shop
 ```
 
 **Photo selection changes (in `apify_adapter.py`):**
+
 - `maxImages`: 10 → 15
 - Remove recency re-sort — trust Google's default order (their quality/engagement algorithm)
 - Age filter: drop > 3 years (changed from 5 years)
 
 **Files:**
+
 - `backend/providers/scraper/apify_adapter.py` — bump `maxImages` to 15, remove `uploadedAt` re-sort, change age cutoff to 3 years
 - `backend/workers/handlers/scrape_batch.py` — remove `ENRICH_SHOP` job enqueue
 - `backend/workers/handlers/classify_shop_photos.py` — enqueue `ENRICH_SHOP` after all photos for a shop are classified
@@ -68,16 +71,22 @@ After:  scrape → classify_shop_photos → enrich_shop
 **Goal:** Extract physical features from Apify's `additionalInfo` field and pass as high-confidence signals to enrichment. No DB migration — features flow through the job payload.
 
 **Apify `additionalInfo` example:**
+
 ```json
-{"Service options": {"Outdoor seating": true}, "Accessibility": {"Wheelchair-accessible entrance": true}}
+{
+  "Service options": { "Outdoor seating": true },
+  "Accessibility": { "Wheelchair-accessible entrance": true }
+}
 ```
 
 **Mapping (in `_extract_maps_features`):**
+
 - `Outdoor seating` → `outdoor_seating`
 - `Wheelchair-accessible entrance` → `wheelchair_accessible`
 - etc. (extensible mapping dict)
 
 **Files:**
+
 - `backend/providers/scraper/interface.py` — add `google_maps_features: dict[str, bool] = {}` to `ScrapedShopData`
 - `backend/providers/scraper/apify_adapter.py` — add `_extract_maps_features(place)` static method; populate field in `_parse_place`
 - `backend/workers/handlers/scrape_batch.py` — include `google_maps_features` in the `ENRICH_SHOP` job payload (queued from classify handler per Track 2)
@@ -93,12 +102,14 @@ After:  scrape → classify_shop_photos → enrich_shop
 **Goal:** Replace 3-point LLM judge (0-2 → {1,3,5}) with 5-point scale (0-4 → {1,2,3,4,5}) to eliminate gaps and align with Maps 1-5 human scores.
 
 **Changes in `backend/scripts/run_search_eval.py`:**
+
 - `_JUDGE_SYSTEM` rubric: 0=irrelevant, 1=marginal, 2=partial, 3=relevant, 4=highly relevant
 - `_normalize_score(s)` → `return s + 1`
 - Score clamping: `max(0, min(4, ...))`
 - `top1_relevant` threshold: `>= 2` (preserves "partially relevant or better" semantic)
 
 **Test updates in `backend/tests/scripts/test_search_eval_validate.py`:**
+
 - Update all `caferoam_scores` fixtures from 0-2 to 0-4 scale
 - Update expected `caferoam_normalized` values (old: `s*2+1`, new: `s+1`)
 
@@ -117,15 +128,16 @@ After:  scrape → classify_shop_photos → enrich_shop
 
 ## Testing
 
-| Test | Type | File |
-|------|------|------|
-| Score normalization (0-4 scale) | Unit | `backend/tests/scripts/test_search_eval_validate.py` |
-| `_extract_maps_features` parsing | Unit | New: `backend/tests/providers/test_apify_features.py` |
-| Enrichment with vibe photos + features | Unit | `backend/tests/workers/test_enrich_shop.py` |
-| classify → enrich pipeline ordering | Unit | `backend/tests/workers/test_classify_shop_photos.py` |
-| End-to-end NDCG + win-rate | Integration | `run_search_eval.py --validate` |
+| Test                                   | Type        | File                                                  |
+| -------------------------------------- | ----------- | ----------------------------------------------------- |
+| Score normalization (0-4 scale)        | Unit        | `backend/tests/scripts/test_search_eval_validate.py`  |
+| `_extract_maps_features` parsing       | Unit        | New: `backend/tests/providers/test_apify_features.py` |
+| Enrichment with vibe photos + features | Unit        | `backend/tests/workers/test_enrich_shop.py`           |
+| classify → enrich pipeline ordering    | Unit        | `backend/tests/workers/test_classify_shop_photos.py`  |
+| End-to-end NDCG + win-rate             | Integration | `run_search_eval.py --validate`                       |
 
 Testing classification:
+
 - [ ] New e2e journey? No — no new critical user path
 - [x] Coverage gate: touches eval script + enrichment worker. Verify 80% coverage on changed paths.
 
@@ -142,19 +154,19 @@ Testing classification:
 
 ## Key Files
 
-| File | Change |
-|------|--------|
-| `data/prebuild/taxonomy.json` | Add 13 new tags |
-| `scripts/prebuild/data-pipeline/pass3a-taxonomy-seed.ts` | Update prompt + flattenProposalToTags |
-| `scripts/prebuild/data-pipeline/types.ts` | Add optional coffee to TaxonomyProposal |
-| `backend/providers/scraper/interface.py` | Add google_maps_features to ScrapedShopData |
-| `backend/providers/scraper/apify_adapter.py` | maxImages→15, remove recency sort, 3yr age filter, _extract_maps_features |
-| `backend/workers/handlers/scrape_batch.py` | Remove ENRICH_SHOP enqueue |
-| `backend/workers/handlers/classify_shop_photos.py` | Enqueue ENRICH_SHOP on completion |
-| `backend/workers/handlers/enrich_shop.py` | Query VIBE photos, pass features from payload |
-| `backend/models/types.py` | Add vibe_photo_urls + google_maps_features to ShopEnrichmentInput |
-| `backend/providers/llm/anthropic_adapter.py` | Image content blocks + confirmed features in prompt |
-| `backend/scripts/run_search_eval.py` | 0-4 rubric, s+1 normalization |
-| `backend/tests/scripts/test_search_eval_validate.py` | Update fixtures for 0-4 scale |
-| New: Supabase migration | INSERT new taxonomy tags |
-| New: `backend/tests/providers/test_apify_features.py` | Test _extract_maps_features |
+| File                                                     | Change                                                                     |
+| -------------------------------------------------------- | -------------------------------------------------------------------------- |
+| `data/prebuild/taxonomy.json`                            | Add 13 new tags                                                            |
+| `scripts/prebuild/data-pipeline/pass3a-taxonomy-seed.ts` | Update prompt + flattenProposalToTags                                      |
+| `scripts/prebuild/data-pipeline/types.ts`                | Add optional coffee to TaxonomyProposal                                    |
+| `backend/providers/scraper/interface.py`                 | Add google_maps_features to ScrapedShopData                                |
+| `backend/providers/scraper/apify_adapter.py`             | maxImages→15, remove recency sort, 3yr age filter, \_extract_maps_features |
+| `backend/workers/handlers/scrape_batch.py`               | Remove ENRICH_SHOP enqueue                                                 |
+| `backend/workers/handlers/classify_shop_photos.py`       | Enqueue ENRICH_SHOP on completion                                          |
+| `backend/workers/handlers/enrich_shop.py`                | Query VIBE photos, pass features from payload                              |
+| `backend/models/types.py`                                | Add vibe_photo_urls + google_maps_features to ShopEnrichmentInput          |
+| `backend/providers/llm/anthropic_adapter.py`             | Image content blocks + confirmed features in prompt                        |
+| `backend/scripts/run_search_eval.py`                     | 0-4 rubric, s+1 normalization                                              |
+| `backend/tests/scripts/test_search_eval_validate.py`     | Update fixtures for 0-4 scale                                              |
+| New: Supabase migration                                  | INSERT new taxonomy tags                                                   |
+| New: `backend/tests/providers/test_apify_features.py`    | Test \_extract_maps_features                                               |
