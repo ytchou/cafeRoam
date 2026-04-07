@@ -168,8 +168,103 @@ async def _judge(client: anthropic.AsyncAnthropic, prompt: str, n_results: int) 
         return [{"rank": i + 1, "score": 0, "reason": "parse_error"} for i in range(n_results)]
 
 
+def load_maps_baseline(path: Path) -> dict[str, dict]:
+    """Load Google Maps baseline scores keyed by query ID."""
+    if not path.exists():
+        raise FileNotFoundError(
+            f"Maps baseline not found at {path}. "
+            f"See docs/validation/MAPS_REVIEW_INSTRUCTIONS.md to create it."
+        )
+    data = json.loads(path.read_text())
+    return {entry["id"]: entry for entry in data}
+
+
+def compare_query_scores(
+    caferoam_avg: float, maps_avg: float, caferoam_scores: list[int]
+) -> dict:
+    """Compare CafeRoam LLM-judge avg (normalized to 1-5) vs Maps human avg (1-5)."""
+    normalized_cr = sum(s * 2 + 1 for s in caferoam_scores) / max(len(caferoam_scores), 1)
+    if normalized_cr > maps_avg + 0.5:
+        winner = "caferoam"
+    elif maps_avg > normalized_cr + 0.5:
+        winner = "maps"
+    else:
+        winner = "tie"
+    return {
+        "caferoam_normalized": round(normalized_cr, 2),
+        "maps_avg": round(maps_avg, 2),
+        "winner": winner,
+    }
+
+
+VALIDATION_THRESHOLD = 7  # out of 20 queries must be "caferoam" or "tie"
+
+
+def generate_validation_report(
+    query_results: list[dict],
+    total_shops: int,
+    mean_ndcg5: float,
+    mean_mrr: float,
+    pass_rate: float,
+) -> str:
+    """Generate markdown validation report."""
+    wins = sum(1 for q in query_results if q["winner"] in ("caferoam", "tie"))
+    total = len(query_results)
+    verdict = "PASS" if wins >= VALIDATION_THRESHOLD else "FAIL"
+
+    lines = [
+        "# Search Quality Validation Report",
+        f"Date: {date.today().isoformat()} | Shops: {total_shops} | Queries: {total}",
+        "",
+        f"## Verdict: **{verdict}** ({wins}/{total} queries better than or equal to Google Maps)",
+        "",
+        "## Per-Query Comparison",
+        "| # | Query | Category | CafeRoam (1-5) | Maps (1-5) | Winner |",
+        "|---|-------|----------|---------------|------------|--------|",
+    ]
+    for q in query_results:
+        icon = "CR" if q["winner"] == "caferoam" else ("Tie" if q["winner"] == "tie" else "Maps")
+        lines.append(
+            f"| {q['id']} | {q['query'][:40]} | {q['category']} | "
+            f"{q.get('caferoam_normalized', q.get('caferoam_avg', 'N/A'))} | "
+            f"{q['maps_avg']} | {icon} |"
+        )
+    lines += [
+        "",
+        "## CafeRoam Metrics (LLM Judge)",
+        f"- Pass rate (top-1 relevant): {pass_rate:.1f}%",
+        f"- Mean NDCG@5: {mean_ndcg5:.3f}",
+        f"- Mean MRR: {mean_mrr:.3f}",
+        "",
+        "## Category Breakdown",
+    ]
+
+    cats: dict[str, list] = {}
+    for q in query_results:
+        cats.setdefault(q["category"], []).append(q)
+    for cat, qs in sorted(cats.items()):
+        cat_wins = sum(1 for q in qs if q["winner"] in ("caferoam", "tie"))
+        lines.append(f"- **{cat}**: {cat_wins}/{len(qs)} better or equal")
+
+    lines += [
+        "",
+        "## Assumptions Validated",
+        f"- {'[x]' if verdict == 'PASS' else '[ ]'} #1: Semantic search wow moment",
+        f"- {'[x]' if verdict == 'PASS' else '[ ]'} #T2: Claude tag accuracy (implicit)",
+        f"- {'[x]' if verdict == 'PASS' else '[ ]'} #T3: Embedding quality (implicit)",
+    ]
+
+    return "\n".join(lines) + "\n"
+
+
 async def main(
-    queries_file: Path, match_count: int, output_dir: Path | None, json_only: bool
+    queries_file: Path,
+    match_count: int,
+    output_dir: Path | None,
+    json_only: bool,
+    validate: bool,
+    baseline: Path,
+    report_output: Path,
 ) -> None:
     if not queries_file.exists():
         warn(f"Queries file not found: {queries_file}")
@@ -331,6 +426,8 @@ async def main(
         },
         "thresholds": thresholds,
     }
+    agg = result["aggregate"]
+    all_query_results = query_results
 
     path = save_results(result, "run_search_eval", output_dir)
 
@@ -392,6 +489,53 @@ async def main(
     print(f"\n  Overall: {status}")
     print(f"\n  Output: {path}\n")
 
+    if validate:
+        baseline_data = load_maps_baseline(baseline)
+        query_comparisons = []
+        for qr in all_query_results:
+            qid = qr["id"]
+            if qid not in baseline_data:
+                print(f"Warning: Query {qid} not found in Maps baseline — skipping", file=sys.stderr)
+                continue
+            maps_entry = baseline_data[qid]
+            cr_scores = [r["judge_score"] for r in qr["results"]]
+            comparison = compare_query_scores(
+                caferoam_avg=sum(cr_scores) / max(len(cr_scores), 1),
+                maps_avg=maps_entry["maps_avg_score"],
+                caferoam_scores=cr_scores,
+            )
+            query_comparisons.append(
+                {
+                    "id": qid,
+                    "query": qr["query"],
+                    "category": qr["category"],
+                    **comparison,
+                    "caferoam_scores": cr_scores,
+                    "ndcg5": qr["ndcg5"],
+                    "mrr": qr["mrr"],
+                }
+            )
+
+        shop_count_resp = (
+            db.table("shops")
+            .select("id", count="exact")
+            .eq("processing_status", "live")
+            .execute()
+        )
+        total_shops = shop_count_resp.count or 0
+
+        report = generate_validation_report(
+            query_results=query_comparisons,
+            total_shops=total_shops,
+            mean_ndcg5=agg["mean_ndcg5"],
+            mean_mrr=agg["mean_mrr"],
+            pass_rate=agg["pass_rate"],
+        )
+        report_output.parent.mkdir(parents=True, exist_ok=True)
+        report_output.write_text(report)
+        print(f"\nValidation report saved to {report_output}")
+        print(report)
+
 
 if __name__ == "__main__":
     import argparse
@@ -410,6 +554,26 @@ if __name__ == "__main__":
     parser.add_argument(
         "--json-only", action="store_true", help="Suppress console output, print JSON path only"
     )
+    parser.add_argument(
+        "--validate",
+        action="store_true",
+        help="Run validation mode: compare against Google Maps baseline and generate report",
+    )
+    parser.add_argument(
+        "--baseline",
+        type=Path,
+        default=Path(__file__).parent / "google-maps-baseline.json",
+        help="Path to Google Maps baseline JSON (default: scripts/google-maps-baseline.json)",
+    )
+    parser.add_argument(
+        "--report-output",
+        type=Path,
+        default=Path(__file__).parent.parent.parent
+        / "docs"
+        / "validation"
+        / "search-quality-report.md",
+        help="Path for markdown validation report",
+    )
     args = parser.parse_args()
     asyncio.run(
         main(
@@ -417,5 +581,8 @@ if __name__ == "__main__":
             match_count=args.match_count,
             output_dir=args.output_dir,
             json_only=args.json_only,
+            validate=args.validate,
+            baseline=args.baseline,
+            report_output=args.report_output,
         )
     )
