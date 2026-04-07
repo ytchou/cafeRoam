@@ -100,7 +100,7 @@ async def test_all_shops_scraped_successfully_enqueues_classification(
     # All shops initially set to "scraping" in a single batch UPDATE
     mock_db.table.return_value.update.return_value.in_.assert_called()
 
-    # Shop A has photos → CLASSIFY_SHOP_PHOTOS enqueued; shop B has no photos → nothing
+    # Shop A has photos → CLASSIFY_SHOP_PHOTOS enqueued
     classify_calls = [
         c
         for c in mock_queue.enqueue.call_args_list
@@ -109,13 +109,14 @@ async def test_all_shops_scraped_successfully_enqueues_classification(
     assert len(classify_calls) == 1
     assert classify_calls[0].kwargs["payload"]["shop_id"] == _SHOP_ID_A
 
-    # ENRICH_SHOP is NOT enqueued here — it fires from classify_shop_photos
+    # Shop B has no photos → ENRICH_SHOP enqueued directly (bypasses classify step)
     enrich_calls = [
         c
         for c in mock_queue.enqueue.call_args_list
         if c.kwargs.get("job_type") == JobType.ENRICH_SHOP
     ]
-    assert len(enrich_calls) == 0
+    assert len(enrich_calls) == 1
+    assert enrich_calls[0].kwargs["payload"]["shop_id"] == _SHOP_ID_B
 
     # Scraper was called once (one Apify actor run)
     mock_scraper.scrape_batch.assert_called_once()
@@ -147,8 +148,14 @@ async def test_shop_not_found_on_google_maps_marks_failed_without_aborting_batch
 
     await handle_scrape_batch(payload=payload, db=mock_db, scraper=mock_scraper, queue=mock_queue)
 
-    # Shop B has no photos → no CLASSIFY_SHOP_PHOTOS enqueue; ENRICH_SHOP not enqueued here
-    mock_queue.enqueue.assert_not_called()
+    # Shop B scraped successfully with no photos → ENRICH_SHOP enqueued directly
+    enrich_calls = [
+        c
+        for c in mock_queue.enqueue.call_args_list
+        if c.kwargs.get("job_type") == JobType.ENRICH_SHOP
+    ]
+    assert len(enrich_calls) == 1
+    assert enrich_calls[0].kwargs["payload"]["shop_id"] == _SHOP_ID_B
 
     # Shop A should be marked "failed"
     update_calls = mock_db.table.return_value.update.call_args_list
@@ -196,8 +203,15 @@ async def test_persist_failure_marks_shop_failed_and_continues_remaining(
     # Batch handler should NOT raise — it catches per-shop errors
     await handle_scrape_batch(payload=payload, db=mock_db, scraper=mock_scraper, queue=mock_queue)
 
-    # Shop A failed (review insert raised); shop B has no photos → no enqueue calls
-    mock_queue.enqueue.assert_not_called()
+    # Shop A failed (review insert raised) → no enqueue for A
+    # Shop B has no photos → ENRICH_SHOP enqueued directly
+    enrich_calls = [
+        c
+        for c in mock_queue.enqueue.call_args_list
+        if c.kwargs.get("job_type") == JobType.ENRICH_SHOP
+    ]
+    assert len(enrich_calls) == 1
+    assert enrich_calls[0].kwargs["payload"]["shop_id"] == _SHOP_ID_B
 
 
 @pytest.mark.asyncio
