@@ -174,6 +174,18 @@ describe('Explore page', () => {
     expect(screen.getByRole('button', { name: /Refresh/ })).toBeInTheDocument();
   });
 
+  it('shows the submit shop CTA', async () => {
+    setupSwrMock();
+    render(<ExplorePage />);
+    expect(
+      await screen.findByText(/知道一間很棒的咖啡廳/)
+    ).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /推薦咖啡廳/i })).toHaveAttribute(
+      'href',
+      '/submit'
+    );
+  });
+
   it('When a user is on desktop, the community section renders in the right column', () => {
     vi.mocked(useIsDesktop).mockReturnValue(true);
     setupSwrMock();

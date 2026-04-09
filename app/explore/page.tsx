@@ -8,6 +8,7 @@ import { CommunityCard } from '@/components/community/community-card';
 import { DistrictPicker } from '@/components/explore/district-picker';
 import { TarotEmptyState } from '@/components/tarot/tarot-empty-state';
 import { TarotSpread } from '@/components/tarot/tarot-spread';
+import { trackSignupCtaClick } from '@/lib/analytics/ga4-events';
 import { useAnalytics } from '@/lib/posthog/use-analytics';
 import { useCommunityPreview } from '@/lib/hooks/use-community-preview';
 import { useDistricts } from '@/lib/hooks/use-districts';
@@ -358,6 +359,19 @@ export default function ExplorePage() {
           {communitySection}
         </>
       )}
+
+      <div className="bg-surface-warm border-b border-[#e5e7eb] px-5 py-3">
+        <div className="mx-auto flex max-w-5xl items-center justify-between">
+          <p className="text-text-secondary text-sm">知道一間很棒的咖啡廳？</p>
+          <Link
+            href="/submit"
+            className="bg-brand inline-flex shrink-0 rounded-full px-4 py-2 text-sm font-semibold text-white"
+            onClick={() => trackSignupCtaClick('home_submit_cta')}
+          >
+            推薦咖啡廳
+          </Link>
+        </div>
+      </div>
     </main>
   );
 }
