@@ -159,7 +159,7 @@ test.describe
 });
 
 test('J-NAV: profile page shows 3 content tabs and lists tab has view-all CTA', async ({
-  page,
+  authedPage: page,
 }) => {
   await page.goto('/profile');
 
