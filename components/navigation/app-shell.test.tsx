@@ -25,8 +25,8 @@ describe('AppShell', () => {
       </AppShell>
     );
 
-    // BottomNav renders Chinese tab labels
-    expect(screen.getByText('地圖')).toBeInTheDocument();
+    // BottomNav renders Chinese tab labels (地圖 tab removed in DEV-281)
+    expect(screen.getByText('首頁')).toBeInTheDocument();
     // HeaderNav desktop header should not appear
     expect(screen.queryByText('啡遊 CafeRoam')).not.toBeInTheDocument();
   });
@@ -47,50 +47,9 @@ describe('AppShell', () => {
     expect(screen.queryByText('地圖')).not.toBeInTheDocument();
   });
 
-  // Regression tests for DEV-236: home page (/) must show nav/footer, /find must not
-  it('on mobile home page (/), BottomNav is rendered', () => {
+  // Regression tests for DEV-236: root (/) is now the full-bleed map page
+  it('on mobile root page (/), BottomNav is NOT rendered (map manages its own layout)', () => {
     mockUsePathname.mockReturnValue('/');
-    vi.mocked(useIsDesktop).mockReturnValue(false);
-
-    render(
-      <AppShell>
-        <p>Home content</p>
-      </AppShell>
-    );
-
-    // BottomNav renders the home tab label
-    expect(screen.getByText('首頁')).toBeInTheDocument();
-  });
-
-  it('on mobile home page (/), Footer is rendered', () => {
-    mockUsePathname.mockReturnValue('/');
-    vi.mocked(useIsDesktop).mockReturnValue(false);
-
-    render(
-      <AppShell>
-        <p>Home content</p>
-      </AppShell>
-    );
-
-    // Footer renders a copyright or brand mark — check via role or text
-    expect(screen.getByRole('contentinfo')).toBeInTheDocument();
-  });
-
-  it('on desktop home page (/), HeaderNav is rendered', () => {
-    mockUsePathname.mockReturnValue('/');
-    vi.mocked(useIsDesktop).mockReturnValue(true);
-
-    render(
-      <AppShell>
-        <p>Home content</p>
-      </AppShell>
-    );
-
-    expect(screen.getByText('啡遊 CafeRoam')).toBeInTheDocument();
-  });
-
-  it('on mobile /find page, BottomNav is NOT rendered (map manages its own layout)', () => {
-    mockUsePathname.mockReturnValue('/find');
     vi.mocked(useIsDesktop).mockReturnValue(false);
 
     render(
@@ -99,12 +58,12 @@ describe('AppShell', () => {
       </AppShell>
     );
 
-    // BottomNav should not be rendered on the /find page
+    // BottomNav should not be rendered — root is now the full-bleed map page
     expect(screen.queryByText('首頁')).not.toBeInTheDocument();
   });
 
-  it('on /find page, Footer is NOT rendered', () => {
-    mockUsePathname.mockReturnValue('/find');
+  it('on root page (/), Footer is NOT rendered', () => {
+    mockUsePathname.mockReturnValue('/');
     vi.mocked(useIsDesktop).mockReturnValue(false);
 
     render(

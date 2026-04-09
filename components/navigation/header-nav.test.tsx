@@ -31,15 +31,13 @@ describe('a user interacting with the HeaderNav', () => {
   it('a user sees all four main navigation destinations in the header', () => {
     render(<HeaderNav activeTab="find" />);
     expect(screen.getByText('Home')).toBeInTheDocument();
-    expect(screen.getByText('Find')).toBeInTheDocument();
     expect(screen.getByText('Explore')).toBeInTheDocument();
     expect(screen.getByText('Profile')).toBeInTheDocument();
   });
 
-  it('a user on the Find page sees the Find tab highlighted as active', () => {
-    render(<HeaderNav activeTab="find" />);
-    const findLink = screen.getByText('Find').closest('a');
-    expect(findLink).toHaveAttribute('data-active', 'true');
+  it('does not render a 地圖 navigation link', () => {
+    render(<HeaderNav />);
+    expect(screen.queryByText('地圖')).not.toBeInTheDocument();
   });
 
   it('a user sees a search button in the header to open search', () => {

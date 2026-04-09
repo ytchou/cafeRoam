@@ -1,4 +1,4 @@
-// @source app/find/page.tsx                       (search lives here post-DEV-197)
+// @source app/page.tsx                            (search lives here post-DEV-281 consolidation)
 // @source lib/hooks/use-search-state.ts           (URL param 'q' and 'view')
 // @source components/shops/shop-card-compact.tsx  (article selector)
 // @source components/map/list-mobile-layout.tsx   (list view layout)
@@ -10,10 +10,10 @@ test.describe('@critical J07 — Semantic search returns ranked results', () => 
   test('searching "想找安靜可以工作的地方" returns at least one result', async ({
     authedPage: page,
   }) => {
-    // Navigate to /find (search lives here after DEV-197 restructure) in list view
+    // Navigate to / (search lives here after DEV-281 consolidation) in list view
     // so article cards are visible without scrolling a carousel.
     await page.goto(
-      '/find?q=' + encodeURIComponent('想找安靜可以工作的地方') + '&view=list'
+      '/?q=' + encodeURIComponent('想找安靜可以工作的地方') + '&view=list'
     );
     await page.waitForLoadState('networkidle');
 

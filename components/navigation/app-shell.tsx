@@ -8,26 +8,26 @@ import { HeaderNav } from './header-nav';
 export function AppShell({ children }: { children: React.ReactNode }) {
   const isDesktop = useIsDesktop();
   const pathname = usePathname();
-  const isFindPage = pathname === '/find';
+  const isHomePage = pathname === '/';
 
   return (
     <>
-      {isDesktop && !isFindPage && <HeaderNav />}
+      {isDesktop && !isHomePage && <HeaderNav />}
       <main
-        // pb-16 on mobile non-find pages offsets the fixed BottomNav (h-[62px] + margin).
-        // The find page ('/find') manages its own layout via MapMobileLayout with embedded BottomNav.
+        // pb-16 on mobile non-home pages offsets the fixed BottomNav (h-[62px] + margin).
+        // The home page ('/') manages its own layout via MapMobileLayout with embedded BottomNav.
         className={
-          isDesktop && !isFindPage ? 'pt-16' : isFindPage ? '' : 'pb-16'
+          isDesktop && !isHomePage ? 'pt-16' : isHomePage ? '' : 'pb-16'
         }
       >
         {children}
       </main>
-      {!isFindPage && (
+      {!isHomePage && (
         <div className={!isDesktop ? 'pb-16' : undefined}>
           <Footer />
         </div>
       )}
-      {!isDesktop && !isFindPage && <BottomNav />}
+      {!isDesktop && !isHomePage && <BottomNav />}
     </>
   );
 }
