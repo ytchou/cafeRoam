@@ -163,7 +163,9 @@ async def get_shop(shop_id: str) -> Any:
             .limit(1)
             .execute()
         )
-        district_row = cast("dict[str, Any]", first(dist_resp.data, "districts")) if dist_resp.data else None
+        district_row = (
+            cast("dict[str, Any]", first(dist_resp.data, "districts")) if dist_resp.data else None
+        )
     response_data: dict[str, Any] = {to_camel(k): v for k, v in shop.items()}
     response_data["photoUrls"] = photo_urls
     response_data["modeScores"] = mode_scores
