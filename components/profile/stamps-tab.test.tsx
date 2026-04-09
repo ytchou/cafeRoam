@@ -33,12 +33,14 @@ const mockStamps: StampData[] = [
   },
 ];
 
-it('renders stamp cards when stamps are provided', () => {
-  render(<StampsTab stamps={mockStamps} isLoading={false} />);
-  expect(screen.getByText('Coffee Lab')).toBeInTheDocument();
-});
+describe('StampsTab', () => {
+  it('renders stamp cards when stamps are provided', () => {
+    render(<StampsTab stamps={mockStamps} isLoading={false} />);
+    expect(screen.getByText('Coffee Lab')).toBeInTheDocument();
+  });
 
-it('shows a loading spinner while loading', () => {
-  render(<StampsTab stamps={[]} isLoading={true} />);
-  expect(document.querySelector('.animate-spin')).toBeInTheDocument();
+  it('shows a loading spinner while loading', () => {
+    render(<StampsTab stamps={[]} isLoading={true} />);
+    expect(document.querySelector('.animate-spin')).toBeInTheDocument();
+  });
 });

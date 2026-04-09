@@ -83,11 +83,11 @@ describe('a user interacting with the BottomNav', () => {
     expect(tabs[2]).toHaveAttribute('href', '/explore');
     expect(tabs[3]).toHaveAttribute('href', '/profile');
   });
-});
 
-it('renders 4 navigation tabs without a lists tab', () => {
-  render(<BottomNav />);
-  const links = screen.getAllByRole('link');
-  expect(links).toHaveLength(4);
-  expect(screen.queryByText('收藏')).not.toBeInTheDocument();
+  it('renders 4 navigation tabs without a lists tab', () => {
+    render(<BottomNav />);
+    const links = screen.getAllByRole('link');
+    expect(links).toHaveLength(4);
+    expect(screen.queryByText('收藏')).not.toBeInTheDocument();
+  });
 });
