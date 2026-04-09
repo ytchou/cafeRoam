@@ -22,13 +22,13 @@ test.describe('@critical J05 — Auth wall: protected routes redirect to login',
     await page.waitForURL(/\/login/, { timeout: 10_000 });
   });
 
-  test('unauthenticated user can access the /find page without redirect', async ({
+  test('unauthenticated user can access the home page without redirect', async ({
     page,
   }) => {
-    // Map view lives at /find — publicly accessible, no auth required
-    await page.goto('/find');
+    // Home page (/) is publicly accessible, no auth required
+    await page.goto('/');
     await page.waitForLoadState('networkidle');
-    // Should stay on /find (not redirected to /login)
+    // Should stay on / (not redirected to /login)
     expect(page.url()).not.toContain('/login');
   });
 });
