@@ -29,7 +29,7 @@ test.describe('J08 — Mode chip: select "work" → filtered results', () => {
   test('selecting work mode chip filters search results to work-friendly shops', async ({
     authedPage: page,
   }) => {
-    await page.goto('/search');
+    await page.goto('/');
     await page.waitForLoadState('networkidle');
 
     // Mode chips may be labeled "Work", "工作", or similar — skip if not yet shipped
@@ -57,7 +57,7 @@ test.describe('J09 — Suggestion chip: tap preset → search executes', () => {
   test('tapping "有插座可以久坐" chip auto-fills search and shows results', async ({
     authedPage: page,
   }) => {
-    await page.goto('/search');
+    await page.goto('/');
     await page.waitForLoadState('networkidle');
 
     // Suggestion chip should be visible on the search page
@@ -86,7 +86,7 @@ test.describe('J21 — Filter pills: toggle WiFi → results update', () => {
     authedPage: page,
   }) => {
     // Navigate to search and get initial results
-    await page.goto('/search');
+    await page.goto('/');
     await page.waitForLoadState('networkidle');
 
     const searchInput = page

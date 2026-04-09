@@ -47,6 +47,7 @@ export function SearchBar({
         </svg>
       </span>
       <input
+        id="discovery-search"
         type="text"
         value={value}
         onChange={(e) => setValue(e.target.value)}

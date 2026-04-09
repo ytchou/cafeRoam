@@ -7,6 +7,7 @@ const nextConfig: NextConfig = {
     return [
       { source: '/map', destination: '/', permanent: true },
       { source: '/find', destination: '/', permanent: true },
+      { source: '/search', destination: '/', permanent: true },
     ];
   },
   turbopack: {
