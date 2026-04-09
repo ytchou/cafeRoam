@@ -41,7 +41,7 @@ function HomePageContent() {
   const currentQuery = query ?? '';
   const isDesktop = useIsDesktop();
   const { shops: featuredShops } = useShops({ featured: true, limit: 200 });
-  const { results: searchResults, isLoading: searchLoading, queryType } =
+  const { results: searchResults, isLoading: searchLoading } =
     useSearch(currentQuery || null, mode);
   const { latitude, longitude, requestLocation } = useGeolocation();
 

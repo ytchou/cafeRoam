@@ -1,7 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { usePathname } from 'next/navigation';
-import { describe, it, expect } from 'vitest';
-import { vi } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { BottomNav } from './bottom-nav';
 
 vi.mock('next/navigation', () => ({
