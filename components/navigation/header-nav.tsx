@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Map as MapIcon, Compass, User, Search } from 'lucide-react';
+import { Home, Compass, User, Search } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 const NAV_ITEMS: {
@@ -11,7 +11,6 @@ const NAV_ITEMS: {
   tab: string;
 }[] = [
   { href: '/', label: 'Home', icon: Home, tab: 'home' },
-  { href: '/find', label: 'Find', icon: MapIcon, tab: 'find' },
   { href: '/explore', label: 'Explore', icon: Compass, tab: 'explore' },
   { href: '/profile', label: 'Profile', icon: User, tab: 'profile' },
 ];
