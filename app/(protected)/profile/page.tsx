@@ -11,8 +11,7 @@ import { useAnalytics } from '@/lib/posthog/use-analytics';
 import { ProfileHeader } from '@/components/profile/profile-header';
 import { FollowingSection } from '@/components/profile/following-section';
 import { ProfileTabs } from '@/components/profile/profile-tabs';
-
-type TabValue = 'stamps' | 'lists' | 'checkins';
+import type { TabValue } from '@/components/profile/profile-tabs';
 
 export default function ProfilePage() {
   const { user } = useUser();

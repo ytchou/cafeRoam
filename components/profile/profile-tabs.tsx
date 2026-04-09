@@ -8,7 +8,7 @@ import { CheckinHistoryTab } from '@/components/profile/checkin-history-tab';
 import type { StampData } from '@/lib/hooks/use-user-stamps';
 import type { Checkin } from '@/lib/types';
 
-type TabValue = 'stamps' | 'lists' | 'checkins';
+export type TabValue = 'stamps' | 'lists' | 'checkins';
 
 interface ProfileTabsProps {
   stamps: StampData[];
