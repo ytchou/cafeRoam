@@ -8,7 +8,7 @@ import { HeaderNav } from './header-nav';
 export function AppShell({ children }: { children: React.ReactNode }) {
   const isDesktop = useIsDesktop();
   const pathname = usePathname();
-  const isFindPage = pathname === '/find';
+  const isFindPage = pathname === '/';
 
   return (
     <>
