@@ -115,7 +115,7 @@ test.describe('@critical J03 — Text search → login gate for unauthenticated 
     await page.goto('/');
     await page.waitForLoadState('networkidle');
 
-    // Home page has a bare <input id="discovery-search"> — no <form> wrapper
+    // Home page search input is keyed off #discovery-search for this auth-gate flow
     const searchInput = page.locator('#discovery-search');
     await searchInput.fill('coffee');
     await searchInput.press('Enter');
