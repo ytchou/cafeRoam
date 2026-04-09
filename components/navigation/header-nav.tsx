@@ -5,7 +5,6 @@ import {
   Home,
   Map as MapIcon,
   Compass,
-  Bookmark,
   User,
   Search,
 } from 'lucide-react';
@@ -20,7 +19,6 @@ const NAV_ITEMS: {
   { href: '/', label: 'Home', icon: Home, tab: 'home' },
   { href: '/find', label: 'Find', icon: MapIcon, tab: 'find' },
   { href: '/explore', label: 'Explore', icon: Compass, tab: 'explore' },
-  { href: '/lists', label: 'Favorites', icon: Bookmark, tab: 'favorites' },
   { href: '/profile', label: 'Profile', icon: User, tab: 'profile' },
 ];
 const NAV_ITEMS_BY_HREF = new Map(NAV_ITEMS.map((item) => [item.href, item]));
