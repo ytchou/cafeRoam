@@ -479,7 +479,7 @@ class TestGetShopSeoFields:
         # New SEO fields
         assert data["phone"] == "+886-2-2700-1234"
         assert data["website"] == "https://cafeflaneur.tw"
-        assert data["openingHours"] == {"Mon": "08:00-18:00", "Tue": "08:00-18:00"}
+        assert "openingHours" not in data
         assert data["priceRange"] == "$$"
         assert data["updatedAt"] == "2026-03-20T14:30:00+00:00"
 

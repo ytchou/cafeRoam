@@ -141,6 +141,7 @@ async def get_shop(shop_id: str) -> Any:
     claim_status = first(raw_claims, "shop_claims")["status"] if raw_claims else None
     owner_user_id: str | None = approved_claim.get("user_id") if approved_claim else None
     taxonomy_tags = _extract_taxonomy_tags(raw_tags)
+    shop.pop("opening_hours", None)
     mode_scores = {
         "work": shop.pop("mode_work", None),
         "rest": shop.pop("mode_rest", None),
