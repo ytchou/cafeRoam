@@ -30,7 +30,7 @@ vi.mock('@/lib/analytics/ga4-events', () => ({
 
 vi.mock('@/lib/hooks/use-search-state', () => ({
   useSearchState: vi.fn().mockReturnValue({
-    query: null,
+    query: '',
     mode: null,
     filters: [],
     view: 'list',
@@ -39,6 +39,7 @@ vi.mock('@/lib/hooks/use-search-state', () => ({
     toggleFilter: vi.fn(),
     setFilters: vi.fn(),
     setView: vi.fn(),
+    clearAll: vi.fn(),
   }),
 }));
 
@@ -83,7 +84,7 @@ describe('HomePage (unified)', () => {
       error: null,
     });
     vi.mocked(useSearchState).mockReturnValue({
-      query: null,
+      query: '',
       mode: null,
       filters: [],
       view: 'list',
@@ -92,6 +93,7 @@ describe('HomePage (unified)', () => {
       toggleFilter: vi.fn(),
       setFilters: vi.fn(),
       setView: vi.fn(),
+      clearAll: vi.fn(),
     });
     mockPush.mockClear();
     localStorage.clear();
@@ -126,6 +128,7 @@ describe('HomePage (unified)', () => {
         toggleFilter: vi.fn(),
         setFilters: vi.fn(),
         setView: vi.fn(),
+        clearAll: vi.fn(),
       });
       mockUseSearch.mockReturnValue({
         results: [],
@@ -170,6 +173,7 @@ describe('HomePage (unified)', () => {
         toggleFilter: vi.fn(),
         setFilters: vi.fn(),
         setView: vi.fn(),
+        clearAll: vi.fn(),
       });
       mockUseSearch.mockReturnValue({
         results: [],
