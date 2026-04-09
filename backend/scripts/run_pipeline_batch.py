@@ -291,55 +291,7 @@ async def run_shop_pipeline(
     return result
 
 
-# ── Main ───────────────────────────────────────────────────────────────────────
-
-
-async def main(dry_run: bool, shop_ids: list[str] | None = None) -> None:
-    run_start = time.monotonic()
-    print("\n=== CafeRoam Pipeline Batch Runner ===\n")
-
-    # Create batch_run immediately so every trigger is visible in the admin UI
-    db = get_service_role_client()
-    batch_id = str(uuid.uuid4())
-    batch_run_id = db_create_batch_run(db, batch_id, 0)
-
-    # Pre-flight
-    print("Pre-flight…", end=" ", flush=True)
-    errors = check_providers()
-    errors += check_db(db)
-    if errors:
-        print("FAILED")
-        for e in errors:
-            print(f"  ✗ {e}")
-        db_fail_batch(db, batch_run_id)
-        sys.exit(1)
-    print("ok\n")
-
-    # Shop selection
-    shops = pick_shops(db, shop_ids=shop_ids)
-    # Update total now that we know the shop count
-    db.table("batch_runs").update({"total": len(shops)}).eq("id", batch_run_id).execute()
-    live_count = len(db.table("shops").select("id").eq("processing_status", "live").execute().data)
-    pending_count = len(
-        db.table("shops").select("id").eq("processing_status", "pending").execute().data
-    )
-    print(
-        f"DB: {live_count} live, {pending_count} pending  →  selecting {len(shops)} for this run\n"
-    )
-    print(f"  {'#':>2}  {'Name'}")
-    print(f"  {'─' * 2}  {'─' * 42}")
-    for i, s in enumerate(shops, 1):
-        print(f"  {i:>2}. {s['name']}")
-
-    if dry_run:
-        print("\nDry-run — stopping here.")
-        return
-
-    queue = JobQueue(db)
-    scraper = get_scraper_provider()
-
-    print(f"\nbatch_id: {batch_id[:8]}…  run_id: {batch_run_id[:8]}…")
-
+async def _run_pipeline_steps(db, batch_id, batch_run_id, shops, queue, scraper, run_start) -> None:
     # ── Step 1: Apify batch scrape ─────────────────────────────────────────────
     print(f"\n{'─' * 60}")
     print(f"STEP 1/4  Scraping {len(shops)} shops  (single Apify run)")
@@ -509,6 +461,61 @@ async def main(dry_run: bool, shop_ids: list[str] | None = None) -> None:
         for r in errors:
             print(f"    ✗ {r['name']}  {r.get('error', '')[:70]}")
     print(f"{'─' * 60}")
+
+
+# ── Main ───────────────────────────────────────────────────────────────────────
+
+
+async def main(dry_run: bool, shop_ids: list[str] | None = None) -> None:
+    run_start = time.monotonic()
+    print("\n=== CafeRoam Pipeline Batch Runner ===\n")
+
+    # Create batch_run immediately so every trigger is visible in the admin UI
+    db = get_service_role_client()
+    batch_id = str(uuid.uuid4())
+    batch_run_id = db_create_batch_run(db, batch_id, 0)
+
+    # Pre-flight
+    print("Pre-flight…", end=" ", flush=True)
+    errors = check_providers()
+    errors += check_db(db)
+    if errors:
+        print("FAILED")
+        for e in errors:
+            print(f"  ✗ {e}")
+        db_fail_batch(db, batch_run_id)
+        sys.exit(1)
+    print("ok\n")
+
+    # Shop selection
+    shops = pick_shops(db, shop_ids=shop_ids)
+    # Update total now that we know the shop count
+    db.table("batch_runs").update({"total": len(shops)}).eq("id", batch_run_id).execute()
+    live_count = len(db.table("shops").select("id").eq("processing_status", "live").execute().data)
+    pending_count = len(
+        db.table("shops").select("id").eq("processing_status", "pending").execute().data
+    )
+    print(
+        f"DB: {live_count} live, {pending_count} pending  →  selecting {len(shops)} for this run\n"
+    )
+    print(f"  {'#':>2}  {'Name'}")
+    print(f"  {'─' * 2}  {'─' * 42}")
+    for i, s in enumerate(shops, 1):
+        print(f"  {i:>2}. {s['name']}")
+
+    if dry_run:
+        print("\nDry-run — stopping here.")
+        return
+
+    queue = JobQueue(db)
+    scraper = get_scraper_provider()
+
+    print(f"\nbatch_id: {batch_id[:8]}…  run_id: {batch_run_id[:8]}…")
+    try:
+        await _run_pipeline_steps(db, batch_id, batch_run_id, shops, queue, scraper, run_start)
+    except BaseException:
+        db_fail_batch(db, batch_run_id)
+        raise
 
 
 if __name__ == "__main__":
