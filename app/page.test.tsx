@@ -2,6 +2,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { Suspense } from 'react'
 import HomePage from './page'
+import { useSearchState } from '@/lib/hooks/use-search-state'
 
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
@@ -75,6 +76,17 @@ describe('HomePage (unified)', () => {
       isLoading: false,
       error: null,
     })
+    vi.mocked(useSearchState).mockReturnValue({
+      query: null,
+      mode: null,
+      filters: [],
+      view: 'list',
+      setQuery: vi.fn(),
+      setMode: vi.fn(),
+      toggleFilter: vi.fn(),
+      setFilters: vi.fn(),
+      setView: vi.fn(),
+    })
     mockPush.mockClear()
     localStorage.clear()
   })
@@ -96,6 +108,17 @@ describe('HomePage (unified)', () => {
 
   describe('free search gate', () => {
     it('sets free search flag in localStorage when server responds with semantic queryType for unauth user', async () => {
+      vi.mocked(useSearchState).mockReturnValue({
+        query: '安靜的咖啡廳',
+        mode: null,
+        filters: [],
+        view: 'list',
+        setQuery: vi.fn(),
+        setMode: vi.fn(),
+        toggleFilter: vi.fn(),
+        setFilters: vi.fn(),
+        setView: vi.fn(),
+      })
       mockUseSearch.mockReturnValue({
         results: [],
         queryType: 'semantic',
@@ -103,11 +126,8 @@ describe('HomePage (unified)', () => {
         isLoading: false,
         error: null,
       })
-      renderHome()
       expect(localStorage.getItem('caferoam_free_search_used')).toBeNull()
-      const input = screen.getByRole('textbox')
-      fireEvent.change(input, { target: { value: '安靜的咖啡廳' } })
-      fireEvent.submit(screen.getByRole('search'))
+      renderHome()
       await waitFor(() => {
         expect(localStorage.getItem('caferoam_free_search_used')).toBe('true')
       })
@@ -132,6 +152,17 @@ describe('HomePage (unified)', () => {
 
     it('redirects to login when server responds with semantic queryType and free search already used', async () => {
       localStorage.setItem('caferoam_free_search_used', 'true')
+      vi.mocked(useSearchState).mockReturnValue({
+        query: '有插座的咖啡廳',
+        mode: null,
+        filters: [],
+        view: 'list',
+        setQuery: vi.fn(),
+        setMode: vi.fn(),
+        toggleFilter: vi.fn(),
+        setFilters: vi.fn(),
+        setView: vi.fn(),
+      })
       mockUseSearch.mockReturnValue({
         results: [],
         queryType: 'semantic',
@@ -140,9 +171,6 @@ describe('HomePage (unified)', () => {
         error: null,
       })
       renderHome()
-      const input = screen.getByRole('textbox')
-      fireEvent.change(input, { target: { value: '有插座的咖啡廳' } })
-      fireEvent.submit(screen.getByRole('search'))
       await waitFor(() => {
         expect(mockPush).toHaveBeenCalledWith('/login?returnTo=/')
       })
