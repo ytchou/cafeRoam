@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ProfileTabs } from './profile-tabs';
 import type { StampData } from '@/lib/hooks/use-user-stamps';
-import type { Checkin } from '@/lib/types';
+import type { CheckInData } from '@/lib/hooks/use-user-checkins';
 
 vi.mock('@/components/profile/stamps-tab', () => ({
   StampsTab: () => <div>stamps content</div>,
@@ -20,7 +20,7 @@ vi.mock('next/navigation', () => ({
 const defaultProps = {
   stamps: [] as StampData[],
   stampsLoading: false,
-  checkins: [] as Checkin[],
+  checkins: [] as CheckInData[],
   checkinsLoading: false,
 };
 

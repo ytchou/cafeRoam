@@ -6,14 +6,14 @@ import { StampsTab } from '@/components/profile/stamps-tab';
 import { ListsTab } from '@/components/profile/lists-tab';
 import { CheckinHistoryTab } from '@/components/profile/checkin-history-tab';
 import type { StampData } from '@/lib/hooks/use-user-stamps';
-import type { Checkin } from '@/lib/types';
+import type { CheckInData } from '@/lib/hooks/use-user-checkins';
 
 export type TabValue = 'stamps' | 'lists' | 'checkins';
 
 interface ProfileTabsProps {
   stamps: StampData[];
   stampsLoading: boolean;
-  checkins: Checkin[];
+  checkins: CheckInData[];
   checkinsLoading: boolean;
   defaultTab?: TabValue;
 }

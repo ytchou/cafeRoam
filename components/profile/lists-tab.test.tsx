@@ -58,7 +58,7 @@ describe('ListsTab', () => {
         },
       ],
       isLoading: false,
-    } as UseUserListsReturn);
+    } as unknown as UseUserListsReturn);
 
     render(<ListsTab />);
     expect(screen.getByText('Morning Coffee')).toBeInTheDocument();
@@ -78,7 +78,7 @@ describe('ListsTab', () => {
         },
       ],
       isLoading: false,
-    } as UseUserListsReturn);
+    } as unknown as UseUserListsReturn);
 
     render(<ListsTab />);
     const cta = screen.getByRole('link', { name: /view all lists/i });
@@ -89,7 +89,7 @@ describe('ListsTab', () => {
     mockUseUserLists.mockReturnValue({
       lists: [],
       isLoading: false,
-    } as UseUserListsReturn);
+    } as unknown as UseUserListsReturn);
 
     render(<ListsTab />);
     expect(screen.getByText(/no lists yet/i)).toBeInTheDocument();
@@ -101,7 +101,7 @@ describe('ListsTab', () => {
     mockUseUserLists.mockReturnValue({
       lists: [],
       isLoading: true,
-    } as UseUserListsReturn);
+    } as unknown as UseUserListsReturn);
 
     render(<ListsTab />);
     expect(document.querySelector('.animate-spin')).toBeInTheDocument();

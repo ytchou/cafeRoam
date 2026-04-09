@@ -195,7 +195,7 @@ describe('ProfilePage tab routing', () => {
   beforeEach(() => {
     vi.stubEnv('NEXT_PUBLIC_POSTHOG_KEY', 'phc_test');
     // Reset useSearchParams mock before each test
-    vi.mocked(useSearchParams).mockReturnValue(null);
+    vi.mocked(useSearchParams).mockReturnValue(null as never);
   });
 
   afterEach(() => {
@@ -234,7 +234,7 @@ describe('ProfilePage tab routing', () => {
   }
 
   it('passes defaultTab="stamps" when no ?tab param is present', async () => {
-    vi.mocked(useSearchParams).mockReturnValue(null);
+    vi.mocked(useSearchParams).mockReturnValue(null as never);
     mockAllEndpointsForTabTests();
     render(<ProfilePage />, { wrapper });
 
