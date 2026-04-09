@@ -17,6 +17,7 @@ Remove the Lists tab from bottom navigation and header nav. Integrate lists as a
 **Navigation:** 4 tabs (Home, Map, Explore, Profile). No routing changes — `/lists` stays as a real page, just not in the nav.
 
 **Profile page layout:**
+
 ```
 ProfileHeader (always visible)
 FollowingSection (always visible)
@@ -65,12 +66,12 @@ NOT reused: `FavoritesListCard` (has CRUD UI, not appropriate for read-only cont
 
 ## Routing
 
-| Route | Before | After |
-|-------|--------|-------|
-| `/lists` | Standalone tab page | Still exists, not in nav |
-| `/lists/[listId]` | Detail page | Unchanged |
-| `/profile` | Stacked sections | Tabbed (default: stamps) |
-| `/profile?tab=lists` | N/A | Profile with lists tab active |
+| Route                | Before              | After                         |
+| -------------------- | ------------------- | ----------------------------- |
+| `/lists`             | Standalone tab page | Still exists, not in nav      |
+| `/lists/[listId]`    | Detail page         | Unchanged                     |
+| `/profile`           | Stacked sections    | Tabbed (default: stamps)      |
+| `/profile?tab=lists` | N/A                 | Profile with lists tab active |
 
 ## Error Handling
 
@@ -79,6 +80,7 @@ No new error states. Each tab defers to its inner component's loading/error hand
 ## Testing Strategy
 
 **Unit (vitest):**
+
 - `bottom-nav.test.tsx` — 4 tabs, no Lists/收藏 tab
 - `profile-tabs.test.tsx` — 3 tab triggers, tab switching, URL update
 - `stamps-tab.test.tsx` — stamps render, selectedStamp state
@@ -86,6 +88,7 @@ No new error states. Each tab defers to its inner component's loading/error hand
 - `profile/page.test.tsx` — reads `?tab` param, passes defaultTab to ProfileTabs
 
 **E2E (playwright):**
+
 - `profile.spec.ts` — smoke: 3 tabs visible, Lists tab shows "View all lists →" CTA
 - `lists.spec.ts` — no route changes needed (J12–J27 navigate to `/lists` directly, which still exists)
 

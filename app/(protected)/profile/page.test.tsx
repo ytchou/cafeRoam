@@ -27,7 +27,11 @@ vi.mock('@/lib/supabase/client', () => ({
 }));
 
 vi.mock('next/navigation', () => ({
-  useRouter: vi.fn(() => ({ push: vi.fn(), replace: vi.fn(), prefetch: vi.fn() })),
+  useRouter: vi.fn(() => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    prefetch: vi.fn(),
+  })),
   usePathname: vi.fn(() => '/profile'),
   useSearchParams: vi.fn(() => null),
 }));
@@ -214,7 +218,9 @@ describe('ProfilePage tab routing', () => {
       if (url.includes('/api/stamps')) {
         return Promise.resolve({
           ok: true,
-          json: async () => [{ ...makeStamp({ id: 'stamp-1' }), shop_name: 'Fika Coffee' }],
+          json: async () => [
+            { ...makeStamp({ id: 'stamp-1' }), shop_name: 'Fika Coffee' },
+          ],
         });
       }
       if (url.includes('/api/checkins')) {
@@ -241,7 +247,9 @@ describe('ProfilePage tab routing', () => {
 
   it('passes defaultTab="lists" when ?tab=lists is in the URL', async () => {
     const mockParams = new URLSearchParams('tab=lists');
-    vi.mocked(useSearchParams).mockReturnValue(mockParams as unknown as ReturnType<typeof useSearchParams>);
+    vi.mocked(useSearchParams).mockReturnValue(
+      mockParams as unknown as ReturnType<typeof useSearchParams>
+    );
     mockAllEndpointsForTabTests();
     render(<ProfilePage />, { wrapper });
 

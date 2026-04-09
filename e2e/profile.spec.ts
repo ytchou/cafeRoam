@@ -172,5 +172,7 @@ test('J-NAV: profile page shows 3 content tabs and lists tab has view-all CTA', 
   await page.getByRole('tab', { name: 'Lists' }).click();
 
   // Verify "View all lists →" CTA is visible
-  await expect(page.getByRole('link', { name: /view all lists/i })).toBeVisible();
+  await expect(
+    page.getByRole('link', { name: /view all lists/i })
+  ).toBeVisible();
 });

@@ -13,9 +13,12 @@ vi.mock('@/components/stamps/polaroid-section', () => ({
 }));
 
 vi.mock('@/components/stamps/stamp-detail-sheet', () => ({
-  StampDetailSheet: ({ onClose }: { stamp: StampData; onClose: () => void }) => (
-    <button onClick={onClose}>close</button>
-  ),
+  StampDetailSheet: ({
+    onClose,
+  }: {
+    stamp: StampData;
+    onClose: () => void;
+  }) => <button onClick={onClose}>close</button>,
 }));
 
 const mockStamps: StampData[] = [

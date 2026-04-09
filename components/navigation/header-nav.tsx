@@ -1,13 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import {
-  Home,
-  Map as MapIcon,
-  Compass,
-  User,
-  Search,
-} from 'lucide-react';
+import { Home, Map as MapIcon, Compass, User, Search } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 const NAV_ITEMS: {

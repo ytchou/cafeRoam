@@ -10,9 +10,13 @@ vi.mock('next/navigation', () => ({
 }));
 
 vi.mock('@/components/lists/empty-slot-card', () => ({
-  EmptySlotCard: ({ remainingSlots, onClick }: { remainingSlots: number; onClick: () => void }) => (
-    <button onClick={onClick}>{remainingSlots} slots remaining</button>
-  ),
+  EmptySlotCard: ({
+    remainingSlots,
+    onClick,
+  }: {
+    remainingSlots: number;
+    onClick: () => void;
+  }) => <button onClick={onClick}>{remainingSlots} slots remaining</button>,
 }));
 
 vi.mock('next/link', () => ({

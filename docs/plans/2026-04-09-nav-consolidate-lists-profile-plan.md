@@ -15,6 +15,7 @@
 **Tech Stack:** Next.js 15 (App Router), React, TypeScript, Radix UI Tabs (`@/components/ui/tabs`), Vitest, Testing Library
 
 **Acceptance Criteria:**
+
 - [ ] Bottom nav shows 4 tabs (Home, Map, Explore, Profile) — no Lists/收藏 tab
 - [ ] Desktop header nav shows 4 items — no Favorites/Bookmark
 - [ ] Profile page shows tabs: Stamps | Lists | Check-ins
@@ -27,6 +28,7 @@
 ### Task 1: Remove Lists tab from navigation
 
 **Files:**
+
 - Modify: `components/navigation/bottom-nav.tsx`
 - Modify: `components/navigation/header-nav.tsx`
 - Test: `components/navigation/bottom-nav.test.tsx`
@@ -62,7 +64,7 @@ const TABS = [
   { href: '/', label: '首頁', icon: Home },
   { href: '/find', label: '地圖', icon: Map },
   { href: '/explore', label: '探索', icon: Compass },
-  { href: '/lists', label: '收藏', icon: Heart },   // ← remove this line
+  { href: '/lists', label: '收藏', icon: Heart }, // ← remove this line
   { href: '/profile', label: '我的', icon: User },
 ];
 
@@ -106,6 +108,7 @@ git commit -m "feat(DEV-296): remove lists tab from bottom nav and header nav"
 ### Task 2: Extract StampsTab component
 
 **Files:**
+
 - Create: `components/profile/stamps-tab.tsx`
 - Test: `components/profile/stamps-tab.test.tsx`
 
@@ -208,6 +211,7 @@ git commit -m "feat(DEV-296): extract StampsTab component from profile page"
 ### Task 3: Build ListsTab component
 
 **Files:**
+
 - Create: `components/profile/lists-tab.tsx`
 - Test: `components/profile/lists-tab.test.tsx`
 
@@ -396,6 +400,7 @@ git commit -m "feat(DEV-296): add ListsTab component — read-only list preview 
 ### Task 4: Build ProfileTabs component
 
 **Files:**
+
 - Create: `components/profile/profile-tabs.tsx`
 - Test: `components/profile/profile-tabs.test.tsx`
 
@@ -551,6 +556,7 @@ git commit -m "feat(DEV-296): add ProfileTabs component with Stamps | Lists | Ch
 ### Task 5: Refactor profile page to use tabs
 
 **Files:**
+
 - Modify: `app/(protected)/profile/page.tsx`
 - Test: `app/(protected)/profile/page.test.tsx`
 
@@ -729,6 +735,7 @@ git commit -m "feat(DEV-296): refactor profile page — tabbed interface with ?t
 ### Task 6: Update E2E tests and docs
 
 **Files:**
+
 - Modify: `e2e/profile.spec.ts`
 - Modify: `SPEC.md`
 - Modify: `PRD.md`
@@ -744,7 +751,9 @@ Depends on: Task 5
 Append a new test block at the end of `e2e/profile.spec.ts`:
 
 ```typescript
-test('J-NAV: profile page shows 3 content tabs and lists tab has view-all CTA', async ({ page }) => {
+test('J-NAV: profile page shows 3 content tabs and lists tab has view-all CTA', async ({
+  page,
+}) => {
   await page.goto('/profile');
 
   // Verify 3 tabs exist
@@ -756,7 +765,9 @@ test('J-NAV: profile page shows 3 content tabs and lists tab has view-all CTA', 
   await page.getByRole('tab', { name: 'Lists' }).click();
 
   // Verify "View all lists →" CTA is visible
-  await expect(page.getByRole('link', { name: /view all lists/i })).toBeVisible();
+  await expect(
+    page.getByRole('link', { name: /view all lists/i })
+  ).toBeVisible();
 });
 ```
 
@@ -773,11 +784,13 @@ In `PRD.md`, find §7 Core Features describing the navigation structure. Update 
 **Step 4: Add changelog entries**
 
 In `SPEC_CHANGELOG.md`, prepend:
+
 ```
 2026-04-09 | §9 Responsive layouts, §2 System Modules | Bottom nav reduced from 5 to 4 tabs; Lists/收藏 tab removed; Lists content accessible via Profile page tabs | DEV-296 nav consolidation
 ```
 
 In `PRD_CHANGELOG.md`, prepend:
+
 ```
 2026-04-09 | §7 Core Features | Navigation updated to 4 tabs; Lists accessible via Profile → Lists tab with "View all lists →" CTA | DEV-296 nav consolidation
 ```
@@ -826,15 +839,19 @@ graph TD
 ```
 
 **Wave 1** (parallel — no dependencies):
+
 - Task 1: Remove Lists tab from navigation
 - Task 2: Extract StampsTab component
 - Task 3: Build ListsTab component
 
 **Wave 2** (depends on Wave 1):
+
 - Task 4: Build ProfileTabs component ← Tasks 2, 3
 
 **Wave 3** (depends on Wave 2):
+
 - Task 5: Refactor profile page ← Tasks 1, 4
 
 **Wave 4** (depends on Wave 3):
+
 - Task 6: Update E2E tests + SPEC/PRD docs ← Task 5
