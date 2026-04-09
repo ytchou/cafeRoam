@@ -27,6 +27,7 @@
 ### Task 1: Add /find → / redirect in next.config.ts
 
 **Files:**
+
 - Modify: `next.config.ts`
 
 No test needed — Next.js redirect config; verified manually via dev server.
@@ -63,6 +64,7 @@ git commit -m "feat(DEV-281): redirect /find to /"
 ### Task 2: Remove 地圖 tab from bottom nav
 
 **Files:**
+
 - Modify: `components/navigation/bottom-nav.tsx`
 - Test: `components/navigation/bottom-nav.test.tsx`
 
@@ -72,11 +74,11 @@ In `components/navigation/bottom-nav.test.tsx`, add:
 
 ```tsx
 it('renders 4 navigation tabs without 地圖', () => {
-  render(<BottomNav />)
-  const links = screen.getAllByRole('link')
-  expect(links).toHaveLength(4)
-  expect(screen.queryByText('地圖')).not.toBeInTheDocument()
-})
+  render(<BottomNav />);
+  const links = screen.getAllByRole('link');
+  expect(links).toHaveLength(4);
+  expect(screen.queryByText('地圖')).not.toBeInTheDocument();
+});
 ```
 
 **Step 2: Run test to verify it fails**
@@ -115,6 +117,7 @@ git commit -m "feat(DEV-281): drop 地圖 tab from bottom nav (5 → 4 tabs)"
 ### Task 3: Remove 地圖 tab from header nav
 
 **Files:**
+
 - Modify: `components/navigation/header-nav.tsx`
 - Test: `components/navigation/header-nav.test.tsx`
 
@@ -124,9 +127,9 @@ In `components/navigation/header-nav.test.tsx`, add or update:
 
 ```tsx
 it('does not render a 地圖 navigation link', () => {
-  render(<HeaderNav />)
-  expect(screen.queryByText('地圖')).not.toBeInTheDocument()
-})
+  render(<HeaderNav />);
+  expect(screen.queryByText('地圖')).not.toBeInTheDocument();
+});
 ```
 
 **Step 2: Run test to verify it fails**
@@ -161,6 +164,7 @@ git commit -m "feat(DEV-281): drop 地圖 tab from header nav"
 ### Task 4: Move submit CTA to Explore page
 
 **Files:**
+
 - Modify: `app/explore/page.tsx`
 - Test: `app/explore/page.test.tsx` (create if absent)
 
@@ -168,10 +172,13 @@ git commit -m "feat(DEV-281): drop 地圖 tab from header nav"
 
 ```tsx
 it('shows the submit shop CTA', async () => {
-  render(<ExplorePage />)
-  expect(await screen.findByText(/知道一間很棒的咖啡廳/)).toBeInTheDocument()
-  expect(screen.getByRole('link', { name: /提交店家/i })).toHaveAttribute('href', '/submit')
-})
+  render(<ExplorePage />);
+  expect(await screen.findByText(/知道一間很棒的咖啡廳/)).toBeInTheDocument();
+  expect(screen.getByRole('link', { name: /提交店家/i })).toHaveAttribute(
+    'href',
+    '/submit'
+  );
+});
 ```
 
 **Step 2: Run test to verify it fails**
@@ -206,6 +213,7 @@ git commit -m "feat(DEV-281): move submit CTA from home to explore page"
 ### Task 5: Unified root page — merge Find + search hero + free search gate
 
 **Files:**
+
 - Modify: `app/page.tsx` (full rewrite)
 - Modify: `app/page.test.tsx` (full rewrite)
 - Delete: `app/find/page.tsx`
@@ -220,10 +228,10 @@ This is the core task. The page renders the search hero above the existing Find 
 Replace the existing test file with:
 
 ```tsx
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { Suspense } from 'react'
-import HomePage from './page'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { Suspense } from 'react';
+import HomePage from './page';
 
 vi.mock('@/lib/hooks/use-search', () => ({
   useSearch: vi.fn().mockReturnValue({
@@ -233,7 +241,7 @@ vi.mock('@/lib/hooks/use-search', () => ({
     isLoading: false,
     error: null,
   }),
-}))
+}));
 
 vi.mock('@/lib/hooks/use-search-state', () => ({
   useSearchState: vi.fn().mockReturnValue({
@@ -247,100 +255,108 @@ vi.mock('@/lib/hooks/use-search-state', () => ({
     setFilters: vi.fn(),
     setView: vi.fn(),
   }),
-}))
+}));
 
 vi.mock('@/lib/hooks/use-geolocation', () => ({
-  useGeolocation: vi.fn().mockReturnValue({ position: null, requestLocation: vi.fn() }),
-}))
+  useGeolocation: vi
+    .fn()
+    .mockReturnValue({ position: null, requestLocation: vi.fn() }),
+}));
 
 vi.mock('@/components/map/map-with-fallback', () => ({
   MapWithFallback: () => <div data-testid="map-with-fallback" />,
-}))
+}));
 
-const mockPush = vi.fn()
+const mockPush = vi.fn();
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: mockPush, replace: vi.fn() }),
   usePathname: () => '/',
   useSearchParams: () => new URLSearchParams(),
-}))
+}));
 
-const mockUseUser = vi.fn()
+const mockUseUser = vi.fn();
 vi.mock('@/lib/hooks/use-user', () => ({
   useUser: () => mockUseUser(),
-}))
+}));
 
 function renderHome() {
-  return render(<Suspense><HomePage /></Suspense>)
+  return render(
+    <Suspense>
+      <HomePage />
+    </Suspense>
+  );
 }
 
 describe('HomePage (unified)', () => {
   beforeEach(() => {
-    mockUseUser.mockReturnValue({ user: null, isLoading: false })
-    mockPush.mockClear()
-    localStorage.clear()
-  })
+    mockUseUser.mockReturnValue({ user: null, isLoading: false });
+    mockPush.mockClear();
+    localStorage.clear();
+  });
 
   it('renders a search bar', () => {
-    renderHome()
-    expect(screen.getByRole('textbox')).toBeInTheDocument()
-  })
+    renderHome();
+    expect(screen.getByRole('textbox')).toBeInTheDocument();
+  });
 
   it('renders mode chips', () => {
-    renderHome()
+    renderHome();
     // At least one mode chip label should be visible
-    expect(screen.getByText(/工作|休息|社交|特色/)).toBeInTheDocument()
-  })
+    expect(screen.getByText(/工作|休息|社交|特色/)).toBeInTheDocument();
+  });
 
   it('renders the map/list area', () => {
-    renderHome()
-    expect(screen.getByTestId('map-with-fallback')).toBeInTheDocument()
-  })
+    renderHome();
+    expect(screen.getByTestId('map-with-fallback')).toBeInTheDocument();
+  });
 
   describe('free search gate', () => {
     it('sets free search flag in localStorage on first semantic search for unauth user', async () => {
-      const { useSearch } = await import('@/lib/hooks/use-search')
+      const { useSearch } = await import('@/lib/hooks/use-search');
       vi.mocked(useSearch).mockReturnValueOnce({
         results: [],
         queryType: 'semantic',
         resultCount: 0,
         isLoading: false,
         error: null,
-      })
-      renderHome()
-      expect(localStorage.getItem('caferoam_free_search_used')).toBeNull()
+      });
+      renderHome();
+      expect(localStorage.getItem('caferoam_free_search_used')).toBeNull();
       // Trigger search — the gate sets the flag before processing
-      const { useSearchState } = await import('@/lib/hooks/use-search-state')
-      const setQuery = vi.mocked(useSearchState)().setQuery
-      fireEvent.submit(screen.getByRole('search'))
-      expect(localStorage.getItem('caferoam_free_search_used')).toBe('true')
-    })
+      const { useSearchState } = await import('@/lib/hooks/use-search-state');
+      const setQuery = vi.mocked(useSearchState)().setQuery;
+      fireEvent.submit(screen.getByRole('search'));
+      expect(localStorage.getItem('caferoam_free_search_used')).toBe('true');
+    });
 
     it('redirects to login on second semantic search for unauth user', async () => {
-      localStorage.setItem('caferoam_free_search_used', 'true')
-      const { useSearch } = await import('@/lib/hooks/use-search')
+      localStorage.setItem('caferoam_free_search_used', 'true');
+      const { useSearch } = await import('@/lib/hooks/use-search');
       vi.mocked(useSearch).mockReturnValue({
         results: [],
         queryType: 'semantic',
         resultCount: 0,
         isLoading: false,
         error: null,
-      })
-      renderHome()
-      fireEvent.submit(screen.getByRole('search'))
+      });
+      renderHome();
+      fireEvent.submit(screen.getByRole('search'));
       await waitFor(() => {
-        expect(mockPush).toHaveBeenCalledWith('/login?returnTo=/')
-      })
-    })
+        expect(mockPush).toHaveBeenCalledWith('/login?returnTo=/');
+      });
+    });
 
     it('bypasses gate for authenticated users even when flag is set', () => {
-      mockUseUser.mockReturnValue({ user: { id: 'user-1' }, isLoading: false })
-      localStorage.setItem('caferoam_free_search_used', 'true')
-      renderHome()
-      fireEvent.submit(screen.getByRole('search'))
-      expect(mockPush).not.toHaveBeenCalledWith(expect.stringContaining('/login'))
-    })
-  })
-})
+      mockUseUser.mockReturnValue({ user: { id: 'user-1' }, isLoading: false });
+      localStorage.setItem('caferoam_free_search_used', 'true');
+      renderHome();
+      fireEvent.submit(screen.getByRole('search'));
+      expect(mockPush).not.toHaveBeenCalledWith(
+        expect.stringContaining('/login')
+      );
+    });
+  });
+});
 ```
 
 **Step 2: Run tests to verify they fail**
@@ -356,52 +372,58 @@ Expected: FAIL — current `app/page.tsx` renders DiscoveryPage, not the unified
 Read `app/find/page.tsx` to get the exact `FindPageContent` implementation and `MapWithFallback` prop API, then write the unified page combining the search hero and map/list area:
 
 ```tsx
-'use client'
+'use client';
 
-import { useCallback, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { useSearchState } from '@/lib/hooks/use-search-state'
-import { useSearch } from '@/lib/hooks/use-search'
-import { useGeolocation } from '@/lib/hooks/use-geolocation'
-import { useUser } from '@/lib/hooks/use-user'
-import { SearchBar } from '@/components/discovery/search-bar'
-import { ModeChips } from '@/components/discovery/mode-chips'
-import { SuggestionChips } from '@/components/discovery/suggestion-chips'
-import { MapWithFallback } from '@/components/map/map-with-fallback'
-import { WebsiteJsonLd } from '@/components/seo/WebsiteJsonLd'
+import { useCallback, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useSearchState } from '@/lib/hooks/use-search-state';
+import { useSearch } from '@/lib/hooks/use-search';
+import { useGeolocation } from '@/lib/hooks/use-geolocation';
+import { useUser } from '@/lib/hooks/use-user';
+import { SearchBar } from '@/components/discovery/search-bar';
+import { ModeChips } from '@/components/discovery/mode-chips';
+import { SuggestionChips } from '@/components/discovery/suggestion-chips';
+import { MapWithFallback } from '@/components/map/map-with-fallback';
+import { WebsiteJsonLd } from '@/components/seo/WebsiteJsonLd';
 
-const FREE_SEARCH_KEY = 'caferoam_free_search_used'
+const FREE_SEARCH_KEY = 'caferoam_free_search_used';
 
 export default function HomePage() {
-  const router = useRouter()
-  const { user } = useUser()
-  const searchState = useSearchState()
-  const { results, queryType, isLoading } = useSearch(searchState.query, searchState.mode)
-  const { position, requestLocation } = useGeolocation()
-  const [hasRequestedLocation, setHasRequestedLocation] = useState(false)
+  const router = useRouter();
+  const { user } = useUser();
+  const searchState = useSearchState();
+  const { results, queryType, isLoading } = useSearch(
+    searchState.query,
+    searchState.mode
+  );
+  const { position, requestLocation } = useGeolocation();
+  const [hasRequestedLocation, setHasRequestedLocation] = useState(false);
 
-  const handleSearch = useCallback((query: string) => {
-    if (!user && queryType === 'semantic') {
-      const used = localStorage.getItem(FREE_SEARCH_KEY)
-      if (used) {
-        router.push('/login?returnTo=/')
-        return
+  const handleSearch = useCallback(
+    (query: string) => {
+      if (!user && queryType === 'semantic') {
+        const used = localStorage.getItem(FREE_SEARCH_KEY);
+        if (used) {
+          router.push('/login?returnTo=/');
+          return;
+        }
+        localStorage.setItem(FREE_SEARCH_KEY, 'true');
       }
-      localStorage.setItem(FREE_SEARCH_KEY, 'true')
-    }
-    searchState.setQuery(query)
-  }, [user, queryType, router, searchState])
+      searchState.setQuery(query);
+    },
+    [user, queryType, router, searchState]
+  );
 
   const handleLocationRequest = useCallback(() => {
-    setHasRequestedLocation(true)
-    requestLocation()
-  }, [requestLocation])
+    setHasRequestedLocation(true);
+    requestLocation();
+  }, [requestLocation]);
 
   return (
     <>
       <WebsiteJsonLd />
-      <div className="flex flex-col h-full">
-        <div className="p-4 space-y-3 shrink-0">
+      <div className="flex h-full flex-col">
+        <div className="shrink-0 space-y-3 p-4">
           <SearchBar
             onSubmit={handleSearch}
             defaultQuery={searchState.query ?? ''}
@@ -429,7 +451,7 @@ export default function HomePage() {
         />
       </div>
     </>
-  )
+  );
 }
 ```
 
@@ -471,6 +493,7 @@ git commit -m "feat(DEV-281): unified root page — search hero + map/list + fre
 ### Task 6: Update AppShell — root gets full-bleed layout
 
 **Files:**
+
 - Modify: `components/navigation/app-shell.tsx`
 - Test: `components/navigation/app-shell.test.tsx`
 
@@ -481,16 +504,16 @@ In `components/navigation/app-shell.test.tsx`, add:
 ```tsx
 it('suppresses global nav and footer at root /', () => {
   // Mock usePathname to return '/'
-  vi.mocked(usePathname).mockReturnValue('/')
+  vi.mocked(usePathname).mockReturnValue('/');
   render(
     <AppShell>
       <div data-testid="content">content</div>
     </AppShell>
-  )
-  expect(screen.getByTestId('content')).toBeInTheDocument()
+  );
+  expect(screen.getByTestId('content')).toBeInTheDocument();
   // Bottom nav should not render at root
-  expect(screen.queryByRole('navigation')).not.toBeInTheDocument()
-})
+  expect(screen.queryByRole('navigation')).not.toBeInTheDocument();
+});
 ```
 
 **Step 2: Run test to verify it fails**
@@ -530,6 +553,7 @@ git commit -m "feat(DEV-281): full-bleed layout at root / (was /find)"
 ### Task 7: Update E2E tests for stale /find references
 
 **Files:**
+
 - Modify: `e2e/discovery.spec.ts`
 - Modify: `e2e/search.spec.ts` (if applicable)
 
@@ -544,6 +568,7 @@ grep -rn "/find" e2e/
 **Step 2: Update each reference**
 
 For each occurrence:
+
 - `page.goto('/find')` → `page.goto('/')`
 - `expect(page.url()).toContain('/find')` → `expect(page.url()).toBe(baseURL + '/')` (or `.toContain('/')`)
 - Any assertion for the 地圖 tab in bottom nav → update to check for 4 tabs or the 首頁 tab
@@ -593,6 +618,7 @@ graph TD
 ```
 
 **Wave 1** (all parallel — no dependencies, no file overlaps):
+
 - Task 1: Add /find redirect in `next.config.ts`
 - Task 2: Remove 地圖 tab from `bottom-nav.tsx`
 - Task 3: Remove 地圖 tab from `header-nav.tsx`
@@ -600,7 +626,9 @@ graph TD
 - Task 5: Unified root page — rewrite `app/page.tsx`, delete old files
 
 **Wave 2** (depends on Task 5 — root page must be unified before AppShell condition shifts):
+
 - Task 6: Update AppShell `pathname === '/'`
 
 **Wave 3** (depends on all code changes):
+
 - Task 7: Update E2E tests

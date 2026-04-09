@@ -1,4 +1,5 @@
 ---
+
 # Design: Consolidate Home + Find Pages
 
 **Date:** 2026-04-09
@@ -48,37 +49,39 @@ Both pages serve as discovery entry points with search bars, creating navigation
 
 ### Navigation Changes
 
-| Element | Before | After |
-|---------|--------|-------|
-| Bottom nav | 5 tabs: 首頁 地圖 探索 收藏 我 | 4 tabs: 首頁 探索 收藏 我 |
-| Header nav | Includes 地圖 tab | 地圖 tab removed |
-| Submit CTA | On DiscoveryPage (`/`) | Moved to Explore page (`/explore`) |
+| Element    | Before                         | After                              |
+| ---------- | ------------------------------ | ---------------------------------- |
+| Bottom nav | 5 tabs: 首頁 地圖 探索 收藏 我 | 4 tabs: 首頁 探索 收藏 我          |
+| Header nav | Includes 地圖 tab              | 地圖 tab removed                   |
+| Submit CTA | On DiscoveryPage (`/`)         | Moved to Explore page (`/explore`) |
 
 ### Route Changes
 
-| Route | Before | After |
-|-------|--------|-------|
-| `/` | DiscoveryPage (search hero + featured shops) | Unified page (search hero + map/list) |
-| `/find` | Find page (map/list directory) | 301 redirect → `/` |
+| Route   | Before                                       | After                                 |
+| ------- | -------------------------------------------- | ------------------------------------- |
+| `/`     | DiscoveryPage (search hero + featured shops) | Unified page (search hero + map/list) |
+| `/find` | Find page (map/list directory)               | 301 redirect → `/`                    |
 
 ## Components
 
-| File | Change |
-|------|--------|
-| `app/page.tsx` | Rewritten — unified root page |
-| `app/find/page.tsx` | Deleted — content merged into root |
-| `app/find/layout.tsx` | Deleted |
-| `components/discovery/discovery-page.tsx` | Deleted |
-| `components/navigation/app-shell.tsx` | `pathname === '/find'` → `pathname === '/'` |
-| `components/navigation/bottom-nav.tsx` | Remove 地圖 tab (5 → 4 tabs) |
-| `components/navigation/header-nav.tsx` | Remove 地圖 tab |
-| `next.config.ts` | Add `/find` → `/` permanent redirect |
-| `app/explore/page.tsx` | Add submit CTA banner |
+| File                                      | Change                                      |
+| ----------------------------------------- | ------------------------------------------- |
+| `app/page.tsx`                            | Rewritten — unified root page               |
+| `app/find/page.tsx`                       | Deleted — content merged into root          |
+| `app/find/layout.tsx`                     | Deleted                                     |
+| `components/discovery/discovery-page.tsx` | Deleted                                     |
+| `components/navigation/app-shell.tsx`     | `pathname === '/find'` → `pathname === '/'` |
+| `components/navigation/bottom-nav.tsx`    | Remove 地圖 tab (5 → 4 tabs)                |
+| `components/navigation/header-nav.tsx`    | Remove 地圖 tab                             |
+| `next.config.ts`                          | Add `/find` → `/` permanent redirect        |
+| `app/explore/page.tsx`                    | Add submit CTA banner                       |
 
 ## Testing Classification
 
 **(a) New e2e journey?**
+
 - [x] Yes — root `/` now renders a different layout. E2E tests in `e2e/discovery.spec.ts` and `e2e/search.spec.ts` referencing `/find` must be updated to use `/`.
 
 **(b) Coverage gate impact?**
+
 - [x] Yes — `useSearch` and the free search gate are on the critical path. Gate unit tests migrate from `components/discovery/discovery-page.test.tsx` to `app/page.test.tsx`. Verify 80% coverage gate for the search path after the move.
