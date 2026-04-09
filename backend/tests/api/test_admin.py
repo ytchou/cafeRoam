@@ -731,11 +731,13 @@ class TestAdminBatchListing:
                 count=1,
             )
             # batch_run_shops query: .table().select().in_().execute()
-            mock_db.table.return_value.select.return_value.in_.return_value.execute.return_value = MagicMock(
-                data=[
-                    {"batch_run_id": _BATCH_RUN_ID, "status": "live"},
-                    {"batch_run_id": _BATCH_RUN_ID, "status": "pending"},
-                ]
+            mock_db.table.return_value.select.return_value.in_.return_value.execute.return_value = (
+                MagicMock(
+                    data=[
+                        {"batch_run_id": _BATCH_RUN_ID, "status": "live"},
+                        {"batch_run_id": _BATCH_RUN_ID, "status": "pending"},
+                    ]
+                )
             )
             with (
                 patch("api.admin.get_service_role_client", return_value=mock_db),
