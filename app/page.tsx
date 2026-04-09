@@ -1,6 +1,13 @@
 'use client';
 
-import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { ModeChips } from '@/components/discovery/mode-chips';
@@ -42,8 +49,11 @@ function HomePageContent() {
   const currentQuery = query ?? '';
   const isDesktop = useIsDesktop();
   const { shops: featuredShops } = useShops({ featured: true, limit: 200 });
-  const { results: searchResults, isLoading: searchLoading, queryType } =
-    useSearch(currentQuery || null, mode);
+  const {
+    results: searchResults,
+    isLoading: searchLoading,
+    queryType,
+  } = useSearch(currentQuery || null, mode);
   const { latitude, longitude, requestLocation } = useGeolocation();
 
   const [selectedShopId, setSelectedShopId] = useState<string | null>(null);
@@ -114,7 +124,9 @@ function HomePageContent() {
         ])
       );
       filtered = filtered.filter((shop) =>
-        tagFilters.every((tagId) => shopTagSets.get(shop.id)?.has(tagId) ?? false)
+        tagFilters.every(
+          (tagId) => shopTagSets.get(shop.id)?.has(tagId) ?? false
+        )
       );
     }
 
@@ -231,7 +243,10 @@ function HomePageContent() {
             <span className="text-white/80">理想咖啡廳</span>
           </h1>
           <div className="mt-6">
-            <SearchBar onSubmit={handleSearchSubmit} defaultQuery={currentQuery} />
+            <SearchBar
+              onSubmit={handleSearchSubmit}
+              defaultQuery={currentQuery}
+            />
           </div>
           <div className="mt-4">
             <ModeChips activeMode={mode} onModeChange={setMode} />

@@ -1,8 +1,8 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { Suspense } from 'react'
-import HomePage from './page'
-import { useSearchState } from '@/lib/hooks/use-search-state'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { Suspense } from 'react';
+import HomePage from './page';
+import { useSearchState } from '@/lib/hooks/use-search-state';
 
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
@@ -16,17 +16,17 @@ Object.defineProperty(window, 'matchMedia', {
     removeEventListener: vi.fn(),
     dispatchEvent: vi.fn(),
   })),
-})
+});
 
-const mockUseSearch = vi.fn()
+const mockUseSearch = vi.fn();
 vi.mock('@/lib/hooks/use-search', () => ({
   useSearch: (...args: unknown[]) => mockUseSearch(...args),
-}))
+}));
 
 vi.mock('@/lib/analytics/ga4-events', () => ({
   trackSearch: vi.fn(),
   trackSignupCtaClick: vi.fn(),
-}))
+}));
 
 vi.mock('@/lib/hooks/use-search-state', () => ({
   useSearchState: vi.fn().mockReturnValue({
@@ -40,42 +40,48 @@ vi.mock('@/lib/hooks/use-search-state', () => ({
     setFilters: vi.fn(),
     setView: vi.fn(),
   }),
-}))
+}));
 
 vi.mock('@/lib/hooks/use-geolocation', () => ({
-  useGeolocation: vi.fn().mockReturnValue({ position: null, requestLocation: vi.fn() }),
-}))
+  useGeolocation: vi
+    .fn()
+    .mockReturnValue({ position: null, requestLocation: vi.fn() }),
+}));
 
 vi.mock('@/components/map/map-with-fallback', () => ({
   MapWithFallback: () => <div data-testid="map-with-fallback" />,
-}))
+}));
 
-const mockPush = vi.fn()
+const mockPush = vi.fn();
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: mockPush, replace: vi.fn() }),
   usePathname: () => '/',
   useSearchParams: () => new URLSearchParams(),
-}))
+}));
 
-const mockUseUser = vi.fn()
+const mockUseUser = vi.fn();
 vi.mock('@/lib/hooks/use-user', () => ({
   useUser: () => mockUseUser(),
-}))
+}));
 
 function renderHome() {
-  return render(<Suspense><HomePage /></Suspense>)
+  return render(
+    <Suspense>
+      <HomePage />
+    </Suspense>
+  );
 }
 
 describe('HomePage (unified)', () => {
   beforeEach(() => {
-    mockUseUser.mockReturnValue({ user: null, isLoading: false })
+    mockUseUser.mockReturnValue({ user: null, isLoading: false });
     mockUseSearch.mockReturnValue({
       results: [],
       queryType: null,
       resultCount: 0,
       isLoading: false,
       error: null,
-    })
+    });
     vi.mocked(useSearchState).mockReturnValue({
       query: null,
       mode: null,
@@ -86,25 +92,27 @@ describe('HomePage (unified)', () => {
       toggleFilter: vi.fn(),
       setFilters: vi.fn(),
       setView: vi.fn(),
-    })
-    mockPush.mockClear()
-    localStorage.clear()
-  })
+    });
+    mockPush.mockClear();
+    localStorage.clear();
+  });
 
   it('renders a search bar', () => {
-    renderHome()
-    expect(screen.getByRole('textbox')).toBeInTheDocument()
-  })
+    renderHome();
+    expect(screen.getByRole('textbox')).toBeInTheDocument();
+  });
 
   it('renders mode chips', () => {
-    renderHome()
-    expect(screen.getAllByText(/工作|休息|社交|特色/).length).toBeGreaterThan(0)
-  })
+    renderHome();
+    expect(screen.getAllByText(/工作|休息|社交|特色/).length).toBeGreaterThan(
+      0
+    );
+  });
 
   it('renders the map/list area', () => {
-    renderHome()
-    expect(screen.getByTestId('map-with-fallback')).toBeInTheDocument()
-  })
+    renderHome();
+    expect(screen.getByTestId('map-with-fallback')).toBeInTheDocument();
+  });
 
   describe('free search gate', () => {
     it('sets free search flag in localStorage when server responds with semantic queryType for unauth user', async () => {
@@ -118,20 +126,20 @@ describe('HomePage (unified)', () => {
         toggleFilter: vi.fn(),
         setFilters: vi.fn(),
         setView: vi.fn(),
-      })
+      });
       mockUseSearch.mockReturnValue({
         results: [],
         queryType: 'semantic',
         resultCount: 0,
         isLoading: false,
         error: null,
-      })
-      expect(localStorage.getItem('caferoam_free_search_used')).toBeNull()
-      renderHome()
+      });
+      expect(localStorage.getItem('caferoam_free_search_used')).toBeNull();
+      renderHome();
       await waitFor(() => {
-        expect(localStorage.getItem('caferoam_free_search_used')).toBe('true')
-      })
-    })
+        expect(localStorage.getItem('caferoam_free_search_used')).toBe('true');
+      });
+    });
 
     it('does not set free search flag for keyword (non-semantic) searches', async () => {
       mockUseSearch.mockReturnValue({
@@ -140,18 +148,18 @@ describe('HomePage (unified)', () => {
         resultCount: 0,
         isLoading: false,
         error: null,
-      })
-      renderHome()
-      const input = screen.getByRole('textbox')
-      fireEvent.change(input, { target: { value: '星巴克' } })
-      fireEvent.submit(screen.getByRole('search'))
+      });
+      renderHome();
+      const input = screen.getByRole('textbox');
+      fireEvent.change(input, { target: { value: '星巴克' } });
+      fireEvent.submit(screen.getByRole('search'));
       await waitFor(() => {
-        expect(localStorage.getItem('caferoam_free_search_used')).toBeNull()
-      })
-    })
+        expect(localStorage.getItem('caferoam_free_search_used')).toBeNull();
+      });
+    });
 
     it('redirects to login when server responds with semantic queryType and free search already used', async () => {
-      localStorage.setItem('caferoam_free_search_used', 'true')
+      localStorage.setItem('caferoam_free_search_used', 'true');
       vi.mocked(useSearchState).mockReturnValue({
         query: '有插座的咖啡廳',
         mode: null,
@@ -162,37 +170,39 @@ describe('HomePage (unified)', () => {
         toggleFilter: vi.fn(),
         setFilters: vi.fn(),
         setView: vi.fn(),
-      })
+      });
       mockUseSearch.mockReturnValue({
         results: [],
         queryType: 'semantic',
         resultCount: 0,
         isLoading: false,
         error: null,
-      })
-      renderHome()
+      });
+      renderHome();
       await waitFor(() => {
-        expect(mockPush).toHaveBeenCalledWith('/login?returnTo=/')
-      })
-    })
+        expect(mockPush).toHaveBeenCalledWith('/login?returnTo=/');
+      });
+    });
 
     it('bypasses gate for authenticated users even when flag is set', async () => {
-      mockUseUser.mockReturnValue({ user: { id: 'user-1' }, isLoading: false })
-      localStorage.setItem('caferoam_free_search_used', 'true')
+      mockUseUser.mockReturnValue({ user: { id: 'user-1' }, isLoading: false });
+      localStorage.setItem('caferoam_free_search_used', 'true');
       mockUseSearch.mockReturnValue({
         results: [],
         queryType: 'semantic',
         resultCount: 0,
         isLoading: false,
         error: null,
-      })
-      renderHome()
-      const input = screen.getByRole('textbox')
-      fireEvent.change(input, { target: { value: '有插座的咖啡廳' } })
-      fireEvent.submit(screen.getByRole('search'))
+      });
+      renderHome();
+      const input = screen.getByRole('textbox');
+      fireEvent.change(input, { target: { value: '有插座的咖啡廳' } });
+      fireEvent.submit(screen.getByRole('search'));
       await waitFor(() => {
-        expect(mockPush).not.toHaveBeenCalledWith(expect.stringContaining('/login'))
-      })
-    })
-  })
-})
+        expect(mockPush).not.toHaveBeenCalledWith(
+          expect.stringContaining('/login')
+        );
+      });
+    });
+  });
+});
