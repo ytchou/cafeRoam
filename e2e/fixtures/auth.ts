@@ -105,7 +105,7 @@ async function createAuthContext(
     {
       name: 'caferoam_consent',
       value: 'denied',
-      url: 'http://localhost:3000',
+      url: process.env.E2E_BASE_URL ?? 'http://localhost:3000',
       expires: Math.floor(Date.now() / 1000) + 31_536_000,
       httpOnly: false,
       secure: false,
