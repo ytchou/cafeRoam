@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { Suspense, useEffect, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useUser } from '@/lib/hooks/use-user';
 import { useUserStamps } from '@/lib/hooks/use-user-stamps';
@@ -13,7 +13,7 @@ import { FollowingSection } from '@/components/profile/following-section';
 import { ProfileTabs } from '@/components/profile/profile-tabs';
 import type { TabValue } from '@/components/profile/profile-tabs';
 
-export default function ProfilePage() {
+function ProfilePageInner() {
   const { user } = useUser();
   const { profile, isLoading: profileLoading } = useUserProfile();
   const { stamps, isLoading: stampsLoading } = useUserStamps();
@@ -77,5 +77,13 @@ export default function ProfilePage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function ProfilePage() {
+  return (
+    <Suspense>
+      <ProfilePageInner />
+    </Suspense>
   );
 }
