@@ -706,34 +706,36 @@ class TestAdminJobCancel:
             app.dependency_overrides.clear()
 
 
+_BATCH_RUN_ID = "e5f6a7b8-0001-0001-0001-000000000001"
+_BATCH_ID = "batch-abc-2026-04-09"
+
+
 class TestAdminBatchListing:
     def test_admin_batch_listing_only_shows_scrape_batch_jobs(self):
-        """When an admin views the batch listing, only scrape_batch jobs appear — not the legacy scrape_shop type."""
+        """When an admin views the batch listing, the response is built from batch_runs and batch_run_shops — not the legacy job_queue table."""
         app.dependency_overrides[get_current_user] = _admin_user
         try:
             mock_db = MagicMock()
-            mock_db.table.return_value.select.return_value.eq.return_value.order.return_value.limit.return_value.execute.return_value = MagicMock(
+            # batch_runs query: .table().select().order().range().execute()
+            mock_db.table.return_value.select.return_value.order.return_value.range.return_value.execute.return_value = MagicMock(
                 data=[
                     {
-                        "job_type": "scrape_batch",
-                        "payload": {
-                            "batch_id": "batch-abc-123",
-                            "shops": [
-                                {"shop_id": _SHOP_1_ID},
-                                {"shop_id": _SHOP_2_ID},
-                            ],
-                        },
-                        "created_at": "2026-04-06T10:00:00Z",
+                        "id": _BATCH_RUN_ID,
+                        "batch_id": _BATCH_ID,
+                        "started_at": "2026-04-09T10:00:00Z",
+                        "completed_at": "2026-04-09T10:05:00Z",
+                        "status": "completed",
+                        "total": 2,
                     }
-                ]
+                ],
+                count=1,
             )
-            mock_db.table.return_value.select.return_value.in_.return_value.execute.return_value = (
-                MagicMock(
-                    data=[
-                        {"id": _SHOP_1_ID, "processing_status": "live"},
-                        {"id": _SHOP_2_ID, "processing_status": "pending"},
-                    ]
-                )
+            # batch_run_shops query: .table().select().in_().execute()
+            mock_db.table.return_value.select.return_value.in_.return_value.execute.return_value = MagicMock(
+                data=[
+                    {"batch_run_id": _BATCH_RUN_ID, "status": "live"},
+                    {"batch_run_id": _BATCH_RUN_ID, "status": "pending"},
+                ]
             )
             with (
                 patch("api.admin.get_service_role_client", return_value=mock_db),
@@ -744,35 +746,18 @@ class TestAdminBatchListing:
             assert response.status_code == 200
             data = response.json()
             assert "batches" in data
+            assert "total" in data
+            assert data["total"] == 1
+
+            batch = data["batches"][0]
+            assert batch["batch_id"] == _BATCH_ID
+            assert batch["status"] == "completed"
+            assert batch["shop_count"] == 2
+            assert "status_counts" in batch
 
             all_call_args = str(mock_db.mock_calls)
-            assert "scrape_shop" not in all_call_args, (
-                "list_batches must not query for scrape_shop — batch-only pipeline uses scrape_batch only"
+            assert "job_queue" not in all_call_args, (
+                "list_batches must read from batch_runs/batch_run_shops — not the legacy job_queue table"
             )
         finally:
             app.dependency_overrides.clear()
-
-    def test_admin_batch_shop_ids_excludes_legacy_scrape_shop_format(self):
-        """When collecting shop IDs for a batch, only the scrape_batch payload format is used — the old scrape_shop format is ignored."""
-        from api.admin import _collect_shop_ids_for_batch
-
-        mock_db = MagicMock()
-        mock_db.table.return_value.select.return_value.eq.return_value.eq.return_value.execute.return_value = MagicMock(
-            data=[
-                {
-                    "payload": {
-                        "batch_id": "batch-xyz-456",
-                        "shops": [{"shop_id": _SHOP_1_ID}],
-                    }
-                }
-            ]
-        )
-
-        result = _collect_shop_ids_for_batch("batch-xyz-456", mock_db)
-        assert result == [_SHOP_1_ID]
-
-        all_call_args = str(mock_db.mock_calls)
-        assert "scrape_shop" not in all_call_args, (
-            "_collect_shop_ids_for_batch must not fall back to scrape_shop — "
-            "that old format is no longer supported"
-        )

@@ -10,7 +10,6 @@ from api.deps import require_admin
 from core.db import first
 from db.supabase_client import get_service_role_client
 from middleware.admin_audit import log_admin_action
-from models.types import JobType
 
 RejectionReasonType = Literal[
     "permanently_closed",
@@ -482,93 +481,46 @@ async def list_batches(
     limit: int = Query(20, ge=1, le=100),
     user: dict[str, Any] = Depends(require_admin),  # noqa: B008
 ) -> dict[str, Any]:
-    """List batch runs grouped by batch_id with per-status shop counts.
-
-    Uses scrape_batch format: one job per batch with shops in payload.shops[].
-    """
+    """List batch runs with per-status shop counts from batch_run_shops."""
     db = get_service_role_client()
 
-    batch_job_cap = 5000
-    # Fetch scrape_batch jobs only — capped to prevent full table scan at scale
     response = (
-        db.table("job_queue")
-        .select("job_type, payload, created_at")
-        .eq("job_type", JobType.SCRAPE_BATCH.value)
-        .order("created_at", desc=True)
-        .limit(batch_job_cap)
+        db.table("batch_runs")
+        .select("id, batch_id, started_at, completed_at, status, total", count="exact")
+        .order("started_at", desc=True)
+        .range(offset, offset + limit - 1)
         .execute()
     )
-    if len(response.data or []) == batch_job_cap:
-        logger.warning("list_batches: hit job cap — oldest batches may be missing")
+    total = response.count or 0
 
-    # Group by batch_id — skip jobs without one
-    batch_map: dict[str, dict[str, Any]] = {}
-    for row in cast("list[dict[str, Any]]", response.data or []):
-        payload = row["payload"]
-        created_at = row["created_at"]
-
-        bid = payload.get("batch_id")
-        if not bid:
-            continue
-        shop_ids = [s["shop_id"] for s in payload.get("shops", []) if s.get("shop_id")]
-
-        if bid not in batch_map:
-            batch_map[bid] = {"shop_ids": [], "created_at": created_at}
-        else:
-            if created_at < batch_map[bid]["created_at"]:
-                batch_map[bid]["created_at"] = created_at
-        # Dedup: retried batches produce a new job with the same shop_ids; extend without dupes
-        existing = set(batch_map[bid]["shop_ids"])
-        batch_map[bid]["shop_ids"].extend(s for s in shop_ids if s not in existing)
-
-    sorted_batches = sorted(batch_map.items(), key=lambda x: x[1]["created_at"], reverse=True)
-    total = len(sorted_batches)
-    page_batches = sorted_batches[offset : offset + limit]
-
-    # Batch-query shops for this page only
-    all_shop_ids = [sid for _, b in page_batches for sid in b["shop_ids"]]
-    shop_status_map: dict[str, str] = {}
-    if all_shop_ids:
+    batch_run_ids = [str(b["id"]) for b in cast("list[dict[str, Any]]", response.data or [])]
+    status_counts_by_batch: dict[str, dict[str, int]] = {}
+    if batch_run_ids:
         shops_resp = (
-            db.table("shops").select("id, processing_status").in_("id", all_shop_ids).execute()
+            db.table("batch_run_shops")
+            .select("batch_run_id, status")
+            .in_("batch_run_id", batch_run_ids)
+            .execute()
         )
-        for s in cast("list[dict[str, Any]]", shops_resp.data or []):
-            shop_status_map[str(s["id"])] = s["processing_status"]
+        for row in cast("list[dict[str, Any]]", shops_resp.data or []):
+            bid = str(row["batch_run_id"])
+            st = row["status"]
+            counts = status_counts_by_batch.setdefault(bid, {})
+            counts[st] = counts.get(st, 0) + 1
 
-    batches = []
-    for bid, b in page_batches:
-        status_counts: dict[str, int] = {}
-        for sid in b["shop_ids"]:
-            status = shop_status_map.get(str(sid), "unknown")
-            status_counts[status] = status_counts.get(status, 0) + 1
-        batches.append(
-            {
-                "batch_id": bid,
-                "created_at": b["created_at"],
-                "shop_count": len(b["shop_ids"]),
-                "status_counts": status_counts,
-            }
-        )
+    batches = [
+        {
+            "batch_id": b["batch_id"],
+            "started_at": b["started_at"],
+            "completed_at": b["completed_at"],
+            "status": b["status"],
+            "shop_count": b["total"] or 0,
+            "status_counts": status_counts_by_batch.get(str(b["id"]), {}),
+        }
+        for b in cast("list[dict[str, Any]]", response.data or [])
+    ]
 
     return {"batches": batches, "total": total}
-
-
-def _collect_shop_ids_for_batch(batch_id: str, db: Any) -> list[str]:
-    """Collect all shop IDs for a batch from the scrape_batch job."""
-    batch_job_resp = (
-        db.table("job_queue")
-        .select("payload")
-        .eq("job_type", JobType.SCRAPE_BATCH.value)
-        .eq("payload->>batch_id", batch_id)
-        .execute()
-    )
-    shop_ids: list[str] = []
-    for row in cast("list[dict[str, Any]]", batch_job_resp.data or []):
-        for s in row["payload"].get("shops", []):
-            if s.get("shop_id"):
-                shop_ids.append(s["shop_id"])
-
-    return list(dict.fromkeys(shop_ids))  # dedup, preserve order
 
 
 @router.get("/batches/{batch_id}")
@@ -586,76 +538,47 @@ async def get_batch_detail(
     """
     db = get_service_role_client()
 
-    shop_ids = _collect_shop_ids_for_batch(batch_id, db)
-    if not shop_ids:
+    batch_resp = db.table("batch_runs").select("id").eq("batch_id", batch_id).limit(1).execute()
+    if not batch_resp.data:
         raise HTTPException(status_code=404, detail=f"Batch {batch_id} not found")
+    batch_run_id = str(first(batch_resp.data, "batch_runs lookup")["id"])
 
-    # Single unfiltered fetch — status_summary needs all shops; search/status filtered in Python
-    all_shops_resp = (
-        db.table("shops").select("id, name, processing_status").in_("id", shop_ids).execute()
+    all_resp = (
+        db.table("batch_run_shops")
+        .select("shop_id, shop_name, status, error_message")
+        .eq("batch_run_id", batch_run_id)
+        .execute()
     )
-    all_shop_rows: dict[str, dict[str, Any]] = {
-        str(s["id"]): s for s in cast("list[dict[str, Any]]", all_shops_resp.data or [])
-    }
+    all_shops_raw = cast("list[dict[str, Any]]", all_resp.data or [])
 
     # Unfiltered status summary
     status_summary: dict[str, int] = {}
-    for s in all_shop_rows.values():
-        st = s["processing_status"]
+    for s in all_shops_raw:
+        st = s["status"]
         status_summary[st] = status_summary.get(st, 0) + 1
 
-    # Collect errors for all shops in batch
-    failed_resp = (
-        db.table("job_queue")
-        .select("payload, last_error, job_type")
-        .eq("payload->>batch_id", batch_id)
-        .in_("status", ["failed", "dead_letter"])
-        .execute()
-    )
-    shop_errors: dict[str, dict[str, str]] = {}
-    for row in cast("list[dict[str, Any]]", failed_resp.data or []):
-        error = row.get("last_error")
-        if not error:
-            continue
-        job_type = row["job_type"]
-        row_payload = row["payload"]
-        if job_type == JobType.SCRAPE_BATCH.value:
-            # Batch-level failure — fan out error to each shop in the batch payload
-            for shop_entry in row_payload.get("shops", []):
-                sid = str(shop_entry.get("shop_id", ""))
-                if sid:
-                    shop_errors[sid] = {"last_error": error, "failed_at_stage": job_type}
-        else:
-            sid = str(row_payload.get("shop_id", ""))
-            if sid:
-                shop_errors[sid] = {"last_error": error, "failed_at_stage": job_type}
-
-    # Build full shop list, applying search/status filters in Python, preserving original order
+    # Apply search/status filters in Python
     search_lower = search.lower() if search else None
     all_shops = []
-    for sid in shop_ids:
-        shop_info = all_shop_rows.get(str(sid))
-        if shop_info is None:
-            continue
-        shop_name = shop_info.get("name", "")
-        shop_status = shop_info.get("processing_status", "unknown")
+    for s in all_shops_raw:
+        shop_name = s.get("shop_name") or ""
+        shop_status = s.get("status", "unknown")
         if search_lower and search_lower not in shop_name.lower():
             continue
         if status and shop_status != status:
             continue
-        error_info = shop_errors.get(str(sid), {})
         all_shops.append(
             {
-                "shop_id": sid,
+                "shop_id": str(s["shop_id"]),
                 "name": shop_name,
                 "processing_status": shop_status,
-                "last_error": error_info.get("last_error"),
-                "failed_at_stage": error_info.get("failed_at_stage"),
+                "last_error": s.get("error_message"),
+                "failed_at_stage": None,
             }
         )
 
-    # Failed shops first, then alphabetical
-    all_shops.sort(key=lambda x: (x["processing_status"] != "failed", x["name"] or ""))
+    # Errors first, then alphabetical
+    all_shops.sort(key=lambda x: (x["processing_status"] != "error", x["name"]))
 
     total_filtered = len(all_shops)
     page_shops = all_shops[offset : offset + limit]

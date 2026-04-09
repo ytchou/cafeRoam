@@ -44,7 +44,9 @@ const STATUS_COLORS: Record<string, string> = {
   embedding: 'bg-indigo-100 text-indigo-700',
   publishing: 'bg-cyan-100 text-cyan-700',
   live: 'bg-green-100 text-green-700',
-  failed: 'bg-red-100 text-red-700',
+  error: 'bg-red-100 text-red-700',
+  not_found: 'bg-orange-100 text-orange-700',
+  out_of_region: 'bg-gray-100 text-gray-600',
 };
 
 const ALL_STATUSES = [
@@ -54,7 +56,9 @@ const ALL_STATUSES = [
   'embedding',
   'publishing',
   'live',
-  'failed',
+  'error',
+  'not_found',
+  'out_of_region',
 ];
 const ALL_STATUSES_VALUE = 'all';
 
@@ -225,7 +229,7 @@ export function BatchDetail({
                 </TableCell>
                 <TableCell className="max-w-xs truncate py-1 text-xs text-red-600">
                   {shop.last_error
-                    ? `[${shop.failed_at_stage}] ${shop.last_error.slice(0, 80)}${shop.last_error.length > 80 ? '…' : ''}`
+                    ? `${shop.failed_at_stage ? `[${shop.failed_at_stage}] ` : ''}${shop.last_error.slice(0, 80)}${shop.last_error.length > 80 ? '…' : ''}`
                     : '-'}
                 </TableCell>
               </TableRow>

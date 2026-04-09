@@ -172,6 +172,15 @@ def db_complete_batch(db, batch_run_id: str, counts: dict) -> None:
     ).eq("id", batch_run_id).execute()
 
 
+def db_fail_batch(db, batch_run_id: str) -> None:
+    db.table("batch_runs").update(
+        {
+            "status": "failed",
+            "completed_at": datetime.now(UTC).isoformat(),
+        }
+    ).eq("id", batch_run_id).execute()
+
+
 # ── Shop selection ─────────────────────────────────────────────────────────────
 
 
@@ -272,6 +281,7 @@ async def run_shop_pipeline(
         db,
         db_row_id,
         status="live",
+        error_message=None,
         enrich_elapsed_s=round(t.get("enriching", 0), 2),
         embed_elapsed_s=round(t.get("embedding", 0), 2),
         publish_elapsed_s=round(t.get("publishing", 0), 2),
@@ -288,20 +298,27 @@ async def main(dry_run: bool, shop_ids: list[str] | None = None) -> None:
     run_start = time.monotonic()
     print("\n=== CafeRoam Pipeline Batch Runner ===\n")
 
+    # Create batch_run immediately so every trigger is visible in the admin UI
+    db = get_service_role_client()
+    batch_id = str(uuid.uuid4())
+    batch_run_id = db_create_batch_run(db, batch_id, 0)
+
     # Pre-flight
     print("Pre-flight…", end=" ", flush=True)
     errors = check_providers()
-    db = get_service_role_client()
     errors += check_db(db)
     if errors:
         print("FAILED")
         for e in errors:
             print(f"  ✗ {e}")
+        db_fail_batch(db, batch_run_id)
         sys.exit(1)
     print("ok\n")
 
     # Shop selection
     shops = pick_shops(db, shop_ids=shop_ids)
+    # Update total now that we know the shop count
+    db.table("batch_runs").update({"total": len(shops)}).eq("id", batch_run_id).execute()
     live_count = len(db.table("shops").select("id").eq("processing_status", "live").execute().data)
     pending_count = len(
         db.table("shops").select("id").eq("processing_status", "pending").execute().data
@@ -318,12 +335,9 @@ async def main(dry_run: bool, shop_ids: list[str] | None = None) -> None:
         print("\nDry-run — stopping here.")
         return
 
-    batch_id = str(uuid.uuid4())
     queue = JobQueue(db)
     scraper = get_scraper_provider()
 
-    # Create batch_run record
-    batch_run_id = db_create_batch_run(db, batch_id, len(shops))
     print(f"\nbatch_id: {batch_id[:8]}…  run_id: {batch_run_id[:8]}…")
 
     # ── Step 1: Apify batch scrape ─────────────────────────────────────────────
