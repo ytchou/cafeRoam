@@ -66,7 +66,7 @@ _SHOP_LIST_COLUMNS = (
 )
 
 _SHOP_DETAIL_COLUMNS = (
-    f"{_SHOP_LIST_COLUMNS}, phone, website, price_range, google_place_id, updated_at"
+    f"{_SHOP_LIST_COLUMNS}, phone, website, price_range, google_place_id, updated_at, district"
 )
 
 
@@ -120,8 +120,7 @@ async def get_shop(shop_id: str) -> Any:
             f"{_SHOP_DETAIL_COLUMNS}, shop_photos(url), "
             "shop_tags(tag_id, confidence, taxonomy_tags(id, dimension, label, label_zh)), "
             "shop_claims(status, user_id), "
-            "shop_content(id, title, body, photo_url, is_published, updated_at, content_type), "
-            "districts(slug, name_zh)"
+            "shop_content(id, title, body, photo_url, is_published, updated_at, content_type)"
         )
         .eq("id", shop_id)
         .limit(1)
@@ -154,7 +153,17 @@ async def get_shop(shop_id: str) -> Any:
             owner_story = {to_camel(k): v for k, v in row.items() if k != "content_type"}
             break
 
-    raw_district = shop.pop("districts", None)
+    district_zh = shop.pop("district", None)
+    district_row = None
+    if district_zh:
+        dist_resp = (
+            db.table("districts")
+            .select("slug, name_zh")
+            .eq("name_zh", district_zh)
+            .limit(1)
+            .execute()
+        )
+        district_row = first(dist_resp.data, "districts") if dist_resp.data else None
     response_data: dict[str, Any] = {to_camel(k): v for k, v in shop.items()}
     response_data["photoUrls"] = photo_urls
     response_data["modeScores"] = mode_scores
@@ -163,7 +172,7 @@ async def get_shop(shop_id: str) -> Any:
     response_data["ownerId"] = owner_user_id
     response_data["ownerStory"] = owner_story
     response_data["district"] = (
-        {"slug": raw_district["slug"], "nameZh": raw_district["name_zh"]} if raw_district else None
+        {"slug": district_row["slug"], "nameZh": district_row["name_zh"]} if district_row else None
     )
     return response_data
 
