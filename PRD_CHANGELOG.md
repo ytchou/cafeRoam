@@ -4,6 +4,8 @@ Every change to PRD.md must be logged here immediately after the edit is made.
 
 **Format:** `YYYY-MM-DD | Section changed | What changed | Why`
 
+2026-04-09 | §7 Core Features | Navigation updated to 4 tabs; Lists accessible via Profile → Lists tab with "View all lists →" CTA | DEV-296 nav consolidation
+
 ---
 
 | Date       | Section                    | Change                                                                                                                                                                                                                                         | Rationale                                                                                                                                                                                      |

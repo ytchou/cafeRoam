@@ -1,18 +1,17 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useUser } from '@/lib/hooks/use-user';
 import { useUserStamps } from '@/lib/hooks/use-user-stamps';
 import { useUserProfile } from '@/lib/hooks/use-user-profile';
 import { useUserCheckins } from '@/lib/hooks/use-user-checkins';
 import { useUserFollowing } from '@/lib/hooks/use-user-following';
 import { useAnalytics } from '@/lib/posthog/use-analytics';
-import { PolaroidSection } from '@/components/stamps/polaroid-section';
-import { StampDetailSheet } from '@/components/stamps/stamp-detail-sheet';
 import { ProfileHeader } from '@/components/profile/profile-header';
-import { CheckinHistoryTab } from '@/components/profile/checkin-history-tab';
 import { FollowingSection } from '@/components/profile/following-section';
-import type { StampData } from '@/lib/hooks/use-user-stamps';
+import { ProfileTabs } from '@/components/profile/profile-tabs';
+import type { TabValue } from '@/components/profile/profile-tabs';
 
 export default function ProfilePage() {
   const { user } = useUser();
@@ -24,9 +23,13 @@ export default function ProfilePage() {
     total: followingTotal,
     isLoading: followingLoading,
   } = useUserFollowing();
-  const [selectedStamp, setSelectedStamp] = useState<StampData | null>(null);
+  const searchParams = useSearchParams();
   const { capture } = useAnalytics();
   const hasFiredRef = useRef(false);
+
+  const rawTab = searchParams?.get('tab');
+  const defaultTab: TabValue =
+    rawTab === 'lists' || rawTab === 'checkins' ? rawTab : 'stamps';
 
   useEffect(() => {
     if (!stampsLoading && !hasFiredRef.current) {
@@ -54,19 +57,6 @@ export default function ProfilePage() {
 
       <div className="mx-auto max-w-4xl px-4 pb-8">
         <section>
-          {stampsLoading ? (
-            <div className="flex justify-center py-12">
-              <div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600" />
-            </div>
-          ) : (
-            <PolaroidSection
-              stamps={stamps}
-              onStampClick={(stamp) => setSelectedStamp(stamp)}
-            />
-          )}
-        </section>
-
-        <section>
           <h2 className="font-heading pt-7 pb-4 text-xl font-bold text-[#1A1918]">
             Following
           </h2>
@@ -76,20 +66,16 @@ export default function ProfilePage() {
           />
         </section>
 
-        <section>
-          <h2 className="font-heading pt-7 pb-4 text-xl font-bold text-[#1A1918]">
-            Check-in History
-          </h2>
-          <CheckinHistoryTab checkins={checkins} isLoading={checkinsLoading} />
-        </section>
+        <div className="pt-6">
+          <ProfileTabs
+            stamps={stamps}
+            stampsLoading={stampsLoading}
+            checkins={checkins}
+            checkinsLoading={checkinsLoading}
+            defaultTab={defaultTab}
+          />
+        </div>
       </div>
-
-      {selectedStamp && (
-        <StampDetailSheet
-          stamp={selectedStamp}
-          onClose={() => setSelectedStamp(null)}
-        />
-      )}
     </main>
   );
 }

@@ -157,3 +157,22 @@ test.describe
     });
   });
 });
+
+test('J-NAV: profile page shows 3 content tabs and lists tab has view-all CTA', async ({
+  authedPage: page,
+}) => {
+  await page.goto('/profile');
+
+  // Verify 3 tabs exist
+  await expect(page.getByRole('tab', { name: 'Stamps' })).toBeVisible();
+  await expect(page.getByRole('tab', { name: 'Lists' })).toBeVisible();
+  await expect(page.getByRole('tab', { name: 'Check-ins' })).toBeVisible();
+
+  // Click Lists tab
+  await page.getByRole('tab', { name: 'Lists' }).click();
+
+  // Verify "View all lists →" CTA is visible
+  await expect(
+    page.getByRole('link', { name: /view all lists/i })
+  ).toBeVisible();
+});

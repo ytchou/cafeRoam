@@ -65,11 +65,12 @@ CafeRoam is a mobile-first web directory for Taiwan's independent coffee shop sc
 - **Geolocation** — "nearby me" search with location permission
 - **Multi-dimension filters:** functionality (outlet, WiFi), time (late night, no time limit, early bird), ambience (quiet, lively, chit-chat), mode (work/rest/social)
 - **Semantic search** — ChatGPT-style chatbox on landing page, auth-gated, powered by pgvector + taxonomy boost
+- **Navigation** — bottom nav is 4 tabs: Home, Find, Explore, Profile. Lists/收藏 is no longer a bottom-nav tab; list access lives under Profile → Lists.
 - **Auth wall:** logged-out = directory + map + shop detail; logged-in = semantic search + lists + check-ins + profile
 - **User lists** — max 3 lists per user, unlimited locations per list (private in V1)
 - **Check-in system** — photo upload (required) + text note (optional) + menu photo (optional, feeds data pipeline)
 - **Stamp/collectible** earned per shop checked into
-- **Private user profile page** — check-in history, stamps earned, lists
+- **Private user profile page** — tabs for stamps, lists preview (with "View all lists →" CTA), and check-in history
 - **Weekly curated email** — fixed schedule, same content for all users
 - **Data pipeline** — Cafe Nomad import + Google Maps scraping via Apify + Claude Haiku enrichment → taxonomy tags + OpenAI embeddings
 - **Taxonomy system** — canonical tag database powering both filter UI and search ranking

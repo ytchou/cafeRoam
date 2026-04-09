@@ -4,6 +4,8 @@ Every change to SPEC.md must be logged here immediately after the edit is made.
 
 **Format:** `YYYY-MM-DD | Section changed | What changed | Why`
 
+2026-04-09 | §9 Responsive layouts, §2 System Modules | Bottom nav reduced from 5 to 4 tabs; Lists/收藏 tab removed; Lists content accessible via Profile page tabs | DEV-296 nav consolidation
+
 | 2026-04-06 | §2 Data pipeline, §9 Business Rules | Removed per-submission scraping; documented batch-only pipeline (daily cron 03:10 Asia/Taipei, completes within 24h) | DEV-276 |
 | 2026-04-06 | §2, §5, §9 | Added shop data reports: user-facing error reporting, IssueTrackerProvider, PDPA SET NULL cascade, daily Linear digest cron | DEV-262 |
 | 2026-04-06 | §9 Auth wall | Added note about public-facing /submit CTAs with login redirect | DEV-263 submit discoverability |

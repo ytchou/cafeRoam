@@ -1,9 +1,9 @@
 import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { SWRConfig } from 'swr';
 import React from 'react';
 import { makeStamp } from '@/lib/test-utils/factories';
+import { useSearchParams } from 'next/navigation';
 
 vi.mock('@/lib/supabase/client', () => ({
   createClient: () => ({
@@ -24,6 +24,22 @@ vi.mock('@/lib/supabase/client', () => ({
       }),
     },
   }),
+}));
+
+vi.mock('next/navigation', () => ({
+  useRouter: vi.fn(() => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    prefetch: vi.fn(),
+  })),
+  usePathname: vi.fn(() => '/profile'),
+  useSearchParams: vi.fn(() => null),
+}));
+
+vi.mock('@/components/profile/profile-tabs', () => ({
+  ProfileTabs: ({ defaultTab }: { defaultTab: string }) => (
+    <div data-testid="profile-tabs" data-default-tab={defaultTab} />
+  ),
 }));
 
 const mockFetch = vi.fn();
@@ -112,31 +128,6 @@ describe('ProfilePage', () => {
     expect(screen.getByText('Check-ins')).toBeInTheDocument();
   });
 
-  it('renders the polaroid memories section', async () => {
-    mockAllEndpoints();
-    render(<ProfilePage />, { wrapper });
-
-    await waitFor(() => {
-      expect(screen.getByText(/my memories/i)).toBeInTheDocument();
-    });
-  });
-
-  it('shows check-in history section', async () => {
-    mockAllEndpoints();
-    render(<ProfilePage />, { wrapper });
-
-    await waitFor(() => {
-      expect(screen.getByText('Check-in History')).toBeInTheDocument();
-    });
-
-    await waitFor(() => {
-      expect(screen.getByRole('link', { name: 'Fika Coffee' })).toHaveAttribute(
-        'href',
-        '/shop/shop-a'
-      );
-    });
-  });
-
   it('fires profile_stamps_viewed event with stamp count when stamps load', async () => {
     mockAllEndpoints({
       stamps: [
@@ -170,24 +161,7 @@ describe('ProfilePage', () => {
       expect(body.event).toBe('profile_stamps_viewed');
       expect(body.properties).toEqual({ stamp_count: 0 });
     });
-    expect(screen.getByText(/my memories/i)).toBeInTheDocument();
-  });
-
-  it('opens stamp detail sheet when user taps a stamp', async () => {
-    mockAllEndpoints({
-      stamps: [{ ...makeStamp({ id: 'stamp-1' }), shop_name: '山小孩咖啡' }],
-    });
-    const user = userEvent.setup();
-    render(<ProfilePage />, { wrapper });
-
-    await waitFor(() => {
-      expect(screen.getByTestId('memory-card')).toBeInTheDocument();
-    });
-    await user.click(screen.getByTestId('memory-card'));
-
-    await waitFor(() => {
-      expect(screen.getAllByText('山小孩咖啡').length).toBeGreaterThan(1);
-    });
+    expect(screen.getByTestId('profile-tabs')).toBeInTheDocument();
   });
 
   it('renders email from auth session in profile header', async () => {
@@ -214,5 +188,75 @@ describe('ProfilePage', () => {
       expect(screen.getByText('12')).toBeInTheDocument();
     });
     expect(screen.getByText('Memories')).toBeInTheDocument();
+  });
+});
+
+describe('ProfilePage tab routing', () => {
+  beforeEach(() => {
+    vi.stubEnv('NEXT_PUBLIC_POSTHOG_KEY', 'phc_test');
+    // Reset useSearchParams mock before each test
+    vi.mocked(useSearchParams).mockReturnValue(null as never);
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  function mockAllEndpointsForTabTests() {
+    mockFetch.mockImplementation((url: string) => {
+      if (url.includes('/api/profile')) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            display_name: 'Mei-Ling',
+            avatar_url: null,
+            checkin_count: 1,
+            stamp_count: 3,
+          }),
+        });
+      }
+      if (url.includes('/api/stamps')) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => [
+            { ...makeStamp({ id: 'stamp-1' }), shop_name: 'Fika Coffee' },
+          ],
+        });
+      }
+      if (url.includes('/api/checkins')) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => [],
+        });
+      }
+      return Promise.resolve({ ok: true, json: async () => ({}) });
+    });
+  }
+
+  it('passes defaultTab="stamps" when no ?tab param is present', async () => {
+    vi.mocked(useSearchParams).mockReturnValue(null as never);
+    mockAllEndpointsForTabTests();
+    render(<ProfilePage />, { wrapper });
+
+    await waitFor(() => {
+      const tabs = screen.getByTestId('profile-tabs');
+      expect(tabs).toBeInTheDocument();
+      expect(tabs).toHaveAttribute('data-default-tab', 'stamps');
+    });
+  });
+
+  it('passes defaultTab="lists" when ?tab=lists is in the URL', async () => {
+    const mockParams = new URLSearchParams('tab=lists');
+    vi.mocked(useSearchParams).mockReturnValue(
+      mockParams as unknown as ReturnType<typeof useSearchParams>
+    );
+    mockAllEndpointsForTabTests();
+    render(<ProfilePage />, { wrapper });
+
+    await waitFor(() => {
+      const tabs = screen.getByTestId('profile-tabs');
+      expect(tabs).toBeInTheDocument();
+      expect(tabs).toHaveAttribute('data-default-tab', 'lists');
+    });
   });
 });
