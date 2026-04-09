@@ -28,12 +28,11 @@ describe('a user interacting with the HeaderNav', () => {
     expect(screen.getByText('啡遊 CafeRoam')).toBeInTheDocument();
   });
 
-  it('a user sees all five main navigation destinations in the header', () => {
+  it('a user sees all four main navigation destinations in the header', () => {
     render(<HeaderNav activeTab="find" />);
     expect(screen.getByText('Home')).toBeInTheDocument();
     expect(screen.getByText('Find')).toBeInTheDocument();
     expect(screen.getByText('Explore')).toBeInTheDocument();
-    expect(screen.getByText('Favorites')).toBeInTheDocument();
     expect(screen.getByText('Profile')).toBeInTheDocument();
   });
 
