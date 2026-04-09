@@ -17,14 +17,14 @@ Object.defineProperty(window, 'matchMedia', {
   })),
 })
 
+const mockUseSearch = vi.fn()
 vi.mock('@/lib/hooks/use-search', () => ({
-  useSearch: vi.fn().mockReturnValue({
-    results: [],
-    queryType: null,
-    resultCount: 0,
-    isLoading: false,
-    error: null,
-  }),
+  useSearch: (...args: unknown[]) => mockUseSearch(...args),
+}))
+
+vi.mock('@/lib/analytics/ga4-events', () => ({
+  trackSearch: vi.fn(),
+  trackSignupCtaClick: vi.fn(),
 }))
 
 vi.mock('@/lib/hooks/use-search-state', () => ({
@@ -68,6 +68,13 @@ function renderHome() {
 describe('HomePage (unified)', () => {
   beforeEach(() => {
     mockUseUser.mockReturnValue({ user: null, isLoading: false })
+    mockUseSearch.mockReturnValue({
+      results: [],
+      queryType: null,
+      resultCount: 0,
+      isLoading: false,
+      error: null,
+    })
     mockPush.mockClear()
     localStorage.clear()
   })
@@ -88,17 +95,50 @@ describe('HomePage (unified)', () => {
   })
 
   describe('free search gate', () => {
-    it('sets free search flag in localStorage on first semantic search for unauth user', async () => {
+    it('sets free search flag in localStorage when server responds with semantic queryType for unauth user', async () => {
+      mockUseSearch.mockReturnValue({
+        results: [],
+        queryType: 'semantic',
+        resultCount: 0,
+        isLoading: false,
+        error: null,
+      })
       renderHome()
       expect(localStorage.getItem('caferoam_free_search_used')).toBeNull()
       const input = screen.getByRole('textbox')
       fireEvent.change(input, { target: { value: '安靜的咖啡廳' } })
       fireEvent.submit(screen.getByRole('search'))
-      expect(localStorage.getItem('caferoam_free_search_used')).toBe('true')
+      await waitFor(() => {
+        expect(localStorage.getItem('caferoam_free_search_used')).toBe('true')
+      })
     })
 
-    it('redirects to login on second semantic search for unauth user', async () => {
+    it('does not set free search flag for keyword (non-semantic) searches', async () => {
+      mockUseSearch.mockReturnValue({
+        results: [],
+        queryType: 'keyword',
+        resultCount: 0,
+        isLoading: false,
+        error: null,
+      })
+      renderHome()
+      const input = screen.getByRole('textbox')
+      fireEvent.change(input, { target: { value: '星巴克' } })
+      fireEvent.submit(screen.getByRole('search'))
+      await waitFor(() => {
+        expect(localStorage.getItem('caferoam_free_search_used')).toBeNull()
+      })
+    })
+
+    it('redirects to login when server responds with semantic queryType and free search already used', async () => {
       localStorage.setItem('caferoam_free_search_used', 'true')
+      mockUseSearch.mockReturnValue({
+        results: [],
+        queryType: 'semantic',
+        resultCount: 0,
+        isLoading: false,
+        error: null,
+      })
       renderHome()
       const input = screen.getByRole('textbox')
       fireEvent.change(input, { target: { value: '有插座的咖啡廳' } })
@@ -108,14 +148,23 @@ describe('HomePage (unified)', () => {
       })
     })
 
-    it('bypasses gate for authenticated users even when flag is set', () => {
+    it('bypasses gate for authenticated users even when flag is set', async () => {
       mockUseUser.mockReturnValue({ user: { id: 'user-1' }, isLoading: false })
       localStorage.setItem('caferoam_free_search_used', 'true')
+      mockUseSearch.mockReturnValue({
+        results: [],
+        queryType: 'semantic',
+        resultCount: 0,
+        isLoading: false,
+        error: null,
+      })
       renderHome()
       const input = screen.getByRole('textbox')
       fireEvent.change(input, { target: { value: '有插座的咖啡廳' } })
       fireEvent.submit(screen.getByRole('search'))
-      expect(mockPush).not.toHaveBeenCalledWith(expect.stringContaining('/login'))
+      await waitFor(() => {
+        expect(mockPush).not.toHaveBeenCalledWith(expect.stringContaining('/login'))
+      })
     })
   })
 })

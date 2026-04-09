@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useCallback, useMemo, useState } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { ModeChips } from '@/components/discovery/mode-chips';
@@ -12,6 +12,7 @@ import {
 } from '@/components/filters/filter-map';
 import { MapWithFallback } from '@/components/map/map-with-fallback';
 import { WebsiteJsonLd } from '@/components/seo/WebsiteJsonLd';
+import { trackSearch, trackSignupCtaClick } from '@/lib/analytics/ga4-events';
 import { useGeolocation } from '@/lib/hooks/use-geolocation';
 import { useIsDesktop } from '@/lib/hooks/use-media-query';
 import { useSearch } from '@/lib/hooks/use-search';
@@ -41,13 +42,47 @@ function HomePageContent() {
   const currentQuery = query ?? '';
   const isDesktop = useIsDesktop();
   const { shops: featuredShops } = useShops({ featured: true, limit: 200 });
-  const { results: searchResults, isLoading: searchLoading } =
+  const { results: searchResults, isLoading: searchLoading, queryType } =
     useSearch(currentQuery || null, mode);
   const { latitude, longitude, requestLocation } = useGeolocation();
 
   const [selectedShopId, setSelectedShopId] = useState<string | null>(null);
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
   const [mapBounds, setMapBounds] = useState<MapBounds | null>(null);
+  const lastHandledQueryRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (user) {
+      lastHandledQueryRef.current = null;
+      return;
+    }
+    if (!currentQuery) {
+      lastHandledQueryRef.current = null;
+      return;
+    }
+    if (queryType === null) return;
+    if (lastHandledQueryRef.current === currentQuery) return;
+
+    if (queryType !== 'semantic') {
+      lastHandledQueryRef.current = currentQuery;
+      return;
+    }
+
+    const hasUsedFreeSearch =
+      window.localStorage.getItem(FREE_SEARCH_KEY) === 'true';
+
+    if (hasUsedFreeSearch) {
+      trackSignupCtaClick('homepage_free_search_gate');
+      router.push('/login?returnTo=/');
+      lastHandledQueryRef.current = currentQuery;
+      return;
+    }
+
+    window.localStorage.setItem(FREE_SEARCH_KEY, 'true');
+    trackSearch(currentQuery);
+    lastHandledQueryRef.current = currentQuery;
+  }, [currentQuery, user, router, queryType]);
 
   const handleLocationRequest = useCallback(async () => {
     const coords = await requestLocation();
@@ -136,23 +171,10 @@ function HomePageContent() {
     (nextQuery: string) => {
       const trimmedQuery = nextQuery.trim();
       if (!trimmedQuery) return;
-
-      if (!user && typeof window !== 'undefined') {
-        const hasUsedFreeSearch =
-          window.localStorage.getItem(FREE_SEARCH_KEY) === 'true';
-
-        if (hasUsedFreeSearch) {
-          router.push('/login?returnTo=/');
-          return;
-        }
-
-        window.localStorage.setItem(FREE_SEARCH_KEY, 'true');
-      }
-
       setQuery(trimmedQuery);
       setSelectedShopId(null);
     },
-    [router, setQuery, user]
+    [setQuery]
   );
 
   const handleSuggestionSelect = useCallback(
