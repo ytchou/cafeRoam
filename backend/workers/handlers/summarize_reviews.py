@@ -43,7 +43,9 @@ async def handle_summarize_reviews(
 
         reviews_result = db.table("shop_reviews").select("text").eq("shop_id", shop_id).execute()
         google_reviews = [
-            row["text"] for row in cast("list[dict[str, Any]]", reviews_result.data or []) if row.get("text")
+            row["text"]
+            for row in cast("list[dict[str, Any]]", reviews_result.data or [])
+            if row.get("text")
         ][:MAX_GOOGLE_REVIEWS]
 
         # Fetch ranked check-in texts (same RPC used by generate_embedding)
@@ -73,12 +75,9 @@ async def handle_summarize_reviews(
             db, job_id, "info", "llm.call", provider="anthropic", method="summarize_reviews"
         )
 
-        result = cast(
-            ReviewSummaryResult,
-            await llm.summarize_reviews(
-                google_reviews=google_reviews,
-                checkin_texts=checkin_texts,
-            ),
+        result = await llm.summarize_reviews(
+            google_reviews=google_reviews,
+            checkin_texts=checkin_texts,
         )
 
         if not result.summary_zh_tw:

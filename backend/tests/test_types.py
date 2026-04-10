@@ -1,4 +1,4 @@
-from models.types import ReviewTopic, ReviewSummaryResult, Shop
+from models.types import ReviewSummaryResult, ReviewTopic, Shop
 
 
 def test_review_topic_model():

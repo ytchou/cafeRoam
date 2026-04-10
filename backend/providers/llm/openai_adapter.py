@@ -23,13 +23,12 @@ from providers.llm._tool_schemas import (
     CLASSIFY_PHOTO_SCHEMA,
     CLASSIFY_SHOP_SCHEMA,
     EXTRACT_MENU_SCHEMA,
+    SUMMARIZE_REVIEWS_TOOL_SCHEMA,
 )
-from providers.llm._tool_schemas import SUMMARIZE_REVIEWS_TOOL_SCHEMA
 from providers.llm.anthropic_adapter import (
     _MENU_VOCAB_REF,
     _SPECIALTY_VOCAB_REF,
     _SUMMARIZE_SYSTEM_PROMPT,
-    SUMMARIZE_REVIEWS_SYSTEM_PROMPT,
     SYSTEM_PROMPT,
     TAROT_SYSTEM_PROMPT,
     _parse_enrichment_payload,

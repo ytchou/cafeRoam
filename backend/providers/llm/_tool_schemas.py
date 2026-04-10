@@ -152,7 +152,8 @@ SUMMARIZE_REVIEWS_TOOL_SCHEMA: dict[str, Any] = {
                 "description": (
                     "2–4 sentences in Traditional Chinese (繁體中文), max 200 characters. "
                     "Focus on drinks, food, atmosphere, and work-suitability. "
-                    "When community notes are present, weight them more heavily than Google reviews."
+                    "When community notes are present, weight them more heavily "
+                    "than Google reviews."
                 ),
             },
             "review_topics": {
@@ -167,7 +168,8 @@ SUMMARIZE_REVIEWS_TOOL_SCHEMA: dict[str, Any] = {
                         "topic": {
                             "type": "string",
                             "description": (
-                                "Topic label in Traditional Chinese (or English if the review used English). "
+                                "Topic label in Traditional Chinese "
+                                "(or English if the review used English). "
                                 "E.g. '手沖咖啡', 'vintage vibe', '插座充足'."
                             ),
                         },

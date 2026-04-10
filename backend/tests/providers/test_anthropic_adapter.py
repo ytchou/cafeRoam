@@ -2,7 +2,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from models.types import ReviewSummaryResult, ReviewTopic, ShopEnrichmentInput, ShopModeScores, TaxonomyTag
+from models.types import ReviewSummaryResult, ShopEnrichmentInput, ShopModeScores, TaxonomyTag
 from providers.llm._tool_schemas import SUMMARIZE_REVIEWS_TOOL_SCHEMA
 from providers.llm.anthropic_adapter import AnthropicLLMAdapter
 

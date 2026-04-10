@@ -116,9 +116,8 @@ async def list_shops(
         )
         for job in (jobs_result.data or []):
             sid = (job.get("payload") or {}).get("shop_id")
-            if sid in shop_ids:
-                if sid not in active_jobs or job["status"] == "claimed":
-                    active_jobs[sid] = {"job_type": job["job_type"], "status": job["status"]}
+            if sid in shop_ids and (sid not in active_jobs or job["status"] == "claimed"):
+                active_jobs[sid] = {"job_type": job["job_type"], "status": job["status"]}
 
     shops = []
     for row in cast("list[dict[str, Any]]", response.data):

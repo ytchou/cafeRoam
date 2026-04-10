@@ -8,6 +8,8 @@ from models.types import (
     EnrichmentResult,
     MenuExtractionResult,
     PhotoCategory,
+    ReviewSummaryResult,
+    ReviewTopic,
     ShopEnrichmentInput,
     TarotEnrichmentResult,
 )
@@ -26,7 +28,12 @@ def anthropic_mock():
     )
     mock.extract_menu_data = AsyncMock(return_value=MenuExtractionResult(items=[]))
     mock.classify_photo = AsyncMock(return_value=PhotoCategory.VIBE)
-    mock.summarize_reviews = AsyncMock(return_value="Great ambiance for focused work.")
+    mock.summarize_reviews = AsyncMock(
+        return_value=ReviewSummaryResult(
+            summary_zh_tw="安靜的工作空間，適合深度工作。",
+            review_topics=[ReviewTopic(topic="安靜", count=5)],
+        )
+    )
     mock.assign_tarot = AsyncMock(
         return_value=TarotEnrichmentResult(
             tarot_title="The Hermit",
@@ -50,7 +57,12 @@ def openai_mock():
         return_value=MenuExtractionResult(items=[{"name": "Latte", "price": 150}])
     )
     mock.classify_photo = AsyncMock(return_value=PhotoCategory.MENU)
-    mock.summarize_reviews = AsyncMock(return_value="Decent coffee, friendly staff.")
+    mock.summarize_reviews = AsyncMock(
+        return_value=ReviewSummaryResult(
+            summary_zh_tw="咖啡不錯，員工友善。",
+            review_topics=[ReviewTopic(topic="友善服務", count=3)],
+        )
+    )
     mock.assign_tarot = AsyncMock(
         return_value=TarotEnrichmentResult(
             tarot_title="The Star",
@@ -102,11 +114,18 @@ async def test_classify_photo_goes_to_openai(hybrid, anthropic_mock, openai_mock
 
 @pytest.mark.asyncio
 async def test_summarize_reviews_goes_to_openai(hybrid, anthropic_mock, openai_mock):
-    texts = ["Great coffee!", "Nice atmosphere for working."]
-    result = await hybrid.summarize_reviews(texts)
-    openai_mock.summarize_reviews.assert_called_once_with(texts)
+    google_reviews = ["Great coffee!", "Nice atmosphere for working."]
+    checkin_texts = ["手沖很棒", "適合工作"]
+    result = await hybrid.summarize_reviews(
+        google_reviews=google_reviews,
+        checkin_texts=checkin_texts,
+    )
+    openai_mock.summarize_reviews.assert_called_once_with(
+        google_reviews=google_reviews,
+        checkin_texts=checkin_texts,
+    )
     anthropic_mock.summarize_reviews.assert_not_called()
-    assert isinstance(result, str)
+    assert isinstance(result, ReviewSummaryResult)
 
 
 @pytest.mark.asyncio
