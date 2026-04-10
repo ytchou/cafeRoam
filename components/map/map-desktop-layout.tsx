@@ -7,8 +7,6 @@ import {
   useCallback,
   Suspense,
 } from 'react';
-
-const PANEL_EXPAND_DELAY_MS = 200;
 import { SlidersHorizontal } from 'lucide-react';
 import { FilterTag } from '@/components/filters/filter-tag';
 import { QUICK_FILTERS } from '@/components/filters/quick-filters';
@@ -21,6 +19,8 @@ import { MapViewDynamic as MapView } from '@/components/map/map-view-dynamic';
 import { ShopPreviewCard } from '@/components/shops/shop-preview-card';
 import type { MappableLayoutShop } from '@/lib/types';
 import type { MapBounds } from '@/components/map/map-view';
+
+const PANEL_EXPAND_DELAY_MS = 200;
 
 interface MapDesktopLayoutProps {
   shops: MappableLayoutShop[];
