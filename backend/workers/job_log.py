@@ -1,6 +1,10 @@
 from __future__ import annotations
-import uuid
-from typing import Any
+
+import contextlib
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    import uuid
 
 
 def log_job_event(
@@ -11,7 +15,7 @@ def log_job_event(
     **context: Any,
 ) -> None:
     """Insert a milestone log row for a job. Swallows all errors — must not break callers."""
-    try:
+    with contextlib.suppress(Exception):
         (
             db.table("job_logs")
             .insert({
@@ -22,5 +26,3 @@ def log_job_event(
             })
             .execute()
         )
-    except Exception:
-        pass

@@ -690,7 +690,10 @@ async def get_job_logs(
     after_ts: str | None = None,
     user: dict[str, Any] = Depends(require_admin),  # noqa: B008
 ) -> dict[str, Any]:
-    """Fetch structured logs for a specific job (capped at 500 rows, supports incremental polling via after_ts)."""
+    """Fetch structured logs for a specific job.
+
+    Capped at 500 rows; supports incremental polling via after_ts.
+    """
     db = get_service_role_client()
 
     job_result = db.table("job_queue").select("status").eq("id", job_id).execute()

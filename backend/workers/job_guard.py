@@ -1,8 +1,11 @@
 from __future__ import annotations
-import uuid
-from typing import Any
 
-from workers.queue import get_status, JobStatus
+from typing import TYPE_CHECKING, Any
+
+from workers.queue import JobStatus, get_status
+
+if TYPE_CHECKING:
+    import uuid
 
 
 def check_job_still_claimed(db: Any, job_id: str | uuid.UUID) -> bool:
