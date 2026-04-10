@@ -3,6 +3,7 @@ from typing import Any
 import jwt as pyjwt
 import structlog
 from fastapi import Depends, HTTPException, Request, status
+from gotrue.errors import AuthApiError
 from jwt import PyJWKClient
 from supabase import Client
 
@@ -184,21 +185,26 @@ def get_optional_user(request: Request) -> dict[str, Any] | None:
 def get_optional_current_user(request: Request) -> dict[str, Any] | None:
     """Same as get_optional_user but also verifies the account is not pending deletion.
     Returns None instead of raising for unauthenticated or invalid tokens."""
-    auth_header = request.headers.get("Authorization")
-    if not auth_header or not auth_header.startswith("Bearer "):
+    user = get_optional_user(request)
+    if user is None:
         return None
     try:
-        user_id, app_metadata = _decode_jwt_claims(auth_header.removeprefix("Bearer "))
         service_db = get_service_role_client()
         profile = (
             service_db.table("profiles")
             .select("deletion_requested_at")
-            .eq("id", user_id)
+            .eq("id", user["id"])
             .single()
             .execute()
         )
         if isinstance(profile.data, dict) and profile.data.get("deletion_requested_at") is not None:
             return None
-        return {"id": user_id, "app_metadata": app_metadata}
+        return user
+    except (AuthApiError, ValueError):
+        return None
     except Exception:
+        logger.warning(
+            "get_optional_current_user: unexpected error during deletion check",
+            exc_info=True,
+        )
         return None

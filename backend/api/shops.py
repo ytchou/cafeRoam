@@ -1,3 +1,4 @@
+import asyncio
 import contextlib
 from datetime import datetime
 from typing import Any, cast
@@ -114,14 +115,19 @@ async def list_shops(
     limit: int = Query(default=50, ge=1, le=200),
 ) -> list[Any]:
     """List shops. Public — no auth required. Featured list re-ranks by user's preferred modes."""
-    user: dict[str, Any] | None = get_optional_current_user(request)
+    user: dict[str, Any] | None = await asyncio.to_thread(get_optional_current_user, request)
     db = get_anon_client()
 
     if featured:
+        # Note: the city filter is intentionally not applied to featured listings.
+        # Featured shops are curated globally — city-scoped featured is not a V1 use case.
         rows = _fetch_featured_shops(db, limit)
         if user:
             svc = ProfileService(db=get_service_role_client())
             preferred_modes = await svc.get_preferred_modes(user["id"])
+            # Known limitation: re-rank operates on the limit-sized slice only.
+            # Preferred-mode shops outside the top-N in insertion order are not surfaced.
+            # Switch to a Postgres RPC approach if ranking across the full corpus matters.
             rows = _rerank_by_modes(rows, preferred_modes)
     else:
         query = db.table("shops").select(
