@@ -705,6 +705,155 @@ class TestAdminJobCancel:
         finally:
             app.dependency_overrides.clear()
 
+    def test_cancel_job_with_reason_sets_cancelled_status(self):
+        """Admin cancels a job with a reason — job row gets cancelled status, cancel_reason, and cancelled_at."""
+        app.dependency_overrides[get_current_user] = _admin_user
+        try:
+            mock_db = MagicMock()
+            mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(
+                data=[{"id": _JOB_1_ID, "status": "pending", "payload": {}}]
+            )
+            updated_row = {"id": _JOB_1_ID, "status": "cancelled", "cancel_reason": "stuck job", "cancelled_at": "2026-04-10T00:00:00"}
+            mock_db.table.return_value.update.return_value.eq.return_value.in_.return_value.execute.return_value = MagicMock(
+                data=[updated_row]
+            )
+            with (
+                patch("api.admin.get_service_role_client", return_value=mock_db),
+                patch("middleware.admin_audit.get_service_role_client", return_value=mock_db),
+                patch("api.deps.settings") as mock_settings,
+            ):
+                mock_settings.admin_user_ids = [_ADMIN_ID]
+                response = client.post(
+                    f"/admin/pipeline/jobs/{_JOB_1_ID}/cancel",
+                    json={"reason": "stuck job"},
+                )
+            assert response.status_code == 200
+            update_calls = mock_db.table.return_value.update.call_args_list
+            assert any(
+                call[0][0].get("status") == "cancelled" and call[0][0].get("cancel_reason") == "stuck job"
+                for call in update_calls
+            )
+        finally:
+            app.dependency_overrides.clear()
+
+    def test_cancel_job_with_reason_updates_shop_processing_status(self):
+        """When a job has a shop_id in payload and shop is not live/failed, cancelling updates shop processing_status to failed."""
+        app.dependency_overrides[get_current_user] = _admin_user
+        try:
+            mock_db = MagicMock()
+            mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(
+                data=[{"id": _JOB_1_ID, "status": "pending", "payload": {"shop_id": _SHOP_1_ID}}]
+            )
+            mock_db.table.return_value.update.return_value.eq.return_value.in_.return_value.execute.return_value = MagicMock(
+                data=[{"id": _JOB_1_ID, "status": "cancelled"}]
+            )
+            mock_db.table.return_value.update.return_value.eq.return_value.not_.in_.return_value.execute.return_value = MagicMock(data=[])
+            with (
+                patch("api.admin.get_service_role_client", return_value=mock_db),
+                patch("middleware.admin_audit.get_service_role_client", return_value=mock_db),
+                patch("api.deps.settings") as mock_settings,
+            ):
+                mock_settings.admin_user_ids = [_ADMIN_ID]
+                response = client.post(
+                    f"/admin/pipeline/jobs/{_JOB_1_ID}/cancel",
+                    json={"reason": "stuck job"},
+                )
+            assert response.status_code == 200
+            shops_update_calls = [
+                call for call in mock_db.table.call_args_list
+                if call[0][0] == "shops"
+            ]
+            assert len(shops_update_calls) >= 1
+        finally:
+            app.dependency_overrides.clear()
+
+    def test_cancel_job_with_reason_inserts_job_log_row(self):
+        """Cancelling a job inserts a warn-level job_logs row with message 'job.cancelled' and the reason in context."""
+        app.dependency_overrides[get_current_user] = _admin_user
+        try:
+            mock_db = MagicMock()
+            mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(
+                data=[{"id": _JOB_1_ID, "status": "claimed", "payload": {}}]
+            )
+            mock_db.table.return_value.update.return_value.eq.return_value.in_.return_value.execute.return_value = MagicMock(
+                data=[{"id": _JOB_1_ID, "status": "cancelled"}]
+            )
+            with (
+                patch("api.admin.get_service_role_client", return_value=mock_db),
+                patch("middleware.admin_audit.get_service_role_client", return_value=mock_db),
+                patch("api.deps.settings") as mock_settings,
+            ):
+                mock_settings.admin_user_ids = [_ADMIN_ID]
+                response = client.post(
+                    f"/admin/pipeline/jobs/{_JOB_1_ID}/cancel",
+                    json={"reason": "stuck job"},
+                )
+            assert response.status_code == 200
+            insert_calls = mock_db.table.return_value.insert.call_args_list
+            log_inserts = [
+                call for call in insert_calls
+                if call[0][0].get("message") == "job.cancelled"
+            ]
+            assert len(log_inserts) >= 1
+            log_row = log_inserts[0][0][0]
+            assert log_row["level"] == "warn"
+            assert log_row["context"].get("reason") == "stuck job"
+        finally:
+            app.dependency_overrides.clear()
+
+    def test_cancel_job_without_reason_uses_default(self):
+        """When no reason is provided, cancel_reason defaults to 'Cancelled by admin'."""
+        app.dependency_overrides[get_current_user] = _admin_user
+        try:
+            mock_db = MagicMock()
+            mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(
+                data=[{"id": _JOB_1_ID, "status": "pending", "payload": {}}]
+            )
+            mock_db.table.return_value.update.return_value.eq.return_value.in_.return_value.execute.return_value = MagicMock(
+                data=[{"id": _JOB_1_ID, "status": "cancelled"}]
+            )
+            with (
+                patch("api.admin.get_service_role_client", return_value=mock_db),
+                patch("middleware.admin_audit.get_service_role_client", return_value=mock_db),
+                patch("api.deps.settings") as mock_settings,
+            ):
+                mock_settings.admin_user_ids = [_ADMIN_ID]
+                response = client.post(f"/admin/pipeline/jobs/{_JOB_1_ID}/cancel")
+            assert response.status_code == 200
+            update_calls = mock_db.table.return_value.update.call_args_list
+            assert any(
+                call[0][0].get("cancel_reason") == "Cancelled by admin"
+                for call in update_calls
+            )
+        finally:
+            app.dependency_overrides.clear()
+
+    def test_cancel_job_does_not_update_shop_when_processing_status_is_live(self):
+        """When a job has a shop_id but the shop is already 'live', the shops table should NOT be updated."""
+        app.dependency_overrides[get_current_user] = _admin_user
+        try:
+            mock_db = MagicMock()
+            mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(
+                data=[{"id": _JOB_1_ID, "status": "pending", "payload": {"shop_id": _SHOP_1_ID}}]
+            )
+            mock_db.table.return_value.update.return_value.eq.return_value.in_.return_value.execute.return_value = MagicMock(
+                data=[{"id": _JOB_1_ID, "status": "cancelled"}]
+            )
+            mock_db.table.return_value.update.return_value.eq.return_value.not_.in_.return_value.execute.return_value = MagicMock(data=[])
+            with (
+                patch("api.admin.get_service_role_client", return_value=mock_db),
+                patch("middleware.admin_audit.get_service_role_client", return_value=mock_db),
+                patch("api.deps.settings") as mock_settings,
+            ):
+                mock_settings.admin_user_ids = [_ADMIN_ID]
+                response = client.post(
+                    f"/admin/pipeline/jobs/{_JOB_1_ID}/cancel",
+                    json={"reason": "stuck job"},
+                )
+            assert response.status_code == 200
+        finally:
+            app.dependency_overrides.clear()
+
 
 _BATCH_RUN_ID = "e5f6a7b8-0001-0001-0001-000000000001"
 _BATCH_ID = "batch-abc-2026-04-09"

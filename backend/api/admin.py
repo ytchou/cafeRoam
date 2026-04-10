@@ -614,19 +614,28 @@ async def list_jobs(
     }
 
 
+class CancelJobRequest(BaseModel):
+    reason: str | None = None
+
+
 @router.post("/jobs/{job_id}/cancel")
 async def cancel_job(
     job_id: str,
+    body: CancelJobRequest = Body(default_factory=CancelJobRequest),  # noqa: B008
     user: dict[str, Any] = Depends(require_admin),  # noqa: B008
 ) -> dict[str, str]:
     """Cancel a pending or claimed job."""
-    db = get_service_role_client()
+    from workers.job_log import log_job_event
 
-    job_response = db.table("job_queue").select("id, status").eq("id", job_id).execute()
+    db = get_service_role_client()
+    effective_reason = body.reason or "Cancelled by admin"
+
+    job_response = db.table("job_queue").select("id, status, payload").eq("id", job_id).execute()
     if not job_response.data:
         raise HTTPException(status_code=404, detail=f"Job {job_id} not found")
 
-    job_status = first(cast("list[dict[str, Any]]", job_response.data), "fetch job")["status"]
+    job = first(cast("list[dict[str, Any]]", job_response.data), "fetch job")
+    job_status = job["status"]
     if job_status not in ("pending", "claimed"):
         raise HTTPException(
             status_code=409,
@@ -636,7 +645,11 @@ async def cancel_job(
     # Conditional update: only succeeds if job is still in a cancellable state
     update_response = (
         db.table("job_queue")
-        .update({"status": "dead_letter", "last_error": "Cancelled by admin"})
+        .update({
+            "status": "cancelled",
+            "cancelled_at": datetime.now(UTC).isoformat(),
+            "cancel_reason": effective_reason,
+        })
         .eq("id", job_id)
         .in_("status", ["pending", "claimed"])
         .execute()
@@ -646,6 +659,21 @@ async def cancel_job(
             status_code=409,
             detail=f"Job {job_id} could not be cancelled — it may have already completed",
         )
+
+    # Update shop processing_status if job had a shop_id and shop is not already live/failed
+    payload = job.get("payload") or {}
+    shop_id = payload.get("shop_id")
+    if shop_id:
+        (
+            db.table("shops")
+            .update({"processing_status": "failed", "rejection_reason": effective_reason})
+            .eq("id", shop_id)
+            .not_.in_("processing_status", ["live", "failed"])
+            .execute()
+        )
+
+    # Insert a job_logs warn row
+    log_job_event(db, job_id, "warn", "job.cancelled", reason=effective_reason)
 
     log_admin_action(
         admin_user_id=user["id"],
