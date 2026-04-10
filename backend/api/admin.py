@@ -701,6 +701,12 @@ async def get_job_logs(
         raise HTTPException(status_code=404, detail=f"Job {job_id} not found")
     job = first(cast("list[dict[str, Any]]", job_result.data), "job_queue lookup")
 
+    if after_ts:
+        try:
+            datetime.fromisoformat(after_ts)
+        except ValueError:
+            raise HTTPException(status_code=422, detail="after_ts must be a valid ISO-8601 datetime")
+
     query = (
         db.table("job_logs")
         .select("id, level, message, context, created_at")
