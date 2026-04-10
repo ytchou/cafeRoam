@@ -17,6 +17,7 @@
 **Tech Stack:** Python 3.12+, FastAPI, `anthropic>=0.40`, `openai>=1.50`, pydantic, pydantic-settings, pytest + pytest-asyncio (asyncio_mode=auto), unittest.mock (AsyncMock/MagicMock).
 
 **Acceptance Criteria:**
+
 - [ ] A staging worker configured with `LLM_PROVIDER=hybrid` successfully enriches a test shop end-to-end, and logs show `enrich_shop` hitting Anthropic while the other 4 methods hit OpenAI.
 - [ ] The pre-merge eval on 20–30 staging shops passes all hard gates (≥95% zh-TW on `summarize_reviews`, ≥90% `classify_photo` agreement, ≥85% `extract_menu_data` item recall, 100% `assign_tarot` whitelist).
 - [ ] Rolling back to `LLM_PROVIDER=anthropic` restores the original Claude-only path with no code changes or data repair.
@@ -42,6 +43,7 @@
 ## Task 1: Extract shared tool JSON schemas
 
 **Files:**
+
 - Create: `backend/providers/llm/_tool_schemas.py`
 - Test: `backend/tests/providers/test_tool_schemas.py`
 
@@ -87,6 +89,7 @@ def test_classify_photo_schema_enum_is_menu_vibe_skip():
 ```bash
 cd backend && uv run pytest tests/providers/test_tool_schemas.py -v
 ```
+
 Expected: `ModuleNotFoundError: No module named 'providers.llm._tool_schemas'`
 
 **Step 3: Implement**
@@ -120,6 +123,7 @@ CLASSIFY_PHOTO_SCHEMA: dict = { ... }  # copy from anthropic_adapter.py:154-172
 ```bash
 cd backend && uv run pytest tests/providers/test_tool_schemas.py -v
 ```
+
 Expected: 4 passed.
 
 **Step 5: Commit**
@@ -134,6 +138,7 @@ git commit -m "feat(llm): extract shared tool schemas module (DEV-304)"
 ## Task 2: Add OpenAI LLM config vars
 
 **Files:**
+
 - Modify: `backend/core/config.py` (insert after `anthropic_classify_model` field)
 - Test: `backend/tests/core/test_config.py` (add or extend)
 
@@ -166,6 +171,7 @@ def test_openai_llm_model_overridable_from_env(monkeypatch):
 ```bash
 cd backend && uv run pytest tests/core/test_config.py -v -k openai_llm
 ```
+
 Expected: `AttributeError: 'Settings' object has no attribute 'openai_llm_model'`
 
 **Step 3: Implement**
@@ -185,6 +191,7 @@ No validator changes needed — these are optional string fields with defaults.
 ```bash
 cd backend && uv run pytest tests/core/test_config.py -v -k openai_llm
 ```
+
 Expected: 2 passed.
 
 **Step 5: Commit**
@@ -199,6 +206,7 @@ git commit -m "feat(config): add OpenAI LLM model settings (DEV-304)"
 ## Task 3: Update .env.example with hybrid routing vars
 
 **Files:**
+
 - Modify: `backend/.env.example`
 
 **No test needed — documentation file, verified by manual diff review.**
@@ -229,6 +237,7 @@ OPENAI_LLM_NANO_MODEL=gpt-5.4-nano
 ```bash
 git diff backend/.env.example
 ```
+
 Visually confirm only the LLM section changed and no real keys leaked.
 
 **Step 3: Commit**
@@ -243,6 +252,7 @@ git commit -m "docs(env): document hybrid LLM provider config (DEV-304)"
 ## Task 4: Refactor anthropic_adapter to import shared schemas
 
 **Files:**
+
 - Modify: `backend/providers/llm/anthropic_adapter.py` (lines 46–172 — delete local tool dicts; import from `_tool_schemas`)
 - Test: `backend/tests/providers/test_anthropic_adapter.py` (existing — regression check, no changes expected)
 
@@ -253,11 +263,13 @@ No new test. Existing `test_anthropic_adapter.py` suite is the regression gate. 
 ```bash
 cd backend && uv run pytest tests/providers/test_anthropic_adapter.py -v
 ```
+
 Expected: all existing tests pass.
 
 **Step 2: Refactor**
 
 In `backend/providers/llm/anthropic_adapter.py`:
+
 1. Delete local definitions of `CLASSIFY_SHOP_TOOL`, `EXTRACT_MENU_TOOL`, `ASSIGN_TAROT_TOOL`, `CLASSIFY_PHOTO_TOOL` (lines 46–172).
 2. Add import at top of file:
    ```python
@@ -275,6 +287,7 @@ In `backend/providers/llm/anthropic_adapter.py`:
 ```bash
 cd backend && uv run pytest tests/providers/test_anthropic_adapter.py tests/providers/test_tool_schemas.py -v
 ```
+
 Expected: all tests pass — behavior unchanged.
 
 Also run lint + mypy to catch any import issues:
@@ -282,6 +295,7 @@ Also run lint + mypy to catch any import issues:
 ```bash
 cd backend && uv run ruff check providers/llm/anthropic_adapter.py && uv run mypy providers/llm/anthropic_adapter.py
 ```
+
 Expected: clean.
 
 **Step 4: Commit**
@@ -296,6 +310,7 @@ git commit -m "refactor(llm): anthropic adapter imports shared tool schemas (DEV
 ## Task 5: Scaffold OpenAILLMAdapter with constructor + `enrich_shop`
 
 **Files:**
+
 - Create: `backend/providers/llm/openai_adapter.py`
 - Test: `backend/tests/providers/test_openai_adapter.py`
 
@@ -436,17 +451,20 @@ async def test_enrich_shop_raises_when_arguments_not_json(adapter, enrich_input)
 ```bash
 cd backend && uv run pytest tests/providers/test_openai_adapter.py -v
 ```
+
 Expected: `ModuleNotFoundError: No module named 'providers.llm.openai_adapter'`.
 
 **Step 3: Implement the adapter — constructor + `enrich_shop` only**
 
 Create `backend/providers/llm/openai_adapter.py`. Implement:
+
 - Module imports (`AsyncOpenAI`, `json`, `TaxonomyTag`, `ShopEnrichmentInput`, `EnrichmentResult`, tool schemas from `_tool_schemas`, prompts from `anthropic_adapter`).
 - `_wrap_schema_for_openai(schema: dict) -> dict` helper — takes an Anthropic-style schema (`{name, description, input_schema}`) and returns OpenAI's `{"type": "function", "function": {"name", "description", "parameters"}}` envelope.
 - `_extract_tool_input(response, expected_name: str) -> dict` helper — validates `choices[0].message.tool_calls` exists, matches the expected name, and parses `arguments` as JSON. Raises `RuntimeError` with a descriptive message on any failure.
 - `_build_enrich_messages(shop: ShopEnrichmentInput) -> list[dict]` — mirrors the Anthropic version's structure but builds OpenAI message format: first message is `{"role":"system","content":SYSTEM_PROMPT}`, second is user content with text + any vibe_photo_urls as `{"type":"image_url","image_url":{"url":...}}` blocks.
 - `_parse_enrichment(payload: dict) -> EnrichmentResult` — reuse the exact parsing logic from `anthropic_adapter._parse_enrichment` (taxonomy validation, confidence clamping, mode inference, vocab normalization). Refactor plan: extract the anthropic private helper into a module-private free function `_parse_enrichment_payload(payload, taxonomy_by_id)` in a shared location (e.g. the bottom of `anthropic_adapter.py` exposed as `_parse_enrichment_payload`) and import it here, OR duplicate the logic. **Choose import over duplication** — duplication risks drift.
 - `OpenAILLMAdapter` class:
+
   ```python
   class OpenAILLMAdapter:
       def __init__(
@@ -483,6 +501,7 @@ Create `backend/providers/llm/openai_adapter.py`. Implement:
 ```bash
 cd backend && uv run pytest tests/providers/test_openai_adapter.py -v
 ```
+
 Expected: 3 tests pass (happy path + 2 error paths).
 
 Also run anthropic regression suite to confirm the `_parse_enrichment_payload` extraction didn't break anything:
@@ -490,6 +509,7 @@ Also run anthropic regression suite to confirm the `_parse_enrichment_payload` e
 ```bash
 cd backend && uv run pytest tests/providers/test_anthropic_adapter.py -v
 ```
+
 Expected: all pass.
 
 **Step 5: Commit**
@@ -504,6 +524,7 @@ git commit -m "feat(llm): OpenAILLMAdapter scaffold + enrich_shop method (DEV-30
 ## Task 6: Implement `extract_menu_data`
 
 **Files:**
+
 - Modify: `backend/providers/llm/openai_adapter.py` (add method)
 - Test: `backend/tests/providers/test_openai_adapter.py` (add tests)
 
@@ -557,6 +578,7 @@ async def test_extract_menu_data_returns_empty_when_no_items(adapter):
 ```bash
 cd backend && uv run pytest tests/providers/test_openai_adapter.py::test_extract_menu_data_returns_items -v
 ```
+
 Expected: `AttributeError: 'OpenAILLMAdapter' object has no attribute 'extract_menu_data'`.
 
 **Step 3: Implement**
@@ -593,6 +615,7 @@ In `openai_adapter.py`, add:
 ```bash
 cd backend && uv run pytest tests/providers/test_openai_adapter.py -v
 ```
+
 Expected: 5 tests pass (3 from Task 5 + 2 new).
 
 **Step 5: Commit**
@@ -607,6 +630,7 @@ git commit -m "feat(llm): OpenAILLMAdapter.extract_menu_data (DEV-304)"
 ## Task 7: Implement `classify_photo`
 
 **Files:**
+
 - Modify: `backend/providers/llm/openai_adapter.py`
 - Test: `backend/tests/providers/test_openai_adapter.py`
 
@@ -638,6 +662,7 @@ async def test_classify_photo_returns_enum(adapter, category_value, expected):
 ```bash
 cd backend && uv run pytest tests/providers/test_openai_adapter.py::test_classify_photo_returns_enum -v
 ```
+
 Expected: AttributeError.
 
 **Step 3: Implement**
@@ -669,6 +694,7 @@ Expected: AttributeError.
 ```bash
 cd backend && uv run pytest tests/providers/test_openai_adapter.py -v
 ```
+
 Expected: 8 passing.
 
 **Step 5: Commit**
@@ -683,6 +709,7 @@ git commit -m "feat(llm): OpenAILLMAdapter.classify_photo (DEV-304)"
 ## Task 8: Implement `summarize_reviews`
 
 **Files:**
+
 - Modify: `backend/providers/llm/openai_adapter.py`
 - Test: `backend/tests/providers/test_openai_adapter.py`
 
@@ -731,6 +758,7 @@ async def test_summarize_reviews_returns_empty_on_blank_response(adapter):
 ```bash
 cd backend && uv run pytest tests/providers/test_openai_adapter.py::test_summarize_reviews_returns_text -v
 ```
+
 Expected: AttributeError.
 
 **Step 3: Implement**
@@ -758,6 +786,7 @@ Note: `SUMMARIZE_REVIEWS_SYSTEM_PROMPT` is imported from `anthropic_adapter` —
 ```bash
 cd backend && uv run pytest tests/providers/test_openai_adapter.py -v
 ```
+
 Expected: 10 passing.
 
 **Step 5: Commit**
@@ -772,6 +801,7 @@ git commit -m "feat(llm): OpenAILLMAdapter.summarize_reviews (DEV-304)"
 ## Task 9: Implement `assign_tarot`
 
 **Files:**
+
 - Modify: `backend/providers/llm/openai_adapter.py`
 - Test: `backend/tests/providers/test_openai_adapter.py`
 
@@ -818,6 +848,7 @@ async def test_assign_tarot_drops_title_not_in_whitelist(adapter, enrich_input):
 ```bash
 cd backend && uv run pytest tests/providers/test_openai_adapter.py::test_assign_tarot_returns_whitelisted_title -v
 ```
+
 Expected: AttributeError.
 
 **Step 3: Implement**
@@ -851,6 +882,7 @@ Expected: AttributeError.
 ```bash
 cd backend && uv run pytest tests/providers/test_openai_adapter.py -v
 ```
+
 Expected: 12 passing.
 
 Also run lint/mypy on the new adapter:
@@ -858,6 +890,7 @@ Also run lint/mypy on the new adapter:
 ```bash
 cd backend && uv run ruff check providers/llm/openai_adapter.py && uv run mypy providers/llm/openai_adapter.py
 ```
+
 Expected: clean.
 
 **Step 5: Commit**
@@ -872,6 +905,7 @@ git commit -m "feat(llm): OpenAILLMAdapter.assign_tarot (DEV-304)"
 ## Task 10: Implement `HybridLLMAdapter`
 
 **Files:**
+
 - Create: `backend/providers/llm/hybrid_adapter.py`
 - Test: `backend/tests/providers/test_hybrid_adapter.py`
 
@@ -977,6 +1011,7 @@ async def test_assign_tarot_goes_to_openai(hybrid, anthropic_mock, openai_mock, 
 ```bash
 cd backend && uv run pytest tests/providers/test_hybrid_adapter.py -v
 ```
+
 Expected: `ModuleNotFoundError`.
 
 **Step 3: Implement**
@@ -1028,6 +1063,7 @@ class HybridLLMAdapter:
 ```bash
 cd backend && uv run pytest tests/providers/test_hybrid_adapter.py -v
 ```
+
 Expected: 5 passing.
 
 **Step 5: Commit**
@@ -1042,6 +1078,7 @@ git commit -m "feat(llm): HybridLLMAdapter composes anthropic + openai (DEV-304)
 ## Task 11: Add `hybrid` case to factory
 
 **Files:**
+
 - Modify: `backend/providers/llm/__init__.py`
 - Test: `backend/tests/providers/test_factories.py`
 
@@ -1072,6 +1109,7 @@ def test_get_llm_provider_returns_hybrid_adapter(monkeypatch):
 ```bash
 cd backend && uv run pytest tests/providers/test_factories.py::test_get_llm_provider_returns_hybrid_adapter -v
 ```
+
 Expected: ValueError — unknown provider "hybrid".
 
 **Step 3: Implement**
@@ -1106,6 +1144,7 @@ In `backend/providers/llm/__init__.py`, add a case before the default `ValueErro
 ```bash
 cd backend && uv run pytest tests/providers/test_factories.py -v
 ```
+
 Expected: all existing tests + new hybrid test pass.
 
 **Step 5: Commit**
@@ -1130,6 +1169,7 @@ cd backend && uv run pytest tests/providers/ --cov=providers.llm --cov-report=te
 ```
 
 Expected output includes per-file coverage. Verify:
+
 - `providers/llm/openai_adapter.py` ≥ 80%
 - `providers/llm/hybrid_adapter.py` ≥ 80%
 
@@ -1146,6 +1186,7 @@ Identify uncovered lines from the `term-missing` output. Add targeted tests for 
 ## Task 13: Build eval script `eval_openai_routing.py`
 
 **Files:**
+
 - Create: `backend/scripts/eval_openai_routing.py`
 - Test: `backend/tests/scripts/test_eval_openai_routing.py`
 
@@ -1196,6 +1237,7 @@ def test_evaluate_hard_gates_fails_on_tarot_whitelist_below_100():
 ```bash
 cd backend && uv run pytest tests/scripts/test_eval_openai_routing.py -v
 ```
+
 Expected: ModuleNotFoundError.
 
 **Step 3: Implement**
@@ -1308,6 +1350,7 @@ The `run_eval` body stays as a `NotImplementedError` stub in this task — it's 
 ```bash
 cd backend && uv run pytest tests/scripts/test_eval_openai_routing.py -v
 ```
+
 Expected: 3 passing.
 
 **Step 5: Commit**
@@ -1322,6 +1365,7 @@ git commit -m "feat(scripts): eval gate skeleton for OpenAI routing (DEV-304)"
 ## Task 14: Run the eval on 20–30 staging shops (manual)
 
 **Files:**
+
 - Modify: `backend/scripts/eval_openai_routing.py` (fill in `run_eval` body)
 - Create: `docs/evals/2026-04-10-openai-routing-eval.md`
 
@@ -1346,6 +1390,7 @@ Expected output ends with `EVAL PASSED` and an eval markdown at `docs/evals/2026
 **Step 4: Hard gate — if EVAL FAILED, stop**
 
 Fix paths in priority order:
+
 1. Prompt-tune the failing method (most likely `summarize_reviews` for zh-TW).
 2. Route the failing method back to Anthropic in `HybridLLMAdapter` (one-line edit in `hybrid_adapter.py`, add a regression test).
 3. Re-run the eval.
@@ -1384,6 +1429,7 @@ Pick one staging shop that hasn't been re-enriched recently. Use the existing CL
 **Step 3: Verify logs**
 
 Tail the worker logs. Confirm:
+
 - `enrich_shop` hits Anthropic (look for AsyncAnthropic client calls or model name in debug logs)
 - Downstream `CLASSIFY_SHOP_PHOTOS`, `ENRICH_MENU_PHOTO`, `SUMMARIZE_REVIEWS` jobs hit OpenAI
 - `assign_tarot` (called inside `enrich_shop` handler) hits OpenAI nano model
@@ -1409,6 +1455,7 @@ Leave `LLM_PROVIDER=hybrid` in place for further QA — don't revert. (`LLM_PROV
 ## Task 16: Update SPEC.md + PRD.md + changelogs
 
 **Files:**
+
 - Modify: `SPEC.md` (§4 Hard Dependencies, §2 Data Pipeline cost table)
 - Modify: `PRD.md` (§7 Core Features, §8 Monetization)
 - Modify: `SPEC_CHANGELOG.md` (append entry)
@@ -1464,6 +1511,7 @@ git commit -m "docs(spec,prd): document hybrid LLM routing + updated cost model 
 ```bash
 cd backend && uv run pytest
 ```
+
 Expected: 901+ passing, zero failures. (Plan added ~25 new tests, so expect ~926+.)
 
 **Step 2: Lint + format**
@@ -1472,6 +1520,7 @@ Expected: 901+ passing, zero failures. (Plan added ~25 new tests, so expect ~926
 cd backend && uv run ruff check .
 cd backend && uv run ruff format --check .
 ```
+
 Expected: clean.
 
 **Step 3: Type check**
@@ -1479,6 +1528,7 @@ Expected: clean.
 ```bash
 cd backend && uv run mypy .
 ```
+
 Expected: clean. (If `mypy` flags the `_parse_enrichment_payload` import shuffle from Task 5, fix with targeted type annotations — do not add `# type: ignore`.)
 
 **Step 4: Frontend smoke (no changes expected)**
@@ -1486,6 +1536,7 @@ Expected: clean. (If `mypy` flags the `_parse_enrichment_payload` import shuffle
 ```bash
 pnpm test
 ```
+
 Expected: 1256 passing, unchanged from baseline.
 
 **Step 5: `make doctor`**
@@ -1493,6 +1544,7 @@ Expected: 1256 passing, unchanged from baseline.
 ```bash
 make doctor
 ```
+
 Expected: clean.
 
 **Step 6: Record verification output in PR description**

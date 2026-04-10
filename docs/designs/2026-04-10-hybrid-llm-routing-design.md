@@ -5,6 +5,7 @@
 **Milestone:** Beta Launch
 **Author:** Yung-Tang Chou
 **ADRs:**
+
 - [docs/decisions/2026-04-10-hybrid-llm-routing.md](../decisions/2026-04-10-hybrid-llm-routing.md)
 - [docs/decisions/2026-04-10-defer-batch-api.md](../decisions/2026-04-10-defer-batch-api.md)
 
@@ -28,13 +29,13 @@ Add a new `HybridLLMAdapter` that composes `AnthropicLLMAdapter` + a new `OpenAI
 
 ### Routing Table
 
-| Method | Provider | Model var | Rationale |
-|---|---|---|---|
-| `enrich_shop` | Anthropic | `anthropic_model` (Claude Sonnet 4.6) | Complex zh-TW taxonomy, ADR 2026-02-24 quality gate |
-| `extract_menu_data` | OpenAI | `openai_classify_model` (GPT-5.4-mini) | Vision OCR, simple JSON schema, 7.5x cheaper than Sonnet |
-| `classify_photo` | OpenAI | `openai_classify_model` (GPT-5.4-mini) | Vision classification, cheaper than Haiku |
-| `summarize_reviews` | OpenAI | `openai_classify_model` (GPT-5.4-mini) | Structured text, cheaper than Haiku |
-| `assign_tarot` | OpenAI | `openai_nano_model` (GPT-5.4-nano) | Fixed-list title matching, trivial task |
+| Method              | Provider  | Model var                              | Rationale                                                |
+| ------------------- | --------- | -------------------------------------- | -------------------------------------------------------- |
+| `enrich_shop`       | Anthropic | `anthropic_model` (Claude Sonnet 4.6)  | Complex zh-TW taxonomy, ADR 2026-02-24 quality gate      |
+| `extract_menu_data` | OpenAI    | `openai_classify_model` (GPT-5.4-mini) | Vision OCR, simple JSON schema, 7.5x cheaper than Sonnet |
+| `classify_photo`    | OpenAI    | `openai_classify_model` (GPT-5.4-mini) | Vision classification, cheaper than Haiku                |
+| `summarize_reviews` | OpenAI    | `openai_classify_model` (GPT-5.4-mini) | Structured text, cheaper than Haiku                      |
+| `assign_tarot`      | OpenAI    | `openai_nano_model` (GPT-5.4-nano)     | Fixed-list title matching, trivial task                  |
 
 ### Architecture
 
@@ -49,6 +50,7 @@ backend/providers/llm/
 ```
 
 **`OpenAILLMAdapter`** mirrors the `AnthropicLLMAdapter` shape:
+
 - Constructor: `__init__(self, api_key, model, classify_model, nano_model, taxonomy)`
 - Uses `openai.AsyncOpenAI` as its SDK client
 - Reuses prompt strings (`SYSTEM_PROMPT`, `TAROT_SYSTEM_PROMPT`, `SUMMARIZE_REVIEWS_SYSTEM_PROMPT`) imported from `anthropic_adapter` — same prompt text works across providers
@@ -73,14 +75,14 @@ class HybridLLMAdapter:
 
 The main engineering complexity is translating Anthropic `tool_use` forced-choice into OpenAI `function_calling` with `tool_choice`.
 
-| Anthropic pattern | OpenAI equivalent |
-|---|---|
-| `tools=[{name, input_schema}]` | `tools=[{type:"function",function:{name,parameters}}]` |
-| `tool_choice={"type":"tool","name":"X"}` | `tool_choice={"type":"function","function":{"name":"X"}}` |
+| Anthropic pattern                                         | OpenAI equivalent                                                                        |
+| --------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `tools=[{name, input_schema}]`                            | `tools=[{type:"function",function:{name,parameters}}]`                                   |
+| `tool_choice={"type":"tool","name":"X"}`                  | `tool_choice={"type":"function","function":{"name":"X"}}`                                |
 | Response `content[].type == "tool_use"`, `.input` is dict | `choices[0].message.tool_calls[0].function.arguments` is JSON string — `json.loads()` it |
-| `{"type":"image","source":{"type":"url","url":...}}` | `{"type":"image_url","image_url":{"url":...}}` |
-| `system="..."` top-level param | First message `{"role":"system","content":"..."}` |
-| `max_tokens=N` | `max_tokens=N` (still supported; `max_completion_tokens` only for reasoning models) |
+| `{"type":"image","source":{"type":"url","url":...}}`      | `{"type":"image_url","image_url":{"url":...}}`                                           |
+| `system="..."` top-level param                            | First message `{"role":"system","content":"..."}`                                        |
+| `max_tokens=N`                                            | `max_tokens=N` (still supported; `max_completion_tokens` only for reasoning models)      |
 
 Shared JSON schemas live in `_tool_schemas.py` as plain dicts. Each adapter wraps them in its provider's envelope at call time. This keeps the schema definitions single-sourced and ensures both adapters ask for the same structured output.
 
@@ -104,17 +106,18 @@ Script: `backend/scripts/eval_openai_routing.py`
 
 Picks 20–30 real staging shops (diverse: with menu photos, with check-in reviews, varied categories). For each shop runs both `AnthropicLLMAdapter` and `OpenAILLMAdapter` and diffs outputs.
 
-| Method | Metric | Hard gate |
-|---|---|---|
-| `extract_menu_data` | Item recall vs Sonnet ground-truth | ≥85% |
-| `classify_photo` | Category agreement vs Haiku baseline | ≥90% |
-| `summarize_reviews` | `is_zh_dominant` pass rate | **≥95%** |
-| `summarize_reviews` | Length within 80–150% of Haiku baseline | advisory |
-| `assign_tarot` | Title in `TAROT_TITLES` whitelist | 100% |
+| Method              | Metric                                  | Hard gate |
+| ------------------- | --------------------------------------- | --------- |
+| `extract_menu_data` | Item recall vs Sonnet ground-truth      | ≥85%      |
+| `classify_photo`    | Category agreement vs Haiku baseline    | ≥90%      |
+| `summarize_reviews` | `is_zh_dominant` pass rate              | **≥95%**  |
+| `summarize_reviews` | Length within 80–150% of Haiku baseline | advisory  |
+| `assign_tarot`      | Title in `TAROT_TITLES` whitelist       | 100%      |
 
 Taxonomy tag overlap isn't a metric here because `enrich_shop` stays on Anthropic — tags are unchanged.
 
 Script emits `docs/evals/2026-04-10-openai-routing-eval.md` with per-shop results. PR is blocked until the artifact exists and all hard gates pass. If a gate fails, fall back options in priority order:
+
 1. Prompt-tune the failing method (likely `summarize_reviews` if zh-TW slips).
 2. Route that method back to Anthropic in `HybridLLMAdapter` — one-line fix.
 3. Document the failure in the design doc and re-run the eval.
@@ -130,14 +133,14 @@ Single env var flip: `LLM_PROVIDER=anthropic` restores the original full-Claude 
 
 ### Risks & Mitigations
 
-| Risk | Mitigation |
-|---|---|
-| GPT-5.4-mini returns Simplified Chinese on `summarize_reviews` | Existing `is_zh_dominant` runtime guard in handler will raise cleanly; eval gate ≥95% pass rate catches pre-merge |
-| Menu OCR quality drops on handwritten Taiwanese menus | Eval gate tests real menu photos; fallback: route `extract_menu_data` back to Anthropic in hybrid |
-| GPT-5.4 model IDs not yet GA at implementation time | Model IDs are env-var parameterized; code ships with aspirational defaults, staging `.env` sets real IDs |
+| Risk                                                                   | Mitigation                                                                                                                   |
+| ---------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| GPT-5.4-mini returns Simplified Chinese on `summarize_reviews`         | Existing `is_zh_dominant` runtime guard in handler will raise cleanly; eval gate ≥95% pass rate catches pre-merge            |
+| Menu OCR quality drops on handwritten Taiwanese menus                  | Eval gate tests real menu photos; fallback: route `extract_menu_data` back to Anthropic in hybrid                            |
+| GPT-5.4 model IDs not yet GA at implementation time                    | Model IDs are env-var parameterized; code ships with aspirational defaults, staging `.env` sets real IDs                     |
 | OpenAI function-calling JSON parse failures (arguments not valid JSON) | Explicit test cases for parse failure paths; adapter raises `RuntimeError` with context so queue retry/fail logic handles it |
-| Regression in `enrich_shop` (should be zero — unchanged code path) | Existing `test_anthropic_adapter.py` suite still runs; `HybridLLMAdapter` delegates identically |
-| Tool-schema refactor breaks anthropic | Step 4 is a regression check — existing anthropic tests must stay green |
+| Regression in `enrich_shop` (should be zero — unchanged code path)     | Existing `test_anthropic_adapter.py` suite still runs; `HybridLLMAdapter` delegates identically                              |
+| Tool-schema refactor breaks anthropic                                  | Step 4 is a regression check — existing anthropic tests must stay green                                                      |
 
 ### Open Questions
 
