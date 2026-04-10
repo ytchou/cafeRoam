@@ -213,3 +213,36 @@ async def test_summarize_reviews_returns_empty_on_blank_response(adapter):
 
     result = await adapter.summarize_reviews(["ok"])
     assert result == ""
+
+
+async def test_assign_tarot_returns_whitelisted_title(adapter, enrich_input):
+    from core.tarot_vocabulary import TAROT_TITLES
+    valid_title = TAROT_TITLES[0]
+    adapter._client = AsyncMock()
+    adapter._client.chat.completions.create = AsyncMock(
+        return_value=_openai_tool_call_response(
+            "assign_tarot",
+            {"tarot_title": valid_title, "flavor_text": "A quiet refuge for late-night writers."},
+        )
+    )
+
+    result = await adapter.assign_tarot(enrich_input)
+    assert result.tarot_title == valid_title
+    assert "refuge" in result.flavor_text.lower()
+    # Verify nano model was used
+    call = adapter._client.chat.completions.create.await_args
+    assert call.kwargs["model"] == "gpt-5.4-nano"
+
+
+async def test_assign_tarot_drops_title_not_in_whitelist(adapter, enrich_input):
+    adapter._client = AsyncMock()
+    adapter._client.chat.completions.create = AsyncMock(
+        return_value=_openai_tool_call_response(
+            "assign_tarot",
+            {"tarot_title": "Not A Real Title", "flavor_text": "..."},
+        )
+    )
+
+    result = await adapter.assign_tarot(enrich_input)
+    assert result.tarot_title is None  # scrubbed — not in whitelist
+    assert result.flavor_text == "..."

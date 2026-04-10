@@ -59,7 +59,12 @@ def _extract_tool_input(response, expected_name: str) -> dict:
         ) from exc
 
 
-def _build_enrich_messages(shop: ShopEnrichmentInput, taxonomy: list, menu_vocab_ref: str, specialty_vocab_ref: str) -> list[dict]:
+def _build_enrich_messages(
+    shop: ShopEnrichmentInput,
+    taxonomy: list,
+    menu_vocab_ref: str,
+    specialty_vocab_ref: str,
+) -> list[dict]:
     """Build OpenAI messages list for enrich_shop."""
     from providers.llm.anthropic_adapter import _MENU_VOCAB_REF, _SPECIALTY_VOCAB_REF
     lines = [
@@ -93,7 +98,10 @@ def _build_enrich_messages(shop: ShopEnrichmentInput, taxonomy: list, menu_vocab
     lines.append("Reference — food & drink items (use exact terms for menu_highlights):")
     lines.append(_MENU_VOCAB_REF)
     lines.append("")
-    lines.append("Reference — coffee origins, varieties & processing (use Traditional Chinese names for coffee_origins):")
+    lines.append(
+        "Reference — coffee origins, varieties & processing"
+        " (use Traditional Chinese names for coffee_origins):"
+    )
     lines.append(_SPECIALTY_VOCAB_REF)
     if shop.google_maps_features:
         feature_list = ", ".join(k for k, v in shop.google_maps_features.items() if v)
@@ -159,7 +167,10 @@ class OpenAILLMAdapter:
             {
                 "role": "user",
                 "content": [
-                    {"type": "text", "text": "Extract all menu items from this image. Return structured JSON."},
+                    {
+                        "type": "text",
+                        "text": "Extract all menu items from this image. Return structured JSON.",
+                    },
                     {"type": "image_url", "image_url": {"url": image_url}},
                 ],
             }
