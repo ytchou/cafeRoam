@@ -1,5 +1,13 @@
 # backend/tests/api/test_shops_featured_rerank.py
-from unittest.mock import AsyncMock, patch
+#
+# Strategy: mock at system boundaries only.
+# - _fetch_featured_shops is a designed DB-isolation seam — patching it is intentional.
+# - get_service_role_client is mocked at the DB boundary so ProfileService reads from
+#   a stub client rather than real Supabase.
+# - get_optional_current_user is patched via its module-import name because the handler
+#   calls it directly (not via Depends) to preserve patch() compatibility in tests.
+#   See handoff note: "intentional pattern — do not change to Depends".
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from fastapi.testclient import TestClient
@@ -17,7 +25,7 @@ def _shop(id_, work, rest, social):
         "id": id_,
         "name": f"Shop {id_}",
         "slug": f"shop-{id_}",
-        "address": "台北市",
+        "address": "台北市大安區和平東路一段",
         "city": "taipei",
         "mrt": None,
         "latitude": 25.0,
@@ -46,8 +54,22 @@ SHOPS = [
 ]
 
 
+def _stub_service_role_client(preferred_modes):
+    """Return a minimal MagicMock supabase service-role client.
+
+    Only stubs the profiles table select chain used by ProfileService.get_preferred_modes.
+    """
+    db = MagicMock()
+    profiles_table = MagicMock()
+    profiles_table.select.return_value.eq.return_value.maybe_single.return_value.execute.return_value.data = (
+        {"preferred_modes": preferred_modes} if preferred_modes is not None else None
+    )
+    db.table.return_value = profiles_table
+    return db
+
+
 class TestFeaturedUnauthenticated:
-    def test_preserves_insertion_order(self, client):
+    def test_unauthenticated_user_sees_insertion_order(self, client):
         with patch("api.shops._fetch_featured_shops", return_value=SHOPS):
             res = client.get("/shops?featured=true")
         assert res.status_code == 200
@@ -56,17 +78,17 @@ class TestFeaturedUnauthenticated:
 
 
 class TestFeaturedAuthenticatedNoPreferences:
-    def test_same_as_unauthenticated(self, client):
-        fake_user = {"id": "user-1", "app_metadata": {}}
+    def test_authenticated_user_with_no_preferences_sees_insertion_order(self, client):
+        fake_user = {"id": "user-abc-001", "app_metadata": {}}
+        stub_db = _stub_service_role_client(preferred_modes=None)
         with (
             patch("api.shops.get_optional_current_user", return_value=fake_user),
             patch("api.shops._fetch_featured_shops", return_value=SHOPS),
-            patch("api.shops.ProfileService") as svc_cls,
+            patch("api.shops.get_service_role_client", return_value=stub_db),
         ):
-            svc_cls.return_value.get_preferred_modes = AsyncMock(return_value=None)
             res = client.get(
                 "/shops?featured=true",
-                headers={"Authorization": "Bearer x"},
+                headers={"Authorization": "Bearer eyJhbGciOiJIUzI1NiJ9.test"},
             )
         ids = [s["id"] for s in res.json()]
         assert ids == ["a", "b", "c"]
@@ -74,37 +96,35 @@ class TestFeaturedAuthenticatedNoPreferences:
 
 class TestFeaturedAuthenticatedWorkPreference:
     def test_work_preference_ranks_work_leader_first(self, client):
-        fake_user = {"id": "user-1", "app_metadata": {}}
+        fake_user = {"id": "user-abc-002", "app_metadata": {}}
+        stub_db = _stub_service_role_client(preferred_modes=["work"])
         with (
             patch("api.shops.get_optional_current_user", return_value=fake_user),
             patch("api.shops._fetch_featured_shops", return_value=SHOPS),
-            patch("api.shops.ProfileService") as svc_cls,
+            patch("api.shops.get_service_role_client", return_value=stub_db),
         ):
-            svc_cls.return_value.get_preferred_modes = AsyncMock(return_value=["work"])
             res = client.get(
                 "/shops?featured=true",
-                headers={"Authorization": "Bearer x"},
+                headers={"Authorization": "Bearer eyJhbGciOiJIUzI1NiJ9.test"},
             )
         ids = [s["id"] for s in res.json()]
         assert ids[0] == "b"  # work leader first
 
 
 class TestFeaturedAuthenticatedMultiMode:
-    def test_greatest_across_rest_and_social(self, client):
-        fake_user = {"id": "user-1", "app_metadata": {}}
+    def test_rest_and_social_preference_ranks_both_leaders_before_work_shop(self, client):
+        fake_user = {"id": "user-abc-003", "app_metadata": {}}
+        stub_db = _stub_service_role_client(preferred_modes=["rest", "social"])
         with (
             patch("api.shops.get_optional_current_user", return_value=fake_user),
             patch("api.shops._fetch_featured_shops", return_value=SHOPS),
-            patch("api.shops.ProfileService") as svc_cls,
+            patch("api.shops.get_service_role_client", return_value=stub_db),
         ):
-            svc_cls.return_value.get_preferred_modes = AsyncMock(
-                return_value=["rest", "social"],
-            )
             res = client.get(
                 "/shops?featured=true",
-                headers={"Authorization": "Bearer x"},
+                headers={"Authorization": "Bearer eyJhbGciOiJIUzI1NiJ9.test"},
             )
         ids = [s["id"] for s in res.json()]
-        # a (rest=0.9) and c (social=0.9) are tied at 0.9 — both before b (0.2)
+        # a (rest=0.9) and c (social=0.9) are tied at 0.9 — both before b (max 0.2)
         assert ids[:2] == ["a", "c"] or ids[:2] == ["c", "a"]
         assert ids[2] == "b"
