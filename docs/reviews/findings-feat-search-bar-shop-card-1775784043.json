@@ -49,8 +49,8 @@
       "status": "resolved"
     }
   ],
-  "active_agents": ["Bug Hunter", "Standards", "Design Quality", "Plan Alignment"],
+  "active_agents": [],
   "skipped": [],
-  "head_sha": "714662cc4de2e8602b72fd2279e84a7c0a401bd4",
+  "head_sha": "HEAD",
   "review_log_path": "docs/reviews/2026-04-10-feat-search-bar-shop-card.md"
 }
