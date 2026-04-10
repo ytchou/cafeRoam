@@ -828,6 +828,178 @@ class TestAdminJobCancel:
         finally:
             app.dependency_overrides.clear()
 
+
+_LOG_1_ID = "e5f6a7b8-0001-0001-0001-000000000001"
+_LOG_2_ID = "e5f6a7b8-0002-0002-0002-000000000002"
+_LOG_3_ID = "e5f6a7b8-0003-0003-0003-000000000003"
+
+
+class TestAdminJobLogs:
+    def test_get_job_logs_returns_empty_when_no_logs(self):
+        """Admin fetches logs for a claimed job that has no log entries yet — returns empty logs list."""
+        app.dependency_overrides[get_current_user] = _admin_user
+        try:
+            mock_db = MagicMock()
+            # job_queue SELECT returns the job with status "claimed"
+            mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(
+                data=[{"id": _JOB_1_ID, "status": "claimed"}]
+            )
+            # job_logs query returns empty
+            mock_db.table.return_value.select.return_value.eq.return_value.order.return_value.limit.return_value.execute.return_value = MagicMock(
+                data=[]
+            )
+            with (
+                patch("api.admin.get_service_role_client", return_value=mock_db),
+                patch("api.deps.settings") as mock_settings,
+            ):
+                mock_settings.admin_user_ids = [_ADMIN_ID]
+                response = client.get(f"/admin/pipeline/jobs/{_JOB_1_ID}/logs")
+            assert response.status_code == 200
+            data = response.json()
+            assert data["logs"] == []
+            assert data["job_status"] == "claimed"
+        finally:
+            app.dependency_overrides.clear()
+
+    def test_get_job_logs_returns_logs_in_order(self):
+        """Admin fetches logs for a job — response contains all logs with required fields in ascending timestamp order."""
+        app.dependency_overrides[get_current_user] = _admin_user
+        try:
+            mock_db = MagicMock()
+            log_rows = [
+                {
+                    "id": _LOG_1_ID,
+                    "level": "info",
+                    "message": "job.started",
+                    "context": {"worker": "classify_shop_photos"},
+                    "created_at": "2026-04-10T10:00:00Z",
+                },
+                {
+                    "id": _LOG_2_ID,
+                    "level": "info",
+                    "message": "photo.classified",
+                    "context": {"photo_count": 3},
+                    "created_at": "2026-04-10T10:00:05Z",
+                },
+                {
+                    "id": _LOG_3_ID,
+                    "level": "info",
+                    "message": "job.completed",
+                    "context": {"duration_ms": 5000},
+                    "created_at": "2026-04-10T10:00:10Z",
+                },
+            ]
+            # job_queue SELECT
+            mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(
+                data=[{"id": _JOB_1_ID, "status": "completed"}]
+            )
+            # job_logs query with order + limit
+            mock_db.table.return_value.select.return_value.eq.return_value.order.return_value.limit.return_value.execute.return_value = MagicMock(
+                data=log_rows
+            )
+            with (
+                patch("api.admin.get_service_role_client", return_value=mock_db),
+                patch("api.deps.settings") as mock_settings,
+            ):
+                mock_settings.admin_user_ids = [_ADMIN_ID]
+                response = client.get(f"/admin/pipeline/jobs/{_JOB_1_ID}/logs")
+            assert response.status_code == 200
+            data = response.json()
+            assert len(data["logs"]) == 3
+            for log in data["logs"]:
+                assert "id" in log
+                assert "level" in log
+                assert "message" in log
+                assert "context" in log
+                assert "created_at" in log
+            assert data["logs"][0]["created_at"] <= data["logs"][1]["created_at"]
+            assert data["logs"][1]["created_at"] <= data["logs"][2]["created_at"]
+        finally:
+            app.dependency_overrides.clear()
+
+    def test_get_job_logs_with_after_ts_filters_logs(self):
+        """When after_ts query param is provided, the DB query filters logs created after that timestamp."""
+        app.dependency_overrides[get_current_user] = _admin_user
+        try:
+            mock_db = MagicMock()
+            after_ts = "2026-04-10T10:00:05Z"
+            # job_queue SELECT
+            mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(
+                data=[{"id": _JOB_1_ID, "status": "completed"}]
+            )
+            # job_logs query with gt filter — chain: .eq().order().limit().gt()... or .eq().gt()...
+            # The gt filter is applied before order/limit, so chain: select.eq.order.limit.execute (after gt)
+            mock_db.table.return_value.select.return_value.eq.return_value.order.return_value.limit.return_value.gt.return_value.execute.return_value = MagicMock(
+                data=[
+                    {
+                        "id": _LOG_3_ID,
+                        "level": "info",
+                        "message": "job.completed",
+                        "context": {},
+                        "created_at": "2026-04-10T10:00:10Z",
+                    }
+                ]
+            )
+            with (
+                patch("api.admin.get_service_role_client", return_value=mock_db),
+                patch("api.deps.settings") as mock_settings,
+            ):
+                mock_settings.admin_user_ids = [_ADMIN_ID]
+                response = client.get(
+                    f"/admin/pipeline/jobs/{_JOB_1_ID}/logs?after_ts={after_ts}"
+                )
+            assert response.status_code == 200
+            # Verify .gt() was called with "created_at" and the after_ts value
+            gt_calls = mock_db.table.return_value.select.return_value.eq.return_value.order.return_value.limit.return_value.gt.call_args_list
+            assert any(
+                call[0] == ("created_at", after_ts) for call in gt_calls
+            )
+        finally:
+            app.dependency_overrides.clear()
+
+    def test_get_job_logs_includes_current_job_status(self):
+        """Response includes the job's current status from job_queue."""
+        app.dependency_overrides[get_current_user] = _admin_user
+        try:
+            mock_db = MagicMock()
+            # job_queue SELECT returns completed status
+            mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(
+                data=[{"id": _JOB_1_ID, "status": "completed"}]
+            )
+            mock_db.table.return_value.select.return_value.eq.return_value.order.return_value.limit.return_value.execute.return_value = MagicMock(
+                data=[]
+            )
+            with (
+                patch("api.admin.get_service_role_client", return_value=mock_db),
+                patch("api.deps.settings") as mock_settings,
+            ):
+                mock_settings.admin_user_ids = [_ADMIN_ID]
+                response = client.get(f"/admin/pipeline/jobs/{_JOB_1_ID}/logs")
+            assert response.status_code == 200
+            data = response.json()
+            assert data["job_status"] == "completed"
+        finally:
+            app.dependency_overrides.clear()
+
+    def test_get_job_logs_returns_404_when_job_not_found(self):
+        """Fetching logs for a non-existent job returns 404."""
+        app.dependency_overrides[get_current_user] = _admin_user
+        try:
+            mock_db = MagicMock()
+            # job_queue SELECT returns empty — job not found
+            mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(
+                data=[]
+            )
+            with (
+                patch("api.admin.get_service_role_client", return_value=mock_db),
+                patch("api.deps.settings") as mock_settings,
+            ):
+                mock_settings.admin_user_ids = [_ADMIN_ID]
+                response = client.get(f"/admin/pipeline/jobs/{_MISSING_JOB_ID}/logs")
+            assert response.status_code == 404
+        finally:
+            app.dependency_overrides.clear()
+
     def test_cancel_job_does_not_update_shop_when_processing_status_is_live(self):
         """When a job has a shop_id but the shop is already 'live', the shops table should NOT be updated."""
         app.dependency_overrides[get_current_user] = _admin_user

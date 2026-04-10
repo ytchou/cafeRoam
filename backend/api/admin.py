@@ -684,6 +684,38 @@ async def cancel_job(
     return {"message": f"Job {job_id} cancelled"}
 
 
+@router.get("/jobs/{job_id}/logs")
+async def get_job_logs(
+    job_id: str,
+    after_ts: str | None = None,
+    user: dict[str, Any] = Depends(require_admin),  # noqa: B008
+) -> dict[str, Any]:
+    """Fetch structured logs for a specific job (capped at 500 rows, supports incremental polling via after_ts)."""
+    db = get_service_role_client()
+
+    job_result = db.table("job_queue").select("status").eq("id", job_id).execute()
+    if not job_result.data:
+        raise HTTPException(status_code=404, detail=f"Job {job_id} not found")
+    job = first(cast("list[dict[str, Any]]", job_result.data), "job_queue lookup")
+
+    query = (
+        db.table("job_logs")
+        .select("id, level, message, context, created_at")
+        .eq("job_id", job_id)
+        .order("created_at", desc=False)
+        .limit(500)
+    )
+    if after_ts:
+        query = query.gt("created_at", after_ts)
+
+    logs_result = query.execute()
+
+    return {
+        "logs": logs_result.data or [],
+        "job_status": job["status"],
+    }
+
+
 class RunBatchRequest(BaseModel):
     shop_ids: list[str] | None = None
 
