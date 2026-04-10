@@ -29,7 +29,7 @@ async def handle_enrich_shop(
     _failure_recorded = False
     try:
         if job_id is not None:
-            log_job_event(
+            await log_job_event(
                 db, job_id, "info", "job.start", job_type="enrich_shop", shop_id=str(shop_id)
             )
 
@@ -75,14 +75,14 @@ async def handle_enrich_shop(
         )
 
         if job_id is not None:
-            log_job_event(
+            await log_job_event(
                 db, job_id, "info", "llm.call", provider="anthropic", method="enrich_shop"
             )
 
         result = await llm.enrich_shop(enrichment_input)
 
         if job_id is not None and not check_job_still_claimed(db, job_id):
-            log_job_event(db, job_id, "warn", "job.aborted_midflight", shop_id=str(shop_id))
+            await log_job_event(db, job_id, "warn", "job.aborted_midflight", shop_id=str(shop_id))
             return
 
         if result.summary and not is_zh_dominant(result.summary):
@@ -115,7 +115,7 @@ async def handle_enrich_shop(
             }
         ).eq("id", shop_id).execute()
         if job_id is not None:
-            log_job_event(
+            await log_job_event(
                 db, job_id, "info", "db.write",
                 table="shops", columns=["description", "enriched_at", "tags"],
             )
@@ -159,11 +159,11 @@ async def handle_enrich_shop(
 
         logger.info("Shop enriched", shop_id=shop_id, tag_count=len(result.tags))
         if job_id is not None:
-            log_job_event(db, job_id, "info", "job.end", status="ok")
+            await log_job_event(db, job_id, "info", "job.end", status="ok")
 
     except Exception as exc:
         if job_id is not None:
-            log_job_event(db, job_id, "error", "job.error", error=str(exc))
+            await log_job_event(db, job_id, "error", "job.error", error=str(exc))
         if not _failure_recorded and (job_id is None or check_job_still_claimed(db, job_id)):
             db.table("shops").update(
                 {

@@ -32,7 +32,7 @@ async def handle_summarize_reviews(
     logger.info("Summarizing reviews", shop_id=shop_id)
 
     if job_id is not None:
-        log_job_event(
+        await log_job_event(
             db, job_id, "info", "job.start",
             job_type="summarize_reviews", shop_id=str(shop_id),
         )
@@ -62,7 +62,7 @@ async def handle_summarize_reviews(
 
         # Generate community summary via Claude Haiku
         if job_id is not None:
-            log_job_event(
+            await log_job_event(
                 db, job_id, "info", "llm.call", provider="anthropic", method="summarize_reviews"
             )
 
@@ -78,7 +78,7 @@ async def handle_summarize_reviews(
             return
 
         if job_id is not None and not check_job_still_claimed(db, job_id):
-            log_job_event(db, job_id, "warn", "job.aborted_midflight", shop_id=str(shop_id))
+            await log_job_event(db, job_id, "warn", "job.aborted_midflight", shop_id=str(shop_id))
             return
 
         if not is_zh_dominant(summary):
@@ -97,7 +97,7 @@ async def handle_summarize_reviews(
             }
         ).eq("id", shop_id).execute()
         if job_id is not None:
-            log_job_event(
+            await log_job_event(
                 db, job_id, "info", "db.write", table="shops", columns=["community_summary"]
             )
 
@@ -116,9 +116,9 @@ async def handle_summarize_reviews(
         )
 
         if job_id is not None:
-            log_job_event(db, job_id, "info", "job.end", status="ok")
+            await log_job_event(db, job_id, "info", "job.end", status="ok")
 
     except Exception as exc:
         if job_id is not None:
-            log_job_event(db, job_id, "error", "job.error", error=str(exc))
+            await log_job_event(db, job_id, "error", "job.error", error=str(exc))
         raise

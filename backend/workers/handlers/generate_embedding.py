@@ -51,7 +51,7 @@ async def handle_generate_embedding(
 
     try:
         if job_id is not None:
-            log_job_event(
+            await log_job_event(
                 db, job_id, "info", "job.start",
                 job_type="generate_embedding", shop_id=str(shop_id),
             )
@@ -98,7 +98,7 @@ async def handle_generate_embedding(
 
         # Generate embedding
         if job_id is not None:
-            log_job_event(db, job_id, "info", "llm.call", provider="openai", method="embed")
+            await log_job_event(db, job_id, "info", "llm.call", provider="openai", method="embed")
 
         embedding = await embeddings.embed(text)
 
@@ -110,12 +110,12 @@ async def handle_generate_embedding(
             update_data["processing_status"] = "publishing"
 
         if job_id is not None and not check_job_still_claimed(db, job_id):
-            log_job_event(db, job_id, "warn", "job.aborted_midflight", shop_id=str(shop_id))
+            await log_job_event(db, job_id, "warn", "job.aborted_midflight", shop_id=str(shop_id))
             return
 
         db.table("shops").update(update_data).eq("id", shop_id).execute()
         if job_id is not None:
-            log_job_event(
+            await log_job_event(
                 db, job_id, "info", "db.write",
                 table="shops", columns=["embedding", "last_embedded_at"],
             )
@@ -142,11 +142,11 @@ async def handle_generate_embedding(
             )
 
         if job_id is not None:
-            log_job_event(db, job_id, "info", "job.end", status="ok")
+            await log_job_event(db, job_id, "info", "job.end", status="ok")
 
     except Exception as exc:
         if job_id is not None:
-            log_job_event(db, job_id, "error", "job.error", error=str(exc))
+            await log_job_event(db, job_id, "error", "job.error", error=str(exc))
         if should_advance and (job_id is None or check_job_still_claimed(db, job_id)):
             db.table("shops").update(
                 {

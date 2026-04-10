@@ -7,7 +7,7 @@ if TYPE_CHECKING:
     import uuid
 
 
-def log_job_event(
+async def log_job_event(
     db: Any,
     job_id: str | uuid.UUID,
     level: str,

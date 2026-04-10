@@ -673,7 +673,7 @@ async def cancel_job(
         )
 
     # Insert a job_logs warn row
-    log_job_event(db, job_id, "warn", "job.cancelled", reason=effective_reason)
+    await log_job_event(db, job_id, "warn", "job.cancelled", reason=effective_reason)
 
     log_admin_action(
         admin_user_id=user["id"],
