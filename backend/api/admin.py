@@ -645,11 +645,13 @@ async def cancel_job(
     # Conditional update: only succeeds if job is still in a cancellable state
     update_response = (
         db.table("job_queue")
-        .update({
-            "status": "cancelled",
-            "cancelled_at": datetime.now(UTC).isoformat(),
-            "cancel_reason": effective_reason,
-        })
+        .update(
+            {
+                "status": "cancelled",
+                "cancelled_at": datetime.now(UTC).isoformat(),
+                "cancel_reason": effective_reason,
+            }
+        )
         .eq("id", job_id)
         .in_("status", ["pending", "claimed"])
         .execute()
@@ -705,7 +707,9 @@ async def get_job_logs(
         try:
             datetime.fromisoformat(after_ts)
         except ValueError:
-            raise HTTPException(status_code=422, detail="after_ts must be a valid ISO-8601 datetime")
+            raise HTTPException(
+                status_code=422, detail="after_ts must be a valid ISO-8601 datetime"
+            ) from None
 
     query = (
         db.table("job_logs")
