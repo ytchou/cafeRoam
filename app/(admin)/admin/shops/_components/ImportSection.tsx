@@ -116,7 +116,7 @@ export function ImportSection({
             {seedingCsv ? 'Uploading...' : 'Choose CSV File'}
           </Button>
           {csvFileName && (
-            <span className="text-sm text-muted-foreground">{csvFileName}</span>
+            <span className="text-muted-foreground text-sm">{csvFileName}</span>
           )}
           <Button
             onClick={handleSeedCsv}
