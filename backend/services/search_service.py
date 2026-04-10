@@ -350,14 +350,15 @@ class SearchService:
         completions = [c for c in _CURATED_COMPLETIONS if q in c][:5]
 
         q_escaped = q.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
-        rows = (
+        rows: list[dict[str, Any]] = cast(
+            list[dict[str, Any]],
             self._db.table("taxonomy_tags")
             .select("id, label_zh")
             .ilike("label_zh", f"%{q_escaped}%")
             .limit(8)
             .execute()
-            .data
+            .data,
         )
-        tags = [SuggestTag(id=row["id"], label=row["label_zh"]) for row in rows]
+        tags = [SuggestTag(id=str(row["id"]), label=str(row["label_zh"])) for row in rows]
 
         return SuggestResponse(completions=completions, tags=tags)
