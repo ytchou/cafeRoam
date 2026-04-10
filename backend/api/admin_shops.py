@@ -105,10 +105,26 @@ async def list_shops(
     query = query.order("created_at", desc=True).range(offset, offset + limit - 1)
     response = query.execute()
 
+    shop_ids = [s["id"] for s in (response.data or [])]
+    active_jobs: dict[str, dict] = {}
+    if shop_ids:
+        jobs_result = (
+            db.table("job_queue")
+            .select("job_type, status, payload")
+            .in_("status", ["pending", "claimed"])
+            .execute()
+        )
+        for job in (jobs_result.data or []):
+            sid = (job.get("payload") or {}).get("shop_id")
+            if sid in shop_ids:
+                if sid not in active_jobs or job["status"] == "claimed":
+                    active_jobs[sid] = {"job_type": job["job_type"], "status": job["status"]}
+
     shops = []
     for row in cast("list[dict[str, Any]]", response.data):
         row["has_embedding"] = row.pop("embedding", None) is not None
         row["tag_count"] = row.pop("shop_tags", [{}])[0].get("count", 0)
+        row["current_job"] = active_jobs.get(row["id"])
         shops.append(row)
 
     return {"shops": shops, "total": response.count or 0}
