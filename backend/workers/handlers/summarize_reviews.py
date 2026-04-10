@@ -1,4 +1,3 @@
-import uuid
 from datetime import UTC, datetime
 from typing import Any, cast
 
@@ -20,7 +19,7 @@ async def handle_summarize_reviews(
     db: Client,
     llm: LLMProvider,
     queue: JobQueue,
-    job_id: str | uuid.UUID | None = None,
+    job_id: str,
 ) -> None:
     """Generate a Claude community summary for a shop's check-in reviews.
 
@@ -31,7 +30,7 @@ async def handle_summarize_reviews(
     shop_id = payload["shop_id"]
     logger.info("Summarizing reviews", shop_id=shop_id)
 
-    if job_id is not None:
+    try:
         await log_job_event(
             db,
             job_id,
@@ -41,7 +40,6 @@ async def handle_summarize_reviews(
             shop_id=str(shop_id),
         )
 
-    try:
         # Fetch ranked check-in texts (same RPC used by generate_embedding)
         response = db.rpc(
             "get_ranked_checkin_texts",
@@ -65,10 +63,9 @@ async def handle_summarize_reviews(
             return
 
         # Generate community summary via Claude Haiku
-        if job_id is not None:
-            await log_job_event(
-                db, job_id, "info", "llm.call", provider="anthropic", method="summarize_reviews"
-            )
+        await log_job_event(
+            db, job_id, "info", "llm.call", provider="anthropic", method="summarize_reviews"
+        )
 
         summary = await llm.summarize_reviews(texts)
 
@@ -81,7 +78,7 @@ async def handle_summarize_reviews(
             )
             return
 
-        if job_id is not None and not check_job_still_claimed(db, job_id):
+        if not await check_job_still_claimed(queue, job_id):
             await log_job_event(db, job_id, "warn", "job.aborted_midflight", shop_id=str(shop_id))
             return
 
@@ -100,10 +97,14 @@ async def handle_summarize_reviews(
                 "community_summary_updated_at": datetime.now(UTC).isoformat(),
             }
         ).eq("id", shop_id).execute()
-        if job_id is not None:
-            await log_job_event(
-                db, job_id, "info", "db.write", table="shops", columns=["community_summary"]
-            )
+        await log_job_event(
+            db,
+            job_id,
+            "info",
+            "db.write",
+            table="shops",
+            columns=["community_summary"],
+        )
 
         logger.info(
             "Community summary generated",
@@ -119,10 +120,8 @@ async def handle_summarize_reviews(
             priority=2,
         )
 
-        if job_id is not None:
-            await log_job_event(db, job_id, "info", "job.end", status="ok")
+        await log_job_event(db, job_id, "info", "job.end", status="ok")
 
     except Exception as exc:
-        if job_id is not None:
-            await log_job_event(db, job_id, "error", "job.error", error=str(exc))
+        await log_job_event(db, job_id, "error", "job.error", error=str(exc))
         raise

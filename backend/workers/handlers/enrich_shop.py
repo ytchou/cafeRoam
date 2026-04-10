@@ -1,4 +1,3 @@
-import uuid
 from datetime import UTC, datetime
 from typing import Any, cast
 
@@ -20,7 +19,7 @@ async def handle_enrich_shop(
     db: Client,
     llm: LLMProvider,
     queue: JobQueue,
-    job_id: str | uuid.UUID | None = None,
+    job_id: str,
 ) -> None:
     """Enrich a shop with AI-generated tags and summary."""
     shop_id = payload["shop_id"]
@@ -28,10 +27,14 @@ async def handle_enrich_shop(
 
     _failure_recorded = False
     try:
-        if job_id is not None:
-            await log_job_event(
-                db, job_id, "info", "job.start", job_type="enrich_shop", shop_id=str(shop_id)
-            )
+        await log_job_event(
+            db,
+            job_id,
+            "info",
+            "job.start",
+            job_type="enrich_shop",
+            shop_id=str(shop_id),
+        )
 
         shop_response = (
             db.table("shops")
@@ -74,14 +77,18 @@ async def handle_enrich_shop(
             vibe_photo_urls=vibe_photo_urls,
         )
 
-        if job_id is not None:
-            await log_job_event(
-                db, job_id, "info", "llm.call", provider="anthropic", method="enrich_shop"
-            )
+        await log_job_event(
+            db,
+            job_id,
+            "info",
+            "llm.call",
+            provider="anthropic",
+            method="enrich_shop",
+        )
 
         result = await llm.enrich_shop(enrichment_input)
 
-        if job_id is not None and not check_job_still_claimed(db, job_id):
+        if not await check_job_still_claimed(queue, job_id):
             await log_job_event(db, job_id, "warn", "job.aborted_midflight", shop_id=str(shop_id))
             return
 
@@ -102,6 +109,10 @@ async def handle_enrich_shop(
             raise ValueError(f"Enrichment summary for shop {shop_id} is not in Traditional Chinese")
 
         mode = result.mode_scores
+        if not await check_job_still_claimed(queue, job_id):
+            logger.warning("job.aborted_midflight job_id=%s handler=enrich_shop", job_id)
+            await log_job_event(db, job_id, "warn", "job.aborted_midflight", shop_id=str(shop_id))
+            return
         db.table("shops").update(
             {
                 "description": result.summary,
@@ -114,17 +125,20 @@ async def handle_enrich_shop(
                 "coffee_origins": result.coffee_origins,
             }
         ).eq("id", shop_id).execute()
-        if job_id is not None:
-            await log_job_event(
-                db,
-                job_id,
-                "info",
-                "db.write",
-                table="shops",
-                columns=["description", "enriched_at", "tags"],
-            )
+        await log_job_event(
+            db,
+            job_id,
+            "info",
+            "db.write",
+            table="shops",
+            columns=["description", "enriched_at", "tags"],
+        )
 
         # Re-enrichment replaces tags, not appends
+        if not await check_job_still_claimed(queue, job_id):
+            logger.warning("job.aborted_midflight job_id=%s handler=enrich_shop", job_id)
+            await log_job_event(db, job_id, "warn", "job.aborted_midflight", shop_id=str(shop_id))
+            return
         db.table("shop_tags").delete().eq("shop_id", shop_id).execute()
         if result.tags:
             tag_rows = [
@@ -162,13 +176,11 @@ async def handle_enrich_shop(
         )
 
         logger.info("Shop enriched", shop_id=shop_id, tag_count=len(result.tags))
-        if job_id is not None:
-            await log_job_event(db, job_id, "info", "job.end", status="ok")
+        await log_job_event(db, job_id, "info", "job.end", status="ok")
 
     except Exception as exc:
-        if job_id is not None:
-            await log_job_event(db, job_id, "error", "job.error", error=str(exc))
-        if not _failure_recorded and (job_id is None or check_job_still_claimed(db, job_id)):
+        await log_job_event(db, job_id, "error", "job.error", error=str(exc))
+        if not _failure_recorded and await check_job_still_claimed(queue, job_id):
             db.table("shops").update(
                 {
                     "processing_status": "failed",

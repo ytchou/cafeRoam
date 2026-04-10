@@ -15,7 +15,10 @@ test.describe.serial('@critical J43 — Community shop submission', () => {
     await page.goto('/submit');
 
     // Page heading visible
-    await expect(page.getByText('推薦咖啡廳')).toBeVisible({ timeout: 10_000 });
+    // Use heading role to avoid matching the footer nav link with the same text
+    await expect(page.getByRole('heading', { name: '推薦咖啡廳' })).toBeVisible(
+      { timeout: 10_000 }
+    );
 
     // Fill in the URL
     const urlInput = page.getByPlaceholder('貼上 Google Maps 連結');

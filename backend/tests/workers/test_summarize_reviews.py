@@ -37,12 +37,14 @@ class TestSummarizeReviewsHandler:
             return_value="顧客推薦拿鐵和巴斯克蛋糕，環境安靜適合工作。"
         )
         queue = AsyncMock()
+        queue.get_status.return_value = "claimed"
 
         await handle_summarize_reviews(
             payload={"shop_id": "shop-a1b2c3"},
             db=db,
             llm=llm,
             queue=queue,
+            job_id="job-summary-happy-01",
         )
 
         # Claude was called with the review texts
@@ -65,12 +67,14 @@ class TestSummarizeReviewsHandler:
         db = self._make_db(checkin_texts=[])
         llm = AsyncMock()
         queue = AsyncMock()
+        queue.get_status.return_value = "claimed"
 
         await handle_summarize_reviews(
             payload={"shop_id": "shop-a1b2c3"},
             db=db,
             llm=llm,
             queue=queue,
+            job_id="job-summary-empty-02",
         )
 
         # Claude NOT called
@@ -89,6 +93,7 @@ class TestSummarizeReviewsHandler:
         llm = AsyncMock()
         llm.summarize_reviews = AsyncMock(side_effect=RuntimeError("Claude API error"))
         queue = AsyncMock()
+        queue.get_status.return_value = "claimed"
 
         import pytest
 
@@ -98,6 +103,7 @@ class TestSummarizeReviewsHandler:
                 db=db,
                 llm=llm,
                 queue=queue,
+                job_id="job-summary-error-03",
             )
 
         # No embedding enqueued on failure
@@ -116,12 +122,14 @@ class TestSummarizeReviewsHandler:
         llm = AsyncMock()
         llm.summarize_reviews = AsyncMock(return_value="顧客推薦咖啡和甜點。")
         queue = AsyncMock()
+        queue.get_status.return_value = "claimed"
 
         await handle_summarize_reviews(
             payload={"shop_id": "shop-a1b2c3"},
             db=db,
             llm=llm,
             queue=queue,
+            job_id="job-summary-filter-04",
         )
 
         # Only the two non-empty texts are passed to Claude
@@ -140,6 +148,7 @@ class TestSummarizeReviewsHandler:
             return_value="Customers recommend the latte and cheesecake. Quiet atmosphere suitable for work."
         )
         queue = AsyncMock()
+        queue.get_status.return_value = "claimed"
 
         import pytest
 
@@ -149,6 +158,7 @@ class TestSummarizeReviewsHandler:
                 db=db,
                 llm=llm,
                 queue=queue,
+                job_id="job-summary-lang-05",
             )
 
         db._shops_table.update.assert_not_called()
@@ -159,12 +169,14 @@ class TestSummarizeReviewsHandler:
         db = self._make_db(checkin_texts=[])
         llm = AsyncMock()
         queue = AsyncMock()
+        queue.get_status.return_value = "claimed"
 
         await handle_summarize_reviews(
             payload={"shop_id": "shop-d4e5f6"},
             db=db,
             llm=llm,
             queue=queue,
+            job_id="job-summary-rpc-06",
         )
 
         db.rpc.assert_called_once()

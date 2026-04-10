@@ -1,15 +1,16 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from models.types import JobStatus
-from workers.queue import get_status
 
 if TYPE_CHECKING:
-    import uuid
+    from workers.queue import JobQueue
 
 
-def check_job_still_claimed(db: Any, job_id: str | uuid.UUID) -> bool:
-    """Return True iff the job's current status is 'claimed'."""
-    status = get_status(db, job_id)
-    return status == JobStatus.CLAIMED
+async def check_job_still_claimed(queue: JobQueue, job_id: str) -> bool:
+    """Return True iff the job's current status is still claimed."""
+    status = await queue.get_status(job_id)
+    if isinstance(status, JobStatus):
+        return status == JobStatus.CLAIMED
+    return status == JobStatus.CLAIMED.value

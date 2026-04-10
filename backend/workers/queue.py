@@ -1,4 +1,3 @@
-import uuid
 from datetime import UTC, datetime, timedelta
 from typing import Any, cast
 
@@ -101,6 +100,14 @@ class JobQueue:
             return []
         return [Job(**row) for row in cast("list[dict[str, Any]]", response.data)]
 
+    async def get_status(self, job_id: str) -> str | None:
+        result = (
+            self._db.table("job_queue").select("status").eq("id", job_id).maybe_single().execute()
+        )
+        if not result or not result.data:
+            return None
+        return cast("dict[str, Any]", result.data).get("status")
+
     async def complete(self, job_id: str, result: dict[str, Any] | None = None) -> None:
         self._db.table("job_queue").update(
             {
@@ -192,22 +199,3 @@ class JobQueue:
         cutoff = (datetime.now(UTC) - timedelta(days=retention_days)).isoformat()
         self._db.table("cron_locks").delete().lt("created_at", cutoff).execute()
 
-    def get_status(self, job_id: str | uuid.UUID) -> "JobStatus | None":
-        """Fetch the current status of a job. Returns None if job not found."""
-        result = self._db.table("job_queue").select("status").eq("id", str(job_id)).execute()
-        if not result.data:
-            return None
-        row = first(cast("list[dict[str, Any]]", result.data), "get_status")
-        return JobStatus(row["status"])
-
-
-def get_status(db: Any, job_id: str | uuid.UUID) -> "JobStatus | None":
-    """Fetch the current status of a job. Returns None if job not found.
-
-    Deprecated: use JobQueue.get_status() instead.
-    """
-    result = db.table("job_queue").select("status").eq("id", str(job_id)).execute()
-    if not result.data:
-        return None
-    row = first(cast("list[dict[str, Any]]", result.data), "get_status")
-    return JobStatus(row["status"])

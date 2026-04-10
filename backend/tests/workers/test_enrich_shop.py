@@ -88,12 +88,14 @@ class TestEnrichShopLanguageGuard:
             return_value=TarotEnrichmentResult(tarot_title=None, flavor_text="")
         )
         queue = AsyncMock()
+        queue.get_status.return_value = "claimed"
 
         await handle_enrich_shop(
             payload={"shop_id": "shop-abc123"},
             db=db,
             llm=llm,
             queue=queue,
+            job_id="job-enrich-zh-01",
         )
 
         update_data = db._shops_table.update.call_args[0][0]
@@ -111,6 +113,7 @@ class TestEnrichShopLanguageGuard:
             )
         )
         queue = AsyncMock()
+        queue.get_status.return_value = "claimed"
 
         with pytest.raises(ValueError, match="not in Traditional Chinese"):
             await handle_enrich_shop(
@@ -118,6 +121,7 @@ class TestEnrichShopLanguageGuard:
                 db=db,
                 llm=llm,
                 queue=queue,
+                job_id="job-enrich-en-02",
             )
 
         update_data = db._shops_table.update.call_args[0][0]
@@ -174,6 +178,7 @@ class TestEnrichShopErrorHandling:
         llm = AsyncMock()
         llm.enrich_shop = AsyncMock(side_effect=RuntimeError("LLM API timeout"))
         queue = AsyncMock()
+        queue.get_status.return_value = "claimed"
 
         with pytest.raises(RuntimeError, match="LLM API timeout"):
             await handle_enrich_shop(
@@ -181,6 +186,7 @@ class TestEnrichShopErrorHandling:
                 db=db,
                 llm=llm,
                 queue=queue,
+                job_id="job-enrich-timeout-03",
             )
 
         update_data = db._shops_table.update.call_args[0][0]
@@ -204,6 +210,7 @@ class TestEnrichShopErrorHandling:
             )
         )
         queue = AsyncMock()
+        queue.get_status.return_value = "claimed"
 
         with pytest.raises(ValueError, match="not in Traditional Chinese"):
             await handle_enrich_shop(
@@ -211,6 +218,7 @@ class TestEnrichShopErrorHandling:
                 db=db,
                 llm=llm,
                 queue=queue,
+                job_id="job-enrich-lang-04",
             )
 
         # The last update should use the specific zh-TW message, not the generic one
@@ -312,12 +320,14 @@ class TestEnrichShopVibePhotos:
             return_value=TarotEnrichmentResult(tarot_title=None, flavor_text="")
         )
         queue = AsyncMock()
+        queue.get_status.return_value = "claimed"
 
         await handle_enrich_shop(
             payload={"shop_id": "shop-photo-test"},
             db=db,
             llm=llm,
             queue=queue,
+            job_id="job-enrich-vibe-05",
         )
 
         assert len(captured_input) == 1
@@ -345,12 +355,14 @@ class TestEnrichShopVibePhotos:
             return_value=TarotEnrichmentResult(tarot_title=None, flavor_text="")
         )
         queue = AsyncMock()
+        queue.get_status.return_value = "claimed"
 
         await handle_enrich_shop(
             payload={"shop_id": "shop-photo-test"},
             db=db,
             llm=llm,
             queue=queue,
+            job_id="job-enrich-vibe-06",
         )
 
         assert len(captured_input) == 1
@@ -439,12 +451,14 @@ class TestEnrichShopGoogleMapsFeatures:
             return_value=TarotEnrichmentResult(tarot_title=None, flavor_text="")
         )
         queue = AsyncMock()
+        queue.get_status.return_value = "claimed"
 
         await handle_enrich_shop(
             payload={"shop_id": "shop-features-test"},
             db=db,
             llm=llm,
             queue=queue,
+            job_id="job-enrich-features-07",
         )
 
         assert len(captured_input) == 1
@@ -475,12 +489,14 @@ class TestEnrichShopGoogleMapsFeatures:
             return_value=TarotEnrichmentResult(tarot_title=None, flavor_text="")
         )
         queue = AsyncMock()
+        queue.get_status.return_value = "claimed"
 
         await handle_enrich_shop(
             payload={"shop_id": "shop-features-test"},
             db=db,
             llm=llm,
             queue=queue,
+            job_id="job-enrich-features-08",
         )
 
         assert len(captured_input) == 1

@@ -1,4 +1,3 @@
-import uuid
 from datetime import UTC, datetime
 from typing import Any, cast
 
@@ -19,7 +18,7 @@ async def handle_generate_embedding(
     db: Client,
     embeddings: EmbeddingsProvider,
     queue: JobQueue,
-    job_id: str | uuid.UUID | None = None,
+    job_id: str,
 ) -> None:
     """Generate vector embedding for a shop, enriched with menu items and community texts.
 
@@ -50,15 +49,14 @@ async def handle_generate_embedding(
     should_advance = shop.get("processing_status") in {"embedding", "enriched"}
 
     try:
-        if job_id is not None:
-            await log_job_event(
-                db,
-                job_id,
-                "info",
-                "job.start",
-                job_type="generate_embedding",
-                shop_id=str(shop_id),
-            )
+        await log_job_event(
+            db,
+            job_id,
+            "info",
+            "job.start",
+            job_type="generate_embedding",
+            shop_id=str(shop_id),
+        )
 
         # Load menu items if available
         menu_response = (
@@ -101,8 +99,7 @@ async def handle_generate_embedding(
             )
 
         # Generate embedding
-        if job_id is not None:
-            await log_job_event(db, job_id, "info", "llm.call", provider="openai", method="embed")
+        await log_job_event(db, job_id, "info", "llm.call", provider="openai", method="embed")
 
         embedding = await embeddings.embed(text)
 
@@ -113,20 +110,19 @@ async def handle_generate_embedding(
         if should_advance:
             update_data["processing_status"] = "publishing"
 
-        if job_id is not None and not check_job_still_claimed(db, job_id):
+        if not await check_job_still_claimed(queue, job_id):
+            logger.warning("job.aborted_midflight job_id=%s handler=generate_embedding", job_id)
             await log_job_event(db, job_id, "warn", "job.aborted_midflight", shop_id=str(shop_id))
             return
-
         db.table("shops").update(update_data).eq("id", shop_id).execute()
-        if job_id is not None:
-            await log_job_event(
-                db,
-                job_id,
-                "info",
-                "db.write",
-                table="shops",
-                columns=["embedding", "last_embedded_at"],
-            )
+        await log_job_event(
+            db,
+            job_id,
+            "info",
+            "db.write",
+            table="shops",
+            columns=["embedding", "last_embedded_at"],
+        )
 
         logger.info(
             "Embedding generated",
@@ -149,13 +145,11 @@ async def handle_generate_embedding(
                 priority=5,
             )
 
-        if job_id is not None:
-            await log_job_event(db, job_id, "info", "job.end", status="ok")
+        await log_job_event(db, job_id, "info", "job.end", status="ok")
 
     except Exception as exc:
-        if job_id is not None:
-            await log_job_event(db, job_id, "error", "job.error", error=str(exc))
-        if should_advance and (job_id is None or check_job_still_claimed(db, job_id)):
+        await log_job_event(db, job_id, "error", "job.error", error=str(exc))
+        if should_advance and await check_job_still_claimed(queue, job_id):
             db.table("shops").update(
                 {
                     "processing_status": "failed",

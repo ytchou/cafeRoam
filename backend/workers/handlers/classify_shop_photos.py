@@ -42,8 +42,7 @@ async def handle_classify_shop_photos(
     )
     photos: list[dict[str, Any]] = response.data  # type: ignore[assignment]
     if not photos:
-        logger.info("No unclassified photos", shop_id=shop_id)
-        return
+        logger.info("No unclassified photos, enqueueing enrichment directly", shop_id=shop_id)
 
     # Query already-classified counts to enforce global caps across runs
     existing_counts = _get_existing_category_counts(db, shop_id)
