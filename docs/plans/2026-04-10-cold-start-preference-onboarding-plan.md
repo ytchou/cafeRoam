@@ -17,6 +17,7 @@
 **Tech Stack:** Postgres (Supabase), FastAPI, Pydantic v2, supabase-py, pytest, Next.js 16 App Router, TypeScript strict, shadcn/ui (radix-ui Dialog), SWR, Vitest + Testing Library, Playwright.
 
 **Acceptance Criteria:**
+
 - [ ] A first-time user who lands on home after consent sees a 3-step modal with warm, natural-language prompts
 - [ ] A user who completes the modal immediately sees the featured shop list re-ordered by their selected mode(s)
 - [ ] A user who skips or closes the modal never sees it again on that account
@@ -82,6 +83,7 @@ graph TD
 ## Task 1: Database migration — add preference columns to `profiles`
 
 **Files:**
+
 - Create: `supabase/migrations/20260410000001_add_user_preferences_to_profiles.sql`
 
 **Step 1: Write the migration**
@@ -119,6 +121,7 @@ COMMENT ON COLUMN profiles.preferences_prompted_at IS 'Set when user dismisses t
 cd /Users/ytchou/Project/caferoam
 supabase db diff --file add_user_preferences_to_profiles
 ```
+
 Expected: diff matches the file above. No other changes.
 
 **Step 3: Apply to staging**
@@ -127,6 +130,7 @@ Expected: diff matches the file above. No other changes.
 cd /Users/ytchou/Project/caferoam
 supabase db push
 ```
+
 Expected: "Pushed migration 20260410000001_add_user_preferences_to_profiles" (success).
 
 **Step 4: Verify the columns exist**
@@ -134,6 +138,7 @@ Expected: "Pushed migration 20260410000001_add_user_preferences_to_profiles" (su
 ```bash
 supabase db psql -c "\d profiles"
 ```
+
 Expected: 5 new columns listed (preferred_modes, preferred_vibes, onboarding_note, preferences_completed_at, preferences_prompted_at) and two new CHECK constraints.
 
 **Step 5: Commit**
@@ -143,13 +148,14 @@ git add supabase/migrations/20260410000001_add_user_preferences_to_profiles.sql
 git commit -m "feat(DEV-297): add preference columns to profiles"
 ```
 
-*No test needed — schema migration verified by `supabase db diff` and `\d profiles`.*
+_No test needed — schema migration verified by `supabase db diff` and `\d profiles`._
 
 ---
 
 ## Task 2: Pydantic models for preference request/status
 
 **Files:**
+
 - Modify: `backend/models/types.py` (add after existing `ProfileUpdateRequest`, ~line 128)
 - Test: `backend/tests/test_types_preferences.py`
 
@@ -219,6 +225,7 @@ class TestPreferenceOnboardingStatus:
 ```bash
 cd /Users/ytchou/Project/caferoam/backend && uv run pytest tests/test_types_preferences.py -v
 ```
+
 Expected: FAIL with `ImportError: cannot import name 'PreferenceOnboardingRequest' from 'models.types'`.
 
 **Step 3: Add the models**
@@ -257,6 +264,7 @@ Ensure `Literal` and `Field` are imported at the top of the file (they likely al
 ```bash
 cd /Users/ytchou/Project/caferoam/backend && uv run pytest tests/test_types_preferences.py -v
 ```
+
 Expected: all 8 tests PASS.
 
 **Step 5: Lint + type check**
@@ -264,6 +272,7 @@ Expected: all 8 tests PASS.
 ```bash
 cd /Users/ytchou/Project/caferoam/backend && uv run ruff check . && uv run mypy .
 ```
+
 Expected: clean.
 
 **Step 6: Commit**
@@ -278,6 +287,7 @@ git commit -m "feat(DEV-297): add PreferenceOnboardingRequest/Status Pydantic mo
 ## Task 3: ProfileService preference methods
 
 **Files:**
+
 - Modify: `backend/services/profile_service.py` (add 4 new async methods)
 - Test: `backend/tests/test_profile_preferences.py` (new file — keeps the existing test_profile_service.py untouched and readable)
 
@@ -429,6 +439,7 @@ class TestGetPreferredModes:
 ```bash
 cd /Users/ytchou/Project/caferoam/backend && uv run pytest tests/test_profile_preferences.py -v
 ```
+
 Expected: FAIL with `AttributeError: 'ProfileService' object has no attribute 'get_preference_status'`.
 
 **Step 3: Add the service methods**
@@ -538,6 +549,7 @@ Append to `backend/services/profile_service.py` (inside the `ProfileService` cla
 ```
 
 Ensure these imports exist at the top of the file:
+
 ```python
 from datetime import datetime, timezone
 from fastapi import HTTPException
@@ -553,6 +565,7 @@ from models.types import (
 ```bash
 cd /Users/ytchou/Project/caferoam/backend && uv run pytest tests/test_profile_preferences.py -v
 ```
+
 Expected: all tests PASS.
 
 **Step 5: Run the full profile test suite to confirm nothing regressed**
@@ -560,6 +573,7 @@ Expected: all tests PASS.
 ```bash
 cd /Users/ytchou/Project/caferoam/backend && uv run pytest tests/test_profile_service.py tests/test_profile_preferences.py -v
 ```
+
 Expected: all PASS.
 
 **Step 6: Lint + type check**
@@ -567,6 +581,7 @@ Expected: all PASS.
 ```bash
 cd /Users/ytchou/Project/caferoam/backend && uv run ruff check . && uv run ruff format --check . && uv run mypy .
 ```
+
 Expected: clean.
 
 **Step 7: Commit**
@@ -581,6 +596,7 @@ git commit -m "feat(DEV-297): add preference methods to ProfileService"
 ## Task 4: Backend preference routes
 
 **Files:**
+
 - Modify: `backend/api/profile.py` (add 3 new routes)
 - Test: `backend/tests/test_profile_preferences_api.py`
 
@@ -672,6 +688,7 @@ class TestDismissPreferences:
 ```bash
 cd /Users/ytchou/Project/caferoam/backend && uv run pytest tests/test_profile_preferences_api.py -v
 ```
+
 Expected: FAIL with 404 on `/profile/preferences/status`.
 
 **Step 3: Add the routes**
@@ -719,6 +736,7 @@ Ensure `PreferenceOnboardingRequest` is imported at the top of the file.
 ```bash
 cd /Users/ytchou/Project/caferoam/backend && uv run pytest tests/test_profile_preferences_api.py -v
 ```
+
 Expected: all PASS.
 
 **Step 5: Run the whole backend suite to catch regressions**
@@ -726,6 +744,7 @@ Expected: all PASS.
 ```bash
 cd /Users/ytchou/Project/caferoam/backend && uv run pytest -x
 ```
+
 Expected: all PASS.
 
 **Step 6: Lint**
@@ -733,6 +752,7 @@ Expected: all PASS.
 ```bash
 cd /Users/ytchou/Project/caferoam/backend && uv run ruff check . && uv run ruff format --check .
 ```
+
 Expected: clean.
 
 **Step 7: Commit**
@@ -747,6 +767,7 @@ git commit -m "feat(DEV-297): add /profile/preferences routes (status/save/dismi
 ## Task 5: Featured shops re-rank by preferred modes
 
 **Files:**
+
 - Modify: `backend/api/shops.py:73-110` (the `list_shops` handler)
 - Test: `backend/tests/api/test_shops_featured_rerank.py`
 
@@ -864,6 +885,7 @@ class TestFeaturedAuthenticatedMultiMode:
 ```bash
 cd /Users/ytchou/Project/caferoam/backend && uv run pytest tests/api/test_shops_featured_rerank.py -v
 ```
+
 Expected: FAIL — `get_optional_current_user` doesn't exist yet, or the endpoint isn't auth-aware, or `_fetch_featured_shops` is not refactored out yet.
 
 **Step 3: Refactor + implement**
@@ -941,6 +963,7 @@ If `get_optional_current_user` does not exist in `backend/api/deps.py`, add it �
 ```bash
 cd /Users/ytchou/Project/caferoam/backend && uv run pytest tests/api/test_shops_featured_rerank.py -v
 ```
+
 Expected: all PASS.
 
 **Step 5: Run existing shops tests to catch regressions**
@@ -948,6 +971,7 @@ Expected: all PASS.
 ```bash
 cd /Users/ytchou/Project/caferoam/backend && uv run pytest tests/api/test_shops.py -v
 ```
+
 Expected: all PASS (unauthenticated behavior unchanged).
 
 **Step 6: Lint + type check**
@@ -955,6 +979,7 @@ Expected: all PASS (unauthenticated behavior unchanged).
 ```bash
 cd /Users/ytchou/Project/caferoam/backend && uv run ruff check . && uv run mypy .
 ```
+
 Expected: clean.
 
 **Step 7: Commit**
@@ -966,9 +991,10 @@ git commit -m "feat(DEV-297): re-rank featured shops by user's preferred modes"
 
 ---
 
-## Task 6: Next.js proxy routes for /api/profile/preferences/*
+## Task 6: Next.js proxy routes for /api/profile/preferences/\*
 
 **Files:**
+
 - Create: `app/api/profile/preferences/status/route.ts`
 - Create: `app/api/profile/preferences/route.ts`
 - Create: `app/api/profile/preferences/dismiss/route.ts`
@@ -978,46 +1004,49 @@ git commit -m "feat(DEV-297): re-rank featured shops by user's preferred modes"
 
 ```ts
 // app/api/profile/preferences/__tests__/preferences.test.ts
-import { NextRequest } from "next/server";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { NextRequest } from 'next/server';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockProxy = vi.hoisted(() => vi.fn());
-vi.mock("@/lib/api/proxy", () => ({ proxyToBackend: mockProxy }));
+vi.mock('@/lib/api/proxy', () => ({ proxyToBackend: mockProxy }));
 
-describe("/api/profile/preferences proxy routes", () => {
+describe('/api/profile/preferences proxy routes', () => {
   beforeEach(() => {
     mockProxy.mockReset();
     mockProxy.mockResolvedValue(new Response(null, { status: 200 }));
   });
 
-  it("GET /status proxies to /profile/preferences/status", async () => {
-    const { GET } = await import("../status/route");
-    const req = new NextRequest("http://localhost/api/profile/preferences/status", {
-      headers: { Authorization: "Bearer x" },
-    });
+  it('GET /status proxies to /profile/preferences/status', async () => {
+    const { GET } = await import('../status/route');
+    const req = new NextRequest(
+      'http://localhost/api/profile/preferences/status',
+      {
+        headers: { Authorization: 'Bearer x' },
+      }
+    );
     await GET(req);
-    expect(mockProxy).toHaveBeenCalledWith(req, "/profile/preferences/status");
+    expect(mockProxy).toHaveBeenCalledWith(req, '/profile/preferences/status');
   });
 
-  it("POST / proxies to /profile/preferences", async () => {
-    const { POST } = await import("../route");
-    const req = new NextRequest("http://localhost/api/profile/preferences", {
-      method: "POST",
-      headers: { Authorization: "Bearer x" },
-      body: JSON.stringify({ preferredModes: ["work"] }),
+  it('POST / proxies to /profile/preferences', async () => {
+    const { POST } = await import('../route');
+    const req = new NextRequest('http://localhost/api/profile/preferences', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer x' },
+      body: JSON.stringify({ preferredModes: ['work'] }),
     });
     await POST(req);
-    expect(mockProxy).toHaveBeenCalledWith(req, "/profile/preferences");
+    expect(mockProxy).toHaveBeenCalledWith(req, '/profile/preferences');
   });
 
-  it("POST /dismiss proxies to /profile/preferences/dismiss", async () => {
-    const { POST } = await import("../dismiss/route");
+  it('POST /dismiss proxies to /profile/preferences/dismiss', async () => {
+    const { POST } = await import('../dismiss/route');
     const req = new NextRequest(
-      "http://localhost/api/profile/preferences/dismiss",
-      { method: "POST", headers: { Authorization: "Bearer x" } },
+      'http://localhost/api/profile/preferences/dismiss',
+      { method: 'POST', headers: { Authorization: 'Bearer x' } }
     );
     await POST(req);
-    expect(mockProxy).toHaveBeenCalledWith(req, "/profile/preferences/dismiss");
+    expect(mockProxy).toHaveBeenCalledWith(req, '/profile/preferences/dismiss');
   });
 });
 ```
@@ -1027,37 +1056,38 @@ describe("/api/profile/preferences proxy routes", () => {
 ```bash
 cd /Users/ytchou/Project/caferoam && pnpm test app/api/profile/preferences
 ```
+
 Expected: FAIL — route files don't exist.
 
 **Step 3: Write the three proxy routes**
 
 ```ts
 // app/api/profile/preferences/status/route.ts
-import { NextRequest } from "next/server";
-import { proxyToBackend } from "@/lib/api/proxy";
+import { NextRequest } from 'next/server';
+import { proxyToBackend } from '@/lib/api/proxy';
 
 export async function GET(request: NextRequest) {
-  return proxyToBackend(request, "/profile/preferences/status");
+  return proxyToBackend(request, '/profile/preferences/status');
 }
 ```
 
 ```ts
 // app/api/profile/preferences/route.ts
-import { NextRequest } from "next/server";
-import { proxyToBackend } from "@/lib/api/proxy";
+import { NextRequest } from 'next/server';
+import { proxyToBackend } from '@/lib/api/proxy';
 
 export async function POST(request: NextRequest) {
-  return proxyToBackend(request, "/profile/preferences");
+  return proxyToBackend(request, '/profile/preferences');
 }
 ```
 
 ```ts
 // app/api/profile/preferences/dismiss/route.ts
-import { NextRequest } from "next/server";
-import { proxyToBackend } from "@/lib/api/proxy";
+import { NextRequest } from 'next/server';
+import { proxyToBackend } from '@/lib/api/proxy';
 
 export async function POST(request: NextRequest) {
-  return proxyToBackend(request, "/profile/preferences/dismiss");
+  return proxyToBackend(request, '/profile/preferences/dismiss');
 }
 ```
 
@@ -1066,6 +1096,7 @@ export async function POST(request: NextRequest) {
 ```bash
 cd /Users/ytchou/Project/caferoam && pnpm test app/api/profile/preferences
 ```
+
 Expected: all PASS.
 
 **Step 5: Lint + type check**
@@ -1073,6 +1104,7 @@ Expected: all PASS.
 ```bash
 cd /Users/ytchou/Project/caferoam && pnpm lint && pnpm type-check
 ```
+
 Expected: clean.
 
 **Step 6: Commit**
@@ -1087,6 +1119,7 @@ git commit -m "feat(DEV-297): add Next.js proxy routes for /api/profile/preferen
 ## Task 7: `use-preference-onboarding` SWR hook
 
 **Files:**
+
 - Create: `lib/hooks/use-preference-onboarding.ts`
 - Test: `lib/hooks/__tests__/use-preference-onboarding.test.tsx`
 
@@ -1094,27 +1127,31 @@ git commit -m "feat(DEV-297): add Next.js proxy routes for /api/profile/preferen
 
 ```tsx
 // lib/hooks/__tests__/use-preference-onboarding.test.tsx
-import { act, renderHook, waitFor } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import { SWRConfig } from "swr";
+import { act, renderHook, waitFor } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { SWRConfig } from 'swr';
 
-import { usePreferenceOnboarding } from "../use-preference-onboarding";
+import { usePreferenceOnboarding } from '../use-preference-onboarding';
 
 const mockFetchWithAuth = vi.hoisted(() => vi.fn());
-vi.mock("@/lib/api/fetcher", () => ({
+vi.mock('@/lib/api/fetcher', () => ({
   fetchWithAuth: mockFetchWithAuth,
 }));
 
 function wrapper({ children }: { children: React.ReactNode }) {
-  return <SWRConfig value={{ provider: () => new Map(), dedupingInterval: 0 }}>{children}</SWRConfig>;
+  return (
+    <SWRConfig value={{ provider: () => new Map(), dedupingInterval: 0 }}>
+      {children}
+    </SWRConfig>
+  );
 }
 
-describe("usePreferenceOnboarding", () => {
+describe('usePreferenceOnboarding', () => {
   beforeEach(() => {
     mockFetchWithAuth.mockReset();
   });
 
-  it("fetches status on mount", async () => {
+  it('fetches status on mount', async () => {
     mockFetchWithAuth.mockResolvedValueOnce({
       shouldPrompt: true,
       preferredModes: null,
@@ -1127,31 +1164,61 @@ describe("usePreferenceOnboarding", () => {
     await waitFor(() => expect(result.current.shouldPrompt).toBe(true));
   });
 
-  it("save calls POST and revalidates status", async () => {
+  it('save calls POST and revalidates status', async () => {
     mockFetchWithAuth
-      .mockResolvedValueOnce({ shouldPrompt: true, preferredModes: null, preferredVibes: null, onboardingNote: null })
-      .mockResolvedValueOnce({ shouldPrompt: false, preferredModes: ["work"], preferredVibes: null, onboardingNote: null })
-      .mockResolvedValueOnce({ shouldPrompt: false, preferredModes: ["work"], preferredVibes: null, onboardingNote: null });
+      .mockResolvedValueOnce({
+        shouldPrompt: true,
+        preferredModes: null,
+        preferredVibes: null,
+        onboardingNote: null,
+      })
+      .mockResolvedValueOnce({
+        shouldPrompt: false,
+        preferredModes: ['work'],
+        preferredVibes: null,
+        onboardingNote: null,
+      })
+      .mockResolvedValueOnce({
+        shouldPrompt: false,
+        preferredModes: ['work'],
+        preferredVibes: null,
+        onboardingNote: null,
+      });
 
     const { result } = renderHook(() => usePreferenceOnboarding(), { wrapper });
     await waitFor(() => expect(result.current.shouldPrompt).toBe(true));
 
     await act(async () => {
-      await result.current.save({ preferredModes: ["work"] });
+      await result.current.save({ preferredModes: ['work'] });
     });
 
     expect(mockFetchWithAuth).toHaveBeenCalledWith(
-      "/api/profile/preferences",
-      expect.objectContaining({ method: "POST" }),
+      '/api/profile/preferences',
+      expect.objectContaining({ method: 'POST' })
     );
     await waitFor(() => expect(result.current.shouldPrompt).toBe(false));
   });
 
-  it("dismiss calls dismiss endpoint and revalidates", async () => {
+  it('dismiss calls dismiss endpoint and revalidates', async () => {
     mockFetchWithAuth
-      .mockResolvedValueOnce({ shouldPrompt: true, preferredModes: null, preferredVibes: null, onboardingNote: null })
-      .mockResolvedValueOnce({ shouldPrompt: false, preferredModes: null, preferredVibes: null, onboardingNote: null })
-      .mockResolvedValueOnce({ shouldPrompt: false, preferredModes: null, preferredVibes: null, onboardingNote: null });
+      .mockResolvedValueOnce({
+        shouldPrompt: true,
+        preferredModes: null,
+        preferredVibes: null,
+        onboardingNote: null,
+      })
+      .mockResolvedValueOnce({
+        shouldPrompt: false,
+        preferredModes: null,
+        preferredVibes: null,
+        onboardingNote: null,
+      })
+      .mockResolvedValueOnce({
+        shouldPrompt: false,
+        preferredModes: null,
+        preferredVibes: null,
+        onboardingNote: null,
+      });
 
     const { result } = renderHook(() => usePreferenceOnboarding(), { wrapper });
     await waitFor(() => expect(result.current.shouldPrompt).toBe(true));
@@ -1161,8 +1228,8 @@ describe("usePreferenceOnboarding", () => {
     });
 
     expect(mockFetchWithAuth).toHaveBeenCalledWith(
-      "/api/profile/preferences/dismiss",
-      expect.objectContaining({ method: "POST" }),
+      '/api/profile/preferences/dismiss',
+      expect.objectContaining({ method: 'POST' })
     );
     await waitFor(() => expect(result.current.shouldPrompt).toBe(false));
   });
@@ -1174,16 +1241,17 @@ describe("usePreferenceOnboarding", () => {
 ```bash
 cd /Users/ytchou/Project/caferoam && pnpm test lib/hooks/__tests__/use-preference-onboarding
 ```
+
 Expected: FAIL — hook doesn't exist.
 
 **Step 3: Implement the hook**
 
 ```ts
 // lib/hooks/use-preference-onboarding.ts
-import useSWR from "swr";
-import { fetchWithAuth } from "@/lib/api/fetcher";
+import useSWR from 'swr';
+import { fetchWithAuth } from '@/lib/api/fetcher';
 
-const STATUS_KEY = "/api/profile/preferences/status";
+const STATUS_KEY = '/api/profile/preferences/status';
 
 export type PreferenceOnboardingStatus = {
   shouldPrompt: boolean;
@@ -1202,21 +1270,21 @@ export function usePreferenceOnboarding() {
   const { data, error, isLoading, mutate } = useSWR<PreferenceOnboardingStatus>(
     STATUS_KEY,
     fetchWithAuth,
-    { revalidateOnFocus: false },
+    { revalidateOnFocus: false }
   );
 
   async function save(payload: PreferencePayload) {
-    await fetchWithAuth("/api/profile/preferences", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+    await fetchWithAuth('/api/profile/preferences', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
     await mutate();
   }
 
   async function dismiss() {
-    await fetchWithAuth("/api/profile/preferences/dismiss", {
-      method: "POST",
+    await fetchWithAuth('/api/profile/preferences/dismiss', {
+      method: 'POST',
     });
     await mutate();
   }
@@ -1238,6 +1306,7 @@ export function usePreferenceOnboarding() {
 ```bash
 cd /Users/ytchou/Project/caferoam && pnpm test lib/hooks/__tests__/use-preference-onboarding
 ```
+
 Expected: all PASS.
 
 **Step 5: Lint + type check**
@@ -1258,6 +1327,7 @@ git commit -m "feat(DEV-297): add use-preference-onboarding SWR hook"
 ## Task 8: PreferenceOnboardingModal component
 
 **Files:**
+
 - Create: `components/onboarding/preference-modal.tsx`
 - Create: `components/onboarding/preference-modal.constants.ts` (MODE_OPTIONS + vibe list fetch)
 - Test: `components/onboarding/__tests__/preference-modal.test.tsx`
@@ -1266,32 +1336,32 @@ git commit -m "feat(DEV-297): add use-preference-onboarding SWR hook"
 
 ```tsx
 // components/onboarding/__tests__/preference-modal.test.tsx
-import { render, screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { PreferenceOnboardingModal } from "../preference-modal";
+import { PreferenceOnboardingModal } from '../preference-modal';
 
 const mockSave = vi.fn();
 const mockDismiss = vi.fn();
 
 const mockUseHook = vi.hoisted(() => vi.fn());
-vi.mock("@/lib/hooks/use-preference-onboarding", () => ({
+vi.mock('@/lib/hooks/use-preference-onboarding', () => ({
   usePreferenceOnboarding: mockUseHook,
 }));
 
 // Stub the vibe fetch so the test doesn't hit network
-vi.mock("@/lib/hooks/use-vibes", () => ({
+vi.mock('@/lib/hooks/use-vibes', () => ({
   useVibes: () => ({
     vibes: [
-      { slug: "study-cave", emoji: "📚", nameZh: "K書", subtitleZh: "好讀書" },
-      { slug: "cat-cafe",   emoji: "🐱", nameZh: "貓貓",  subtitleZh: "有貓" },
+      { slug: 'study-cave', emoji: '📚', nameZh: 'K書', subtitleZh: '好讀書' },
+      { slug: 'cat-cafe', emoji: '🐱', nameZh: '貓貓', subtitleZh: '有貓' },
     ],
     isLoading: false,
   }),
 }));
 
-describe("PreferenceOnboardingModal", () => {
+describe('PreferenceOnboardingModal', () => {
   beforeEach(() => {
     mockSave.mockReset();
     mockDismiss.mockReset();
@@ -1303,53 +1373,59 @@ describe("PreferenceOnboardingModal", () => {
     });
   });
 
-  it("shows step 1 on open", () => {
+  it('shows step 1 on open', () => {
     render(<PreferenceOnboardingModal />);
     expect(screen.getByText(/what brings you here today/i)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /focus time/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /focus time/i })
+    ).toBeInTheDocument();
   });
 
-  it("advances from step 1 → 2 → 3 on Next", async () => {
+  it('advances from step 1 → 2 → 3 on Next', async () => {
     const user = userEvent.setup();
     render(<PreferenceOnboardingModal />);
 
-    await user.click(screen.getByRole("button", { name: /focus time/i }));
-    await user.click(screen.getByRole("button", { name: /next/i }));
-    expect(screen.getByText(/how do you like your coffee shops/i)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /focus time/i }));
+    await user.click(screen.getByRole('button', { name: /next/i }));
+    expect(
+      screen.getByText(/how do you like your coffee shops/i)
+    ).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: /study-cave|k書/i }));
-    await user.click(screen.getByRole("button", { name: /next/i }));
-    expect(screen.getByText(/anything else you're hoping to find/i)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /study-cave|k書/i }));
+    await user.click(screen.getByRole('button', { name: /next/i }));
+    expect(
+      screen.getByText(/anything else you're hoping to find/i)
+    ).toBeInTheDocument();
   });
 
-  it("submits with correct payload", async () => {
+  it('submits with correct payload', async () => {
     const user = userEvent.setup();
     render(<PreferenceOnboardingModal />);
 
-    await user.click(screen.getByRole("button", { name: /focus time/i }));
-    await user.click(screen.getByRole("button", { name: /next/i }));
-    await user.click(screen.getByRole("button", { name: /study-cave|k書/i }));
-    await user.click(screen.getByRole("button", { name: /next/i }));
-    await user.type(screen.getByRole("textbox"), "no chains please");
-    await user.click(screen.getByRole("button", { name: /finish/i }));
+    await user.click(screen.getByRole('button', { name: /focus time/i }));
+    await user.click(screen.getByRole('button', { name: /next/i }));
+    await user.click(screen.getByRole('button', { name: /study-cave|k書/i }));
+    await user.click(screen.getByRole('button', { name: /next/i }));
+    await user.type(screen.getByRole('textbox'), 'no chains please');
+    await user.click(screen.getByRole('button', { name: /finish/i }));
 
     await waitFor(() =>
       expect(mockSave).toHaveBeenCalledWith({
-        preferredModes: ["work"],
-        preferredVibes: ["study-cave"],
-        onboardingNote: "no chains please",
-      }),
+        preferredModes: ['work'],
+        preferredVibes: ['study-cave'],
+        onboardingNote: 'no chains please',
+      })
     );
   });
 
-  it("skip button calls dismiss", async () => {
+  it('skip button calls dismiss', async () => {
     const user = userEvent.setup();
     render(<PreferenceOnboardingModal />);
-    await user.click(screen.getByRole("button", { name: /skip/i }));
+    await user.click(screen.getByRole('button', { name: /skip/i }));
     expect(mockDismiss).toHaveBeenCalled();
   });
 
-  it("returns null when shouldPrompt is false", () => {
+  it('returns null when shouldPrompt is false', () => {
     mockUseHook.mockReturnValue({
       shouldPrompt: false,
       save: mockSave,
@@ -1360,19 +1436,19 @@ describe("PreferenceOnboardingModal", () => {
     expect(container.firstChild).toBeNull();
   });
 
-  it("anywhere submits with empty preferred_modes", async () => {
+  it('anywhere submits with empty preferred_modes', async () => {
     const user = userEvent.setup();
     render(<PreferenceOnboardingModal />);
 
-    await user.click(screen.getByRole("button", { name: /anywhere/i }));
-    await user.click(screen.getByRole("button", { name: /next/i }));
-    await user.click(screen.getByRole("button", { name: /next/i })); // skip vibes
-    await user.click(screen.getByRole("button", { name: /finish/i }));
+    await user.click(screen.getByRole('button', { name: /anywhere/i }));
+    await user.click(screen.getByRole('button', { name: /next/i }));
+    await user.click(screen.getByRole('button', { name: /next/i })); // skip vibes
+    await user.click(screen.getByRole('button', { name: /finish/i }));
 
     await waitFor(() =>
       expect(mockSave).toHaveBeenCalledWith(
-        expect.objectContaining({ preferredModes: [] }),
-      ),
+        expect.objectContaining({ preferredModes: [] })
+      )
     );
   });
 });
@@ -1383,6 +1459,7 @@ describe("PreferenceOnboardingModal", () => {
 ```bash
 cd /Users/ytchou/Project/caferoam && pnpm test components/onboarding
 ```
+
 Expected: FAIL — component doesn't exist.
 
 **Step 3: Implement the constants file**
@@ -1390,17 +1467,37 @@ Expected: FAIL — component doesn't exist.
 ```ts
 // components/onboarding/preference-modal.constants.ts
 export type ModeOption = {
-  slug: "work" | "rest" | "social" | null;
+  slug: 'work' | 'rest' | 'social' | null;
   emoji: string;
   label: string;
   blurb: string;
 };
 
 export const MODE_OPTIONS: ModeOption[] = [
-  { slug: "work",   emoji: "💻", label: "Focus time",     blurb: "A corner to get work done" },
-  { slug: "rest",   emoji: "🌿", label: "Slow afternoon", blurb: "Just want to breathe and sip" },
-  { slug: "social", emoji: "🤝", label: "Catching up",    blurb: "Meeting someone over coffee" },
-  { slug: null,     emoji: "☕", label: "Anywhere",       blurb: "I just love coffee shops" },
+  {
+    slug: 'work',
+    emoji: '💻',
+    label: 'Focus time',
+    blurb: 'A corner to get work done',
+  },
+  {
+    slug: 'rest',
+    emoji: '🌿',
+    label: 'Slow afternoon',
+    blurb: 'Just want to breathe and sip',
+  },
+  {
+    slug: 'social',
+    emoji: '🤝',
+    label: 'Catching up',
+    blurb: 'Meeting someone over coffee',
+  },
+  {
+    slug: null,
+    emoji: '☕',
+    label: 'Anywhere',
+    blurb: 'I just love coffee shops',
+  },
 ];
 ```
 
@@ -1408,22 +1505,22 @@ export const MODE_OPTIONS: ModeOption[] = [
 
 ```tsx
 // components/onboarding/preference-modal.tsx
-"use client";
+'use client';
 
-import { useState } from "react";
+import { useState } from 'react';
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
-import { usePreferenceOnboarding } from "@/lib/hooks/use-preference-onboarding";
-import { useVibes } from "@/lib/hooks/use-vibes";
-import { MODE_OPTIONS } from "./preference-modal.constants";
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/utils';
+import { usePreferenceOnboarding } from '@/lib/hooks/use-preference-onboarding';
+import { useVibes } from '@/lib/hooks/use-vibes';
+import { MODE_OPTIONS } from './preference-modal.constants';
 
 type Step = 1 | 2 | 3;
 
@@ -1431,9 +1528,11 @@ export function PreferenceOnboardingModal() {
   const { shouldPrompt, save, dismiss } = usePreferenceOnboarding();
   const { vibes } = useVibes();
   const [step, setStep] = useState<Step>(1);
-  const [selectedModes, setSelectedModes] = useState<Set<string | null>>(new Set());
+  const [selectedModes, setSelectedModes] = useState<Set<string | null>>(
+    new Set()
+  );
   const [selectedVibes, setSelectedVibes] = useState<Set<string>>(new Set());
-  const [note, setNote] = useState("");
+  const [note, setNote] = useState('');
 
   if (!shouldPrompt) return null;
 
@@ -1453,7 +1552,7 @@ export function PreferenceOnboardingModal() {
 
   const handleFinish = async () => {
     const preferredModes = Array.from(selectedModes).filter(
-      (s): s is "work" | "rest" | "social" => s !== null,
+      (s): s is 'work' | 'rest' | 'social' => s !== null
     );
     await save({
       preferredModes,
@@ -1467,12 +1566,17 @@ export function PreferenceOnboardingModal() {
   };
 
   return (
-    <Dialog open onOpenChange={(open) => { if (!open) handleSkip(); }}>
+    <Dialog
+      open
+      onOpenChange={(open) => {
+        if (!open) handleSkip();
+      }}
+    >
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>
-            {step === 1 && "What brings you here today?"}
-            {step === 2 && "How do you like your coffee shops?"}
+            {step === 1 && 'What brings you here today?'}
+            {step === 2 && 'How do you like your coffee shops?'}
             {step === 3 && "Anything else you're hoping to find?"}
           </DialogTitle>
           <DialogDescription>Step {step} of 3</DialogDescription>
@@ -1486,10 +1590,10 @@ export function PreferenceOnboardingModal() {
                 type="button"
                 onClick={() => toggleMode(m.slug)}
                 className={cn(
-                  "w-full rounded-2xl border p-4 text-left transition",
+                  'w-full rounded-2xl border p-4 text-left transition',
                   selectedModes.has(m.slug)
-                    ? "border-[#2c1810] bg-[#2c1810] text-white"
-                    : "border-gray-200 bg-white",
+                    ? 'border-[#2c1810] bg-[#2c1810] text-white'
+                    : 'border-gray-200 bg-white'
                 )}
               >
                 <div className="text-2xl">{m.emoji}</div>
@@ -1508,10 +1612,10 @@ export function PreferenceOnboardingModal() {
                 type="button"
                 onClick={() => toggleVibe(v.slug)}
                 className={cn(
-                  "rounded-full border px-4 py-2 transition",
+                  'rounded-full border px-4 py-2 transition',
                   selectedVibes.has(v.slug)
-                    ? "border-[#2c1810] bg-[#2c1810] text-white"
-                    : "border-gray-200 bg-white",
+                    ? 'border-[#2c1810] bg-[#2c1810] text-white'
+                    : 'border-gray-200 bg-white'
                 )}
               >
                 <span className="mr-1">{v.emoji}</span>
@@ -1567,6 +1671,7 @@ export function PreferenceOnboardingModal() {
 ```bash
 cd /Users/ytchou/Project/caferoam && pnpm test components/onboarding
 ```
+
 Expected: all PASS.
 
 **Step 6: Lint + type check**
@@ -1587,6 +1692,7 @@ git commit -m "feat(DEV-297): add PreferenceOnboardingModal component"
 ## Task 9: Mount modal on home page + re-fetch featured shops after save
 
 **Files:**
+
 - Modify: `app/page.tsx`
 - Test: `app/__tests__/page-preference-onboarding.test.tsx`
 
@@ -1594,47 +1700,68 @@ git commit -m "feat(DEV-297): add PreferenceOnboardingModal component"
 
 ```tsx
 // app/__tests__/page-preference-onboarding.test.tsx
-import { render, screen } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { render, screen } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import HomePage from "../page";
+import HomePage from '../page';
 
 const mockUseUser = vi.hoisted(() => vi.fn());
 const mockUseHook = vi.hoisted(() => vi.fn());
 
-vi.mock("@/lib/hooks/use-user", () => ({ useUser: mockUseUser }));
-vi.mock("@/lib/hooks/use-preference-onboarding", () => ({
+vi.mock('@/lib/hooks/use-user', () => ({ useUser: mockUseUser }));
+vi.mock('@/lib/hooks/use-preference-onboarding', () => ({
   usePreferenceOnboarding: mockUseHook,
 }));
-vi.mock("@/lib/hooks/use-shops", () => ({
-  useShops: () => ({ shops: [], isLoading: false, error: null, mutate: vi.fn() }),
+vi.mock('@/lib/hooks/use-shops', () => ({
+  useShops: () => ({
+    shops: [],
+    isLoading: false,
+    error: null,
+    mutate: vi.fn(),
+  }),
 }));
 
-describe("HomePage — preference modal mount", () => {
+describe('HomePage — preference modal mount', () => {
   beforeEach(() => {
     mockUseUser.mockReset();
     mockUseHook.mockReset();
   });
 
-  it("renders modal when authenticated and shouldPrompt is true", () => {
-    mockUseUser.mockReturnValue({ user: { id: "u1" }, isLoading: false });
-    mockUseHook.mockReturnValue({ shouldPrompt: true, save: vi.fn(), dismiss: vi.fn() });
+  it('renders modal when authenticated and shouldPrompt is true', () => {
+    mockUseUser.mockReturnValue({ user: { id: 'u1' }, isLoading: false });
+    mockUseHook.mockReturnValue({
+      shouldPrompt: true,
+      save: vi.fn(),
+      dismiss: vi.fn(),
+    });
     render(<HomePage />);
     expect(screen.getByText(/what brings you here today/i)).toBeInTheDocument();
   });
 
-  it("does not render modal when shouldPrompt is false", () => {
-    mockUseUser.mockReturnValue({ user: { id: "u1" }, isLoading: false });
-    mockUseHook.mockReturnValue({ shouldPrompt: false, save: vi.fn(), dismiss: vi.fn() });
+  it('does not render modal when shouldPrompt is false', () => {
+    mockUseUser.mockReturnValue({ user: { id: 'u1' }, isLoading: false });
+    mockUseHook.mockReturnValue({
+      shouldPrompt: false,
+      save: vi.fn(),
+      dismiss: vi.fn(),
+    });
     render(<HomePage />);
-    expect(screen.queryByText(/what brings you here today/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/what brings you here today/i)
+    ).not.toBeInTheDocument();
   });
 
-  it("does not render modal when unauthenticated", () => {
+  it('does not render modal when unauthenticated', () => {
     mockUseUser.mockReturnValue({ user: null, isLoading: false });
-    mockUseHook.mockReturnValue({ shouldPrompt: true, save: vi.fn(), dismiss: vi.fn() });
+    mockUseHook.mockReturnValue({
+      shouldPrompt: true,
+      save: vi.fn(),
+      dismiss: vi.fn(),
+    });
     render(<HomePage />);
-    expect(screen.queryByText(/what brings you here today/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/what brings you here today/i)
+    ).not.toBeInTheDocument();
   });
 });
 ```
@@ -1644,6 +1771,7 @@ describe("HomePage — preference modal mount", () => {
 ```bash
 cd /Users/ytchou/Project/caferoam && pnpm test app/__tests__/page-preference-onboarding
 ```
+
 Expected: FAIL — modal not mounted yet.
 
 **Step 3: Mount the modal in `app/page.tsx`**
@@ -1652,23 +1780,29 @@ Add the import and conditional render. Also call `mutate` on the featured shops 
 
 ```tsx
 // Near the top of app/page.tsx, add:
-import { PreferenceOnboardingModal } from "@/components/onboarding/preference-modal";
-import { usePreferenceOnboarding } from "@/lib/hooks/use-preference-onboarding";
+import { PreferenceOnboardingModal } from '@/components/onboarding/preference-modal';
+import { usePreferenceOnboarding } from '@/lib/hooks/use-preference-onboarding';
 
 // Inside HomePageContent (or the component that uses useShops):
 const { user } = useUser();
-const { shops: featuredShops, isLoading: shopsLoading, mutate: refetchShops } = useShops({
+const {
+  shops: featuredShops,
+  isLoading: shopsLoading,
+  mutate: refetchShops,
+} = useShops({
   featured: true,
   limit: 200,
 });
 
 // Add the modal near the end of the returned JSX (after the map/list layout):
-{user && (
-  <PreferenceOnboardingModal
-    // The modal reads shouldPrompt from the hook internally — just mount it.
-    onCompleted={() => refetchShops()}
-  />
-)}
+{
+  user && (
+    <PreferenceOnboardingModal
+      // The modal reads shouldPrompt from the hook internally — just mount it.
+      onCompleted={() => refetchShops()}
+    />
+  );
+}
 ```
 
 If the modal component doesn't currently accept `onCompleted`, add it (optional callback invoked after successful `save`).
@@ -1678,6 +1812,7 @@ If the modal component doesn't currently accept `onCompleted`, add it (optional 
 ```bash
 cd /Users/ytchou/Project/caferoam && pnpm test app/__tests__/page-preference-onboarding
 ```
+
 Expected: all PASS.
 
 **Step 5: Run all frontend tests to catch regressions**
@@ -1685,6 +1820,7 @@ Expected: all PASS.
 ```bash
 cd /Users/ytchou/Project/caferoam && pnpm test
 ```
+
 Expected: all PASS (the skill expects a full green suite — see MEMORY).
 
 **Step 6: Lint + type check + format**
@@ -1705,62 +1841,75 @@ git commit -m "feat(DEV-297): mount preference modal on home with shops re-fetch
 ## Task 10: E2E journey — completion and dismiss paths
 
 **Files:**
+
 - Create: `e2e/preference-onboarding.spec.ts`
 
 **Step 1: Write the failing E2E spec**
 
 ```ts
 // e2e/preference-onboarding.spec.ts
-import { test, expect } from "@playwright/test";
-import { createTestUser, loginAs } from "./helpers";  // assume these exist
+import { test, expect } from '@playwright/test';
+import { createTestUser, loginAs } from './helpers'; // assume these exist
 
-test.describe("preference onboarding @critical", () => {
-  test("completes the 3-step modal and re-orders featured list", async ({ page }) => {
+test.describe('preference onboarding @critical', () => {
+  test('completes the 3-step modal and re-orders featured list', async ({
+    page,
+  }) => {
     const user = await createTestUser();
     await loginAs(page, user);
-    await page.goto("/onboarding/consent");
-    await page.getByRole("checkbox", { name: /agree/i }).check();
-    await page.getByRole("button", { name: /continue|submit/i }).click();
+    await page.goto('/onboarding/consent');
+    await page.getByRole('checkbox', { name: /agree/i }).check();
+    await page.getByRole('button', { name: /continue|submit/i }).click();
 
     // Lands on home; modal opens
     await expect(page.getByText(/what brings you here today/i)).toBeVisible();
 
     // Step 1: Focus time
-    await page.getByRole("button", { name: /focus time/i }).click();
-    await page.getByRole("button", { name: /next/i }).click();
+    await page.getByRole('button', { name: /focus time/i }).click();
+    await page.getByRole('button', { name: /next/i }).click();
 
     // Step 2: pick first vibe
     await page.locator('[data-testid^="vibe-chip-"]').first().click();
-    await page.getByRole("button", { name: /next/i }).click();
+    await page.getByRole('button', { name: /next/i }).click();
 
     // Step 3: optional note
-    await page.getByRole("textbox").fill("near MRT please");
-    await page.getByRole("button", { name: /finish/i }).click();
+    await page.getByRole('textbox').fill('near MRT please');
+    await page.getByRole('button', { name: /finish/i }).click();
 
     // Modal closes
-    await expect(page.getByText(/what brings you here today/i)).not.toBeVisible();
+    await expect(
+      page.getByText(/what brings you here today/i)
+    ).not.toBeVisible();
 
     // Featured list is visible (left panel on desktop, carousel on mobile)
-    await expect(page.locator('[data-testid="featured-shop-card"]').first()).toBeVisible();
+    await expect(
+      page.locator('[data-testid="featured-shop-card"]').first()
+    ).toBeVisible();
 
     // Refresh — modal should NOT reappear
     await page.reload();
-    await expect(page.getByText(/what brings you here today/i)).not.toBeVisible();
+    await expect(
+      page.getByText(/what brings you here today/i)
+    ).not.toBeVisible();
   });
 
-  test("dismisses the modal and never sees it again", async ({ page }) => {
+  test('dismisses the modal and never sees it again', async ({ page }) => {
     const user = await createTestUser();
     await loginAs(page, user);
-    await page.goto("/onboarding/consent");
-    await page.getByRole("checkbox", { name: /agree/i }).check();
-    await page.getByRole("button", { name: /continue|submit/i }).click();
+    await page.goto('/onboarding/consent');
+    await page.getByRole('checkbox', { name: /agree/i }).check();
+    await page.getByRole('button', { name: /continue|submit/i }).click();
 
     await expect(page.getByText(/what brings you here today/i)).toBeVisible();
-    await page.getByRole("button", { name: /skip/i }).click();
-    await expect(page.getByText(/what brings you here today/i)).not.toBeVisible();
+    await page.getByRole('button', { name: /skip/i }).click();
+    await expect(
+      page.getByText(/what brings you here today/i)
+    ).not.toBeVisible();
 
     await page.reload();
-    await expect(page.getByText(/what brings you here today/i)).not.toBeVisible();
+    await expect(
+      page.getByText(/what brings you here today/i)
+    ).not.toBeVisible();
   });
 });
 ```
@@ -1770,6 +1919,7 @@ test.describe("preference onboarding @critical", () => {
 ```bash
 cd /Users/ytchou/Project/caferoam && pnpm exec playwright test e2e/preference-onboarding.spec.ts
 ```
+
 Expected: first run should PASS if prior tasks landed correctly. If it fails, debug with `--headed --debug`.
 
 **Step 3: Verify smoke tests still green**
@@ -1777,6 +1927,7 @@ Expected: first run should PASS if prior tasks landed correctly. If it fails, de
 ```bash
 cd /Users/ytchou/Project/caferoam && pnpm exec playwright test --grep @critical
 ```
+
 Expected: all critical smoke tests pass.
 
 **Step 4: Commit**
@@ -1793,27 +1944,35 @@ git commit -m "test(DEV-297): add e2e journey for preference onboarding (complet
 After all waves complete, run the full verification block:
 
 1. **Backend full suite**
+
    ```bash
    cd /Users/ytchou/Project/caferoam/backend && uv run pytest
    ```
+
    Expected: all tests PASS, 901+ tests.
 
 2. **Backend coverage on profile_service.py**
+
    ```bash
    cd /Users/ytchou/Project/caferoam/backend && uv run pytest --cov=services/profile_service --cov-report=term-missing
    ```
+
    Expected: ≥ 80% coverage on `profile_service.py`.
 
 3. **Frontend full suite**
+
    ```bash
    cd /Users/ytchou/Project/caferoam && pnpm test
    ```
+
    Expected: all 1256+ tests PASS.
 
 4. **Frontend lint + type + format**
+
    ```bash
    cd /Users/ytchou/Project/caferoam && pnpm lint && pnpm type-check && pnpm format:check
    ```
+
    Expected: clean.
 
 5. **Manual smoke on staging**
@@ -1823,6 +1982,7 @@ After all waves complete, run the full verification block:
    - Check the `profiles` row in staging DB: the appropriate timestamp is set
 
 6. **E2E smoke**
+
    ```bash
    cd /Users/ytchou/Project/caferoam && pnpm exec playwright test --grep @critical
    ```
@@ -1834,11 +1994,13 @@ After all waves complete, run the full verification block:
 ## Notes & gotchas for the executor
 
 - **Worktree first:** Before Task 1, create a worktree per the project convention:
+
   ```bash
   git worktree add -b feat/DEV-297-preference-onboarding /Users/ytchou/Project/caferoam/.worktrees/feat/DEV-297-preference-onboarding
   ln -s /Users/ytchou/Project/caferoam/.env.local .worktrees/feat/DEV-297-preference-onboarding/.env.local
   ln -s /Users/ytchou/Project/caferoam/backend/.env .worktrees/feat/DEV-297-preference-onboarding/backend/.env
   ```
+
   All subsequent commands run from the worktree.
 
 - **`make doctor` before starting** — per project pre-flight rules, verify env health before touching backend or DB.
@@ -1849,7 +2011,7 @@ After all waves complete, run the full verification block:
 
 - **`get_optional_current_user` may not exist** — if missing, add it to `backend/api/deps.py` as part of Task 5.
 
-- **Don't split TDD steps across tasks** — each task's test → red → impl → green → commit sequence is atomic. If a task starts to balloon, split at a natural feature boundary *including the test*, not between test-writing and implementation.
+- **Don't split TDD steps across tasks** — each task's test → red → impl → green → commit sequence is atomic. If a task starts to balloon, split at a natural feature boundary _including the test_, not between test-writing and implementation.
 
 - **Middleware: no change needed** — the modal lives on home (`/`), which is already in the middleware's authenticated-pass-through path. Do NOT add `/onboarding/preferences` to `ONBOARDING_ROUTES` in `proxy.ts` — there's no such route.
 

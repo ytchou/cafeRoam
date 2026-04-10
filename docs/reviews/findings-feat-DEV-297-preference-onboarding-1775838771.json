@@ -121,14 +121,7 @@
       "status": "resolved"
     }
   ],
-  "active_agents": [
-    "Bug Hunter",
-    "Standards & Conventions",
-    "Architecture & Design",
-    "Plan Alignment",
-    "Test Philosophy",
-    "Design Quality"
-  ],
+  "active_agents": [],
   "skipped": [
     {
       "file": "backend/services/profile_service.py",

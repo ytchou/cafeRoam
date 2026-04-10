@@ -15,26 +15,26 @@ This design replaces the clinical labels with natural-language story prompts ("W
 
 Four flags surfaced during alignment; the design explicitly mitigates each:
 
-| Flag | Source | Mitigation |
-|---|---|---|
-| Orphaned data — DEV-295 (rec engine) not built | Related ticket | Add featured-shops re-rank as an immediate consumer (below) |
-| "Observe, don't prescribe" | `ASSUMPTIONS.md` U1 | Step 3 is an optional open-text field so we learn from beta users' own framing |
-| Retention friction (40% Week-4 target) | `PRD.md` | Modal over home (home renders behind it); single-skip-never-re-prompt |
-| Vibe is weakest enrichment signal (NDCG 0.43) | `ASSUMPTIONS.md` | Vibes stored but not consumed yet; waits for DEV-295 |
+| Flag                                           | Source              | Mitigation                                                                     |
+| ---------------------------------------------- | ------------------- | ------------------------------------------------------------------------------ |
+| Orphaned data — DEV-295 (rec engine) not built | Related ticket      | Add featured-shops re-rank as an immediate consumer (below)                    |
+| "Observe, don't prescribe"                     | `ASSUMPTIONS.md` U1 | Step 3 is an optional open-text field so we learn from beta users' own framing |
+| Retention friction (40% Week-4 target)         | `PRD.md`            | Modal over home (home renders behind it); single-skip-never-re-prompt          |
+| Vibe is weakest enrichment signal (NDCG 0.43)  | `ASSUMPTIONS.md`    | Vibes stored but not consumed yet; waits for DEV-295                           |
 
 ## Decisions
 
-| Question | Decision | Rationale |
-|---|---|---|
-| Primary goal | All three layered: UX welcome + product research + seed recs | Step should *feel* valuable, inform observation, and feed future personalization |
-| Framing | Curated story prompts, tap-to-select cards, taxonomy hidden | Matches user intent: friendly quiz, not settings form |
-| Step 1 | "What brings you here today?" → multi-select mode | Natural language, maps to shop mode scores |
-| Step 2 | "How do you like your coffee shops?" → vibe chips | Reuses existing `vibe_collections` slugs |
-| Step 3 | "Anything else you're hoping to find?" → 1-line optional text | Observation channel; respects U1 |
-| Schema | Extend `profiles` table | Matches `analytics_opt_out` precedent; inherits RLS + PDPA cascade |
-| Placement | Modal on home, first visit only | Lowest friction; home renders behind |
-| Skip | Single skip, never re-prompt | Respects user time; user can edit later from profile settings (follow-up) |
-| Consumer | Re-rank `/shops?featured=true` by mode score when `preferred_modes` set | Immediate payoff; unblocks latent mode-chip gap |
+| Question     | Decision                                                                | Rationale                                                                        |
+| ------------ | ----------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| Primary goal | All three layered: UX welcome + product research + seed recs            | Step should _feel_ valuable, inform observation, and feed future personalization |
+| Framing      | Curated story prompts, tap-to-select cards, taxonomy hidden             | Matches user intent: friendly quiz, not settings form                            |
+| Step 1       | "What brings you here today?" → multi-select mode                       | Natural language, maps to shop mode scores                                       |
+| Step 2       | "How do you like your coffee shops?" → vibe chips                       | Reuses existing `vibe_collections` slugs                                         |
+| Step 3       | "Anything else you're hoping to find?" → 1-line optional text           | Observation channel; respects U1                                                 |
+| Schema       | Extend `profiles` table                                                 | Matches `analytics_opt_out` precedent; inherits RLS + PDPA cascade               |
+| Placement    | Modal on home, first visit only                                         | Lowest friction; home renders behind                                             |
+| Skip         | Single skip, never re-prompt                                            | Respects user time; user can edit later from profile settings (follow-up)        |
+| Consumer     | Re-rank `/shops?featured=true` by mode score when `preferred_modes` set | Immediate payoff; unblocks latent mode-chip gap                                  |
 
 ## User flow
 
@@ -111,6 +111,7 @@ class PreferenceOnboardingStatus(CamelModel):
 ```
 
 **Extend `ProfileService`** (`backend/services/profile_service.py`):
+
 - `get_preference_status(user_id)` → `PreferenceOnboardingStatus` — `should_prompt = (completed_at IS NULL AND prompted_at IS NULL)`
 - `save_preferences(user_id, req)` — partial update using `model_fields_set` (preserves fields client didn't send); sets `preferences_completed_at = now()`; validates `preferred_vibes` slugs against `vibe_collections` and raises 422 on unknown
 - `dismiss_preferences(user_id)` — writes `preferences_prompted_at = now()` only
@@ -128,11 +129,12 @@ All three use the existing `Depends(get_current_user)` + `Depends(get_user_db)` 
 
 **Extend featured shops endpoint** (`backend/api/shops.py:73-110`):
 
-- Route becomes auth-aware: takes an *optional* user via a new `Depends(get_optional_user)` helper (or reuses existing one if present — to be confirmed during implementation)
+- Route becomes auth-aware: takes an _optional_ user via a new `Depends(get_optional_user)` helper (or reuses existing one if present — to be confirmed during implementation)
 - If user is authenticated AND has `preferred_modes IS NOT NULL`, re-rank results by `GREATEST(mode_<m>, …)` over their preferred modes
 - Unauthenticated behavior unchanged — still insertion-order
 
 SQL sketch:
+
 ```sql
 SELECT <_SHOP_LIST_COLUMNS>
 FROM shops
@@ -150,6 +152,7 @@ LIMIT $2;
 ```
 
 Implementation note: Supabase-py's query builder doesn't support `GREATEST(...)` ordering directly. Two options:
+
 1. **Recommended:** Add a Postgres RPC function `get_featured_shops_for_user(preferred_modes text[], limit int)` and call via `db.rpc()`. Keeps the SQL explicit and tested.
 2. Apply the ordering client-side in Python after `SELECT` (works but re-sorts 200 rows in memory — acceptable at current scale).
 
@@ -168,6 +171,7 @@ Each follows the existing `app/api/auth/consent/route.ts` + `lib/api/proxy.ts` p
 ### Frontend
 
 **New component** — `components/onboarding/preference-modal.tsx`:
+
 - `<Dialog>` from `components/ui/dialog` (shadcn/radix-ui). Full-screen on mobile (via custom CSS), centered modal on desktop.
 - Three-step internal state machine (React `useState`, no router changes).
 - Step 1: `<ChipGroup>` with 4 mode cards (Focus time, Slow afternoon, Catching up, Anywhere), multi-select, Espresso bg on selected.
@@ -178,12 +182,14 @@ Each follows the existing `app/api/auth/consent/route.ts` + `lib/api/proxy.ts` p
 - Close (X): top-right, same behavior as Skip.
 
 **New hook** — `lib/hooks/use-preference-onboarding.ts`:
+
 - Uses SWR + `fetchWithAuth` (same pattern as `lib/hooks/use-shops.ts`).
 - Fetches `/api/profile/preferences/status` on mount.
 - Returns `{ shouldPrompt, save, dismiss, isLoading }`.
 - `save(payload)` and `dismiss()` each `POST` and then `mutate()` the status key.
 
 **Home page integration** — `app/page.tsx`:
+
 - Import `PreferenceOnboardingModal` and `usePreferenceOnboarding`.
 - Render modal conditionally: `shouldPrompt && user` (don't fetch status if no user).
 - Home's shop-list fetch (`useShops({ featured: true, limit: 200 })`) proceeds independently — modal does not block render.
@@ -193,10 +199,30 @@ Each follows the existing `app/api/auth/consent/route.ts` + `lib/api/proxy.ts` p
 
 ```ts
 const MODE_OPTIONS = [
-  { slug: 'work',   emoji: '💻', label: 'Focus time',     blurb: 'A corner to get work done' },
-  { slug: 'rest',   emoji: '🌿', label: 'Slow afternoon', blurb: 'Just want to breathe and sip' },
-  { slug: 'social', emoji: '🤝', label: 'Catching up',    blurb: 'Meeting someone over coffee' },
-  { slug: null,     emoji: '☕', label: 'Anywhere',       blurb: 'I just love coffee shops' },
+  {
+    slug: 'work',
+    emoji: '💻',
+    label: 'Focus time',
+    blurb: 'A corner to get work done',
+  },
+  {
+    slug: 'rest',
+    emoji: '🌿',
+    label: 'Slow afternoon',
+    blurb: 'Just want to breathe and sip',
+  },
+  {
+    slug: 'social',
+    emoji: '🤝',
+    label: 'Catching up',
+    blurb: 'Meeting someone over coffee',
+  },
+  {
+    slug: null,
+    emoji: '☕',
+    label: 'Anywhere',
+    blurb: 'I just love coffee shops',
+  },
 ];
 ```
 
@@ -240,15 +266,18 @@ Follows the project's [testing philosophy](../testing-philosophy.md) — integra
 ### E2E (Playwright)
 
 New journey in `/e2e-smoke`:
+
 - Completion path: signup → consent → home → modal appears → fill mode → fill vibe → finish → modal closes → featured list re-orders
 - Dismiss path: signup → consent → home → modal appears → dismiss → modal closes → refresh → stays closed
 
 ## Testing classification
 
 **(a) New e2e journey?**
+
 - [x] Yes — add e2e journey for cold-start preference onboarding (new critical user path: signup → consent → preferences → home)
 
 **(b) Coverage gate impact?**
+
 - [x] Yes — verify 80% coverage gate for `profile_service.py` (extending existing critical-path service with 4 new methods)
 
 ## Alternatives rejected
