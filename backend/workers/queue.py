@@ -136,6 +136,7 @@ class JobQueue:
                 {
                     "status": JobStatus.FAILED.value,
                     "last_error": error,
+                    "failed_at": datetime.now(UTC).isoformat(),
                 }
             ).eq("id", job_id).execute()
 
@@ -191,9 +192,25 @@ class JobQueue:
         cutoff = (datetime.now(UTC) - timedelta(days=retention_days)).isoformat()
         self._db.table("cron_locks").delete().lt("created_at", cutoff).execute()
 
+    def get_status(self, job_id: str | uuid.UUID) -> "JobStatus | None":
+        """Fetch the current status of a job. Returns None if job not found."""
+        result = (
+            self._db.table("job_queue")
+            .select("status")
+            .eq("id", str(job_id))
+            .execute()
+        )
+        if not result.data:
+            return None
+        row = first(cast("list[dict[str, Any]]", result.data), "get_status")
+        return JobStatus(row["status"])
+
 
 def get_status(db: Any, job_id: str | uuid.UUID) -> "JobStatus | None":
-    """Fetch the current status of a job. Returns None if job not found."""
+    """Fetch the current status of a job. Returns None if job not found.
+
+    Deprecated: use JobQueue.get_status() instead.
+    """
     result = (
         db.table("job_queue")
         .select("status")
