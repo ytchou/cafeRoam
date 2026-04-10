@@ -33,11 +33,13 @@ class TestPreferenceOnboardingRequest:
         assert req.onboarding_note == "x" * 280
 
     def test_camel_case_alias_roundtrip(self):
-        req = PreferenceOnboardingRequest.model_validate({
-            "preferredModes": ["work"],
-            "preferredVibes": ["deep-work"],
-            "onboardingNote": "late nights only",
-        })
+        req = PreferenceOnboardingRequest.model_validate(
+            {
+                "preferredModes": ["work"],
+                "preferredVibes": ["deep-work"],
+                "onboardingNote": "late nights only",
+            }
+        )
         assert req.preferred_modes == ["work"]
         assert req.preferred_vibes == ["deep-work"]
         assert req.onboarding_note == "late nights only"

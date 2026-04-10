@@ -16,6 +16,12 @@ Object.defineProperty(window, 'IntersectionObserver', {
   value: mockIntersectionObserver,
 });
 
+// DEBT: This test file mocks ~10 internal hooks and components because app/page.tsx
+// is a large top-level orchestrator with no smaller testable unit for modal-mount logic.
+// Longer-term fix: extract the PreferenceOnboardingModal mount condition into a smaller
+// hook or wrapper component so it can be tested in isolation at the HTTP boundary.
+// Tracked as tech debt — do not add more vi.mock() calls here without first considering
+// whether the relevant behaviour can be tested closer to the boundary.
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn() }),
   usePathname: () => '/',

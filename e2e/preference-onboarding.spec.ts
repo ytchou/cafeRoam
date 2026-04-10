@@ -36,8 +36,10 @@ test.describe('@critical J55/J56 — Preference onboarding modal', () => {
     await expect(page.getByRole('dialog')).not.toBeVisible();
 
     await page.reload();
-    await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(2000);
+
+    // Wait for the page to settle: either the modal appears (fail) or the shop list loads (pass).
+    // Using a positive DOM assertion avoids networkidle / arbitrary timeouts.
+    await expect(page.locator('[data-testid="shop-list"], main')).toBeVisible({ timeout: 10_000 });
 
     await expect(
       page.getByRole('heading', { name: /what brings you here today/i })
@@ -48,7 +50,6 @@ test.describe('@critical J55/J56 — Preference onboarding modal', () => {
     deletionPage: page,
   }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
 
     await expect(
       page.getByRole('heading', { name: /what brings you here today/i })
@@ -58,8 +59,9 @@ test.describe('@critical J55/J56 — Preference onboarding modal', () => {
     await expect(page.getByRole('dialog')).not.toBeVisible();
 
     await page.reload();
-    await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(2000);
+
+    // Wait for the page to settle before asserting the modal is absent.
+    await expect(page.locator('[data-testid="shop-list"], main')).toBeVisible({ timeout: 10_000 });
 
     await expect(
       page.getByRole('heading', { name: /what brings you here today/i })
