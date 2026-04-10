@@ -47,6 +47,7 @@ const STATUS_OPTIONS = [
   'completed',
   'failed',
   'dead_letter',
+  'cancelled',
 ] as const;
 
 const JOB_TYPE_OPTIONS = [
@@ -364,7 +365,7 @@ export function RawJobsList({ initialStatus }: { initialStatus?: string }) {
         title={confirmAction?.type === 'cancel' ? 'Force fail job?' : 'Retry job?'}
         description={
           confirmAction?.type === 'cancel'
-            ? 'This cannot be undone. The job will be moved to dead letter.'
+            ? 'This cannot be undone. The job will be cancelled.'
             : 'This will re-queue the failed job for processing.'
         }
         confirmLabel={confirmAction?.type === 'cancel' ? 'Force fail' : 'Retry'}
