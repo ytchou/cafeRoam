@@ -73,13 +73,7 @@
       "status": "resolved"
     }
   ],
-  "active_agents": [
-    "Bug Hunter",
-    "Standards & Conventions",
-    "Architecture & Design",
-    "Plan Alignment",
-    "Test Philosophy"
-  ],
+  "active_agents": [],
   "skipped": [
     {
       "file": "backend/providers/llm/hybrid_adapter.py",
@@ -105,5 +99,10 @@
   "head_sha": "5e357715f2b2594e53f1db013a02d78b8e2f0dbc",
   "review_log_path": "docs/reviews/2026-04-10-ytchou-dev-304-hybrid-llm-routing.md",
   "codex_status": "Adversarial Review (Codex): failed — skill 'codex:adversarial-review' unavailable in this environment",
-  "fix_pass_1_sha": "112ee62"
+  "fix_pass_1_sha": "112ee62",
+  "reverify_pass_1": {
+    "resolved": 9,
+    "new_issues": 0,
+    "verdict": "ALL_CLEAR"
+  }
 }
