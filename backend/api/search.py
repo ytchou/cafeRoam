@@ -14,7 +14,7 @@ from models.types import SearchQuery
 from providers.cache import get_search_cache_provider
 from providers.embeddings import EmbeddingsProviderUnavailableError, get_embeddings_provider
 from services.query_classifier import classify
-from services.search_service import SearchService
+from services.search_service import SearchService, SuggestResponse
 
 logger = structlog.get_logger()
 router = APIRouter(tags=["search"])
@@ -104,3 +104,15 @@ async def search(
         "result_count": result_count,
         "cache_hit": False,
     }
+
+
+@limiter.limit(settings.rate_limit_search, key_func=get_user_id_or_ip)
+@router.get("/search/suggest", response_model=SuggestResponse)
+async def suggest_search(
+    request: Request,
+    q: str = Query(default="", max_length=50),
+    db: Client = Depends(get_optional_user_db),  # noqa: B008
+) -> SuggestResponse:
+    """Return autocomplete completions and matching taxonomy tags for query prefix."""
+    service = SearchService(db=db)
+    return await service.suggest(q)

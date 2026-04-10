@@ -11,9 +11,8 @@ import {
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { ModeChips } from '@/components/discovery/mode-chips';
-import { SearchBar } from '@/components/discovery/search-bar';
-import { StickySearchBar } from '@/components/discovery/sticky-search-bar';
-import { SuggestionChips } from '@/components/discovery/suggestion-chips';
+import { SearchInputTokens } from '@/components/discovery/search-input-tokens';
+import { SearchSuggestionPanel } from '@/components/discovery/search-suggestion-panel';
 import {
   FILTER_TO_TAG_IDS,
   type TagFilterId,
@@ -60,12 +59,28 @@ function HomePageContent() {
   const [selectedShopId, setSelectedShopId] = useState<string | null>(null);
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
   const [mapBounds, setMapBounds] = useState<MapBounds | null>(null);
+  const [inputValue, setInputValue] = useState('');
   const lastHandledQueryRef = useRef<string | null>(null);
-  const heroRef = useRef<HTMLElement>(null);
-  const [heroVisible, setHeroVisible] = useState(true);
+
+  // Tokens are derived from filters — single source of truth, survives page reload.
+  // Suggestion tags are stored as "tag:{id}:{label}" entries in filters.
+  const tokens = useMemo(
+    () =>
+      filters.flatMap((f) => {
+        if (!f.startsWith('tag:')) return [];
+        const rest = f.slice(4);
+        const colonIdx = rest.indexOf(':');
+        if (colonIdx === -1) return [];
+        return [
+          { id: rest.slice(0, colonIdx), label: rest.slice(colonIdx + 1) },
+        ];
+      }),
+    [filters]
+  );
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
+
     if (user) {
       lastHandledQueryRef.current = null;
       return;
@@ -97,17 +112,6 @@ function HomePageContent() {
     lastHandledQueryRef.current = currentQuery;
   }, [currentQuery, user, router, queryType]);
 
-  useEffect(() => {
-    const node = heroRef.current;
-    if (!node) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => setHeroVisible(!!entry?.isIntersecting),
-      { threshold: 0 }
-    );
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, []);
-
   const handleLocationRequest = useCallback(async () => {
     const coords = await requestLocation();
     if (!coords) {
@@ -125,9 +129,20 @@ function HomePageContent() {
       : featuredShops;
 
     const activeFiltersSet = new Set(filters);
-    const tagFilters = filters
-      .filter((filter): filter is TagFilterId => filter in FILTER_TO_TAG_IDS)
-      .map((filter) => FILTER_TO_TAG_IDS[filter]);
+    // Collect all taxonomy tag IDs to filter by — from both quick-filter IDs
+    // (mapped via FILTER_TO_TAG_IDS) and suggestion tag tokens stored as
+    // "tag:{id}:{label}" in filters.
+    const tagFilters = filters.flatMap((filter) => {
+      if (filter in FILTER_TO_TAG_IDS)
+        return [FILTER_TO_TAG_IDS[filter as TagFilterId]];
+      if (filter.startsWith('tag:')) {
+        // Format: "tag:{taxonomyId}:{label}" — extract the taxonomy ID only
+        const rest = filter.slice(4);
+        const colonIdx = rest.indexOf(':');
+        return [colonIdx === -1 ? rest : rest.slice(0, colonIdx)];
+      }
+      return [];
+    });
 
     let filtered = base;
     if (tagFilters.length > 0) {
@@ -215,6 +230,33 @@ function HomePageContent() {
     handleSearchSubmit('附近的咖啡廳');
   }, [handleLocationRequest, handleSearchSubmit]);
 
+  const handleTagSelect = useCallback(
+    (tag: { id: string; label: string }) => {
+      // Guard against duplicates (tokens is derived from filters, so checking
+      // tokens is sufficient).
+      if (tokens.some((t) => t.id === tag.id)) return;
+      // Store as "tag:{id}:{label}" so the token can be fully reconstructed from
+      // URL state on page reload (fixes single-source-of-truth + ID mismatch).
+      setFilters([...filters, `tag:${tag.id}:${tag.label}`]);
+      setInputValue('');
+    },
+    [tokens, filters, setFilters]
+  );
+
+  const handleTokenRemove = useCallback(
+    (id: string) => {
+      // Remove the "tag:{id}:{label}" entry corresponding to this token id.
+      setFilters(
+        filters.filter((f) => {
+          if (!f.startsWith('tag:')) return true;
+          const tokenId = f.slice(4, f.indexOf(':', 4));
+          return tokenId !== id;
+        })
+      );
+    },
+    [filters, setFilters]
+  );
+
   const handleViewChange = useCallback(
     (nextView: 'map' | 'list') => {
       if (nextView === view) return;
@@ -247,18 +289,7 @@ function HomePageContent() {
     <div className="min-h-screen bg-white">
       <WebsiteJsonLd />
 
-      <div
-        data-testid="sticky-search-bar-wrapper"
-        className={heroVisible ? 'invisible h-0 overflow-hidden' : ''}
-      >
-        <StickySearchBar
-          defaultQuery={currentQuery}
-          onSubmit={handleSearchSubmit}
-          onFilterClick={handleFilterOpen}
-        />
-      </div>
-
-      <section ref={heroRef} className="bg-[#3d2314] px-5 pt-8 pb-8 text-white">
+      <section className="bg-[#3d2314] px-5 pt-8 pb-8 text-white">
         <div className="mx-auto max-w-5xl">
           <span className="text-brand text-sm font-semibold tracking-[0.2em]">
             啡遊
@@ -267,20 +298,23 @@ function HomePageContent() {
             <span>找到你的</span>
             <span className="text-white/80">理想咖啡廳</span>
           </h1>
-          <div className="mt-6">
-            <SearchBar
+          <div className="relative mt-6">
+            <SearchInputTokens
+              value={inputValue}
+              tokens={tokens}
+              onValueChange={setInputValue}
+              onTokenRemove={handleTokenRemove}
               onSubmit={handleSearchSubmit}
-              defaultQuery={currentQuery}
+            />
+            <SearchSuggestionPanel
+              query={inputValue}
+              onPhraseSelect={handleSuggestionSelect}
+              onTagSelect={handleTagSelect}
+              onNearMe={handleNearMe}
             />
           </div>
           <div className="mt-4">
             <ModeChips activeMode={mode} onModeChange={setMode} />
-          </div>
-          <div className="mt-4">
-            <SuggestionChips
-              onSelect={handleSuggestionSelect}
-              onNearMe={handleNearMe}
-            />
           </div>
         </div>
       </section>

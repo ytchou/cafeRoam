@@ -5,7 +5,7 @@ from structlog.testing import capture_logs
 
 import services.search_service as _ss_module
 from models.types import SearchFilters, SearchQuery
-from services.search_service import SearchService
+from services.search_service import SearchService, SuggestResponse
 from tests.factories import make_shop_row
 
 
@@ -630,3 +630,52 @@ class TestOpeningHoursCoercion:
 
         assert len(response.results) == 1
         assert response.results[0].shop.opening_hours is None
+
+
+# --- suggest() tests (DEV-314) ---
+
+
+@pytest.fixture
+def search_service_with_tags():
+    """SearchService with a db that returns sample taxonomy tags."""
+    mock_db = MagicMock()
+    mock_db.table.return_value.select.return_value.ilike.return_value.limit.return_value.execute.return_value.data = [
+        {"id": "tag_quiet", "label_zh": "安靜"},
+        {"id": "tag_workspace", "label_zh": "可以工作"},
+    ]
+    return SearchService(db=mock_db, embeddings=AsyncMock())
+
+
+@pytest.mark.asyncio
+async def test_suggest_returns_suggest_response(search_service_with_tags):
+    result = await search_service_with_tags.suggest("安")
+    assert isinstance(result, SuggestResponse)
+    assert isinstance(result.completions, list)
+    assert isinstance(result.tags, list)
+
+
+@pytest.mark.asyncio
+async def test_suggest_caps_completions_at_five(search_service_with_tags):
+    result = await search_service_with_tags.suggest("安")
+    assert len(result.completions) <= 5
+
+
+@pytest.mark.asyncio
+async def test_suggest_caps_tags_at_eight(search_service_with_tags):
+    result = await search_service_with_tags.suggest("安")
+    assert len(result.tags) <= 8
+
+
+@pytest.mark.asyncio
+async def test_suggest_empty_query_returns_empty(search_service_with_tags):
+    result = await search_service_with_tags.suggest("")
+    assert result.completions == []
+    assert result.tags == []
+
+
+@pytest.mark.asyncio
+async def test_suggest_tags_have_id_and_label(search_service_with_tags):
+    result = await search_service_with_tags.suggest("安")
+    for tag in result.tags:
+        assert tag.id
+        assert tag.label

@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import Any, cast
 
 import structlog
+from pydantic import BaseModel
 from supabase import Client
 
 from core.config import settings
@@ -20,6 +21,16 @@ class SearchResponse:
 
     results: list[Any]
     cache_hit: bool
+
+
+class SuggestTag(BaseModel):
+    id: str
+    label: str
+
+
+class SuggestResponse(BaseModel):
+    completions: list[str]
+    tags: list[SuggestTag]
 
 
 logger = structlog.get_logger()
@@ -41,12 +52,25 @@ _IDF_CACHE: dict[str, float] | None = None
 _IDF_CACHE_AT: float = 0.0
 _IDF_TTL = 3600.0  # seconds
 
+_CURATED_COMPLETIONS: list[str] = [
+    "安靜可以工作",
+    "有插座",
+    "寵物友善",
+    "不限時",
+    "有WiFi",
+    "氣氛好",
+    "平價",
+    "巴斯克蛋糕",
+    "單品咖啡",
+    "戶外座位",
+]
+
 
 class SearchService:
     def __init__(
         self,
         db: Client,
-        embeddings: EmbeddingsProvider,
+        embeddings: EmbeddingsProvider | None = None,
         cache: SearchCacheProvider | None = None,
     ):
         self._db = db
@@ -78,7 +102,10 @@ class SearchService:
                 return SearchResponse(results=cached.results, cache_hit=True)
 
         # Generate embedding (needed for Tier 2 + full search)
-        query_embedding = await self._embeddings.embed(normalized)
+        embeddings = self._embeddings
+        if embeddings is None:
+            raise ValueError("Embeddings provider is required for semantic search")
+        query_embedding = await embeddings.embed(normalized)
 
         # Tier 2: semantic similarity
         if self._cache is not None:
@@ -314,3 +341,24 @@ class SearchService:
             return 0.5
 
         return 0.0
+
+    async def suggest(self, q: str) -> SuggestResponse:
+        """Return autocomplete completions and matching taxonomy tags for query prefix q."""
+        if not q:
+            return SuggestResponse(completions=[], tags=[])
+
+        completions = [c for c in _CURATED_COMPLETIONS if q in c][:5]
+
+        q_escaped = q.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        rows: list[dict[str, Any]] = cast(
+            "list[dict[str, Any]]",
+            self._db.table("taxonomy_tags")
+            .select("id, label_zh")
+            .ilike("label_zh", f"%{q_escaped}%")
+            .limit(8)
+            .execute()
+            .data,
+        )
+        tags = [SuggestTag(id=str(row["id"]), label=str(row["label_zh"])) for row in rows]
+
+        return SuggestResponse(completions=completions, tags=tags)

@@ -53,7 +53,7 @@ export function SearchBar({
         onChange={(e) => setValue(e.target.value)}
         placeholder="找間有巴斯克蛋糕的咖啡廳…"
         autoFocus={autoFocus}
-        className="focus:ring-brand min-h-[48px] w-full rounded-full border border-gray-200 bg-white pr-4 pl-10 text-sm focus:ring-2 focus:outline-none"
+        className="focus:ring-brand min-h-[48px] w-full rounded-full border border-gray-200 bg-white pr-4 pl-10 text-sm text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:outline-none"
       />
     </form>
   );
