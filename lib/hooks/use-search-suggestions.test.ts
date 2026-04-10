@@ -38,8 +38,10 @@ describe('useSearchSuggestions', () => {
   })
 
   it('does not fetch when query length is 0', async () => {
+    vi.useFakeTimers()
     renderHook(() => useSearchSuggestions(''))
-    await new Promise((r) => setTimeout(r, 400))
+    await vi.advanceTimersByTimeAsync(400)
     expect(mockFetch).not.toHaveBeenCalled()
+    vi.useRealTimers()
   })
 })
