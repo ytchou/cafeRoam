@@ -1,0 +1,56 @@
+{
+  "findings": [
+    {
+      "severity": "Critical",
+      "file": "components/map/map-with-fallback.tsx",
+      "line": "99-130",
+      "description": "MapWithFallback never forwards an onFilterClick prop to MapDesktopLayout or MapMobileLayout. Both new layouts declare onFilterClick?: () => void and render filter buttons (desktop sidebar header + mobile floating button) whose onClick is bound to onFilterClick, but the only props spread comes from layoutProps which contains onFilterOpen (not onFilterClick). As a result, the two new filter buttons introduced by this PR are no-ops at runtime — clicking them does nothing. This breaks the plan's acceptance criterion 'Filter button always accessible on both desktop and mobile' (docs/plans/2026-04-10-search-bar-shop-card-plan.md, Task 4/5). Fix: either pass onFilterClick={layoutProps.onFilterOpen} explicitly to MapDesktopLayout and MapMobileLayout in MapWithFallback, or rename the map-layouts' prop back to onFilterOpen to match the existing contract.",
+      "flagged_by": "Bug Hunter",
+      "status": "resolved"
+    },
+    {
+      "severity": "Important",
+      "file": "components/map/map-desktop-layout.tsx",
+      "line": "120-126",
+      "description": "Visual inconsistency: sidebar-header filter button uses a raw '≡' Unicode character as visible text content, while the new StickySearchBar uses the lucide SlidersHorizontal icon for the same action. Mobile floating filter button (map-mobile-layout.tsx:57-64) also uses raw '≡'. This is an AI-slop fingerprint — mixing Unicode glyph with proper lucide icon for the same control is inconsistent with the project's shadcn/ui + lucide design system. Replace the '≡' with <SlidersHorizontal className=\"h-4 w-4\" aria-hidden=\"true\" /> and adjust label spacing; do the same on mobile.",
+      "flagged_by": "Design Quality",
+      "status": "resolved"
+    },
+    {
+      "severity": "Important",
+      "file": "components/map/map-mobile-layout.tsx",
+      "line": "57-64",
+      "description": "Mobile floating filter button uses raw '≡' character instead of a lucide icon — same consistency issue as desktop. Also: the button is 40x40 (h-10 w-10) which meets the 44px touch target minimum only at standard Tailwind scale (2.5rem=40px). WCAG / iOS HIG recommend minimum 44px touch targets for primary interactive controls. Consider h-11 w-11 (44px).",
+      "flagged_by": "Design Quality",
+      "status": "resolved"
+    },
+    {
+      "severity": "Minor",
+      "file": "components/map/map-mobile-layout.test.tsx",
+      "line": "88-103",
+      "description": "Test defaultProps includes many fields (count, query, onFilterToggle, view, onViewChange, onSearch, onFilterOpen) that are no longer part of the MapMobileLayoutProps interface after this refactor. These extra keys survive only because JSX spread does not trigger excess-property checks. They are dead test cruft and should be removed to keep the fixture aligned with the current contract.",
+      "flagged_by": "Standards",
+      "status": "resolved"
+    },
+    {
+      "severity": "Minor",
+      "file": "components/map/map-desktop-layout.tsx",
+      "line": "11",
+      "description": "The const PANEL_EXPAND_DELAY_MS = 200; declaration is inserted between the react import block (line 2-9) and the rest of the imports (line 12+). Stylistically awkward — should be placed after all imports. Pre-existing but untouched-by-diff adjacent code; note only.",
+      "flagged_by": "Standards",
+      "status": "resolved"
+    },
+    {
+      "severity": "Minor",
+      "file": "app/page.test.tsx",
+      "line": "186, 232",
+      "description": "screen.getAllByRole('textbox')[0]! and screen.getAllByRole('search')[0]! use unsafe [0]! array indexing with non-null assertion. CLAUDE.md says 'Never use unsafe [0] array indexing. Use the project's first() helper function instead.' The rule is primarily targeted at production code and no first() helper is currently imported in tests across this codebase, so this is debatable, but flagging for awareness — a safer pattern in tests is destructuring: const [input] = screen.getAllByRole('textbox'); with expect(input).toBeDefined().",
+      "flagged_by": "Standards",
+      "status": "resolved"
+    }
+  ],
+  "active_agents": ["Bug Hunter", "Standards", "Design Quality", "Plan Alignment"],
+  "skipped": [],
+  "head_sha": "714662cc4de2e8602b72fd2279e84a7c0a401bd4",
+  "review_log_path": "docs/reviews/2026-04-10-feat-search-bar-shop-card.md"
+}
