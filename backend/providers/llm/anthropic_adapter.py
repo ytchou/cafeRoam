@@ -11,6 +11,8 @@ from models.types import (
     EnrichmentResult,
     MenuExtractionResult,
     PhotoCategory,
+    ReviewSummaryResult,
+    ReviewTopic,
     ShopEnrichmentInput,
     ShopModeScores,
     TarotEnrichmentResult,
@@ -28,6 +30,7 @@ from providers.llm._tool_schemas import (
 from providers.llm._tool_schemas import (
     EXTRACT_MENU_SCHEMA as EXTRACT_MENU_TOOL,
 )
+from providers.llm._tool_schemas import SUMMARIZE_REVIEWS_TOOL_SCHEMA
 
 logger = logging.getLogger(__name__)
 
@@ -62,6 +65,19 @@ SUMMARIZE_REVIEWS_SYSTEM_PROMPT = (
     "Focus on: popular drinks/food, atmosphere, work-suitability, "
     "and standout qualities. Output 2-4 sentences, max 200 characters total. "
     "Do NOT use bullet points or lists — write flowing prose."
+)
+
+_SUMMARIZE_SYSTEM_PROMPT = (
+    "你是台灣咖啡廳資料整理助手。根據提供的評論資料，以繁體中文撰寫咖啡廳摘要，並提取常見主題標籤。\n\n"
+    "摘要規則：\n"
+    "- 2–4 句話，最多 200 字\n"
+    "- 著重飲品、食物、氛圍、工作適合度\n"
+    "- 若同時有社群筆記與 Google 評論，以社群筆記為主，Google 評論為輔\n"
+    "- 語氣自然，不用條列式\n\n"
+    "主題標籤規則：\n"
+    "- 提取 8–10 個常見主題（如「手沖咖啡」、「安靜工作」、「插座充足」）\n"
+    "- 以繁體中文為主，若原文為英文可保留英文詞彙\n"
+    "- count 為估計提及次數"
 )
 
 TAROT_SYSTEM_PROMPT = (
@@ -264,24 +280,41 @@ class AnthropicLLMAdapter:
             raise ValueError(f"classify_photo tool response missing 'category' key: {tool_input!r}")
         return PhotoCategory(raw_category)
 
-    async def summarize_reviews(self, texts: list[str]) -> str:
-        """Summarize community check-in texts into a concise thematic snapshot."""
-        numbered = "\n".join(f"[{i}] {t}" for i, t in enumerate(texts, 1))
-        user_prompt = (
-            f"Summarize these {len(texts)} visitor reviews into a community snapshot:\n\n{numbered}"
-        )
+    async def summarize_reviews(
+        self,
+        google_reviews: list[str],
+        checkin_texts: list[str],
+    ) -> ReviewSummaryResult:
+        """Summarize Google reviews and community check-in texts into a structured snapshot."""
+        parts: list[str] = []
+        if google_reviews:
+            lines = "\n".join(f"[{i + 1}] {r}" for i, r in enumerate(google_reviews))
+            parts.append(f"Google 評論：\n{lines}")
+        if checkin_texts:
+            lines = "\n".join(f"[{i + 1}] {t}" for i, t in enumerate(checkin_texts))
+            parts.append(f"社群筆記（請優先參考）：\n{lines}")
 
+        user_content = "\n\n".join(parts)
         response = await self._client.messages.create(
             model=self._classify_model,
             max_tokens=512,
-            system=SUMMARIZE_REVIEWS_SYSTEM_PROMPT,
-            messages=[{"role": "user", "content": user_prompt}],
+            system=_SUMMARIZE_SYSTEM_PROMPT,
+            messages=[{"role": "user", "content": user_content}],
+            tools=[SUMMARIZE_REVIEWS_TOOL_SCHEMA],
+            tool_choice={"type": "tool", "name": "summarize_reviews"},
         )
-
-        for block in response.content:
-            if block.type == "text":
-                return block.text.strip()
-        raise ValueError("No text block in summarize_reviews response")
+        tool_input = next(
+            block.input
+            for block in response.content
+            if block.type == "tool_use" and block.name == "summarize_reviews"
+        )
+        return ReviewSummaryResult(
+            summary_zh_tw=tool_input["summary_zh_tw"],
+            review_topics=[
+                ReviewTopic(topic=t["topic"], count=t["count"])
+                for t in tool_input.get("review_topics", [])
+            ],
+        )
 
     def _build_enrich_messages(self, shop: ShopEnrichmentInput) -> list[dict]:
         """Build the messages list for the enrich_shop API call.
