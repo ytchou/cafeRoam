@@ -12,6 +12,8 @@ from models.types import (
     EnrichmentResult,
     MenuExtractionResult,
     PhotoCategory,
+    ReviewSummaryResult,
+    ReviewTopic,
     ShopEnrichmentInput,
     TarotEnrichmentResult,
     TaxonomyTag,
@@ -22,9 +24,11 @@ from providers.llm._tool_schemas import (
     CLASSIFY_SHOP_SCHEMA,
     EXTRACT_MENU_SCHEMA,
 )
+from providers.llm._tool_schemas import SUMMARIZE_REVIEWS_TOOL_SCHEMA
 from providers.llm.anthropic_adapter import (
     _MENU_VOCAB_REF,
     _SPECIALTY_VOCAB_REF,
+    _SUMMARIZE_SYSTEM_PROMPT,
     SUMMARIZE_REVIEWS_SYSTEM_PROMPT,
     SYSTEM_PROMPT,
     TAROT_SYSTEM_PROMPT,
@@ -244,19 +248,43 @@ class OpenAILLMAdapter:
         payload = _extract_tool_input(response, "classify_photo")
         return PhotoCategory(payload["category"])
 
-    async def summarize_reviews(self, texts: list[str]) -> str:
-        numbered = "\n".join(f"[{i + 1}] {t}" for i, t in enumerate(texts))
+    async def summarize_reviews(
+        self,
+        google_reviews: list[str],
+        checkin_texts: list[str],
+    ) -> ReviewSummaryResult:
+        parts: list[str] = []
+        if google_reviews:
+            lines = "\n".join(f"[{i + 1}] {r}" for i, r in enumerate(google_reviews))
+            parts.append(f"Google 評論：\n{lines}")
+        if checkin_texts:
+            lines = "\n".join(f"[{i + 1}] {t}" for i, t in enumerate(checkin_texts))
+            parts.append(f"社群筆記（請優先參考）：\n{lines}")
+
+        user_content = "\n\n".join(parts)
+        wrapped = _wrap_schema_for_openai(SUMMARIZE_REVIEWS_TOOL_SCHEMA)
         messages: list[dict[str, Any]] = [
-            {"role": "system", "content": SUMMARIZE_REVIEWS_SYSTEM_PROMPT},
-            {"role": "user", "content": numbered},
+            {"role": "system", "content": _SUMMARIZE_SYSTEM_PROMPT},
+            {"role": "user", "content": user_content},
         ]
         response = await self._client.chat.completions.create(
             model=self._classify_model,
             messages=cast("list[Any]", messages),
+            tools=cast("Any", [wrapped]),
+            tool_choice=cast(
+                "Any",
+                {"type": "function", "function": {"name": "summarize_reviews"}},
+            ),
             max_completion_tokens=512,
         )
-        content = response.choices[0].message.content
-        return content or ""
+        tool_input = _extract_tool_input(response, "summarize_reviews")
+        return ReviewSummaryResult(
+            summary_zh_tw=tool_input["summary_zh_tw"],
+            review_topics=[
+                ReviewTopic(topic=t["topic"], count=t["count"])
+                for t in tool_input.get("review_topics", [])
+            ],
+        )
 
     async def assign_tarot(self, shop: ShopEnrichmentInput) -> TarotEnrichmentResult:
         lines = [f"Shop: {shop.name}"]

@@ -11,6 +11,7 @@ import pytest
 
 from models.types import (
     PhotoCategory,
+    ReviewSummaryResult,
     ShopEnrichmentInput,
     TaxonomyTag,
 )
@@ -195,39 +196,53 @@ async def test_classify_photo_returns_enum(adapter, category_value, expected):
     assert result == expected
 
 
-async def test_summarize_reviews_returns_text(adapter):
+async def test_summarize_reviews_returns_structured_result(adapter):
+    """summarize_reviews now uses tool calling and returns ReviewSummaryResult."""
     adapter._client = AsyncMock()
-    # summarize_reviews does NOT use tool calling — direct text response
-    message = MagicMock()
-    message.tool_calls = None
-    message.content = "這家咖啡店以手沖與安靜氛圍著稱。"
-    choice = MagicMock()
-    choice.message = message
-    resp = MagicMock()
-    resp.choices = [choice]
-    adapter._client.chat.completions.create = AsyncMock(return_value=resp)
+    adapter._client.chat.completions.create = AsyncMock(
+        return_value=_openai_tool_call_response(
+            "summarize_reviews",
+            {
+                "summary_zh_tw": "這家咖啡店以手沖與安靜氛圍著稱。",
+                "review_topics": [{"topic": "手沖", "count": 5}, {"topic": "安靜", "count": 3}],
+            },
+        )
+    )
 
-    result = await adapter.summarize_reviews(["好喝", "很安靜", "手沖很棒"])
-    assert result.startswith("這家")
+    result = await adapter.summarize_reviews(
+        google_reviews=["好喝", "很安靜", "手沖很棒"],
+        checkin_texts=[],
+    )
+    assert isinstance(result, ReviewSummaryResult)
+    assert "手沖" in result.summary_zh_tw
     # Verify system prompt was included and classify_model was used
     call = adapter._client.chat.completions.create.await_args
     assert call.kwargs["model"] == "gpt-5.4-mini"
     assert call.kwargs["messages"][0]["role"] == "system"
 
 
-async def test_summarize_reviews_returns_empty_on_blank_response(adapter):
+async def test_summarize_reviews_blended_includes_community_section(adapter):
+    """When checkin_texts present, the user message contains community notes section."""
     adapter._client = AsyncMock()
-    message = MagicMock()
-    message.tool_calls = None
-    message.content = ""
-    choice = MagicMock()
-    choice.message = message
-    resp = MagicMock()
-    resp.choices = [choice]
-    adapter._client.chat.completions.create = AsyncMock(return_value=resp)
+    adapter._client.chat.completions.create = AsyncMock(
+        return_value=_openai_tool_call_response(
+            "summarize_reviews",
+            {
+                "summary_zh_tw": "社群推薦的安靜咖啡廳。",
+                "review_topics": [{"topic": "安靜", "count": 4}],
+            },
+        )
+    )
 
-    result = await adapter.summarize_reviews(["ok"])
-    assert result == ""
+    await adapter.summarize_reviews(
+        google_reviews=["ok coffee"],
+        checkin_texts=["很安靜，適合工作"],
+    )
+
+    call = adapter._client.chat.completions.create.await_args
+    user_msg = call.kwargs["messages"][1]["content"]
+    assert "社群筆記" in user_msg
+    assert "Google 評論" in user_msg
 
 
 async def test_assign_tarot_returns_whitelisted_title(adapter, enrich_input):
@@ -262,3 +277,42 @@ async def test_assign_tarot_drops_title_not_in_whitelist(adapter, enrich_input):
     result = await adapter.assign_tarot(enrich_input)
     assert result.tarot_title is None  # scrubbed — not in whitelist
     assert result.flavor_text == "..."
+
+
+async def test_openai_summarize_reviews_returns_structured_result(adapter):
+    """With Google reviews, summarize_reviews returns a ReviewSummaryResult."""
+    adapter._client = AsyncMock()
+    adapter._client.chat.completions.create = AsyncMock(
+        return_value=_openai_tool_call_response(
+            "summarize_reviews",
+            {
+                "summary_zh_tw": "咖啡很棒",
+                "review_topics": [{"topic": "手沖", "count": 6}],
+            },
+        )
+    )
+
+    result = await adapter.summarize_reviews(
+        google_reviews=["Great coffee"],
+        checkin_texts=[],
+    )
+
+    assert isinstance(result, ReviewSummaryResult)
+    assert result.summary_zh_tw == "咖啡很棒"
+    assert result.review_topics[0].topic == "手沖"
+
+
+async def test_openai_summarize_reviews_uses_function_calling(adapter):
+    """Verifies tool_choice with summarize_reviews function name is passed correctly."""
+    adapter._client = AsyncMock()
+    adapter._client.chat.completions.create = AsyncMock(
+        return_value=_openai_tool_call_response(
+            "summarize_reviews",
+            {"summary_zh_tw": "test", "review_topics": [{"topic": "x", "count": 1}]},
+        )
+    )
+
+    await adapter.summarize_reviews(google_reviews=["r"], checkin_texts=[])
+
+    call_kwargs = adapter._client.chat.completions.create.call_args[1]
+    assert call_kwargs["tool_choice"]["function"]["name"] == "summarize_reviews"
