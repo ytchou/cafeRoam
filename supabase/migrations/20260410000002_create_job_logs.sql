@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS job_logs (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  job_id UUID NOT NULL,
+  job_id UUID NOT NULL REFERENCES job_queue(id) ON DELETE CASCADE,
   level TEXT NOT NULL CHECK (level IN ('info', 'warn', 'error')),
   message TEXT NOT NULL,
   context JSONB DEFAULT '{}',
