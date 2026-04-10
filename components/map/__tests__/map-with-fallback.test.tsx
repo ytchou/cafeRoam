@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { vi, type Mock } from 'vitest';
+import { describe, expect, it, vi, type Mock } from 'vitest';
 
 // Mock the device capability hook — it has its own dedicated test file
 vi.mock('@/lib/hooks/use-device-capability', () => ({
