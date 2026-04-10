@@ -9,6 +9,7 @@ import {
 } from 'react';
 
 const PANEL_EXPAND_DELAY_MS = 200;
+import { SlidersHorizontal } from 'lucide-react';
 import { FilterTag } from '@/components/filters/filter-tag';
 import { QUICK_FILTERS } from '@/components/filters/quick-filters';
 import { CountHeader } from '@/components/discovery/count-header';
@@ -119,10 +120,12 @@ export function MapDesktopLayout({
                 />
                 <button
                   type="button"
+                  aria-label="篩選"
                   onClick={onFilterClick}
                   className="flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium text-[var(--text-secondary)] hover:bg-[var(--muted)]"
                 >
-                  ≡ 篩選
+                  <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
+                  篩選
                 </button>
               </div>
               <div className="scrollbar-none flex gap-2 overflow-x-auto pl-1">

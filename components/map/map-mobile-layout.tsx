@@ -1,6 +1,6 @@
 'use client';
 import { Suspense } from 'react';
-import { Locate } from 'lucide-react';
+import { Locate, SlidersHorizontal } from 'lucide-react';
 import { ShopCarousel } from '@/components/map/shop-carousel';
 import { FilterSheet } from '@/components/filters/filter-sheet';
 import { BottomNav } from '@/components/navigation/bottom-nav';
@@ -58,9 +58,9 @@ export function MapMobileLayout({
         type="button"
         aria-label="篩選"
         onClick={onFilterClick}
-        className="absolute top-4 right-4 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-white text-[var(--text-secondary)] shadow-lg"
+        className="absolute top-4 right-4 z-20 flex h-11 w-11 items-center justify-center rounded-full bg-white text-[var(--text-secondary)] shadow-lg"
       >
-        ≡
+        <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
       </button>
 
       {onLocationRequest && (
