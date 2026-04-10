@@ -7,9 +7,7 @@ import {
   useCallback,
   Suspense,
 } from 'react';
-
-const PANEL_EXPAND_DELAY_MS = 200;
-import { SearchBar } from '@/components/filters/search-bar';
+import { SlidersHorizontal } from 'lucide-react';
 import { FilterTag } from '@/components/filters/filter-tag';
 import { QUICK_FILTERS } from '@/components/filters/quick-filters';
 import { CountHeader } from '@/components/discovery/count-header';
@@ -22,22 +20,22 @@ import { ShopPreviewCard } from '@/components/shops/shop-preview-card';
 import type { MappableLayoutShop } from '@/lib/types';
 import type { MapBounds } from '@/components/map/map-view';
 
+const PANEL_EXPAND_DELAY_MS = 200;
+
 interface MapDesktopLayoutProps {
   shops: MappableLayoutShop[];
   count: number;
   selectedShopId: string | null;
   onShopClick: (id: string | null) => void;
   onCardClick?: (id: string) => void;
-  query: string;
   activeFilters: string[];
   onFilterToggle: (id: string) => void;
   view: 'map' | 'list';
   onViewChange: (view: 'map' | 'list') => void;
-  onSearch: (q: string) => void;
   filterSheetOpen: boolean;
-  onFilterOpen: () => void;
   onFilterClose: () => void;
   onFilterApply: (filters: string[]) => void;
+  onFilterClick?: () => void;
   onBoundsChange?: (bounds: MapBounds) => void;
 }
 
@@ -47,16 +45,14 @@ export function MapDesktopLayout({
   selectedShopId,
   onShopClick,
   onCardClick,
-  query,
   activeFilters,
   onFilterToggle,
   view,
   onViewChange,
-  onSearch,
   filterSheetOpen,
-  onFilterOpen,
   onFilterClose,
   onFilterApply,
+  onFilterClick,
   onBoundsChange,
 }: MapDesktopLayoutProps) {
   const [panelCollapsed, setPanelCollapsed] = useState(false);
@@ -67,11 +63,7 @@ export function MapDesktopLayout({
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const scrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const selectedShop = useMemo(
-    () => shops.find((s) => s.id === selectedShopId) ?? null,
-    [shops, selectedShopId]
-  );
+  const selectedCardRef = useRef<HTMLDivElement>(null);
 
   const handlePreviewClose = useCallback(
     () => onShopClick(null),
@@ -104,6 +96,14 @@ export function MapDesktopLayout({
     };
   }, [selectedShopId]);
 
+  useEffect(() => {
+    if (!selectedShopId) return;
+    selectedCardRef.current?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'nearest',
+    });
+  }, [selectedShopId]);
+
   return (
     <div className="flex h-screen w-full flex-col">
       <HeaderNav activeTab="find" />
@@ -112,11 +112,22 @@ export function MapDesktopLayout({
         {!panelCollapsed && (
           <div className="flex w-[420px] shrink-0 flex-col overflow-hidden border-r border-[var(--border)] bg-white">
             <div className="flex flex-col gap-2 px-4 pt-4 pb-2">
-              <SearchBar
-                onSearch={onSearch}
-                onFilterClick={onFilterOpen}
-                defaultQuery={query}
-              />
+              <div className="flex items-center justify-between">
+                <CountHeader
+                  count={count}
+                  view={view}
+                  onViewChange={onViewChange}
+                />
+                <button
+                  type="button"
+                  aria-label="篩選"
+                  onClick={onFilterClick}
+                  className="flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium text-[var(--text-secondary)] hover:bg-[var(--muted)]"
+                >
+                  <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
+                  篩選
+                </button>
+              </div>
               <div className="scrollbar-none flex gap-2 overflow-x-auto pl-1">
                 {QUICK_FILTERS.map((f) => (
                   <FilterTag
@@ -128,26 +139,31 @@ export function MapDesktopLayout({
                   />
                 ))}
               </div>
-              <CountHeader
-                count={count}
-                view={view}
-                onViewChange={onViewChange}
-              />
             </div>
 
             <div
               ref={scrollRef}
               className="flex-1 divide-y divide-[var(--border)] overflow-y-auto"
             >
-              {shops.map((shop) => (
-                <div key={shop.id} data-shop-id={shop.id}>
-                  <ShopCardCompact
-                    shop={shop}
-                    onClick={() => onShopClick(shop.id)}
-                    selected={shop.id === selectedShopId}
-                  />
-                </div>
-              ))}
+              {shops.map((shop) =>
+                shop.id === selectedShopId ? (
+                  <div key={shop.id} ref={selectedCardRef} className="w-full">
+                    <ShopPreviewCard
+                      shop={shop}
+                      onClose={handlePreviewClose}
+                      onNavigate={handlePreviewNavigate}
+                    />
+                  </div>
+                ) : (
+                  <div key={shop.id} data-shop-id={shop.id}>
+                    <ShopCardCompact
+                      shop={shop}
+                      onClick={() => onShopClick(shop.id)}
+                      selected={false}
+                    />
+                  </div>
+                )
+              )}
             </div>
           </div>
         )}
@@ -172,15 +188,6 @@ export function MapDesktopLayout({
               onBoundsChange={onBoundsChange}
             />
           </Suspense>
-          {selectedShop && (
-            <div className="absolute bottom-6 left-1/2 z-30 -translate-x-1/2">
-              <ShopPreviewCard
-                shop={selectedShop}
-                onClose={handlePreviewClose}
-                onNavigate={handlePreviewNavigate}
-              />
-            </div>
-          )}
         </div>
       </div>
 

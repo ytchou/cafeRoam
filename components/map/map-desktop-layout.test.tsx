@@ -1,3 +1,4 @@
+import '@testing-library/jest-dom/vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeAll } from 'vitest';
@@ -127,11 +128,12 @@ describe('a user on the desktop map view', () => {
     expect(screen.getByText('2 places nearby')).toBeInTheDocument();
   });
 
-  it('a user sees the search bar to find shops', () => {
-    render(<MapDesktopLayout {...defaultProps} />);
-    expect(
-      screen.getByPlaceholderText('Search coffee shops...')
-    ).toBeInTheDocument();
+  it('a user sees a filter button in the sidebar header (SearchBar removed from map overlay)', () => {
+    const onFilterClick = vi.fn();
+    render(
+      <MapDesktopLayout {...defaultProps} onFilterClick={onFilterClick} />
+    );
+    expect(screen.getByRole('button', { name: /篩選/ })).toBeInTheDocument();
   });
 
   it('a user clicking a shop card triggers the shop selection callback', async () => {
@@ -209,9 +211,10 @@ describe('a user on the desktop map view', () => {
     expect(
       screen.getByRole('button', { name: /close preview/i })
     ).toBeInTheDocument();
+    // With inline rendering, the selected shop appears once as ShopPreviewCard in the sidebar
     expect(
       screen.getAllByText('晨光咖啡 Morning Glow').length
-    ).toBeGreaterThanOrEqual(2); // panel card + preview card
+    ).toBeGreaterThanOrEqual(1);
   });
 
   it('a user does not see a preview card when no pin is selected', () => {
@@ -262,5 +265,111 @@ describe('a user on the desktop map view', () => {
       screen.getByRole('button', { name: /view details/i })
     );
     expect(onCardClick).toHaveBeenCalledWith('shop-aa11bb');
+  });
+
+  it('renders the selected shop as a full ShopPreviewCard in the sidebar, not as a floating overlay', () => {
+    const shopA = {
+      id: 'shop-a001',
+      name: '清晨咖啡 Dawn Brew',
+      address: '台北市信義區松仁路',
+      latitude: 25.033,
+      longitude: 121.543,
+      mrt: '台北101',
+      rating: 4.5,
+      review_count: 100,
+      price_range: '$$',
+      slug: 'dawn-brew',
+      photo_urls: ['https://example.com/dawn.jpg'],
+    };
+    const shopB = {
+      id: 'shop-b002',
+      name: 'Selected Cafe',
+      address: '台北市大安區復興南路',
+      latitude: 25.04,
+      longitude: 121.55,
+      mrt: '大安森林公園',
+      rating: 4.8,
+      review_count: 250,
+      price_range: '$',
+      slug: 'selected-cafe',
+      photo_urls: ['https://example.com/selected.jpg'],
+    };
+    render(
+      <MapDesktopLayout
+        {...defaultProps}
+        shops={[shopA, shopB]}
+        selectedShopId="shop-b002"
+        onShopClick={vi.fn()}
+      />
+    );
+    // ShopPreviewCard renders the shop name in a span, not a heading
+    expect(screen.getByText('Selected Cafe')).toBeInTheDocument();
+    // No bottom-center floating overlay wrapper
+    expect(document.querySelector('.absolute.bottom-6.left-1\\/2')).toBeNull();
+  });
+
+  it('auto-scrolls the selected card into view when selection changes', () => {
+    // Use the scrollIntoView mock set up in beforeAll on HTMLElement.prototype
+    const scrollIntoView = vi.fn();
+    window.HTMLElement.prototype.scrollIntoView = scrollIntoView;
+    const shopA = {
+      id: 'shop-a001',
+      name: '清晨咖啡 Dawn Brew',
+      address: '台北市信義區松仁路',
+      latitude: 25.033,
+      longitude: 121.543,
+      mrt: '台北101',
+      rating: 4.5,
+      review_count: 100,
+      price_range: '$$',
+      slug: 'dawn-brew',
+      photo_urls: ['https://example.com/dawn.jpg'],
+    };
+    const shopB = {
+      id: 'shop-b002',
+      name: 'Selected Cafe',
+      address: '台北市大安區復興南路',
+      latitude: 25.04,
+      longitude: 121.55,
+      mrt: '大安森林公園',
+      rating: 4.8,
+      review_count: 250,
+      price_range: '$',
+      slug: 'selected-cafe',
+      photo_urls: ['https://example.com/selected.jpg'],
+    };
+    const { rerender } = render(
+      <MapDesktopLayout
+        {...defaultProps}
+        shops={[shopA, shopB]}
+        selectedShopId={null}
+      />
+    );
+    rerender(
+      <MapDesktopLayout
+        {...defaultProps}
+        shops={[shopA, shopB]}
+        selectedShopId="shop-b002"
+      />
+    );
+    expect(scrollIntoView).toHaveBeenCalledWith({
+      behavior: 'smooth',
+      block: 'nearest',
+    });
+  });
+
+  it('does not render the map-overlay SearchBar in the sidebar', () => {
+    render(<MapDesktopLayout {...defaultProps} />);
+    // SearchBar renders an input[type="search"] / role="searchbox"; after removal it should be gone
+    expect(screen.queryByRole('searchbox')).toBeNull();
+  });
+
+  it('renders a filter button in the sidebar header that calls onFilterClick', async () => {
+    const onFilterClick = vi.fn();
+    render(
+      <MapDesktopLayout {...defaultProps} onFilterClick={onFilterClick} />
+    );
+    await userEvent.click(screen.getByRole('button', { name: /篩選/ }));
+    expect(onFilterClick).toHaveBeenCalled();
   });
 });
