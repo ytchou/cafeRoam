@@ -41,7 +41,14 @@ async function collectFps(page: Page, maxFrames: number): Promise<number[]> {
 }
 
 test.describe('Mapbox GL JS performance under throttling', () => {
-  test('map tiles render within acceptance criteria', async ({ page }) => {
+  test('map tiles render within acceptance criteria', async ({
+    page,
+    browserName,
+  }) => {
+    test.skip(
+      browserName !== 'chromium',
+      'CDP session only available in Chromium'
+    );
     const cdp: CDPSession = await page.context().newCDPSession(page);
 
     try {
@@ -149,7 +156,11 @@ test.describe('Mapbox GL JS performance under throttling', () => {
           avgFps >= ACCEPTANCE.minFps,
       };
 
-      const reportsDir = path.join(__dirname, '..', 'reports');
+      const reportsDir = path.join(
+        path.dirname(new URL(import.meta.url).pathname),
+        '..',
+        'reports'
+      );
       fs.mkdirSync(reportsDir, { recursive: true });
       const dateSlug = new Date().toISOString().slice(0, 10);
       const reportPath = path.join(reportsDir, `map-perf-${dateSlug}.json`);
