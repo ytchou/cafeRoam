@@ -7,6 +7,7 @@ from supabase import Client
 from core.lang import is_zh_dominant
 from models.types import JobType, ShopEnrichmentInput
 from providers.llm.interface import LLMProvider
+from workers.job_guard import check_job_still_claimed
 from workers.queue import JobQueue
 
 logger = structlog.get_logger()
@@ -17,6 +18,7 @@ async def handle_enrich_shop(
     db: Client,
     llm: LLMProvider,
     queue: JobQueue,
+    job_id: str,
 ) -> None:
     """Enrich a shop with AI-generated tags and summary."""
     shop_id = payload["shop_id"]
@@ -84,6 +86,9 @@ async def handle_enrich_shop(
             raise ValueError(f"Enrichment summary for shop {shop_id} is not in Traditional Chinese")
 
         mode = result.mode_scores
+        if not await check_job_still_claimed(queue, job_id):
+            logger.warning("job.aborted_midflight job_id=%s handler=enrich_shop", job_id)
+            return
         db.table("shops").update(
             {
                 "description": result.summary,
@@ -98,6 +103,9 @@ async def handle_enrich_shop(
         ).eq("id", shop_id).execute()
 
         # Re-enrichment replaces tags, not appends
+        if not await check_job_still_claimed(queue, job_id):
+            logger.warning("job.aborted_midflight job_id=%s handler=enrich_shop", job_id)
+            return
         db.table("shop_tags").delete().eq("shop_id", shop_id).execute()
         if result.tags:
             tag_rows = [

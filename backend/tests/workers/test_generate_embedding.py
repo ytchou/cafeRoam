@@ -49,6 +49,7 @@ async def test_embedding_failure_marks_pipeline_shop_failed():
     embeddings = AsyncMock()
     embeddings.embed = AsyncMock(side_effect=RuntimeError("OpenAI rate limit exceeded"))
     queue = AsyncMock()
+    queue.get_status.return_value = "claimed"
 
     with pytest.raises(RuntimeError, match="OpenAI rate limit exceeded"):
         await handle_generate_embedding(
@@ -56,6 +57,7 @@ async def test_embedding_failure_marks_pipeline_shop_failed():
             db=db,
             embeddings=embeddings,
             queue=queue,
+            job_id="job-embed-fail-01",
         )
 
     update_data = db._shops_table.update.call_args[0][0]
@@ -75,6 +77,7 @@ async def test_embedding_failure_does_not_fail_live_shop():
     embeddings = AsyncMock()
     embeddings.embed = AsyncMock(side_effect=RuntimeError("Embedding provider unreachable"))
     queue = AsyncMock()
+    queue.get_status.return_value = "claimed"
 
     with pytest.raises(RuntimeError):
         await handle_generate_embedding(
@@ -82,6 +85,7 @@ async def test_embedding_failure_does_not_fail_live_shop():
             db=db,
             embeddings=embeddings,
             queue=queue,
+            job_id="job-embed-live-02",
         )
 
     # No update should have set processing_status to "failed"
