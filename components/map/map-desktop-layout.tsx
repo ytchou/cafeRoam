@@ -27,14 +27,11 @@ interface MapDesktopLayoutProps {
   selectedShopId: string | null;
   onShopClick: (id: string | null) => void;
   onCardClick?: (id: string) => void;
-  query: string;
   activeFilters: string[];
   onFilterToggle: (id: string) => void;
   view: 'map' | 'list';
   onViewChange: (view: 'map' | 'list') => void;
-  onSearch: (q: string) => void;
   filterSheetOpen: boolean;
-  onFilterOpen: () => void;
   onFilterClose: () => void;
   onFilterApply: (filters: string[]) => void;
   onFilterClick?: () => void;
@@ -47,14 +44,11 @@ export function MapDesktopLayout({
   selectedShopId,
   onShopClick,
   onCardClick,
-  query,
   activeFilters,
   onFilterToggle,
   view,
   onViewChange,
-  onSearch,
   filterSheetOpen,
-  onFilterOpen,
   onFilterClose,
   onFilterApply,
   onFilterClick,

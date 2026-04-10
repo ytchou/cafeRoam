@@ -127,11 +127,7 @@ export function MapWithFallback({
     <div className="relative h-full w-full">
       {showMap ? (
         <div data-testid="map-container">
-          <MapMobileLayout
-            {...layoutProps}
-            view={view}
-            onCardClick={onCardClick}
-          />
+          <MapMobileLayout {...layoutProps} onCardClick={onCardClick} />
         </div>
       ) : (
         <div data-testid="list-container">

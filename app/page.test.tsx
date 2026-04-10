@@ -102,7 +102,7 @@ describe('HomePage (unified)', () => {
         observe = vi.fn();
         disconnect = vi.fn();
         unobserve = vi.fn();
-        constructor(_cb: IntersectionObserverCallback) {}
+        constructor() {}
       },
     );
     mockUseUser.mockReturnValue({ user: null, isLoading: false });
