@@ -67,6 +67,7 @@ export function MapDesktopLayout({
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const scrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const selectedCardRef = useRef<HTMLDivElement>(null);
 
   const selectedShop = useMemo(
     () => shops.find((s) => s.id === selectedShopId) ?? null,
@@ -104,6 +105,14 @@ export function MapDesktopLayout({
     };
   }, [selectedShopId]);
 
+  useEffect(() => {
+    if (!selectedShopId) return;
+    selectedCardRef.current?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'nearest',
+    });
+  }, [selectedShopId]);
+
   return (
     <div className="flex h-screen w-full flex-col">
       <HeaderNav activeTab="find" />
@@ -139,15 +148,25 @@ export function MapDesktopLayout({
               ref={scrollRef}
               className="flex-1 divide-y divide-[var(--border)] overflow-y-auto"
             >
-              {shops.map((shop) => (
-                <div key={shop.id} data-shop-id={shop.id}>
-                  <ShopCardCompact
-                    shop={shop}
-                    onClick={() => onShopClick(shop.id)}
-                    selected={shop.id === selectedShopId}
-                  />
-                </div>
-              ))}
+              {shops.map((shop) =>
+                shop.id === selectedShopId ? (
+                  <div key={shop.id} ref={selectedCardRef} className="w-full">
+                    <ShopPreviewCard
+                      shop={shop}
+                      onClose={handlePreviewClose}
+                      onNavigate={handlePreviewNavigate}
+                    />
+                  </div>
+                ) : (
+                  <div key={shop.id} data-shop-id={shop.id}>
+                    <ShopCardCompact
+                      shop={shop}
+                      onClick={() => onShopClick(shop.id)}
+                      selected={false}
+                    />
+                  </div>
+                )
+              )}
             </div>
           </div>
         )}
@@ -172,15 +191,6 @@ export function MapDesktopLayout({
               onBoundsChange={onBoundsChange}
             />
           </Suspense>
-          {selectedShop && (
-            <div className="absolute bottom-6 left-1/2 z-30 -translate-x-1/2">
-              <ShopPreviewCard
-                shop={selectedShop}
-                onClose={handlePreviewClose}
-                onNavigate={handlePreviewNavigate}
-              />
-            </div>
-          )}
         </div>
       </div>
 
