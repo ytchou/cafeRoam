@@ -7,29 +7,29 @@
 
 ## Pass 1 — Full Discovery
 
-*Agents: Bug Hunter, Standards, Architecture, Plan Alignment, Test Philosophy, Design Quality (inline — Opus single-session). Adversarial Review (Codex) was unavailable in this session.*
+_Agents: Bug Hunter, Standards, Architecture, Plan Alignment, Test Philosophy, Design Quality (inline — Opus single-session). Adversarial Review (Codex) was unavailable in this session._
 
 ### Issues Found (17 total)
 
-| Severity | File:Line | Description | Flagged By |
-|---|---|---|---|
-| Critical | app/page.tsx:219-227 | Tag tokens push raw taxonomy_tags.id into filters[]; FILTER_TO_TAG_IDS uses short UI IDs → selected tags silently do not filter results | Bug Hunter |
-| Critical | backend/api/search.py:109 | /search/suggest missing @limiter.limit — unauthenticated, per-keystroke DB query | Bug Hunter |
-| Important | app/page.tsx:65-66,101-110,269-272 | Plan deviation — heroRef, IntersectionObserver, sticky wrapper div not removed per plan Task 1 | Plan Alignment |
-| Important | backend/api/search.py:111 | q has no max_length; interpolated into ilike | Standards |
-| Important | app/page.tsx:62,219-235 | tokens state duplicates filters[] instead of deriving from it; reload loses tokens | Architecture |
-| Important | lib/hooks/use-search-suggestions.ts:28-43 | No request race protection (no AbortController) | Bug Hunter |
-| Important | lib/hooks/use-search-suggestions.ts:22-26 | In-flight fetch not cancelled on cleanup → stale state writes | Bug Hunter |
-| Important | components/discovery/search-suggestion-panel.test.tsx:5-11 | Mocks internal hook module — violates CLAUDE.md "mock at boundaries only" | Test Philosophy |
-| Important | components/discovery/search-input-tokens.tsx:33 | Unsafe tokens[tokens.length - 1] — CLAUDE.md requires first()/safe access | Standards |
-| Important | backend/services/search_service.py:349-356 | LIKE metacharacters in q not escaped (% _ pass through) | Bug Hunter |
-| Minor | backend/api/search.py:115 | SearchService(embeddings=None) with type ignore — code smell | Architecture |
-| Minor | lib/hooks/use-search-suggestions.ts:5-8 | SuggestTag interface triplicated; extract to lib/types | Architecture |
-| Minor | components/discovery/search-input-tokens.test.tsx:6-35 | Test descriptions function-name framed, not user-journey | Test Philosophy |
-| Minor | lib/hooks/use-search-suggestions.test.ts:40-44 | Real-clock setTimeout(400ms) — flaky | Test Philosophy |
-| Minor | app/api/search/suggest/route.test.ts:4-14 | Mocks internal @/lib/api/proxy; test is tautological | Test Philosophy |
-| Minor | components/discovery/search-suggestion-panel.tsx:76 | Hardcoded 🔍 emoji instead of lucide <Search /> | Design Quality |
-| Minor | components/discovery/search-suggestion-panel.tsx:44,53 | Chip contrast (white/20 on #3d2314) near WCAG AA boundary | Design Quality |
+| Severity  | File:Line                                                  | Description                                                                                                                             | Flagged By      |
+| --------- | ---------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | --------------- |
+| Critical  | app/page.tsx:219-227                                       | Tag tokens push raw taxonomy_tags.id into filters[]; FILTER_TO_TAG_IDS uses short UI IDs → selected tags silently do not filter results | Bug Hunter      |
+| Critical  | backend/api/search.py:109                                  | /search/suggest missing @limiter.limit — unauthenticated, per-keystroke DB query                                                        | Bug Hunter      |
+| Important | app/page.tsx:65-66,101-110,269-272                         | Plan deviation — heroRef, IntersectionObserver, sticky wrapper div not removed per plan Task 1                                          | Plan Alignment  |
+| Important | backend/api/search.py:111                                  | q has no max_length; interpolated into ilike                                                                                            | Standards       |
+| Important | app/page.tsx:62,219-235                                    | tokens state duplicates filters[] instead of deriving from it; reload loses tokens                                                      | Architecture    |
+| Important | lib/hooks/use-search-suggestions.ts:28-43                  | No request race protection (no AbortController)                                                                                         | Bug Hunter      |
+| Important | lib/hooks/use-search-suggestions.ts:22-26                  | In-flight fetch not cancelled on cleanup → stale state writes                                                                           | Bug Hunter      |
+| Important | components/discovery/search-suggestion-panel.test.tsx:5-11 | Mocks internal hook module — violates CLAUDE.md "mock at boundaries only"                                                               | Test Philosophy |
+| Important | components/discovery/search-input-tokens.tsx:33            | Unsafe tokens[tokens.length - 1] — CLAUDE.md requires first()/safe access                                                               | Standards       |
+| Important | backend/services/search_service.py:349-356                 | LIKE metacharacters in q not escaped (% \_ pass through)                                                                                | Bug Hunter      |
+| Minor     | backend/api/search.py:115                                  | SearchService(embeddings=None) with type ignore — code smell                                                                            | Architecture    |
+| Minor     | lib/hooks/use-search-suggestions.ts:5-8                    | SuggestTag interface triplicated; extract to lib/types                                                                                  | Architecture    |
+| Minor     | components/discovery/search-input-tokens.test.tsx:6-35     | Test descriptions function-name framed, not user-journey                                                                                | Test Philosophy |
+| Minor     | lib/hooks/use-search-suggestions.test.ts:40-44             | Real-clock setTimeout(400ms) — flaky                                                                                                    | Test Philosophy |
+| Minor     | app/api/search/suggest/route.test.ts:4-14                  | Mocks internal @/lib/api/proxy; test is tautological                                                                                    | Test Philosophy |
+| Minor     | components/discovery/search-suggestion-panel.tsx:76        | Hardcoded 🔍 emoji instead of lucide <Search />                                                                                         | Design Quality  |
+| Minor     | components/discovery/search-suggestion-panel.tsx:44,53     | Chip contrast (white/20 on #3d2314) near WCAG AA boundary                                                                               | Design Quality  |
 
 ### Validation Results
 
@@ -41,6 +41,7 @@ All 17 findings validated inline (Opus, single-pass, Phase 4). 14 marked `valid`
 - `components/discovery/search-suggestion-panel.tsx:44,53` — contrast ratio borderline; needs DesignQuality follow-up (debatable)
 
 3 potential findings skipped as false positives:
+
 - `components/discovery/search-bar.test.tsx` gutted coverage → actually covered elsewhere
 - `_CURATED_COMPLETIONS` linear scan → O(10), not a perf issue
 - Layout shift between empty/typing states → intentional per design doc
@@ -55,8 +56,8 @@ All 17 findings validated inline (Opus, single-pass, Phase 4). 14 marked `valid`
 
 ## Pass 2 — Re-Verify (Iteration 1)
 
-*Agents re-run: Bug Hunter, Standards & Conventions, Architecture & Design, Plan Alignment, Test Philosophy, Design Quality*
-*Agents skipped (Minor-only): none*
+_Agents re-run: Bug Hunter, Standards & Conventions, Architecture & Design, Plan Alignment, Test Philosophy, Design Quality_
+_Agents skipped (Minor-only): none_
 
 ### Previously Flagged Issues — Resolution Status
 

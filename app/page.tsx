@@ -71,7 +71,9 @@ function HomePageContent() {
         const rest = f.slice(4);
         const colonIdx = rest.indexOf(':');
         if (colonIdx === -1) return [];
-        return [{ id: rest.slice(0, colonIdx), label: rest.slice(colonIdx + 1) }];
+        return [
+          { id: rest.slice(0, colonIdx), label: rest.slice(colonIdx + 1) },
+        ];
       }),
     [filters]
   );
@@ -244,11 +246,13 @@ function HomePageContent() {
   const handleTokenRemove = useCallback(
     (id: string) => {
       // Remove the "tag:{id}:{label}" entry corresponding to this token id.
-      setFilters(filters.filter((f) => {
-        if (!f.startsWith('tag:')) return true;
-        const tokenId = f.slice(4, f.indexOf(':', 4));
-        return tokenId !== id;
-      }));
+      setFilters(
+        filters.filter((f) => {
+          if (!f.startsWith('tag:')) return true;
+          const tokenId = f.slice(4, f.indexOf(':', 4));
+          return tokenId !== id;
+        })
+      );
     },
     [filters, setFilters]
   );
@@ -285,9 +289,7 @@ function HomePageContent() {
     <div className="min-h-screen bg-white">
       <WebsiteJsonLd />
 
-      <section
-        className="bg-[#3d2314] px-5 pt-8 pb-8 text-white"
-      >
+      <section className="bg-[#3d2314] px-5 pt-8 pb-8 text-white">
         <div className="mx-auto max-w-5xl">
           <span className="text-brand text-sm font-semibold tracking-[0.2em]">
             啡遊
@@ -296,7 +298,7 @@ function HomePageContent() {
             <span>找到你的</span>
             <span className="text-white/80">理想咖啡廳</span>
           </h1>
-          <div className="mt-6 relative">
+          <div className="relative mt-6">
             <SearchInputTokens
               value={inputValue}
               tokens={tokens}

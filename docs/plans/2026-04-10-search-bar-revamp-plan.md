@@ -15,6 +15,7 @@
 **Tech Stack:** Next.js 16 App Router · TypeScript strict · Tailwind CSS · FastAPI (Python 3.12) · Supabase (taxonomy_tags table) · Vitest + Testing Library · pytest
 
 **Acceptance Criteria:**
+
 - [ ] Typed text in the hero search input is visibly dark (not white-on-white)
 - [ ] Page scrolls without a second search bar appearing
 - [ ] Default state shows short phrase chips below the search bar at all times without any interaction
@@ -27,6 +28,7 @@
 ### Task 1: Bug fixes + StickySearchBar removal
 
 **Files:**
+
 - Modify: `components/discovery/search-bar.tsx:56`
 - Modify: `app/page.tsx` (remove lines 250–259 sticky wrapper, lines 64–109 observer logic, line 15 import)
 - Delete: `components/discovery/sticky-search-bar.tsx`
@@ -36,21 +38,24 @@
 **Step 1: Write the failing test**
 
 Create/update `components/discovery/search-bar.test.tsx`:
+
 ```tsx
-import { render, screen } from '@testing-library/react'
-import { SearchBar } from './search-bar'
+import { render, screen } from '@testing-library/react';
+import { SearchBar } from './search-bar';
 
 describe('SearchBar', () => {
   it('renders input with explicit dark text color', () => {
-    render(<SearchBar onSubmit={vi.fn()} />)
-    expect(screen.getByRole('textbox')).toHaveClass('text-gray-900')
-  })
+    render(<SearchBar onSubmit={vi.fn()} />);
+    expect(screen.getByRole('textbox')).toHaveClass('text-gray-900');
+  });
 
   it('renders placeholder with muted color', () => {
-    render(<SearchBar onSubmit={vi.fn()} />)
-    expect(screen.getByRole('textbox')).toHaveClass('placeholder:text-gray-400')
-  })
-})
+    render(<SearchBar onSubmit={vi.fn()} />);
+    expect(screen.getByRole('textbox')).toHaveClass(
+      'placeholder:text-gray-400'
+    );
+  });
+});
 ```
 
 **Step 2: Run test to verify it fails**
@@ -58,13 +63,16 @@ describe('SearchBar', () => {
 ```bash
 pnpm test components/discovery/search-bar
 ```
+
 Expected: FAIL — `text-gray-900` class not found on input.
 
 **Step 3: Fix search-bar.tsx**
 
 In `components/discovery/search-bar.tsx:56`, change the input className to add `text-gray-900 placeholder:text-gray-400`:
+
 ```tsx
-className="focus:ring-brand min-h-[48px] w-full rounded-full border border-gray-200 bg-white pr-4 pl-10 text-sm text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:outline-none"
+className =
+  'focus:ring-brand min-h-[48px] w-full rounded-full border border-gray-200 bg-white pr-4 pl-10 text-sm text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:outline-none';
 ```
 
 **Step 4: Remove StickySearchBar from app/page.tsx**
@@ -89,6 +97,7 @@ rm components/discovery/sticky-search-bar.test.tsx
 pnpm test components/discovery/search-bar
 pnpm test -- --run
 ```
+
 Expected: search-bar tests PASS, no broken imports.
 
 **Step 7: Commit**
@@ -105,12 +114,14 @@ git commit -m "chore(DEV-314): remove StickySearchBar and IntersectionObserver"
 ### Task 2: Backend suggest() method in SearchService
 
 **Files:**
+
 - Modify: `backend/services/search_service.py` — add `suggest()` method + `SuggestResponse` / `SuggestTag` models
 - Test: `backend/tests/test_search_service.py` (add to existing file)
 
 **Step 1: Add response models to search_service.py**
 
 At top of `backend/services/search_service.py` (or in `backend/models/types.py`), add:
+
 ```python
 from pydantic import BaseModel
 
@@ -126,6 +137,7 @@ class SuggestResponse(BaseModel):
 **Step 2: Write the failing tests**
 
 In `backend/tests/test_search_service.py`, add:
+
 ```python
 import pytest
 from unittest.mock import AsyncMock, MagicMock
@@ -178,11 +190,13 @@ async def test_suggest_tags_have_id_and_label(search_service_with_tags):
 ```bash
 cd backend && uv run pytest tests/test_search_service.py -k "suggest" -v
 ```
+
 Expected: FAIL — `suggest` method not found.
 
 **Step 4: Implement suggest() in SearchService**
 
 Add to `backend/services/search_service.py`:
+
 ```python
 # Curated short phrases — supplement to DB tag matches
 _CURATED_COMPLETIONS = [
@@ -231,6 +245,7 @@ Note: `self._db` — check the actual attribute name in `SearchService.__init__`
 ```bash
 cd backend && uv run pytest tests/test_search_service.py -k "suggest" -v
 ```
+
 Expected: all 5 suggest tests PASS.
 
 **Step 6: Check coverage**
@@ -238,6 +253,7 @@ Expected: all 5 suggest tests PASS.
 ```bash
 cd backend && uv run pytest tests/test_search_service.py --cov=services/search_service --cov-report=term-missing
 ```
+
 Expected: search_service coverage ≥ 80%.
 
 **Step 7: Commit**
@@ -252,12 +268,14 @@ git commit -m "feat(DEV-314): add SearchService.suggest() with taxonomy tag matc
 ### Task 3: Backend GET /search/suggest route
 
 **Files:**
+
 - Modify: `backend/routers/search.py` — add `GET /search/suggest` endpoint
 - Test: `backend/tests/test_search_router.py` (add to existing file, or create)
 
 **Step 1: Write the failing tests**
 
 In `backend/tests/test_search_router.py` (or the equivalent router test file), add:
+
 ```python
 from httpx import AsyncClient
 import pytest
@@ -291,6 +309,7 @@ async def test_suggest_empty_q_returns_empty(client: AsyncClient):
 ```bash
 cd backend && uv run pytest tests/test_search_router.py -k "suggest" -v
 ```
+
 Expected: FAIL — route not found (404).
 
 **Step 3: Add route to backend/routers/search.py**
@@ -315,6 +334,7 @@ Note: follow the existing Depends injection pattern in `search.py` — check exa
 ```bash
 cd backend && uv run pytest tests/test_search_router.py -k "suggest" -v
 ```
+
 Expected: all 3 suggest route tests PASS.
 
 **Step 5: Commit**
@@ -329,6 +349,7 @@ git commit -m "feat(DEV-314): add GET /search/suggest backend route"
 ### Task 4: Next.js proxy /api/search/suggest/route.ts
 
 **Files:**
+
 - Create: `app/api/search/suggest/route.ts`
 - Test: `app/api/search/suggest/route.test.ts`
 
@@ -339,23 +360,28 @@ Read `app/api/search/route.ts` to understand the `proxyToBackend` pattern before
 **Step 2: Write the failing test**
 
 Create `app/api/search/suggest/route.test.ts`:
+
 ```typescript
-import { GET } from './route'
-import { NextRequest } from 'next/server'
+import { GET } from './route';
+import { NextRequest } from 'next/server';
 
 // Mock proxyToBackend
 vi.mock('@/lib/api/proxy', () => ({
-  proxyToBackend: vi.fn().mockResolvedValue(new Response('{"completions":[],"tags":[]}', { status: 200 }))
-}))
+  proxyToBackend: vi
+    .fn()
+    .mockResolvedValue(
+      new Response('{"completions":[],"tags":[]}', { status: 200 })
+    ),
+}));
 
 describe('GET /api/search/suggest', () => {
   it('forwards request to backend suggest endpoint', async () => {
-    const { proxyToBackend } = await import('@/lib/api/proxy')
-    const req = new NextRequest('http://localhost/api/search/suggest?q=安靜')
-    await GET(req)
-    expect(proxyToBackend).toHaveBeenCalledWith(req, '/search/suggest')
-  })
-})
+    const { proxyToBackend } = await import('@/lib/api/proxy');
+    const req = new NextRequest('http://localhost/api/search/suggest?q=安靜');
+    await GET(req);
+    expect(proxyToBackend).toHaveBeenCalledWith(req, '/search/suggest');
+  });
+});
 ```
 
 Note: adjust the `proxyToBackend` import path to match where it actually lives in the project.
@@ -365,11 +391,13 @@ Note: adjust the `proxyToBackend` import path to match where it actually lives i
 ```bash
 pnpm test app/api/search/suggest/route
 ```
+
 Expected: FAIL — module not found.
 
 **Step 4: Implement the proxy route**
 
 Create `app/api/search/suggest/route.ts`:
+
 ```typescript
 import { type NextRequest } from 'next/server';
 import { proxyToBackend } from '@/lib/api/proxy'; // adjust import to match existing pattern
@@ -384,6 +412,7 @@ export async function GET(request: NextRequest) {
 ```bash
 pnpm test app/api/search/suggest/route
 ```
+
 Expected: PASS.
 
 **Step 6: Commit**
@@ -398,58 +427,66 @@ git commit -m "feat(DEV-314): add Next.js proxy for /api/search/suggest"
 ### Task 5: useSearchSuggestions hook
 
 **Files:**
+
 - Create: `lib/hooks/use-search-suggestions.ts`
 - Test: `lib/hooks/use-search-suggestions.test.ts`
 
 **Step 1: Write the failing tests**
 
 Create `lib/hooks/use-search-suggestions.test.ts`:
+
 ```typescript
-import { renderHook, waitFor, act } from '@testing-library/react'
-import { useSearchSuggestions } from './use-search-suggestions'
-import { vi } from 'vitest'
+import { renderHook, waitFor, act } from '@testing-library/react';
+import { useSearchSuggestions } from './use-search-suggestions';
+import { vi } from 'vitest';
 
 // Mock fetch
-const mockFetch = vi.fn()
-vi.stubGlobal('fetch', mockFetch)
+const mockFetch = vi.fn();
+vi.stubGlobal('fetch', mockFetch);
 
-function mockSuggestResponse(completions: string[], tags: { id: string; label: string }[]) {
+function mockSuggestResponse(
+  completions: string[],
+  tags: { id: string; label: string }[]
+) {
   mockFetch.mockResolvedValueOnce({
     ok: true,
     json: async () => ({ completions, tags }),
-  })
+  });
 }
 
 describe('useSearchSuggestions', () => {
-  beforeEach(() => mockFetch.mockClear())
+  beforeEach(() => mockFetch.mockClear());
 
   it('returns empty results when query is empty', () => {
-    const { result } = renderHook(() => useSearchSuggestions(''))
-    expect(result.current.completions).toEqual([])
-    expect(result.current.tags).toEqual([])
-  })
+    const { result } = renderHook(() => useSearchSuggestions(''));
+    expect(result.current.completions).toEqual([]);
+    expect(result.current.tags).toEqual([]);
+  });
 
   it('fetches from /api/search/suggest after debounce', async () => {
-    mockSuggestResponse(['安靜可以工作'], [{ id: 'tag_1', label: '安靜' }])
-    const { result } = renderHook(() => useSearchSuggestions('安靜'))
+    mockSuggestResponse(['安靜可以工作'], [{ id: 'tag_1', label: '安靜' }]);
+    const { result } = renderHook(() => useSearchSuggestions('安靜'));
+
+    await waitFor(
+      () => {
+        expect(mockFetch).toHaveBeenCalledWith(
+          expect.stringContaining('/api/search/suggest?q=')
+        );
+      },
+      { timeout: 500 }
+    );
 
     await waitFor(() => {
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/search/suggest?q=')
-      )
-    }, { timeout: 500 })
-
-    await waitFor(() => {
-      expect(result.current.completions).toEqual(['安靜可以工作'])
-    })
-  })
+      expect(result.current.completions).toEqual(['安靜可以工作']);
+    });
+  });
 
   it('does not fetch when query length is 0', async () => {
-    renderHook(() => useSearchSuggestions(''))
-    await new Promise((r) => setTimeout(r, 400))
-    expect(mockFetch).not.toHaveBeenCalled()
-  })
-})
+    renderHook(() => useSearchSuggestions(''));
+    await new Promise((r) => setTimeout(r, 400));
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+});
 ```
 
 **Step 2: Run tests to verify they fail**
@@ -457,11 +494,13 @@ describe('useSearchSuggestions', () => {
 ```bash
 pnpm test lib/hooks/use-search-suggestions
 ```
+
 Expected: FAIL — module not found.
 
 **Step 3: Implement useSearchSuggestions**
 
 Create `lib/hooks/use-search-suggestions.ts`:
+
 ```typescript
 'use client';
 
@@ -493,7 +532,9 @@ export function useSearchSuggestions(query: string): SearchSuggestions {
     const timer = setTimeout(async () => {
       setIsLoading(true);
       try {
-        const res = await fetch(`/api/search/suggest?q=${encodeURIComponent(query)}`);
+        const res = await fetch(
+          `/api/search/suggest?q=${encodeURIComponent(query)}`
+        );
         if (res.ok) {
           const data = await res.json();
           setCompletions(data.completions ?? []);
@@ -516,6 +557,7 @@ export function useSearchSuggestions(query: string): SearchSuggestions {
 ```bash
 pnpm test lib/hooks/use-search-suggestions
 ```
+
 Expected: all 3 tests PASS.
 
 **Step 5: Commit**
@@ -530,12 +572,14 @@ git commit -m "feat(DEV-314): add useSearchSuggestions hook with 300ms debounce"
 ### Task 6: SearchInputTokens component
 
 **Files:**
+
 - Create: `components/discovery/search-input-tokens.tsx`
 - Test: `components/discovery/search-input-tokens.test.tsx`
 
 **Step 1: Write the failing tests**
 
 Create `components/discovery/search-input-tokens.test.tsx`:
+
 ```typescript
 import { render, screen, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -580,11 +624,13 @@ describe('SearchInputTokens', () => {
 ```bash
 pnpm test components/discovery/search-input-tokens
 ```
+
 Expected: FAIL — module not found.
 
 **Step 3: Implement SearchInputTokens**
 
 Create `components/discovery/search-input-tokens.tsx`:
+
 ```tsx
 'use client';
 
@@ -623,15 +669,32 @@ export function SearchInputTokens({
   }
 
   return (
-    <form role="search" onSubmit={handleSubmit} className="relative flex items-center rounded-full border border-gray-200 bg-white px-3 focus-within:ring-2 focus-within:ring-[#E06B3F]">
-      <span className="pointer-events-none text-[#E06B3F] mr-2">
-        <svg xmlns="http://www.w3.org/2000/svg" width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} role="img" aria-label="search">
+    <form
+      role="search"
+      onSubmit={handleSubmit}
+      className="relative flex items-center rounded-full border border-gray-200 bg-white px-3 focus-within:ring-2 focus-within:ring-[#E06B3F]"
+    >
+      <span className="pointer-events-none mr-2 text-[#E06B3F]">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width={20}
+          height={20}
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={2}
+          role="img"
+          aria-label="search"
+        >
           <path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5z" />
         </svg>
       </span>
-      <div className="flex flex-1 flex-wrap items-center gap-1 min-h-[48px] py-1">
+      <div className="flex min-h-[48px] flex-1 flex-wrap items-center gap-1 py-1">
         {tokens.map((token) => (
-          <span key={token.id} className="flex items-center gap-1 rounded-full bg-[#2c1810] px-2 py-0.5 text-xs text-white">
+          <span
+            key={token.id}
+            className="flex items-center gap-1 rounded-full bg-[#2c1810] px-2 py-0.5 text-xs text-white"
+          >
             {token.label}
             <button
               type="button"
@@ -648,9 +711,11 @@ export function SearchInputTokens({
           value={value}
           onChange={(e) => onValueChange(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder={tokens.length === 0 ? '找間有巴斯克蛋糕的咖啡廳…' : '繼續輸入…'}
+          placeholder={
+            tokens.length === 0 ? '找間有巴斯克蛋糕的咖啡廳…' : '繼續輸入…'
+          }
           autoFocus={autoFocus}
-          className="min-w-[120px] flex-1 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none bg-transparent"
+          className="min-w-[120px] flex-1 bg-transparent text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none"
         />
       </div>
     </form>
@@ -663,6 +728,7 @@ export function SearchInputTokens({
 ```bash
 pnpm test components/discovery/search-input-tokens
 ```
+
 Expected: all 5 tests PASS.
 
 **Step 5: Commit**
@@ -677,6 +743,7 @@ git commit -m "feat(DEV-314): add SearchInputTokens multi-token search input com
 ### Task 7: SearchSuggestionPanel component
 
 **Files:**
+
 - Create: `components/discovery/search-suggestion-panel.tsx`
 - Test: `components/discovery/search-suggestion-panel.test.tsx`
 
@@ -685,6 +752,7 @@ Depends on: Task 5 (`useSearchSuggestions`)
 **Step 1: Write the failing tests**
 
 Create `components/discovery/search-suggestion-panel.test.tsx`:
+
 ```typescript
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -737,11 +805,13 @@ describe('SearchSuggestionPanel', () => {
 ```bash
 pnpm test components/discovery/search-suggestion-panel
 ```
+
 Expected: FAIL — module not found.
 
 **Step 3: Implement SearchSuggestionPanel**
 
 Create `components/discovery/search-suggestion-panel.tsx`:
+
 ```tsx
 'use client';
 
@@ -807,10 +877,12 @@ export function SearchSuggestionPanel({
   if (completions.length === 0 && tags.length === 0) return null;
 
   return (
-    <div className="absolute top-full left-0 right-0 z-50 mt-1 rounded-2xl border border-gray-100 bg-white shadow-lg">
+    <div className="absolute top-full right-0 left-0 z-50 mt-1 rounded-2xl border border-gray-100 bg-white shadow-lg">
       {completions.length > 0 && (
         <div className="p-2">
-          <p className="px-2 py-1 text-xs font-medium text-gray-400">建議搜尋</p>
+          <p className="px-2 py-1 text-xs font-medium text-gray-400">
+            建議搜尋
+          </p>
           {completions.map((c) => (
             <button
               key={c}
@@ -826,7 +898,9 @@ export function SearchSuggestionPanel({
       )}
       {tags.length > 0 && (
         <div className="border-t border-gray-100 p-2">
-          <p className="px-2 py-1 text-xs font-medium text-gray-400">相關標籤</p>
+          <p className="px-2 py-1 text-xs font-medium text-gray-400">
+            相關標籤
+          </p>
           <div className="flex flex-wrap gap-1 px-2">
             {tags.map((tag) => (
               <button
@@ -851,6 +925,7 @@ export function SearchSuggestionPanel({
 ```bash
 pnpm test components/discovery/search-suggestion-panel
 ```
+
 Expected: all 5 tests PASS.
 
 **Step 5: Commit**
@@ -865,6 +940,7 @@ git commit -m "feat(DEV-314): add SearchSuggestionPanel with default chips and t
 ### Task 8: Wire new components into app/page.tsx
 
 **Files:**
+
 - Modify: `app/page.tsx` — replace `SearchBar` with `SearchInputTokens` + `SearchSuggestionPanel`; manage token state locally
 - Test: Update existing page test if it references old components
 
@@ -873,22 +949,25 @@ Depends on: Tasks 6 + 7
 **Step 1: Plan the state change**
 
 `app/page.tsx` needs a local `tokens` state (array of `{ id, label }`) in addition to the existing `query` (free text). When a tag is selected:
+
 1. Add token to `tokens` state
 2. Call `setFilters([...filters, token.id])` to update URL-driven filter state
 3. Clear the local input value
 
 When a token is removed:
+
 1. Remove from `tokens` state
 2. Call `toggleFilter(token.id)` or `setFilters(filters.filter(f => f !== token.id))`
 
 **Step 2: Write/update failing tests for page behavior**
 
 In the existing page test file (likely `app/page.test.tsx`), add or update:
+
 ```tsx
 it('adding a tag token updates filters', async () => {
   // Render page, simulate tag click from suggestion panel
   // Expect the shop list to be filtered by that tag
-})
+});
 ```
 
 Check if `app/page.test.tsx` exists; if it tests the old sticky search bar wrapper, remove those assertions.
@@ -896,6 +975,7 @@ Check if `app/page.test.tsx` exists; if it tests the old sticky search bar wrapp
 **Step 3: Update app/page.tsx**
 
 1. Add imports:
+
 ```tsx
 import { SearchInputTokens } from '@/components/discovery/search-input-tokens';
 import { SearchSuggestionPanel } from '@/components/discovery/search-suggestion-panel';
@@ -904,12 +984,14 @@ import { SearchSuggestionPanel } from '@/components/discovery/search-suggestion-
 2. Remove imports: `SearchBar`, `StickySearchBar` (if not already done in Task 1)
 
 3. Add local state for tokens + input value:
+
 ```tsx
 const [tokens, setTokens] = useState<{ id: string; label: string }[]>([]);
 const [inputValue, setInputValue] = useState('');
 ```
 
 4. Add handlers:
+
 ```tsx
 const handleTagSelect = useCallback(
   (tag: { id: string; label: string }) => {
@@ -931,8 +1013,9 @@ const handleTokenRemove = useCallback(
 ```
 
 5. Replace the `<SearchBar>` in the hero section:
+
 ```tsx
-<div className="mt-6 relative">
+<div className="relative mt-6">
   <SearchInputTokens
     value={inputValue}
     tokens={tokens}
@@ -956,6 +1039,7 @@ const handleTokenRemove = useCallback(
 ```bash
 pnpm test -- --run
 ```
+
 Expected: all 1256+ tests PASS (including new ones).
 
 **Step 5: Run linting + type check**
@@ -963,6 +1047,7 @@ Expected: all 1256+ tests PASS (including new ones).
 ```bash
 pnpm lint && pnpm type-check
 ```
+
 Expected: no errors.
 
 **Step 6: Commit**
@@ -1009,21 +1094,27 @@ graph TD
 ```
 
 **Wave 1** (parallel — no dependencies):
+
 - Task 1: Bug fixes + StickySearchBar removal
 - Task 2: Backend `SearchService.suggest()`
 
 **Wave 2** (parallel — depends on Wave 1):
+
 - Task 3: Backend `GET /search/suggest` route ← Task 2
 - Task 6: `SearchInputTokens` component ← Task 1 (cleanup done, safe to build)
 
 **Wave 3** (sequential):
+
 - Task 4: Next.js proxy `/api/search/suggest/route.ts` ← Task 3
 
 **Wave 4** (sequential):
+
 - Task 5: `useSearchSuggestions` hook ← Task 4
 
 **Wave 5** (sequential):
+
 - Task 7: `SearchSuggestionPanel` ← Task 5 + Task 6
 
 **Wave 6** (sequential):
+
 - Task 8: Wire `app/page.tsx` ← Task 7

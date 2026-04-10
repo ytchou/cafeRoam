@@ -1,4 +1,5 @@
 # AbortController fetch calls need 2-arg assertion in tests
+
 **Date:** 2026-04-10
 **Context:** DEV-314 search bar revamp — useSearchSuggestions hook tests
 

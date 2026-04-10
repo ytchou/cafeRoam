@@ -59,10 +59,12 @@ export function SearchSuggestionPanel({
   if (completions.length === 0 && tags.length === 0) return null;
 
   return (
-    <div className="absolute top-full left-0 right-0 z-50 mt-1 rounded-2xl border border-gray-100 bg-white shadow-lg">
+    <div className="absolute top-full right-0 left-0 z-50 mt-1 rounded-2xl border border-gray-100 bg-white shadow-lg">
       {completions.length > 0 && (
         <div className="p-2">
-          <p className="px-2 py-1 text-xs font-medium text-gray-400">建議搜尋</p>
+          <p className="px-2 py-1 text-xs font-medium text-gray-400">
+            建議搜尋
+          </p>
           {completions.map((c) => (
             <button
               key={c}
@@ -78,7 +80,9 @@ export function SearchSuggestionPanel({
       )}
       {tags.length > 0 && (
         <div className="border-t border-gray-100 p-2">
-          <p className="px-2 py-1 text-xs font-medium text-gray-400">相關標籤</p>
+          <p className="px-2 py-1 text-xs font-medium text-gray-400">
+            相關標籤
+          </p>
           <div className="flex flex-wrap gap-1 px-2">
             {tags.map((tag) => (
               <button
