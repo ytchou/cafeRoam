@@ -3,8 +3,8 @@ import time
 from dataclasses import dataclass
 from typing import Any, cast
 
-from pydantic import BaseModel
 import structlog
+from pydantic import BaseModel
 from supabase import Client
 
 from core.config import settings
@@ -346,10 +346,11 @@ class SearchService:
 
         completions = [c for c in _CURATED_COMPLETIONS if q in c][:5]
 
+        q_escaped = q.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
         rows = (
             self._db.table("taxonomy_tags")
             .select("id, label_zh")
-            .ilike("label_zh", f"%{q}%")
+            .ilike("label_zh", f"%{q_escaped}%")
             .limit(8)
             .execute()
             .data

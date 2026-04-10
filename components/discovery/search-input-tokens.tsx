@@ -30,7 +30,8 @@ export function SearchInputTokens({
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === 'Backspace' && !value && tokens.length > 0) {
-      onTokenRemove(tokens[tokens.length - 1].id);
+      const lastTokenId = tokens.at(-1)?.id;
+      if (lastTokenId) onTokenRemove(lastTokenId);
     }
   }
 
