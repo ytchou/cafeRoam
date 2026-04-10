@@ -2,7 +2,7 @@ from datetime import datetime
 from enum import StrEnum
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from pydantic.alias_generators import to_camel
 
 TaxonomyDimension = Literal["functionality", "time", "ambience", "mode", "coffee"]
@@ -124,6 +124,31 @@ class ProfileUpdateRequest(CamelModel):
                 "Avatar URL must point to the project's Supabase Storage avatars bucket"
             )
         return v
+
+
+# --- DEV-297: cold-start preference onboarding ---
+
+
+class PreferenceOnboardingRequest(CamelModel):
+    """Client payload for POST /profile/preferences.
+
+    All fields optional — only those present are updated (partial update
+    via model_fields_set). Unknown vibe slugs are validated against
+    vibe_collections in the service layer, not here.
+    """
+
+    preferred_modes: list[Literal["work", "rest", "social"]] | None = None
+    preferred_vibes: list[str] | None = None
+    onboarding_note: str | None = Field(default=None, max_length=280)
+
+
+class PreferenceOnboardingStatus(CamelModel):
+    """Response for GET /profile/preferences/status and POST endpoints."""
+
+    should_prompt: bool
+    preferred_modes: list[str] | None
+    preferred_vibes: list[str] | None
+    onboarding_note: str | None
 
 
 class StampWithShop(CamelModel):
