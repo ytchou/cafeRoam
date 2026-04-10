@@ -2,7 +2,13 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from models.types import EnrichmentResult, JobStatus, ReviewSummaryResult, ReviewTopic, ShopModeScores
+from models.types import (
+    EnrichmentResult,
+    JobStatus,
+    ReviewSummaryResult,
+    ReviewTopic,
+    ShopModeScores,
+)
 from workers.handlers.enrich_shop import handle_enrich_shop
 from workers.handlers.generate_embedding import handle_generate_embedding
 from workers.handlers.summarize_reviews import handle_summarize_reviews

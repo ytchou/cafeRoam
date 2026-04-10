@@ -5,7 +5,7 @@ import structlog
 from supabase import Client
 
 from core.lang import is_zh_dominant
-from models.types import CHECKIN_MIN_TEXT_LENGTH, MAX_COMMUNITY_TEXTS, JobType, ReviewSummaryResult
+from models.types import CHECKIN_MIN_TEXT_LENGTH, MAX_COMMUNITY_TEXTS, JobType
 from providers.llm.interface import LLMProvider
 from workers.job_guard import check_job_still_claimed
 from workers.job_log import log_job_event
