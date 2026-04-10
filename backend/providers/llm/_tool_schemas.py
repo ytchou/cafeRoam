@@ -4,6 +4,7 @@ Each schema uses Anthropic's envelope ({name, description, input_schema}) as the
 canonical form. The OpenAI adapter rewraps these at call time into its
 function_calling envelope ({type: "function", function: {name, description, parameters}}).
 """
+
 from core.tarot_vocabulary import TAROT_TITLES
 
 CLASSIFY_SHOP_SCHEMA: dict = {

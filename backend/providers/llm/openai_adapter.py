@@ -3,6 +3,7 @@
 Tool schemas use Anthropic's envelope (name, description, input_schema) as canonical form.
 This adapter rewraps them into OpenAI's function_calling envelope at call time.
 """
+
 import json
 
 from core.tarot_vocabulary import TAROT_TITLES, TITLE_TO_TAGS
@@ -151,6 +152,7 @@ class OpenAILLMAdapter:
         taxonomy: list[TaxonomyTag],
     ) -> None:
         from openai import AsyncOpenAI
+
         self._client = AsyncOpenAI(api_key=api_key)
         self._model = model
         self._classify_model = classify_model
@@ -233,7 +235,7 @@ class OpenAILLMAdapter:
         return PhotoCategory(payload["category"])
 
     async def summarize_reviews(self, texts: list[str]) -> str:
-        numbered = "\n".join(f"[{i+1}] {t}" for i, t in enumerate(texts))
+        numbered = "\n".join(f"[{i + 1}] {t}" for i, t in enumerate(texts))
         messages = [
             {"role": "system", "content": SUMMARIZE_REVIEWS_SYSTEM_PROMPT},
             {"role": "user", "content": numbered},

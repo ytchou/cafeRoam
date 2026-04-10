@@ -1,4 +1,5 @@
 """Smoke test for the eval script: verify it can compute pass/fail gates from a fake result set."""
+
 from scripts.eval_openai_routing import EvalResult, evaluate_hard_gates
 
 

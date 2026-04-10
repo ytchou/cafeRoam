@@ -3,6 +3,7 @@
 Mocks are at the AsyncOpenAI SDK boundary only. All 5 protocol methods are covered,
 plus error paths (missing tool_call, malformed JSON arguments, title not in whitelist).
 """
+
 import json
 from unittest.mock import AsyncMock, MagicMock
 
@@ -20,8 +21,15 @@ from providers.llm.openai_adapter import OpenAILLMAdapter
 def taxonomy() -> list[TaxonomyTag]:
     return [
         TaxonomyTag(id="quiet", dimension="ambience", label="quiet", label_zh="安靜"),
-        TaxonomyTag(id="laptop_friendly", dimension="functionality", label="laptop friendly", label_zh="筆電友善"),
-        TaxonomyTag(id="wifi_available", dimension="functionality", label="wifi", label_zh="有 Wi-Fi"),
+        TaxonomyTag(
+            id="laptop_friendly",
+            dimension="functionality",
+            label="laptop friendly",
+            label_zh="筆電友善",
+        ),
+        TaxonomyTag(
+            id="wifi_available", dimension="functionality", label="wifi", label_zh="有 Wi-Fi"
+        ),
     ]
 
 
@@ -74,7 +82,10 @@ async def test_enrich_shop_returns_parsed_result_on_happy_path(adapter, enrich_i
         return_value=_openai_tool_call_response(
             "classify_shop",
             {
-                "tags": [{"id": "quiet", "confidence": 0.9}, {"id": "laptop_friendly", "confidence": 0.8}],
+                "tags": [
+                    {"id": "quiet", "confidence": 0.9},
+                    {"id": "laptop_friendly", "confidence": 0.8},
+                ],
                 "summary": "安靜的獨立咖啡店,適合工作與閱讀。",
                 "topReviews": ["好喝", "安靜適合工作"],
                 "mode": "work",
@@ -150,7 +161,8 @@ async def test_extract_menu_data_returns_items(adapter):
     assert call.kwargs["model"] == "gpt-5.4-mini"
     user_content = call.kwargs["messages"][-1]["content"]
     assert any(
-        block.get("type") == "image_url" and block["image_url"]["url"] == "https://cdn.example.com/menu.jpg"
+        block.get("type") == "image_url"
+        and block["image_url"]["url"] == "https://cdn.example.com/menu.jpg"
         for block in user_content
     )
 
@@ -165,11 +177,14 @@ async def test_extract_menu_data_returns_empty_when_no_items(adapter):
     assert result.items == []
 
 
-@pytest.mark.parametrize("category_value,expected", [
-    ("MENU", PhotoCategory.MENU),
-    ("VIBE", PhotoCategory.VIBE),
-    ("SKIP", PhotoCategory.SKIP),
-])
+@pytest.mark.parametrize(
+    "category_value,expected",
+    [
+        ("MENU", PhotoCategory.MENU),
+        ("VIBE", PhotoCategory.VIBE),
+        ("SKIP", PhotoCategory.SKIP),
+    ],
+)
 async def test_classify_photo_returns_enum(adapter, category_value, expected):
     adapter._client = AsyncMock()
     adapter._client.chat.completions.create = AsyncMock(
@@ -217,6 +232,7 @@ async def test_summarize_reviews_returns_empty_on_blank_response(adapter):
 
 async def test_assign_tarot_returns_whitelisted_title(adapter, enrich_input):
     from core.tarot_vocabulary import TAROT_TITLES
+
     valid_title = TAROT_TITLES[0]
     adapter._client = AsyncMock()
     adapter._client.chat.completions.create = AsyncMock(

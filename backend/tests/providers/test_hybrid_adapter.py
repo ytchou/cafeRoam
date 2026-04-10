@@ -1,4 +1,5 @@
 """Tests for HybridLLMAdapter — verifies per-method routing to anthropic vs openai."""
+
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -16,38 +17,46 @@ from providers.llm.hybrid_adapter import HybridLLMAdapter
 @pytest.fixture
 def anthropic_mock():
     mock = MagicMock()
-    mock.enrich_shop = AsyncMock(return_value=EnrichmentResult(
-        tags=[],
-        summary="A quiet specialty cafe in Da'an District.",
-        confidence=0.92,
-    ))
+    mock.enrich_shop = AsyncMock(
+        return_value=EnrichmentResult(
+            tags=[],
+            summary="A quiet specialty cafe in Da'an District.",
+            confidence=0.92,
+        )
+    )
     mock.extract_menu_data = AsyncMock(return_value=MenuExtractionResult(items=[]))
     mock.classify_photo = AsyncMock(return_value=PhotoCategory.VIBE)
     mock.summarize_reviews = AsyncMock(return_value="Great ambiance for focused work.")
-    mock.assign_tarot = AsyncMock(return_value=TarotEnrichmentResult(
-        tarot_title="The Hermit",
-        flavor_text="A sanctuary for solitary thinkers.",
-    ))
+    mock.assign_tarot = AsyncMock(
+        return_value=TarotEnrichmentResult(
+            tarot_title="The Hermit",
+            flavor_text="A sanctuary for solitary thinkers.",
+        )
+    )
     return mock
 
 
 @pytest.fixture
 def openai_mock():
     mock = MagicMock()
-    mock.enrich_shop = AsyncMock(return_value=EnrichmentResult(
-        tags=[],
-        summary="OpenAI enriched.",
-        confidence=0.70,
-    ))
-    mock.extract_menu_data = AsyncMock(return_value=MenuExtractionResult(items=[
-        {"name": "Latte", "price": 150}
-    ]))
+    mock.enrich_shop = AsyncMock(
+        return_value=EnrichmentResult(
+            tags=[],
+            summary="OpenAI enriched.",
+            confidence=0.70,
+        )
+    )
+    mock.extract_menu_data = AsyncMock(
+        return_value=MenuExtractionResult(items=[{"name": "Latte", "price": 150}])
+    )
     mock.classify_photo = AsyncMock(return_value=PhotoCategory.MENU)
     mock.summarize_reviews = AsyncMock(return_value="Decent coffee, friendly staff.")
-    mock.assign_tarot = AsyncMock(return_value=TarotEnrichmentResult(
-        tarot_title="The Star",
-        flavor_text="A beacon of creativity.",
-    ))
+    mock.assign_tarot = AsyncMock(
+        return_value=TarotEnrichmentResult(
+            tarot_title="The Star",
+            flavor_text="A beacon of creativity.",
+        )
+    )
     return mock
 
 

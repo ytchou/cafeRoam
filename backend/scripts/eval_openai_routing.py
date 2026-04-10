@@ -7,6 +7,7 @@ Usage:
     uv run python -m scripts.eval_openai_routing --shops <id1> <id2> ...
     uv run python -m scripts.eval_openai_routing --auto
 """
+
 from __future__ import annotations
 
 import argparse
@@ -91,13 +92,15 @@ async def run_eval(shop_ids: list[str]) -> EvalResult:
 
     if not shop_ids:
         rows = await asyncio.to_thread(
-            lambda: db.table("shops")
-            .select(shop_fields)
-            .not_.is_("enriched_at", "null")
-            .eq("processing_status", "live")
-            .limit(20)
-            .execute()
-            .data
+            lambda: (
+                db.table("shops")
+                .select(shop_fields)
+                .not_.is_("enriched_at", "null")
+                .eq("processing_status", "live")
+                .limit(20)
+                .execute()
+                .data
+            )
         )
         shop_ids = [row["id"] for row in rows]
         prefetched_rows = {row["id"]: row for row in rows}
@@ -128,12 +131,9 @@ async def run_eval(shop_ids: list[str]) -> EvalResult:
             shop = prefetched_rows[sid]
         else:
             shop_row = await asyncio.to_thread(
-                lambda sid=sid: db.table("shops")
-                .select(shop_fields)
-                .eq("id", sid)
-                .limit(1)
-                .execute()
-                .data
+                lambda sid=sid: (
+                    db.table("shops").select(shop_fields).eq("id", sid).limit(1).execute().data
+                )
             )
             if not shop_row:
                 print(f"Warning: shop not found: {shop_id}")
@@ -142,29 +142,31 @@ async def run_eval(shop_ids: list[str]) -> EvalResult:
         print(f"Evaluating {shop['name']}")
 
         reviews_rows = await asyncio.to_thread(
-            lambda sid=sid: db.table("shop_reviews")
-            .select("text")
-            .eq("shop_id", sid)
-            .execute()
-            .data
+            lambda sid=sid: (
+                db.table("shop_reviews").select("text").eq("shop_id", sid).execute().data
+            )
         )
         vibe_photo_rows = await asyncio.to_thread(
-            lambda sid=sid: db.table("shop_photos")
-            .select("url")
-            .eq("shop_id", sid)
-            .eq("category", "VIBE")
-            .limit(3)
-            .execute()
-            .data
+            lambda sid=sid: (
+                db.table("shop_photos")
+                .select("url")
+                .eq("shop_id", sid)
+                .eq("category", "VIBE")
+                .limit(3)
+                .execute()
+                .data
+            )
         )
         menu_photo_rows = await asyncio.to_thread(
-            lambda sid=sid: db.table("shop_photos")
-            .select("url")
-            .eq("shop_id", sid)
-            .eq("category", "MENU")
-            .limit(2)
-            .execute()
-            .data
+            lambda sid=sid: (
+                db.table("shop_photos")
+                .select("url")
+                .eq("shop_id", sid)
+                .eq("category", "MENU")
+                .limit(2)
+                .execute()
+                .data
+            )
         )
 
         reviews = [row["text"] for row in reviews_rows if row.get("text")]
@@ -248,20 +250,14 @@ async def run_eval(shop_ids: list[str]) -> EvalResult:
         report_rows.append(
             {
                 "shop_name": shop["name"],
-                "zh_pass": (
-                    f"{_rate(shop_zh_results):.2f}" if shop_zh_results else "n/a"
-                ),
+                "zh_pass": (f"{_rate(shop_zh_results):.2f}" if shop_zh_results else "n/a"),
                 "photo_agree": (
                     f"{_rate(shop_photo_results):.2f}" if shop_photo_results else "n/a"
                 ),
                 "menu_recall": (
-                    f"{_recall_avg(shop_menu_recalls):.2f}"
-                    if shop_menu_recalls
-                    else "n/a"
+                    f"{_recall_avg(shop_menu_recalls):.2f}" if shop_menu_recalls else "n/a"
                 ),
-                "tarot_ok": (
-                    f"{_rate(shop_tarot_results):.2f}" if shop_tarot_results else "n/a"
-                ),
+                "tarot_ok": (f"{_rate(shop_tarot_results):.2f}" if shop_tarot_results else "n/a"),
             }
         )
 
@@ -273,10 +269,7 @@ async def run_eval(shop_ids: list[str]) -> EvalResult:
     )
 
     report_path = (
-        Path(__file__).parent.parent.parent
-        / "docs"
-        / "evals"
-        / "2026-04-10-openai-routing-eval.md"
+        Path(__file__).parent.parent.parent / "docs" / "evals" / "2026-04-10-openai-routing-eval.md"
     )
     report_path.parent.mkdir(parents=True, exist_ok=True)
     lines = [
@@ -307,9 +300,7 @@ async def run_eval(shop_ids: list[str]) -> EvalResult:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(
-        description="Eval gate for OpenAI hybrid routing (DEV-304)"
-    )
+    parser = argparse.ArgumentParser(description="Eval gate for OpenAI hybrid routing (DEV-304)")
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument(
         "--shops",

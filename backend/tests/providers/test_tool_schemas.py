@@ -1,4 +1,5 @@
 """Tool schemas are imported by anthropic and openai adapters; these tests lock the shape."""
+
 from providers.llm._tool_schemas import (
     ASSIGN_TAROT_SCHEMA,
     CLASSIFY_PHOTO_SCHEMA,
@@ -21,6 +22,7 @@ def test_extract_menu_schema_expects_items_array():
 
 def test_assign_tarot_schema_enum_matches_tarot_titles():
     from core.tarot_vocabulary import TAROT_TITLES
+
     enum = ASSIGN_TAROT_SCHEMA["input_schema"]["properties"]["tarot_title"]["enum"]
     assert enum == list(TAROT_TITLES)
 

@@ -4,6 +4,7 @@ ADR 2026-02-24) and routes the other four methods to OpenAI.
 
 See docs/decisions/2026-04-10-hybrid-llm-routing.md for full rationale.
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
