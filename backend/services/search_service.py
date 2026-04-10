@@ -102,6 +102,8 @@ class SearchService:
                 return SearchResponse(results=cached.results, cache_hit=True)
 
         # Generate embedding (needed for Tier 2 + full search)
+        if self._embeddings is None:
+            raise ValueError("Embeddings provider is required for semantic search")
         query_embedding = await self._embeddings.embed(normalized)
 
         # Tier 2: semantic similarity
