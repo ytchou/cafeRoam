@@ -121,6 +121,11 @@ export interface Stamp {
   shopName: string | null;
 }
 
+export interface SuggestTag {
+  id: string;
+  label: string;
+}
+
 export interface SearchResult {
   shop: Shop;
   similarityScore: number;

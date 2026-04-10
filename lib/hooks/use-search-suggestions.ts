@@ -1,11 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-
-interface SuggestTag {
-  id: string;
-  label: string;
-}
+import type { SuggestTag } from '@/lib/types';
 
 interface SearchSuggestions {
   completions: string[];

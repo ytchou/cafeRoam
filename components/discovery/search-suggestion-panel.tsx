@@ -1,6 +1,8 @@
 'use client';
 
+import { Search } from 'lucide-react';
 import { useSearchSuggestions } from '@/lib/hooks/use-search-suggestions';
+import type { SuggestTag } from '@/lib/types';
 
 const DEFAULT_PHRASES = [
   '安靜可以工作',
@@ -12,11 +14,6 @@ const DEFAULT_PHRASES = [
   '有插座',
   '不限時',
 ] as const;
-
-interface SuggestTag {
-  id: string;
-  label: string;
-}
 
 interface SearchSuggestionPanelProps {
   query: string;
@@ -41,7 +38,7 @@ export function SearchSuggestionPanel({
             key={phrase}
             type="button"
             onClick={() => onPhraseSelect(phrase)}
-            className="flex-shrink-0 rounded-full border border-white/30 bg-white/20 px-3 py-1.5 text-sm text-white hover:bg-white/30"
+            className="flex-shrink-0 rounded-full border border-white/40 bg-white/30 px-3 py-1.5 text-sm text-white hover:bg-white/40"
           >
             {phrase}
           </button>
@@ -50,7 +47,7 @@ export function SearchSuggestionPanel({
           <button
             type="button"
             onClick={onNearMe}
-            className="flex-shrink-0 rounded-full border border-white/30 bg-white/20 px-3 py-1.5 text-sm text-white hover:bg-white/30"
+            className="flex-shrink-0 rounded-full border border-white/40 bg-white/30 px-3 py-1.5 text-sm text-white hover:bg-white/40"
           >
             附近的咖啡廳
           </button>
@@ -73,7 +70,7 @@ export function SearchSuggestionPanel({
               onClick={() => onPhraseSelect(c)}
               className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
             >
-              <span className="text-gray-400">🔍</span>
+              <Search size={14} className="text-gray-400" />
               {c}
             </button>
           ))}
