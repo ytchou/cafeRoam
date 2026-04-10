@@ -50,6 +50,12 @@ async def handle_generate_embedding(
     should_advance = shop.get("processing_status") in {"embedding", "enriched"}
 
     try:
+        if job_id is not None:
+            log_job_event(
+                db, job_id, "info", "job.start",
+                job_type="generate_embedding", shop_id=str(shop_id),
+            )
+
         # Load menu items if available
         menu_response = (
             db.table("shop_menu_items").select("item_name").eq("shop_id", shop_id).execute()
@@ -91,6 +97,9 @@ async def handle_generate_embedding(
             )
 
         # Generate embedding
+        if job_id is not None:
+            log_job_event(db, job_id, "info", "llm.call", provider="openai", method="embed")
+
         embedding = await embeddings.embed(text)
 
         update_data: dict[str, Any] = {
@@ -105,6 +114,11 @@ async def handle_generate_embedding(
             return
 
         db.table("shops").update(update_data).eq("id", shop_id).execute()
+        if job_id is not None:
+            log_job_event(
+                db, job_id, "info", "db.write",
+                table="shops", columns=["embedding", "last_embedded_at"],
+            )
 
         logger.info(
             "Embedding generated",
@@ -127,7 +141,12 @@ async def handle_generate_embedding(
                 priority=5,
             )
 
+        if job_id is not None:
+            log_job_event(db, job_id, "info", "job.end", status="ok")
+
     except Exception as exc:
+        if job_id is not None:
+            log_job_event(db, job_id, "error", "job.error", error=str(exc))
         if should_advance:
             db.table("shops").update(
                 {

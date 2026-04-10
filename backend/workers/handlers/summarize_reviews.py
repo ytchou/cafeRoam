@@ -31,70 +31,94 @@ async def handle_summarize_reviews(
     shop_id = payload["shop_id"]
     logger.info("Summarizing reviews", shop_id=shop_id)
 
-    # Fetch ranked check-in texts (same RPC used by generate_embedding)
-    response = db.rpc(
-        "get_ranked_checkin_texts",
-        {
-            "p_shop_id": shop_id,
-            "p_min_length": CHECKIN_MIN_TEXT_LENGTH,
-            "p_limit": MAX_COMMUNITY_TEXTS,
-        },
-    ).execute()
-
-    rows = cast("list[dict[str, Any]]", response.data or [])
-    texts = [row["text"] for row in rows if row.get("text")]
-
-    if not texts:
-        logger.info("No qualifying review texts — skipping summarization", shop_id=shop_id)
-        await queue.enqueue(
-            job_type=JobType.GENERATE_EMBEDDING,
-            payload={"shop_id": shop_id},
-            priority=2,
+    if job_id is not None:
+        log_job_event(
+            db, job_id, "info", "job.start",
+            job_type="summarize_reviews", shop_id=str(shop_id),
         )
-        return
 
-    # Generate community summary via Claude Haiku
-    summary = await llm.summarize_reviews(texts)
+    try:
+        # Fetch ranked check-in texts (same RPC used by generate_embedding)
+        response = db.rpc(
+            "get_ranked_checkin_texts",
+            {
+                "p_shop_id": shop_id,
+                "p_min_length": CHECKIN_MIN_TEXT_LENGTH,
+                "p_limit": MAX_COMMUNITY_TEXTS,
+            },
+        ).execute()
 
-    if not summary:
-        logger.warning("LLM returned empty summary — skipping DB write", shop_id=shop_id)
-        await queue.enqueue(
-            job_type=JobType.GENERATE_EMBEDDING,
-            payload={"shop_id": shop_id},
-            priority=2,
-        )
-        return
+        rows = cast("list[dict[str, Any]]", response.data or [])
+        texts = [row["text"] for row in rows if row.get("text")]
 
-    if not is_zh_dominant(summary):
-        logger.warning(
-            "Community summary is not zh-TW dominant — skipping DB write",
+        if not texts:
+            logger.info("No qualifying review texts — skipping summarization", shop_id=shop_id)
+            await queue.enqueue(
+                job_type=JobType.GENERATE_EMBEDDING,
+                payload={"shop_id": shop_id},
+                priority=2,
+            )
+            return
+
+        # Generate community summary via Claude Haiku
+        if job_id is not None:
+            log_job_event(
+                db, job_id, "info", "llm.call", provider="anthropic", method="summarize_reviews"
+            )
+
+        summary = await llm.summarize_reviews(texts)
+
+        if not summary:
+            logger.warning("LLM returned empty summary — skipping DB write", shop_id=shop_id)
+            await queue.enqueue(
+                job_type=JobType.GENERATE_EMBEDDING,
+                payload={"shop_id": shop_id},
+                priority=2,
+            )
+            return
+
+        if not is_zh_dominant(summary):
+            logger.warning(
+                "Community summary is not zh-TW dominant — skipping DB write",
+                shop_id=shop_id,
+                summary_preview=summary[:80],
+            )
+            raise ValueError(f"Community summary for shop {shop_id} is not in Traditional Chinese")
+
+        if job_id is not None and not check_job_still_claimed(db, job_id):
+            log_job_event(db, job_id, "warn", "job.aborted_midflight", shop_id=str(shop_id))
+            return
+
+        # Persist summary to DB
+        db.table("shops").update(
+            {
+                "community_summary": summary,
+                "community_summary_updated_at": datetime.now(UTC).isoformat(),
+            }
+        ).eq("id", shop_id).execute()
+        if job_id is not None:
+            log_job_event(
+                db, job_id, "info", "db.write", table="shops", columns=["community_summary"]
+            )
+
+        logger.info(
+            "Community summary generated",
             shop_id=shop_id,
-            summary_preview=summary[:80],
+            summary_length=len(summary),
+            review_count=len(texts),
         )
-        raise ValueError(f"Community summary for shop {shop_id} is not in Traditional Chinese")
 
-    if job_id is not None and not check_job_still_claimed(db, job_id):
-        log_job_event(db, job_id, "warn", "job.aborted_midflight", shop_id=str(shop_id))
-        return
+        # Chain to embedding generation
+        await queue.enqueue(
+            job_type=JobType.GENERATE_EMBEDDING,
+            payload={"shop_id": shop_id},
+            priority=2,
+        )
 
-    # Persist summary to DB
-    db.table("shops").update(
-        {
-            "community_summary": summary,
-            "community_summary_updated_at": datetime.now(UTC).isoformat(),
-        }
-    ).eq("id", shop_id).execute()
+        if job_id is not None:
+            log_job_event(db, job_id, "info", "job.end", status="ok")
 
-    logger.info(
-        "Community summary generated",
-        shop_id=shop_id,
-        summary_length=len(summary),
-        review_count=len(texts),
-    )
-
-    # Chain to embedding generation
-    await queue.enqueue(
-        job_type=JobType.GENERATE_EMBEDDING,
-        payload={"shop_id": shop_id},
-        priority=2,
-    )
+    except Exception as exc:
+        if job_id is not None:
+            log_job_event(db, job_id, "error", "job.error", error=str(exc))
+        raise
