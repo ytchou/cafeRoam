@@ -5,7 +5,7 @@ from structlog.testing import capture_logs
 
 import services.search_service as _ss_module
 from models.types import SearchFilters, SearchQuery
-from services.search_service import SearchService
+from services.search_service import SearchService, SuggestResponse
 from tests.factories import make_shop_row
 
 
@@ -633,7 +633,6 @@ class TestOpeningHoursCoercion:
 
 
 # --- suggest() tests (DEV-314) ---
-from services.search_service import SuggestResponse  # may already be imported
 
 
 @pytest.fixture
