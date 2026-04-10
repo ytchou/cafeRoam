@@ -14,6 +14,9 @@ class Settings(BaseSettings):
     anthropic_api_key: str = ""
     anthropic_model: str = "claude-sonnet-4-6"
     anthropic_classify_model: str = "claude-haiku-4-5-20251001"
+    openai_llm_model: str = "gpt-5.4"
+    openai_llm_classify_model: str = "gpt-5.4-mini"
+    openai_llm_nano_model: str = "gpt-5.4-nano"
 
     # Embeddings
     embeddings_provider: str = "openai"
