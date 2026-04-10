@@ -37,6 +37,8 @@ export function JobLogsPanel({ jobId, pollInterval = 3000 }: Props) {
   useEffect(() => {
     if (terminalRef.current) return;
 
+    const controller = new AbortController();
+
     const fetchLogs = async () => {
       if (terminalRef.current) return;
       const params = new URLSearchParams();
@@ -44,7 +46,7 @@ export function JobLogsPanel({ jobId, pollInterval = 3000 }: Props) {
       const qs = params.size ? `?${params}` : '';
       const url = `/api/admin/pipeline/jobs/${jobId}/logs${qs}`;
       try {
-        const res = await fetch(url);
+        const res = await fetch(url, { signal: controller.signal });
         if (!res.ok) return;
         const data = await res.json();
         if (data.logs?.length) {
@@ -64,6 +66,7 @@ export function JobLogsPanel({ jobId, pollInterval = 3000 }: Props) {
     intervalRef.current = setInterval(fetchLogs, pollInterval);
 
     return () => {
+      controller.abort();
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
   }, [jobId, pollInterval]);
