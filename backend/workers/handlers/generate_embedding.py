@@ -147,7 +147,7 @@ async def handle_generate_embedding(
     except Exception as exc:
         if job_id is not None:
             log_job_event(db, job_id, "error", "job.error", error=str(exc))
-        if should_advance:
+        if should_advance and (job_id is None or check_job_still_claimed(db, job_id)):
             db.table("shops").update(
                 {
                     "processing_status": "failed",
