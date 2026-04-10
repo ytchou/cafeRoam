@@ -129,7 +129,7 @@ describe('AdminJobsPage', () => {
     );
   });
 
-  it('asks for confirmation and cancels a pending job when the admin clicks Cancel', async () => {
+  it('asks for confirmation and force-fails a pending job when the admin clicks Force fail', async () => {
     const jobsResponse = makeJobsResponse([
       {
         id: 'job-cancel-001',
@@ -166,22 +166,23 @@ describe('AdminJobsPage', () => {
       expect(within(tbody).getByText('scrape_shop')).toBeInTheDocument();
     });
 
-    // Click Cancel — opens confirmation dialog
-    const cancelButton = screen.getByRole('button', { name: /cancel/i });
+    // Click Force fail — opens confirmation dialog
+    const cancelButton = screen.getByRole('button', { name: /force fail/i });
     await user.click(cancelButton);
 
     // Confirm in alertdialog
     const dialog = await screen.findByRole('alertdialog');
-    await user.click(
-      within(dialog).getByRole('button', { name: /cancel job/i })
-    );
+    const forceFailButtons = within(dialog).getAllByRole('button', { name: /force fail/i });
+    await user.click(forceFailButtons[forceFailButtons.length - 1]);
 
     await waitFor(() => {
       expect(mockFetch).toHaveBeenCalledWith(
         '/api/admin/pipeline/jobs/job-cancel-001/cancel',
         expect.objectContaining({
           method: 'POST',
-          headers: { Authorization: `Bearer ${testSession.access_token}` },
+          headers: expect.objectContaining({
+            Authorization: `Bearer ${testSession.access_token}`,
+          }),
         })
       );
     });
