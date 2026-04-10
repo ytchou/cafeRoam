@@ -24,7 +24,9 @@ class TestSummarizeReviewsHandler:
         shops_table = MagicMock()
         shops_table.update.return_value.eq.return_value.execute.return_value = MagicMock(data=[])
 
-        db.table.side_effect = lambda name: shop_reviews_table if name == "shop_reviews" else shops_table
+        db.table.side_effect = lambda name: (
+            shop_reviews_table if name == "shop_reviews" else shops_table
+        )
         db._shops_table = shops_table
 
         # RPC: get_ranked_checkin_texts
@@ -52,6 +54,7 @@ class TestSummarizeReviewsHandler:
         queue.get_status.return_value = "claimed"
 
         from workers.handlers.summarize_reviews import handle_summarize_reviews
+
         await handle_summarize_reviews({"shop_id": "shop-1"}, db, llm, queue, "job-1")
 
         llm.summarize_reviews.assert_called_once_with(
@@ -74,6 +77,7 @@ class TestSummarizeReviewsHandler:
         queue.get_status.return_value = "claimed"
 
         from workers.handlers.summarize_reviews import handle_summarize_reviews
+
         await handle_summarize_reviews({"shop_id": "shop-1"}, db, llm, queue, "job-1")
 
         update_payload = db._shops_table.update.call_args[0][0]
@@ -94,6 +98,7 @@ class TestSummarizeReviewsHandler:
         queue = AsyncMock()
 
         from workers.handlers.summarize_reviews import handle_summarize_reviews
+
         await handle_summarize_reviews({"shop_id": "shop-1"}, db, llm, queue, "job-1")
 
         llm.summarize_reviews.assert_not_called()
@@ -115,6 +120,7 @@ class TestSummarizeReviewsHandler:
         queue.get_status.return_value = "claimed"
 
         from workers.handlers.summarize_reviews import handle_summarize_reviews
+
         await handle_summarize_reviews({"shop_id": "shop-1"}, db, llm, queue, "job-1")
 
         llm.summarize_reviews.assert_called_once_with(
@@ -134,6 +140,7 @@ class TestSummarizeReviewsHandler:
 
         with pytest.raises(RuntimeError, match="LLM API error"):
             from workers.handlers.summarize_reviews import handle_summarize_reviews
+
             await handle_summarize_reviews({"shop_id": "shop-1"}, db, llm, queue, "job-1")
 
         queue.enqueue.assert_not_called()
@@ -154,6 +161,7 @@ class TestSummarizeReviewsHandler:
 
         with pytest.raises(ValueError):
             from workers.handlers.summarize_reviews import handle_summarize_reviews
+
             await handle_summarize_reviews({"shop_id": "shop-1"}, db, llm, queue, "job-1")
 
         db._shops_table.update.assert_not_called()
@@ -169,6 +177,7 @@ class TestSummarizeReviewsHandler:
         queue = AsyncMock()
 
         from workers.handlers.summarize_reviews import handle_summarize_reviews
+
         await handle_summarize_reviews(
             payload={"shop_id": "shop-d4e5f6"},
             db=db,

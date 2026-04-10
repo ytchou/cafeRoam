@@ -594,7 +594,9 @@ class TestEnrichShopPipelineChain:
         shops_table.update.return_value.eq.return_value.execute.return_value = MagicMock(data=[])
 
         shop_tags_table = MagicMock()
-        shop_tags_table.delete.return_value.eq.return_value.execute.return_value = MagicMock(data=[])
+        shop_tags_table.delete.return_value.eq.return_value.execute.return_value = MagicMock(
+            data=[]
+        )
         shop_tags_table.insert.return_value.execute.return_value = MagicMock(data=[])
 
         shop_reviews_table = MagicMock()

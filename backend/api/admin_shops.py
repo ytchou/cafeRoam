@@ -115,7 +115,7 @@ async def list_shops(
             .in_("payload->>shop_id", list(shop_ids))
             .execute()
         )
-        for job in (jobs_result.data or []):
+        for job in jobs_result.data or []:
             sid: str | None = (job.get("payload") or {}).get("shop_id")
             if sid is None or sid not in shop_ids:
                 continue

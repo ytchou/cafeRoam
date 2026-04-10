@@ -364,7 +364,8 @@ export function ShopTable({
                     shop.processing_status}
                   {shop.current_job && (
                     <span className="text-text-tertiary ml-1 text-[11px]">
-                      · {JOB_LABELS[shop.current_job.job_type] ??
+                      ·{' '}
+                      {JOB_LABELS[shop.current_job.job_type] ??
                         shop.current_job.job_type}
                     </span>
                   )}
