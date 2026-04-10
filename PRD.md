@@ -72,7 +72,7 @@ CafeRoam is a mobile-first web directory for Taiwan's independent coffee shop sc
 - **Stamp/collectible** earned per shop checked into
 - **Private user profile page** — tabs for stamps, lists preview (with "View all lists →" CTA), and check-in history
 - **Weekly curated email** — fixed schedule, same content for all users
-- **Data pipeline** — Cafe Nomad import + Google Maps scraping via Apify + Claude Haiku enrichment → taxonomy tags + OpenAI embeddings
+- **Data pipeline** — Google Maps scraping via Apify + hybrid LLM enrichment (Claude Sonnet 4.6 for taxonomy tagging via `enrich_shop`, GPT-5.4-mini for vision + summarization, GPT-5.4-nano for tarot assignment) → taxonomy tags + OpenAI embeddings
 - **Taxonomy system** — canonical tag database powering both filter UI and search ranking
 - **Mobile-first responsive web** — shareable URLs for Threads
 - **Shop data reports** — "回報錯誤" button on shop pages; any user can flag incorrect data (hours, wifi, name, other) with a free-text description; reports batched daily into Linear for ops triage
@@ -122,7 +122,7 @@ These will NOT be built in V1. Any scope change requires an explicit decision an
 | Sponsored | NT$500-1,000/mo | Featured in search results, highlighted in directory _(Phase 3, details: DEV-35)_ |
 | Premium   | NT$300-1,000/mo | Full analytics, menu management, event posts _(Phase 3, details: DEV-35)_         |
 
-**Cost structure (rough):** Railway ~$5/mo, Supabase Free → Pro $25/mo, Apify ~$10-30/mo (scraping), Claude Haiku ~$5-20/mo (enrichment), OpenAI embeddings ~$2-5/mo. Total: ~NT$1,500-2,400/month at launch.
+**Cost structure (rough):** Railway ~$5/mo, Supabase Free → Pro $25/mo, Apify ~$10-30/mo (scraping), hybrid LLM enrichment ~$3-12/mo (Claude Sonnet 4.6 for taxonomy tagging + OpenAI GPT-5.4-mini/nano for 4 other methods — ~40-60% cost reduction vs. single-provider), OpenAI embeddings ~$2-5/mo. Total: ~NT$1,200-2,000/month at launch.
 
 **Unit economics:** CAC ~$0 (organic Threads). Break-even: ~25-40 paid members. Lifestyle ceiling: NT$50,000-100,000/month (from ASSUMPTIONS.md). LTV unknown until retention proven.
 

@@ -1,0 +1,108 @@
+{
+  "findings": [
+    {
+      "severity": "Important",
+      "file": "backend/providers/llm/__init__.py",
+      "line": "7-38",
+      "description": ".env.example documents LLM_PROVIDER=openai as a valid option and OPENAI_LLM_MODEL is annotated 'used when LLM_PROVIDER=openai or hybrid', but the factory match statement only has 'anthropic' and 'hybrid' cases. Setting LLM_PROVIDER=openai raises 'Unknown LLM provider: openai'. Either add an 'openai' case that returns a standalone OpenAILLMAdapter or remove 'openai' from the documented options in .env.example.",
+      "flagged_by": "Bug Hunter, Standards",
+      "status": "resolved"
+    },
+    {
+      "severity": "Important",
+      "file": "backend/tests/providers/test_openai_adapter.py",
+      "line": "135-147",
+      "description": "test_extract_menu_data_returns_items mocks the OpenAI tool_call with items using key 'item_name', but EXTRACT_MENU_SCHEMA (_tool_schemas.py:80-87) declares the required key as 'name'. The adapter passes payload.get('items', []) through unchanged, so the test passes against an incorrect shape. This locks in a silent divergence: a real API response matching the schema ('name') would fail the test assertion at line 146, and a response matching the test ('item_name') would violate the declared tool schema. Fix the mock to use 'name' (and any consumer code that expects 'name').",
+      "flagged_by": "Test Philosophy",
+      "status": "resolved"
+    },
+    {
+      "severity": "Important",
+      "file": "backend/providers/llm/openai_adapter.py",
+      "line": "203-207",
+      "description": "classify_photo prompt omits the 'If both MENU and VIBE apply, choose MENU' disambiguation rule that anthropic_adapter.py:251 includes. The eval gate measures classify_photo_agreement between the two providers; by construction a missing tie-breaker rule guarantees disagreement on menu+vibe edge cases and will depress the metric. Share the full prompt text between adapters (hoist to a module-level constant or use the SYSTEM_PROMPT pattern).",
+      "flagged_by": "Architecture & Design",
+      "status": "resolved"
+    },
+    {
+      "severity": "Important",
+      "file": "backend/scripts/eval_openai_routing.py",
+      "line": "89-162",
+      "description": "N+1 DB query pattern: the --auto branch already fetches the full shop rows with the same shop_fields list at lines 89-98, but the main loop at line 121 immediately re-queries each shop individually via db.table('shops').select(shop_fields).eq('id', sid).limit(1). Violates CLAUDE.md Performance Standards ('No N+1 queries — use JOINs or IN()') and 'batch calls at end, not per-item'. Reuse the rows already in memory when shop_ids came from --auto, or batch-fetch with .in_('id', shop_ids) once.",
+      "flagged_by": "Architecture & Design",
+      "status": "resolved"
+    },
+    {
+      "severity": "Minor",
+      "file": "backend/providers/llm/openai_adapter.py",
+      "line": "62-69, 154",
+      "description": "_build_enrich_messages declares parameters menu_vocab_ref and specialty_vocab_ref but never uses them — the function imports _MENU_VOCAB_REF / _SPECIALTY_VOCAB_REF directly from providers.llm.anthropic_adapter inside the function body. Call site in enrich_shop passes empty strings for both. Drop the dead parameters and hoist the import to module scope.",
+      "flagged_by": "Standards & Conventions",
+      "status": "resolved"
+    },
+    {
+      "severity": "Minor",
+      "file": "backend/providers/llm/openai_adapter.py",
+      "line": "233",
+      "description": "assign_tarot imports TAROT_TITLES, TITLE_TO_TAGS from core.tarot_vocabulary inside the function body on every invocation. CLAUDE.md Performance Standards says 'Hoist regex compile, JSON/date parsing, and DB/API calls out of any loop' — the spirit applies to repeated imports in hot paths. Move to module-level import (or justify with a circular-import comment).",
+      "flagged_by": "Standards & Conventions",
+      "status": "resolved"
+    },
+    {
+      "severity": "Minor",
+      "file": "backend/providers/llm/openai_adapter.py",
+      "line": "96-106",
+      "description": "_build_enrich_messages is missing the vocabulary normalization 'Instruction' block that anthropic_adapter._build_enrich_prompt appends (anthropic_adapter.py:353-360) — the explicit 'use Traditional Chinese names exactly as they appear in the reference list' directive. Currently latent because HybridLLMAdapter routes enrich_shop to Anthropic, but .env.example already documents LLM_PROVIDER=openai as a future option, so this will silently produce degraded vocab alignment once that path exists.",
+      "flagged_by": "Architecture & Design",
+      "status": "resolved"
+    },
+    {
+      "severity": "Minor",
+      "file": "backend/providers/llm/openai_adapter.py",
+      "line": "160, 189, 213, 227, 253",
+      "description": "All OpenAI ChatCompletion calls use max_completion_tokens unconditionally. The design doc (docs/designs/2026-04-10-hybrid-llm-routing-design.md, Tool-Use Translation table row 6) explicitly notes max_completion_tokens is reasoning-model-only — non-reasoning GPT models may need max_tokens. Worth a comment explaining the choice, or guard with a model-capability check, so future model changes don't silently fail.",
+      "flagged_by": "Architecture & Design",
+      "status": "resolved"
+    },
+    {
+      "severity": "Minor",
+      "file": "backend/models/types.py",
+      "line": "400",
+      "description": "socket: str | None widened to str | bool | None without a corresponding test or plan-doc mention. Scope creep on a PR whose stated goal is 'Hybrid LLM routing implementation'. If the change was triggered by real scraper data, document it in the PR description or move to a separate commit/ticket.",
+      "flagged_by": "Plan Alignment",
+      "status": "resolved"
+    }
+  ],
+  "active_agents": [],
+  "skipped": [
+    {
+      "file": "backend/providers/llm/hybrid_adapter.py",
+      "line": "7-25",
+      "reason": "TYPE_CHECKING-guarded imports are safe here because 'from __future__ import annotations' is set — runtime annotations are strings."
+    },
+    {
+      "file": "backend/tests/providers/test_factories.py",
+      "line": "42-50",
+      "reason": "test_llm_factory_returns_anthropic not setting mock.anthropic_classify_model is pre-existing test style and not touched by this PR."
+    },
+    {
+      "file": "backend/providers/llm/openai_adapter.py",
+      "line": "219",
+      "reason": "summarize_reviews 0-indexed enumerate with i+1 offset vs Anthropic's enumerate(texts, 1) — both produce 1-indexed output; cosmetic difference only."
+    },
+    {
+      "file": "backend/tests/providers/test_openai_adapter.py",
+      "line": "1-249",
+      "reason": "Missing @pytest.mark.asyncio decorators — backend uses asyncio_mode=auto in pyproject.toml, so bare async tests are picked up automatically."
+    }
+  ],
+  "head_sha": "5e357715f2b2594e53f1db013a02d78b8e2f0dbc",
+  "review_log_path": "docs/reviews/2026-04-10-ytchou-dev-304-hybrid-llm-routing.md",
+  "codex_status": "Adversarial Review (Codex): failed — skill 'codex:adversarial-review' unavailable in this environment",
+  "fix_pass_1_sha": "112ee62",
+  "reverify_pass_1": {
+    "resolved": 9,
+    "new_issues": 0,
+    "verdict": "ALL_CLEAR"
+  }
+}

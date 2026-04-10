@@ -161,3 +161,20 @@ class TestProviderFactories:
 
             adapter = get_analytics_provider()
         assert isinstance(adapter, NullAnalyticsAdapter)
+
+
+def test_get_llm_provider_returns_hybrid_adapter(monkeypatch):
+    from core import config as config_module
+    from providers.llm import get_llm_provider
+    from providers.llm.anthropic_adapter import AnthropicLLMAdapter
+    from providers.llm.hybrid_adapter import HybridLLMAdapter
+    from providers.llm.openai_adapter import OpenAILLMAdapter
+
+    monkeypatch.setattr(config_module.settings, "llm_provider", "hybrid")
+    monkeypatch.setattr(config_module.settings, "anthropic_api_key", "sk-ant-test")
+    monkeypatch.setattr(config_module.settings, "openai_api_key", "sk-test")
+
+    provider = get_llm_provider(taxonomy=[])
+    assert isinstance(provider, HybridLLMAdapter)
+    assert isinstance(provider._anthropic, AnthropicLLMAdapter)
+    assert isinstance(provider._openai, OpenAILLMAdapter)
