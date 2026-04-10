@@ -303,11 +303,7 @@ class AnthropicLLMAdapter:
             tools=[SUMMARIZE_REVIEWS_TOOL_SCHEMA],
             tool_choice={"type": "tool", "name": "summarize_reviews"},
         )
-        tool_input = next(
-            block.input
-            for block in response.content
-            if block.type == "tool_use" and block.name == "summarize_reviews"
-        )
+        tool_input = self._extract_tool_input(response, "summarize_reviews")
         return ReviewSummaryResult(
             summary_zh_tw=tool_input["summary_zh_tw"],
             review_topics=[

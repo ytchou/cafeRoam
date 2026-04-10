@@ -65,7 +65,7 @@ ALTER TABLE shops ADD COLUMN review_topics JSONB;
 
 ### Admin Dashboard
 
-Show active job type alongside `processing_status` in the admin shops table via a LEFT JOIN on `job_queue`. No new DB status values needed.
+Show active job type alongside `processing_status` in the admin shops table. Implementation uses a two-query merge: fetch the current page of shops, then query `job_queue` filtered by `status IN ('pending','claimed')` and `payload->>'shop_id' IN (current-page IDs)`, then merge in Python. No new DB status values needed.
 
 ```
 Before: "Enriching"

@@ -105,13 +105,14 @@ async def list_shops(
     query = query.order("created_at", desc=True).range(offset, offset + limit - 1)
     response = query.execute()
 
-    shop_ids = [s["id"] for s in (response.data or [])]
+    shop_ids = {s["id"] for s in (response.data or [])}
     active_jobs: dict[str, dict] = {}
     if shop_ids:
         jobs_result = (
             db.table("job_queue")
             .select("job_type, status, payload")
             .in_("status", ["pending", "claimed"])
+            .in_("payload->>shop_id", list(shop_ids))
             .execute()
         )
         for job in (jobs_result.data or []):

@@ -41,12 +41,19 @@ async def handle_summarize_reviews(
             shop_id=str(shop_id),
         )
 
-        reviews_result = db.table("shop_reviews").select("text").eq("shop_id", shop_id).execute()
+        reviews_result = (
+            db.table("shop_reviews")
+            .select("text")
+            .eq("shop_id", shop_id)
+            .order("created_at", desc=True)
+            .limit(MAX_GOOGLE_REVIEWS)
+            .execute()
+        )
         google_reviews = [
             row["text"]
             for row in cast("list[dict[str, Any]]", reviews_result.data or [])
             if row.get("text")
-        ][:MAX_GOOGLE_REVIEWS]
+        ]
 
         # Fetch ranked check-in texts (same RPC used by generate_embedding)
         response = db.rpc(

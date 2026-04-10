@@ -51,11 +51,13 @@ async def main(dry_run: bool, queue: JobQueue | None = None) -> None:
         return
 
     # Deduplicate: skip shops that already have a pending or claimed SUMMARIZE_REVIEWS job
+    batch_shop_ids = [r["id"] for r in rows]
     existing = (
         db.table("job_queue")
         .select("payload")
         .eq("job_type", JobType.SUMMARIZE_REVIEWS.value)
         .in_("status", [JobStatus.PENDING.value, JobStatus.CLAIMED.value])
+        .in_("payload->>shop_id", batch_shop_ids)
         .execute()
         .data
         or []
