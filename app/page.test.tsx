@@ -183,9 +183,12 @@ describe('HomePage (unified)', () => {
         error: null,
       });
       renderHome();
-      const input = screen.getAllByRole('textbox')[0]!;
-      fireEvent.change(input, { target: { value: '星巴克' } });
-      fireEvent.submit(screen.getAllByRole('search')[0]!);
+      const [input] = screen.getAllByRole('textbox');
+      const [searchForm] = screen.getAllByRole('search');
+      expect(input).toBeDefined();
+      expect(searchForm).toBeDefined();
+      fireEvent.change(input!, { target: { value: '星巴克' } });
+      fireEvent.submit(searchForm!);
       await waitFor(() => {
         expect(localStorage.getItem('caferoam_free_search_used')).toBeNull();
       });
@@ -229,9 +232,12 @@ describe('HomePage (unified)', () => {
         error: null,
       });
       renderHome();
-      const input = screen.getAllByRole('textbox')[0]!;
-      fireEvent.change(input, { target: { value: '有插座的咖啡廳' } });
-      fireEvent.submit(screen.getAllByRole('search')[0]!);
+      const [input] = screen.getAllByRole('textbox');
+      const [searchForm] = screen.getAllByRole('search');
+      expect(input).toBeDefined();
+      expect(searchForm).toBeDefined();
+      fireEvent.change(input!, { target: { value: '有插座的咖啡廳' } });
+      fireEvent.submit(searchForm!);
       await waitFor(() => {
         expect(mockPush).not.toHaveBeenCalledWith(
           expect.stringContaining('/login')
