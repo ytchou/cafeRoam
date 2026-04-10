@@ -1,10 +1,6 @@
 'use client';
-import { useMemo, Suspense } from 'react';
+import { Suspense } from 'react';
 import { Locate } from 'lucide-react';
-import { SearchBar } from '@/components/filters/search-bar';
-import { FilterTag } from '@/components/filters/filter-tag';
-import { QUICK_FILTERS } from '@/components/filters/quick-filters';
-import { CountHeader } from '@/components/discovery/count-header';
 import { ShopCarousel } from '@/components/map/shop-carousel';
 import { FilterSheet } from '@/components/filters/filter-sheet';
 import { BottomNav } from '@/components/navigation/bottom-nav';
@@ -29,6 +25,7 @@ interface MapMobileLayoutProps {
   onFilterApply: (filters: string[]) => void;
   onLocationRequest?: () => void;
   onCardClick?: (id: string) => void;
+  onFilterClick?: () => void;
   onBoundsChange?: (bounds: MapBounds) => void;
 }
 
@@ -49,13 +46,9 @@ export function MapMobileLayout({
   onFilterApply,
   onLocationRequest,
   onCardClick,
+  onFilterClick,
   onBoundsChange,
 }: MapMobileLayoutProps) {
-  const activeFilterSet = useMemo(
-    () => new Set(activeFilters),
-    [activeFilters]
-  );
-
   return (
     <div className="relative h-screen w-full overflow-hidden">
       <div className="absolute inset-0">
@@ -75,25 +68,14 @@ export function MapMobileLayout({
         </Suspense>
       </div>
 
-      <div className="absolute top-4 right-4 left-4 z-20 flex flex-col gap-2">
-        <SearchBar
-          onSearch={onSearch}
-          onFilterClick={onFilterOpen}
-          defaultQuery={query}
-        />
-        <div className="scrollbar-none flex gap-2 overflow-x-auto pl-1">
-          {QUICK_FILTERS.map((f) => (
-            <FilterTag
-              key={f.id}
-              label={f.label}
-              dot={f.dot}
-              active={activeFilterSet.has(f.id)}
-              onClick={() => onFilterToggle(f.id)}
-            />
-          ))}
-        </div>
-        <CountHeader count={count} view={view} onViewChange={onViewChange} />
-      </div>
+      <button
+        type="button"
+        aria-label="篩選"
+        onClick={onFilterClick}
+        className="absolute top-4 right-4 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-white text-[var(--text-secondary)] shadow-lg"
+      >
+        ≡
+      </button>
 
       {onLocationRequest && (
         <button
