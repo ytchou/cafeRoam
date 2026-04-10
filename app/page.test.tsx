@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { act, render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Suspense } from 'react';
 import HomePage from './page';
@@ -73,8 +73,38 @@ function renderHome() {
   );
 }
 
+class MockIntersectionObserver {
+  callback: IntersectionObserverCallback;
+  observe = vi.fn();
+  disconnect = vi.fn();
+  unobserve = vi.fn();
+  constructor(cb: IntersectionObserverCallback) {
+    this.callback = cb;
+  }
+  trigger(isIntersecting: boolean) {
+    this.callback(
+      [
+        {
+          isIntersecting,
+          target: document.createElement('div'),
+        } as IntersectionObserverEntry,
+      ],
+      this as unknown as IntersectionObserver,
+    );
+  }
+}
+
 describe('HomePage (unified)', () => {
   beforeEach(() => {
+    vi.stubGlobal(
+      'IntersectionObserver',
+      class {
+        observe = vi.fn();
+        disconnect = vi.fn();
+        unobserve = vi.fn();
+        constructor(_cb: IntersectionObserverCallback) {}
+      },
+    );
     mockUseUser.mockReturnValue({ user: null, isLoading: false });
     mockUseSearch.mockReturnValue({
       results: [],
@@ -153,9 +183,9 @@ describe('HomePage (unified)', () => {
         error: null,
       });
       renderHome();
-      const input = screen.getByRole('textbox');
+      const input = screen.getAllByRole('textbox')[0]!;
       fireEvent.change(input, { target: { value: '星巴克' } });
-      fireEvent.submit(screen.getByRole('search'));
+      fireEvent.submit(screen.getAllByRole('search')[0]!);
       await waitFor(() => {
         expect(localStorage.getItem('caferoam_free_search_used')).toBeNull();
       });
@@ -199,14 +229,51 @@ describe('HomePage (unified)', () => {
         error: null,
       });
       renderHome();
-      const input = screen.getByRole('textbox');
+      const input = screen.getAllByRole('textbox')[0]!;
       fireEvent.change(input, { target: { value: '有插座的咖啡廳' } });
-      fireEvent.submit(screen.getByRole('search'));
+      fireEvent.submit(screen.getAllByRole('search')[0]!);
       await waitFor(() => {
         expect(mockPush).not.toHaveBeenCalledWith(
           expect.stringContaining('/login')
         );
       });
+    });
+  });
+
+  describe('sticky search bar visibility', () => {
+    it('hides the sticky search bar while the hero is in view', () => {
+      const mocks: MockIntersectionObserver[] = [];
+      vi.stubGlobal(
+        'IntersectionObserver',
+        class {
+          constructor(cb: IntersectionObserverCallback) {
+            const m = new MockIntersectionObserver(cb);
+            mocks.push(m);
+            return m as unknown as IntersectionObserver;
+          }
+        },
+      );
+      renderHome();
+      const sticky = screen.getByTestId('sticky-search-bar-wrapper');
+      expect(sticky.className).toMatch(/invisible/);
+    });
+
+    it('shows the sticky search bar once the hero leaves the viewport', () => {
+      const mocks: MockIntersectionObserver[] = [];
+      vi.stubGlobal(
+        'IntersectionObserver',
+        class {
+          constructor(cb: IntersectionObserverCallback) {
+            const m = new MockIntersectionObserver(cb);
+            mocks.push(m);
+            return m as unknown as IntersectionObserver;
+          }
+        },
+      );
+      renderHome();
+      act(() => mocks[0]!.trigger(false));
+      const sticky = screen.getByTestId('sticky-search-bar-wrapper');
+      expect(sticky.className).not.toMatch(/invisible/);
     });
   });
 });

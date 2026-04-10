@@ -12,6 +12,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { ModeChips } from '@/components/discovery/mode-chips';
 import { SearchBar } from '@/components/discovery/search-bar';
+import { StickySearchBar } from '@/components/discovery/sticky-search-bar';
 import { SuggestionChips } from '@/components/discovery/suggestion-chips';
 import {
   FILTER_TO_TAG_IDS,
@@ -60,6 +61,8 @@ function HomePageContent() {
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
   const [mapBounds, setMapBounds] = useState<MapBounds | null>(null);
   const lastHandledQueryRef = useRef<string | null>(null);
+  const heroRef = useRef<HTMLElement>(null);
+  const [heroVisible, setHeroVisible] = useState(true);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -93,6 +96,17 @@ function HomePageContent() {
     trackSearch(currentQuery);
     lastHandledQueryRef.current = currentQuery;
   }, [currentQuery, user, router, queryType]);
+
+  useEffect(() => {
+    const node = heroRef.current;
+    if (!node) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setHeroVisible(!!entry?.isIntersecting),
+      { threshold: 0 },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
 
   const handleLocationRequest = useCallback(async () => {
     const coords = await requestLocation();
@@ -233,7 +247,18 @@ function HomePageContent() {
     <div className="min-h-screen bg-white">
       <WebsiteJsonLd />
 
-      <section className="bg-[#3d2314] px-5 pt-8 pb-8 text-white">
+      <div
+        data-testid="sticky-search-bar-wrapper"
+        className={heroVisible ? 'invisible h-0 overflow-hidden' : ''}
+      >
+        <StickySearchBar
+          defaultQuery={currentQuery}
+          onSubmit={handleSearchSubmit}
+          onFilterClick={handleFilterOpen}
+        />
+      </div>
+
+      <section ref={heroRef} className="bg-[#3d2314] px-5 pt-8 pb-8 text-white">
         <div className="mx-auto max-w-5xl">
           <span className="text-brand text-sm font-semibold tracking-[0.2em]">
             啡遊
