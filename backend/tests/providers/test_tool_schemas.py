@@ -1,9 +1,9 @@
 """Tool schemas are imported by anthropic and openai adapters; these tests lock the shape."""
 from providers.llm._tool_schemas import (
-    CLASSIFY_SHOP_SCHEMA,
-    EXTRACT_MENU_SCHEMA,
     ASSIGN_TAROT_SCHEMA,
     CLASSIFY_PHOTO_SCHEMA,
+    CLASSIFY_SHOP_SCHEMA,
+    EXTRACT_MENU_SCHEMA,
 )
 
 
