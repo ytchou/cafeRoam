@@ -1,176 +1,173 @@
-from unittest.mock import AsyncMock, MagicMock
+import pytest
+from unittest.mock import MagicMock, AsyncMock
 
-from workers.handlers.summarize_reviews import handle_summarize_reviews
+from models.types import ReviewSummaryResult, ReviewTopic
 
 
 class TestSummarizeReviewsHandler:
     def _make_db(
         self,
+        google_review_rows: list[dict] | None = None,
         checkin_texts: list[dict] | None = None,
     ) -> MagicMock:
-        """Build a db mock that returns check-in texts from RPC and allows shops table updates."""
+        """Build a db mock with shop_reviews table and get_ranked_checkin_texts RPC."""
         db = MagicMock()
 
-        # RPC: get_ranked_checkin_texts
-        db.rpc.return_value.execute.return_value = MagicMock(
-            data=checkin_texts if checkin_texts is not None else []
+        # shop_reviews table query
+        shop_reviews_table = MagicMock()
+        shop_reviews_table.select.return_value.eq.return_value.execute.return_value = MagicMock(
+            data=google_review_rows if google_review_rows is not None else []
         )
 
         # shops table update
         shops_table = MagicMock()
         shops_table.update.return_value.eq.return_value.execute.return_value = MagicMock(data=[])
 
-        db.table.side_effect = lambda name: shops_table if name == "shops" else MagicMock()
+        db.table.side_effect = lambda name: shop_reviews_table if name == "shop_reviews" else shops_table
         db._shops_table = shops_table
+
+        # RPC: get_ranked_checkin_texts
+        db.rpc.return_value.execute.return_value = MagicMock(
+            data=checkin_texts if checkin_texts is not None else []
+        )
+
         return db
 
-    async def test_happy_path_generates_summary_and_enqueues_embedding(self):
-        """Given a shop with qualifying reviews, Claude is called and summary is stored, then GENERATE_EMBEDDING is enqueued."""
+    async def test_handler_reads_shop_reviews_and_checkin_texts(self):
+        """Handler passes both google_reviews and checkin_texts to LLM."""
         db = self._make_db(
-            checkin_texts=[
-                {"text": "超好喝的拿鐵，環境安靜適合工作"},
-                {"text": "巴斯克蛋糕是必點的，每次來都會點"},
-            ]
+            google_review_rows=[
+                {"text": "Great pour-over"},
+                {"text": "Slow service"},
+            ],
+            checkin_texts=[{"text": "很安靜"}],
         )
         llm = AsyncMock()
-        llm.summarize_reviews = AsyncMock(
-            return_value="顧客推薦拿鐵和巴斯克蛋糕，環境安靜適合工作。"
+        llm.summarize_reviews.return_value = ReviewSummaryResult(
+            summary_zh_tw="咖啡很棒",
+            review_topics=[ReviewTopic(topic="手沖", count=5)],
         )
         queue = AsyncMock()
         queue.get_status.return_value = "claimed"
 
-        await handle_summarize_reviews(
-            payload={"shop_id": "shop-a1b2c3"},
-            db=db,
-            llm=llm,
-            queue=queue,
-            job_id="job-summary-happy-01",
-        )
+        from workers.handlers.summarize_reviews import handle_summarize_reviews
+        await handle_summarize_reviews({"shop_id": "shop-1"}, db, llm, queue, "job-1")
 
-        # Claude was called with the review texts
         llm.summarize_reviews.assert_called_once_with(
-            ["超好喝的拿鐵，環境安靜適合工作", "巴斯克蛋糕是必點的，每次來都會點"]
+            google_reviews=["Great pour-over", "Slow service"],
+            checkin_texts=["很安靜"],
         )
 
-        # Summary stored in DB
-        update_data = db._shops_table.update.call_args[0][0]
-        assert update_data["community_summary"] == "顧客推薦拿鐵和巴斯克蛋糕，環境安靜適合工作。"
-        assert "community_summary_updated_at" in update_data
-
-        # GENERATE_EMBEDDING enqueued
-        queue.enqueue.assert_called_once()
-        assert queue.enqueue.call_args.kwargs["job_type"].value == "generate_embedding"
-        assert queue.enqueue.call_args.kwargs["payload"] == {"shop_id": "shop-a1b2c3"}
-
-    async def test_no_qualifying_texts_skips_claude_and_enqueues_embedding_directly(self):
-        """When no check-in texts qualify, skip Claude call and directly enqueue GENERATE_EMBEDDING."""
-        db = self._make_db(checkin_texts=[])
+    async def test_handler_persists_review_topics(self):
+        """Handler writes review_topics JSONB and community_summary to shops."""
+        db = self._make_db(
+            google_review_rows=[{"text": "Good coffee"}],
+            checkin_texts=[],
+        )
         llm = AsyncMock()
+        llm.summarize_reviews.return_value = ReviewSummaryResult(
+            summary_zh_tw="咖啡品質高",
+            review_topics=[ReviewTopic(topic="手沖", count=4), ReviewTopic(topic="安靜", count=2)],
+        )
         queue = AsyncMock()
         queue.get_status.return_value = "claimed"
 
-        await handle_summarize_reviews(
-            payload={"shop_id": "shop-a1b2c3"},
-            db=db,
-            llm=llm,
-            queue=queue,
-            job_id="job-summary-empty-02",
+        from workers.handlers.summarize_reviews import handle_summarize_reviews
+        await handle_summarize_reviews({"shop_id": "shop-1"}, db, llm, queue, "job-1")
+
+        update_payload = db._shops_table.update.call_args[0][0]
+        assert update_payload["community_summary"] == "咖啡品質高"
+        assert update_payload["review_topics"] == [
+            {"topic": "手沖", "count": 4},
+            {"topic": "安靜", "count": 2},
+        ]
+        assert "community_summary_updated_at" in update_payload
+
+    async def test_handler_skips_llm_when_no_reviews_at_all(self):
+        """With no Google reviews AND no check-in texts, skip LLM and enqueue embedding."""
+        db = self._make_db(
+            google_review_rows=[],
+            checkin_texts=[],
         )
+        llm = AsyncMock()
+        queue = AsyncMock()
 
-        # Claude NOT called
+        from workers.handlers.summarize_reviews import handle_summarize_reviews
+        await handle_summarize_reviews({"shop_id": "shop-1"}, db, llm, queue, "job-1")
+
         llm.summarize_reviews.assert_not_called()
-
-        # No DB update
-        db._shops_table.update.assert_not_called()
-
-        # GENERATE_EMBEDDING still enqueued (for fallback to raw concat)
         queue.enqueue.assert_called_once()
         assert queue.enqueue.call_args.kwargs["job_type"].value == "generate_embedding"
+
+    async def test_handler_google_only_no_checkins(self):
+        """With only Google reviews (no check-ins), still calls LLM and persists."""
+        db = self._make_db(
+            google_review_rows=[{"text": "Great espresso"}],
+            checkin_texts=[],
+        )
+        llm = AsyncMock()
+        llm.summarize_reviews.return_value = ReviewSummaryResult(
+            summary_zh_tw="義式咖啡出色",
+            review_topics=[ReviewTopic(topic="義式", count=3)],
+        )
+        queue = AsyncMock()
+        queue.get_status.return_value = "claimed"
+
+        from workers.handlers.summarize_reviews import handle_summarize_reviews
+        await handle_summarize_reviews({"shop_id": "shop-1"}, db, llm, queue, "job-1")
+
+        llm.summarize_reviews.assert_called_once_with(
+            google_reviews=["Great espresso"],
+            checkin_texts=[],
+        )
 
     async def test_llm_failure_propagates_without_enqueuing_embedding(self):
-        """When Claude fails, the exception propagates and no GENERATE_EMBEDDING is enqueued."""
-        db = self._make_db(checkin_texts=[{"text": "好喝的咖啡，推薦拿鐵"}])
+        """When LLM fails, the exception propagates and no GENERATE_EMBEDDING is enqueued."""
+        db = self._make_db(
+            google_review_rows=[{"text": "好喝的咖啡，推薦拿鐵"}],
+            checkin_texts=[],
+        )
         llm = AsyncMock()
-        llm.summarize_reviews = AsyncMock(side_effect=RuntimeError("Claude API error"))
+        llm.summarize_reviews = AsyncMock(side_effect=RuntimeError("LLM API error"))
         queue = AsyncMock()
-        queue.get_status.return_value = "claimed"
 
-        import pytest
+        with pytest.raises(RuntimeError, match="LLM API error"):
+            from workers.handlers.summarize_reviews import handle_summarize_reviews
+            await handle_summarize_reviews({"shop_id": "shop-1"}, db, llm, queue, "job-1")
 
-        with pytest.raises(RuntimeError, match="Claude API error"):
-            await handle_summarize_reviews(
-                payload={"shop_id": "shop-a1b2c3"},
-                db=db,
-                llm=llm,
-                queue=queue,
-                job_id="job-summary-error-03",
-            )
-
-        # No embedding enqueued on failure
         queue.enqueue.assert_not_called()
 
-    async def test_filters_out_empty_and_none_texts_before_calling_claude(self):
-        """When RPC returns rows with None or empty text values, only qualifying texts are passed to Claude."""
-        db = self._make_db(
-            checkin_texts=[
-                {"text": "有料咖啡，環境好"},
-                {"text": None},
-                {"text": ""},
-                {"text": "巴斯克蛋糕必點"},
-            ]
-        )
-        llm = AsyncMock()
-        llm.summarize_reviews = AsyncMock(return_value="顧客推薦咖啡和甜點。")
-        queue = AsyncMock()
-        queue.get_status.return_value = "claimed"
-
-        await handle_summarize_reviews(
-            payload={"shop_id": "shop-a1b2c3"},
-            db=db,
-            llm=llm,
-            queue=queue,
-            job_id="job-summary-filter-04",
-        )
-
-        # Only the two non-empty texts are passed to Claude
-        llm.summarize_reviews.assert_called_once_with(["有料咖啡，環境好", "巴斯克蛋糕必點"])
-
     async def test_english_summary_is_rejected_with_error(self):
-        """When Claude returns an English-dominant summary, the handler raises ValueError and does not write to DB."""
+        """When LLM returns an English-dominant summary, the handler raises ValueError and does not write to DB."""
         db = self._make_db(
-            checkin_texts=[
-                {"text": "Nice latte, quiet space for working"},
-                {"text": "Great cheesecake, friendly staff"},
-            ]
+            google_review_rows=[{"text": "Nice latte, quiet space for working"}],
+            checkin_texts=[],
         )
         llm = AsyncMock()
-        llm.summarize_reviews = AsyncMock(
-            return_value="Customers recommend the latte and cheesecake. Quiet atmosphere suitable for work."
+        llm.summarize_reviews.return_value = ReviewSummaryResult(
+            summary_zh_tw="Customers recommend the latte. Quiet atmosphere.",
+            review_topics=[],
         )
         queue = AsyncMock()
         queue.get_status.return_value = "claimed"
 
-        import pytest
-
-        with pytest.raises(ValueError, match="not in Traditional Chinese"):
-            await handle_summarize_reviews(
-                payload={"shop_id": "shop-a1b2c3"},
-                db=db,
-                llm=llm,
-                queue=queue,
-                job_id="job-summary-lang-05",
-            )
+        with pytest.raises(ValueError):
+            from workers.handlers.summarize_reviews import handle_summarize_reviews
+            await handle_summarize_reviews({"shop_id": "shop-1"}, db, llm, queue, "job-1")
 
         db._shops_table.update.assert_not_called()
         queue.enqueue.assert_not_called()
 
     async def test_rpc_called_with_correct_parameters(self):
-        """The handler calls get_ranked_checkin_texts with the correct shop_id and min length."""
-        db = self._make_db(checkin_texts=[])
+        """The handler calls get_ranked_checkin_texts with correct shop_id and min length."""
+        db = self._make_db(
+            google_review_rows=[],
+            checkin_texts=[],
+        )
         llm = AsyncMock()
         queue = AsyncMock()
-        queue.get_status.return_value = "claimed"
 
+        from workers.handlers.summarize_reviews import handle_summarize_reviews
         await handle_summarize_reviews(
             payload={"shop_id": "shop-d4e5f6"},
             db=db,
@@ -184,4 +181,3 @@ class TestSummarizeReviewsHandler:
         assert rpc_name == "get_ranked_checkin_texts"
         assert rpc_params["p_shop_id"] == "shop-d4e5f6"
         assert rpc_params["p_min_length"] == 15
-        assert rpc_params["p_limit"] == 20

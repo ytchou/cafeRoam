@@ -5,13 +5,14 @@ import structlog
 from supabase import Client
 
 from core.lang import is_zh_dominant
-from models.types import CHECKIN_MIN_TEXT_LENGTH, MAX_COMMUNITY_TEXTS, JobType
+from models.types import CHECKIN_MIN_TEXT_LENGTH, MAX_COMMUNITY_TEXTS, JobType, ReviewSummaryResult
 from providers.llm.interface import LLMProvider
 from workers.job_guard import check_job_still_claimed
 from workers.job_log import log_job_event
 from workers.queue import JobQueue
 
 logger = structlog.get_logger()
+MAX_GOOGLE_REVIEWS = 50
 
 
 async def handle_summarize_reviews(
@@ -21,11 +22,11 @@ async def handle_summarize_reviews(
     queue: JobQueue,
     job_id: str,
 ) -> None:
-    """Generate a Claude community summary for a shop's check-in reviews.
+    """Generate a community summary for a shop from Google and check-in reviews.
 
-    Fetches top 20 ranked check-in texts, calls Claude Haiku to summarize,
-    stores the summary in shops.community_summary, then chains to GENERATE_EMBEDDING.
-    If no qualifying texts exist, skips Claude and enqueues embedding directly.
+    Fetches Google reviews plus top ranked check-in texts, calls the LLM to summarize,
+    stores the summary and review topics in shops, then chains to GENERATE_EMBEDDING.
+    If no qualifying texts exist from either source, skips the LLM and enqueues embedding directly.
     """
     shop_id = payload["shop_id"]
     logger.info("Summarizing reviews", shop_id=shop_id)
@@ -40,6 +41,11 @@ async def handle_summarize_reviews(
             shop_id=str(shop_id),
         )
 
+        reviews_result = db.table("shop_reviews").select("text").eq("shop_id", shop_id).execute()
+        google_reviews = [
+            row["text"] for row in cast("list[dict[str, Any]]", reviews_result.data or []) if row.get("text")
+        ][:MAX_GOOGLE_REVIEWS]
+
         # Fetch ranked check-in texts (same RPC used by generate_embedding)
         response = db.rpc(
             "get_ranked_checkin_texts",
@@ -51,9 +57,9 @@ async def handle_summarize_reviews(
         ).execute()
 
         rows = cast("list[dict[str, Any]]", response.data or [])
-        texts = [row["text"] for row in rows if row.get("text")]
+        checkin_texts = [row["text"] for row in rows if row.get("text")]
 
-        if not texts:
+        if not google_reviews and not checkin_texts:
             logger.info("No qualifying review texts — skipping summarization", shop_id=shop_id)
             await queue.enqueue(
                 job_type=JobType.GENERATE_EMBEDDING,
@@ -67,9 +73,15 @@ async def handle_summarize_reviews(
             db, job_id, "info", "llm.call", provider="anthropic", method="summarize_reviews"
         )
 
-        summary = await llm.summarize_reviews(texts)
+        result = cast(
+            ReviewSummaryResult,
+            await llm.summarize_reviews(
+                google_reviews=google_reviews,
+                checkin_texts=checkin_texts,
+            ),
+        )
 
-        if not summary:
+        if not result.summary_zh_tw:
             logger.warning("LLM returned empty summary — skipping DB write", shop_id=shop_id)
             await queue.enqueue(
                 job_type=JobType.GENERATE_EMBEDDING,
@@ -82,18 +94,19 @@ async def handle_summarize_reviews(
             await log_job_event(db, job_id, "warn", "job.aborted_midflight", shop_id=str(shop_id))
             return
 
-        if not is_zh_dominant(summary):
+        if not is_zh_dominant(result.summary_zh_tw):
             logger.warning(
                 "Community summary is not zh-TW dominant — skipping DB write",
                 shop_id=shop_id,
-                summary_preview=summary[:80],
+                summary_preview=result.summary_zh_tw[:80],
             )
             raise ValueError(f"Community summary for shop {shop_id} is not in Traditional Chinese")
 
         # Persist summary to DB
         db.table("shops").update(
             {
-                "community_summary": summary,
+                "community_summary": result.summary_zh_tw,
+                "review_topics": [topic.model_dump() for topic in result.review_topics],
                 "community_summary_updated_at": datetime.now(UTC).isoformat(),
             }
         ).eq("id", shop_id).execute()
@@ -109,8 +122,8 @@ async def handle_summarize_reviews(
         logger.info(
             "Community summary generated",
             shop_id=shop_id,
-            summary_length=len(summary),
-            review_count=len(texts),
+            summary_length=len(result.summary_zh_tw),
+            review_count=len(google_reviews) + len(checkin_texts),
         )
 
         # Chain to embedding generation
