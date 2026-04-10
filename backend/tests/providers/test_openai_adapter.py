@@ -178,3 +178,38 @@ async def test_classify_photo_returns_enum(adapter, category_value, expected):
 
     result = await adapter.classify_photo("https://cdn.example.com/photo_w400.jpg")
     assert result == expected
+
+
+async def test_summarize_reviews_returns_text(adapter):
+    adapter._client = AsyncMock()
+    # summarize_reviews does NOT use tool calling — direct text response
+    message = MagicMock()
+    message.tool_calls = None
+    message.content = "這家咖啡店以手沖與安靜氛圍著稱。"
+    choice = MagicMock()
+    choice.message = message
+    resp = MagicMock()
+    resp.choices = [choice]
+    adapter._client.chat.completions.create = AsyncMock(return_value=resp)
+
+    result = await adapter.summarize_reviews(["好喝", "很安靜", "手沖很棒"])
+    assert result.startswith("這家")
+    # Verify system prompt was included and classify_model was used
+    call = adapter._client.chat.completions.create.await_args
+    assert call.kwargs["model"] == "gpt-5.4-mini"
+    assert call.kwargs["messages"][0]["role"] == "system"
+
+
+async def test_summarize_reviews_returns_empty_on_blank_response(adapter):
+    adapter._client = AsyncMock()
+    message = MagicMock()
+    message.tool_calls = None
+    message.content = ""
+    choice = MagicMock()
+    choice.message = message
+    resp = MagicMock()
+    resp.choices = [choice]
+    adapter._client.chat.completions.create = AsyncMock(return_value=resp)
+
+    result = await adapter.summarize_reviews(["ok"])
+    assert result == ""
