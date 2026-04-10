@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from workers.queue import JobStatus, get_status
+from models.types import JobStatus
+from workers.queue import get_status
 
 if TYPE_CHECKING:
     import uuid
