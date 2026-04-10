@@ -130,7 +130,9 @@ describe('a user on the desktop map view', () => {
 
   it('a user sees a filter button in the sidebar header (SearchBar removed from map overlay)', () => {
     const onFilterClick = vi.fn();
-    render(<MapDesktopLayout {...defaultProps} onFilterClick={onFilterClick} />);
+    render(
+      <MapDesktopLayout {...defaultProps} onFilterClick={onFilterClick} />
+    );
     expect(screen.getByRole('button', { name: /篩選/ })).toBeInTheDocument();
   });
 
@@ -364,7 +366,9 @@ describe('a user on the desktop map view', () => {
 
   it('renders a filter button in the sidebar header that calls onFilterClick', async () => {
     const onFilterClick = vi.fn();
-    render(<MapDesktopLayout {...defaultProps} onFilterClick={onFilterClick} />);
+    render(
+      <MapDesktopLayout {...defaultProps} onFilterClick={onFilterClick} />
+    );
     await userEvent.click(screen.getByRole('button', { name: /篩選/ }));
     expect(onFilterClick).toHaveBeenCalled();
   });

@@ -17,6 +17,7 @@
 **Tech Stack:** Next.js 16 (App Router), TypeScript strict, Tailwind CSS, vitest + @testing-library/react, Playwright (e2e).
 
 **Acceptance Criteria:**
+
 - [ ] A user sees exactly one search input at a time on the main page (hero on load, sticky on scroll).
 - [ ] A user scrolling past the hero section can still submit a new search from the sticky bar at the top of the viewport.
 - [ ] A user clicking a map pin on desktop sees the matching shop expand to a full card in the sidebar (not a floating overlay).
@@ -28,6 +29,7 @@
 ## Task 1: Sticky search bar component (TDD)
 
 **Files:**
+
 - Create: `components/discovery/sticky-search-bar.tsx`
 - Test: `components/discovery/sticky-search-bar.test.tsx`
 
@@ -35,34 +37,40 @@
 
 ```tsx
 // components/discovery/sticky-search-bar.test.tsx
-import { render, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
-import { describe, expect, it, vi } from 'vitest'
-import { StickySearchBar } from './sticky-search-bar'
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { describe, expect, it, vi } from 'vitest';
+import { StickySearchBar } from './sticky-search-bar';
 
 describe('StickySearchBar', () => {
   it('submits the query typed by the user', async () => {
-    const onSubmit = vi.fn()
-    render(<StickySearchBar onSubmit={onSubmit} onFilterClick={vi.fn()} />)
-    const input = screen.getByRole('searchbox')
-    await userEvent.type(input, 'pour over{enter}')
-    expect(onSubmit).toHaveBeenCalledWith('pour over')
-  })
+    const onSubmit = vi.fn();
+    render(<StickySearchBar onSubmit={onSubmit} onFilterClick={vi.fn()} />);
+    const input = screen.getByRole('searchbox');
+    await userEvent.type(input, 'pour over{enter}');
+    expect(onSubmit).toHaveBeenCalledWith('pour over');
+  });
 
   it('prefills from defaultQuery', () => {
     render(
-      <StickySearchBar defaultQuery="flat white" onSubmit={vi.fn()} onFilterClick={vi.fn()} />,
-    )
-    expect(screen.getByRole('searchbox')).toHaveValue('flat white')
-  })
+      <StickySearchBar
+        defaultQuery="flat white"
+        onSubmit={vi.fn()}
+        onFilterClick={vi.fn()}
+      />
+    );
+    expect(screen.getByRole('searchbox')).toHaveValue('flat white');
+  });
 
   it('calls onFilterClick when filter button pressed', async () => {
-    const onFilterClick = vi.fn()
-    render(<StickySearchBar onSubmit={vi.fn()} onFilterClick={onFilterClick} />)
-    await userEvent.click(screen.getByRole('button', { name: /篩選|filter/i }))
-    expect(onFilterClick).toHaveBeenCalled()
-  })
-})
+    const onFilterClick = vi.fn();
+    render(
+      <StickySearchBar onSubmit={vi.fn()} onFilterClick={onFilterClick} />
+    );
+    await userEvent.click(screen.getByRole('button', { name: /篩選|filter/i }));
+    expect(onFilterClick).toHaveBeenCalled();
+  });
+});
 ```
 
 **Step 2: Run test — expect FAIL**
@@ -74,32 +82,40 @@ Expected: module not found / cannot resolve `./sticky-search-bar`.
 
 ```tsx
 // components/discovery/sticky-search-bar.tsx
-'use client'
+'use client';
 
-import { Search, SlidersHorizontal } from 'lucide-react'
-import { useEffect, useState, type FormEvent } from 'react'
+import { Search, SlidersHorizontal } from 'lucide-react';
+import { useEffect, useState, type FormEvent } from 'react';
 
 type Props = {
-  defaultQuery?: string
-  onSubmit: (query: string) => void
-  onFilterClick: () => void
-}
+  defaultQuery?: string;
+  onSubmit: (query: string) => void;
+  onFilterClick: () => void;
+};
 
-export function StickySearchBar({ defaultQuery = '', onSubmit, onFilterClick }: Props) {
-  const [value, setValue] = useState(defaultQuery)
+export function StickySearchBar({
+  defaultQuery = '',
+  onSubmit,
+  onFilterClick,
+}: Props) {
+  const [value, setValue] = useState(defaultQuery);
 
   useEffect(() => {
-    setValue(defaultQuery)
-  }, [defaultQuery])
+    setValue(defaultQuery);
+  }, [defaultQuery]);
 
   function handleSubmit(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    onSubmit(value.trim())
+    e.preventDefault();
+    onSubmit(value.trim());
   }
 
   return (
     <div className="sticky top-0 z-50 border-b border-black/5 bg-white/95 px-4 py-2 shadow-sm backdrop-blur">
-      <form role="search" onSubmit={handleSubmit} className="flex items-center gap-2">
+      <form
+        role="search"
+        onSubmit={handleSubmit}
+        className="flex items-center gap-2"
+      >
         <div className="flex h-[40px] flex-1 items-center gap-2 rounded-full bg-neutral-100 px-4">
           <Search className="h-4 w-4 text-neutral-500" aria-hidden="true" />
           <input
@@ -121,7 +137,7 @@ export function StickySearchBar({ defaultQuery = '', onSubmit, onFilterClick }: 
         </button>
       </form>
     </div>
-  )
+  );
 }
 ```
 
@@ -142,6 +158,7 @@ git commit -m "feat(DEV-302): add StickySearchBar component"
 ## Task 2: Remove w-[340px] from ShopPreviewCard (TDD)
 
 **Files:**
+
 - Modify: `components/shops/shop-preview-card.tsx` (root div className)
 - Test: `components/shops/shop-preview-card.test.tsx` (add width assertion)
 
@@ -153,13 +170,19 @@ Add to `components/shops/shop-preview-card.test.tsx`:
 it('takes full width of its parent (no hardcoded width)', () => {
   const { container } = render(
     <div style={{ width: '600px' }}>
-      <ShopPreviewCard shop={makeShop()} onClose={vi.fn()} onNavigate={vi.fn()} />
-    </div>,
-  )
-  const root = container.querySelector('article') ?? container.firstElementChild?.firstElementChild
-  expect(root?.className).not.toMatch(/w-\[340px\]/)
-  expect(root?.className).toMatch(/w-full/)
-})
+      <ShopPreviewCard
+        shop={makeShop()}
+        onClose={vi.fn()}
+        onNavigate={vi.fn()}
+      />
+    </div>
+  );
+  const root =
+    container.querySelector('article') ??
+    container.firstElementChild?.firstElementChild;
+  expect(root?.className).not.toMatch(/w-\[340px\]/);
+  expect(root?.className).toMatch(/w-full/);
+});
 ```
 
 **Step 2: Run test — expect FAIL**
@@ -170,6 +193,7 @@ Expected: fails on `w-[340px]` still present.
 **Step 3: Implement**
 
 Edit `components/shops/shop-preview-card.tsx`:
+
 - Replace `w-[340px]` with `w-full` on the root div.
 
 **Step 4: Run test — expect PASS**
@@ -189,6 +213,7 @@ git commit -m "refactor(DEV-303): make ShopPreviewCard width parent-controlled"
 ## Task 3: Inline expanded card in desktop sidebar (TDD)
 
 **Files:**
+
 - Modify: `components/map/map-desktop-layout.tsx`
 - Test: `components/map/map-desktop-layout.test.tsx`
 
@@ -198,31 +223,41 @@ Add to `components/map/map-desktop-layout.test.tsx`:
 
 ```tsx
 it('renders the selected shop as a full ShopPreviewCard in the sidebar, not as a floating overlay', () => {
-  const shops = [makeShop({ id: 'a' }), makeShop({ id: 'b', name: 'Selected Cafe' })]
+  const shops = [
+    makeShop({ id: 'a' }),
+    makeShop({ id: 'b', name: 'Selected Cafe' }),
+  ];
   render(
     <MapDesktopLayout
       shops={shops}
       selectedShopId="b"
       onShopClick={vi.fn()}
       {...defaultProps()}
-    />,
-  )
+    />
+  );
   // Full card present in sidebar
-  expect(screen.getByRole('heading', { name: 'Selected Cafe' })).toBeInTheDocument()
+  expect(
+    screen.getByRole('heading', { name: 'Selected Cafe' })
+  ).toBeInTheDocument();
   // No bottom-center floating overlay wrapper
-  expect(document.querySelector('.absolute.bottom-6.left-1\\/2')).toBeNull()
-})
+  expect(document.querySelector('.absolute.bottom-6.left-1\\/2')).toBeNull();
+});
 
 it('auto-scrolls the selected card into view', () => {
-  const scrollIntoView = vi.fn()
-  Element.prototype.scrollIntoView = scrollIntoView
-  const shops = [makeShop({ id: 'a' }), makeShop({ id: 'b' })]
+  const scrollIntoView = vi.fn();
+  Element.prototype.scrollIntoView = scrollIntoView;
+  const shops = [makeShop({ id: 'a' }), makeShop({ id: 'b' })];
   const { rerender } = render(
-    <MapDesktopLayout shops={shops} selectedShopId={null} {...defaultProps()} />,
-  )
-  rerender(<MapDesktopLayout shops={shops} selectedShopId="b" {...defaultProps()} />)
-  expect(scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'nearest' })
-})
+    <MapDesktopLayout shops={shops} selectedShopId={null} {...defaultProps()} />
+  );
+  rerender(
+    <MapDesktopLayout shops={shops} selectedShopId="b" {...defaultProps()} />
+  );
+  expect(scrollIntoView).toHaveBeenCalledWith({
+    behavior: 'smooth',
+    block: 'nearest',
+  });
+});
 ```
 
 **Step 2: Run test — expect FAIL**
@@ -235,6 +270,7 @@ Expected: floating overlay assertion fails; scrollIntoView never called on selec
 In `components/map/map-desktop-layout.tsx`:
 
 1. Remove the floating overlay block:
+
    ```tsx
    <div className="absolute bottom-6 left-1/2 z-30 -translate-x-1/2">
      <ShopPreviewCard ... />
@@ -242,33 +278,39 @@ In `components/map/map-desktop-layout.tsx`:
    ```
 
 2. Add ref + effect near top of component:
+
    ```tsx
-   const selectedCardRef = useRef<HTMLDivElement>(null)
+   const selectedCardRef = useRef<HTMLDivElement>(null);
    useEffect(() => {
-     if (!selectedShopId) return
-     selectedCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
-   }, [selectedShopId])
+     if (!selectedShopId) return;
+     selectedCardRef.current?.scrollIntoView({
+       behavior: 'smooth',
+       block: 'nearest',
+     });
+   }, [selectedShopId]);
    ```
 
 3. In the sidebar shop list render, swap the per-item render to:
    ```tsx
-   {shops.map((shop) =>
-     shop.id === selectedShopId ? (
-       <div key={shop.id} ref={selectedCardRef} className="w-full">
-         <ShopPreviewCard
+   {
+     shops.map((shop) =>
+       shop.id === selectedShopId ? (
+         <div key={shop.id} ref={selectedCardRef} className="w-full">
+           <ShopPreviewCard
+             shop={shop}
+             onClose={() => onShopClick(null)}
+             onNavigate={() => onCardClick?.(shop.id)}
+           />
+         </div>
+       ) : (
+         <ShopCardCompact
+           key={shop.id}
            shop={shop}
-           onClose={() => onShopClick(null)}
-           onNavigate={() => onCardClick?.(shop.id)}
+           onClick={() => onShopClick(shop.id)}
          />
-       </div>
-     ) : (
-       <ShopCardCompact
-         key={shop.id}
-         shop={shop}
-         onClick={() => onShopClick(shop.id)}
-       />
-     ),
-   )}
+       )
+     );
+   }
    ```
 
 **Step 4: Run test — expect PASS**
@@ -288,6 +330,7 @@ git commit -m "feat(DEV-303): inline expand selected shop card in desktop sideba
 ## Task 4: Remove map-overlay SearchBar from MapDesktopLayout + add filter button to sidebar header (TDD)
 
 **Files:**
+
 - Modify: `components/map/map-desktop-layout.tsx`
 - Test: `components/map/map-desktop-layout.test.tsx`
 
@@ -297,17 +340,19 @@ Add to `components/map/map-desktop-layout.test.tsx`:
 
 ```tsx
 it('does not render the map-overlay SearchBar', () => {
-  render(<MapDesktopLayout {...defaultProps()} />)
+  render(<MapDesktopLayout {...defaultProps()} />);
   // filters/search-bar wraps its input in role="search"; hero bar is not rendered inside MapDesktopLayout
-  expect(screen.queryByRole('searchbox')).toBeNull()
-})
+  expect(screen.queryByRole('searchbox')).toBeNull();
+});
 
 it('exposes a filter button in the sidebar header', async () => {
-  const onFilterClick = vi.fn()
-  render(<MapDesktopLayout {...defaultProps()} onFilterClick={onFilterClick} />)
-  await userEvent.click(screen.getByRole('button', { name: /篩選/ }))
-  expect(onFilterClick).toHaveBeenCalled()
-})
+  const onFilterClick = vi.fn();
+  render(
+    <MapDesktopLayout {...defaultProps()} onFilterClick={onFilterClick} />
+  );
+  await userEvent.click(screen.getByRole('button', { name: /篩選/ }));
+  expect(onFilterClick).toHaveBeenCalled();
+});
 ```
 
 **Step 2: Run test — expect FAIL**
@@ -338,6 +383,7 @@ git commit -m "refactor(DEV-302): remove map-overlay SearchBar from desktop layo
 ## Task 5: Remove map-overlay SearchBar from MapMobileLayout + add standalone filter button (TDD)
 
 **Files:**
+
 - Modify: `components/map/map-mobile-layout.tsx`
 - Test: `components/map/map-mobile-layout.test.tsx`
 
@@ -347,16 +393,16 @@ Add to `components/map/map-mobile-layout.test.tsx`:
 
 ```tsx
 it('does not render the map-overlay SearchBar on mobile', () => {
-  render(<MapMobileLayout {...defaultProps()} />)
-  expect(screen.queryByRole('searchbox')).toBeNull()
-})
+  render(<MapMobileLayout {...defaultProps()} />);
+  expect(screen.queryByRole('searchbox')).toBeNull();
+});
 
 it('renders a standalone floating filter button', async () => {
-  const onFilterClick = vi.fn()
-  render(<MapMobileLayout {...defaultProps()} onFilterClick={onFilterClick} />)
-  await userEvent.click(screen.getByRole('button', { name: /篩選/ }))
-  expect(onFilterClick).toHaveBeenCalled()
-})
+  const onFilterClick = vi.fn();
+  render(<MapMobileLayout {...defaultProps()} onFilterClick={onFilterClick} />);
+  await userEvent.click(screen.getByRole('button', { name: /篩選/ }));
+  expect(onFilterClick).toHaveBeenCalled();
+});
 ```
 
 **Step 2: Run test — expect FAIL**
@@ -386,6 +432,7 @@ git commit -m "refactor(DEV-302): remove map-overlay SearchBar from mobile layou
 ## Task 6: Wire StickySearchBar into app/page.tsx with IntersectionObserver (TDD)
 
 **Files:**
+
 - Modify: `app/page.tsx`
 - Test: `app/page.test.tsx`
 
@@ -394,58 +441,63 @@ git commit -m "refactor(DEV-302): remove map-overlay SearchBar from mobile layou
 Add to `app/page.test.tsx` (stub IntersectionObserver per existing pattern in `components/community/community-card.test.tsx`):
 
 ```tsx
-import { vi } from 'vitest'
+import { vi } from 'vitest';
 
 class MockIntersectionObserver {
-  callback: IntersectionObserverCallback
+  callback: IntersectionObserverCallback;
   constructor(cb: IntersectionObserverCallback) {
-    this.callback = cb
+    this.callback = cb;
   }
-  observe = vi.fn()
-  disconnect = vi.fn()
-  unobserve = vi.fn()
+  observe = vi.fn();
+  disconnect = vi.fn();
+  unobserve = vi.fn();
   trigger(isIntersecting: boolean) {
     this.callback(
-      [{ isIntersecting, target: document.createElement('div') } as IntersectionObserverEntry],
-      this as unknown as IntersectionObserver,
-    )
+      [
+        {
+          isIntersecting,
+          target: document.createElement('div'),
+        } as IntersectionObserverEntry,
+      ],
+      this as unknown as IntersectionObserver
+    );
   }
 }
 
 it('hides the sticky search bar while the hero is in view', () => {
-  const mocks: MockIntersectionObserver[] = []
+  const mocks: MockIntersectionObserver[] = [];
   vi.stubGlobal(
     'IntersectionObserver',
     class {
       constructor(cb: IntersectionObserverCallback) {
-        const m = new MockIntersectionObserver(cb)
-        mocks.push(m)
-        return m as unknown as IntersectionObserver
+        const m = new MockIntersectionObserver(cb);
+        mocks.push(m);
+        return m as unknown as IntersectionObserver;
       }
-    },
-  )
-  render(<HomePage />)
-  const sticky = screen.getByTestId('sticky-search-bar-wrapper')
-  expect(sticky.className).toMatch(/invisible/)
-})
+    }
+  );
+  render(<HomePage />);
+  const sticky = screen.getByTestId('sticky-search-bar-wrapper');
+  expect(sticky.className).toMatch(/invisible/);
+});
 
 it('shows the sticky search bar once the hero leaves the viewport', () => {
-  const mocks: MockIntersectionObserver[] = []
+  const mocks: MockIntersectionObserver[] = [];
   vi.stubGlobal(
     'IntersectionObserver',
     class {
       constructor(cb: IntersectionObserverCallback) {
-        const m = new MockIntersectionObserver(cb)
-        mocks.push(m)
-        return m as unknown as IntersectionObserver
+        const m = new MockIntersectionObserver(cb);
+        mocks.push(m);
+        return m as unknown as IntersectionObserver;
       }
-    },
-  )
-  render(<HomePage />)
-  act(() => mocks[0]!.trigger(false))
-  const sticky = screen.getByTestId('sticky-search-bar-wrapper')
-  expect(sticky.className).not.toMatch(/invisible/)
-})
+    }
+  );
+  render(<HomePage />);
+  act(() => mocks[0]!.trigger(false));
+  const sticky = screen.getByTestId('sticky-search-bar-wrapper');
+  expect(sticky.className).not.toMatch(/invisible/);
+});
 ```
 
 **Step 2: Run test — expect FAIL**
@@ -458,19 +510,19 @@ Expected: `sticky-search-bar-wrapper` testid not found.
 In `app/page.tsx`:
 
 ```tsx
-const heroRef = useRef<HTMLElement>(null)
-const [heroVisible, setHeroVisible] = useState(true)
+const heroRef = useRef<HTMLElement>(null);
+const [heroVisible, setHeroVisible] = useState(true);
 
 useEffect(() => {
-  const node = heroRef.current
-  if (!node) return
+  const node = heroRef.current;
+  if (!node) return;
   const observer = new IntersectionObserver(
     ([entry]) => setHeroVisible(!!entry?.isIntersecting),
-    { threshold: 0 },
-  )
-  observer.observe(node)
-  return () => observer.disconnect()
-}, [])
+    { threshold: 0 }
+  );
+  observer.observe(node);
+  return () => observer.disconnect();
+}, []);
 ```
 
 Render the sticky wrapper above the hero:
@@ -508,11 +560,13 @@ git commit -m "feat(DEV-302): wire StickySearchBar into main page with Intersect
 ## Task 7: E2E drift fix
 
 **Files:**
+
 - Modify: `e2e/search.spec.ts`
 
 **Step 1: Audit stale selectors**
 
 Run:
+
 ```bash
 grep -n "role=\"search\"" e2e/search.spec.ts
 grep -n "form\[role" e2e/search.spec.ts
@@ -605,21 +659,26 @@ graph TD
 ```
 
 **Wave 1** (parallel — no dependencies):
+
 - Task 1: StickySearchBar component
 - Task 2: ShopPreviewCard `w-full`
 
 **Wave 2** (parallel — Wave 1 done):
+
 - Task 3: Inline sidebar expansion ← Task 2
 - Task 4: Remove desktop map SearchBar
 - Task 5: Remove mobile map SearchBar
 
 **Wave 3** (sequential — Wave 2 done):
+
 - Task 6: Wire StickySearchBar into `app/page.tsx` ← Tasks 1, 3, 4, 5
 
 **Wave 4** (sequential — Wave 3 done):
+
 - Task 7: E2E drift fix ← Task 6
 
 **Wave 5** (sequential — Wave 4 done):
+
 - Task 8: Full verification sweep ← Task 7
 
 ---

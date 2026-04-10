@@ -111,10 +111,16 @@ describe('a user seeing a shop preview card on the map', () => {
   it('takes full width of its parent (no hardcoded width)', () => {
     const { container } = render(
       <div style={{ width: '600px' }}>
-        <ShopPreviewCard shop={mockShop} onClose={vi.fn()} onNavigate={vi.fn()} />
-      </div>,
+        <ShopPreviewCard
+          shop={mockShop}
+          onClose={vi.fn()}
+          onNavigate={vi.fn()}
+        />
+      </div>
     );
-    const root = container.querySelector('article') ?? container.firstElementChild?.firstElementChild;
+    const root =
+      container.querySelector('article') ??
+      container.firstElementChild?.firstElementChild;
     expect(root?.className).not.toMatch(/w-\[340px\]/);
     expect(root?.className).toMatch(/w-full/);
   });

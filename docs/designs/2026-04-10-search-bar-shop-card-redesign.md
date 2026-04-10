@@ -52,6 +52,7 @@ The codebase already uses raw `IntersectionObserver` for similar scroll-triggere
 
 **Why inline expansion over slide-in panel or top-right float:**
 Pencil exploration (`caferoam-design.pen`, frame `I6ScR`) compared three treatments:
+
 - Option 1 (top-right floating 440px): still competes with the map for attention.
 - Option 2 (sidebar inline expansion): clean map, selected card gets real presence (full sidebar width ≈ 420px), no extra chrome, reuses existing `ShopPreviewCard`.
 - Option 3 (three-column slide-in panel): introduces a new layout region and eats map real estate.
@@ -103,9 +104,11 @@ app/page.tsx
 ## Testing Classification
 
 ### (a) New e2e journey?
+
 - [ ] **No** — existing journeys J07 (search), J08 (mode chips), J09 (suggestion chips), and J21 (filter + re-search) cover the user-visible behavior. Selectors may need disambiguation (the map-area bar is being removed), but no new critical path is introduced.
 
 ### (b) Coverage gate impact?
+
 - [ ] **No** — no critical-path service touched. `search_service`, `checkin_service`, `lists_service` are untouched. Changes are UI-layer only.
 
 ### Drift risk

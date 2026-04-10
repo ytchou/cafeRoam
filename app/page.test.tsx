@@ -1,4 +1,10 @@
-import { act, render, screen, fireEvent, waitFor } from '@testing-library/react';
+import {
+  act,
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+} from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Suspense } from 'react';
 import HomePage from './page';
@@ -89,7 +95,7 @@ class MockIntersectionObserver {
           target: document.createElement('div'),
         } as unknown as IntersectionObserverEntry,
       ],
-      this as unknown as IntersectionObserver,
+      this as unknown as IntersectionObserver
     );
   }
 }
@@ -103,7 +109,7 @@ describe('HomePage (unified)', () => {
         disconnect = vi.fn();
         unobserve = vi.fn();
         constructor() {}
-      },
+      }
     );
     mockUseUser.mockReturnValue({ user: null, isLoading: false });
     mockUseSearch.mockReturnValue({
@@ -257,7 +263,7 @@ describe('HomePage (unified)', () => {
             mocks.push(m);
             return m as unknown as IntersectionObserver;
           }
-        },
+        }
       );
       renderHome();
       const sticky = screen.getByTestId('sticky-search-bar-wrapper');
@@ -274,7 +280,7 @@ describe('HomePage (unified)', () => {
             mocks.push(m);
             return m as unknown as IntersectionObserver;
           }
-        },
+        }
       );
       renderHome();
       act(() => mocks[0]!.trigger(false));

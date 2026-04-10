@@ -7,18 +7,18 @@
 
 ## Pass 1 — Full Discovery
 
-*Agents: Bug Hunter, Standards, Architecture & Design, Plan Alignment, Design Quality (inline review; diff was small — 529 lines / 11 code files)*
+_Agents: Bug Hunter, Standards, Architecture & Design, Plan Alignment, Design Quality (inline review; diff was small — 529 lines / 11 code files)_
 
 ### Issues Found (6 total)
 
-| Severity | File:Line | Description | Flagged By |
-|----------|-----------|-------------|------------|
-| Critical | components/map/map-with-fallback.tsx:99-130 | MapWithFallback never forwards onFilterClick to MapDesktopLayout / MapMobileLayout; new filter buttons are no-ops. Breaks plan acceptance criterion. | Bug Hunter |
-| Important | components/map/map-desktop-layout.tsx:120-126 | Sidebar filter button uses raw '≡' Unicode character instead of lucide SlidersHorizontal icon (inconsistent with StickySearchBar). | Design Quality |
-| Important | components/map/map-mobile-layout.tsx:57-64 | Mobile floating filter button also uses raw '≡'; also 40x40 touch target below 44px WCAG recommendation. | Design Quality |
-| Minor | components/map/map-mobile-layout.test.tsx:88-103 | Test defaultProps contains dead fields (count, query, onFilterToggle, view, onViewChange, onSearch, onFilterOpen) no longer on the component's interface. | Standards |
-| Minor | components/map/map-desktop-layout.tsx:11 | const PANEL_EXPAND_DELAY_MS declaration wedged between imports. Cosmetic, pre-existing. | Standards |
-| Minor | app/page.test.tsx:186, 232 | Unsafe [0]! array indexing with non-null assertion in tests; CLAUDE.md prefers first() helper. Debatable for test code. | Standards |
+| Severity  | File:Line                                        | Description                                                                                                                                               | Flagged By     |
+| --------- | ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------- |
+| Critical  | components/map/map-with-fallback.tsx:99-130      | MapWithFallback never forwards onFilterClick to MapDesktopLayout / MapMobileLayout; new filter buttons are no-ops. Breaks plan acceptance criterion.      | Bug Hunter     |
+| Important | components/map/map-desktop-layout.tsx:120-126    | Sidebar filter button uses raw '≡' Unicode character instead of lucide SlidersHorizontal icon (inconsistent with StickySearchBar).                        | Design Quality |
+| Important | components/map/map-mobile-layout.tsx:57-64       | Mobile floating filter button also uses raw '≡'; also 40x40 touch target below 44px WCAG recommendation.                                                  | Design Quality |
+| Minor     | components/map/map-mobile-layout.test.tsx:88-103 | Test defaultProps contains dead fields (count, query, onFilterToggle, view, onViewChange, onSearch, onFilterOpen) no longer on the component's interface. | Standards      |
+| Minor     | components/map/map-desktop-layout.tsx:11         | const PANEL_EXPAND_DELAY_MS declaration wedged between imports. Cosmetic, pre-existing.                                                                   | Standards      |
+| Minor     | app/page.test.tsx:186, 232                       | Unsafe [0]! array indexing with non-null assertion in tests; CLAUDE.md prefers first() helper. Debatable for test code.                                   | Standards      |
 
 ### Validation Results
 
@@ -35,8 +35,10 @@
 - e2e drift — `.first()` added to both `form[role="search"]` matchers in e2e/search.spec.ts (J09, J21). Covers the dual-search-bar ambiguity introduced.
 
 ## Fix Pass 1
+
 **Pre-fix SHA:** 714662cc4de2e8602b72fd2279e84a7c0a401bd4
 **Issues fixed:**
+
 - [Critical] components/map/map-with-fallback.tsx:99-130 — Added explicit `onFilterClick={layoutProps.onFilterOpen}` to both MapDesktopLayout and MapMobileLayout renders. Added integration tests in map-with-fallback.test.tsx verifying mobile and desktop filter buttons each call onFilterOpen once.
 - [Important] components/map/map-desktop-layout.tsx:120-126 — Imported SlidersHorizontal from lucide-react; replaced `≡ 篩選` with `<SlidersHorizontal className="h-4 w-4" aria-hidden="true" /> 篩選`; added aria-label="篩選".
 - [Important] components/map/map-mobile-layout.tsx:57-64 — Replaced `≡` with `<SlidersHorizontal className="h-4 w-4" aria-hidden="true" />`; bumped button from h-10 w-10 to h-11 w-11 (44px WCAG touch target).
@@ -45,14 +47,17 @@
 - [Minor] app/page.test.tsx:186,232 — Replaced unsafe [0]! with array destructuring + toBeDefined() guards.
 
 **Batch Test Run:**
+
 - `pnpm test` — PASS
 - `cd backend && uv run pytest` — PASS
 
 ## Pass 2 — Re-Verify
-*Agents re-run: Bug Hunter, Standards, Design Quality, Plan Alignment*
-*Agents skipped (Minor-only): none — all agents ran*
+
+_Agents re-run: Bug Hunter, Standards, Design Quality, Plan Alignment_
+_Agents skipped (Minor-only): none — all agents ran_
 
 ### Previously Flagged Issues — Resolution Status
+
 - [Critical] components/map/map-with-fallback.tsx:99-130 — ✓ Resolved
 - [Important] components/map/map-desktop-layout.tsx:120-126 — ✓ Resolved
 - [Important] components/map/map-mobile-layout.tsx:57-64 — ✓ Resolved
@@ -61,6 +66,7 @@
 - [Minor] app/page.test.tsx:186,232 — ✓ Resolved
 
 ### New Issues Found (0)
+
 No new issues introduced by the fixes.
 
 ## Final State

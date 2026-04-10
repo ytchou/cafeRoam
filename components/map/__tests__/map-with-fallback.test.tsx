@@ -147,7 +147,11 @@ describe('MapWithFallback', () => {
     const onFilterOpen = vi.fn();
     const user = userEvent.setup();
     render(
-      <MapWithFallback {...defaultProps} onFilterOpen={onFilterOpen} isDesktop={false} />
+      <MapWithFallback
+        {...defaultProps}
+        onFilterOpen={onFilterOpen}
+        isDesktop={false}
+      />
     );
     await waitFor(() =>
       expect(screen.getByTestId('map-container')).toBeInTheDocument()
@@ -164,7 +168,11 @@ describe('MapWithFallback', () => {
     const onFilterOpen = vi.fn();
     const user = userEvent.setup();
     render(
-      <MapWithFallback {...defaultProps} onFilterOpen={onFilterOpen} isDesktop={true} />
+      <MapWithFallback
+        {...defaultProps}
+        onFilterOpen={onFilterOpen}
+        isDesktop={true}
+      />
     );
     await waitFor(() =>
       expect(screen.getByTestId('map-container')).toBeInTheDocument()

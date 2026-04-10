@@ -102,7 +102,7 @@ function HomePageContent() {
     if (!node) return;
     const observer = new IntersectionObserver(
       ([entry]) => setHeroVisible(!!entry?.isIntersecting),
-      { threshold: 0 },
+      { threshold: 0 }
     );
     observer.observe(node);
     return () => observer.disconnect();

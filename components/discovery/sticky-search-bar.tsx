@@ -1,29 +1,37 @@
-'use client'
+'use client';
 
-import { Search, SlidersHorizontal } from 'lucide-react'
-import { useEffect, useState, type FormEvent } from 'react'
+import { Search, SlidersHorizontal } from 'lucide-react';
+import { useEffect, useState, type FormEvent } from 'react';
 
 type Props = {
-  defaultQuery?: string
-  onSubmit: (query: string) => void
-  onFilterClick: () => void
-}
+  defaultQuery?: string;
+  onSubmit: (query: string) => void;
+  onFilterClick: () => void;
+};
 
-export function StickySearchBar({ defaultQuery = '', onSubmit, onFilterClick }: Props) {
-  const [value, setValue] = useState(defaultQuery)
+export function StickySearchBar({
+  defaultQuery = '',
+  onSubmit,
+  onFilterClick,
+}: Props) {
+  const [value, setValue] = useState(defaultQuery);
 
   useEffect(() => {
-    setValue(defaultQuery)
-  }, [defaultQuery])
+    setValue(defaultQuery);
+  }, [defaultQuery]);
 
   function handleSubmit(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    onSubmit(value.trim())
+    e.preventDefault();
+    onSubmit(value.trim());
   }
 
   return (
     <div className="sticky top-0 z-50 border-b border-black/5 bg-white/95 px-4 py-2 shadow-sm backdrop-blur">
-      <form role="search" onSubmit={handleSubmit} className="flex items-center gap-2">
+      <form
+        role="search"
+        onSubmit={handleSubmit}
+        className="flex items-center gap-2"
+      >
         <div className="flex h-[40px] flex-1 items-center gap-2 rounded-full bg-neutral-100 px-4">
           <Search className="h-4 w-4 text-neutral-500" aria-hidden="true" />
           <input
@@ -45,5 +53,5 @@ export function StickySearchBar({ defaultQuery = '', onSubmit, onFilterClick }: 
         </button>
       </form>
     </div>
-  )
+  );
 }
