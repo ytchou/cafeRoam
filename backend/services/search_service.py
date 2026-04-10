@@ -351,7 +351,7 @@ class SearchService:
 
         q_escaped = q.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
         rows: list[dict[str, Any]] = cast(
-            list[dict[str, Any]],
+            "list[dict[str, Any]]",
             self._db.table("taxonomy_tags")
             .select("id, label_zh")
             .ilike("label_zh", f"%{q_escaped}%")
