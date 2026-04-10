@@ -4,9 +4,9 @@ import useSWR from 'swr';
 import { fetchPublic } from '@/lib/api/fetch';
 import type { VibeCollection } from '@/types/vibes';
 
-export function useVibes() {
+export function useVibes(key: string | null = '/api/explore/vibes') {
   const { data, error, isLoading } = useSWR<VibeCollection[]>(
-    '/api/explore/vibes',
+    key,
     fetchPublic,
     { revalidateOnFocus: false }
   );

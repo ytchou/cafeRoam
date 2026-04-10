@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -21,18 +22,29 @@ type Step = 1 | 2 | 3;
 
 export function PreferenceOnboardingModal() {
   const { shouldPrompt, save, dismiss } = usePreferenceOnboarding();
-  const { vibes } = useVibes();
+  // Gate the vibes fetch — skip the /api/explore/vibes round-trip for users
+  // who won't see the modal at all.
+  const { vibes } = useVibes(shouldPrompt ? '/api/explore/vibes' : null);
   const [step, setStep] = useState<Step>(1);
   const [selectedModes, setSelectedModes] = useState<Set<string | null>>(new Set());
   const [selectedVibes, setSelectedVibes] = useState<Set<string>>(new Set());
   const [note, setNote] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (!shouldPrompt) return null;
 
   const toggleMode = (slug: string | null) => {
     const next = new Set(selectedModes);
-    if (next.has(slug)) next.delete(slug);
-    else next.add(slug);
+    if (slug === null) {
+      // 'Anywhere' is mutually exclusive with specific modes
+      next.clear();
+      if (!selectedModes.has(null)) next.add(null);
+    } else {
+      // Selecting a specific mode clears 'Anywhere'
+      next.delete(null);
+      if (next.has(slug)) next.delete(slug);
+      else next.add(slug);
+    }
     setSelectedModes(next);
   };
 
@@ -44,18 +56,34 @@ export function PreferenceOnboardingModal() {
   };
 
   const handleFinish = async () => {
-    const preferredModes = Array.from(selectedModes).filter(
-      (s): s is 'work' | 'rest' | 'social' => s !== null,
-    );
-    await save({
-      preferredModes,
-      preferredVibes: Array.from(selectedVibes),
-      onboardingNote: note.trim() || undefined,
-    });
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      const preferredModes = Array.from(selectedModes).filter(
+        (s): s is 'work' | 'rest' | 'social' => s !== null,
+      );
+      await save({
+        preferredModes,
+        preferredVibes: Array.from(selectedVibes),
+        onboardingNote: note.trim() || undefined,
+      });
+    } catch {
+      toast.error('Could not save your preferences. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleSkip = async () => {
-    await dismiss();
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      await dismiss();
+    } catch {
+      toast.error('Something went wrong. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -80,7 +108,7 @@ export function PreferenceOnboardingModal() {
                 className={cn(
                   'w-full rounded-2xl border p-4 text-left transition',
                   selectedModes.has(m.slug)
-                    ? 'border-[#2c1810] bg-[#2c1810] text-white'
+                    ? 'border-espresso bg-espresso text-white'
                     : 'border-gray-200 bg-white',
                 )}
               >
@@ -102,7 +130,7 @@ export function PreferenceOnboardingModal() {
                 className={cn(
                   'rounded-full border px-4 py-2 transition',
                   selectedVibes.has(v.slug)
-                    ? 'border-[#2c1810] bg-[#2c1810] text-white'
+                    ? 'border-espresso bg-espresso text-white'
                     : 'border-gray-200 bg-white',
                 )}
               >
@@ -125,15 +153,17 @@ export function PreferenceOnboardingModal() {
         <div className="flex flex-col gap-2 pt-4">
           {step < 3 ? (
             <Button
-              className="h-12 w-full rounded-full bg-[#E06B3F] text-white"
+              className="h-12 w-full rounded-full bg-brand text-white"
               onClick={() => setStep((step + 1) as Step)}
+              disabled={isSubmitting}
             >
               Next →
             </Button>
           ) : (
             <Button
-              className="h-12 w-full rounded-full bg-[#E06B3F] text-white"
+              className="h-12 w-full rounded-full bg-brand text-white"
               onClick={handleFinish}
+              disabled={isSubmitting}
             >
               Finish →
             </Button>
@@ -141,7 +171,8 @@ export function PreferenceOnboardingModal() {
           <button
             type="button"
             onClick={handleSkip}
-            className="text-sm text-[#2c1810] opacity-70 hover:opacity-100"
+            disabled={isSubmitting}
+            className="text-sm text-espresso opacity-70 hover:opacity-100 disabled:cursor-not-allowed disabled:opacity-40"
           >
             Skip
           </button>
