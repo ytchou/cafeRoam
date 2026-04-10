@@ -28,7 +28,8 @@ describe('useSearchSuggestions', () => {
 
     await waitFor(() => {
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/search/suggest?q=')
+        expect.stringContaining('/api/search/suggest?q='),
+        expect.objectContaining({ signal: expect.any(AbortSignal) })
       )
     }, { timeout: 500 })
 
