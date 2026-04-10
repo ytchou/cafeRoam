@@ -116,8 +116,10 @@ async def list_shops(
             .execute()
         )
         for job in (jobs_result.data or []):
-            sid = (job.get("payload") or {}).get("shop_id")
-            if sid in shop_ids and (sid not in active_jobs or job["status"] == "claimed"):
+            sid: str | None = (job.get("payload") or {}).get("shop_id")
+            if sid is None or sid not in shop_ids:
+                continue
+            if sid not in active_jobs or job["status"] == "claimed":
                 active_jobs[sid] = {"job_type": job["job_type"], "status": job["status"]}
 
     shops = []
