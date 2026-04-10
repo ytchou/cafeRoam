@@ -57,7 +57,7 @@ def _extract_tool_input(response: Any, expected_name: str) -> dict[str, Any]:
         )
     tool_call = message.tool_calls[0]
     try:
-        return cast(dict[str, Any], json.loads(tool_call.function.arguments))
+        return cast("dict[str, Any]", json.loads(tool_call.function.arguments))
     except (json.JSONDecodeError, ValueError) as exc:
         raise RuntimeError(
             f"Failed to parse tool_call arguments as JSON for '{expected_name}': {exc}"
@@ -168,10 +168,10 @@ class OpenAILLMAdapter:
         messages = _build_enrich_messages(shop, self._taxonomy)
         response = await self._client.chat.completions.create(
             model=self._model,
-            messages=cast(list[Any], messages),
-            tools=cast(Any, [_wrap_schema_for_openai(CLASSIFY_SHOP_SCHEMA)]),
+            messages=cast("list[Any]", messages),
+            tools=cast("Any", [_wrap_schema_for_openai(CLASSIFY_SHOP_SCHEMA)]),
             tool_choice=cast(
-                Any,
+                "Any",
                 {"type": "function", "function": {"name": "classify_shop"}},
             ),
             max_completion_tokens=2048,
@@ -200,10 +200,10 @@ class OpenAILLMAdapter:
         ]
         response = await self._client.chat.completions.create(
             model=self._classify_model,
-            messages=cast(list[Any], messages),
-            tools=cast(Any, [_wrap_schema_for_openai(EXTRACT_MENU_SCHEMA)]),
+            messages=cast("list[Any]", messages),
+            tools=cast("Any", [_wrap_schema_for_openai(EXTRACT_MENU_SCHEMA)]),
             tool_choice=cast(
-                Any,
+                "Any",
                 {"type": "function", "function": {"name": "extract_menu"}},
             ),
             max_completion_tokens=4096,
@@ -233,10 +233,10 @@ class OpenAILLMAdapter:
         ]
         response = await self._client.chat.completions.create(
             model=self._classify_model,
-            messages=cast(list[Any], messages),
-            tools=cast(Any, [_wrap_schema_for_openai(CLASSIFY_PHOTO_SCHEMA)]),
+            messages=cast("list[Any]", messages),
+            tools=cast("Any", [_wrap_schema_for_openai(CLASSIFY_PHOTO_SCHEMA)]),
             tool_choice=cast(
-                Any,
+                "Any",
                 {"type": "function", "function": {"name": "classify_photo"}},
             ),
             max_completion_tokens=128,
@@ -252,7 +252,7 @@ class OpenAILLMAdapter:
         ]
         response = await self._client.chat.completions.create(
             model=self._classify_model,
-            messages=cast(list[Any], messages),
+            messages=cast("list[Any]", messages),
             max_completion_tokens=512,
         )
         content = response.choices[0].message.content
@@ -275,10 +275,10 @@ class OpenAILLMAdapter:
         ]
         response = await self._client.chat.completions.create(
             model=self._nano_model,
-            messages=cast(list[Any], messages),
-            tools=cast(Any, [_wrap_schema_for_openai(ASSIGN_TAROT_SCHEMA)]),
+            messages=cast("list[Any]", messages),
+            tools=cast("Any", [_wrap_schema_for_openai(ASSIGN_TAROT_SCHEMA)]),
             tool_choice=cast(
-                Any,
+                "Any",
                 {"type": "function", "function": {"name": "assign_tarot"}},
             ),
             max_completion_tokens=256,
