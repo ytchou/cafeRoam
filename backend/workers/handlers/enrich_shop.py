@@ -170,7 +170,7 @@ async def handle_enrich_shop(
                 enqueue_payload[key] = payload[key]
 
         await queue.enqueue(
-            job_type=JobType.GENERATE_EMBEDDING,
+            job_type=JobType.SUMMARIZE_REVIEWS,
             payload=enqueue_payload,
             priority=5,
         )

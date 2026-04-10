@@ -14,6 +14,7 @@ if TYPE_CHECKING:
         EnrichmentResult,
         MenuExtractionResult,
         PhotoCategory,
+        ReviewSummaryResult,
         ShopEnrichmentInput,
         TarotEnrichmentResult,
     )
@@ -34,8 +35,15 @@ class HybridLLMAdapter:
     async def classify_photo(self, image_url: str) -> PhotoCategory:
         return await self._openai.classify_photo(image_url)
 
-    async def summarize_reviews(self, texts: list[str]) -> str:
-        return await self._openai.summarize_reviews(texts)
+    async def summarize_reviews(
+        self,
+        google_reviews: list[str],
+        checkin_texts: list[str],
+    ) -> ReviewSummaryResult:
+        return await self._openai.summarize_reviews(
+            google_reviews=google_reviews,
+            checkin_texts=checkin_texts,
+        )
 
     async def assign_tarot(self, shop: ShopEnrichmentInput) -> TarotEnrichmentResult:
         return await self._openai.assign_tarot(shop)

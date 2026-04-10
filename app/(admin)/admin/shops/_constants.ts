@@ -45,6 +45,16 @@ export const STATUS_COLORS: Record<string, string> = {
   timed_out: 'bg-amber-100 text-amber-800 border-amber-300',
 };
 
+export const JOB_LABELS: Record<string, string> = {
+  enrich_shop: 'Enriching shop',
+  classify_shop_photos: 'Classifying photos',
+  summarize_reviews: 'Summarizing reviews',
+  generate_embedding: 'Generating embedding',
+  publish_shop: 'Publishing',
+  scrape_batch: 'Scraping',
+  enrich_menu_photo: 'Enriching menu photo',
+};
+
 export const SOURCE_OPTIONS = [
   'all',
   'cafe_nomad',
@@ -68,6 +78,7 @@ export interface Shop {
   name: string;
   address: string;
   processing_status: string;
+  current_job?: { job_type: string; status: string } | null;
   source: string;
   enriched_at: string | null;
   tag_count: number;

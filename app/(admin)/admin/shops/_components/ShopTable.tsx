@@ -36,7 +36,13 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
-import { PAGE_SIZE, Shop, SOURCE_LABELS, STATUS_LABELS } from '../_constants';
+import {
+  JOB_LABELS,
+  PAGE_SIZE,
+  Shop,
+  SOURCE_LABELS,
+  STATUS_LABELS,
+} from '../_constants';
 
 const RETRYABLE_STATUSES_SET = new Set([
   'scraping',
@@ -356,6 +362,13 @@ export function ShopTable({
                 <TableCell className="py-2">
                   {STATUS_LABELS[shop.processing_status] ??
                     shop.processing_status}
+                  {shop.current_job && (
+                    <span className="text-text-tertiary ml-1 text-[11px]">
+                      ·{' '}
+                      {JOB_LABELS[shop.current_job.job_type] ??
+                        shop.current_job.job_type}
+                    </span>
+                  )}
                 </TableCell>
                 <TableCell className="py-2 text-gray-500">
                   {SOURCE_LABELS[shop.source] ?? shop.source}

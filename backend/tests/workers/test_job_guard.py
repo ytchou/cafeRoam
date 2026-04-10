@@ -2,7 +2,13 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from models.types import EnrichmentResult, JobStatus, ShopModeScores
+from models.types import (
+    EnrichmentResult,
+    JobStatus,
+    ReviewSummaryResult,
+    ReviewTopic,
+    ShopModeScores,
+)
 from workers.handlers.enrich_shop import handle_enrich_shop
 from workers.handlers.generate_embedding import handle_generate_embedding
 from workers.handlers.summarize_reviews import handle_summarize_reviews
@@ -198,7 +204,10 @@ async def test_handle_summarize_reviews_skips_writes_when_job_was_force_failed()
     """Admin force-fail prevents community summary writes from undoing the abort."""
     db = _make_summarize_db()
     llm = AsyncMock()
-    llm.summarize_reviews.return_value = "常客提到環境安靜、拿鐵順口，適合午後工作與放鬆。"
+    llm.summarize_reviews.return_value = ReviewSummaryResult(
+        summary_zh_tw="常客提到環境安靜、拿鐵順口，適合午後工作與放鬆。",
+        review_topics=[ReviewTopic(topic="環境安靜", count=5)],
+    )
     queue = AsyncMock()
     queue.get_status.return_value = "failed"
 

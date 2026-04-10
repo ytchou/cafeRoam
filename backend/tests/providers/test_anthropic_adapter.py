@@ -2,7 +2,8 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from models.types import ShopEnrichmentInput, ShopModeScores, TaxonomyTag
+from models.types import ReviewSummaryResult, ShopEnrichmentInput, ShopModeScores, TaxonomyTag
+from providers.llm._tool_schemas import SUMMARIZE_REVIEWS_TOOL_SCHEMA
 from providers.llm.anthropic_adapter import AnthropicLLMAdapter
 
 SAMPLE_TAXONOMY = [
@@ -433,3 +434,88 @@ class TestAnthropicExtractMenuData:
         call_args = adapter._client.messages.create.call_args
         tool_choice = call_args.kwargs.get("tool_choice") or call_args[1].get("tool_choice")
         assert tool_choice == {"type": "tool", "name": "extract_menu"}
+
+
+def _make_summarize_tool_response(tool_input: dict) -> MagicMock:
+    """Build a mock Anthropic response with a summarize_reviews tool_use block."""
+    tool_block = MagicMock()
+    tool_block.type = "tool_use"
+    tool_block.name = "summarize_reviews"
+    tool_block.input = tool_input
+
+    response = MagicMock()
+    response.content = [tool_block]
+    response.stop_reason = "tool_use"
+    return response
+
+
+class TestAnthropicSummarizeReviews:
+    @pytest.fixture
+    def adapter(self):
+        return AnthropicLLMAdapter(
+            api_key="test-key",
+            model="claude-sonnet-4-6",
+            classify_model="claude-haiku-4-5-20251001",
+            taxonomy=SAMPLE_TAXONOMY,
+        )
+
+    async def test_summarize_reviews_google_only_returns_structured_result(self, adapter):
+        """With only Google reviews, returns ReviewSummaryResult."""
+        mock_response = _make_summarize_tool_response(
+            {
+                "summary_zh_tw": "咖啡豆精選，適合安靜工作。",
+                "review_topics": [
+                    {"topic": "手沖咖啡", "count": 8},
+                    {"topic": "安靜", "count": 5},
+                ],
+            }
+        )
+        adapter._client = AsyncMock()
+        adapter._client.messages.create = AsyncMock(return_value=mock_response)
+
+        result = await adapter.summarize_reviews(
+            google_reviews=["Great pour-over", "Very quiet"],
+            checkin_texts=[],
+        )
+
+        assert isinstance(result, ReviewSummaryResult)
+        assert result.summary_zh_tw == "咖啡豆精選，適合安靜工作。"
+        assert len(result.review_topics) == 2
+        assert result.review_topics[0].topic == "手沖咖啡"
+
+    async def test_summarize_reviews_calls_api_with_tool_schema(self, adapter):
+        """Verifies tool_choice and tools are passed correctly."""
+        mock_response = _make_summarize_tool_response(
+            {
+                "summary_zh_tw": "test",
+                "review_topics": [{"topic": "x", "count": 1}],
+            }
+        )
+        adapter._client = AsyncMock()
+        adapter._client.messages.create = AsyncMock(return_value=mock_response)
+
+        await adapter.summarize_reviews(google_reviews=["review"], checkin_texts=[])
+
+        call_kwargs = adapter._client.messages.create.call_args[1]
+        assert call_kwargs["tools"] == [SUMMARIZE_REVIEWS_TOOL_SCHEMA]
+        assert call_kwargs["tool_choice"] == {"type": "tool", "name": "summarize_reviews"}
+
+    async def test_summarize_reviews_blended_prompt_emphasises_community(self, adapter):
+        """When both sources present, community notes appear as higher-priority section."""
+        mock_response = _make_summarize_tool_response(
+            {
+                "summary_zh_tw": "社群推薦",
+                "review_topics": [{"topic": "安靜", "count": 3}],
+            }
+        )
+        adapter._client = AsyncMock()
+        adapter._client.messages.create = AsyncMock(return_value=mock_response)
+
+        await adapter.summarize_reviews(
+            google_reviews=["Good coffee"],
+            checkin_texts=["很安靜，適合工作"],
+        )
+
+        user_message = adapter._client.messages.create.call_args[1]["messages"][0]["content"]
+        assert "社群筆記" in user_message
+        assert "Google 評論" in user_message

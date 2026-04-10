@@ -1,0 +1,53 @@
+{
+  "findings": [
+    {
+      "severity": "Important",
+      "file": "backend/api/admin_shops.py",
+      "line": "111-120",
+      "description": "New active-jobs fetch runs a SELECT on job_queue filtered only by status IN ('pending','claimed') with no shop_id filter — pulls every in-flight job in the system on every admin page load, then filters in Python. Should push payload->>shop_id filter into the query via .in_() so Postgres returns only rows for the current page. Also, shop_ids is a list used for `sid in shop_ids` membership test inside the per-job loop — should be a set for O(1) lookup. Violates CLAUDE.md performance standards ('No N+1 queries', 'O(1) first', 'hoist DB calls out of loops').",
+      "flagged_by": "Bug Hunter / Architecture",
+      "status": "resolved"
+    },
+    {
+      "severity": "Important",
+      "file": "backend/providers/llm/anthropic_adapter.py",
+      "line": "306-310",
+      "description": "summarize_reviews parses the tool_use block with inline `next(block.input for block in response.content if block.type == 'tool_use' and block.name == 'summarize_reviews')` with no default. If the model returns no matching tool_use block (refusal, stop_reason='end_turn', malformed response), next() raises StopIteration inside an async function, which Python converts to RuntimeError — losing the real error context and bypassing the intended ValueError path. All sibling methods in the same file (classify_shop, extract_menu, assign_tarot, classify_photo) use self._extract_tool_input() which raises a clear ValueError. Switch summarize_reviews to the helper for consistency and robustness.",
+      "flagged_by": "Bug Hunter / Standards",
+      "status": "resolved"
+    },
+    {
+      "severity": "Important",
+      "file": "backend/workers/handlers/summarize_reviews.py",
+      "line": "44-49",
+      "description": "shop_reviews fetch has no .limit() and no .order() — returns every row for the shop, then slices the first MAX_GOOGLE_REVIEWS (50) in Python. With the new mostRelevant scrape cap of 50 this is usually fine, but re-scraped or pre-DEV-305 shops can have more rows, and the Python slice becomes insertion-order rather than relevance-order. Push the cap into Postgres with .order('...').limit(MAX_GOOGLE_REVIEWS) for deterministic slicing and to avoid fetching unused rows. Violates CLAUDE.md 'no work in loops / hoist DB calls'.",
+      "flagged_by": "Architecture",
+      "status": "resolved"
+    },
+    {
+      "severity": "Minor",
+      "file": "backend/api/admin_shops.py",
+      "line": "105-120",
+      "description": "Design doc (docs/designs/2026-04-10-review-topic-chips-design.md line 68) specifies a 'LEFT JOIN on job_queue' for the admin current_job field. Implementation uses a separate round-trip query plus Python merge instead. Behavior-equivalent for the dashboard, but deviates from documented approach. Either update design doc to reflect 'two-query merge', or switch to the Supabase embedded select pattern for a single round-trip.",
+      "flagged_by": "Plan Alignment",
+      "status": "resolved"
+    },
+    {
+      "severity": "Minor",
+      "file": "backend/scripts/backfill_review_topics.py",
+      "line": "53-63",
+      "description": "The dedup `existing` query fetches every pending/claimed SUMMARIZE_REVIEWS job in the table to build `already_queued`. Should filter `.in_('payload->>shop_id', [r['id'] for r in rows])` so the query is bounded by the backfill batch size. Minor because the script is a one-shot; still worth fixing before large re-runs.",
+      "flagged_by": "Architecture",
+      "status": "resolved"
+    }
+  ],
+  "active_agents": [],
+  "skipped": [
+    "Plan Alignment — Minor-only findings, trivially verified (iteration 1)",
+    "Test Philosophy — not in active_agents",
+    "Design Quality — not in active_agents",
+    "Adversarial Review — not in active_agents"
+  ],
+  "head_sha": "fbaad7188c6a09e560b676293a1069aaa06d4273",
+  "review_log_path": "docs/reviews/2026-04-11-feat-dev-305-review-topic-chips.md"
+}

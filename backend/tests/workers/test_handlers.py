@@ -731,6 +731,7 @@ class TestSummarizeReviewsHandlerGuard:
         """When a job is cancelled mid-flight, summarize_reviews returns early without writing community_summary."""
         from unittest.mock import patch
 
+        from models.types import ReviewSummaryResult, ReviewTopic
         from workers.handlers.summarize_reviews import handle_summarize_reviews
 
         db = MagicMock()
@@ -742,7 +743,12 @@ class TestSummarizeReviewsHandlerGuard:
         )
 
         llm = AsyncMock()
-        llm.summarize_reviews = AsyncMock(return_value="溫馨的咖啡廳社群總結，適合各種場合")
+        llm.summarize_reviews = AsyncMock(
+            return_value=ReviewSummaryResult(
+                summary_zh_tw="溫馨的咖啡廳社群總結，適合各種場合",
+                review_topics=[ReviewTopic(topic="環境安靜", count=3)],
+            )
+        )
         queue = AsyncMock()
 
         with patch(
@@ -895,6 +901,7 @@ class TestSummarizeReviewsMilestoneLogs:
         """When summarize_reviews completes successfully, it emits job.start, llm.call, db.write, job.end milestones."""
         from unittest.mock import patch
 
+        from models.types import ReviewSummaryResult, ReviewTopic
         from workers.handlers.summarize_reviews import handle_summarize_reviews
 
         db = MagicMock()
@@ -906,7 +913,12 @@ class TestSummarizeReviewsMilestoneLogs:
         )
 
         llm = AsyncMock()
-        llm.summarize_reviews = AsyncMock(return_value="溫馨的咖啡廳社群總結，適合各種場合休憩")
+        llm.summarize_reviews = AsyncMock(
+            return_value=ReviewSummaryResult(
+                summary_zh_tw="溫馨的咖啡廳社群總結，適合各種場合休憩",
+                review_topics=[ReviewTopic(topic="環境安靜", count=4)],
+            )
+        )
         queue = AsyncMock()
 
         guard_path = "workers.handlers.summarize_reviews.check_job_still_claimed"

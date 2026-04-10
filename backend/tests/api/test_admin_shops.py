@@ -77,6 +77,93 @@ class TestAdminShopsList:
         finally:
             test_app.dependency_overrides.clear()
 
+    def test_admin_shops_includes_current_job_when_active(self):
+        """When a shop has a CLAIMED job, current_job is returned in the shop list."""
+        test_app.dependency_overrides[get_current_user] = _admin_user
+        try:
+            mock_db = MagicMock()
+            shop = make_shop_row(id="shop-abc", name="活躍工作咖啡館")
+
+            shops_table_mock = MagicMock()
+            select_rv = shops_table_mock.select.return_value
+            select_rv.order.return_value.range.return_value.execute.return_value = MagicMock(
+                data=[shop], count=1
+            )
+
+            jobs_table_mock = MagicMock()
+            jobs_table_mock.select.return_value.in_.return_value.in_.return_value.execute.return_value = MagicMock(
+                data=[
+                    {
+                        "job_type": "summarize_reviews",
+                        "status": "claimed",
+                        "payload": {"shop_id": "shop-abc"},
+                    }
+                ]
+            )
+
+            def table_side_effect(table_name):
+                if table_name == "job_queue":
+                    return jobs_table_mock
+                return shops_table_mock
+
+            mock_db.table.side_effect = table_side_effect
+
+            with (
+                patch("api.admin_shops.get_service_role_client", return_value=mock_db),
+                patch("api.deps.settings") as mock_settings,
+            ):
+                mock_settings.admin_user_ids = [_ADMIN_ID]
+                response = client.get("/admin/shops")
+
+            assert response.status_code == 200
+            shops_data = response.json()["shops"]
+            assert len(shops_data) == 1
+            assert shops_data[0]["current_job"] == {
+                "job_type": "summarize_reviews",
+                "status": "claimed",
+            }
+        finally:
+            test_app.dependency_overrides.clear()
+
+    def test_admin_shops_current_job_is_null_when_no_active_job(self):
+        """When no active job exists for a shop, current_job is null in the shop list."""
+        test_app.dependency_overrides[get_current_user] = _admin_user
+        try:
+            mock_db = MagicMock()
+            shop = make_shop_row(id="shop-xyz", name="平靜咖啡館")
+
+            shops_table_mock = MagicMock()
+            select_rv = shops_table_mock.select.return_value
+            select_rv.order.return_value.range.return_value.execute.return_value = MagicMock(
+                data=[shop], count=1
+            )
+
+            jobs_table_mock = MagicMock()
+            jobs_table_mock.select.return_value.in_.return_value.in_.return_value.execute.return_value = MagicMock(
+                data=[]
+            )
+
+            def table_side_effect(table_name):
+                if table_name == "job_queue":
+                    return jobs_table_mock
+                return shops_table_mock
+
+            mock_db.table.side_effect = table_side_effect
+
+            with (
+                patch("api.admin_shops.get_service_role_client", return_value=mock_db),
+                patch("api.deps.settings") as mock_settings,
+            ):
+                mock_settings.admin_user_ids = [_ADMIN_ID]
+                response = client.get("/admin/shops")
+
+            assert response.status_code == 200
+            shops_data = response.json()["shops"]
+            assert len(shops_data) == 1
+            assert shops_data[0]["current_job"] is None
+        finally:
+            test_app.dependency_overrides.clear()
+
 
 class TestAdminShopCreate:
     def test_admin_creates_shop_with_manual_source_and_audit_log(self):

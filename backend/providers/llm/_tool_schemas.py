@@ -136,3 +136,56 @@ CLASSIFY_PHOTO_SCHEMA: dict[str, Any] = {
         "required": ["category"],
     },
 }
+
+SUMMARIZE_REVIEWS_TOOL_SCHEMA: dict[str, Any] = {
+    "name": "summarize_reviews",
+    "description": (
+        "Generate a blended community summary and extract recurring topic chips "
+        "from Google reviews and community check-in notes. "
+        "Output in Traditional Chinese (繁體中文) where possible."
+    ),
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "summary_zh_tw": {
+                "type": "string",
+                "description": (
+                    "2–4 sentences in Traditional Chinese (繁體中文), max 200 characters. "
+                    "Focus on drinks, food, atmosphere, and work-suitability. "
+                    "When community notes are present, weight them more heavily "
+                    "than Google reviews."
+                ),
+            },
+            "review_topics": {
+                "type": "array",
+                "description": (
+                    "Top 8–10 recurring topics mentioned across all reviews, "
+                    "with estimated mention counts."
+                ),
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "topic": {
+                            "type": "string",
+                            "description": (
+                                "Topic label in Traditional Chinese "
+                                "(or English if the review used English). "
+                                "E.g. '手沖咖啡', 'vintage vibe', '插座充足'."
+                            ),
+                        },
+                        "count": {
+                            "type": "integer",
+                            "description": (
+                                "Estimated number of reviews/notes mentioning this topic."
+                            ),
+                        },
+                    },
+                    "required": ["topic", "count"],
+                },
+                "minItems": 1,
+                "maxItems": 10,
+            },
+        },
+        "required": ["summary_zh_tw", "review_topics"],
+    },
+}
