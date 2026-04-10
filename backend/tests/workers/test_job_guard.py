@@ -1,48 +1,54 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 from models.types import JobStatus
 from workers.job_guard import check_job_still_claimed
 from workers.queue import get_status
 
 
-def test_check_job_still_claimed_returns_true_when_claimed():
-    """check_job_still_claimed returns True when the job status is claimed."""
-    with patch("workers.job_guard.get_status", return_value=JobStatus.CLAIMED):
-        mock_db = MagicMock()
-        result = check_job_still_claimed(mock_db, "job-id-1")
+def _mock_db_with_status(status: str | None) -> MagicMock:
+    mock_db = MagicMock()
+    if status is None:
+        mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value = (
+            MagicMock(data=[])
+        )
+    else:
+        mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value = (
+            MagicMock(data=[{"status": status}])
+        )
+    return mock_db
+
+
+def test_guard_allows_worker_to_continue_when_job_is_still_claimed():
+    """Given a worker holding a claimed job, when the guard runs, it reports the job is active."""
+    mock_db = _mock_db_with_status("claimed")
+    result = check_job_still_claimed(mock_db, "job-id-1")
     assert result is True
 
 
-def test_check_job_still_claimed_returns_false_when_cancelled():
-    """check_job_still_claimed returns False when the job status is cancelled."""
-    with patch("workers.job_guard.get_status", return_value=JobStatus.CANCELLED):
-        mock_db = MagicMock()
-        result = check_job_still_claimed(mock_db, "job-id-2")
+def test_guard_blocks_write_when_admin_cancelled_the_job_mid_flight():
+    """Given an admin who cancelled a job while the worker was processing, the guard detects it."""
+    mock_db = _mock_db_with_status("cancelled")
+    result = check_job_still_claimed(mock_db, "job-id-2")
     assert result is False
 
 
-def test_check_job_still_claimed_returns_false_when_dead_letter():
-    """check_job_still_claimed returns False when the job status is dead_letter."""
-    with patch("workers.job_guard.get_status", return_value=JobStatus.DEAD_LETTER):
-        mock_db = MagicMock()
-        result = check_job_still_claimed(mock_db, "job-id-3")
+def test_guard_blocks_write_when_job_reached_dead_letter():
+    """Given a job that moved to dead_letter, when the guard runs, it signals the worker to abort."""
+    mock_db = _mock_db_with_status("dead_letter")
+    result = check_job_still_claimed(mock_db, "job-id-3")
     assert result is False
 
 
-def test_check_job_still_claimed_returns_false_when_none():
-    """check_job_still_claimed returns False when the job is not found."""
-    with patch("workers.job_guard.get_status", return_value=None):
-        mock_db = MagicMock()
-        result = check_job_still_claimed(mock_db, "job-id-missing")
+def test_guard_blocks_write_when_job_no_longer_exists():
+    """Given a job that was deleted from the queue, when the guard runs, it signals the worker to abort."""
+    mock_db = _mock_db_with_status(None)
+    result = check_job_still_claimed(mock_db, "job-id-missing")
     assert result is False
 
 
-def test_queue_get_status_queries_correct_table():
-    """get_status queries job_queue.status by job_id and returns the correct JobStatus."""
-    mock_db = MagicMock()
-    mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value = (
-        MagicMock(data=[{"status": "claimed"}])
-    )
+def test_get_status_returns_correct_status_from_job_queue_table():
+    """Given a job in the queue, when get_status is called, it queries job_queue by id and returns the status."""
+    mock_db = _mock_db_with_status("claimed")
 
     result = get_status(mock_db, "test-id")
 
