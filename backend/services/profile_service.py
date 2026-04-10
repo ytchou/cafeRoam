@@ -165,7 +165,7 @@ class ProfileService:
     # --- DEV-297: preference onboarding ---
 
     async def get_preference_status(self, user_id: str) -> PreferenceOnboardingStatus:
-        def _fetch():
+        def _fetch() -> Any:
             return (
                 self._db.table("profiles")
                 .select(
@@ -208,14 +208,14 @@ class ProfileService:
 
         update_data["preferences_completed_at"] = datetime.now(UTC).isoformat()
 
-        def _update():
+        def _update() -> Any:
             return self._db.table("profiles").update(update_data).eq("id", user_id).execute()
 
         await asyncio.to_thread(_update)
         return await self.get_preference_status(user_id)
 
     async def dismiss_preferences(self, user_id: str) -> PreferenceOnboardingStatus:
-        def _update():
+        def _update() -> Any:
             return (
                 self._db.table("profiles")
                 .update({"preferences_prompted_at": datetime.now(UTC).isoformat()})
@@ -227,7 +227,7 @@ class ProfileService:
         return await self.get_preference_status(user_id)
 
     async def get_preferred_modes(self, user_id: str) -> list[str] | None:
-        def _fetch():
+        def _fetch() -> Any:
             return (
                 self._db.table("profiles")
                 .select("preferred_modes")
@@ -240,7 +240,7 @@ class ProfileService:
         return row.get("preferred_modes")
 
     async def _validate_vibe_slugs(self, slugs: list[str]) -> None:
-        def _fetch():
+        def _fetch() -> Any:
             return self._db.table("vibe_collections").select("slug").in_("slug", slugs).execute()
 
         rows = (await asyncio.to_thread(_fetch)).data or []

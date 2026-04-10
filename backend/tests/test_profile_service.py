@@ -317,8 +317,8 @@ class TestSavePreferences:
         vibe_table.select.return_value.in_.return_value.execute.return_value.data = [
             {"slug": "specialty-coffee"}
         ]
-        mock_db.table.side_effect = (
-            lambda name: vibe_table if name == "vibe_collections" else profile_table
+        mock_db.table.side_effect = lambda name: (
+            vibe_table if name == "vibe_collections" else profile_table
         )
 
         service = ProfileService(db=mock_db)
@@ -336,8 +336,8 @@ class TestSavePreferences:
         profile_table = MagicMock()
         vibe_table = MagicMock()
         vibe_table.select.return_value.in_.return_value.execute.return_value.data = []
-        mock_db.table.side_effect = (
-            lambda name: vibe_table if name == "vibe_collections" else profile_table
+        mock_db.table.side_effect = lambda name: (
+            vibe_table if name == "vibe_collections" else profile_table
         )
 
         service = ProfileService(db=mock_db)

@@ -3,7 +3,7 @@ from typing import Any
 import jwt as pyjwt
 import structlog
 from fastapi import Depends, HTTPException, Request, status
-from gotrue.errors import AuthApiError
+from supabase_auth.errors import AuthApiError
 from jwt import PyJWKClient
 from supabase import Client
 

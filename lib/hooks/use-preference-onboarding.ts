@@ -21,7 +21,7 @@ export function usePreferenceOnboarding() {
   const { data, error, isLoading, mutate } = useSWR<PreferenceOnboardingStatus>(
     STATUS_KEY,
     fetchWithAuth,
-    { revalidateOnFocus: false },
+    { revalidateOnFocus: false }
   );
 
   async function save(payload: PreferencePayload) {

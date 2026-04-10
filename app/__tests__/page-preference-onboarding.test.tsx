@@ -122,7 +122,13 @@ function setupDefaultMocks() {
     error: null,
   });
   mockUseShops.mockReturnValue({ shops: [], isLoading: false, error: null });
-  mockUseSearch.mockReturnValue({ results: [], isLoading: false, queryType: null, resultCount: 0, error: null });
+  mockUseSearch.mockReturnValue({
+    results: [],
+    isLoading: false,
+    queryType: null,
+    resultCount: 0,
+    error: null,
+  });
   mockUseSearchState.mockReturnValue({
     query: '',
     mode: null,
@@ -177,7 +183,9 @@ describe('HomePage — PreferenceOnboardingModal integration', () => {
 
     render(<HomePage />);
 
-    expect(screen.queryByText('what brings you here today')).not.toBeInTheDocument();
+    expect(
+      screen.queryByText('what brings you here today')
+    ).not.toBeInTheDocument();
   });
 
   it('does not render the preference onboarding modal when shouldPrompt is false even if authenticated', () => {
@@ -198,6 +206,8 @@ describe('HomePage — PreferenceOnboardingModal integration', () => {
 
     render(<HomePage />);
 
-    expect(screen.queryByText('what brings you here today')).not.toBeInTheDocument();
+    expect(
+      screen.queryByText('what brings you here today')
+    ).not.toBeInTheDocument();
   });
 });

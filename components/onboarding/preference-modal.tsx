@@ -26,7 +26,9 @@ export function PreferenceOnboardingModal() {
   // who won't see the modal at all.
   const { vibes } = useVibes(shouldPrompt ? '/api/explore/vibes' : null);
   const [step, setStep] = useState<Step>(1);
-  const [selectedModes, setSelectedModes] = useState<Set<string | null>>(new Set());
+  const [selectedModes, setSelectedModes] = useState<Set<string | null>>(
+    new Set()
+  );
   const [selectedVibes, setSelectedVibes] = useState<Set<string>>(new Set());
   const [note, setNote] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -60,7 +62,7 @@ export function PreferenceOnboardingModal() {
     setIsSubmitting(true);
     try {
       const preferredModes = Array.from(selectedModes).filter(
-        (s): s is 'work' | 'rest' | 'social' => s !== null,
+        (s): s is 'work' | 'rest' | 'social' => s !== null
       );
       await save({
         preferredModes,
@@ -87,7 +89,12 @@ export function PreferenceOnboardingModal() {
   };
 
   return (
-    <Dialog open onOpenChange={(open) => { if (!open) handleSkip(); }}>
+    <Dialog
+      open
+      onOpenChange={(open) => {
+        if (!open) handleSkip();
+      }}
+    >
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>
@@ -109,7 +116,7 @@ export function PreferenceOnboardingModal() {
                   'w-full rounded-2xl border p-4 text-left transition',
                   selectedModes.has(m.slug)
                     ? 'border-espresso bg-espresso text-white'
-                    : 'border-gray-200 bg-white',
+                    : 'border-gray-200 bg-white'
                 )}
               >
                 <div className="text-2xl">{m.emoji}</div>
@@ -131,7 +138,7 @@ export function PreferenceOnboardingModal() {
                   'rounded-full border px-4 py-2 transition',
                   selectedVibes.has(v.slug)
                     ? 'border-espresso bg-espresso text-white'
-                    : 'border-gray-200 bg-white',
+                    : 'border-gray-200 bg-white'
                 )}
               >
                 <span className="mr-1">{v.emoji}</span>
@@ -153,7 +160,7 @@ export function PreferenceOnboardingModal() {
         <div className="flex flex-col gap-2 pt-4">
           {step < 3 ? (
             <Button
-              className="h-12 w-full rounded-full bg-brand text-white"
+              className="bg-brand h-12 w-full rounded-full text-white"
               onClick={() => setStep((step + 1) as Step)}
               disabled={isSubmitting}
             >
@@ -161,7 +168,7 @@ export function PreferenceOnboardingModal() {
             </Button>
           ) : (
             <Button
-              className="h-12 w-full rounded-full bg-brand text-white"
+              className="bg-brand h-12 w-full rounded-full text-white"
               onClick={handleFinish}
               disabled={isSubmitting}
             >
@@ -172,7 +179,7 @@ export function PreferenceOnboardingModal() {
             type="button"
             onClick={handleSkip}
             disabled={isSubmitting}
-            className="text-sm text-espresso opacity-70 hover:opacity-100 disabled:cursor-not-allowed disabled:opacity-40"
+            className="text-espresso text-sm opacity-70 hover:opacity-100 disabled:cursor-not-allowed disabled:opacity-40"
           >
             Skip
           </button>

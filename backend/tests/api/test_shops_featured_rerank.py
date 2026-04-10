@@ -7,7 +7,7 @@
 # - get_optional_current_user is patched via its module-import name because the handler
 #   calls it directly (not via Depends) to preserve patch() compatibility in tests.
 #   See handoff note: "intentional pattern — do not change to Depends".
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from fastapi.testclient import TestClient
