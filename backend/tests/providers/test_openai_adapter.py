@@ -163,3 +163,18 @@ async def test_extract_menu_data_returns_empty_when_no_items(adapter):
 
     result = await adapter.extract_menu_data("https://cdn.example.com/blank.jpg")
     assert result.items == []
+
+
+@pytest.mark.parametrize("category_value,expected", [
+    ("MENU", PhotoCategory.MENU),
+    ("VIBE", PhotoCategory.VIBE),
+    ("SKIP", PhotoCategory.SKIP),
+])
+async def test_classify_photo_returns_enum(adapter, category_value, expected):
+    adapter._client = AsyncMock()
+    adapter._client.chat.completions.create = AsyncMock(
+        return_value=_openai_tool_call_response("classify_photo", {"category": category_value})
+    )
+
+    result = await adapter.classify_photo("https://cdn.example.com/photo_w400.jpg")
+    assert result == expected
