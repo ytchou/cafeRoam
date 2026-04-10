@@ -1,3 +1,4 @@
+import asyncio
 import contextlib
 from datetime import datetime
 from typing import Any, cast
@@ -8,11 +9,11 @@ from pydantic import BaseModel, Field, ValidationError
 from pydantic.alias_generators import to_camel
 from starlette.requests import Request
 
-from api.deps import get_admin_db, get_optional_user
+from api.deps import get_admin_db, get_optional_current_user, get_optional_user
 from core.config import settings
 from core.db import first
 from core.opening_hours import is_open_now
-from db.supabase_client import get_anon_client
+from db.supabase_client import get_anon_client, get_service_role_client
 from middleware.rate_limit import limiter
 from models.types import (
     ShopCheckInPreview,
@@ -21,6 +22,7 @@ from models.types import (
     ShopReviewsResponse,
     TaxonomyTag,
 )
+from services.profile_service import ProfileService
 
 _TW = ZoneInfo("Asia/Taipei")
 
@@ -70,6 +72,40 @@ _SHOP_DETAIL_COLUMNS = (
 )
 
 
+def _fetch_featured_shops(db: Any, limit: int) -> list[dict[str, Any]]:
+    """Raw featured-shops query, isolated so tests can stub the DB layer."""
+    response = (
+        db.table("shops")
+        .select(
+            f"{_SHOP_LIST_COLUMNS}, shop_photos(url), shop_claims(status), "
+            "shop_tags(tag_id, confidence, taxonomy_tags(id, dimension, label, label_zh))"
+        )
+        .eq("processing_status", "live")
+        .limit(limit)
+        .execute()
+    )
+    return cast("list[dict[str, Any]]", response.data or [])
+
+
+def _rerank_by_modes(
+    shops: list[dict[str, Any]], preferred_modes: list[str] | None
+) -> list[dict[str, Any]]:
+    if not preferred_modes:
+        return shops
+
+    def mode_score(s: dict[str, Any]) -> float:
+        candidates = []
+        if "work" in preferred_modes:
+            candidates.append(s.get("mode_work") or 0.0)
+        if "rest" in preferred_modes:
+            candidates.append(s.get("mode_rest") or 0.0)
+        if "social" in preferred_modes:
+            candidates.append(s.get("mode_social") or 0.0)
+        return max(candidates) if candidates else 0.0
+
+    return sorted(shops, key=mode_score, reverse=True)
+
+
 @limiter.limit(settings.rate_limit_shops_list)
 @router.get("/")
 async def list_shops(
@@ -78,19 +114,32 @@ async def list_shops(
     featured: bool = False,
     limit: int = Query(default=50, ge=1, le=200),
 ) -> list[Any]:
-    """List shops. Public — no auth required."""
+    """List shops. Public — no auth required. Featured list re-ranks by user's preferred modes."""
+    user: dict[str, Any] | None = await asyncio.to_thread(get_optional_current_user, request)
     db = get_anon_client()
-    query = db.table("shops").select(
-        f"{_SHOP_LIST_COLUMNS}, shop_photos(url), shop_claims(status), "
-        "shop_tags(tag_id, confidence, taxonomy_tags(id, dimension, label, label_zh))"
-    )
-    if city:
-        query = query.eq("city", city)
+
     if featured:
-        query = query.eq("processing_status", "live")
-    query = query.limit(limit)
-    response = query.execute()
-    rows = cast("list[dict[str, Any]]", response.data or [])
+        # Note: the city filter is intentionally not applied to featured listings.
+        # Featured shops are curated globally — city-scoped featured is not a V1 use case.
+        rows = _fetch_featured_shops(db, limit)
+        if user:
+            svc = ProfileService(db=get_service_role_client())
+            preferred_modes = await svc.get_preferred_modes(user["id"])
+            # Known limitation: re-rank operates on the limit-sized slice only.
+            # Preferred-mode shops outside the top-N in insertion order are not surfaced.
+            # Switch to a Postgres RPC approach if ranking across the full corpus matters.
+            rows = _rerank_by_modes(rows, preferred_modes)
+    else:
+        query = db.table("shops").select(
+            f"{_SHOP_LIST_COLUMNS}, shop_photos(url), shop_claims(status), "
+            "shop_tags(tag_id, confidence, taxonomy_tags(id, dimension, label, label_zh))"
+        )
+        if city:
+            query = query.eq("city", city)
+        query = query.limit(limit)
+        response = query.execute()
+        rows = cast("list[dict[str, Any]]", response.data or [])
+
     now = datetime.now(_TW)
     result = []
     for row in rows:

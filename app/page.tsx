@@ -18,6 +18,7 @@ import {
   type TagFilterId,
 } from '@/components/filters/filter-map';
 import { MapWithFallback } from '@/components/map/map-with-fallback';
+import { PreferenceOnboardingModal } from '@/components/onboarding/preference-modal';
 import { WebsiteJsonLd } from '@/components/seo/WebsiteJsonLd';
 import { trackSearch, trackSignupCtaClick } from '@/lib/analytics/ga4-events';
 import { useGeolocation } from '@/lib/hooks/use-geolocation';
@@ -341,6 +342,7 @@ function HomePageContent() {
           isDesktop={isDesktop}
         />
       </section>
+      {user && <PreferenceOnboardingModal />}
     </div>
   );
 }

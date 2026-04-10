@@ -3,9 +3,10 @@ import asyncio
 from datetime import UTC, datetime, timedelta
 from typing import Any, cast
 
+from fastapi import HTTPException
 from supabase import Client
 
-from models.types import ProfileResponse
+from models.types import PreferenceOnboardingRequest, PreferenceOnboardingStatus, ProfileResponse
 
 
 class ProfileService:
@@ -160,3 +161,93 @@ class ProfileService:
             "days_since_first_session": days,
             "previous_sessions": previous_count,
         }
+
+    # --- DEV-297: preference onboarding ---
+
+    async def get_preference_status(self, user_id: str) -> PreferenceOnboardingStatus:
+        def _fetch() -> Any:
+            return (
+                self._db.table("profiles")
+                .select(
+                    "preferred_modes, preferred_vibes, onboarding_note, "
+                    "preferences_completed_at, preferences_prompted_at"
+                )
+                .eq("id", user_id)
+                .maybe_single()
+                .execute()
+            )
+
+        row = (await asyncio.to_thread(_fetch)).data or {}
+        should_prompt = (
+            row.get("preferences_completed_at") is None
+            and row.get("preferences_prompted_at") is None
+        )
+        return PreferenceOnboardingStatus(
+            should_prompt=should_prompt,
+            preferred_modes=row.get("preferred_modes"),
+            preferred_vibes=row.get("preferred_vibes"),
+            onboarding_note=row.get("onboarding_note"),
+        )
+
+    async def save_preferences(
+        self,
+        user_id: str,
+        req: PreferenceOnboardingRequest,
+    ) -> PreferenceOnboardingStatus:
+        fields = req.model_fields_set
+        update_data: dict[str, Any] = {}
+
+        if "preferred_modes" in fields:
+            update_data["preferred_modes"] = req.preferred_modes
+        if "preferred_vibes" in fields:
+            if req.preferred_vibes:
+                await self._validate_vibe_slugs(req.preferred_vibes)
+            update_data["preferred_vibes"] = req.preferred_vibes
+        if "onboarding_note" in fields:
+            update_data["onboarding_note"] = req.onboarding_note
+
+        update_data["preferences_completed_at"] = datetime.now(UTC).isoformat()
+
+        def _update() -> Any:
+            return self._db.table("profiles").update(update_data).eq("id", user_id).execute()
+
+        await asyncio.to_thread(_update)
+        return await self.get_preference_status(user_id)
+
+    async def dismiss_preferences(self, user_id: str) -> PreferenceOnboardingStatus:
+        def _update() -> Any:
+            return (
+                self._db.table("profiles")
+                .update({"preferences_prompted_at": datetime.now(UTC).isoformat()})
+                .eq("id", user_id)
+                .execute()
+            )
+
+        await asyncio.to_thread(_update)
+        return await self.get_preference_status(user_id)
+
+    async def get_preferred_modes(self, user_id: str) -> list[str] | None:
+        def _fetch() -> Any:
+            return (
+                self._db.table("profiles")
+                .select("preferred_modes")
+                .eq("id", user_id)
+                .maybe_single()
+                .execute()
+            )
+
+        row = (await asyncio.to_thread(_fetch)).data or {}
+        return row.get("preferred_modes")
+
+    async def _validate_vibe_slugs(self, slugs: list[str]) -> None:
+        def _fetch() -> Any:
+            return self._db.table("vibe_collections").select("slug").in_("slug", slugs).execute()
+
+        rows = (await asyncio.to_thread(_fetch)).data or []
+        known = {r["slug"] for r in rows}
+        unknown = [s for s in slugs if s not in known]
+        if unknown:
+            raise HTTPException(
+                status_code=422,
+                detail=f"Unknown vibe slug(s): {', '.join(unknown)}",
+            )
