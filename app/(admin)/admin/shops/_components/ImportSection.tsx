@@ -24,6 +24,7 @@ export function ImportSection({
   const csvFileRef = useRef<HTMLInputElement>(null);
   const [seedingCsv, setSeedingCsv] = useState(false);
   const [csvSummary, setCsvSummary] = useState<CsvSummary | null>(null);
+  const [csvFileName, setCsvFileName] = useState<string>('');
   const [runningPipeline, setRunningPipeline] = useState(false);
 
   async function handleSeedCsv() {
@@ -55,6 +56,7 @@ export function ImportSection({
       setCsvSummary(data);
       toast.success('CSV imported successfully');
       if (csvFileRef.current) csvFileRef.current.value = '';
+      setCsvFileName('');
       onImportComplete();
     } catch {
       toast.error('Network error');
@@ -104,6 +106,7 @@ export function ImportSection({
             accept=".csv"
             className="hidden"
             id="csv-file"
+            onChange={(e) => setCsvFileName(e.target.files?.[0]?.name ?? '')}
           />
           <Button
             onClick={() => csvFileRef.current?.click()}
@@ -112,6 +115,9 @@ export function ImportSection({
           >
             {seedingCsv ? 'Uploading...' : 'Choose CSV File'}
           </Button>
+          {csvFileName && (
+            <span className="text-muted-foreground text-sm">{csvFileName}</span>
+          )}
           <Button
             onClick={handleSeedCsv}
             disabled={seedingCsv}
