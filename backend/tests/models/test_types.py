@@ -175,7 +175,8 @@ class TestJobStatus:
 
     def test_all_db_statuses_covered(self):
         """Every status in the DB CHECK constraint must have a Python enum value."""
-        db_statuses = {"pending", "claimed", "completed", "failed", "dead_letter"}
+        # 'cancelled' added in migration 20260410000001_jobs_queue_cancelled_status_and_audit_columns
+        db_statuses = {"pending", "claimed", "completed", "failed", "dead_letter", "cancelled"}
         enum_values = {s.value for s in JobStatus}
         assert db_statuses == enum_values
 

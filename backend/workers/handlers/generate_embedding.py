@@ -7,6 +7,7 @@ from supabase import Client
 from models.types import CHECKIN_MIN_TEXT_LENGTH, MAX_COMMUNITY_TEXTS, JobType
 from providers.embeddings.interface import EmbeddingsProvider
 from workers.job_guard import check_job_still_claimed
+from workers.job_log import log_job_event
 from workers.queue import JobQueue
 
 logger = structlog.get_logger()
@@ -48,6 +49,15 @@ async def handle_generate_embedding(
     should_advance = shop.get("processing_status") in {"embedding", "enriched"}
 
     try:
+        await log_job_event(
+            db,
+            job_id,
+            "info",
+            "job.start",
+            job_type="generate_embedding",
+            shop_id=str(shop_id),
+        )
+
         # Load menu items if available
         menu_response = (
             db.table("shop_menu_items").select("item_name").eq("shop_id", shop_id).execute()
@@ -89,6 +99,8 @@ async def handle_generate_embedding(
             )
 
         # Generate embedding
+        await log_job_event(db, job_id, "info", "llm.call", provider="openai", method="embed")
+
         embedding = await embeddings.embed(text)
 
         update_data: dict[str, Any] = {
@@ -100,8 +112,17 @@ async def handle_generate_embedding(
 
         if not await check_job_still_claimed(queue, job_id):
             logger.warning("job.aborted_midflight job_id=%s handler=generate_embedding", job_id)
+            await log_job_event(db, job_id, "warn", "job.aborted_midflight", shop_id=str(shop_id))
             return
         db.table("shops").update(update_data).eq("id", shop_id).execute()
+        await log_job_event(
+            db,
+            job_id,
+            "info",
+            "db.write",
+            table="shops",
+            columns=["embedding", "last_embedded_at"],
+        )
 
         logger.info(
             "Embedding generated",
@@ -124,8 +145,11 @@ async def handle_generate_embedding(
                 priority=5,
             )
 
+        await log_job_event(db, job_id, "info", "job.end", status="ok")
+
     except Exception as exc:
-        if should_advance:
+        await log_job_event(db, job_id, "error", "job.error", error=str(exc))
+        if should_advance and await check_job_still_claimed(queue, job_id):
             db.table("shops").update(
                 {
                     "processing_status": "failed",

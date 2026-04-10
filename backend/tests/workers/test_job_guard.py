@@ -2,7 +2,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from models.types import EnrichmentResult, ShopModeScores
+from models.types import EnrichmentResult, JobStatus, ShopModeScores
 from workers.handlers.enrich_shop import handle_enrich_shop
 from workers.handlers.generate_embedding import handle_generate_embedding
 from workers.handlers.summarize_reviews import handle_summarize_reviews
@@ -19,12 +19,22 @@ async def test_check_job_still_claimed_returns_true_for_claimed_job():
 
 
 @pytest.mark.asyncio
-async def test_check_job_still_claimed_returns_false_for_failed_job():
-    """System blocks the write path after an admin force-fails the job."""
+async def test_check_job_still_claimed_returns_true_for_claimed_job_status_enum():
+    """System accepts queue implementations that return the JobStatus enum directly."""
     queue = AsyncMock()
-    queue.get_status.return_value = "failed"
+    queue.get_status.return_value = JobStatus.CLAIMED
 
-    assert await check_job_still_claimed(queue, "job-cafe-failed-02") is False
+    assert await check_job_still_claimed(queue, "job-cafe-claimed-enum-02") is True
+
+
+@pytest.mark.parametrize("status", ["failed", "cancelled", "dead_letter"])
+@pytest.mark.asyncio
+async def test_check_job_still_claimed_returns_false_for_non_claimed_jobs(status: str):
+    """System blocks the write path after the job leaves the claimed state."""
+    queue = AsyncMock()
+    queue.get_status.return_value = status
+
+    assert await check_job_still_claimed(queue, f"job-cafe-{status}-03") is False
 
 
 @pytest.mark.asyncio
@@ -33,7 +43,7 @@ async def test_check_job_still_claimed_returns_false_when_job_is_missing():
     queue = AsyncMock()
     queue.get_status.return_value = None
 
-    assert await check_job_still_claimed(queue, "job-cafe-missing-03") is False
+    assert await check_job_still_claimed(queue, "job-cafe-missing-04") is False
 
 
 def _make_enrich_db() -> MagicMock:

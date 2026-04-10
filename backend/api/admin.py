@@ -614,19 +614,28 @@ async def list_jobs(
     }
 
 
+class CancelJobRequest(BaseModel):
+    reason: str | None = None
+
+
 @router.post("/jobs/{job_id}/cancel")
 async def cancel_job(
     job_id: str,
+    body: CancelJobRequest = Body(default_factory=CancelJobRequest),  # noqa: B008
     user: dict[str, Any] = Depends(require_admin),  # noqa: B008
 ) -> dict[str, str]:
     """Cancel a pending or claimed job."""
-    db = get_service_role_client()
+    from workers.job_log import log_job_event
 
-    job_response = db.table("job_queue").select("id, status").eq("id", job_id).execute()
+    db = get_service_role_client()
+    effective_reason = body.reason or "Cancelled by admin"
+
+    job_response = db.table("job_queue").select("id, status, payload").eq("id", job_id).execute()
     if not job_response.data:
         raise HTTPException(status_code=404, detail=f"Job {job_id} not found")
 
-    job_status = first(cast("list[dict[str, Any]]", job_response.data), "fetch job")["status"]
+    job = first(cast("list[dict[str, Any]]", job_response.data), "fetch job")
+    job_status = job["status"]
     if job_status not in ("pending", "claimed"):
         raise HTTPException(
             status_code=409,
@@ -636,7 +645,13 @@ async def cancel_job(
     # Conditional update: only succeeds if job is still in a cancellable state
     update_response = (
         db.table("job_queue")
-        .update({"status": "dead_letter", "last_error": "Cancelled by admin"})
+        .update(
+            {
+                "status": "cancelled",
+                "cancelled_at": datetime.now(UTC).isoformat(),
+                "cancel_reason": effective_reason,
+            }
+        )
         .eq("id", job_id)
         .in_("status", ["pending", "claimed"])
         .execute()
@@ -647,6 +662,21 @@ async def cancel_job(
             detail=f"Job {job_id} could not be cancelled — it may have already completed",
         )
 
+    # Update shop processing_status if job had a shop_id and shop is not already live/failed
+    payload = job.get("payload") or {}
+    shop_id = payload.get("shop_id")
+    if shop_id:
+        (
+            db.table("shops")
+            .update({"processing_status": "failed", "rejection_reason": effective_reason})
+            .eq("id", shop_id)
+            .not_.in_("processing_status", ["live", "failed"])
+            .execute()
+        )
+
+    # Insert a job_logs warn row
+    await log_job_event(db, job_id, "warn", "job.cancelled", reason=effective_reason)
+
     log_admin_action(
         admin_user_id=user["id"],
         action=f"POST /admin/pipeline/jobs/{job_id}/cancel",
@@ -654,6 +684,49 @@ async def cancel_job(
         target_id=job_id,
     )
     return {"message": f"Job {job_id} cancelled"}
+
+
+@router.get("/jobs/{job_id}/logs")
+async def get_job_logs(
+    job_id: str,
+    after_ts: str | None = None,
+    user: dict[str, Any] = Depends(require_admin),  # noqa: B008
+) -> dict[str, Any]:
+    """Fetch structured logs for a specific job.
+
+    Capped at 500 rows; supports incremental polling via after_ts.
+    """
+    db = get_service_role_client()
+
+    job_result = db.table("job_queue").select("status").eq("id", job_id).execute()
+    if not job_result.data:
+        raise HTTPException(status_code=404, detail=f"Job {job_id} not found")
+    job = first(cast("list[dict[str, Any]]", job_result.data), "job_queue lookup")
+
+    if after_ts:
+        try:
+            datetime.fromisoformat(after_ts)
+        except ValueError:
+            raise HTTPException(
+                status_code=422, detail="after_ts must be a valid ISO-8601 datetime"
+            ) from None
+
+    query = (
+        db.table("job_logs")
+        .select("id, level, message, context, created_at")
+        .eq("job_id", job_id)
+        .order("created_at", desc=False)
+        .limit(500)
+    )
+    if after_ts:
+        query = query.gt("created_at", after_ts)
+
+    logs_result = query.execute()
+
+    return {
+        "logs": logs_result.data or [],
+        "job_status": job["status"],
+    }
 
 
 class RunBatchRequest(BaseModel):

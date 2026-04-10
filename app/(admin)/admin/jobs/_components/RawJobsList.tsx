@@ -22,6 +22,7 @@ import {
 import { getStatusVariant } from '../../_lib/status-badge';
 import { ConfirmDialog } from '../../_components/ConfirmDialog';
 import { useAdminAuth } from '../../_hooks/use-admin-auth';
+import { JobLogsPanel } from './JobLogsPanel';
 
 interface Job {
   id: string;
@@ -46,6 +47,7 @@ const STATUS_OPTIONS = [
   'completed',
   'failed',
   'dead_letter',
+  'cancelled',
 ] as const;
 
 const JOB_TYPE_OPTIONS = [
@@ -71,6 +73,7 @@ export function RawJobsList({ initialStatus }: { initialStatus?: string }) {
     type: 'cancel' | 'retry';
     jobId: string;
   } | null>(null);
+  const [cancelReason, setCancelReason] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
   const [page, setPage] = useState(1);
   const [expandedJobId, setExpandedJobId] = useState<string | null>(null);
@@ -115,13 +118,17 @@ export function RawJobsList({ initialStatus }: { initialStatus?: string }) {
     return () => clearTimeout(timeoutId);
   }, [page, statusFilter, typeFilter, fetchJobs]);
 
-  async function handleCancel(jobId: string) {
+  async function handleCancel(jobId: string, reason: string) {
     try {
       const token = await getToken();
       if (!token) return;
       const res = await fetch(`/api/admin/pipeline/jobs/${jobId}/cancel`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(reason ? { reason } : {}),
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
@@ -265,12 +272,13 @@ export function RawJobsList({ initialStatus }: { initialStatus?: string }) {
                     <Button
                       onClick={(e) => {
                         e.stopPropagation();
+                        setCancelReason('');
                         setConfirmAction({ type: 'cancel', jobId: job.id });
                       }}
                       variant="destructive"
                       size="sm"
                     >
-                      Cancel
+                      Force fail
                     </Button>
                   )}
                   {(job.status === 'failed' ||
@@ -310,6 +318,12 @@ export function RawJobsList({ initialStatus }: { initialStatus?: string }) {
                           </pre>
                         </div>
                       )}
+                      <div>
+                        <p className="mb-1 text-xs font-semibold text-gray-500">
+                          Logs
+                        </p>
+                        <JobLogsPanel jobId={job.id} />
+                      </div>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -343,23 +357,38 @@ export function RawJobsList({ initialStatus }: { initialStatus?: string }) {
       <ConfirmDialog
         open={confirmAction !== null}
         onOpenChange={(open) => {
-          if (!open) setConfirmAction(null);
+          if (!open) {
+            setConfirmAction(null);
+            setCancelReason('');
+          }
         }}
-        title={confirmAction?.type === 'cancel' ? 'Cancel job?' : 'Retry job?'}
+        title={
+          confirmAction?.type === 'cancel' ? 'Force fail job?' : 'Retry job?'
+        }
         description={
           confirmAction?.type === 'cancel'
-            ? 'This cannot be undone. The job will be moved to dead letter.'
+            ? 'This cannot be undone. The job will be cancelled.'
             : 'This will re-queue the failed job for processing.'
         }
-        confirmLabel={confirmAction?.type === 'cancel' ? 'Cancel Job' : 'Retry'}
+        confirmLabel={confirmAction?.type === 'cancel' ? 'Force fail' : 'Retry'}
         variant={confirmAction?.type === 'cancel' ? 'destructive' : 'default'}
         onConfirm={async () => {
           if (!confirmAction) return;
           if (confirmAction.type === 'cancel')
-            await handleCancel(confirmAction.jobId);
+            await handleCancel(confirmAction.jobId, cancelReason);
           else await handleRetry(confirmAction.jobId);
         }}
-      />
+      >
+        {confirmAction?.type === 'cancel' && (
+          <textarea
+            className="mt-2 w-full resize-none rounded border p-2 text-sm"
+            rows={3}
+            placeholder="Reason (optional)"
+            value={cancelReason}
+            onChange={(e) => setCancelReason(e.target.value)}
+          />
+        )}
+      </ConfirmDialog>
     </div>
   );
 }

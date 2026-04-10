@@ -482,6 +482,7 @@ class JobStatus(StrEnum):
     COMPLETED = "completed"
     FAILED = "failed"
     DEAD_LETTER = "dead_letter"
+    CANCELLED = "cancelled"
 
 
 class Job(BaseModel):
