@@ -1,0 +1,156 @@
+{
+  "findings": [
+    {
+      "severity": "Important",
+      "file": "backend/api/shops.py",
+      "line": "117",
+      "description": "get_optional_current_user(request) runs a blocking supabase-py DB query on every /shops request on the async event loop. Adds a per-request DB round-trip even for non-featured listings and blocks the event loop during the call. Pre-existing handler is async; this is a new blocking call added to a hot path.",
+      "flagged_by": "Architecture & Design, Bug Hunter",
+      "status": "resolved"
+    },
+    {
+      "severity": "Important",
+      "file": "components/onboarding/preference-modal.tsx",
+      "line": "73",
+      "description": "handleFinish has no isSubmitting guard — user can double-click 'Finish' and trigger two POSTs to /profile/preferences. Same for handleSkip on rapid clicks. Add a local submitting state and disable primary buttons while the promise is pending.",
+      "flagged_by": "Bug Hunter",
+      "status": "resolved"
+    },
+    {
+      "severity": "Important",
+      "file": "components/onboarding/preference-modal.tsx",
+      "line": "78",
+      "description": "handleFinish does not catch errors from save(). If the POST fails (422 unknown vibe slug, network error), the rejection is unhandled and the user sees nothing — no toast, no retry, modal stays in stale state. Same for handleSkip calling dismiss(). Wrap in try/catch and surface via toast/inline error.",
+      "flagged_by": "Bug Hunter",
+      "status": "resolved"
+    },
+    {
+      "severity": "Important",
+      "file": "components/onboarding/preference-modal.tsx",
+      "line": "97",
+      "description": "Hardcoded brand hex values bg-[#E06B3F] and bg-[#2c1810] in a shared component. docs/designs/ux/DESIGN.md:37 explicitly says: 'Never apply bg-[#E06B3F] directly in shared components — use bg-primary if promoted, or a named class.' Applies to both step-1 cards, step-2 chips, and the Finish/Next CTA.",
+      "flagged_by": "Design Quality, Standards & Conventions",
+      "status": "resolved"
+    },
+    {
+      "severity": "Important",
+      "file": "backend/api/deps.py",
+      "line": "336",
+      "description": "get_optional_current_user swallows all exceptions via bare `except Exception: return None`. A transient DB failure on the deletion_requested_at lookup silently degrades an authenticated user to unauthenticated, dropping their preference re-rank with no log or signal. Narrow the except to expected error types, or log the failure.",
+      "flagged_by": "Bug Hunter",
+      "status": "resolved"
+    },
+    {
+      "severity": "Important",
+      "file": "backend/tests/api/test_shops_featured_rerank.py",
+      "line": "48",
+      "description": "Tests patch internal module attributes (api.shops._fetch_featured_shops, api.shops.ProfileService, api.shops.get_optional_current_user) instead of mocking at system boundaries. Violates testing philosophy 'mock at boundaries only'. Prefer FastAPI dependency_overrides + a DB stub so tests survive internal refactors.",
+      "flagged_by": "Test Philosophy",
+      "status": "resolved"
+    },
+    {
+      "severity": "Minor",
+      "file": "backend/api/deps.py",
+      "line": "319",
+      "description": "get_optional_current_user duplicates JWT-decoding logic from get_optional_user. Refactor to call get_optional_user and layer the deletion check on top.",
+      "flagged_by": "Architecture & Design",
+      "status": "resolved"
+    },
+    {
+      "severity": "Minor",
+      "file": "backend/api/shops.py",
+      "line": "120",
+      "description": "city query-param is silently dropped when featured=true (only the else branch applies it). The old code applied both filters together. No known caller today combines them, but the behavior change is undocumented. Either restore the city filter inside _fetch_featured_shops or comment why it was dropped.",
+      "flagged_by": "Architecture & Design",
+      "status": "resolved"
+    },
+    {
+      "severity": "Minor",
+      "file": "backend/api/shops.py",
+      "line": "125",
+      "description": "Re-rank is applied only to the limit-sized slice fetched from the DB, so preferred-mode shops are surfaced only among the first-N in insertion order, not across the whole corpus. Known limitation per design doc; logged for visibility — consider swapping to the Postgres RPC option when scale matters.",
+      "flagged_by": "Architecture & Design",
+      "status": "resolved"
+    },
+    {
+      "severity": "Minor",
+      "file": "components/onboarding/__tests__/preference-modal.test.tsx",
+      "line": "15",
+      "description": "Mocks @/lib/hooks/use-vibes (internal module). Testing philosophy prefers boundary mocks — stub fetchPublic or MSW the /api/explore/vibes response so the test exercises the real hook.",
+      "flagged_by": "Test Philosophy",
+      "status": "resolved"
+    },
+    {
+      "severity": "Minor",
+      "file": "app/__tests__/page-preference-onboarding.test.tsx",
+      "line": "25",
+      "description": "Mocks ~10 internal hooks/components (use-user, use-shops, use-search, discovery components, map-with-fallback). Pragmatic given app/page.tsx size, but violates 'mock at boundaries only'. Longer-term fix: extract the modal-mount logic into a smaller testable unit.",
+      "flagged_by": "Test Philosophy",
+      "status": "resolved"
+    },
+    {
+      "severity": "Minor",
+      "file": "backend/tests/test_profile_preferences.py",
+      "line": "20",
+      "description": "Duplicates coverage already in backend/tests/test_profile_service.py (TestGetPreferenceStatus/TestSavePreferences/TestDismissPreferences). Test names here are implementation-framed (test_writes_all_fields_and_sets_completed_at) vs. user-journey framed in test_profile_service.py (test_member_can_save_a_work_mode_and_complete_onboarding). Delete one copy and keep the user-journey-named version.",
+      "flagged_by": "Test Philosophy, Architecture & Design",
+      "status": "resolved"
+    },
+    {
+      "severity": "Minor",
+      "file": "e2e/preference-onboarding.spec.ts",
+      "line": "34",
+      "description": "Uses page.waitForLoadState('networkidle') + page.waitForTimeout(2000) — both flaky-prone patterns. Prefer expect(locator).toBeVisible({ timeout }) polling and explicit DOM assertions.",
+      "flagged_by": "Test Philosophy",
+      "status": "resolved"
+    },
+    {
+      "severity": "Minor",
+      "file": "components/onboarding/preference-modal.tsx",
+      "line": "22",
+      "description": "useVibes() runs at the top of PreferenceOnboardingModal, so /api/explore/vibes is fetched for every authenticated home-page visit, not only for users who still need onboarding. Gate the SWR key (or extract the vibes-loading subtree behind the shouldPrompt check) to skip the fetch when the modal will not render.",
+      "flagged_by": "Architecture & Design",
+      "status": "resolved"
+    },
+    {
+      "severity": "Minor",
+      "file": "components/onboarding/preference-modal.tsx",
+      "line": "30",
+      "description": "Step 1 'Anywhere' (slug: null) is multi-selectable alongside real modes. If user picks both 'Anywhere' and 'Focus time', the null is silently filtered and only ['work'] is submitted — a UX surprise. Either make 'Anywhere' a radio-style single-select, or deselect other chips when it is chosen.",
+      "flagged_by": "Bug Hunter",
+      "status": "resolved"
+    }
+  ],
+  "active_agents": [
+    "Bug Hunter",
+    "Standards & Conventions",
+    "Architecture & Design",
+    "Plan Alignment",
+    "Test Philosophy",
+    "Design Quality"
+  ],
+  "skipped": [
+    {
+      "file": "backend/services/profile_service.py",
+      "line": "200",
+      "reason": "PDPA cascade on new preference columns — lives on the profiles row which is already deleted on account deletion. Plan doc has an explicit sanity-check task. Not a finding."
+    },
+    {
+      "file": "components/onboarding/preference-modal.tsx",
+      "line": "60",
+      "reason": "English-only modal copy — design doc explicitly hardcodes English labels (MODE_OPTIONS, titles). Intentional choice, not a regression."
+    },
+    {
+      "file": "backend/services/profile_service.py",
+      "line": "220",
+      "reason": "save_preferences always sets preferences_completed_at — intentional per design (marks the step complete even with empty partial updates)."
+    },
+    {
+      "file": "Adversarial Review (Codex)",
+      "line": "-",
+      "reason": "Codex adversarial-review skill not available in this environment — logged as unavailable per orchestrator instructions."
+    }
+  ],
+  "head_sha": "9de9f73a72488a2a2ec1a9674d640106f11daa9a",
+  "review_log_path": "docs/reviews/2026-04-11-feat-DEV-297-preference-onboarding.md"
+}
