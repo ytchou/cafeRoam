@@ -1,0 +1,167 @@
+{
+  "findings": [
+    {
+      "severity": "Critical",
+      "file": "app/page.tsx",
+      "line": "219-227",
+      "description": "handleTagSelect pushes raw taxonomy_tags.id (e.g. 'tag_quiet') returned by /search/suggest into the filters[] array, but the shop-filter logic at app/page.tsx:129-131 only recognizes short UI IDs from FILTER_TO_TAG_IDS ('wifi'|'outlet'|'quiet'|...). Selected tag chips render as tokens but silently do not filter shop results. The tag ID also leaks into the URL via useSearchState and will never be re-hydrated into tokens on page reload. Fix: define a canonical suggestion->filter-id mapping (or push {label}: token state locally and keep filters[] separate from tokens), and ensure the tokens array is derived from filters via useMemo so refresh restores them.",
+      "flagged_by": "Bug Hunter",
+      "status": "resolved"
+    },
+    {
+      "severity": "Critical",
+      "file": "backend/api/search.py",
+      "line": "109-116",
+      "description": "GET /search/suggest has no @limiter.limit decorator while sibling /search does (line 48). The endpoint is unauthenticated, hit on every debounced keystroke from the homepage (300ms), and runs a Supabase query per call. Trivial abuse vector + unbounded backend/DB cost. Add @limiter.limit(settings.rate_limit_search, key_func=get_user_id_or_ip) and consider a tighter burst allowance for suggest specifically.",
+      "flagged_by": "Bug Hunter",
+      "status": "resolved"
+    },
+    {
+      "severity": "Important",
+      "file": "app/page.tsx",
+      "line": "65-66,101-110,269-272",
+      "description": "Plan deviation: the design doc and plan (Task 1, steps 2-5) explicitly delete heroRef, heroVisible, the IntersectionObserver useEffect, and the sticky-search-bar-wrapper div. Codex preserved all of them (hidden via 'invisible h-0 overflow-hidden') solely to keep four pre-existing tests in app/page.test.tsx:255-290 passing. Per the handoff note, Option A is the intended path: delete the sticky-search-bar visibility describe block in app/page.test.tsx and then fully clean out page.tsx. Leaving the placeholder div + observer logic contradicts the plan, keeps dead code on every render, and keeps an IntersectionObserver running for no visible effect.",
+      "flagged_by": "Plan Alignment",
+      "status": "resolved"
+    },
+    {
+      "severity": "Important",
+      "file": "backend/api/search.py",
+      "line": "111",
+      "description": "q: str = Query(default='') has no max_length. User input is interpolated into .ilike('label_zh', f'%{q}%'). While the Supabase client parameterizes the value, there is no bound on input size, letting a caller submit arbitrarily large strings that hit the DB. Add max_length (e.g., 50) matching the sibling /search endpoint's defensive validation style.",
+      "flagged_by": "Standards & Conventions",
+      "status": "resolved"
+    },
+    {
+      "severity": "Important",
+      "file": "app/page.tsx",
+      "line": "62,219-235",
+      "description": "Tokens live in local useState AND are mirrored into filters[] on every tag selection. This violates single-source-of-truth: on URL/reload the hook restores filters but NOT tokens, so users see an empty search bar with invisible applied filters (or, after finding #1 is fixed, with real filters but no token pills). Derive tokens from filters via useMemo so refresh is lossless.",
+      "flagged_by": "Architecture & Design",
+      "status": "resolved"
+    },
+    {
+      "severity": "Important",
+      "file": "lib/hooks/use-search-suggestions.ts",
+      "line": "28-43",
+      "description": "No request race protection. Keystroke sequence a -> ab -> a can land the older 'a' response after the 'ab' response, corrupting state. Use an AbortController inside the effect and abort on cleanup, or a request-id guard.",
+      "flagged_by": "Bug Hunter",
+      "status": "resolved"
+    },
+    {
+      "severity": "Important",
+      "file": "lib/hooks/use-search-suggestions.ts",
+      "line": "22-26",
+      "description": "When query becomes empty during an in-flight fetch, cleanup only clears the debounce timer; the pending fetch will still resolve and call setCompletions/setTags on an unmounted or stale state. Guard the setState calls with a mounted/cancel flag or the same AbortController used for finding #6.",
+      "flagged_by": "Bug Hunter",
+      "status": "resolved"
+    },
+    {
+      "severity": "Important",
+      "file": "components/discovery/search-suggestion-panel.test.tsx",
+      "line": "5-11",
+      "description": "vi.mock('@/lib/hooks/use-search-suggestions', ...) mocks an internal project module. CLAUDE.md Core Principle #1: 'Mock at boundaries only. Never mock your own modules.' Leave the hook real and mock fetch instead, matching the pattern already used in use-search-suggestions.test.ts.",
+      "flagged_by": "Test Philosophy",
+      "status": "resolved"
+    },
+    {
+      "severity": "Important",
+      "file": "components/discovery/search-input-tokens.tsx",
+      "line": "33",
+      "description": "tokens[tokens.length - 1].id is unsafe direct index access. CLAUDE.md: 'Never use unsafe [0] array indexing. Use the project's first() helper.' Apply the same rule for last()/tail access, or guard with optional chaining.",
+      "flagged_by": "Standards & Conventions",
+      "status": "resolved"
+    },
+    {
+      "severity": "Important",
+      "file": "backend/services/search_service.py",
+      "line": "349-356",
+      "description": "q is interpolated into ilike('%{q}%') without escaping Postgres LIKE metacharacters (% and _). A user typing '%' will match every tag; typing '_' will match any single char. This is a correctness bug for real user input, not just security. Escape % and _ (and the escape char) before the f-string.",
+      "flagged_by": "Bug Hunter",
+      "status": "resolved"
+    },
+    {
+      "severity": "Minor",
+      "file": "backend/api/search.py",
+      "line": "115",
+      "description": "SearchService(db=db, embeddings=None)  # type: ignore[arg-type] is a code smell. Either make the embeddings param Optional in SearchService.__init__ typing or factor suggest() into a module-level function / dedicated SuggestService that does not depend on embeddings.",
+      "flagged_by": "Architecture & Design",
+      "status": "resolved"
+    },
+    {
+      "severity": "Minor",
+      "file": "lib/hooks/use-search-suggestions.ts",
+      "line": "5-8",
+      "description": "SuggestTag interface duplicated across use-search-suggestions.ts, search-suggestion-panel.tsx, and the backend Pydantic model. Extract to lib/types/ so the three layers share one canonical shape.",
+      "flagged_by": "Architecture & Design",
+      "status": "resolved"
+    },
+    {
+      "severity": "Minor",
+      "file": "components/discovery/search-input-tokens.test.tsx",
+      "line": "6-35",
+      "description": "Test descriptions are function/prop-name framed ('renders free text input', 'renders token pills', 'calls onTokenRemove when ×...'). CLAUDE.md testing principle #2 requires user-journey framing. Rewrite as user outcomes (e.g., 'a user can see their typed query', 'a user can remove an applied tag by clicking its ×').",
+      "flagged_by": "Test Philosophy",
+      "status": "resolved"
+    },
+    {
+      "severity": "Minor",
+      "file": "lib/hooks/use-search-suggestions.test.ts",
+      "line": "40-44",
+      "description": "'does not fetch when query length is 0' uses new Promise((r) => setTimeout(r, 400)) — a real-clock wait that is inherently flaky in CI. Prefer vi.useFakeTimers + advanceTimersByTime, or assert synchronously after renderHook('').",
+      "flagged_by": "Test Philosophy",
+      "status": "resolved"
+    },
+    {
+      "severity": "Minor",
+      "file": "app/api/search/suggest/route.test.ts",
+      "line": "4-14",
+      "description": "vi.mock('@/lib/api/proxy') mocks an internal module. The test then only verifies 'proxyToBackend was called with the right args' — a tautology that would survive any refactor that keeps the same shape. CLAUDE.md: mock at boundaries only. Either mock HTTP (the backend origin) via MSW, or drop this test entirely since the route body is a one-liner.",
+      "flagged_by": "Test Philosophy",
+      "status": "resolved"
+    },
+    {
+      "severity": "Minor",
+      "file": "components/discovery/search-suggestion-panel.tsx",
+      "line": "76",
+      "description": "'🔍' emoji hardcoded in JSX next to completion rows. The rest of the component (and the design doc) use a Lucide search icon pattern. Use <Search /> from lucide-react for consistency; project coding standards discourage emoji in code.",
+      "flagged_by": "Design Quality",
+      "status": "resolved"
+    },
+    {
+      "severity": "Minor",
+      "file": "components/discovery/search-suggestion-panel.tsx",
+      "line": "44,53",
+      "description": "Chips use bg-white/20 + border-white/30 + text-white on a #3d2314 hero background. Translucent white on warm brown gives roughly 3.5:1 contrast for the small-text chip labels, below WCAG AA 4.5:1 for body text. Consider bumping to bg-white/30 or using a solid lighter surface token.",
+      "flagged_by": "Design Quality",
+      "status": "resolved"
+    }
+  ],
+  "active_agents": [
+    "Bug Hunter",
+    "Standards & Conventions",
+    "Architecture & Design",
+    "Plan Alignment",
+    "Test Philosophy",
+    "Design Quality"
+  ],
+  "skipped": [
+    {
+      "file": "components/discovery/search-bar.test.tsx",
+      "line": "1-12",
+      "reason": "Test file was gutted from 41 to 12 lines, but SearchBar is still covered by components/filters/search-bar.test.tsx which imports the same component. Not a coverage regression."
+    },
+    {
+      "file": "backend/services/search_service.py",
+      "line": "52-62",
+      "reason": "_CURATED_COMPLETIONS linear scan is O(10) — micro-optimization territory, not a performance issue at any realistic scale."
+    },
+    {
+      "file": "components/discovery/search-suggestion-panel.tsx",
+      "line": "36-60",
+      "reason": "Empty-query chips render inline while typing-query completions render absolute — intentional per design doc, layout shift is bounded and acceptable."
+    }
+  ],
+  "head_sha": "ebeff0d2352099d9cc30a5b0bad4ab61ec12221c",
+  "review_log_path": "docs/reviews/2026-04-10-feat-DEV-314-search-bar-revamp.md"
+}
