@@ -686,6 +686,46 @@ async def cancel_job(
     return {"message": f"Job {job_id} cancelled"}
 
 
+@router.post("/jobs/{job_id}/acknowledge")
+async def acknowledge_job(
+    job_id: str,
+    user: dict[str, Any] = Depends(require_admin),  # noqa: B008
+) -> dict[str, str]:
+    """Acknowledge a failed/dead-letter job - moves to dead_letter without retrying."""
+    db = get_service_role_client()
+
+    job_response = db.table("job_queue").select("id, status").eq("id", job_id).execute()
+    if not job_response.data:
+        raise HTTPException(status_code=404, detail=f"Job {job_id} not found")
+
+    job_status = first(cast("list[dict[str, Any]]", job_response.data), "fetch job")["status"]
+    if job_status not in ("failed", "dead_letter"):
+        raise HTTPException(
+            status_code=409,
+            detail=f"Job {job_id} cannot be acknowledged (status: {job_status})",
+        )
+
+    update_response = (
+        db.table("job_queue")
+        .update({"status": "dead_letter", "last_error": "Acknowledged by admin"})
+        .eq("id", job_id)
+        .in_("status", ["failed", "dead_letter"])
+        .execute()
+    )
+    if not update_response.data:
+        raise HTTPException(
+            status_code=409,
+            detail=f"Job {job_id} status changed concurrently - refresh and retry",
+        )
+    log_admin_action(
+        admin_user_id=user["id"],
+        action=f"POST /admin/pipeline/jobs/{job_id}/acknowledge",
+        target_type="job",
+        target_id=job_id,
+    )
+    return {"message": f"Job {job_id} acknowledged"}
+
+
 @router.get("/jobs/{job_id}/logs")
 async def get_job_logs(
     job_id: str,

@@ -70,7 +70,7 @@ export function RawJobsList({ initialStatus }: { initialStatus?: string }) {
       : 'all'
   );
   const [confirmAction, setConfirmAction] = useState<{
-    type: 'cancel' | 'retry';
+    type: 'cancel' | 'retry' | 'acknowledge';
     jobId: string;
   } | null>(null);
   const [cancelReason, setCancelReason] = useState('');
@@ -156,6 +156,26 @@ export function RawJobsList({ initialStatus }: { initialStatus?: string }) {
         return;
       }
       toast.success('Job queued for retry');
+      fetchJobs(page, statusFilter, typeFilter);
+    } catch {
+      toast.error('Network error');
+    }
+  }
+
+  async function handleAcknowledge(jobId: string) {
+    try {
+      const token = await getToken();
+      if (!token) return;
+      const res = await fetch(`/api/admin/pipeline/jobs/${jobId}/acknowledge`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        toast.error(body.detail || 'Failed to acknowledge job');
+        return;
+      }
+      toast.success('Job acknowledged');
       fetchJobs(page, statusFilter, typeFilter);
     } catch {
       toast.error('Network error');
@@ -283,16 +303,31 @@ export function RawJobsList({ initialStatus }: { initialStatus?: string }) {
                   )}
                   {(job.status === 'failed' ||
                     job.status === 'dead_letter') && (
-                    <Button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setConfirmAction({ type: 'retry', jobId: job.id });
-                      }}
-                      variant="secondary"
-                      size="sm"
-                    >
-                      Retry
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setConfirmAction({ type: 'retry', jobId: job.id });
+                        }}
+                        variant="secondary"
+                        size="sm"
+                      >
+                        Retry
+                      </Button>
+                      <Button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setConfirmAction({
+                            type: 'acknowledge',
+                            jobId: job.id,
+                          });
+                        }}
+                        variant="outline"
+                        size="sm"
+                      >
+                        Acknowledge
+                      </Button>
+                    </div>
                   )}
                 </TableCell>
               </TableRow>
@@ -363,20 +398,34 @@ export function RawJobsList({ initialStatus }: { initialStatus?: string }) {
           }
         }}
         title={
-          confirmAction?.type === 'cancel' ? 'Force fail job?' : 'Retry job?'
+          confirmAction?.type === 'cancel'
+            ? 'Force fail job?'
+            : confirmAction?.type === 'retry'
+              ? 'Retry job?'
+              : 'Acknowledge job?'
         }
         description={
           confirmAction?.type === 'cancel'
             ? 'This cannot be undone. The job will be cancelled.'
-            : 'This will re-queue the failed job for processing.'
+            : confirmAction?.type === 'retry'
+              ? 'This will re-queue the failed job for processing.'
+              : 'Mark as acknowledged. The job will remain in dead letter and will not be retried.'
         }
-        confirmLabel={confirmAction?.type === 'cancel' ? 'Force fail' : 'Retry'}
+        confirmLabel={
+          confirmAction?.type === 'cancel'
+            ? 'Force fail'
+            : confirmAction?.type === 'retry'
+              ? 'Retry'
+              : 'Acknowledge'
+        }
         variant={confirmAction?.type === 'cancel' ? 'destructive' : 'default'}
         onConfirm={async () => {
           if (!confirmAction) return;
           if (confirmAction.type === 'cancel')
             await handleCancel(confirmAction.jobId, cancelReason);
-          else await handleRetry(confirmAction.jobId);
+          else if (confirmAction.type === 'retry')
+            await handleRetry(confirmAction.jobId);
+          else await handleAcknowledge(confirmAction.jobId);
         }}
       >
         {confirmAction?.type === 'cancel' && (
