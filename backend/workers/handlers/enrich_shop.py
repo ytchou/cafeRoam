@@ -81,6 +81,10 @@ async def handle_enrich_shop(
 
         result = await llm.enrich_shop(enrichment_input)
 
+        if job_id is not None and not check_job_still_claimed(db, job_id):
+            log_job_event(db, job_id, "warn", "job.aborted_midflight", shop_id=str(shop_id))
+            return
+
         if result.summary and not is_zh_dominant(result.summary):
             logger.warning(
                 "Enrichment summary is not zh-TW dominant — marking failed",
@@ -96,10 +100,6 @@ async def handle_enrich_shop(
             ).eq("id", shop_id).execute()
             _failure_recorded = True
             raise ValueError(f"Enrichment summary for shop {shop_id} is not in Traditional Chinese")
-
-        if job_id is not None and not check_job_still_claimed(db, job_id):
-            log_job_event(db, job_id, "warn", "job.aborted_midflight", shop_id=str(shop_id))
-            return
 
         mode = result.mode_scores
         db.table("shops").update(
@@ -164,7 +164,7 @@ async def handle_enrich_shop(
     except Exception as exc:
         if job_id is not None:
             log_job_event(db, job_id, "error", "job.error", error=str(exc))
-        if not _failure_recorded:
+        if not _failure_recorded and (job_id is None or check_job_still_claimed(db, job_id)):
             db.table("shops").update(
                 {
                     "processing_status": "failed",
