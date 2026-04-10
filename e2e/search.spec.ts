@@ -69,6 +69,7 @@ test.describe('J09 — Suggestion chip: tap preset → search executes', () => {
     // Search input should be auto-filled with the chip text
     const searchInput = page
       .locator('form[role="search"]')
+      .first()
       .getByRole('textbox');
     await expect(searchInput).toHaveValue('有插座可以久坐', { timeout: 5_000 });
 
@@ -91,6 +92,7 @@ test.describe('J21 — Filter pills: toggle WiFi → results update', () => {
 
     const searchInput = page
       .locator('form[role="search"]')
+      .first()
       .getByRole('textbox');
     await searchInput.fill('咖啡廳');
     await searchInput.press('Enter');

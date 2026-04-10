@@ -128,6 +128,7 @@ async def _dispatch_job(job: Job, db: Client, queue: JobQueue) -> None:
                     db=db,
                     llm=llm,
                     queue=queue,
+                    job_id=job.id,
                 )
             else:
                 await handle_enrich_menu_photo(
@@ -143,6 +144,7 @@ async def _dispatch_job(job: Job, db: Client, queue: JobQueue) -> None:
                 db=db,
                 embeddings=embeddings,
                 queue=queue,
+                job_id=job.id,
             )
         case JobType.WEEKLY_EMAIL:
             email = get_email_provider()
@@ -179,6 +181,7 @@ async def _dispatch_job(job: Job, db: Client, queue: JobQueue) -> None:
                 db=db,
                 llm=llm,
                 queue=queue,
+                job_id=job.id,
             )
         case _:
             logger.warning("Unknown job type", job_type=job.job_type)

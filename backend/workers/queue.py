@@ -100,6 +100,14 @@ class JobQueue:
             return []
         return [Job(**row) for row in cast("list[dict[str, Any]]", response.data)]
 
+    async def get_status(self, job_id: str) -> str | None:
+        result = (
+            self._db.table("job_queue").select("status").eq("id", job_id).maybe_single().execute()
+        )
+        if not result or not result.data:
+            return None
+        return cast("dict[str, Any]", result.data).get("status")
+
     async def complete(self, job_id: str, result: dict[str, Any] | None = None) -> None:
         self._db.table("job_queue").update(
             {

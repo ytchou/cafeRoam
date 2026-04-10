@@ -7,6 +7,7 @@ from supabase import Client
 from core.lang import is_zh_dominant
 from models.types import CHECKIN_MIN_TEXT_LENGTH, MAX_COMMUNITY_TEXTS, JobType
 from providers.llm.interface import LLMProvider
+from workers.job_guard import check_job_still_claimed
 from workers.queue import JobQueue
 
 logger = structlog.get_logger()
@@ -17,6 +18,7 @@ async def handle_summarize_reviews(
     db: Client,
     llm: LLMProvider,
     queue: JobQueue,
+    job_id: str,
 ) -> None:
     """Generate a Claude community summary for a shop's check-in reviews.
 
@@ -70,6 +72,9 @@ async def handle_summarize_reviews(
         raise ValueError(f"Community summary for shop {shop_id} is not in Traditional Chinese")
 
     # Persist summary to DB
+    if not await check_job_still_claimed(queue, job_id):
+        logger.warning("job.aborted_midflight job_id=%s handler=summarize_reviews", job_id)
+        return
     db.table("shops").update(
         {
             "community_summary": summary,

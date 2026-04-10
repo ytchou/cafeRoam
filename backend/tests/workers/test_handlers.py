@@ -12,6 +12,7 @@ class TestEnrichShopHandler:
         db = MagicMock()
         llm = AsyncMock()
         queue = AsyncMock()
+        queue.get_status.return_value = "claimed"
 
         tag_mock = MagicMock(id="tag-cozy")
         llm.enrich_shop = AsyncMock(
@@ -44,7 +45,13 @@ class TestEnrichShopHandler:
             data=[]
         )
 
-        await handle_enrich_shop(payload={"shop_id": "shop-1"}, db=db, llm=llm, queue=queue)
+        await handle_enrich_shop(
+            payload={"shop_id": "shop-1"},
+            db=db,
+            llm=llm,
+            queue=queue,
+            job_id="job-handlers-enrich-01",
+        )
 
         # Must delete old tags (not upsert) so stale tags are removed on re-enrichment
         db.table.return_value.delete.return_value.eq.return_value.execute.assert_called_once()
@@ -70,6 +77,7 @@ class TestEnrichShopHandler:
             )
         )
         queue = AsyncMock()
+        queue.get_status.return_value = "claimed"
 
         db.table = MagicMock(
             return_value=MagicMock(
@@ -117,6 +125,7 @@ class TestEnrichShopHandler:
             db=db,
             llm=llm,
             queue=queue,
+            job_id="job-handlers-enrich-02",
         )
         llm.enrich_shop.assert_called_once()
         queue.enqueue.assert_called_once()  # Should queue embedding generation
@@ -139,6 +148,7 @@ class TestEnrichShopHandler:
             )
         )
         llm.assign_tarot = AsyncMock(return_value=MagicMock(tarot_title=None, flavor_text=""))
+        queue.get_status.return_value = "claimed"
 
         db.table.return_value.select.return_value.eq.return_value.single.return_value.execute.return_value = MagicMock(
             data={
@@ -162,6 +172,7 @@ class TestEnrichShopHandler:
             db=db,
             llm=llm,
             queue=queue,
+            job_id="job-handlers-enrich-03",
         )
 
         update_calls = db.table.return_value.update.call_args_list
@@ -220,12 +231,14 @@ class TestGenerateEmbeddingHandler:
         embeddings = AsyncMock()
         embeddings.embed = AsyncMock(return_value=[0.1] * 1536)
         queue = AsyncMock()
+        queue.get_status.return_value = "claimed"
 
         await handle_generate_embedding(
             payload={"shop_id": "shop-taipei-01"},
             db=db,
             embeddings=embeddings,
             queue=queue,
+            job_id="job-handlers-embed-01",
         )
 
         embed_text = embeddings.embed.call_args[0][0]
@@ -246,12 +259,14 @@ class TestGenerateEmbeddingHandler:
         embeddings = AsyncMock()
         embeddings.embed = AsyncMock(return_value=[0.1] * 1536)
         queue = AsyncMock()
+        queue.get_status.return_value = "claimed"
 
         await handle_generate_embedding(
             payload={"shop_id": "shop-taipei-01"},
             db=db,
             embeddings=embeddings,
             queue=queue,
+            job_id="job-handlers-embed-02",
         )
 
         embed_text = embeddings.embed.call_args[0][0]
@@ -271,12 +286,14 @@ class TestGenerateEmbeddingHandler:
         embeddings = AsyncMock()
         embeddings.embed = AsyncMock(return_value=[0.1] * 1536)
         queue = AsyncMock()
+        queue.get_status.return_value = "claimed"
 
         await handle_generate_embedding(
             payload={"shop_id": "shop-taipei-01"},
             db=db,
             embeddings=embeddings,
             queue=queue,
+            job_id="job-handlers-embed-03",
         )
 
         update_data = shop_table.update.call_args[0][0]
@@ -298,12 +315,14 @@ class TestGenerateEmbeddingHandler:
         embeddings = AsyncMock()
         embeddings.embed = AsyncMock(return_value=[0.1] * 1536)
         queue = AsyncMock()
+        queue.get_status.return_value = "claimed"
 
         await handle_generate_embedding(
             payload={"shop_id": "shop-taipei-01"},
             db=db,
             embeddings=embeddings,
             queue=queue,
+            job_id="job-handlers-embed-09",
         )
 
         update_data = shop_table.update.call_args[0][0]
@@ -328,12 +347,14 @@ class TestGenerateEmbeddingHandler:
         embeddings = AsyncMock()
         embeddings.embed = AsyncMock(return_value=[0.1] * 1536)
         queue = AsyncMock()
+        queue.get_status.return_value = "claimed"
 
         await handle_generate_embedding(
             payload={"shop_id": "shop-d4e5f6"},
             db=db,
             embeddings=embeddings,
             queue=queue,
+            job_id="job-handlers-embed-04",
         )
 
         embed_text = embeddings.embed.call_args[0][0]
@@ -357,12 +378,14 @@ class TestGenerateEmbeddingHandler:
         embeddings = AsyncMock()
         embeddings.embed = AsyncMock(return_value=[0.1] * 1536)
         queue = AsyncMock()
+        queue.get_status.return_value = "claimed"
 
         await handle_generate_embedding(
             payload={"shop_id": "shop-d4e5f6"},
             db=db,
             embeddings=embeddings,
             queue=queue,
+            job_id="job-handlers-embed-05",
         )
 
         embed_text = embeddings.embed.call_args[0][0]
@@ -384,12 +407,14 @@ class TestGenerateEmbeddingHandler:
         embeddings = AsyncMock()
         embeddings.embed = AsyncMock(return_value=[0.1] * 1536)
         queue = AsyncMock()
+        queue.get_status.return_value = "claimed"
 
         await handle_generate_embedding(
             payload={"shop_id": "shop-d4e5f6"},
             db=db,
             embeddings=embeddings,
             queue=queue,
+            job_id="job-handlers-embed-06",
         )
 
         update_data = shop_table.update.call_args[0][0]
@@ -413,12 +438,14 @@ class TestGenerateEmbeddingHandler:
         embeddings = AsyncMock()
         embeddings.embed = AsyncMock(return_value=[0.1] * 1536)
         queue = AsyncMock()
+        queue.get_status.return_value = "claimed"
 
         await handle_generate_embedding(
             payload={"shop_id": "shop-d4e5f6"},
             db=db,
             embeddings=embeddings,
             queue=queue,
+            job_id="job-handlers-embed-07",
         )
 
         embed_text = embeddings.embed.call_args[0][0]
@@ -445,12 +472,14 @@ class TestGenerateEmbeddingHandler:
         embeddings = AsyncMock()
         embeddings.embed = AsyncMock(return_value=[0.1] * 1536)
         queue = AsyncMock()
+        queue.get_status.return_value = "claimed"
 
         await handle_generate_embedding(
             payload={"shop_id": "shop-d4e5f6"},
             db=db,
             embeddings=embeddings,
             queue=queue,
+            job_id="job-handlers-embed-08",
         )
 
         embed_text = embeddings.embed.call_args[0][0]
