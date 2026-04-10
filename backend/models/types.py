@@ -49,6 +49,7 @@ class Shop(CamelModel):
     created_at: datetime
     updated_at: datetime
     community_summary: str | None = None
+    review_topics: list["ReviewTopic"] | None = None
     menu_highlights: list[str] = []
     coffee_origins: list[str] = []
     payment_methods: dict[str, bool | None] = {}
@@ -426,6 +427,16 @@ class MenuExtractionResult(BaseModel):
 class TarotEnrichmentResult(BaseModel):
     tarot_title: str | None = None
     flavor_text: str = ""
+
+
+class ReviewTopic(BaseModel):
+    topic: str
+    count: int
+
+
+class ReviewSummaryResult(BaseModel):
+    summary_zh_tw: str
+    review_topics: list[ReviewTopic]
 
 
 class GeocodingResult(BaseModel):
