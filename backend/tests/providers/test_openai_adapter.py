@@ -123,3 +123,43 @@ async def test_enrich_shop_raises_when_arguments_not_json(adapter, enrich_input)
 
     with pytest.raises(RuntimeError, match="JSON"):
         await adapter.enrich_shop(enrich_input)
+
+
+async def test_extract_menu_data_returns_items(adapter):
+    adapter._client = AsyncMock()
+    adapter._client.chat.completions.create = AsyncMock(
+        return_value=_openai_tool_call_response(
+            "extract_menu",
+            {
+                "items": [
+                    {"item_name": "美式咖啡", "price": 120, "category": "coffee"},
+                    {"item_name": "拿鐵", "price": 140, "category": "coffee"},
+                ],
+                "raw_text": "美式 120\n拿鐵 140",
+            },
+        )
+    )
+
+    result = await adapter.extract_menu_data("https://cdn.example.com/menu.jpg")
+
+    assert len(result.items) == 2
+    assert result.items[0]["item_name"] == "美式咖啡"
+    assert result.raw_text.startswith("美式")
+    # Verify the call used classify_model and passed the image URL in OpenAI format
+    call = adapter._client.chat.completions.create.await_args
+    assert call.kwargs["model"] == "gpt-5.4-mini"
+    user_content = call.kwargs["messages"][-1]["content"]
+    assert any(
+        block.get("type") == "image_url" and block["image_url"]["url"] == "https://cdn.example.com/menu.jpg"
+        for block in user_content
+    )
+
+
+async def test_extract_menu_data_returns_empty_when_no_items(adapter):
+    adapter._client = AsyncMock()
+    adapter._client.chat.completions.create = AsyncMock(
+        return_value=_openai_tool_call_response("extract_menu", {"items": [], "raw_text": ""})
+    )
+
+    result = await adapter.extract_menu_data("https://cdn.example.com/blank.jpg")
+    assert result.items == []
