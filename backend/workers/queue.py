@@ -1,3 +1,4 @@
+import uuid
 from datetime import UTC, datetime, timedelta
 from typing import Any, cast
 
@@ -189,3 +190,17 @@ class JobQueue:
         """Delete cron_locks older than retention period."""
         cutoff = (datetime.now(UTC) - timedelta(days=retention_days)).isoformat()
         self._db.table("cron_locks").delete().lt("created_at", cutoff).execute()
+
+
+def get_status(db: Any, job_id: str | uuid.UUID) -> "JobStatus | None":
+    """Fetch the current status of a job. Returns None if job not found."""
+    result = (
+        db.table("job_queue")
+        .select("status")
+        .eq("id", str(job_id))
+        .execute()
+    )
+    if not result.data:
+        return None
+    row = first(cast("list[dict[str, Any]]", result.data), "get_status")
+    return JobStatus(row["status"])
