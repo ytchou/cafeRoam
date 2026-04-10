@@ -77,6 +77,10 @@ async def handle_summarize_reviews(
             )
             return
 
+        if job_id is not None and not check_job_still_claimed(db, job_id):
+            log_job_event(db, job_id, "warn", "job.aborted_midflight", shop_id=str(shop_id))
+            return
+
         if not is_zh_dominant(summary):
             logger.warning(
                 "Community summary is not zh-TW dominant — skipping DB write",
@@ -84,10 +88,6 @@ async def handle_summarize_reviews(
                 summary_preview=summary[:80],
             )
             raise ValueError(f"Community summary for shop {shop_id} is not in Traditional Chinese")
-
-        if job_id is not None and not check_job_still_claimed(db, job_id):
-            log_job_event(db, job_id, "warn", "job.aborted_midflight", shop_id=str(shop_id))
-            return
 
         # Persist summary to DB
         db.table("shops").update(
