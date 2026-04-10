@@ -307,3 +307,15 @@ async def test_run_actor_returns_empty_list_when_actor_call_returns_none(adapter
 
     result = await adapter._run_actor({"startUrls": []})
     assert result == []
+
+
+def test_actor_base_input_uses_most_relevant_sort():
+    from providers.scraper.apify_adapter import _ACTOR_BASE_INPUT
+
+    assert _ACTOR_BASE_INPUT["reviewsSort"] == "mostRelevant"
+
+
+def test_actor_base_input_max_reviews_is_50():
+    from providers.scraper.apify_adapter import _ACTOR_BASE_INPUT
+
+    assert _ACTOR_BASE_INPUT["maxReviews"] == 50

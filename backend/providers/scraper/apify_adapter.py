@@ -27,7 +27,8 @@ _FEATURE_MAP: dict[str, str] = {
 }
 _ACTOR_BASE_INPUT: dict[str, Any] = {
     "maxCrawledPlacesPerSearch": 1,
-    "maxReviews": 20,
+    "maxReviews": 50,
+    "reviewsSort": "mostRelevant",
     "maxImages": 15,
     "language": "zh-TW",
     "skipClosedPlaces": True,
