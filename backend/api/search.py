@@ -106,9 +106,11 @@ async def search(
     }
 
 
+@limiter.limit(settings.rate_limit_search, key_func=get_user_id_or_ip)
 @router.get("/search/suggest", response_model=SuggestResponse)
 async def suggest_search(
-    q: str = Query(default=""),
+    request: Request,
+    q: str = Query(default="", max_length=50),
     db: Client = Depends(get_optional_user_db),  # noqa: B008
 ) -> SuggestResponse:
     """Return autocomplete completions and matching taxonomy tags for query prefix."""
