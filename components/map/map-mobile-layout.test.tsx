@@ -87,17 +87,10 @@ const baseShops = [
 
 const defaultProps = {
   shops: baseShops,
-  count: 1,
   selectedShopId: null,
   onShopClick: vi.fn(),
-  query: '',
   activeFilters: [],
-  onFilterToggle: vi.fn(),
-  view: 'map' as const,
-  onViewChange: vi.fn(),
-  onSearch: vi.fn(),
   filterSheetOpen: false,
-  onFilterOpen: vi.fn(),
   onFilterClose: vi.fn(),
   onFilterApply: vi.fn(),
 };
