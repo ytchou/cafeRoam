@@ -127,11 +127,10 @@ describe('a user on the desktop map view', () => {
     expect(screen.getByText('2 places nearby')).toBeInTheDocument();
   });
 
-  it('a user sees the search bar to find shops', () => {
-    render(<MapDesktopLayout {...defaultProps} />);
-    expect(
-      screen.getByPlaceholderText('Search coffee shops...')
-    ).toBeInTheDocument();
+  it('a user sees a filter button in the sidebar header (SearchBar removed from map overlay)', () => {
+    const onFilterClick = vi.fn();
+    render(<MapDesktopLayout {...defaultProps} onFilterClick={onFilterClick} />);
+    expect(screen.getByRole('button', { name: /篩選/ })).toBeInTheDocument();
   });
 
   it('a user clicking a shop card triggers the shop selection callback', async () => {
@@ -354,5 +353,18 @@ describe('a user on the desktop map view', () => {
       behavior: 'smooth',
       block: 'nearest',
     });
+  });
+
+  it('does not render the map-overlay SearchBar in the sidebar', () => {
+    render(<MapDesktopLayout {...defaultProps} />);
+    // SearchBar renders an input[type="search"] / role="searchbox"; after removal it should be gone
+    expect(screen.queryByRole('searchbox')).toBeNull();
+  });
+
+  it('renders a filter button in the sidebar header that calls onFilterClick', async () => {
+    const onFilterClick = vi.fn();
+    render(<MapDesktopLayout {...defaultProps} onFilterClick={onFilterClick} />);
+    await userEvent.click(screen.getByRole('button', { name: /篩選/ }));
+    expect(onFilterClick).toHaveBeenCalled();
   });
 });

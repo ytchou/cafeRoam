@@ -9,7 +9,6 @@ import {
 } from 'react';
 
 const PANEL_EXPAND_DELAY_MS = 200;
-import { SearchBar } from '@/components/filters/search-bar';
 import { FilterTag } from '@/components/filters/filter-tag';
 import { QUICK_FILTERS } from '@/components/filters/quick-filters';
 import { CountHeader } from '@/components/discovery/count-header';
@@ -38,6 +37,7 @@ interface MapDesktopLayoutProps {
   onFilterOpen: () => void;
   onFilterClose: () => void;
   onFilterApply: (filters: string[]) => void;
+  onFilterClick?: () => void;
   onBoundsChange?: (bounds: MapBounds) => void;
 }
 
@@ -57,6 +57,7 @@ export function MapDesktopLayout({
   onFilterOpen,
   onFilterClose,
   onFilterApply,
+  onFilterClick,
   onBoundsChange,
 }: MapDesktopLayoutProps) {
   const [panelCollapsed, setPanelCollapsed] = useState(false);
@@ -68,11 +69,6 @@ export function MapDesktopLayout({
   const scrollRef = useRef<HTMLDivElement>(null);
   const scrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const selectedCardRef = useRef<HTMLDivElement>(null);
-
-  const selectedShop = useMemo(
-    () => shops.find((s) => s.id === selectedShopId) ?? null,
-    [shops, selectedShopId]
-  );
 
   const handlePreviewClose = useCallback(
     () => onShopClick(null),
@@ -121,11 +117,20 @@ export function MapDesktopLayout({
         {!panelCollapsed && (
           <div className="flex w-[420px] shrink-0 flex-col overflow-hidden border-r border-[var(--border)] bg-white">
             <div className="flex flex-col gap-2 px-4 pt-4 pb-2">
-              <SearchBar
-                onSearch={onSearch}
-                onFilterClick={onFilterOpen}
-                defaultQuery={query}
-              />
+              <div className="flex items-center justify-between">
+                <CountHeader
+                  count={count}
+                  view={view}
+                  onViewChange={onViewChange}
+                />
+                <button
+                  type="button"
+                  onClick={onFilterClick}
+                  className="flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium text-[var(--text-secondary)] hover:bg-[var(--muted)]"
+                >
+                  ≡ 篩選
+                </button>
+              </div>
               <div className="scrollbar-none flex gap-2 overflow-x-auto pl-1">
                 {QUICK_FILTERS.map((f) => (
                   <FilterTag
@@ -137,11 +142,6 @@ export function MapDesktopLayout({
                   />
                 ))}
               </div>
-              <CountHeader
-                count={count}
-                view={view}
-                onViewChange={onViewChange}
-              />
             </div>
 
             <div
