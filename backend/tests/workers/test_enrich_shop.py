@@ -2,7 +2,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from models.types import EnrichmentResult, ShopModeScores, TarotEnrichmentResult
+from models.types import EnrichmentResult, JobType, ShopModeScores, TarotEnrichmentResult
 from workers.handlers.enrich_shop import handle_enrich_shop
 
 
@@ -566,3 +566,92 @@ class TestEnrichShopLLMImageBlocks:
         user_message = messages[0]
         # Without photos, content should be a plain string (existing behavior)
         assert isinstance(user_message["content"], str)
+
+
+class TestEnrichShopPipelineChain:
+    """Validate that enrich_shop chains to SUMMARIZE_REVIEWS (not GENERATE_EMBEDDING)."""
+
+    def _make_db(self) -> MagicMock:
+        db = MagicMock()
+
+        shop_data = {
+            "id": "shop-chain-test",
+            "name": "連鎖測試咖啡",
+            "description": None,
+            "categories": ["cafe"],
+            "price_range": "$$",
+            "socket": "yes",
+            "limited_time": "no",
+            "rating": 4.3,
+            "review_count": 60,
+        }
+        reviews_data = [{"text": "環境舒適，咖啡好喝"}]
+
+        shops_table = MagicMock()
+        shops_table.select.return_value.eq.return_value.single.return_value.execute.return_value = (
+            MagicMock(data=shop_data)
+        )
+        shops_table.update.return_value.eq.return_value.execute.return_value = MagicMock(data=[])
+
+        shop_tags_table = MagicMock()
+        shop_tags_table.delete.return_value.eq.return_value.execute.return_value = MagicMock(data=[])
+        shop_tags_table.insert.return_value.execute.return_value = MagicMock(data=[])
+
+        shop_reviews_table = MagicMock()
+        shop_reviews_table.select.return_value.eq.return_value.execute.return_value = MagicMock(
+            data=reviews_data
+        )
+
+        shop_photos_table = MagicMock()
+        shop_photos_table.select.return_value.eq.return_value.eq.return_value.limit.return_value.execute.return_value = MagicMock(
+            data=[]
+        )
+
+        def table_router(name: str) -> MagicMock:
+            if name == "shops":
+                return shops_table
+            if name == "shop_tags":
+                return shop_tags_table
+            if name == "shop_reviews":
+                return shop_reviews_table
+            if name == "shop_photos":
+                return shop_photos_table
+            return MagicMock()
+
+        db.table.side_effect = table_router
+        db._shops_table = shops_table
+        return db
+
+    @pytest.mark.asyncio
+    async def test_enrich_shop_enqueues_summarize_reviews_not_generate_embedding(self):
+        """After enrichment, SUMMARIZE_REVIEWS is enqueued (not GENERATE_EMBEDDING directly)."""
+        db = self._make_db()
+        llm = AsyncMock()
+        llm.enrich_shop = AsyncMock(
+            return_value=EnrichmentResult(
+                tags=[],
+                tag_confidences={},
+                summary="安靜的街角咖啡廳，以精品手沖聞名。",
+                confidence=0.85,
+                mode_scores=ShopModeScores(work=0.7, rest=0.3, social=0.1),
+                menu_highlights=["手沖"],
+                coffee_origins=[],
+            )
+        )
+        llm.assign_tarot = AsyncMock(
+            return_value=TarotEnrichmentResult(tarot_title=None, flavor_text="")
+        )
+        queue = AsyncMock()
+        queue.get_status.return_value = "claimed"
+
+        await handle_enrich_shop(
+            payload={"shop_id": "shop-chain-test"},
+            db=db,
+            llm=llm,
+            queue=queue,
+            job_id="job-chain-test-01",
+        )
+
+        enqueued_types = [c[1]["job_type"] for c in queue.enqueue.call_args_list]
+        assert JobType.SUMMARIZE_REVIEWS in enqueued_types
+        assert JobType.GENERATE_EMBEDDING not in enqueued_types
