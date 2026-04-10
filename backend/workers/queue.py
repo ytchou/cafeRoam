@@ -198,4 +198,3 @@ class JobQueue:
         """Delete cron_locks older than retention period."""
         cutoff = (datetime.now(UTC) - timedelta(days=retention_days)).isoformat()
         self._db.table("cron_locks").delete().lt("created_at", cutoff).execute()
-
