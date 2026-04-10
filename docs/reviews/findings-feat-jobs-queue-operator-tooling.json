@@ -1,0 +1,143 @@
+{
+  "findings": [
+    {
+      "severity": "Critical",
+      "file": "backend/workers/handlers/enrich_shop.py",
+      "line": "84-98",
+      "description": "Pre-LLM zh-TW dominance check writes shops.processing_status='failed' + rejection_reason BEFORE the check_job_still_claimed guard at line 100. If admin force-fails the job mid-LLM-call and the LLM returns non-zh output, the handler silently overwrites the operator's cancel_reason. Move guard before the non-zh branch or re-check guard inside it.",
+      "flagged_by": "Bug Hunter",
+      "status": "resolved",
+      "resolution": "Moved check_job_still_claimed guard before the zh-TW branch. Commit 2fd907e."
+    },
+    {
+      "severity": "Critical",
+      "file": "backend/workers/handlers/enrich_shop.py",
+      "line": "164-175",
+      "description": "Exception handler writes shops.processing_status='failed' + rejection_reason=f'Enrichment error: {exc}' unconditionally, without consulting the cancel guard. Any exception after an admin cancel (network error, LLM 500) will silently overwrite the operator's cancel state — exactly the regression DEV-311 intends to prevent. Run check_job_still_claimed in the except path before writing.",
+      "flagged_by": "Bug Hunter",
+      "status": "resolved",
+      "resolution": "Added guard check in except block: `if not _failure_recorded and (job_id is None or check_job_still_claimed(db, job_id))`. Commit 2fd907e."
+    },
+    {
+      "severity": "Critical",
+      "file": "backend/workers/handlers/generate_embedding.py",
+      "line": "147-158",
+      "description": "Same DEV-311 regression as enrich_shop: the except block unconditionally writes shops.processing_status='failed' + rejection_reason when should_advance is true, bypassing the cancel guard. Any mid-flight exception after admin cancel overwrites the operator reason.",
+      "flagged_by": "Bug Hunter",
+      "status": "resolved",
+      "resolution": "Added guard check in except block: `if should_advance and (job_id is None or check_job_still_claimed(db, job_id))`. Commit 6371646."
+    },
+    {
+      "severity": "Important",
+      "file": "app/(admin)/admin/jobs/_components/RawJobsList.tsx",
+      "line": "43-50",
+      "description": "STATUS_OPTIONS omits the new 'cancelled' status. Plan decision #2 makes 'cancelled' a first-class distinct status for operator force-fails — but operators cannot filter by it in the UI. Add 'cancelled' to STATUS_OPTIONS.",
+      "flagged_by": "Plan Alignment",
+      "status": "resolved",
+      "resolution": "Added 'cancelled' to STATUS_OPTIONS array. Commit 5f2f872."
+    },
+    {
+      "severity": "Important",
+      "file": "supabase/migrations/20260410000001_jobs_queue_cancelled_status_and_audit_columns.sql",
+      "line": "4",
+      "description": "Migration adds failed_at TIMESTAMPTZ but no backend code ever writes to it (verified: grep failed_at in backend/ only finds the migration + an unrelated 'failed_at_stage' field). Either drop the column or populate it in queue.fail() when transitioning to failed/dead_letter. Current state = dead column.",
+      "flagged_by": "Plan Alignment",
+      "status": "resolved",
+      "resolution": "Added failed_at write in JobQueue.fail() when status transitions to FAILED. Commit c4087f6."
+    },
+    {
+      "severity": "Important",
+      "file": "app/(admin)/admin/jobs/_components/RawJobsList.tsx",
+      "line": "367",
+      "description": "ConfirmDialog copy: 'This cannot be undone. The job will be moved to dead letter.' Backend now transitions to 'cancelled' (per plan decision #2), not dead_letter. Update copy to match actual behavior.",
+      "flagged_by": "Plan Alignment",
+      "status": "resolved",
+      "resolution": "Updated copy to 'This cannot be undone. The job will be cancelled.' Commit 5f2f872."
+    },
+    {
+      "severity": "Important",
+      "file": "supabase/migrations/20260410000002_create_job_logs.sql",
+      "line": "3",
+      "description": "job_logs.job_id UUID NOT NULL has no foreign key reference to job_queue(id). Deleting a job leaves orphan log rows with no integrity guarantee. Add REFERENCES job_queue(id) ON DELETE CASCADE.",
+      "flagged_by": "Architecture & Design",
+      "status": "resolved",
+      "resolution": "Added REFERENCES job_queue(id) ON DELETE CASCADE to job_logs.job_id. Commit 343cfd6."
+    },
+    {
+      "severity": "Important",
+      "file": "backend/api/admin.py",
+      "line": "687-719",
+      "description": "get_job_logs accepts after_ts: str | None and passes it directly to Supabase .gt('created_at', after_ts) without validation. A malformed value surfaces as an opaque Postgres error. Validate as ISO-8601 datetime via Pydantic Query or datetime.fromisoformat before use.",
+      "flagged_by": "Bug Hunter",
+      "status": "resolved",
+      "resolution": "Added datetime.fromisoformat() validation with HTTP 422 response on failure. Commit c4c6d10."
+    },
+    {
+      "severity": "Important",
+      "file": "backend/workers/handlers/summarize_reviews.py",
+      "line": "80-90",
+      "description": "Guard placement consistency: ValueError at line 86 is raised before the guard check at line 88, meaning a mid-flight cancel during a non-zh response still propagates to the except block at line 121 which logs job.error. Lower impact than enrich_shop (no shops write) but the overall pattern — guard must wrap all write/error paths — needs a consistent refactor across all three handlers.",
+      "flagged_by": "Architecture & Design",
+      "status": "resolved",
+      "resolution": "Moved check_job_still_claimed guard before the zh-TW ValueError raise for consistent pattern across all handlers. Commit 213b452."
+    },
+    {
+      "severity": "Important",
+      "file": "backend/workers/job_guard.py",
+      "line": "11-14",
+      "description": "check_job_still_claimed is a non-atomic TOCTOU check: read status, then unconditional UPDATE in the handler. Race window is small but real. Consider a conditional UPDATE on shops that only succeeds when job_queue.status='claimed' (via CTE or a single RPC), matching the pattern already used in cancel_job. Plan decision #4 explicitly accepts this tradeoff, so classified debatable.",
+      "flagged_by": "Bug Hunter",
+      "status": "resolved",
+      "resolution": "Accepted per plan decision #4 — TOCTOU tradeoff explicitly accepted. No code change needed. The plan explicitly documents this as an accepted design tradeoff."
+    },
+    {
+      "severity": "Minor",
+      "file": "backend/workers/job_log.py",
+      "line": "10",
+      "description": "Plan spec specifies `async def log_job_event(...)`; implementation is sync `def`. Callers work because no `await` is used, but inconsistency with plan + other worker helpers is surprising. Either update plan doc or make it async.",
+      "flagged_by": "Plan Alignment",
+      "status": "resolved",
+      "resolution": "Made log_job_event async and updated all callers (handlers + admin.py) to await it. Updated test_job_log.py to use async test functions. Commit ae6efc2."
+    },
+    {
+      "severity": "Minor",
+      "file": "backend/tests/workers/test_job_guard.py",
+      "line": "10",
+      "description": "Tests patch workers.job_guard.get_status — an internal function of the module under test — instead of mocking at the DB boundary. Violates CLAUDE.md 'mock at boundaries only' testing principle. Should inject a mocked DB client and let check_job_still_claimed call real get_status.",
+      "flagged_by": "Test Philosophy",
+      "status": "resolved",
+      "resolution": "Refactored tests to pass a mocked DB client and removed internal get_status patches. check_job_still_claimed now exercises real get_status via DB mock. Commit a5c4f35."
+    },
+    {
+      "severity": "Minor",
+      "file": "backend/tests/workers/test_job_guard.py",
+      "line": "8",
+      "description": "Test descriptions use function-name framing ('check_job_still_claimed returns True when claimed') instead of user-action/outcome framing required by CLAUDE.md. Rewrite as e.g. 'Given a worker whose job was cancelled mid-flight, when the guard runs, it reports the job is no longer claimed.' Applies to test_job_log.py line 6, 25 as well.",
+      "flagged_by": "Test Philosophy",
+      "status": "resolved",
+      "resolution": "Rewrote all test descriptions in test_job_guard.py and test_job_log.py to describe worker/operator outcomes. Commits a5c4f35, ae6efc2."
+    },
+    {
+      "severity": "Minor",
+      "file": "app/(admin)/admin/jobs/_components/JobLogsPanel.tsx",
+      "line": "40-61",
+      "description": "Fetch inside useEffect has no AbortController. If component unmounts mid-fetch, the response is discarded but may trigger a setState-after-unmount warning in strict mode. Low impact since polling is short-lived. Add AbortController for hygiene.",
+      "flagged_by": "Bug Hunter",
+      "status": "resolved",
+      "resolution": "Added AbortController, pass signal to fetch, and call controller.abort() in cleanup. Commit 469773b."
+    },
+    {
+      "severity": "Minor",
+      "file": "backend/workers/queue.py",
+      "line": "195-207",
+      "description": "New get_status helper is a module-level function while other queue operations are methods on JobQueue. Inconsistent API shape — prefer a method on JobQueue or document why the helper sits outside.",
+      "flagged_by": "Standards",
+      "status": "resolved",
+      "resolution": "Added get_status as a method on JobQueue. Kept module-level function as a deprecated shim for existing callers (job_guard.py uses it directly). Commit c4087f6."
+    }
+  ],
+  "active_agents": ["Bug Hunter", "Standards & Conventions", "Architecture & Design", "Plan Alignment", "Test Philosophy"],
+  "skipped": [],
+  "head_sha": "a0ee86df9e64836ebac303b9c2a3481f137c6485",
+  "review_log_path": "docs/reviews/2026-04-10-feat-jobs-queue-operator-tooling.md"
+}
