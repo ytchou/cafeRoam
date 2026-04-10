@@ -11,8 +11,8 @@ import {
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { ModeChips } from '@/components/discovery/mode-chips';
-import { SearchBar } from '@/components/discovery/search-bar';
-import { SuggestionChips } from '@/components/discovery/suggestion-chips';
+import { SearchInputTokens } from '@/components/discovery/search-input-tokens';
+import { SearchSuggestionPanel } from '@/components/discovery/search-suggestion-panel';
 import {
   FILTER_TO_TAG_IDS,
   type TagFilterId,
@@ -59,6 +59,8 @@ function HomePageContent() {
   const [selectedShopId, setSelectedShopId] = useState<string | null>(null);
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
   const [mapBounds, setMapBounds] = useState<MapBounds | null>(null);
+  const [tokens, setTokens] = useState<{ id: string; label: string }[]>([]);
+  const [inputValue, setInputValue] = useState('');
   const lastHandledQueryRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -201,6 +203,24 @@ function HomePageContent() {
     handleSearchSubmit('附近的咖啡廳');
   }, [handleLocationRequest, handleSearchSubmit]);
 
+  const handleTagSelect = useCallback(
+    (tag: { id: string; label: string }) => {
+      if (tokens.some((t) => t.id === tag.id)) return;
+      setTokens((prev) => [...prev, tag]);
+      setFilters([...filters, tag.id]);
+      setInputValue('');
+    },
+    [tokens, filters, setFilters]
+  );
+
+  const handleTokenRemove = useCallback(
+    (id: string) => {
+      setTokens((prev) => prev.filter((t) => t.id !== id));
+      setFilters(filters.filter((f) => f !== id));
+    },
+    [filters, setFilters]
+  );
+
   const handleViewChange = useCallback(
     (nextView: 'map' | 'list') => {
       if (nextView === view) return;
@@ -242,20 +262,23 @@ function HomePageContent() {
             <span>找到你的</span>
             <span className="text-white/80">理想咖啡廳</span>
           </h1>
-          <div className="mt-6">
-            <SearchBar
+          <div className="mt-6 relative">
+            <SearchInputTokens
+              value={inputValue}
+              tokens={tokens}
+              onValueChange={setInputValue}
+              onTokenRemove={handleTokenRemove}
               onSubmit={handleSearchSubmit}
-              defaultQuery={currentQuery}
+            />
+            <SearchSuggestionPanel
+              query={inputValue}
+              onPhraseSelect={handleSuggestionSelect}
+              onTagSelect={handleTagSelect}
+              onNearMe={handleNearMe}
             />
           </div>
           <div className="mt-4">
             <ModeChips activeMode={mode} onModeChange={setMode} />
-          </div>
-          <div className="mt-4">
-            <SuggestionChips
-              onSelect={handleSuggestionSelect}
-              onNearMe={handleNearMe}
-            />
           </div>
         </div>
       </section>
