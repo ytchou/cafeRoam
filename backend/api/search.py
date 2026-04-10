@@ -114,5 +114,5 @@ async def suggest_search(
     db: Client = Depends(get_optional_user_db),  # noqa: B008
 ) -> SuggestResponse:
     """Return autocomplete completions and matching taxonomy tags for query prefix."""
-    service = SearchService(db=db, embeddings=None)  # type: ignore[arg-type]
+    service = SearchService(db=db)
     return await service.suggest(q)
