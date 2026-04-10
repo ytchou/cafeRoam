@@ -1,4 +1,5 @@
 """Tests for GET /search/suggest endpoint."""
+
 from unittest.mock import MagicMock
 
 from fastapi.testclient import TestClient

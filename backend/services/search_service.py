@@ -1,7 +1,7 @@
 import math
 import time
 from dataclasses import dataclass
-from typing import Any, cast, Optional
+from typing import Any, cast
 
 import structlog
 from pydantic import BaseModel
@@ -70,7 +70,7 @@ class SearchService:
     def __init__(
         self,
         db: Client,
-        embeddings: Optional[EmbeddingsProvider] = None,
+        embeddings: EmbeddingsProvider | None = None,
         cache: SearchCacheProvider | None = None,
     ):
         self._db = db
