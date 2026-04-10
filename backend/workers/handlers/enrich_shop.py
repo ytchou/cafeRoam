@@ -1,3 +1,4 @@
+import uuid
 from datetime import UTC, datetime
 from typing import Any, cast
 
@@ -7,6 +8,8 @@ from supabase import Client
 from core.lang import is_zh_dominant
 from models.types import JobType, ShopEnrichmentInput
 from providers.llm.interface import LLMProvider
+from workers.job_guard import check_job_still_claimed
+from workers.job_log import log_job_event
 from workers.queue import JobQueue
 
 logger = structlog.get_logger()
@@ -17,6 +20,7 @@ async def handle_enrich_shop(
     db: Client,
     llm: LLMProvider,
     queue: JobQueue,
+    job_id: str | uuid.UUID | None = None,
 ) -> None:
     """Enrich a shop with AI-generated tags and summary."""
     shop_id = payload["shop_id"]
@@ -82,6 +86,10 @@ async def handle_enrich_shop(
             ).eq("id", shop_id).execute()
             _failure_recorded = True
             raise ValueError(f"Enrichment summary for shop {shop_id} is not in Traditional Chinese")
+
+        if job_id is not None and not check_job_still_claimed(db, job_id):
+            log_job_event(db, job_id, "warn", "job.aborted_midflight", shop_id=str(shop_id))
+            return
 
         mode = result.mode_scores
         db.table("shops").update(

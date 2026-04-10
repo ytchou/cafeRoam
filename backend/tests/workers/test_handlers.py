@@ -590,3 +590,139 @@ class TestWeeklyEmailHandler:
 
         await handle_weekly_email(db=db, email=email)
         assert email.send.call_count == 2  # Both attempted despite first failure
+
+
+class TestEnrichShopHandlerGuard:
+    async def test_enrich_shop_aborts_write_when_cancelled_midflight(self):
+        """When a job is cancelled mid-flight, enrich_shop returns early without writing to shops."""
+        from unittest.mock import patch
+
+        db = MagicMock()
+        llm = AsyncMock()
+        queue = AsyncMock()
+
+        tag_mock = MagicMock(id="tag-cozy")
+        llm.enrich_shop = AsyncMock(
+            return_value=MagicMock(
+                tags=[tag_mock],
+                tag_confidences={"tag-cozy": 0.9},
+                summary="溫馨的咖啡廳，適合放鬆閱讀",
+                mode_scores=None,
+                menu_highlights=[],
+                coffee_origins=[],
+            )
+        )
+        llm.assign_tarot = AsyncMock(return_value=MagicMock(tarot_title=None, flavor_text=""))
+
+        db.table.return_value.select.return_value.eq.return_value.single.return_value.execute.return_value = MagicMock(
+            data={
+                "id": "shop-guard-1",
+                "name": "防護測試咖啡",
+                "description": None,
+                "categories": [],
+                "price_range": None,
+                "socket": None,
+                "limited_time": None,
+                "rating": None,
+                "review_count": 0,
+                "google_maps_features": {},
+            }
+        )
+        db.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(
+            data=[]
+        )
+
+        with patch("workers.handlers.enrich_shop.check_job_still_claimed", return_value=False):
+            await handle_enrich_shop(
+                payload={"shop_id": "shop-guard-1"},
+                db=db,
+                llm=llm,
+                queue=queue,
+                job_id="job-cancelled-1",
+            )
+
+        # The shops update (writing enrichment results) must NOT be called
+        # when the job was cancelled mid-flight
+        update_calls = db.table.return_value.update.call_args_list
+        enrichment_writes = [
+            c for c in update_calls
+            if c.args and "description" in c.args[0]
+        ]
+        assert len(enrichment_writes) == 0, "shops.update with description should not be called when job is cancelled"
+
+
+class TestGenerateEmbeddingHandlerGuard:
+    async def test_generate_embedding_aborts_write_when_cancelled_midflight(self):
+        """When a job is cancelled mid-flight, generate_embedding returns early without writing embedding."""
+        from unittest.mock import patch
+
+        db = MagicMock()
+        shop_table = MagicMock()
+        shop_table.select.return_value.eq.return_value.single.return_value.execute.return_value = MagicMock(
+            data={
+                "name": "防護測試咖啡",
+                "description": "台灣老宅咖啡館",
+                "processing_status": "embedding",
+                "community_summary": None,
+            }
+        )
+        shop_table.update.return_value.eq.return_value.execute.return_value = MagicMock(data=[])
+
+        menu_table = MagicMock()
+        menu_table.select.return_value.eq.return_value.execute.return_value = MagicMock(data=[])
+
+        def table_side_effect(name: str):
+            return menu_table if name == "shop_menu_items" else shop_table
+
+        db.table.side_effect = table_side_effect
+        db.rpc.return_value.execute.return_value = MagicMock(data=[])
+
+        embeddings = AsyncMock()
+        embeddings.embed = AsyncMock(return_value=[0.1] * 1536)
+        queue = AsyncMock()
+
+        with patch("workers.handlers.generate_embedding.check_job_still_claimed", return_value=False):
+            await handle_generate_embedding(
+                payload={"shop_id": "shop-guard-2"},
+                db=db,
+                embeddings=embeddings,
+                queue=queue,
+                job_id="job-cancelled-2",
+            )
+
+        # The shops.update with embedding must NOT be called
+        shop_table.update.assert_not_called()
+
+
+class TestSummarizeReviewsHandlerGuard:
+    async def test_summarize_reviews_aborts_write_when_cancelled_midflight(self):
+        """When a job is cancelled mid-flight, summarize_reviews returns early without writing community_summary."""
+        from unittest.mock import patch
+        from workers.handlers.summarize_reviews import handle_summarize_reviews
+
+        db = MagicMock()
+        db.rpc.return_value.execute.return_value = MagicMock(
+            data=[{"text": "超好喝的拿鐵，環境安靜適合工作，每次來都很享受"}]
+        )
+        db.table.return_value.update.return_value.eq.return_value.execute.return_value = MagicMock(data=[])
+
+        llm = AsyncMock()
+        llm.summarize_reviews = AsyncMock(return_value="溫馨的咖啡廳社群總結，適合各種場合")
+        queue = AsyncMock()
+
+        with patch("workers.handlers.summarize_reviews.check_job_still_claimed", return_value=False):
+            await handle_summarize_reviews(
+                payload={"shop_id": "shop-guard-3"},
+                db=db,
+                llm=llm,
+                queue=queue,
+                job_id="job-cancelled-3",
+            )
+
+        # The shops.update with community_summary must NOT be called
+        update_calls = db.table.return_value.update.call_args_list
+        summary_writes = [
+            c for c in update_calls
+            if c.args and "community_summary" in c.args[0]
+        ]
+        assert len(summary_writes) == 0, "shops.update with community_summary should not be called when job is cancelled"

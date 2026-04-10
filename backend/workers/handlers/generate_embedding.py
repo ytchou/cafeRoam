@@ -1,3 +1,4 @@
+import uuid
 from datetime import UTC, datetime
 from typing import Any, cast
 
@@ -6,6 +7,8 @@ from supabase import Client
 
 from models.types import CHECKIN_MIN_TEXT_LENGTH, MAX_COMMUNITY_TEXTS, JobType
 from providers.embeddings.interface import EmbeddingsProvider
+from workers.job_guard import check_job_still_claimed
+from workers.job_log import log_job_event
 from workers.queue import JobQueue
 
 logger = structlog.get_logger()
@@ -16,6 +19,7 @@ async def handle_generate_embedding(
     db: Client,
     embeddings: EmbeddingsProvider,
     queue: JobQueue,
+    job_id: str | uuid.UUID | None = None,
 ) -> None:
     """Generate vector embedding for a shop, enriched with menu items and community texts.
 
@@ -95,6 +99,10 @@ async def handle_generate_embedding(
         }
         if should_advance:
             update_data["processing_status"] = "publishing"
+
+        if job_id is not None and not check_job_still_claimed(db, job_id):
+            log_job_event(db, job_id, "warn", "job.aborted_midflight", shop_id=str(shop_id))
+            return
 
         db.table("shops").update(update_data).eq("id", shop_id).execute()
 
