@@ -270,13 +270,19 @@ class TestClassifyShopPhotosHandler:
         assert enqueue_call.kwargs["payload"]["shop_id"] == "shop-enrich-trigger"
 
     @pytest.mark.asyncio
-    async def test_enrich_shop_not_enqueued_when_no_photos_to_classify(
+    async def test_enrich_shop_enqueued_when_no_photos_to_classify(
         self, mock_db, mock_llm, mock_queue
     ):
-        """When there are no unclassified photos, ENRICH_SHOP is NOT enqueued."""
+        """When there are no unclassified photos, ENRICH_SHOP is still enqueued to advance the pipeline."""
+        from models.types import JobType
         from workers.handlers.classify_shop_photos import handle_classify_shop_photos
 
+        # Unclassified photos query returns empty
         mock_db.table.return_value.select.return_value.eq.return_value.is_.return_value.execute.return_value = MagicMock(
+            data=[]
+        )
+        # Submission context query returns no submission
+        mock_db.table.return_value.select.return_value.eq.return_value.eq.return_value.limit.return_value.execute.return_value = MagicMock(
             data=[]
         )
 
@@ -287,7 +293,10 @@ class TestClassifyShopPhotosHandler:
             queue=mock_queue,
         )
 
-        mock_queue.enqueue.assert_not_called()
+        mock_queue.enqueue.assert_called_once()
+        enqueue_call = mock_queue.enqueue.call_args
+        assert enqueue_call.kwargs["job_type"] == JobType.ENRICH_SHOP
+        assert enqueue_call.kwargs["payload"]["shop_id"] == "shop-no-photos"
 
     @pytest.mark.asyncio
     async def test_enrich_shop_enqueued_once_not_per_photo(self, mock_db, mock_llm, mock_queue):
