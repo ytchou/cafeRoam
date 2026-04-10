@@ -3,9 +3,9 @@ from typing import Any
 import jwt as pyjwt
 import structlog
 from fastapi import Depends, HTTPException, Request, status
-from supabase_auth.errors import AuthApiError
 from jwt import PyJWKClient
 from supabase import Client
+from supabase_auth.errors import AuthApiError
 
 from core.config import settings
 from db.supabase_client import get_service_role_client, get_user_client
