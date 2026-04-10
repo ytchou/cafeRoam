@@ -14,6 +14,16 @@ def get_llm_provider(taxonomy: list[TaxonomyTag] | None = None) -> LLMProvider:
                 classify_model=settings.anthropic_classify_model,
                 taxonomy=taxonomy or [],
             )
+        case "openai":
+            from providers.llm.openai_adapter import OpenAILLMAdapter
+
+            return OpenAILLMAdapter(
+                api_key=settings.openai_api_key,
+                model=settings.openai_llm_model,
+                classify_model=settings.openai_llm_classify_model,
+                nano_model=settings.openai_llm_nano_model,
+                taxonomy=taxonomy or [],
+            )
         case "hybrid":
             from providers.llm.anthropic_adapter import AnthropicLLMAdapter
             from providers.llm.hybrid_adapter import HybridLLMAdapter

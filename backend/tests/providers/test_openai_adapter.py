@@ -132,8 +132,8 @@ async def test_extract_menu_data_returns_items(adapter):
             "extract_menu",
             {
                 "items": [
-                    {"item_name": "美式咖啡", "price": 120, "category": "coffee"},
-                    {"item_name": "拿鐵", "price": 140, "category": "coffee"},
+                    {"name": "美式咖啡", "price": 120, "category": "coffee"},
+                    {"name": "拿鐵", "price": 140, "category": "coffee"},
                 ],
                 "raw_text": "美式 120\n拿鐵 140",
             },
@@ -143,7 +143,7 @@ async def test_extract_menu_data_returns_items(adapter):
     result = await adapter.extract_menu_data("https://cdn.example.com/menu.jpg")
 
     assert len(result.items) == 2
-    assert result.items[0]["item_name"] == "美式咖啡"
+    assert result.items[0]["name"] == "美式咖啡"
     assert result.raw_text.startswith("美式")
     # Verify the call used classify_model and passed the image URL in OpenAI format
     call = adapter._client.chat.completions.create.await_args

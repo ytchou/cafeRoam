@@ -200,7 +200,13 @@ class OpenAILLMAdapter:
             {
                 "role": "user",
                 "content": [
-                    {"type": "text", "text": "Classify this cafe photo as MENU, VIBE, or SKIP."},
+                    {
+                        "type": "text",
+                        "text": (
+                            "Classify this coffee shop photo. "
+                            "If both MENU and VIBE apply, choose MENU."
+                        ),
+                    },
                     {"type": "image_url", "image_url": {"url": image_url}},
                 ],
             }

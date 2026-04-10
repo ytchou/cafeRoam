@@ -86,6 +86,9 @@ async def run_eval(shop_ids: list[str]) -> EvalResult:
     recall_list: list[float] = []
     tarot_list: list[bool] = []
 
+    # prefetched_rows maps shop_id -> row dict for shops already loaded in bulk.
+    prefetched_rows: dict[str, dict] = {}
+
     if not shop_ids:
         rows = await asyncio.to_thread(
             lambda: db.table("shops")
@@ -97,6 +100,7 @@ async def run_eval(shop_ids: list[str]) -> EvalResult:
             .data
         )
         shop_ids = [row["id"] for row in rows]
+        prefetched_rows = {row["id"]: row for row in rows}
 
     anthropic_adapter = AnthropicLLMAdapter(
         api_key=settings.anthropic_api_key,
@@ -120,19 +124,21 @@ async def run_eval(shop_ids: list[str]) -> EvalResult:
 
     for shop_id in shop_ids:
         sid = shop_id  # bind loop variable for lambda capture
-        shop_row = await asyncio.to_thread(
-            lambda sid=sid: db.table("shops")
-            .select(shop_fields)
-            .eq("id", sid)
-            .limit(1)
-            .execute()
-            .data
-        )
-        if not shop_row:
-            print(f"Warning: shop not found: {shop_id}")
-            continue
-
-        shop = shop_row[0]
+        if sid in prefetched_rows:
+            shop = prefetched_rows[sid]
+        else:
+            shop_row = await asyncio.to_thread(
+                lambda sid=sid: db.table("shops")
+                .select(shop_fields)
+                .eq("id", sid)
+                .limit(1)
+                .execute()
+                .data
+            )
+            if not shop_row:
+                print(f"Warning: shop not found: {shop_id}")
+                continue
+            shop = shop_row[0]
         print(f"Evaluating {shop['name']}")
 
         reviews_rows = await asyncio.to_thread(
