@@ -70,7 +70,10 @@ def _stub_service_role_client(preferred_modes):
 
 class TestFeaturedUnauthenticated:
     def test_unauthenticated_user_sees_insertion_order(self, client):
-        with patch("api.shops._fetch_featured_shops", return_value=SHOPS):
+        with (
+            patch("api.shops.get_anon_client", return_value=MagicMock()),
+            patch("api.shops._fetch_featured_shops", return_value=SHOPS),
+        ):
             res = client.get("/shops?featured=true")
         assert res.status_code == 200
         ids = [s["id"] for s in res.json()]
@@ -82,6 +85,7 @@ class TestFeaturedAuthenticatedNoPreferences:
         fake_user = {"id": "user-abc-001", "app_metadata": {}}
         stub_db = _stub_service_role_client(preferred_modes=None)
         with (
+            patch("api.shops.get_anon_client", return_value=MagicMock()),
             patch("api.shops.get_optional_current_user", return_value=fake_user),
             patch("api.shops._fetch_featured_shops", return_value=SHOPS),
             patch("api.shops.get_service_role_client", return_value=stub_db),
@@ -99,6 +103,7 @@ class TestFeaturedAuthenticatedWorkPreference:
         fake_user = {"id": "user-abc-002", "app_metadata": {}}
         stub_db = _stub_service_role_client(preferred_modes=["work"])
         with (
+            patch("api.shops.get_anon_client", return_value=MagicMock()),
             patch("api.shops.get_optional_current_user", return_value=fake_user),
             patch("api.shops._fetch_featured_shops", return_value=SHOPS),
             patch("api.shops.get_service_role_client", return_value=stub_db),
@@ -116,6 +121,7 @@ class TestFeaturedAuthenticatedMultiMode:
         fake_user = {"id": "user-abc-003", "app_metadata": {}}
         stub_db = _stub_service_role_client(preferred_modes=["rest", "social"])
         with (
+            patch("api.shops.get_anon_client", return_value=MagicMock()),
             patch("api.shops.get_optional_current_user", return_value=fake_user),
             patch("api.shops._fetch_featured_shops", return_value=SHOPS),
             patch("api.shops.get_service_role_client", return_value=stub_db),
