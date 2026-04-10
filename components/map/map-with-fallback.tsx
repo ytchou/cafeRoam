@@ -100,6 +100,7 @@ export function MapWithFallback({
               {...layoutProps}
               view={view}
               onCardClick={onCardClick}
+              onFilterClick={layoutProps.onFilterOpen}
             />
           </div>
         ) : (
@@ -127,7 +128,11 @@ export function MapWithFallback({
     <div className="relative h-full w-full">
       {showMap ? (
         <div data-testid="map-container">
-          <MapMobileLayout {...layoutProps} onCardClick={onCardClick} />
+          <MapMobileLayout
+            {...layoutProps}
+            onCardClick={onCardClick}
+            onFilterClick={layoutProps.onFilterOpen}
+          />
         </div>
       ) : (
         <div data-testid="list-container">

@@ -23,10 +23,22 @@ vi.mock('mapbox-gl/dist/mapbox-gl.css', () => ({}));
 // The boundary mock for the actual map renderer is next/dynamic above; these are
 // isolation mocks so MapWithFallback can be tested without its full dependency tree.
 vi.mock('@/components/map/map-mobile-layout', () => ({
-  MapMobileLayout: () => <div data-testid="map-mobile-layout" />,
+  MapMobileLayout: ({ onFilterClick }: { onFilterClick?: () => void }) => (
+    <div data-testid="map-mobile-layout">
+      <button type="button" onClick={onFilterClick}>
+        filter-mobile
+      </button>
+    </div>
+  ),
 }));
 vi.mock('@/components/map/map-desktop-layout', () => ({
-  MapDesktopLayout: () => <div data-testid="map-desktop-layout" />,
+  MapDesktopLayout: ({ onFilterClick }: { onFilterClick?: () => void }) => (
+    <div data-testid="map-desktop-layout">
+      <button type="button" onClick={onFilterClick}>
+        filter-desktop
+      </button>
+    </div>
+  ),
 }));
 vi.mock('@/components/map/list-mobile-layout', () => ({
   ListMobileLayout: () => <div data-testid="list-mobile-layout" />,
@@ -125,5 +137,39 @@ describe('MapWithFallback', () => {
     expect(
       screen.queryByRole('button', { name: /載入地圖/i })
     ).not.toBeInTheDocument();
+  });
+
+  it('forwards onFilterOpen as onFilterClick to mobile map layout so the filter button is functional', async () => {
+    mockUseDeviceCapability.mockReturnValue({
+      isLowEnd: false,
+      deviceMemory: 8,
+    });
+    const onFilterOpen = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <MapWithFallback {...defaultProps} onFilterOpen={onFilterOpen} isDesktop={false} />
+    );
+    await waitFor(() =>
+      expect(screen.getByTestId('map-container')).toBeInTheDocument()
+    );
+    await user.click(screen.getByRole('button', { name: 'filter-mobile' }));
+    expect(onFilterOpen).toHaveBeenCalledOnce();
+  });
+
+  it('forwards onFilterOpen as onFilterClick to desktop map layout so the filter button is functional', async () => {
+    mockUseDeviceCapability.mockReturnValue({
+      isLowEnd: false,
+      deviceMemory: 8,
+    });
+    const onFilterOpen = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <MapWithFallback {...defaultProps} onFilterOpen={onFilterOpen} isDesktop={true} />
+    );
+    await waitFor(() =>
+      expect(screen.getByTestId('map-container')).toBeInTheDocument()
+    );
+    await user.click(screen.getByRole('button', { name: 'filter-desktop' }));
+    expect(onFilterOpen).toHaveBeenCalledOnce();
   });
 });
