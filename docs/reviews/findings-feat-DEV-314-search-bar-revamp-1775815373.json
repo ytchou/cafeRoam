@@ -137,14 +137,13 @@
       "status": "resolved"
     }
   ],
-  "active_agents": [
-    "Bug Hunter",
-    "Standards & Conventions",
-    "Architecture & Design",
-    "Plan Alignment",
-    "Test Philosophy",
-    "Design Quality"
-  ],
+  "active_agents": [],
+  "re_verify_iteration_1": {
+    "verified_at_sha": "3ec96d04c8e1c367dcf3a8420b52eea55b3ce1ab",
+    "resolved": 17,
+    "new_issues": 0,
+    "status": "SUCCESS"
+  },
   "skipped": [
     {
       "file": "components/discovery/search-bar.test.tsx",
