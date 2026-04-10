@@ -5,9 +5,11 @@ canonical form. The OpenAI adapter rewraps these at call time into its
 function_calling envelope ({type: "function", function: {name, description, parameters}}).
 """
 
+from typing import Any
+
 from core.tarot_vocabulary import TAROT_TITLES
 
-CLASSIFY_SHOP_SCHEMA: dict = {
+CLASSIFY_SHOP_SCHEMA: dict[str, Any] = {
     "name": "classify_shop",
     "description": "Classify a coffee shop based on its reviews using the provided taxonomy",
     "input_schema": {
@@ -68,7 +70,7 @@ CLASSIFY_SHOP_SCHEMA: dict = {
     },
 }
 
-EXTRACT_MENU_SCHEMA: dict = {
+EXTRACT_MENU_SCHEMA: dict[str, Any] = {
     "name": "extract_menu",
     "description": "Extract structured menu items from a coffee shop menu image",
     "input_schema": {
@@ -93,7 +95,7 @@ EXTRACT_MENU_SCHEMA: dict = {
     },
 }
 
-ASSIGN_TAROT_SCHEMA: dict = {
+ASSIGN_TAROT_SCHEMA: dict[str, Any] = {
     "name": "assign_tarot",
     "description": "Assign a mystical tarot archetype title and flavor text to a coffee shop",
     "input_schema": {
@@ -115,7 +117,7 @@ ASSIGN_TAROT_SCHEMA: dict = {
     },
 }
 
-CLASSIFY_PHOTO_SCHEMA: dict = {
+CLASSIFY_PHOTO_SCHEMA: dict[str, Any] = {
     "name": "classify_photo",
     "description": "Classify a coffee shop photo into one category.",
     "input_schema": {

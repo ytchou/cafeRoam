@@ -5,6 +5,7 @@ This adapter rewraps them into OpenAI's function_calling envelope at call time.
 """
 
 import json
+from typing import Any, cast
 
 from core.tarot_vocabulary import TAROT_TITLES, TITLE_TO_TAGS
 from models.types import (
@@ -31,7 +32,7 @@ from providers.llm.anthropic_adapter import (
 )
 
 
-def _wrap_schema_for_openai(schema: dict) -> dict:
+def _wrap_schema_for_openai(schema: dict[str, Any]) -> dict[str, Any]:
     """Convert Anthropic-style schema envelope to OpenAI function_calling envelope."""
     return {
         "type": "function",
@@ -43,7 +44,7 @@ def _wrap_schema_for_openai(schema: dict) -> dict:
     }
 
 
-def _extract_tool_input(response, expected_name: str) -> dict:
+def _extract_tool_input(response: Any, expected_name: str) -> dict[str, Any]:
     """Extract and parse tool call arguments from an OpenAI ChatCompletion response.
 
     Raises RuntimeError if no tool_call is present or if arguments are not valid JSON.
@@ -56,7 +57,7 @@ def _extract_tool_input(response, expected_name: str) -> dict:
         )
     tool_call = message.tool_calls[0]
     try:
-        return json.loads(tool_call.function.arguments)
+        return cast(dict[str, Any], json.loads(tool_call.function.arguments))
     except (json.JSONDecodeError, ValueError) as exc:
         raise RuntimeError(
             f"Failed to parse tool_call arguments as JSON for '{expected_name}': {exc}"
@@ -65,8 +66,8 @@ def _extract_tool_input(response, expected_name: str) -> dict:
 
 def _build_enrich_messages(
     shop: ShopEnrichmentInput,
-    taxonomy: list,
-) -> list[dict]:
+    taxonomy: list[TaxonomyTag],
+) -> list[dict[str, Any]]:
     """Build OpenAI messages list for enrich_shop."""
     lines = [
         "Classify this coffee shop based on its reviews and attributes.",
@@ -126,7 +127,7 @@ def _build_enrich_messages(
     if not shop.vibe_photo_urls:
         return [system_message, {"role": "user", "content": text_prompt}]
 
-    content: list[dict] = [
+    content: list[dict[str, Any]] = [
         {
             "type": "text",
             "text": (
@@ -167,16 +168,19 @@ class OpenAILLMAdapter:
         messages = _build_enrich_messages(shop, self._taxonomy)
         response = await self._client.chat.completions.create(
             model=self._model,
-            messages=messages,
-            tools=[_wrap_schema_for_openai(CLASSIFY_SHOP_SCHEMA)],
-            tool_choice={"type": "function", "function": {"name": "classify_shop"}},
+            messages=cast(list[Any], messages),
+            tools=cast(Any, [_wrap_schema_for_openai(CLASSIFY_SHOP_SCHEMA)]),
+            tool_choice=cast(
+                Any,
+                {"type": "function", "function": {"name": "classify_shop"}},
+            ),
             max_completion_tokens=2048,
         )
         payload = _extract_tool_input(response, "classify_shop")
         return _parse_enrichment_payload(payload, self._taxonomy_by_id)
 
     async def extract_menu_data(self, image_url: str) -> MenuExtractionResult:
-        messages = [
+        messages: list[dict[str, Any]] = [
             {
                 "role": "user",
                 "content": [
@@ -196,9 +200,12 @@ class OpenAILLMAdapter:
         ]
         response = await self._client.chat.completions.create(
             model=self._classify_model,
-            messages=messages,
-            tools=[_wrap_schema_for_openai(EXTRACT_MENU_SCHEMA)],
-            tool_choice={"type": "function", "function": {"name": "extract_menu"}},
+            messages=cast(list[Any], messages),
+            tools=cast(Any, [_wrap_schema_for_openai(EXTRACT_MENU_SCHEMA)]),
+            tool_choice=cast(
+                Any,
+                {"type": "function", "function": {"name": "extract_menu"}},
+            ),
             max_completion_tokens=4096,
             temperature=0,
         )
@@ -209,7 +216,7 @@ class OpenAILLMAdapter:
         )
 
     async def classify_photo(self, image_url: str) -> PhotoCategory:
-        messages = [
+        messages: list[dict[str, Any]] = [
             {
                 "role": "user",
                 "content": [
@@ -226,9 +233,12 @@ class OpenAILLMAdapter:
         ]
         response = await self._client.chat.completions.create(
             model=self._classify_model,
-            messages=messages,
-            tools=[_wrap_schema_for_openai(CLASSIFY_PHOTO_SCHEMA)],
-            tool_choice={"type": "function", "function": {"name": "classify_photo"}},
+            messages=cast(list[Any], messages),
+            tools=cast(Any, [_wrap_schema_for_openai(CLASSIFY_PHOTO_SCHEMA)]),
+            tool_choice=cast(
+                Any,
+                {"type": "function", "function": {"name": "classify_photo"}},
+            ),
             max_completion_tokens=128,
         )
         payload = _extract_tool_input(response, "classify_photo")
@@ -236,13 +246,13 @@ class OpenAILLMAdapter:
 
     async def summarize_reviews(self, texts: list[str]) -> str:
         numbered = "\n".join(f"[{i + 1}] {t}" for i, t in enumerate(texts))
-        messages = [
+        messages: list[dict[str, Any]] = [
             {"role": "system", "content": SUMMARIZE_REVIEWS_SYSTEM_PROMPT},
             {"role": "user", "content": numbered},
         ]
         response = await self._client.chat.completions.create(
             model=self._classify_model,
-            messages=messages,
+            messages=cast(list[Any], messages),
             max_completion_tokens=512,
         )
         content = response.choices[0].message.content
@@ -256,22 +266,25 @@ class OpenAILLMAdapter:
             lines.append(f"Sample reviews: {'; '.join(shop.reviews[:5])}")
         lines.append("")
         lines.append("Title-to-tag reference (pick the best match):")
-        for title, tags in TITLE_TO_TAGS.items():
-            lines.append(f"  {title}: {', '.join(tags)}")
+        for tarot_title, tags in TITLE_TO_TAGS.items():
+            lines.append(f"  {tarot_title}: {', '.join(tags)}")
         prompt = "\n".join(lines)
-        messages = [
+        messages: list[dict[str, Any]] = [
             {"role": "system", "content": TAROT_SYSTEM_PROMPT},
             {"role": "user", "content": prompt},
         ]
         response = await self._client.chat.completions.create(
             model=self._nano_model,
-            messages=messages,
-            tools=[_wrap_schema_for_openai(ASSIGN_TAROT_SCHEMA)],
-            tool_choice={"type": "function", "function": {"name": "assign_tarot"}},
+            messages=cast(list[Any], messages),
+            tools=cast(Any, [_wrap_schema_for_openai(ASSIGN_TAROT_SCHEMA)]),
+            tool_choice=cast(
+                Any,
+                {"type": "function", "function": {"name": "assign_tarot"}},
+            ),
             max_completion_tokens=256,
         )
         payload = _extract_tool_input(response, "assign_tarot")
-        title = payload.get("tarot_title")
+        title: str | None = payload.get("tarot_title")
         if title not in TAROT_TITLES:
             title = None
         return TarotEnrichmentResult(
