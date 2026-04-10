@@ -157,7 +157,7 @@ class OpenAILLMAdapter:
             messages=messages,
             tools=[_wrap_schema_for_openai(CLASSIFY_SHOP_SCHEMA)],
             tool_choice={"type": "function", "function": {"name": "classify_shop"}},
-            max_tokens=2048,
+            max_completion_tokens=2048,
         )
         payload = _extract_tool_input(response, "classify_shop")
         return _parse_enrichment_payload(payload, self._taxonomy_by_id)
@@ -169,7 +169,13 @@ class OpenAILLMAdapter:
                 "content": [
                     {
                         "type": "text",
-                        "text": "Extract all menu items from this image. Return structured JSON.",
+                        "text": (
+                            "Extract every individual menu item visible in this image. "
+                            "Each item must have its exact name as written on the menu "
+                            "(including the original language). Do NOT group items into "
+                            "categories — list each drink, food, or product as a separate "
+                            "item with its name and price if visible."
+                        ),
                     },
                     {"type": "image_url", "image_url": {"url": image_url}},
                 ],
@@ -180,7 +186,8 @@ class OpenAILLMAdapter:
             messages=messages,
             tools=[_wrap_schema_for_openai(EXTRACT_MENU_SCHEMA)],
             tool_choice={"type": "function", "function": {"name": "extract_menu"}},
-            max_tokens=4096,
+            max_completion_tokens=4096,
+            temperature=0,
         )
         payload = _extract_tool_input(response, "extract_menu")
         return MenuExtractionResult(
@@ -203,7 +210,7 @@ class OpenAILLMAdapter:
             messages=messages,
             tools=[_wrap_schema_for_openai(CLASSIFY_PHOTO_SCHEMA)],
             tool_choice={"type": "function", "function": {"name": "classify_photo"}},
-            max_tokens=128,
+            max_completion_tokens=128,
         )
         payload = _extract_tool_input(response, "classify_photo")
         return PhotoCategory(payload["category"])
@@ -217,7 +224,7 @@ class OpenAILLMAdapter:
         response = await self._client.chat.completions.create(
             model=self._classify_model,
             messages=messages,
-            max_tokens=512,
+            max_completion_tokens=512,
         )
         content = response.choices[0].message.content
         return content or ""
@@ -243,7 +250,7 @@ class OpenAILLMAdapter:
             messages=messages,
             tools=[_wrap_schema_for_openai(ASSIGN_TAROT_SCHEMA)],
             tool_choice={"type": "function", "function": {"name": "assign_tarot"}},
-            max_tokens=256,
+            max_completion_tokens=256,
         )
         payload = _extract_tool_input(response, "assign_tarot")
         title = payload.get("tarot_title")
