@@ -4,6 +4,7 @@ from models.types import (
     EnrichmentResult,
     MenuExtractionResult,
     PhotoCategory,
+    ReviewSummaryResult,
     ShopEnrichmentInput,
     TarotEnrichmentResult,
 )
@@ -18,4 +19,8 @@ class LLMProvider(Protocol):
 
     async def classify_photo(self, image_url: str) -> PhotoCategory: ...
 
-    async def summarize_reviews(self, texts: list[str]) -> str: ...
+    async def summarize_reviews(
+        self,
+        google_reviews: list[str],
+        checkin_texts: list[str],
+    ) -> ReviewSummaryResult: ...
