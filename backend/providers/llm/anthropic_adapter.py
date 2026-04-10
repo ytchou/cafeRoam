@@ -16,6 +16,18 @@ from models.types import (
     TarotEnrichmentResult,
     TaxonomyTag,
 )
+from providers.llm._tool_schemas import (
+    ASSIGN_TAROT_SCHEMA as ASSIGN_TAROT_TOOL,
+)
+from providers.llm._tool_schemas import (
+    CLASSIFY_PHOTO_SCHEMA as CLASSIFY_PHOTO_TOOL,
+)
+from providers.llm._tool_schemas import (
+    CLASSIFY_SHOP_SCHEMA as CLASSIFY_SHOP_TOOL,
+)
+from providers.llm._tool_schemas import (
+    EXTRACT_MENU_SCHEMA as EXTRACT_MENU_TOOL,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -42,134 +54,6 @@ def _to_vocab_term(raw: str, vocab: dict[str, str]) -> str | None:
 
 _MENU_VOCAB_REF = ", ".join(ITEM_TERMS)
 _SPECIALTY_VOCAB_REF = ", ".join(SPECIALTY_TERMS)
-
-CLASSIFY_SHOP_TOOL = {
-    "name": "classify_shop",
-    "description": "Classify a coffee shop based on its reviews using the provided taxonomy",
-    "input_schema": {
-        "type": "object",
-        "properties": {
-            "tags": {
-                "type": "array",
-                "items": {
-                    "type": "object",
-                    "properties": {
-                        "id": {"type": "string", "description": "Tag ID from the taxonomy list"},
-                        "confidence": {
-                            "type": "number",
-                            "description": "Confidence score 0.0-1.0",
-                        },
-                    },
-                    "required": ["id", "confidence"],
-                },
-                "description": "Tags that apply to this shop, selected from the taxonomy",
-            },
-            "summary": {
-                "type": "string",
-                "description": (
-                    "2-3 sentence natural language profile of the shop "
-                    "in Traditional Chinese (繁體中文)"
-                ),
-            },
-            "topReviews": {
-                "type": "array",
-                "items": {"type": "string"},
-                "description": "3-5 most informative review excerpts",
-            },
-            "mode": {
-                "type": "string",
-                "enum": ["work", "rest", "social", "mixed"],
-                "description": "Primary usage mode for this shop",
-            },
-            "menu_highlights": {
-                "type": "array",
-                "items": {"type": "string"},
-                "description": (
-                    "Specific food or drink items mentioned in reviews "
-                    "(e.g. 巴斯克蛋糕, 司康, 手沖, 冷萃). "
-                    "Only include items explicitly mentioned by name. Max 10."
-                ),
-            },
-            "coffee_origins": {
-                "type": "array",
-                "items": {"type": "string"},
-                "description": (
-                    "Specific coffee origins or varieties mentioned "
-                    "(e.g. 耶加雪菲, 藝伎, 衣索比亞). "
-                    "Use Traditional Chinese names. Max 5."
-                ),
-            },
-        },
-        "required": ["tags", "summary", "mode"],
-    },
-}
-
-EXTRACT_MENU_TOOL = {
-    "name": "extract_menu",
-    "description": "Extract structured menu items from a coffee shop menu image",
-    "input_schema": {
-        "type": "object",
-        "properties": {
-            "items": {
-                "type": "array",
-                "items": {
-                    "type": "object",
-                    "properties": {
-                        "name": {"type": "string"},
-                        "price": {"type": "number"},
-                        "description": {"type": "string"},
-                        "category": {"type": "string"},
-                    },
-                    "required": ["name"],
-                },
-            },
-            "raw_text": {"type": "string"},
-        },
-        "required": ["items"],
-    },
-}
-
-ASSIGN_TAROT_TOOL = {
-    "name": "assign_tarot",
-    "description": "Assign a mystical tarot archetype title and flavor text to a coffee shop",
-    "input_schema": {
-        "type": "object",
-        "properties": {
-            "tarot_title": {
-                "type": "string",
-                "enum": TAROT_TITLES,
-                "description": "The tarot archetype title that best fits this shop",
-            },
-            "flavor_text": {
-                "type": "string",
-                "description": (
-                    "One evocative sentence in the style of a tarot reading. Max 80 characters."
-                ),
-            },
-        },
-        "required": ["tarot_title", "flavor_text"],
-    },
-}
-
-CLASSIFY_PHOTO_TOOL = {
-    "name": "classify_photo",
-    "description": "Classify a coffee shop photo into one category.",
-    "input_schema": {
-        "type": "object",
-        "properties": {
-            "category": {
-                "type": "string",
-                "enum": ["MENU", "VIBE", "SKIP"],
-                "description": (
-                    "MENU: photo contains readable menu board, price list, or drink list text. "
-                    "VIBE: photo shows shop ambience, interior, exterior, or food/drinks. "
-                    "SKIP: photo is blurry, irrelevant, or primarily shows people."
-                ),
-            },
-        },
-        "required": ["category"],
-    },
-}
 
 SUMMARIZE_REVIEWS_SYSTEM_PROMPT = (
     "You summarize coffee shop visitor reviews into a concise community snapshot. "
@@ -214,6 +98,48 @@ MODE_SCORES: dict[str, ShopModeScores] = {
     "social": ShopModeScores(work=0.0, rest=0.0, social=1.0),
     "mixed": ShopModeScores(work=0.5, rest=0.5, social=0.5),
 }
+
+
+def _parse_enrichment_payload(payload: dict, taxonomy_by_id: dict) -> EnrichmentResult:
+    raw_tags = payload.get("tags", [])
+    valid_tags: list[TaxonomyTag] = []
+    tag_confidences: dict[str, float] = {}
+    confidences: list[float] = []
+
+    for raw in raw_tags:
+        tag_id = raw.get("id", "")
+        if tag_id not in taxonomy_by_id:
+            logger.warning("Filtering unknown tag: %s", tag_id)
+            continue
+        confidence = max(0.0, min(1.0, float(raw.get("confidence", 0.0))))
+        tag = taxonomy_by_id[tag_id]
+        valid_tags.append(tag)
+        tag_confidences[tag_id] = confidence
+        confidences.append(confidence)
+
+    mode_str = payload.get("mode", "mixed")
+    mode_scores = MODE_SCORES.get(mode_str, MODE_SCORES["mixed"])
+
+    overall_confidence = sum(confidences) / len(confidences) if confidences else 0.0
+
+    raw_highlights = payload.get("menu_highlights") or []
+    raw_origins = payload.get("coffee_origins") or []
+    menu_highlights = list(
+        dict.fromkeys(t for raw in raw_highlights if (t := _to_vocab_term(raw, _ITEM_VOCAB)))
+    )
+    coffee_origins = list(
+        dict.fromkeys(t for raw in raw_origins if (t := _to_vocab_term(raw, _SPECIALTY_VOCAB)))
+    )
+
+    return EnrichmentResult(
+        tags=valid_tags,
+        tag_confidences=tag_confidences,
+        summary=payload.get("summary", ""),
+        confidence=overall_confidence,
+        mode_scores=mode_scores,
+        menu_highlights=menu_highlights,
+        coffee_origins=coffee_origins,
+    )
 
 
 class AnthropicLLMAdapter:
@@ -452,42 +378,4 @@ class AnthropicLLMAdapter:
         raise ValueError(f"No tool_use block with name '{tool_name}' in response")
 
     def _parse_enrichment(self, tool_input: dict) -> EnrichmentResult:
-        raw_tags = tool_input.get("tags", [])
-        valid_tags: list[TaxonomyTag] = []
-        tag_confidences: dict[str, float] = {}
-        confidences: list[float] = []
-
-        for raw in raw_tags:
-            tag_id = raw.get("id", "")
-            if tag_id not in self._taxonomy_by_id:
-                logger.warning("Filtering unknown tag: %s", tag_id)
-                continue
-            confidence = max(0.0, min(1.0, float(raw.get("confidence", 0.0))))
-            tag = self._taxonomy_by_id[tag_id]
-            valid_tags.append(tag)
-            tag_confidences[tag_id] = confidence
-            confidences.append(confidence)
-
-        mode_str = tool_input.get("mode", "mixed")
-        mode_scores = MODE_SCORES.get(mode_str, MODE_SCORES["mixed"])
-
-        overall_confidence = sum(confidences) / len(confidences) if confidences else 0.0
-
-        raw_highlights = tool_input.get("menu_highlights") or []
-        raw_origins = tool_input.get("coffee_origins") or []
-        menu_highlights = list(
-            dict.fromkeys(t for raw in raw_highlights if (t := _to_vocab_term(raw, _ITEM_VOCAB)))
-        )
-        coffee_origins = list(
-            dict.fromkeys(t for raw in raw_origins if (t := _to_vocab_term(raw, _SPECIALTY_VOCAB)))
-        )
-
-        return EnrichmentResult(
-            tags=valid_tags,
-            tag_confidences=tag_confidences,
-            summary=tool_input.get("summary", ""),
-            confidence=overall_confidence,
-            mode_scores=mode_scores,
-            menu_highlights=menu_highlights,
-            coffee_origins=coffee_origins,
-        )
+        return _parse_enrichment_payload(tool_input, self._taxonomy_by_id)
