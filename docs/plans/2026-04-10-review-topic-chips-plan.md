@@ -15,6 +15,7 @@
 **Tech Stack:** Python 3.12, FastAPI, Pydantic v2, Supabase (Postgres), OpenAI function calling, Anthropic tool use, pytest + asyncio, Next.js 16, TypeScript, Vitest
 
 **Acceptance Criteria:**
+
 - [ ] A shop with only Google reviews (no check-ins) shows `review_topics` populated after its initial enrich pipeline completes
 - [ ] A shop with both Google reviews and community check-ins shows a blended `community_summary` and populated `review_topics`
 - [ ] A shop mid-pipeline shows "Enriching · Summarizing reviews" in the admin dashboard status column
@@ -26,6 +27,7 @@
 ### Task 1: DB Migration — add review_topics column
 
 **Files:**
+
 - Create: `supabase/migrations/20260410000002_add_review_topics_to_shops.sql`
 
 No test needed — SQL migration; correctness verified by `supabase db diff` and schema inspection.
@@ -45,6 +47,7 @@ COMMENT ON COLUMN shops.review_topics IS
 ```bash
 supabase db diff
 ```
+
 Expected: shows `ALTER TABLE shops ADD COLUMN review_topics jsonb;` and nothing else.
 
 **Step 3: Apply to staging**
@@ -65,6 +68,7 @@ git commit -m "feat(DEV-305): add review_topics JSONB column to shops"
 ### Task 2: Scraper Config — reviewsSort + maxReviews
 
 **Files:**
+
 - Modify: `backend/providers/scraper/apify_adapter.py`
 - Test: `backend/tests/providers/test_apify_adapter.py`
 
@@ -87,6 +91,7 @@ Import `_ACTOR_BASE_INPUT` from `providers.scraper.apify_adapter`.
 ```bash
 cd backend && uv run pytest tests/providers/test_apify_adapter.py::test_actor_base_input_uses_most_relevant_sort tests/providers/test_apify_adapter.py::test_actor_base_input_max_reviews_is_50 -v
 ```
+
 Expected: FAIL — `KeyError: 'reviewsSort'` and `AssertionError: 20 != 50`
 
 **Step 3: Update `_ACTOR_BASE_INPUT`**
@@ -115,6 +120,7 @@ _ACTOR_BASE_INPUT: dict[str, Any] = {
 ```bash
 cd backend && uv run pytest tests/providers/test_apify_adapter.py -v
 ```
+
 Expected: all pass
 
 **Step 5: Commit**
@@ -129,10 +135,12 @@ git commit -m "feat(DEV-305): scraper — mostRelevant sort, maxReviews 50"
 ### Task 3: Admin API — active job display
 
 **Files:**
+
 - Modify: `backend/api/admin_shops.py`
 - Test: `backend/tests/api/test_admin_shops.py`
 
 **API Contract:**
+
 ```yaml
 endpoint: GET /admin/shops
 response_item_new_field:
@@ -164,6 +172,7 @@ Follow existing test patterns in the file for mocking the Supabase client.
 ```bash
 cd backend && uv run pytest tests/api/test_admin_shops.py -v -k "current_job"
 ```
+
 Expected: FAIL — `current_job` not in response
 
 **Step 3: Add `current_job` to admin shops query**
@@ -171,6 +180,7 @@ Expected: FAIL — `current_job` not in response
 In `backend/api/admin_shops.py`:
 
 1. Add a Pydantic model for the new field:
+
 ```python
 class ActiveJob(BaseModel):
     job_type: str
@@ -182,6 +192,7 @@ class AdminShop(BaseModel):
 ```
 
 2. After the shops query, run a second query to fetch active jobs for returned shop IDs:
+
 ```python
 shop_ids = [s["id"] for s in shops_data]
 active_jobs: dict[str, dict] = {}
@@ -209,6 +220,7 @@ for shop in shops_data:
 ```bash
 cd backend && uv run pytest tests/api/test_admin_shops.py -v
 ```
+
 Expected: all pass
 
 **Step 5: Commit**
@@ -223,6 +235,7 @@ git commit -m "feat(DEV-305): admin API — include active job type in shop list
 ### Task 4: Pydantic Types — ReviewTopic, ReviewSummaryResult, Shop.review_topics
 
 **Files:**
+
 - Modify: `backend/models/types.py`
 - Test: `backend/tests/test_types.py` (create if missing)
 
@@ -263,6 +276,7 @@ def test_shop_model_accepts_review_topics():
 ```bash
 cd backend && uv run pytest tests/test_types.py -v
 ```
+
 Expected: FAIL — `ImportError: cannot import name 'ReviewTopic'`
 
 **Step 3: Add types to `backend/models/types.py`**
@@ -291,6 +305,7 @@ review_topics: list[ReviewTopic] | None = None
 ```bash
 cd backend && uv run pytest tests/test_types.py -v
 ```
+
 Expected: all pass
 
 **Step 5: Commit**
@@ -305,6 +320,7 @@ git commit -m "feat(DEV-305): add ReviewTopic, ReviewSummaryResult types + Shop.
 ### Task 5: Tool Schema — SUMMARIZE_REVIEWS_TOOL_SCHEMA
 
 **Files:**
+
 - Modify: `backend/providers/llm/_tool_schemas.py`
 - Test: `backend/tests/providers/test_tool_schemas.py`
 
@@ -342,6 +358,7 @@ def test_summarize_reviews_tool_schema_required_fields():
 ```bash
 cd backend && uv run pytest tests/providers/test_tool_schemas.py -v -k "summarize_reviews"
 ```
+
 Expected: FAIL — `ImportError: cannot import name 'SUMMARIZE_REVIEWS_TOOL_SCHEMA'`
 
 **Step 3: Add schema to `_tool_schemas.py`**
@@ -396,6 +413,7 @@ SUMMARIZE_REVIEWS_TOOL_SCHEMA: dict[str, Any] = {
 ```bash
 cd backend && uv run pytest tests/providers/test_tool_schemas.py -v
 ```
+
 Expected: all pass
 
 **Step 5: Commit**
@@ -410,6 +428,7 @@ git commit -m "feat(DEV-305): add SUMMARIZE_REVIEWS_TOOL_SCHEMA"
 ### Task 6: LLM Interface — update summarize_reviews signature
 
 **Files:**
+
 - Modify: `backend/providers/llm/interface.py`
 
 No test needed — interface.py is a Protocol; the adapters enforce it. mypy will catch violations at the end.
@@ -431,6 +450,7 @@ async def summarize_reviews(
 ```
 
 Add import at top of file:
+
 ```python
 from models.types import ReviewSummaryResult
 ```
@@ -440,6 +460,7 @@ from models.types import ReviewSummaryResult
 ```bash
 cd backend && uv run mypy providers/llm/interface.py
 ```
+
 Expected: clean on interface.py itself
 
 **Step 3: Commit**
@@ -454,6 +475,7 @@ git commit -m "feat(DEV-305): update LLMProvider.summarize_reviews signature —
 ### Task 7: Anthropic Adapter — tool call impl
 
 **Files:**
+
 - Modify: `backend/providers/llm/anthropic_adapter.py`
 - Test: `backend/tests/providers/test_anthropic_adapter.py` (or equivalent)
 
@@ -529,6 +551,7 @@ async def test_summarize_reviews_blended_prompt_emphasises_community():
 ```bash
 cd backend && uv run pytest tests/providers/ -v -k "summarize_reviews"
 ```
+
 Expected: FAIL — signature mismatch
 
 **Step 3: Rewrite `summarize_reviews` in `anthropic_adapter.py`**
@@ -586,6 +609,7 @@ _SUMMARIZE_SYSTEM_PROMPT = (
 ```
 
 Add imports:
+
 ```python
 from models.types import ReviewSummaryResult, ReviewTopic
 from providers.llm._tool_schemas import SUMMARIZE_REVIEWS_TOOL_SCHEMA
@@ -596,6 +620,7 @@ from providers.llm._tool_schemas import SUMMARIZE_REVIEWS_TOOL_SCHEMA
 ```bash
 cd backend && uv run pytest tests/providers/ -v -k "summarize_reviews"
 ```
+
 Expected: all pass
 
 **Step 5: Commit**
@@ -610,6 +635,7 @@ git commit -m "feat(DEV-305): Anthropic adapter — summarize_reviews tool call 
 ### Task 8: OpenAI Adapter — function call impl
 
 **Files:**
+
 - Modify: `backend/providers/llm/openai_adapter.py`
 - Test: `backend/tests/providers/test_openai_adapter.py`
 
@@ -660,6 +686,7 @@ async def test_openai_summarize_reviews_uses_function_calling():
 ```bash
 cd backend && uv run pytest tests/providers/test_openai_adapter.py -v -k "summarize_reviews"
 ```
+
 Expected: FAIL — signature mismatch
 
 **Step 3: Rewrite `summarize_reviews` in `openai_adapter.py`**
@@ -703,11 +730,13 @@ async def summarize_reviews(
 ```
 
 Import `_SUMMARIZE_SYSTEM_PROMPT` from `anthropic_adapter` or define a shared constant. Easiest: import from `anthropic_adapter`:
+
 ```python
 from providers.llm.anthropic_adapter import _SUMMARIZE_SYSTEM_PROMPT
 ```
 
 Add imports:
+
 ```python
 from models.types import ReviewSummaryResult, ReviewTopic
 from providers.llm._tool_schemas import SUMMARIZE_REVIEWS_TOOL_SCHEMA
@@ -718,6 +747,7 @@ from providers.llm._tool_schemas import SUMMARIZE_REVIEWS_TOOL_SCHEMA
 ```bash
 cd backend && uv run pytest tests/providers/test_openai_adapter.py -v
 ```
+
 Expected: all pass
 
 **Step 5: Commit**
@@ -732,6 +762,7 @@ git commit -m "feat(DEV-305): OpenAI adapter — summarize_reviews function call
 ### Task 9: Handler — dual-source input + review_topics persistence
 
 **Files:**
+
 - Modify: `backend/workers/handlers/summarize_reviews.py`
 - Test: `backend/tests/workers/test_summarize_reviews.py`
 
@@ -843,6 +874,7 @@ async def test_handler_google_only_no_checkins():
 ```bash
 cd backend && uv run pytest tests/workers/test_summarize_reviews.py -v
 ```
+
 Expected: FAIL — signature mismatch, missing `review_topics` in update
 
 **Step 3: Rewrite handler**
@@ -923,6 +955,7 @@ async def handle_summarize_reviews(
 ```bash
 cd backend && uv run pytest tests/workers/test_summarize_reviews.py -v
 ```
+
 Expected: all pass, ≥80% coverage on handler file
 
 **Step 5: Commit**
@@ -937,6 +970,7 @@ git commit -m "feat(DEV-305): summarize_reviews handler — dual source, structu
 ### Task 10: Pipeline Wiring — enrich_shop enqueues SUMMARIZE_REVIEWS
 
 **Files:**
+
 - Modify: `backend/workers/handlers/enrich_shop.py`
 - Test: `backend/tests/workers/test_enrich_shop.py`
 
@@ -961,6 +995,7 @@ async def test_enrich_shop_enqueues_summarize_reviews_not_generate_embedding():
 ```bash
 cd backend && uv run pytest tests/workers/test_enrich_shop.py::test_enrich_shop_enqueues_summarize_reviews_not_generate_embedding -v
 ```
+
 Expected: FAIL — `GENERATE_EMBEDDING` is currently enqueued
 
 **Step 3: Update `enrich_shop.py`**
@@ -980,6 +1015,7 @@ await queue.enqueue(
 ```bash
 cd backend && uv run pytest tests/workers/test_enrich_shop.py -v
 ```
+
 Expected: all pass
 
 **Step 5: Commit**
@@ -994,6 +1030,7 @@ git commit -m "feat(DEV-305): enrich_shop — chain to SUMMARIZE_REVIEWS instead
 ### Task 11: Admin Frontend — job label display
 
 **Files:**
+
 - Modify: `app/(admin)/admin/shops/_constants.ts`
 - Modify: `app/(admin)/admin/shops/_components/ShopTable.tsx`
 - Test: `app/(admin)/admin/shops/_components/__tests__/ShopTable.test.tsx` (create if missing)
@@ -1031,37 +1068,44 @@ it("shows only status when no current_job", () => {
 ```bash
 pnpm test app/(admin)/admin/shops/_components/__tests__/ShopTable.test.tsx
 ```
+
 Expected: FAIL — `current_job` not in type, no label shown
 
 **Step 3: Add JOB_LABELS to `_constants.ts`**
 
 ```typescript
 export const JOB_LABELS: Record<string, string> = {
-  enrich_shop: "Enriching shop",
-  classify_shop_photos: "Classifying photos",
-  summarize_reviews: "Summarizing reviews",
-  generate_embedding: "Generating embedding",
-  publish_shop: "Publishing",
-  scrape_batch: "Scraping",
-  enrich_menu_photo: "Enriching menu photo",
-}
+  enrich_shop: 'Enriching shop',
+  classify_shop_photos: 'Classifying photos',
+  summarize_reviews: 'Summarizing reviews',
+  generate_embedding: 'Generating embedding',
+  publish_shop: 'Publishing',
+  scrape_batch: 'Scraping',
+  enrich_menu_photo: 'Enriching menu photo',
+};
 ```
 
 **Step 4: Update Shop type + status column in `ShopTable.tsx`**
 
 Add to the `Shop` interface:
+
 ```typescript
 current_job?: { job_type: string; status: string } | null
 ```
 
 In the status column render, replace the current status label with:
+
 ```tsx
-{STATUS_LABELS[shop.processing_status] ?? shop.processing_status}
-{shop.current_job && (
-  <span className="text-text-tertiary text-[11px] ml-1">
-    · {JOB_LABELS[shop.current_job.job_type] ?? shop.current_job.job_type}
-  </span>
-)}
+{
+  STATUS_LABELS[shop.processing_status] ?? shop.processing_status;
+}
+{
+  shop.current_job && (
+    <span className="text-text-tertiary ml-1 text-[11px]">
+      · {JOB_LABELS[shop.current_job.job_type] ?? shop.current_job.job_type}
+    </span>
+  );
+}
 ```
 
 **Step 5: Run to verify pass**
@@ -1069,6 +1113,7 @@ In the status column render, replace the current status label with:
 ```bash
 pnpm test
 ```
+
 Expected: all pass
 
 **Step 6: Commit**
@@ -1083,6 +1128,7 @@ git commit -m "feat(DEV-305): admin UI — show active job type alongside proces
 ### Task 12: Backfill Script
 
 **Files:**
+
 - Create: `backend/scripts/backfill_review_topics.py`
 
 No test needed — script is a one-time operator tool; correctness verified by `--dry-run` output.
@@ -1170,6 +1216,7 @@ if __name__ == "__main__":
 ```bash
 cd backend && uv run python scripts/backfill_review_topics.py --dry-run
 ```
+
 Expected: prints shop count + cost estimate, "Dry run — no jobs enqueued."
 
 **Step 3: Commit**
@@ -1191,6 +1238,7 @@ git commit -m "feat(DEV-305): backfill_review_topics script"
 cd backend && uv run ruff check .
 cd backend && uv run mypy .
 ```
+
 Expected: no errors
 
 **Step 2: Frontend type check**
@@ -1198,6 +1246,7 @@ Expected: no errors
 ```bash
 pnpm type-check
 ```
+
 Expected: no errors
 
 **Step 3: Full backend test suite**
@@ -1205,6 +1254,7 @@ Expected: no errors
 ```bash
 cd backend && uv run pytest -v
 ```
+
 Expected: all pass; check coverage ≥80% for `summarize_reviews` handler
 
 **Step 4: Full frontend test suite**
@@ -1212,6 +1262,7 @@ Expected: all pass; check coverage ≥80% for `summarize_reviews` handler
 ```bash
 pnpm test
 ```
+
 Expected: all pass
 
 **Step 5: Commit if any lint fixes were needed**
@@ -1275,28 +1326,35 @@ graph TD
 ```
 
 **Wave 1** (parallel — no dependencies):
+
 - Task 1: DB Migration
 - Task 2: Scraper Config
 - Task 3: Admin API backend
 
 **Wave 2** (parallel — Task 1 done, Task 3 done):
+
 - Task 4: Pydantic Types ← Task 1
 - Task 11: Admin Frontend ← Task 3
 
 **Wave 3** (parallel — Task 4 done):
+
 - Task 5: Tool Schema ← Task 4
 - Task 6: LLM Interface ← Task 4
 
 **Wave 4** (parallel — Tasks 5 + 6 done):
+
 - Task 7: Anthropic Adapter ← Tasks 5, 6
 - Task 8: OpenAI Adapter ← Tasks 5, 6
 
 **Wave 5** (sequential — Tasks 7 + 8 done):
+
 - Task 9: Handler ← Tasks 7, 8
 
 **Wave 6** (parallel — Task 9 done):
+
 - Task 10: Pipeline Wiring ← Task 9
 - Task 12: Backfill Script ← Task 9
 
 **Wave 7** (sequential — all done):
+
 - Task 13: Lint + Full Test Suite

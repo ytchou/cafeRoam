@@ -41,8 +41,13 @@
       "status": "resolved"
     }
   ],
-  "active_agents": ["Bug Hunter", "Standards & Conventions", "Architecture & Design", "Plan Alignment"],
-  "skipped": [],
+  "active_agents": [],
+  "skipped": [
+    "Plan Alignment — Minor-only findings, trivially verified (iteration 1)",
+    "Test Philosophy — not in active_agents",
+    "Design Quality — not in active_agents",
+    "Adversarial Review — not in active_agents"
+  ],
   "head_sha": "fbaad7188c6a09e560b676293a1069aaa06d4273",
   "review_log_path": "docs/reviews/2026-04-11-feat-dev-305-review-topic-chips.md"
 }

@@ -20,10 +20,10 @@ The ticket's original framing was wrong. `summarize_reviews` reads community che
 
 ### Data Sources
 
-| Source | Table | Populated by | Used by (before) | Used by (after) |
-|---|---|---|---|---|
-| Apify-scraped Google reviews | `shop_reviews` | `persist_scraped_data` | `enrich_shop` only | `enrich_shop` + `summarize_reviews` |
-| Community check-in notes | `check_ins` via RPC | user check-ins | `summarize_reviews` | `summarize_reviews` (unchanged) |
+| Source                       | Table               | Populated by           | Used by (before)    | Used by (after)                     |
+| ---------------------------- | ------------------- | ---------------------- | ------------------- | ----------------------------------- |
+| Apify-scraped Google reviews | `shop_reviews`      | `persist_scraped_data` | `enrich_shop` only  | `enrich_shop` + `summarize_reviews` |
+| Community check-in notes     | `check_ins` via RPC | user check-ins         | `summarize_reviews` | `summarize_reviews` (unchanged)     |
 
 ### Blending Logic
 
@@ -37,11 +37,13 @@ neither                                   →  skip LLM, enqueue GENERATE_EMBEDD
 ### Pipeline Change
 
 **Before:**
+
 ```
 SCRAPE → CLASSIFY_SHOP_PHOTOS → ENRICH_SHOP → GENERATE_EMBEDDING → PUBLISH_SHOP
 ```
 
 **After:**
+
 ```
 SCRAPE → CLASSIFY_SHOP_PHOTOS → ENRICH_SHOP → SUMMARIZE_REVIEWS → GENERATE_EMBEDDING → PUBLISH_SHOP
 ```
@@ -76,21 +78,21 @@ After:  "Enriching · Summarizing reviews"
 
 ## Components Changed
 
-| Component | File | Change |
-|---|---|---|
-| Scraper config | `backend/providers/scraper/apify_adapter.py` | `reviewsSort: mostRelevant`, `maxReviews: 50` |
-| DB migration | `supabase/migrations/20260410000002_add_review_topics_to_shops.sql` | New `review_topics JSONB` column |
-| Pydantic types | `backend/models/types.py` | `ReviewTopic`, `ReviewSummaryResult`, `Shop.review_topics` |
-| Tool schema | `backend/providers/llm/_tool_schemas.py` | `SUMMARIZE_REVIEWS_TOOL_SCHEMA` |
-| LLM interface | `backend/providers/llm/interface.py` | New method signature (dual sources, structured return) |
-| Anthropic adapter | `backend/providers/llm/anthropic_adapter.py` | Tool call impl + blending prompt |
-| OpenAI adapter | `backend/providers/llm/openai_adapter.py` | Function call impl + blending prompt |
-| Handler | `backend/workers/handlers/summarize_reviews.py` | Read `shop_reviews`, persist `review_topics` |
-| Pipeline | `backend/workers/handlers/enrich_shop.py` | Enqueue `SUMMARIZE_REVIEWS` instead of `GENERATE_EMBEDDING` |
-| Admin API | `backend/api/admin_shops.py` | LEFT JOIN job_queue, `current_job` response field |
-| Admin UI | `app/(admin)/admin/shops/_components/ShopTable.tsx` | "Status · Active job" label |
-| Admin constants | `app/(admin)/admin/shops/_constants.ts` | `JOB_LABELS` map |
-| Backfill | `backend/scripts/backfill_review_topics.py` | Enqueue SUMMARIZE_REVIEWS for live shops with no `review_topics` |
+| Component         | File                                                                | Change                                                           |
+| ----------------- | ------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| Scraper config    | `backend/providers/scraper/apify_adapter.py`                        | `reviewsSort: mostRelevant`, `maxReviews: 50`                    |
+| DB migration      | `supabase/migrations/20260410000002_add_review_topics_to_shops.sql` | New `review_topics JSONB` column                                 |
+| Pydantic types    | `backend/models/types.py`                                           | `ReviewTopic`, `ReviewSummaryResult`, `Shop.review_topics`       |
+| Tool schema       | `backend/providers/llm/_tool_schemas.py`                            | `SUMMARIZE_REVIEWS_TOOL_SCHEMA`                                  |
+| LLM interface     | `backend/providers/llm/interface.py`                                | New method signature (dual sources, structured return)           |
+| Anthropic adapter | `backend/providers/llm/anthropic_adapter.py`                        | Tool call impl + blending prompt                                 |
+| OpenAI adapter    | `backend/providers/llm/openai_adapter.py`                           | Function call impl + blending prompt                             |
+| Handler           | `backend/workers/handlers/summarize_reviews.py`                     | Read `shop_reviews`, persist `review_topics`                     |
+| Pipeline          | `backend/workers/handlers/enrich_shop.py`                           | Enqueue `SUMMARIZE_REVIEWS` instead of `GENERATE_EMBEDDING`      |
+| Admin API         | `backend/api/admin_shops.py`                                        | LEFT JOIN job_queue, `current_job` response field                |
+| Admin UI          | `app/(admin)/admin/shops/_components/ShopTable.tsx`                 | "Status · Active job" label                                      |
+| Admin constants   | `app/(admin)/admin/shops/_constants.ts`                             | `JOB_LABELS` map                                                 |
+| Backfill          | `backend/scripts/backfill_review_topics.py`                         | Enqueue SUMMARIZE_REVIEWS for live shops with no `review_topics` |
 
 ## Alternatives Rejected
 
@@ -100,8 +102,8 @@ After:  "Enriching · Summarizing reviews"
 
 ## Cost
 
-| Item | Est. cost |
-|---|---|
-| Scraping delta (maxReviews 20→50, per 100 shops) | ~$3–6 |
-| LLM backfill (~300 shops × GPT-5.4-mini) | ~$0.30 |
-| Nightly cron increase (~20 shops/night) | ~$0.02/night |
+| Item                                             | Est. cost    |
+| ------------------------------------------------ | ------------ |
+| Scraping delta (maxReviews 20→50, per 100 shops) | ~$3–6        |
+| LLM backfill (~300 shops × GPT-5.4-mini)         | ~$0.30       |
+| Nightly cron increase (~20 shops/night)          | ~$0.02/night |
