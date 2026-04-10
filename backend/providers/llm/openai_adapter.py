@@ -5,6 +5,7 @@ This adapter rewraps them into OpenAI's function_calling envelope at call time.
 """
 import json
 
+from core.tarot_vocabulary import TAROT_TITLES, TITLE_TO_TAGS
 from models.types import (
     EnrichmentResult,
     MenuExtractionResult,
@@ -20,6 +21,8 @@ from providers.llm._tool_schemas import (
     EXTRACT_MENU_SCHEMA,
 )
 from providers.llm.anthropic_adapter import (
+    _MENU_VOCAB_REF,
+    _SPECIALTY_VOCAB_REF,
     SUMMARIZE_REVIEWS_SYSTEM_PROMPT,
     SYSTEM_PROMPT,
     TAROT_SYSTEM_PROMPT,
@@ -62,11 +65,8 @@ def _extract_tool_input(response, expected_name: str) -> dict:
 def _build_enrich_messages(
     shop: ShopEnrichmentInput,
     taxonomy: list,
-    menu_vocab_ref: str,
-    specialty_vocab_ref: str,
 ) -> list[dict]:
     """Build OpenAI messages list for enrich_shop."""
-    from providers.llm.anthropic_adapter import _MENU_VOCAB_REF, _SPECIALTY_VOCAB_REF
     lines = [
         "Classify this coffee shop based on its reviews and attributes.",
         "",
@@ -103,6 +103,14 @@ def _build_enrich_messages(
         " (use Traditional Chinese names for coffee_origins):"
     )
     lines.append(_SPECIALTY_VOCAB_REF)
+    lines.append("")
+    lines.append(
+        "Instruction: When extracting coffee_origins, use the Traditional Chinese name"
+        " exactly as it appears in the reference list above"
+        " (e.g. 古吉 not 'Guji', 耶加雪菲 not 'Yirgacheffe')."
+        " For menu_highlights, prefer the Traditional Chinese term from the list"
+        " (e.g. 手沖 not 'pour over', 可頌 not 'croissant')."
+    )
     if shop.google_maps_features:
         feature_list = ", ".join(k for k, v in shop.google_maps_features.items() if v)
         if feature_list:
@@ -149,9 +157,12 @@ class OpenAILLMAdapter:
         self._nano_model = nano_model
         self._taxonomy = taxonomy
         self._taxonomy_by_id: dict[str, TaxonomyTag] = {tag.id: tag for tag in taxonomy}
+        # max_completion_tokens is used throughout this adapter because all targeted models
+        # (gpt-5.4 series) support it. If this adapter is ever extended to non-reasoning
+        # GPT models, replace max_completion_tokens with max_tokens for those calls.
 
     async def enrich_shop(self, shop: ShopEnrichmentInput) -> EnrichmentResult:
-        messages = _build_enrich_messages(shop, self._taxonomy, "", "")
+        messages = _build_enrich_messages(shop, self._taxonomy)
         response = await self._client.chat.completions.create(
             model=self._model,
             messages=messages,
@@ -236,7 +247,6 @@ class OpenAILLMAdapter:
         return content or ""
 
     async def assign_tarot(self, shop: ShopEnrichmentInput) -> TarotEnrichmentResult:
-        from core.tarot_vocabulary import TAROT_TITLES, TITLE_TO_TAGS
         lines = [f"Shop: {shop.name}"]
         if shop.description:
             lines.append(f"Description: {shop.description}")

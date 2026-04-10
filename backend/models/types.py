@@ -397,7 +397,7 @@ class ShopEnrichmentInput(BaseModel):
     description: str | None = None
     categories: list[str] = []
     price_range: str | None = None
-    socket: str | bool | None = None
+    socket: str | bool | None = None  # widened from str|None: real scraper data returns bool
     limited_time: str | None = None
     rating: float | None = None
     review_count: int | None = None
