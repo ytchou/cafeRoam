@@ -68,7 +68,9 @@ describe('RawJobsList — force fail + logs panel', () => {
     render(<RawJobsList />);
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: 'Force fail' })).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: 'Force fail' })
+      ).toBeInTheDocument();
     });
   });
 
@@ -87,13 +89,17 @@ describe('RawJobsList — force fail + logs panel', () => {
     render(<RawJobsList />);
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: 'Force fail' })).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: 'Force fail' })
+      ).toBeInTheDocument();
     });
 
     await user.click(screen.getByRole('button', { name: 'Force fail' }));
 
     await waitFor(() => {
-      expect(screen.getByPlaceholderText('Reason (optional)')).toBeInTheDocument();
+      expect(
+        screen.getByPlaceholderText('Reason (optional)')
+      ).toBeInTheDocument();
     });
   });
 
@@ -104,7 +110,9 @@ describe('RawJobsList — force fail + logs panel', () => {
     fetchMock.mockResolvedValueOnce({
       ok: true,
       json: () =>
-        Promise.resolve(makeJobsResponse([makeJob({ id: 'job-stuck01', status: 'claimed' })])),
+        Promise.resolve(
+          makeJobsResponse([makeJob({ id: 'job-stuck01', status: 'claimed' })])
+        ),
     });
     // Second call: cancel endpoint
     fetchMock.mockResolvedValueOnce({
@@ -122,19 +130,28 @@ describe('RawJobsList — force fail + logs panel', () => {
     render(<RawJobsList />);
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: 'Force fail' })).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: 'Force fail' })
+      ).toBeInTheDocument();
     });
 
     await user.click(screen.getByRole('button', { name: 'Force fail' }));
 
     await waitFor(() => {
-      expect(screen.getByPlaceholderText('Reason (optional)')).toBeInTheDocument();
+      expect(
+        screen.getByPlaceholderText('Reason (optional)')
+      ).toBeInTheDocument();
     });
 
-    await user.type(screen.getByPlaceholderText('Reason (optional)'), 'stuck job');
+    await user.type(
+      screen.getByPlaceholderText('Reason (optional)'),
+      'stuck job'
+    );
 
     // Click the confirm button in the dialog
-    const confirmButtons = screen.getAllByRole('button', { name: /Force fail/i });
+    const confirmButtons = screen.getAllByRole('button', {
+      name: /Force fail/i,
+    });
     // The dialog confirm button is the last one
     await user.click(confirmButtons[confirmButtons.length - 1]);
 
@@ -154,7 +171,9 @@ describe('RawJobsList — force fail + logs panel', () => {
     fetchMock.mockResolvedValueOnce({
       ok: true,
       json: () =>
-        Promise.resolve(makeJobsResponse([makeJob({ id: 'job-blank01', status: 'claimed' })])),
+        Promise.resolve(
+          makeJobsResponse([makeJob({ id: 'job-blank01', status: 'claimed' })])
+        ),
     });
     fetchMock.mockResolvedValueOnce({
       ok: true,
@@ -170,17 +189,23 @@ describe('RawJobsList — force fail + logs panel', () => {
     render(<RawJobsList />);
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: 'Force fail' })).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: 'Force fail' })
+      ).toBeInTheDocument();
     });
 
     await user.click(screen.getByRole('button', { name: 'Force fail' }));
 
     await waitFor(() => {
-      expect(screen.getByPlaceholderText('Reason (optional)')).toBeInTheDocument();
+      expect(
+        screen.getByPlaceholderText('Reason (optional)')
+      ).toBeInTheDocument();
     });
 
     // Do NOT fill the textarea — leave it blank
-    const confirmButtons = screen.getAllByRole('button', { name: /Force fail/i });
+    const confirmButtons = screen.getAllByRole('button', {
+      name: /Force fail/i,
+    });
     await user.click(confirmButtons[confirmButtons.length - 1]);
 
     await waitFor(() => {
@@ -189,7 +214,9 @@ describe('RawJobsList — force fail + logs panel', () => {
       );
       expect(cancelCall).toBeDefined();
       // Empty reason → body should be "{}" or omitted
-      const rawBody = (cancelCall![1] as RequestInit).body as string | undefined;
+      const rawBody = (cancelCall![1] as RequestInit).body as
+        | string
+        | undefined;
       if (rawBody) {
         const body = JSON.parse(rawBody);
         expect(Object.keys(body)).toHaveLength(0);
@@ -207,7 +234,9 @@ describe('RawJobsList — force fail + logs panel', () => {
       ok: true,
       json: () =>
         Promise.resolve(
-          makeJobsResponse([makeJob({ id: 'job-running01', status: 'claimed' })])
+          makeJobsResponse([
+            makeJob({ id: 'job-running01', status: 'claimed' }),
+          ])
         ),
     });
     // JobLogsPanel fetch (polls /logs endpoint)

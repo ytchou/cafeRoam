@@ -172,7 +172,9 @@ describe('AdminJobsPage', () => {
 
     // Confirm in alertdialog
     const dialog = await screen.findByRole('alertdialog');
-    const forceFailButtons = within(dialog).getAllByRole('button', { name: /force fail/i });
+    const forceFailButtons = within(dialog).getAllByRole('button', {
+      name: /force fail/i,
+    });
     await user.click(forceFailButtons[forceFailButtons.length - 1]);
 
     await waitFor(() => {

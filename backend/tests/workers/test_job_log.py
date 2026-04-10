@@ -1,5 +1,6 @@
-import pytest
 from unittest.mock import MagicMock
+
+import pytest
 
 from workers.job_log import log_job_event
 
@@ -14,12 +15,14 @@ async def test_log_job_event_inserts_row():
     await log_job_event(mock_db, "abc-123", "info", "test message", shop_id="s1")
 
     mock_db.table.assert_called_once_with("job_logs")
-    mock_db.table.return_value.insert.assert_called_once_with({
-        "job_id": "abc-123",
-        "level": "info",
-        "message": "test message",
-        "context": {"shop_id": "s1"},
-    })
+    mock_db.table.return_value.insert.assert_called_once_with(
+        {
+            "job_id": "abc-123",
+            "level": "info",
+            "message": "test message",
+            "context": {"shop_id": "s1"},
+        }
+    )
     mock_db.table.return_value.insert.return_value.execute.assert_called_once()
 
 

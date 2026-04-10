@@ -136,8 +136,14 @@
       "resolution": "Added get_status as a method on JobQueue. Kept module-level function as a deprecated shim for existing callers (job_guard.py uses it directly). Commit c4087f6."
     }
   ],
-  "active_agents": ["Bug Hunter", "Standards & Conventions", "Architecture & Design", "Plan Alignment", "Test Philosophy"],
-  "skipped": [],
+  "active_agents": [],
+  "skipped": [
+    "Bug Hunter",
+    "Standards & Conventions",
+    "Architecture & Design",
+    "Plan Alignment",
+    "Test Philosophy"
+  ],
   "head_sha": "a0ee86df9e64836ebac303b9c2a3481f137c6485",
   "review_log_path": "docs/reviews/2026-04-10-feat-jobs-queue-operator-tooling.md"
 }

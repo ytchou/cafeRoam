@@ -52,8 +52,12 @@ async def handle_generate_embedding(
     try:
         if job_id is not None:
             await log_job_event(
-                db, job_id, "info", "job.start",
-                job_type="generate_embedding", shop_id=str(shop_id),
+                db,
+                job_id,
+                "info",
+                "job.start",
+                job_type="generate_embedding",
+                shop_id=str(shop_id),
             )
 
         # Load menu items if available
@@ -116,8 +120,12 @@ async def handle_generate_embedding(
         db.table("shops").update(update_data).eq("id", shop_id).execute()
         if job_id is not None:
             await log_job_event(
-                db, job_id, "info", "db.write",
-                table="shops", columns=["embedding", "last_embedded_at"],
+                db,
+                job_id,
+                "info",
+                "db.write",
+                table="shops",
+                columns=["embedding", "last_embedded_at"],
             )
 
         logger.info(

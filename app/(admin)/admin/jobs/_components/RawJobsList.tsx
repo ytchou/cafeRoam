@@ -319,7 +319,7 @@ export function RawJobsList({ initialStatus }: { initialStatus?: string }) {
                         </div>
                       )}
                       <div>
-                        <p className="text-xs font-semibold text-gray-500 mb-1">
+                        <p className="mb-1 text-xs font-semibold text-gray-500">
                           Logs
                         </p>
                         <JobLogsPanel jobId={job.id} />
@@ -362,7 +362,9 @@ export function RawJobsList({ initialStatus }: { initialStatus?: string }) {
             setCancelReason('');
           }
         }}
-        title={confirmAction?.type === 'cancel' ? 'Force fail job?' : 'Retry job?'}
+        title={
+          confirmAction?.type === 'cancel' ? 'Force fail job?' : 'Retry job?'
+        }
         description={
           confirmAction?.type === 'cancel'
             ? 'This cannot be undone. The job will be cancelled.'
@@ -379,7 +381,7 @@ export function RawJobsList({ initialStatus }: { initialStatus?: string }) {
       >
         {confirmAction?.type === 'cancel' && (
           <textarea
-            className="w-full text-sm border rounded p-2 mt-2 resize-none"
+            className="mt-2 w-full resize-none rounded border p-2 text-sm"
             rows={3}
             placeholder="Reason (optional)"
             value={cancelReason}

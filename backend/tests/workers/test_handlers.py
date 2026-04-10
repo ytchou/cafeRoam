@@ -644,11 +644,10 @@ class TestEnrichShopHandlerGuard:
         # The shops update (writing enrichment results) must NOT be called
         # when the job was cancelled mid-flight
         update_calls = db.table.return_value.update.call_args_list
-        enrichment_writes = [
-            c for c in update_calls
-            if c.args and "description" in c.args[0]
-        ]
-        assert len(enrichment_writes) == 0, "shops.update with description should not be called when job is cancelled"
+        enrichment_writes = [c for c in update_calls if c.args and "description" in c.args[0]]
+        assert len(enrichment_writes) == 0, (
+            "shops.update with description should not be called when job is cancelled"
+        )
 
 
 class TestGenerateEmbeddingHandlerGuard:
@@ -658,13 +657,15 @@ class TestGenerateEmbeddingHandlerGuard:
 
         db = MagicMock()
         shop_table = MagicMock()
-        shop_table.select.return_value.eq.return_value.single.return_value.execute.return_value = MagicMock(
-            data={
-                "name": "防護測試咖啡",
-                "description": "台灣老宅咖啡館",
-                "processing_status": "embedding",
-                "community_summary": None,
-            }
+        shop_table.select.return_value.eq.return_value.single.return_value.execute.return_value = (
+            MagicMock(
+                data={
+                    "name": "防護測試咖啡",
+                    "description": "台灣老宅咖啡館",
+                    "processing_status": "embedding",
+                    "community_summary": None,
+                }
+            )
         )
         shop_table.update.return_value.eq.return_value.execute.return_value = MagicMock(data=[])
 
@@ -681,7 +682,9 @@ class TestGenerateEmbeddingHandlerGuard:
         embeddings.embed = AsyncMock(return_value=[0.1] * 1536)
         queue = AsyncMock()
 
-        with patch("workers.handlers.generate_embedding.check_job_still_claimed", return_value=False):
+        with patch(
+            "workers.handlers.generate_embedding.check_job_still_claimed", return_value=False
+        ):
             await handle_generate_embedding(
                 payload={"shop_id": "shop-guard-2"},
                 db=db,
@@ -705,13 +708,17 @@ class TestSummarizeReviewsHandlerGuard:
         db.rpc.return_value.execute.return_value = MagicMock(
             data=[{"text": "超好喝的拿鐵，環境安靜適合工作，每次來都很享受"}]
         )
-        db.table.return_value.update.return_value.eq.return_value.execute.return_value = MagicMock(data=[])
+        db.table.return_value.update.return_value.eq.return_value.execute.return_value = MagicMock(
+            data=[]
+        )
 
         llm = AsyncMock()
         llm.summarize_reviews = AsyncMock(return_value="溫馨的咖啡廳社群總結，適合各種場合")
         queue = AsyncMock()
 
-        with patch("workers.handlers.summarize_reviews.check_job_still_claimed", return_value=False):
+        with patch(
+            "workers.handlers.summarize_reviews.check_job_still_claimed", return_value=False
+        ):
             await handle_summarize_reviews(
                 payload={"shop_id": "shop-guard-3"},
                 db=db,
@@ -722,11 +729,10 @@ class TestSummarizeReviewsHandlerGuard:
 
         # The shops.update with community_summary must NOT be called
         update_calls = db.table.return_value.update.call_args_list
-        summary_writes = [
-            c for c in update_calls
-            if c.args and "community_summary" in c.args[0]
-        ]
-        assert len(summary_writes) == 0, "shops.update with community_summary should not be called when job is cancelled"
+        summary_writes = [c for c in update_calls if c.args and "community_summary" in c.args[0]]
+        assert len(summary_writes) == 0, (
+            "shops.update with community_summary should not be called when job is cancelled"
+        )
 
 
 class TestEnrichShopMilestoneLogs:
@@ -803,13 +809,15 @@ class TestGenerateEmbeddingMilestoneLogs:
 
         db = MagicMock()
         shop_table = MagicMock()
-        shop_table.select.return_value.eq.return_value.single.return_value.execute.return_value = MagicMock(
-            data={
-                "name": "里程碑咖啡",
-                "description": "台灣老宅咖啡館",
-                "processing_status": "embedding",
-                "community_summary": None,
-            }
+        shop_table.select.return_value.eq.return_value.single.return_value.execute.return_value = (
+            MagicMock(
+                data={
+                    "name": "里程碑咖啡",
+                    "description": "台灣老宅咖啡館",
+                    "processing_status": "embedding",
+                    "community_summary": None,
+                }
+            )
         )
         shop_table.update.return_value.eq.return_value.execute.return_value = MagicMock(data=[])
 
@@ -864,7 +872,9 @@ class TestSummarizeReviewsMilestoneLogs:
         db.rpc.return_value.execute.return_value = MagicMock(
             data=[{"text": "超好喝的拿鐵，環境安靜適合工作，每次來都很享受"}]
         )
-        db.table.return_value.update.return_value.eq.return_value.execute.return_value = MagicMock(data=[])
+        db.table.return_value.update.return_value.eq.return_value.execute.return_value = MagicMock(
+            data=[]
+        )
 
         llm = AsyncMock()
         llm.summarize_reviews = AsyncMock(return_value="溫馨的咖啡廳社群總結，適合各種場合休憩")

@@ -194,12 +194,7 @@ class JobQueue:
 
     def get_status(self, job_id: str | uuid.UUID) -> "JobStatus | None":
         """Fetch the current status of a job. Returns None if job not found."""
-        result = (
-            self._db.table("job_queue")
-            .select("status")
-            .eq("id", str(job_id))
-            .execute()
-        )
+        result = self._db.table("job_queue").select("status").eq("id", str(job_id)).execute()
         if not result.data:
             return None
         row = first(cast("list[dict[str, Any]]", result.data), "get_status")
@@ -211,12 +206,7 @@ def get_status(db: Any, job_id: str | uuid.UUID) -> "JobStatus | None":
 
     Deprecated: use JobQueue.get_status() instead.
     """
-    result = (
-        db.table("job_queue")
-        .select("status")
-        .eq("id", str(job_id))
-        .execute()
-    )
+    result = db.table("job_queue").select("status").eq("id", str(job_id)).execute()
     if not result.data:
         return None
     row = first(cast("list[dict[str, Any]]", result.data), "get_status")

@@ -33,8 +33,12 @@ async def handle_summarize_reviews(
 
     if job_id is not None:
         await log_job_event(
-            db, job_id, "info", "job.start",
-            job_type="summarize_reviews", shop_id=str(shop_id),
+            db,
+            job_id,
+            "info",
+            "job.start",
+            job_type="summarize_reviews",
+            shop_id=str(shop_id),
         )
 
     try:

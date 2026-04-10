@@ -710,10 +710,15 @@ class TestAdminJobCancel:
         app.dependency_overrides[get_current_user] = _admin_user
         try:
             mock_db = MagicMock()
-            mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(
-                data=[{"id": _JOB_1_ID, "status": "pending", "payload": {}}]
+            mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value = (
+                MagicMock(data=[{"id": _JOB_1_ID, "status": "pending", "payload": {}}])
             )
-            updated_row = {"id": _JOB_1_ID, "status": "cancelled", "cancel_reason": "stuck job", "cancelled_at": "2026-04-10T00:00:00"}
+            updated_row = {
+                "id": _JOB_1_ID,
+                "status": "cancelled",
+                "cancel_reason": "stuck job",
+                "cancelled_at": "2026-04-10T00:00:00",
+            }
             mock_db.table.return_value.update.return_value.eq.return_value.in_.return_value.execute.return_value = MagicMock(
                 data=[updated_row]
             )
@@ -730,7 +735,8 @@ class TestAdminJobCancel:
             assert response.status_code == 200
             update_calls = mock_db.table.return_value.update.call_args_list
             assert any(
-                call[0][0].get("status") == "cancelled" and call[0][0].get("cancel_reason") == "stuck job"
+                call[0][0].get("status") == "cancelled"
+                and call[0][0].get("cancel_reason") == "stuck job"
                 for call in update_calls
             )
         finally:
@@ -741,13 +747,19 @@ class TestAdminJobCancel:
         app.dependency_overrides[get_current_user] = _admin_user
         try:
             mock_db = MagicMock()
-            mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(
-                data=[{"id": _JOB_1_ID, "status": "pending", "payload": {"shop_id": _SHOP_1_ID}}]
+            mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value = (
+                MagicMock(
+                    data=[
+                        {"id": _JOB_1_ID, "status": "pending", "payload": {"shop_id": _SHOP_1_ID}}
+                    ]
+                )
             )
             mock_db.table.return_value.update.return_value.eq.return_value.in_.return_value.execute.return_value = MagicMock(
                 data=[{"id": _JOB_1_ID, "status": "cancelled"}]
             )
-            mock_db.table.return_value.update.return_value.eq.return_value.not_.in_.return_value.execute.return_value = MagicMock(data=[])
+            mock_db.table.return_value.update.return_value.eq.return_value.not_.in_.return_value.execute.return_value = MagicMock(
+                data=[]
+            )
             with (
                 patch("api.admin.get_service_role_client", return_value=mock_db),
                 patch("middleware.admin_audit.get_service_role_client", return_value=mock_db),
@@ -760,8 +772,7 @@ class TestAdminJobCancel:
                 )
             assert response.status_code == 200
             shops_update_calls = [
-                call for call in mock_db.table.call_args_list
-                if call[0][0] == "shops"
+                call for call in mock_db.table.call_args_list if call[0][0] == "shops"
             ]
             assert len(shops_update_calls) >= 1
         finally:
@@ -772,8 +783,8 @@ class TestAdminJobCancel:
         app.dependency_overrides[get_current_user] = _admin_user
         try:
             mock_db = MagicMock()
-            mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(
-                data=[{"id": _JOB_1_ID, "status": "claimed", "payload": {}}]
+            mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value = (
+                MagicMock(data=[{"id": _JOB_1_ID, "status": "claimed", "payload": {}}])
             )
             mock_db.table.return_value.update.return_value.eq.return_value.in_.return_value.execute.return_value = MagicMock(
                 data=[{"id": _JOB_1_ID, "status": "cancelled"}]
@@ -791,8 +802,7 @@ class TestAdminJobCancel:
             assert response.status_code == 200
             insert_calls = mock_db.table.return_value.insert.call_args_list
             log_inserts = [
-                call for call in insert_calls
-                if call[0][0].get("message") == "job.cancelled"
+                call for call in insert_calls if call[0][0].get("message") == "job.cancelled"
             ]
             assert len(log_inserts) >= 1
             log_row = log_inserts[0][0][0]
@@ -806,8 +816,8 @@ class TestAdminJobCancel:
         app.dependency_overrides[get_current_user] = _admin_user
         try:
             mock_db = MagicMock()
-            mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(
-                data=[{"id": _JOB_1_ID, "status": "pending", "payload": {}}]
+            mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value = (
+                MagicMock(data=[{"id": _JOB_1_ID, "status": "pending", "payload": {}}])
             )
             mock_db.table.return_value.update.return_value.eq.return_value.in_.return_value.execute.return_value = MagicMock(
                 data=[{"id": _JOB_1_ID, "status": "cancelled"}]
@@ -822,8 +832,7 @@ class TestAdminJobCancel:
             assert response.status_code == 200
             update_calls = mock_db.table.return_value.update.call_args_list
             assert any(
-                call[0][0].get("cancel_reason") == "Cancelled by admin"
-                for call in update_calls
+                call[0][0].get("cancel_reason") == "Cancelled by admin" for call in update_calls
             )
         finally:
             app.dependency_overrides.clear()
@@ -841,8 +850,8 @@ class TestAdminJobLogs:
         try:
             mock_db = MagicMock()
             # job_queue SELECT returns the job with status "claimed"
-            mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(
-                data=[{"id": _JOB_1_ID, "status": "claimed"}]
+            mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value = (
+                MagicMock(data=[{"id": _JOB_1_ID, "status": "claimed"}])
             )
             # job_logs query returns empty
             mock_db.table.return_value.select.return_value.eq.return_value.order.return_value.limit.return_value.execute.return_value = MagicMock(
@@ -890,8 +899,8 @@ class TestAdminJobLogs:
                 },
             ]
             # job_queue SELECT
-            mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(
-                data=[{"id": _JOB_1_ID, "status": "completed"}]
+            mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value = (
+                MagicMock(data=[{"id": _JOB_1_ID, "status": "completed"}])
             )
             # job_logs query with order + limit
             mock_db.table.return_value.select.return_value.eq.return_value.order.return_value.limit.return_value.execute.return_value = MagicMock(
@@ -924,8 +933,8 @@ class TestAdminJobLogs:
             mock_db = MagicMock()
             after_ts = "2026-04-10T10:00:05Z"
             # job_queue SELECT
-            mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(
-                data=[{"id": _JOB_1_ID, "status": "completed"}]
+            mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value = (
+                MagicMock(data=[{"id": _JOB_1_ID, "status": "completed"}])
             )
             # job_logs query with gt filter — chain: .eq().order().limit().gt()... or .eq().gt()...
             # The gt filter is applied before order/limit, so chain: select.eq.order.limit.execute (after gt)
@@ -945,15 +954,11 @@ class TestAdminJobLogs:
                 patch("api.deps.settings") as mock_settings,
             ):
                 mock_settings.admin_user_ids = [_ADMIN_ID]
-                response = client.get(
-                    f"/admin/pipeline/jobs/{_JOB_1_ID}/logs?after_ts={after_ts}"
-                )
+                response = client.get(f"/admin/pipeline/jobs/{_JOB_1_ID}/logs?after_ts={after_ts}")
             assert response.status_code == 200
             # Verify .gt() was called with "created_at" and the after_ts value
             gt_calls = mock_db.table.return_value.select.return_value.eq.return_value.order.return_value.limit.return_value.gt.call_args_list
-            assert any(
-                call[0] == ("created_at", after_ts) for call in gt_calls
-            )
+            assert any(call[0] == ("created_at", after_ts) for call in gt_calls)
         finally:
             app.dependency_overrides.clear()
 
@@ -963,8 +968,8 @@ class TestAdminJobLogs:
         try:
             mock_db = MagicMock()
             # job_queue SELECT returns completed status
-            mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(
-                data=[{"id": _JOB_1_ID, "status": "completed"}]
+            mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value = (
+                MagicMock(data=[{"id": _JOB_1_ID, "status": "completed"}])
             )
             mock_db.table.return_value.select.return_value.eq.return_value.order.return_value.limit.return_value.execute.return_value = MagicMock(
                 data=[]
@@ -987,8 +992,8 @@ class TestAdminJobLogs:
         try:
             mock_db = MagicMock()
             # job_queue SELECT returns empty — job not found
-            mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(
-                data=[]
+            mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value = (
+                MagicMock(data=[])
             )
             with (
                 patch("api.admin.get_service_role_client", return_value=mock_db),
@@ -1005,13 +1010,19 @@ class TestAdminJobLogs:
         app.dependency_overrides[get_current_user] = _admin_user
         try:
             mock_db = MagicMock()
-            mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(
-                data=[{"id": _JOB_1_ID, "status": "pending", "payload": {"shop_id": _SHOP_1_ID}}]
+            mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value = (
+                MagicMock(
+                    data=[
+                        {"id": _JOB_1_ID, "status": "pending", "payload": {"shop_id": _SHOP_1_ID}}
+                    ]
+                )
             )
             mock_db.table.return_value.update.return_value.eq.return_value.in_.return_value.execute.return_value = MagicMock(
                 data=[{"id": _JOB_1_ID, "status": "cancelled"}]
             )
-            mock_db.table.return_value.update.return_value.eq.return_value.not_.in_.return_value.execute.return_value = MagicMock(data=[])
+            mock_db.table.return_value.update.return_value.eq.return_value.not_.in_.return_value.execute.return_value = MagicMock(
+                data=[]
+            )
             with (
                 patch("api.admin.get_service_role_client", return_value=mock_db),
                 patch("middleware.admin_audit.get_service_role_client", return_value=mock_db),

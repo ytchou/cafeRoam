@@ -72,22 +72,22 @@ export function JobLogsPanel({ jobId, pollInterval = 3000 }: Props) {
   }, [jobId, pollInterval]);
 
   if (!logs.length) {
-    return <p className="text-xs text-gray-500 px-2 py-1">No logs yet.</p>;
+    return <p className="px-2 py-1 text-xs text-gray-500">No logs yet.</p>;
   }
 
   return (
-    <div className="max-h-48 overflow-y-auto bg-gray-950 rounded p-2 font-mono text-xs space-y-0.5">
+    <div className="max-h-48 space-y-0.5 overflow-y-auto rounded bg-gray-950 p-2 font-mono text-xs">
       {logs.map((log) => (
         <div key={log.id} className="flex gap-2">
-          <span className="text-gray-600 shrink-0">
+          <span className="shrink-0 text-gray-600">
             {new Date(log.created_at).toISOString().slice(11, 23)}
           </span>
-          <span className={`shrink-0 w-8 ${levelClass[log.level]}`}>
+          <span className={`w-8 shrink-0 ${levelClass[log.level]}`}>
             {log.level}
           </span>
           <span className="text-gray-200">{log.message}</span>
           {Object.keys(log.context).length > 0 && (
-            <span className="text-gray-500 truncate">
+            <span className="truncate text-gray-500">
               {JSON.stringify(log.context)}
             </span>
           )}

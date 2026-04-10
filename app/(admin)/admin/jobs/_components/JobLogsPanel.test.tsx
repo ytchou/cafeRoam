@@ -39,9 +39,25 @@ describe('JobLogsPanel', () => {
       json: () =>
         Promise.resolve({
           logs: [
-            makeLog({ id: '1', level: 'info', message: 'job.start', created_at: '2026-04-10T00:00:00Z' }),
-            makeLog({ id: '2', level: 'warn', message: 'job.aborted_midflight', created_at: '2026-04-10T00:00:01Z' }),
-            makeLog({ id: '3', level: 'error', message: 'job.error', context: { error: 'timeout' }, created_at: '2026-04-10T00:00:02Z' }),
+            makeLog({
+              id: '1',
+              level: 'info',
+              message: 'job.start',
+              created_at: '2026-04-10T00:00:00Z',
+            }),
+            makeLog({
+              id: '2',
+              level: 'warn',
+              message: 'job.aborted_midflight',
+              created_at: '2026-04-10T00:00:01Z',
+            }),
+            makeLog({
+              id: '3',
+              level: 'error',
+              message: 'job.error',
+              context: { error: 'timeout' },
+              created_at: '2026-04-10T00:00:02Z',
+            }),
           ],
           job_status: 'failed',
         }),

@@ -116,8 +116,12 @@ async def handle_enrich_shop(
         ).eq("id", shop_id).execute()
         if job_id is not None:
             await log_job_event(
-                db, job_id, "info", "db.write",
-                table="shops", columns=["description", "enriched_at", "tags"],
+                db,
+                job_id,
+                "info",
+                "db.write",
+                table="shops",
+                columns=["description", "enriched_at", "tags"],
             )
 
         # Re-enrichment replaces tags, not appends

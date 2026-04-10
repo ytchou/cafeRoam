@@ -18,11 +18,13 @@ async def log_job_event(
     with contextlib.suppress(Exception):
         (
             db.table("job_logs")
-            .insert({
-                "job_id": str(job_id),
-                "level": level,
-                "message": message,
-                "context": context or {},
-            })
+            .insert(
+                {
+                    "job_id": str(job_id),
+                    "level": level,
+                    "message": message,
+                    "context": context or {},
+                }
+            )
             .execute()
         )

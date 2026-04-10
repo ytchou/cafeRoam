@@ -16,17 +16,17 @@ Three Linear tickets, shipped together in a single PR because they share files a
 
 ## Design Decisions (locked)
 
-| # | Decision | Chosen | Rejected alternatives |
-|---|----------|--------|----------------------|
-| 1 | Force-fail API | **Extend existing `POST /api/admin/pipeline/jobs/{id}/cancel`** with optional `reason` body param. UI button relabeled "Force fail". | New `/force-fail` endpoint (two code paths) |
-| 2 | Status semantics | **New `cancelled` status** for operator force-fails. `dead_letter` stays for retry-exhaustion only. Clean query split: `WHERE status='cancelled'` = all operator actions. | Keep `dead_letter` for both (distinguish via `cancelled_at IS NOT NULL`); rename `dead_letter` → `cancelled` (largest migration) |
-| 3 | New columns | **Add `cancelled_at`, `failed_at`, `cancel_reason`** to `job_queue`. `cancelled_at` set when operator cancels (→ `cancelled`); `failed_at` set on terminal `failed`/`dead_letter`; `cancel_reason` stores free-text operator reason. | No new columns (last_error string only) |
-| 4 | DEV-311 cancellation check | **Pre-write status re-read** — each handler re-fetches `job_queue.status` before committing to `shops`. If not `claimed`, abort the write. | Atomic CTE update (too invasive); mid-LLM polling (overengineered) |
-| 5 | DEV-308 log transport | **Polling** `GET /api/admin/pipeline/jobs/{id}/logs` every 3s while row expanded AND job running. | SSE (new infra); on-expand snapshot only |
-| 6 | PR scope | **Single PR, all three tickets** | Split into 2 or 3 PRs (overlapping files) |
-| 7 | Shop side-effect on force-fail | **Set `shop.processing_status = 'failed'` + `rejection_reason`** from operator's reason. | Leave shop state untouched; reset to `pending` |
-| 8 | Log granularity | **Milestones only** — `job.start`, `llm.call` (provider+model), `db.write`, `error`, `job.end`. ~5–10 lines per job. | Verbose every-log-line; errors+LLM only |
-| 9 | Reason codes | **Free-text `cancel_reason` for now**; structured enum deferred to separate ticket (DEV-3xx). | Structured codes now (out of scope) |
+| #   | Decision                       | Chosen                                                                                                                                                                                                                               | Rejected alternatives                                                                                                            |
+| --- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Force-fail API                 | **Extend existing `POST /api/admin/pipeline/jobs/{id}/cancel`** with optional `reason` body param. UI button relabeled "Force fail".                                                                                                 | New `/force-fail` endpoint (two code paths)                                                                                      |
+| 2   | Status semantics               | **New `cancelled` status** for operator force-fails. `dead_letter` stays for retry-exhaustion only. Clean query split: `WHERE status='cancelled'` = all operator actions.                                                            | Keep `dead_letter` for both (distinguish via `cancelled_at IS NOT NULL`); rename `dead_letter` → `cancelled` (largest migration) |
+| 3   | New columns                    | **Add `cancelled_at`, `failed_at`, `cancel_reason`** to `job_queue`. `cancelled_at` set when operator cancels (→ `cancelled`); `failed_at` set on terminal `failed`/`dead_letter`; `cancel_reason` stores free-text operator reason. | No new columns (last_error string only)                                                                                          |
+| 4   | DEV-311 cancellation check     | **Pre-write status re-read** — each handler re-fetches `job_queue.status` before committing to `shops`. If not `claimed`, abort the write.                                                                                           | Atomic CTE update (too invasive); mid-LLM polling (overengineered)                                                               |
+| 5   | DEV-308 log transport          | **Polling** `GET /api/admin/pipeline/jobs/{id}/logs` every 3s while row expanded AND job running.                                                                                                                                    | SSE (new infra); on-expand snapshot only                                                                                         |
+| 6   | PR scope                       | **Single PR, all three tickets**                                                                                                                                                                                                     | Split into 2 or 3 PRs (overlapping files)                                                                                        |
+| 7   | Shop side-effect on force-fail | **Set `shop.processing_status = 'failed'` + `rejection_reason`** from operator's reason.                                                                                                                                             | Leave shop state untouched; reset to `pending`                                                                                   |
+| 8   | Log granularity                | **Milestones only** — `job.start`, `llm.call` (provider+model), `db.write`, `error`, `job.end`. ~5–10 lines per job.                                                                                                                 | Verbose every-log-line; errors+LLM only                                                                                          |
+| 9   | Reason codes                   | **Free-text `cancel_reason` for now**; structured enum deferred to separate ticket (DEV-3xx).                                                                                                                                        | Structured codes now (out of scope)                                                                                              |
 
 ---
 
@@ -60,6 +60,7 @@ Frontend polls logs while expanded:
 ## Files to Change
 
 ### Database (1 migration)
+
 - **NEW** `supabase/migrations/20260410000001_jobs_queue_cancelled_status_and_audit_columns.sql`
   - Add `cancelled` to the `job_queue.status` CHECK constraint (alongside pending, claimed, completed, failed, dead_letter)
   - Add columns: `cancelled_at TIMESTAMPTZ`, `failed_at TIMESTAMPTZ`, `cancel_reason TEXT`
@@ -73,6 +74,7 @@ Frontend polls logs while expanded:
   - Note: **No retention cron in this PR** — milestones-only keeps volume <20 rows/job.
 
 ### Backend — new helper
+
 - **NEW** `backend/workers/job_log.py`
   - `async def log_job_event(db, job_id, level, message, **context) -> None`
   - Single insert to `job_logs` table. Swallows errors (log sink must not break the worker).
@@ -84,6 +86,7 @@ Frontend polls logs while expanded:
   - Tests: `backend/tests/workers/test_job_guard.py`
 
 ### Backend — admin API
+
 - **MODIFY** `backend/api/admin.py` (around line 617–656, `cancel_job`)
   - Add `reason: Optional[str] = Body(None)` param.
   - Default reason = `"Cancelled by admin"` when not provided.
@@ -100,6 +103,7 @@ Frontend polls logs while expanded:
   - Cap at 500 rows per request (defensive)
 
 ### Backend — workers (DEV-311 fix + DEV-308 logging)
+
 - **MODIFY** `backend/workers/handlers/enrich_shop.py` (lines 87–111 write path)
   - At handler start: `await log_job_event(db, job_id, 'info', 'job.start', job_type='enrich_shop', shop_id=shop_id)`
   - Before LLM call: `await log_job_event(db, job_id, 'info', 'llm.call', provider=provider_name, model=model_name, method='enrich')`
@@ -121,12 +125,14 @@ Frontend polls logs while expanded:
   - Accessor helper `async def get_status(job_id) -> JobStatus | None` (used by `check_job_still_claimed`). Single SELECT on `id`.
 
 ### Backend — tests
+
 - **MODIFY** `backend/tests/workers/test_handlers.py` — add cases:
   - Handler aborts write when job_queue.status has been flipped to dead_letter mid-flight
   - Handler emits expected milestone log rows
 - **MODIFY** `backend/tests/api/test_admin.py` — add cases for cancel_job with reason param, shop side-effect, and logs endpoint
 
 ### Frontend — UI
+
 - **MODIFY** `app/(admin)/admin/jobs/_components/RawJobsList.tsx` (~line 122 cancel button)
   - Rename button label "Cancel" → "Force fail" (destructive variant already).
   - Confirm dialog: add a `reason` textarea (default empty → server uses "Cancelled by admin").
@@ -145,6 +151,7 @@ Frontend polls logs while expanded:
 - **MODIFY** Next.js proxy route (if exists) — confirm the `POST /api/admin/pipeline/jobs/{id}/cancel` proxy handler forwards the JSON body; add proxy for `GET .../logs` if not already pass-through.
 
 ### Frontend — tests
+
 - **MODIFY** existing admin jobs test file(s) — vitest: JobLogsPanel polls while running, stops on terminal, renders log levels correctly. RawJobsList force-fail dialog sends reason.
 
 ---
@@ -152,6 +159,7 @@ Frontend polls logs while expanded:
 ## Testing Strategy
 
 ### Unit / Handler tests (pytest)
+
 - `check_job_still_claimed` returns False for dead_letter/failed/completed
 - `log_job_event` inserts one row with correct columns
 - Each handler aborts its shop write when status is flipped mid-run (simulate by patching queue.get_status)
@@ -159,13 +167,16 @@ Frontend polls logs while expanded:
 - cancel_job endpoint accepts reason, updates shop.processing_status when shop_id is in payload, inserts warn log
 
 ### Integration test
+
 - `backend/tests/workers/test_handlers.py`: end-to-end scheduler → handler flow with DB mocked; verify no shop write happens after simulated cancellation
 
 ### Frontend tests (vitest)
+
 - `JobLogsPanel.test.tsx`: polls every 3s, appends new rows, stops on terminal status
 - `RawJobsList.test.tsx`: Force fail dialog includes reason textarea; POST body contains reason
 
 ### Testing classification (per CafeRoam convention)
+
 - **(a) New e2e journey?** No — admin-only tooling, not a core user path. No change to `/e2e-smoke`.
 - **(b) Coverage gate impact?** Touches `backend/api/admin.py`, `backend/workers/handlers/*`, `backend/workers/queue.py`. Handlers and queue are critical-path for enrichment pipeline — verify 80% coverage gate holds after change.
 
@@ -204,6 +215,7 @@ Frontend polls logs while expanded:
 ## Linear Tasks To Append (one `## Tasks` checklist per ticket)
 
 **DEV-307:**
+
 - [ ] [Foundation] Migration: add `job_logs` table
 - [ ] Backend: extend `cancel_job` with optional `reason` body param
 - [ ] Backend: cancel_job updates `shops.processing_status='failed'` + `rejection_reason`
@@ -211,6 +223,7 @@ Frontend polls logs while expanded:
 - [ ] Tests: pytest for reason + shop side-effect; vitest for dialog
 
 **DEV-311:**
+
 - [ ] [Foundation] Backend helper `check_job_still_claimed(db, job_id)` in `workers/job_guard.py`
 - [ ] Backend: `queue.get_status(job_id)` helper
 - [ ] Wire pre-write guard into `enrich_shop.py` (before DB write)
@@ -219,6 +232,7 @@ Frontend polls logs while expanded:
 - [ ] Handler tests: mid-flight cancellation aborts shop write
 
 **DEV-308:**
+
 - [ ] [Foundation] `backend/workers/job_log.py` with `log_job_event` helper
 - [ ] Scheduler threads `job_id` into all handler invocations
 - [ ] Milestone log calls (job.start, llm.call, db.write, job.end, job.error) in all 3 handlers
