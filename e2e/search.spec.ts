@@ -67,9 +67,8 @@ test.describe('J09 — Suggestion chip: tap preset → search executes', () => {
     await chip.click();
 
     // Search input should be auto-filled with the chip text
-    const searchInput = page
-      .locator('form[role="search"]')
-      .getByRole('textbox');
+    // Use #discovery-search to avoid matching the filters search bar (also form[role="search"])
+    const searchInput = page.locator('#discovery-search');
     await expect(searchInput).toHaveValue('有插座可以久坐', { timeout: 5_000 });
 
     // Results should load
@@ -89,9 +88,8 @@ test.describe('J21 — Filter pills: toggle WiFi → results update', () => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
 
-    const searchInput = page
-      .locator('form[role="search"]')
-      .getByRole('textbox');
+    // Use #discovery-search to avoid matching the filters search bar (also form[role="search"])
+    const searchInput = page.locator('#discovery-search');
     await searchInput.fill('咖啡廳');
     await searchInput.press('Enter');
     await expect(page.getByText('搜尋中…')).toBeHidden({ timeout: 15_000 });
