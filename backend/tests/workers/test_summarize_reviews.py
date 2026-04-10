@@ -16,7 +16,7 @@ class TestSummarizeReviewsHandler:
 
         # shop_reviews table query
         shop_reviews_table = MagicMock()
-        shop_reviews_table.select.return_value.eq.return_value.execute.return_value = MagicMock(
+        shop_reviews_table.select.return_value.eq.return_value.order.return_value.limit.return_value.execute.return_value = MagicMock(
             data=google_review_rows if google_review_rows is not None else []
         )
 

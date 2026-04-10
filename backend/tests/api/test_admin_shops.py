@@ -91,7 +91,7 @@ class TestAdminShopsList:
             )
 
             jobs_table_mock = MagicMock()
-            jobs_table_mock.select.return_value.in_.return_value.execute.return_value = MagicMock(
+            jobs_table_mock.select.return_value.in_.return_value.in_.return_value.execute.return_value = MagicMock(
                 data=[
                     {
                         "job_type": "summarize_reviews",
@@ -139,7 +139,7 @@ class TestAdminShopsList:
             )
 
             jobs_table_mock = MagicMock()
-            jobs_table_mock.select.return_value.in_.return_value.execute.return_value = MagicMock(
+            jobs_table_mock.select.return_value.in_.return_value.in_.return_value.execute.return_value = MagicMock(
                 data=[]
             )
 
