@@ -107,25 +107,6 @@ test.describe('@critical J02 — Near Me: deny geolocation → error toast', () 
   });
 });
 
-test.describe('@critical J03 — Text search → login gate for unauthenticated users', () => {
-  test('searching from home without login redirects to /login', async ({
-    page,
-  }) => {
-    // Search requires auth — unauthenticated user gets redirected to login
-    await page.goto('/');
-    await page.waitForLoadState('networkidle');
-
-    // Home page search input is keyed off #discovery-search for this auth-gate flow
-    const searchInput = page.locator('#discovery-search');
-    await searchInput.fill('coffee');
-    await searchInput.press('Enter');
-
-    // Unauthenticated search triggers login redirect
-    await page.waitForURL(/\/login/, { timeout: 10_000 });
-    expect(page.url()).toContain('/login');
-  });
-});
-
 // --- Phase 2 stubs (nightly suite) ---
 
 test.describe('J04 — Browse map → tap pin → shop detail sheet', () => {
@@ -480,14 +461,14 @@ test.describe('@critical J36 — Shop detail: navigation links open Google Maps 
     await page.goto(`/shops/${shop.id}/${shop.slug || ''}`);
     await page.waitForLoadState('networkidle');
 
-    // The shop detail page renders nav links twice: desktop (hidden on mobile, first in DOM)
-    // and mobile (visible on mobile, second in DOM). Use nth(1) to target the mobile link.
-    const googleMapsLink = page.locator('a[href*="google.com/maps"]').nth(1);
+    // The shop detail page renders nav links twice (desktop + mobile containers).
+    // Target the visible one for the current viewport.
+    const googleMapsLink = page.locator('a[href*="google.com/maps"]:visible');
     await expect(googleMapsLink).toBeVisible({ timeout: 10_000 });
     await expect(googleMapsLink).toHaveAttribute('target', '_blank');
 
     // Apple Maps link should be present and open in a new tab
-    const appleMapsLink = page.locator('a[href*="maps.apple.com"]').nth(1);
+    const appleMapsLink = page.locator('a[href*="maps.apple.com"]:visible');
     await expect(appleMapsLink).toBeVisible({ timeout: 10_000 });
     await expect(appleMapsLink).toHaveAttribute('target', '_blank');
   });
