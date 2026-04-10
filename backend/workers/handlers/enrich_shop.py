@@ -8,6 +8,7 @@ from core.lang import is_zh_dominant
 from models.types import JobType, ShopEnrichmentInput
 from providers.llm.interface import LLMProvider
 from workers.job_guard import check_job_still_claimed
+from workers.job_log import log_job_event
 from workers.queue import JobQueue
 
 logger = structlog.get_logger()
@@ -26,6 +27,15 @@ async def handle_enrich_shop(
 
     _failure_recorded = False
     try:
+        await log_job_event(
+            db,
+            job_id,
+            "info",
+            "job.start",
+            job_type="enrich_shop",
+            shop_id=str(shop_id),
+        )
+
         shop_response = (
             db.table("shops")
             .select(
@@ -67,7 +77,20 @@ async def handle_enrich_shop(
             vibe_photo_urls=vibe_photo_urls,
         )
 
+        await log_job_event(
+            db,
+            job_id,
+            "info",
+            "llm.call",
+            provider="anthropic",
+            method="enrich_shop",
+        )
+
         result = await llm.enrich_shop(enrichment_input)
+
+        if not await check_job_still_claimed(queue, job_id):
+            await log_job_event(db, job_id, "warn", "job.aborted_midflight", shop_id=str(shop_id))
+            return
 
         if result.summary and not is_zh_dominant(result.summary):
             logger.warning(
@@ -88,6 +111,7 @@ async def handle_enrich_shop(
         mode = result.mode_scores
         if not await check_job_still_claimed(queue, job_id):
             logger.warning("job.aborted_midflight job_id=%s handler=enrich_shop", job_id)
+            await log_job_event(db, job_id, "warn", "job.aborted_midflight", shop_id=str(shop_id))
             return
         db.table("shops").update(
             {
@@ -101,10 +125,19 @@ async def handle_enrich_shop(
                 "coffee_origins": result.coffee_origins,
             }
         ).eq("id", shop_id).execute()
+        await log_job_event(
+            db,
+            job_id,
+            "info",
+            "db.write",
+            table="shops",
+            columns=["description", "enriched_at", "tags"],
+        )
 
         # Re-enrichment replaces tags, not appends
         if not await check_job_still_claimed(queue, job_id):
             logger.warning("job.aborted_midflight job_id=%s handler=enrich_shop", job_id)
+            await log_job_event(db, job_id, "warn", "job.aborted_midflight", shop_id=str(shop_id))
             return
         db.table("shop_tags").delete().eq("shop_id", shop_id).execute()
         if result.tags:
@@ -143,9 +176,11 @@ async def handle_enrich_shop(
         )
 
         logger.info("Shop enriched", shop_id=shop_id, tag_count=len(result.tags))
+        await log_job_event(db, job_id, "info", "job.end", status="ok")
 
     except Exception as exc:
-        if not _failure_recorded:
+        await log_job_event(db, job_id, "error", "job.error", error=str(exc))
+        if not _failure_recorded and await check_job_still_claimed(queue, job_id):
             db.table("shops").update(
                 {
                     "processing_status": "failed",

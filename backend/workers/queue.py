@@ -143,6 +143,7 @@ class JobQueue:
                 {
                     "status": JobStatus.FAILED.value,
                     "last_error": error,
+                    "failed_at": datetime.now(UTC).isoformat(),
                 }
             ).eq("id", job_id).execute()
 
