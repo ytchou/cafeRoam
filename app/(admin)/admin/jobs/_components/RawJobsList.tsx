@@ -90,11 +90,11 @@ function TimingSection({
 
   return (
     <div className="mb-4">
-      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+      <p className="text-muted-foreground mb-2 text-xs font-semibold tracking-wide uppercase">
         Timing
       </p>
       {totalMs !== null && (
-        <p className="mb-2 text-sm text-foreground">
+        <p className="text-foreground mb-2 text-sm">
           Total: {formatDuration(totalMs)}{' '}
           <span className="text-muted-foreground">(claimed → completed)</span>
         </p>
@@ -102,15 +102,15 @@ function TimingSection({
       <div className="space-y-1">
         {steps.map(([step, { duration_ms }]) => (
           <div key={step} className="flex items-center gap-2 text-xs">
-            <span className="w-28 shrink-0 font-mono text-muted-foreground">
+            <span className="text-muted-foreground w-28 shrink-0 font-mono">
               {step}
             </span>
-            <span className="w-14 shrink-0 text-right text-foreground">
+            <span className="text-foreground w-14 shrink-0 text-right">
               {formatDuration(duration_ms)}
             </span>
-            <div className="h-2 flex-1 rounded-sm bg-muted">
+            <div className="bg-muted h-2 flex-1 rounded-sm">
               <div
-                className="h-2 rounded-sm bg-primary"
+                className="bg-primary h-2 rounded-sm"
                 style={{ width: `${(duration_ms / maxMs) * 100}%` }}
               />
             </div>

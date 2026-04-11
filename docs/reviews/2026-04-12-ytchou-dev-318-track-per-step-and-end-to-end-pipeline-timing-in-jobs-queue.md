@@ -7,18 +7,18 @@
 
 ## Pass 1 — Full Discovery
 
-*Agents: Bug Hunter, Standards, Architecture, Plan Alignment, Test Philosophy, Design Quality (inline — Task tool unavailable). Adversarial Review (Codex) skipped — unavailable via Skill tool.*
+_Agents: Bug Hunter, Standards, Architecture, Plan Alignment, Test Philosophy, Design Quality (inline — Task tool unavailable). Adversarial Review (Codex) skipped — unavailable via Skill tool._
 
 ### Issues Found
 
-| Severity | File:Line | Description | Flagged By |
-|----------|-----------|-------------|------------|
-| Important | backend/workers/handlers/enrich_shop.py:188 | `step_timings` only written in the success path. If any step raises (e.g. LLM call, zh-TW guard, DB write), partial timings are lost. Plan acceptance criterion #3 requires "Handlers that fail mid-run write partial step timings without affecting the failure outcome." | Plan Alignment / Bug Hunter |
-| Important | backend/workers/handlers/generate_embedding.py:158 | Same as above — `step_timings` write is happy-path only; partial timings on exception are lost. Violates plan acceptance criterion #3. | Plan Alignment / Bug Hunter |
-| Important | backend/workers/handlers/summarize_reviews.py:137 | Same as above — partial timings on exception never persisted. Violates plan acceptance criterion #3. | Plan Alignment / Bug Hunter |
-| Important | backend/workers/handlers/classify_shop_photos.py:89 | Same as above — write only occurs after all steps succeed; exceptions lose partial timings. | Plan Alignment / Bug Hunter |
-| Minor | app/(admin)/admin/jobs/_components/RawJobsList.tsx:56-61 | `JOB_TYPE_OPTIONS` dropdown still only lists `enrich_shop`, `generate_embedding`, `scrape_shop` — missing `summarize_reviews` and `classify_shop_photos`, both now instrumented. Pre-existing, but touching this file is the natural moment to fix since the PR concerns those handler types. | Standards |
-| Minor | backend/workers/handlers/enrich_shop.py:28 | `job_id = cast("str", job_id)` erases the `str | None` type. The later `if job_id is not None:` guard at line 188 is thus dead to mypy but still meaningful at runtime. Pre-existing type smell, worth a note. | Standards |
+| Severity  | File:Line                                                 | Description                                                                                                                                                                                                                                                                                   | Flagged By                                                                                                                                                  |
+| --------- | --------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
+| Important | backend/workers/handlers/enrich_shop.py:188               | `step_timings` only written in the success path. If any step raises (e.g. LLM call, zh-TW guard, DB write), partial timings are lost. Plan acceptance criterion #3 requires "Handlers that fail mid-run write partial step timings without affecting the failure outcome."                    | Plan Alignment / Bug Hunter                                                                                                                                 |
+| Important | backend/workers/handlers/generate_embedding.py:158        | Same as above — `step_timings` write is happy-path only; partial timings on exception are lost. Violates plan acceptance criterion #3.                                                                                                                                                        | Plan Alignment / Bug Hunter                                                                                                                                 |
+| Important | backend/workers/handlers/summarize_reviews.py:137         | Same as above — partial timings on exception never persisted. Violates plan acceptance criterion #3.                                                                                                                                                                                          | Plan Alignment / Bug Hunter                                                                                                                                 |
+| Important | backend/workers/handlers/classify_shop_photos.py:89       | Same as above — write only occurs after all steps succeed; exceptions lose partial timings.                                                                                                                                                                                                   | Plan Alignment / Bug Hunter                                                                                                                                 |
+| Minor     | app/(admin)/admin/jobs/\_components/RawJobsList.tsx:56-61 | `JOB_TYPE_OPTIONS` dropdown still only lists `enrich_shop`, `generate_embedding`, `scrape_shop` — missing `summarize_reviews` and `classify_shop_photos`, both now instrumented. Pre-existing, but touching this file is the natural moment to fix since the PR concerns those handler types. | Standards                                                                                                                                                   |
+| Minor     | backend/workers/handlers/enrich_shop.py:28                | `job_id = cast("str", job_id)` erases the `str                                                                                                                                                                                                                                                | None`type. The later`if job_id is not None:` guard at line 188 is thus dead to mypy but still meaningful at runtime. Pre-existing type smell, worth a note. | Standards |
 
 ### Validation Results
 
@@ -37,6 +37,7 @@ No false positives identified. No design-quality regressions: `TimingSection` us
 **Pre-fix SHA:** 4ba9f9df2d7e94863018300d397b25275a56da58
 
 **Issues fixed:**
+
 - [Important] `backend/workers/handlers/enrich_shop.py` — removed step_timings update from success path; added `finally:` block with `contextlib.suppress(Exception)` so partial timings persist on failure
 - [Important] `backend/workers/handlers/generate_embedding.py` — same pattern: step_timings write moved from happy path to `finally:`
 - [Important] `backend/workers/handlers/summarize_reviews.py` — same pattern: step_timings write moved from happy path to `finally:`
@@ -44,9 +45,11 @@ No false positives identified. No design-quality regressions: `TimingSection` us
 - [Minor] `app/(admin)/admin/jobs/_components/RawJobsList.tsx` — added `classify_shop_photos`, `publish_shop`, `summarize_reviews` to `JOB_TYPE_OPTIONS` (sorted alphabetically)
 
 **Issues skipped (acknowledged):**
+
 - `backend/workers/handlers/enrich_shop.py:28` — pre-existing `cast('str', job_id)` type erasure; noted for awareness only, no change made
 
 **Commits:**
+
 - `a09ab76` — enrich_shop.py: move step_timings write to finally block
 - `8d5cda7` — generate_embedding.py: move step_timings write to finally block
 - `86f71f2` — summarize_reviews.py: move step_timings write to finally block
@@ -54,6 +57,7 @@ No false positives identified. No design-quality regressions: `TimingSection` us
 - `7d38297` — RawJobsList.tsx: add summarize_reviews, classify_shop_photos, publish_shop to JOB_TYPE_OPTIONS
 
 **Batch Test + Lint Run:**
+
 - `pnpm test` — PASS (1288 passed)
 - `cd backend && uv run pytest` — FAIL (1 failure) → fixed in `eba5a53` (test_generate_embedding_aborts_write_when_cancelled_midflight — updated mock routing to expect step_timings write in finally block)
 - `pnpm lint` — PASS
@@ -63,8 +67,8 @@ No false positives identified. No design-quality regressions: `TimingSection` us
 
 ## Pass 2 — Re-Verify
 
-*Agents re-run: Plan Alignment, Standards & Conventions, Bug Hunter, Architecture & Design*
-*Agents skipped: Adversarial Review (excluded by routing rules)*
+_Agents re-run: Plan Alignment, Standards & Conventions, Bug Hunter, Architecture & Design_
+_Agents skipped: Adversarial Review (excluded by routing rules)_
 
 ### Previously Flagged Issues — Resolution Status
 

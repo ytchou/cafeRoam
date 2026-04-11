@@ -298,7 +298,10 @@ describe('TimingSection', () => {
       'fetch',
       vi.fn().mockResolvedValue({
         ok: true,
-        json: async () => ({ jobs: [jobWithTimings, jobWithoutTimings], total: 2 }),
+        json: async () => ({
+          jobs: [jobWithTimings, jobWithoutTimings],
+          total: 2,
+        }),
       })
     );
   });
@@ -334,7 +337,9 @@ describe('TimingSection', () => {
     screen.getAllByText('enrich_shop');
     // Click the second row's toggle
     const rows = screen.getAllByRole('row');
-    const secondJobRow = rows.filter((r) => r.textContent?.includes('job-2'))[0];
+    const secondJobRow = rows.filter((r) =>
+      r.textContent?.includes('job-2')
+    )[0];
     if (secondJobRow) fireEvent.click(secondJobRow);
 
     // Should not find a timing section

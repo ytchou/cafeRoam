@@ -26,6 +26,7 @@
 ## Task 1: DB Migration — Add step_timings column
 
 **Files:**
+
 - Create: `supabase/migrations/20260411000001_job_queue_step_timings.sql`
 
 No test needed — schema change only.
@@ -66,6 +67,7 @@ git commit -m "feat(DEV-318): add step_timings JSONB column to job_queue"
 ## Task 2: Extend Job model + admin API test
 
 **Files:**
+
 - Modify: `backend/models/types.py`
 - Test: `backend/tests/api/test_admin.py`
 
@@ -156,6 +158,7 @@ git commit -m "feat(DEV-318): add step_timings field to Job model + admin API te
 ## Task 3: Instrument classify_shop_photos
 
 **Files:**
+
 - Modify: `backend/workers/handlers/classify_shop_photos.py`
 - Test: `backend/tests/workers/test_classify_shop_photos.py`
 
@@ -295,6 +298,7 @@ git commit -m "feat(DEV-318): add step timing instrumentation to classify_shop_p
 ## Task 4: Instrument enrich_shop
 
 **Files:**
+
 - Modify: `backend/workers/handlers/enrich_shop.py`
 - Test: `backend/tests/workers/test_enrich_shop.py`
 
@@ -423,6 +427,7 @@ git commit -m "feat(DEV-318): add step timing instrumentation to enrich_shop"
 ## Task 5: Instrument summarize_reviews
 
 **Files:**
+
 - Modify: `backend/workers/handlers/summarize_reviews.py`
 - Test: `backend/tests/workers/test_summarize_reviews.py`
 
@@ -541,6 +546,7 @@ git commit -m "feat(DEV-318): add step timing instrumentation to summarize_revie
 ## Task 6: Instrument generate_embedding
 
 **Files:**
+
 - Modify: `backend/workers/handlers/generate_embedding.py`
 - Test: `backend/tests/workers/test_generate_embedding.py`
 
@@ -659,6 +665,7 @@ git commit -m "feat(DEV-318): add step timing instrumentation to generate_embedd
 ## Task 7: Frontend TimingSection in RawJobsList
 
 **Files:**
+
 - Modify: `app/(admin)/admin/jobs/_components/RawJobsList.tsx`
 - Test: `app/(admin)/admin/jobs/_components/RawJobsList.test.tsx`
 
@@ -757,13 +764,15 @@ Expected: FAIL — `Timing` heading not found (component doesn't exist yet).
 In `app/(admin)/admin/jobs/_components/RawJobsList.tsx`:
 
 **a. Extend `Job` interface** (add after `payload`):
+
 ```typescript
-  claimed_at: string | null;
-  completed_at: string | null;
-  step_timings: Record<string, { duration_ms: number }> | null;
+claimed_at: string | null;
+completed_at: string | null;
+step_timings: Record<string, { duration_ms: number }> | null;
 ```
 
 **b. Add `TimingSection` component** (inline, before the main component):
+
 ```typescript
 function formatDuration(ms: number): string {
   if (ms >= 1000) return `${(ms / 1000).toFixed(1)}s`;
@@ -823,6 +832,7 @@ function TimingSection({
 ```
 
 **c. Add `TimingSection` to expandable row** — in the expanded row render, before the Payload section:
+
 ```tsx
 <TimingSection
   claimedAt={job.claimed_at}
@@ -931,11 +941,13 @@ graph TD
 ```
 
 **Wave 1** (parallel — no dependencies):
+
 - Task 1: DB Migration
 - Task 2: Job model + admin API test
 - Task 7: Frontend TimingSection
 
 **Wave 2** (parallel — all depend on Task 2 for `Job.step_timings` type):
+
 - Task 3: classify_shop_photos instrumentation
 - Task 4: enrich_shop instrumentation
 - Task 5: summarize_reviews instrumentation
