@@ -1,26 +1,23 @@
 import { test, expect } from './fixtures/auth';
-import { first } from './fixtures/helpers';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+const SHOP_ID = process.env.E2E_CHECKIN_SHOP_ID!;
 const TEST_PHOTO = path.join(__dirname, 'fixtures', 'test-photo.jpg');
 
 test.describe('@critical J10 — Check-in: upload photo → submit → stamp awarded', () => {
   test('completing a check-in with a photo shows success toast', async ({
     authedPage: page,
   }) => {
-    const response = await page.request.get('/api/shops?featured=true&limit=1');
-    const shops = await response.json();
-    const shop = first(shops);
-    test.skip(!shop?.id, 'No seeded shops available');
+    test.skip(!SHOP_ID, 'E2E_CHECKIN_SHOP_ID not set — skipping check-in E2E');
 
     // Navigate directly to the check-in page. The "Check In 打卡" button on the shop
     // detail page opens an inline popover/sheet (not a page navigation), so to test
     // the dedicated check-in flow we go there directly.
-    await page.goto(`/checkin/${shop!.id}`);
+    await page.goto(`/checkin/${SHOP_ID}`);
     await expect(page.getByRole('heading', { name: 'Check In' })).toBeVisible({
       timeout: 10_000,
     });
@@ -59,12 +56,9 @@ test.describe('@critical J11 — Check-in: no photo → validation error', () =>
   test('attempting to submit check-in without photo shows disabled submit button', async ({
     authedPage: page,
   }) => {
-    const response = await page.request.get('/api/shops?featured=true&limit=1');
-    const shops = await response.json();
-    const shopId = first(shops)?.id;
-    test.skip(!shopId, 'No seeded shops available');
+    test.skip(!SHOP_ID, 'E2E_CHECKIN_SHOP_ID not set — skipping check-in E2E');
 
-    await page.goto(`/checkin/${shopId}`);
+    await page.goto(`/checkin/${SHOP_ID}`);
     await expect(page.getByRole('heading', { name: 'Check In' })).toBeVisible({
       timeout: 10_000,
     });
@@ -82,14 +76,10 @@ test.describe('J24 — Duplicate stamp at same shop (intended)', () => {
   }) => {
     // Two full check-in flows + profile retry loop can exceed 30s under full-suite load.
     test.setTimeout(90_000);
-
-    const response = await page.request.get('/api/shops?featured=true&limit=1');
-    const shops = await response.json();
-    const shopId = first(shops)?.id;
-    test.skip(!shopId, 'No seeded shops available');
+    test.skip(!SHOP_ID, 'E2E_CHECKIN_SHOP_ID not set — skipping check-in E2E');
 
     async function doCheckin() {
-      await page.goto(`/checkin/${shopId}`);
+      await page.goto(`/checkin/${SHOP_ID}`);
       await page.waitForLoadState('networkidle');
       await expect(page.getByRole('heading', { name: 'Check In' })).toBeVisible(
         { timeout: 10_000 }
@@ -158,14 +148,11 @@ test.describe('J30 — Check-in with optional menu photo + text note', () => {
   test('completing a check-in with menu photo and text note succeeds', async ({
     authedPage: page,
   }) => {
-    const response = await page.request.get('/api/shops?featured=true&limit=1');
-    const shops = await response.json();
-    const shop = first(shops);
-    test.skip(!shop?.id, 'No seeded shops available');
+    test.skip(!SHOP_ID, 'E2E_CHECKIN_SHOP_ID not set — skipping check-in E2E');
 
     // Navigate directly to the check-in page (the "Check In" button on shop detail opens
     // an inline popover/sheet; the dedicated page has menu photo + text note fields).
-    await page.goto(`/checkin/${shop!.id}`);
+    await page.goto(`/checkin/${SHOP_ID}`);
     await expect(page.getByRole('heading', { name: 'Check In' })).toBeVisible({
       timeout: 10_000,
     });
@@ -213,12 +200,9 @@ test.describe('@critical J39 — Check-in with review text → review visible on
   test('submitting a check-in with a text note shows the review in the shop detail reviews section', async ({
     authedPage: page,
   }) => {
-    const response = await page.request.get('/api/shops?featured=true&limit=1');
-    const shops = await response.json();
-    const shop = first(shops);
-    test.skip(!shop, 'No seeded shops available');
+    test.skip(!SHOP_ID, 'E2E_CHECKIN_SHOP_ID not set — skipping check-in E2E');
 
-    await page.goto(`/checkin/${shop!.id}`);
+    await page.goto(`/checkin/${SHOP_ID}`);
     // Use heading role to avoid strict-mode ambiguity with the submit button
     // which also contains "Check In" text.
     await expect(page.getByRole('heading', { name: 'Check In' })).toBeVisible({
@@ -257,7 +241,7 @@ test.describe('@critical J39 — Check-in with review text → review visible on
 
     // The review write is async — reload the shop page until it appears.
     await expect(async () => {
-      await page.goto(`/shops/${shop!.id}/${shop!.slug || shop!.id}`);
+      await page.goto(`/shops/${SHOP_ID}/${SHOP_ID}`);
       await page.waitForLoadState('networkidle');
       await expect(
         page.getByRole('heading', { name: '打卡評價' })
