@@ -156,8 +156,6 @@ async def test_persist_writes_threads_url(mock_db, mock_queue):
     await persist_scraped_data(shop_id="shop-06", data=data, db=mock_db, queue=mock_queue)
 
     update_calls = mock_db.table.return_value.update.call_args_list
-    shop_updates = [
-        c for c in update_calls if "threads_url" in (c.args[0] if c.args else {})
-    ]
+    shop_updates = [c for c in update_calls if "threads_url" in (c.args[0] if c.args else {})]
     assert len(shop_updates) == 1
     assert shop_updates[0].args[0]["threads_url"] == "https://www.threads.net/@rufous"
