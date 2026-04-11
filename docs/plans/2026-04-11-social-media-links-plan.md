@@ -15,6 +15,7 @@
 **Tech Stack:** Python 3.12 (Pydantic, FastAPI, pytest), TypeScript (Next.js 16, Vitest), Supabase Postgres, Lucide React icons, inline SVGs for social brand icons
 
 **Acceptance Criteria:**
+
 - [ ] A user viewing a shop detail page sees Instagram, Facebook, and Threads icon links when those URLs are populated, and no icons when they are null
 - [ ] A user can click the Google Maps icon on any shop detail page and be navigated to that shop's location in Google Maps
 - [ ] A shop's website link is shown only when the website is not already represented as a social platform icon
@@ -28,6 +29,7 @@
 **No test needed — DDL migration has no testable business logic.**
 
 **Files:**
+
 - Create: `supabase/migrations/20260411000001_add_threads_url_to_shops.sql`
 
 **Step 1: Create migration file**
@@ -65,6 +67,7 @@ git commit -m "feat(DEV-209): add threads_url column to shops table"
 ### Task 2: Python classify_social_url utility
 
 **Files:**
+
 - Create: `backend/utils/__init__.py`
 - Create: `backend/utils/url_classifier.py`
 - Test: `backend/tests/utils/test_url_classifier.py`
@@ -205,6 +208,7 @@ git commit -m "feat(DEV-209): add classify_social_url utility"
 ### Task 3: TypeScript classifySocialUrl + Pass 2 mapper update
 
 **Files:**
+
 - Create: `scripts/prebuild/data-pipeline/utils/url-classifier.ts`
 - Create: `scripts/prebuild/data-pipeline/utils/url-classifier.test.ts`
 - Modify: `scripts/prebuild/data-pipeline/types.ts` (add `instagram_url`, `facebook_url`, `threads_url` to `Pass2Shop`)
@@ -215,8 +219,8 @@ git commit -m "feat(DEV-209): add classify_social_url utility"
 Create `scripts/prebuild/data-pipeline/utils/url-classifier.test.ts`:
 
 ```typescript
-import { describe, it, expect } from 'vitest'
-import { classifySocialUrl } from './url-classifier'
+import { describe, it, expect } from 'vitest';
+import { classifySocialUrl } from './url-classifier';
 
 describe('classifySocialUrl', () => {
   it('classifies instagram.com URL', () => {
@@ -224,56 +228,56 @@ describe('classifySocialUrl', () => {
       instagram_url: 'https://www.instagram.com/somecafe',
       facebook_url: null,
       threads_url: null,
-    })
-  })
+    });
+  });
 
   it('classifies instagr.am shortlink', () => {
-    const r = classifySocialUrl('https://instagr.am/p/abc123')
-    expect(r.instagram_url).toBe('https://instagr.am/p/abc123')
-  })
+    const r = classifySocialUrl('https://instagr.am/p/abc123');
+    expect(r.instagram_url).toBe('https://instagr.am/p/abc123');
+  });
 
   it('classifies fb.me shortlink', () => {
-    const r = classifySocialUrl('https://fb.me/somepage')
-    expect(r.facebook_url).toBe('https://fb.me/somepage')
-  })
+    const r = classifySocialUrl('https://fb.me/somepage');
+    expect(r.facebook_url).toBe('https://fb.me/somepage');
+  });
 
   it('classifies m.facebook.com', () => {
-    const r = classifySocialUrl('https://m.facebook.com/cafe')
-    expect(r.facebook_url).toBe('https://m.facebook.com/cafe')
-  })
+    const r = classifySocialUrl('https://m.facebook.com/cafe');
+    expect(r.facebook_url).toBe('https://m.facebook.com/cafe');
+  });
 
   it('classifies threads.net URL', () => {
     expect(classifySocialUrl('https://www.threads.net/@cafe')).toEqual({
       instagram_url: null,
       facebook_url: null,
       threads_url: 'https://www.threads.net/@cafe',
-    })
-  })
+    });
+  });
 
   it('returns all null for unrecognized URL', () => {
     expect(classifySocialUrl('https://www.somecafe.com')).toEqual({
       instagram_url: null,
       facebook_url: null,
       threads_url: null,
-    })
-  })
+    });
+  });
 
   it('returns all null for null input', () => {
     expect(classifySocialUrl(null)).toEqual({
       instagram_url: null,
       facebook_url: null,
       threads_url: null,
-    })
-  })
+    });
+  });
 
   it('returns all null for invalid URL string', () => {
     expect(classifySocialUrl('not-a-url')).toEqual({
       instagram_url: null,
       facebook_url: null,
       threads_url: null,
-    })
-  })
-})
+    });
+  });
+});
 ```
 
 **Step 2: Run test to verify it fails**
@@ -289,28 +293,42 @@ Expected: FAIL — `Cannot find module './url-classifier'`
 Create `scripts/prebuild/data-pipeline/utils/url-classifier.ts`:
 
 ```typescript
-const INSTAGRAM_HOSTS = new Set(['instagram.com', 'www.instagram.com', 'instagr.am'])
-const FACEBOOK_HOSTS = new Set(['facebook.com', 'fb.com', 'm.facebook.com', 'www.facebook.com', 'fb.me'])
-const THREADS_HOSTS = new Set(['threads.net', 'www.threads.net'])
+const INSTAGRAM_HOSTS = new Set([
+  'instagram.com',
+  'www.instagram.com',
+  'instagr.am',
+]);
+const FACEBOOK_HOSTS = new Set([
+  'facebook.com',
+  'fb.com',
+  'm.facebook.com',
+  'www.facebook.com',
+  'fb.me',
+]);
+const THREADS_HOSTS = new Set(['threads.net', 'www.threads.net']);
 
 export interface SocialUrls {
-  instagram_url: string | null
-  facebook_url: string | null
-  threads_url: string | null
+  instagram_url: string | null;
+  facebook_url: string | null;
+  threads_url: string | null;
 }
 
 export function classifySocialUrl(url: string | null | undefined): SocialUrls {
-  const result: SocialUrls = { instagram_url: null, facebook_url: null, threads_url: null }
-  if (!url) return result
+  const result: SocialUrls = {
+    instagram_url: null,
+    facebook_url: null,
+    threads_url: null,
+  };
+  if (!url) return result;
   try {
-    const host = new URL(url).hostname.toLowerCase()
-    if (INSTAGRAM_HOSTS.has(host)) result.instagram_url = url
-    else if (FACEBOOK_HOSTS.has(host)) result.facebook_url = url
-    else if (THREADS_HOSTS.has(host)) result.threads_url = url
+    const host = new URL(url).hostname.toLowerCase();
+    if (INSTAGRAM_HOSTS.has(host)) result.instagram_url = url;
+    else if (FACEBOOK_HOSTS.has(host)) result.facebook_url = url;
+    else if (THREADS_HOSTS.has(host)) result.threads_url = url;
   } catch {
     // invalid URL — return nulls
   }
-  return result
+  return result;
 }
 ```
 
@@ -327,9 +345,9 @@ Expected: all 8 tests PASS.
 In `scripts/prebuild/data-pipeline/types.ts`, add to the `Pass2Shop` interface:
 
 ```typescript
-instagram_url: string | null
-facebook_url: string | null
-threads_url: string | null
+instagram_url: string | null;
+facebook_url: string | null;
+threads_url: string | null;
 ```
 
 **Step 6: Update pass2-scrape.ts mapper**
@@ -337,7 +355,7 @@ threads_url: string | null
 In `scripts/prebuild/data-pipeline/pass2-scrape.ts`, add the import at the top:
 
 ```typescript
-import { classifySocialUrl } from './utils/url-classifier'
+import { classifySocialUrl } from './utils/url-classifier';
 ```
 
 In the mapper where `Pass2Shop` is constructed (near the `website: shop.website` line), add:
@@ -376,6 +394,7 @@ git commit -m "feat(DEV-209): add classifySocialUrl TS utility + pass2 fallback"
 **Depends on:** Task 2 (`classify_social_url` exists in `backend/utils/url_classifier.py`)
 
 **Files:**
+
 - Modify: `backend/providers/scraper/interface.py` (add `threads_url` to `ScrapedShopData`)
 - Modify: `backend/providers/scraper/apify_adapter.py` (apply fallback classification)
 - Test: `backend/tests/providers/test_apify_adapter.py`
@@ -503,11 +522,12 @@ git commit -m "feat(DEV-209): add threads_url to ScrapedShopData + social URL fa
 
 ---
 
-### Task 5: Backend API wiring — Shop model + _SHOP_DETAIL_COLUMNS
+### Task 5: Backend API wiring — Shop model + \_SHOP_DETAIL_COLUMNS
 
 **Depends on:** Task 1 (threads_url column exists in DB)
 
 **Files:**
+
 - Modify: `backend/models/types.py` (add 3 URL fields to `Shop`)
 - Modify: `backend/api/shops.py` (add 3 columns to `_SHOP_DETAIL_COLUMNS`)
 - Test: `backend/tests/api/test_shops.py`
@@ -567,7 +587,7 @@ facebook_url: str | None = None
 threads_url: str | None = None
 ```
 
-**Step 4: Add columns to _SHOP_DETAIL_COLUMNS**
+**Step 4: Add columns to \_SHOP_DETAIL_COLUMNS**
 
 In `backend/api/shops.py`, update `_SHOP_DETAIL_COLUMNS` (around line 70):
 
@@ -610,6 +630,7 @@ git commit -m "feat(DEV-209): wire instagram_url, facebook_url, threads_url thro
 **No test needed — one-time data migration script. Verify by inspection after running.**
 
 **Files:**
+
 - Create: `scripts/backfill_social_urls.py`
 
 **Step 1: Create the backfill script**
@@ -691,6 +712,7 @@ cd backend && uv run python ../scripts/backfill_social_urls.py
 ```
 
 Expected output:
+
 ```
 Fetched N shops with a website field
 Shops to update: M
@@ -715,6 +737,7 @@ git commit -m "feat(DEV-209): add backfill script for social URLs from website f
 **Depends on:** Task 4 (`ScrapedShopData` has `threads_url`)
 
 **Files:**
+
 - Modify: `backend/workers/persist.py`
 - Test: `backend/tests/workers/test_persist.py` (or wherever persist tests live — check first)
 
@@ -772,6 +795,7 @@ git commit -m "feat(DEV-209): persist threads_url in scraper worker"
 **Depends on:** Task 5 (backend returns the new fields)
 
 **Files:**
+
 - Modify: `lib/types/index.ts` (add 3 URL fields to `Shop` interface)
 - Modify: `app/shops/[shopId]/[slug]/shop-detail-client.tsx` (add Links section + update `ShopData` interface)
 - Test: `app/shops/[shopId]/[slug]/shop-detail-client.test.tsx`
@@ -852,9 +876,9 @@ Expected: FAIL — `instagramUrl` not in `ShopData` type, no Links section rende
 Add to the `Shop` interface:
 
 ```typescript
-instagramUrl: string | null
-facebookUrl: string | null
-threadsUrl: string | null
+instagramUrl: string | null;
+facebookUrl: string | null;
+threadsUrl: string | null;
 ```
 
 **Step 4: Update shop-detail-client.tsx**
@@ -870,24 +894,31 @@ threadsUrl?: string | null
 **(b) Add Lucide imports** — add `Globe` and `MapPin` to the existing lucide-react import:
 
 ```typescript
-import { Navigation, Globe, MapPin } from 'lucide-react'
+import { Navigation, Globe, MapPin } from 'lucide-react';
 ```
 
 **(c) Add isSocialUrl helper** — add near the top of the component file, before the component function:
 
 ```typescript
 const SOCIAL_DOMAINS = new Set([
-  'instagram.com', 'www.instagram.com', 'instagr.am',
-  'facebook.com', 'fb.com', 'm.facebook.com', 'www.facebook.com', 'fb.me',
-  'threads.net', 'www.threads.net',
-])
+  'instagram.com',
+  'www.instagram.com',
+  'instagr.am',
+  'facebook.com',
+  'fb.com',
+  'm.facebook.com',
+  'www.facebook.com',
+  'fb.me',
+  'threads.net',
+  'www.threads.net',
+]);
 
 function isSocialUrl(url: string | null | undefined): boolean {
-  if (!url) return false
+  if (!url) return false;
   try {
-    return SOCIAL_DOMAINS.has(new URL(url).hostname.toLowerCase())
+    return SOCIAL_DOMAINS.has(new URL(url).hostname.toLowerCase());
   } catch {
-    return false
+    return false;
   }
 }
 ```
@@ -923,87 +954,96 @@ function ThreadsIcon({ className }: { className?: string }) {
 **(e) Add Links section JSX** — insert between the AttributeChips section and MenuHighlights section:
 
 ```tsx
-{/* Social Links + Google Maps */}
-{(shop.instagramUrl || shop.facebookUrl || shop.threadsUrl || shop.website || shop.googlePlaceId || (shop.latitude && shop.longitude)) && (
-  <div className="border-t pt-4 pb-2">
-    <div className="flex items-center gap-4">
-      {/* Google Maps — always show if we have location */}
-      {shop.googlePlaceId ? (
-        <a
-          href={`https://www.google.com/maps/place/?q=place_id:${shop.googlePlaceId}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="在 Google Maps 查看"
-          className="text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <MapPin className="h-5 w-5" />
-        </a>
-      ) : shop.latitude && shop.longitude ? (
-        <a
-          href={`https://www.google.com/maps?q=${shop.latitude},${shop.longitude}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="在 Google Maps 查看"
-          className="text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <MapPin className="h-5 w-5" />
-        </a>
-      ) : null}
+{
+  /* Social Links + Google Maps */
+}
+{
+  (shop.instagramUrl ||
+    shop.facebookUrl ||
+    shop.threadsUrl ||
+    shop.website ||
+    shop.googlePlaceId ||
+    (shop.latitude && shop.longitude)) && (
+    <div className="border-t pt-4 pb-2">
+      <div className="flex items-center gap-4">
+        {/* Google Maps — always show if we have location */}
+        {shop.googlePlaceId ? (
+          <a
+            href={`https://www.google.com/maps/place/?q=place_id:${shop.googlePlaceId}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="在 Google Maps 查看"
+            className="text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <MapPin className="h-5 w-5" />
+          </a>
+        ) : shop.latitude && shop.longitude ? (
+          <a
+            href={`https://www.google.com/maps?q=${shop.latitude},${shop.longitude}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="在 Google Maps 查看"
+            className="text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <MapPin className="h-5 w-5" />
+          </a>
+        ) : null}
 
-      {/* Instagram */}
-      {shop.instagramUrl && (
-        <a
-          href={shop.instagramUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="Instagram"
-          className="text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <InstagramIcon className="h-5 w-5" />
-        </a>
-      )}
+        {/* Instagram */}
+        {shop.instagramUrl && (
+          <a
+            href={shop.instagramUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Instagram"
+            className="text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <InstagramIcon className="h-5 w-5" />
+          </a>
+        )}
 
-      {/* Facebook */}
-      {shop.facebookUrl && (
-        <a
-          href={shop.facebookUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="Facebook"
-          className="text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <FacebookIcon className="h-5 w-5" />
-        </a>
-      )}
+        {/* Facebook */}
+        {shop.facebookUrl && (
+          <a
+            href={shop.facebookUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Facebook"
+            className="text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <FacebookIcon className="h-5 w-5" />
+          </a>
+        )}
 
-      {/* Threads */}
-      {shop.threadsUrl && (
-        <a
-          href={shop.threadsUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="Threads"
-          className="text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <ThreadsIcon className="h-5 w-5" />
-        </a>
-      )}
+        {/* Threads */}
+        {shop.threadsUrl && (
+          <a
+            href={shop.threadsUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Threads"
+            className="text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ThreadsIcon className="h-5 w-5" />
+          </a>
+        )}
 
-      {/* Website — only when not already shown as a social icon */}
-      {shop.website && !isSocialUrl(shop.website) && (
-        <a
-          href={shop.website}
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="官方網站"
-          className="text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <Globe className="h-5 w-5" />
-        </a>
-      )}
+        {/* Website — only when not already shown as a social icon */}
+        {shop.website && !isSocialUrl(shop.website) && (
+          <a
+            href={shop.website}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="官方網站"
+            className="text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <Globe className="h-5 w-5" />
+          </a>
+        )}
+      </div>
     </div>
-  </div>
-)}
+  );
+}
 ```
 
 **Step 5: Run tests to verify they pass**
@@ -1069,16 +1109,19 @@ graph TD
 ```
 
 **Wave 1** (parallel — no dependencies):
+
 - Task 1: DB Migration
 - Task 2: Python classify_social_url
 - Task 3: TypeScript classifySocialUrl + pass2 mapper
 
 **Wave 2** (parallel — depends on Wave 1):
+
 - Task 4: ScrapedShopData + apify_adapter ← Task 2
 - Task 5: Backend API wiring ← Tasks 1 + 2
 - Task 6: Backfill script ← Tasks 1 + 2 + 3
 
 **Wave 3** (parallel — depends on Wave 2):
+
 - Task 7: persist.py threads_url ← Task 4
 - Task 8: Frontend types + Links section ← Task 5
 

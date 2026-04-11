@@ -108,9 +108,7 @@
       "status": "valid"
     }
   ],
-  "active_agents": [
-    "Bug Hunter"
-  ],
+  "active_agents": ["Bug Hunter"],
   "skipped": [
     "Standards & Conventions — all prior findings resolved, no new findings in fix diff",
     "Architecture & Design — all prior findings resolved, no new findings in fix diff",

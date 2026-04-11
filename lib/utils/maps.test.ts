@@ -23,9 +23,7 @@ describe('getGoogleMapsUrl', () => {
       googlePlaceId: null,
       address: '台北市大安區',
     });
-    expect(url).toBe(
-      'https://www.google.com/maps?q=25.033,121.565'
-    );
+    expect(url).toBe('https://www.google.com/maps?q=25.033,121.565');
   });
 });
 

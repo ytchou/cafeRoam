@@ -31,11 +31,11 @@ The prebuild TypeScript pipeline (`pass2-scrape.ts`) uses a parallel `classifySo
 
 ## URL Classification Rules
 
-| Platform  | Matched domains |
-|-----------|----------------|
-| Instagram | `instagram.com`, `www.instagram.com`, `instagr.am` |
+| Platform  | Matched domains                                                         |
+| --------- | ----------------------------------------------------------------------- |
+| Instagram | `instagram.com`, `www.instagram.com`, `instagr.am`                      |
 | Facebook  | `facebook.com`, `fb.com`, `m.facebook.com`, `www.facebook.com`, `fb.me` |
-| Threads   | `threads.net`, `www.threads.net` |
+| Threads   | `threads.net`, `www.threads.net`                                        |
 
 Fallback logic: keep Apify-provided value; classify from `website` only when Apify returned null.
 
