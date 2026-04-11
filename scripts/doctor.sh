@@ -15,6 +15,7 @@ set -euo pipefail
 
 PASS=0
 FAIL=0
+SOFT_FAIL=0
 
 # Colors (disabled if not a terminal)
 if [ -t 1 ]; then
@@ -33,6 +34,7 @@ fi
 
 _pass() { printf "${GREEN}[PASS]${NC} %s\n" "$1"; PASS=$((PASS + 1)); }
 _fail() { printf "${RED}[FAIL]${NC} %s\n" "$1"; printf "       ${YELLOW}Fix: %s${NC}\n" "$2"; FAIL=$((FAIL + 1)); }
+_skip() { printf "${YELLOW}[SKIP]${NC} %s\n" "$1"; printf "       Fix: %s\n" "$2"; SOFT_FAIL=$((SOFT_FAIL + 1)); }
 
 check() {
   local description="$1"
@@ -42,6 +44,18 @@ check() {
     _pass "$description"
   else
     _fail "$description" "$fix_hint"
+  fi
+}
+
+# Like check() but failures are non-blocking — shown as [SKIP], don't exit non-zero
+check_optional() {
+  local description="$1"
+  local command="$2"
+  local fix_hint="$3"
+  if bash -c "$command" > /dev/null 2>&1; then
+    _pass "$description"
+  else
+    _skip "$description" "$fix_hint"
   fi
 }
 
@@ -77,11 +91,11 @@ SUPABASE_URL=$(grep "^NEXT_PUBLIC_SUPABASE_URL=" "${PROJECT_ROOT}/.env.local" 2>
 
 if [ -n "$SUPABASE_URL" ]; then
   check "Supabase REST API reachable" \
-    "curl -sf '${SUPABASE_URL}/rest/v1/' -H 'apikey: placeholder' -o /dev/null" \
+    "curl -s -o /dev/null -w '%{http_code}' '${SUPABASE_URL}/rest/v1/' -H 'apikey: placeholder' | grep -qE '^[1-5][0-9][0-9]$'" \
     "Check NEXT_PUBLIC_SUPABASE_URL in .env.local — is the staging project running?"
 
   check "Supabase Auth reachable" \
-    "curl -sf '${SUPABASE_URL}/auth/v1/health'" \
+    "curl -s -o /dev/null -w '%{http_code}' '${SUPABASE_URL}/auth/v1/health' | grep -qE '^[1-5][0-9][0-9]$'" \
     "Check Supabase dashboard — is Auth enabled on the staging project?"
 else
   _fail "NEXT_PUBLIC_SUPABASE_URL is set" "Add NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co to .env.local"
@@ -136,11 +150,11 @@ check "SEARCH_CACHE_PROVIDER is set in backend/.env" \
   "grep -q '^SEARCH_CACHE_PROVIDER=.' '${PROJECT_ROOT}/backend/.env'" \
   "Add SEARCH_CACHE_PROVIDER=supabase (or 'none' to disable) to backend/.env"
 
-check "LINEAR_API_KEY is set in backend/.env (required for shop data report worker)" \
+check_optional "LINEAR_API_KEY is set in backend/.env (required for shop data report worker)" \
   "grep -q '^LINEAR_API_KEY=.' '${PROJECT_ROOT}/backend/.env'" \
   "Add LINEAR_API_KEY=<key> to backend/.env (get from Linear → Settings → API)"
 
-check "LINEAR_TEAM_ID is set in backend/.env (required for shop data report worker)" \
+check_optional "LINEAR_TEAM_ID is set in backend/.env (required for shop data report worker)" \
   "grep -q '^LINEAR_TEAM_ID=.' '${PROJECT_ROOT}/backend/.env'" \
   "Add LINEAR_TEAM_ID=<team-id> to backend/.env (find in Linear team settings URL)"
 
@@ -169,7 +183,7 @@ check "pnpm deps installed" \
   "test -f '${PROJECT_ROOT}/node_modules/.modules.yaml'" \
   "Run: pnpm install"
 
-check "Playwright browsers installed" \
+check_optional "Playwright browsers installed" \
   "pnpm exec playwright --version > /dev/null 2>&1 && test -d '${PROJECT_ROOT}/node_modules/.cache/ms-playwright'" \
   "Run: pnpm exec playwright install chromium webkit"
 
@@ -178,15 +192,15 @@ printf "\n"
 # ─── E2E ──────────────────────────────────────────────────────────────────────
 printf "${BOLD}E2E (optional — only needed for e2e tests)${NC}\n"
 
-check "E2E_BASE_URL set or dev server available" \
+check_optional "E2E_BASE_URL set or dev server available" \
   "[ -n \"\${E2E_BASE_URL:-}\" ] || curl -sf http://localhost:3000 -o /dev/null" \
   "Set E2E_BASE_URL in .env.local, or run: pnpm dev"
 
-check "E2E_USER_EMAIL set" \
+check_optional "E2E_USER_EMAIL set" \
   "[ -n \"\${E2E_USER_EMAIL:-}\" ]" \
   "Set E2E_USER_EMAIL in .env.local (test account email)"
 
-check "E2E_USER_PASSWORD set" \
+check_optional "E2E_USER_PASSWORD set" \
   "[ -n \"\${E2E_USER_PASSWORD:-}\" ]" \
   "Set E2E_USER_PASSWORD in .env.local (test account password)"
 
@@ -195,7 +209,7 @@ printf "\n"
 # ─── Data ─────────────────────────────────────────────────────────────────────
 printf "${BOLD}Data${NC}\n"
 check "Supabase CLI linked to staging" \
-  "test -f '${PROJECT_ROOT}/.supabase/project-ref'" \
+  "test -f '${PROJECT_ROOT}/supabase/.temp/project-ref'" \
   "Run: supabase link --project-ref <your-project-ref>"
 
 check "Migrations in sync" \
@@ -244,12 +258,18 @@ else
 fi
 
 # ─── Summary ──────────────────────────────────────────────────────────────────
+TOTAL=$((PASS + FAIL + SOFT_FAIL))
 printf "\n────────────────────────────────\n"
-if [ "$FAIL" -eq 0 ]; then
-  printf "${GREEN}${BOLD}Result: All %d checks passed${NC}\n\n" "$((PASS + FAIL))"
+if [ "$FAIL" -eq 0 ] && [ "$SOFT_FAIL" -eq 0 ]; then
+  printf "${GREEN}${BOLD}Result: All %d checks passed${NC}\n\n" "$TOTAL"
+  exit 0
+elif [ "$FAIL" -eq 0 ]; then
+  printf "${GREEN}${BOLD}Result: %d/%d checks passed${NC} (${YELLOW}%d optional skipped${NC})\n" "$PASS" "$TOTAL" "$SOFT_FAIL"
+  printf "Optional checks above are not required for local dev.\n\n"
   exit 0
 else
-  printf "${RED}${BOLD}Result: %d/%d checks passed (%d failed)${NC}\n" "$PASS" "$((PASS + FAIL))" "$FAIL"
-  printf "Fix the issues above before proceeding.\n\n"
+  printf "${RED}${BOLD}Result: %d/%d checks passed (%d failed)${NC}" "$PASS" "$TOTAL" "$FAIL"
+  [ "$SOFT_FAIL" -gt 0 ] && printf " ${YELLOW}(%d optional skipped)${NC}" "$SOFT_FAIL"
+  printf "\nFix the issues above before proceeding.\n\n"
   exit 1
 fi

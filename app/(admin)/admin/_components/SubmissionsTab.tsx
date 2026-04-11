@@ -57,6 +57,7 @@ export function SubmissionsTab({
   getToken,
   onRefresh,
 }: SubmissionsTabProps) {
+  const [statusFilter, setStatusFilter] = useState<string>('all');
   const [rejectingId, setRejectingId] = useState<string | null>(null);
   const [rejectionReason, setRejectionReason] = useState<string>('not_a_cafe');
   const [confirmAction, setConfirmAction] = useState<{
@@ -141,6 +142,9 @@ export function SubmissionsTab({
 
   const actionableSubmissions = (data?.recent_submissions ?? []).filter((s) =>
     ['pending', 'processing', 'pending_review'].includes(s.status)
+  );
+  const filteredSubmissions = (data?.recent_submissions ?? []).filter(
+    (sub) => statusFilter === 'all' || sub.status === statusFilter
   );
   const isAllSelected =
     actionableSubmissions.length > 0 &&
@@ -233,7 +237,27 @@ export function SubmissionsTab({
   return (
     <>
       <section>
-        <h2 className="mb-4 text-lg font-semibold">Recent Submissions</h2>
+        <div className="mb-4 flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-semibold">Recent Submissions</h2>
+            <p className="text-xs text-gray-400">
+              Showing up to 20 most recent submissions
+            </p>
+          </div>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="All statuses" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All statuses</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="processing">Processing</SelectItem>
+              <SelectItem value="pending_review">Pending review</SelectItem>
+              <SelectItem value="live">Live</SelectItem>
+              <SelectItem value="rejected">Rejected</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
         {selectedIds.size > 0 && (
           <div className="mb-2 flex items-center gap-2 rounded border-b border-amber-200 bg-amber-50 px-4 py-2">
             <span className="text-sm text-amber-800">
@@ -256,7 +280,7 @@ export function SubmissionsTab({
             </Button>
           </div>
         )}
-        {data?.recent_submissions.length === 0 ? (
+        {filteredSubmissions.length === 0 ? (
           <p className="text-gray-500">No submissions yet.</p>
         ) : (
           <Table className="w-full text-left text-sm">
@@ -277,7 +301,7 @@ export function SubmissionsTab({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {data?.recent_submissions.map((sub) => (
+              {filteredSubmissions.map((sub) => (
                 <TableRow key={sub.id} className="border-b">
                   <TableCell
                     className="w-8 px-2"
