@@ -41,6 +41,9 @@ class Shop(CamelModel):
     description: str | None = None
     photo_urls: list[str] = []
     menu_url: str | None = None
+    instagram_url: str | None = None
+    facebook_url: str | None = None
+    threads_url: str | None = None
     taxonomy_tags: list[TaxonomyTag] = []
     mode_scores: ShopModeScores | None = None
     slug: str | None = None
