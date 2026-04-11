@@ -46,6 +46,9 @@ function makeShop(overrides: Partial<Pass2Shop> = {}): Pass2Shop {
     limited_time: 'no',
     socket: 'yes',
     social_url: '',
+    instagram_url: null,
+    facebook_url: null,
+    threads_url: null,
     reviews: [
       {
         text: '很安靜適合工作',
