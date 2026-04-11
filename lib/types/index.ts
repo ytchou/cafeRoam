@@ -26,6 +26,9 @@ export interface Shop {
   modeWork?: number | null;
   modeRest?: number | null;
   modeSocial?: number | null;
+  instagramUrl?: string | null;
+  facebookUrl?: string | null;
+  threadsUrl?: string | null;
 }
 
 export interface ShopDetail extends Shop {

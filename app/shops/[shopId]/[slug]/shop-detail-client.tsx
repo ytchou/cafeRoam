@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useMemo } from 'react';
-import { Navigation } from 'lucide-react';
+import { Navigation, Globe, MapPin } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import type { TaxonomyTag } from '@/lib/types';
@@ -24,6 +24,45 @@ import { useUser } from '@/lib/hooks/use-user';
 import { useSearchParams } from 'next/navigation';
 import { useAnalytics } from '@/lib/posthog/use-analytics';
 import { trackShopDetailView } from '@/lib/analytics/ga4-events';
+
+const SOCIAL_DOMAINS = new Set([
+  'instagram.com', 'www.instagram.com', 'instagr.am',
+  'facebook.com', 'fb.com', 'm.facebook.com', 'www.facebook.com', 'fb.me',
+  'threads.net', 'www.threads.net',
+])
+
+function isSocialUrl(url: string | null | undefined): boolean {
+  if (!url) return false
+  try {
+    return SOCIAL_DOMAINS.has(new URL(url).hostname.toLowerCase())
+  } catch {
+    return false
+  }
+}
+
+function InstagramIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
+      <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+    </svg>
+  )
+}
+
+function FacebookIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
+      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+    </svg>
+  )
+}
+
+function ThreadsIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 192 192" fill="currentColor" className={className} aria-hidden="true">
+      <path d="M141.537 88.988a66.667 66.667 0 0 0-2.518-1.143c-1.482-27.307-16.403-42.94-41.457-43.1h-.34c-14.986 0-27.449 6.396-35.12 18.035l13.779 9.452c5.73-8.695 14.724-10.548 21.348-10.548h.229c8.249.053 14.474 2.452 18.502 7.13 2.932 3.405 4.893 8.11 5.864 14.05-7.314-1.243-15.224-1.626-23.68-1.14-23.82 1.371-39.134 15.264-38.105 34.568.522 9.792 5.4 18.216 13.735 23.719 7.047 4.652 16.124 6.927 25.557 6.412 12.458-.683 22.231-5.436 29.049-14.127 5.178-6.6 8.453-15.153 9.899-25.93 5.937 3.583 10.337 8.298 12.767 13.966 4.132 9.635 4.373 25.468-8.546 38.376-11.319 11.308-24.925 16.2-45.488 16.351-22.809-.169-40.06-7.484-51.275-21.742C35.236 139.966 29.808 120.682 29.605 96c.203-24.682 5.63-43.966 16.133-57.317C57.044 25.425 74.295 18.11 97.104 17.942c22.976.17 40.526 7.52 52.171 21.847 5.71 7.026 10.015 15.86 12.853 26.162l16.147-4.308c-3.44-12.68-8.853-23.606-16.219-32.668C147.036 10.606 125.202 1.195 97.27 1.001h-.253C69.32 1.195 47.842 10.637 33.663 28.37 21.079 44.246 14.619 66.6 14.396 96c.223 29.4 6.683 51.755 19.267 67.63 14.179 17.732 35.657 27.175 62.884 27.369h.253c24.586-.169 41.702-6.686 55.821-21.07 18.683-18.942 18.136-42.637 11.996-57.14-4.231-9.856-12.36-17.96-22.08-23.801Zm-38.653 34.237c-10.426.583-21.24-4.098-21.82-14.135-.426-7.975 5.658-16.867 24.033-17.94 2.102-.122 4.168-.179 6.199-.179 6.5 0 12.59.638 18.166 1.882-2.067 25.928-16.793 29.855-26.578 30.372Z"/>
+    </svg>
+  )
+}
 
 interface ShopData {
   id: string;
@@ -66,6 +105,10 @@ interface ShopData {
   } | null;
   district?: { slug: string; nameZh: string } | null;
   googlePlaceId?: string | null;
+  website?: string | null;
+  instagramUrl?: string | null;
+  facebookUrl?: string | null;
+  threadsUrl?: string | null;
 }
 
 interface ShopDetailClientProps {
@@ -217,6 +260,84 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
           isOwner={user?.id === shop.ownerId}
         />
         {tags.length > 0 && <AttributeChips tags={tags as TaxonomyTag[]} />}
+
+        {/* Social Links + Google Maps */}
+        {(shop.instagramUrl || shop.facebookUrl || shop.threadsUrl || shop.website || shop.googlePlaceId || (shop.latitude && shop.longitude)) && (
+          <div className="border-t pt-4 pb-2 mx-5">
+            <div className="flex items-center gap-4">
+              {shop.googlePlaceId ? (
+                <a
+                  href={`https://www.google.com/maps/place/?q=place_id:${shop.googlePlaceId}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="在 Google Maps 查看"
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <MapPin className="h-5 w-5" />
+                </a>
+              ) : shop.latitude && shop.longitude ? (
+                <a
+                  href={`https://www.google.com/maps?q=${shop.latitude},${shop.longitude}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="在 Google Maps 查看"
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <MapPin className="h-5 w-5" />
+                </a>
+              ) : null}
+
+              {shop.instagramUrl && (
+                <a
+                  href={shop.instagramUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Instagram"
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <InstagramIcon className="h-5 w-5" />
+                </a>
+              )}
+
+              {shop.facebookUrl && (
+                <a
+                  href={shop.facebookUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Facebook"
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <FacebookIcon className="h-5 w-5" />
+                </a>
+              )}
+
+              {shop.threadsUrl && (
+                <a
+                  href={shop.threadsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Threads"
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <ThreadsIcon className="h-5 w-5" />
+                </a>
+              )}
+
+              {shop.website && !isSocialUrl(shop.website) && (
+                <a
+                  href={shop.website}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="官方網站"
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <Globe className="h-5 w-5" />
+                </a>
+              )}
+            </div>
+          </div>
+        )}
+
         {shop.menuHighlights && <MenuHighlights items={shop.menuHighlights} />}
         {paymentMethods.length > 0 && (
           <>
