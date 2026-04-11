@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { getGoogleMapsUrl, getAppleMapsUrl } from './maps';
 
 describe('getGoogleMapsUrl', () => {
-  it('links to the place page using lat/lng', () => {
+  it('links to the place page using place_id when googlePlaceId is available', () => {
     const url = getGoogleMapsUrl({
       name: 'Cafe Roam',
       latitude: 25.033,
@@ -11,7 +11,7 @@ describe('getGoogleMapsUrl', () => {
       address: '台北市大安區',
     });
     expect(url).toBe(
-      'https://www.google.com/maps/search/?api=1&query=25.033,121.565'
+      'https://www.google.com/maps/place/?q=place_id:ChIJx7x7x7x7'
     );
   });
 
@@ -24,7 +24,7 @@ describe('getGoogleMapsUrl', () => {
       address: '台北市大安區',
     });
     expect(url).toBe(
-      'https://www.google.com/maps/search/?api=1&query=25.033,121.565'
+      'https://www.google.com/maps?q=25.033,121.565'
     );
   });
 });
