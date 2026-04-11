@@ -5,7 +5,7 @@ import path from 'node:path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const SHOP_ID = process.env.E2E_CHECKIN_SHOP_ID;
+const SHOP_ID = process.env.E2E_CHECKIN_SHOP_ID!;
 const TEST_PHOTO = path.join(__dirname, 'fixtures', 'test-photo.jpg');
 
 test.describe('@critical J10 — Check-in: upload photo → submit → stamp awarded', () => {
