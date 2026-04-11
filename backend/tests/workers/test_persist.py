@@ -146,3 +146,18 @@ async def test_persist_skips_city_and_district_when_address_unparseable(mock_db,
     payload = shop_updates[0].args[0]
     assert "city" not in payload
     assert "district" not in payload
+
+
+@pytest.mark.asyncio
+async def test_persist_writes_threads_url(mock_db, mock_queue):
+    """persist_scraped_data writes threads_url to the shops table."""
+    data = _make_shop_data(threads_url="https://www.threads.net/@rufous")
+
+    await persist_scraped_data(shop_id="shop-06", data=data, db=mock_db, queue=mock_queue)
+
+    update_calls = mock_db.table.return_value.update.call_args_list
+    shop_updates = [
+        c for c in update_calls if "threads_url" in (c.args[0] if c.args else {})
+    ]
+    assert len(shop_updates) == 1
+    assert shop_updates[0].args[0]["threads_url"] == "https://www.threads.net/@rufous"

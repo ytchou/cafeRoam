@@ -98,6 +98,7 @@ async def persist_scraped_data(
         "menu_url": data.menu_url,
         "instagram_url": data.instagram_url,
         "facebook_url": data.facebook_url,
+        "threads_url": data.threads_url,
         "price_range": data.price_range,
         "google_maps_features": data.google_maps_features,
         "processing_status": "enriching",
