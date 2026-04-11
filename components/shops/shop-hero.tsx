@@ -38,13 +38,14 @@ export function ShopHero({
   useEffect(() => {
     if (!api) return;
     const onSelect = () => setCurrent(api.selectedScrollSnap());
-    api.on('init', onSelect);
+    onSelect();
+    api.on('reInit', onSelect);
     api.on('select', onSelect);
     return () => {
-      api.off('init', onSelect);
+      api.off('reInit', onSelect);
       api.off('select', onSelect);
     };
-  }, [api]);
+  }, [api, photoUrls]);
 
   const hasPhotos = photoUrls.length > 0;
   const isMulti = photoUrls.length > 1;
