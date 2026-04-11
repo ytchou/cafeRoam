@@ -134,15 +134,6 @@ async def handle_summarize_reviews(
             columns=["community_summary"],
         )
 
-        if job_id is not None:
-            with contextlib.suppress(Exception):
-                (
-                    db.table("job_queue")
-                    .update({"step_timings": step_timings})
-                    .eq("id", str(job_id))
-                    .execute()
-                )
-
         logger.info(
             "Community summary generated",
             shop_id=shop_id,
@@ -162,3 +153,12 @@ async def handle_summarize_reviews(
     except Exception as exc:
         await log_job_event(db, job_id, "error", "job.error", error=str(exc))
         raise
+    finally:
+        if job_id is not None:
+            with contextlib.suppress(Exception):
+                (
+                    db.table("job_queue")
+                    .update({"step_timings": step_timings})
+                    .eq("id", str(job_id))
+                    .execute()
+                )
