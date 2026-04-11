@@ -74,6 +74,7 @@ Unchanged. `shop.photoUrls: string[]` is already passed to `ShopHero`. The carou
 ### Component tests (Vitest + Testing Library)
 
 **`components/shops/shop-hero.test.tsx`** (existing file — update):
+
 - Single photo still renders the image (existing assertion continues to pass)
 - Multiple photos: all slides are in the DOM; initial indicator shows "1 / N"
 - Multiple photos: clicking the desktop "next" button changes the indicator to "2 / N"
@@ -84,6 +85,7 @@ Unchanged. `shop.photoUrls: string[]` is already passed to `ShopHero`. The carou
 **`components/shops/shop-map-thumbnail.test.tsx`** (existing — no changes required): current assertions verify both rendering paths. The CSS import is side-effectful and not directly testable; regression is covered by the passing existing suite.
 
 **`app/shops/[shopId]/[slug]/shop-detail-client.test.tsx`** (existing — minor update):
+
 - Existing "Google Maps link" / "Apple Maps link" assertions: ensure selectors still match after the markup consolidation. If they grep by href, no change needed. If they rely on the `.hidden.lg:flex` container, update to target the Location section container.
 - Add one assertion: the navigation links render exactly once in the DOM (not twice).
 
@@ -91,12 +93,12 @@ Unchanged. `shop.photoUrls: string[]` is already passed to `ShopHero`. The carou
 
 The research subagent flagged four e2e tests that reference shop detail content. Drift check plan:
 
-| File | Risk | Mitigation |
-|---|---|---|
+| File                                  | Risk                                                                                                                                                                                                                             | Mitigation                                                                                                                                       |
+| ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `e2e/discovery.spec.ts:450-475` (J36) | Uses `a[href*='google.com/maps']:visible` and `a[href*='maps.apple.com']:visible`. Currently may find duplicate elements across desktop+mobile blocks. After fix: exactly one visible link per href pattern at a given viewport. | Run the test post-fix; update expectations from "first visible" to just "visible" if needed. Likely already passes since `:visible` filters one. |
-| `e2e/discovery.spec.ts:332-340` (J28) | Desktop 2-column layout check. Carousel in `ShopHero` should not change the outer container. | Run test; verify no regression. |
-| `e2e/checkin.spec.ts:213` | Reviews section on shop detail. Carousel is above the fold — should not interfere. | Run test. |
-| `e2e/lists.spec.ts:306,326` | Save-to-list flow navigating through shop detail. Carousel prev/next buttons could potentially intercept click events on overlay buttons. | Run test; verify save button still clickable. Carousel controls are scoped to the image area, not the overlay row. |
+| `e2e/discovery.spec.ts:332-340` (J28) | Desktop 2-column layout check. Carousel in `ShopHero` should not change the outer container.                                                                                                                                     | Run test; verify no regression.                                                                                                                  |
+| `e2e/checkin.spec.ts:213`             | Reviews section on shop detail. Carousel is above the fold — should not interfere.                                                                                                                                               | Run test.                                                                                                                                        |
+| `e2e/lists.spec.ts:306,326`           | Save-to-list flow navigating through shop detail. Carousel prev/next buttons could potentially intercept click events on overlay buttons.                                                                                        | Run test; verify save button still clickable. Carousel controls are scoped to the image area, not the overlay row.                               |
 
 All e2e updates (if any) ship in the same PR as the component change — no follow-up cleanup tickets.
 

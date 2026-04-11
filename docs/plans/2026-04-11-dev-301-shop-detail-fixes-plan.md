@@ -17,6 +17,7 @@
 **Tech Stack:** Next.js 16 (App Router), TypeScript strict, Tailwind, shadcn/ui, embla-carousel-react, Vitest + Testing Library, Playwright (e2e).
 
 **Acceptance Criteria:**
+
 - [ ] A user on the shop detail page sees all photos for a multi-photo shop and can swipe (mobile) or click prev/next arrows (desktop) to browse them.
 - [ ] The Google Maps and Apple Maps links appear exactly once on the page, inside the Location section below the map thumbnail, on both mobile and desktop.
 - [ ] The orange location pin is visible on the desktop interactive Mapbox thumbnail (previously missing).
@@ -38,6 +39,7 @@ Before starting Task 1:
 ### Task 1: Install embla-carousel-react and add shadcn Carousel primitive
 
 **Files:**
+
 - Modify: `package.json` (new dep)
 - Modify: `pnpm-lock.yaml` (auto-updated)
 - Create: `components/ui/carousel.tsx`
@@ -48,14 +50,17 @@ Before starting Task 1:
 **Step 1: Install the dep**
 
 Run:
+
 ```bash
 pnpm add embla-carousel-react
 ```
+
 Expected: `package.json` shows `"embla-carousel-react": "^8.x"` in `dependencies`; `pnpm-lock.yaml` updated.
 
 **Step 2: Add the shadcn Carousel component**
 
 Run:
+
 ```bash
 pnpm dlx shadcn@latest add carousel
 ```
@@ -63,17 +68,21 @@ pnpm dlx shadcn@latest add carousel
 If the shadcn CLI fails or prompts interactively, fall back to manually creating `components/ui/carousel.tsx` with the stock shadcn Carousel source — paste the canonical file from the shadcn docs (Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext, with `useCarousel` context).
 
 Verify the file exists:
+
 ```bash
 ls components/ui/carousel.tsx
 ```
+
 Expected: the file is present and exports `Carousel`, `CarouselContent`, `CarouselItem`, `CarouselPrevious`, `CarouselNext`.
 
 **Step 3: Type-check**
 
 Run:
+
 ```bash
 pnpm type-check
 ```
+
 Expected: PASS.
 
 **Step 4: Commit**
@@ -88,12 +97,14 @@ git commit -m "chore(DEV-301): add embla-carousel-react + shadcn Carousel primit
 ### Task 2: Add ShopHero carousel behavior (TDD)
 
 **Files:**
+
 - Modify: `components/shops/shop-hero.tsx`
 - Test: `components/shops/shop-hero.test.tsx`
 
 **Why:** `ShopHero` currently only renders `photoUrls.at(0)`. Users can't browse multi-photo shops.
 
 **Notes for the implementer:**
+
 - The component must become a client component (`'use client'`) because the Carousel uses hooks.
 - Preserve the existing `ShopHeroProps` interface exactly — do not add or rename props. The `className` prop must still merge into the outer container (allowing the caller's `lg:h-[480px]`).
 - The outer container stays `relative h-[260px] w-full bg-gray-100` + caller-supplied className. The Carousel must fill it.
@@ -134,8 +145,12 @@ describe('ShopHero multi-photo carousel', () => {
 
   it('does not render prev/next buttons when there is only one photo', () => {
     render(<ShopHero photoUrls={[photos[0]]} shopName="Fika Taipei" />);
-    expect(screen.queryByRole('button', { name: /previous slide/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /next slide/i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /previous slide/i })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /next slide/i })
+    ).not.toBeInTheDocument();
   });
 
   it('does not render the slide indicator when there is only one photo', () => {
@@ -151,7 +166,9 @@ describe('ShopHero multi-photo carousel', () => {
   // Existing tests below — preserve them from the current file:
   it('calls onBack when the back button is tapped', async () => {
     const onBack = vi.fn();
-    render(<ShopHero photoUrls={photos} shopName="Fika Taipei" onBack={onBack} />);
+    render(
+      <ShopHero photoUrls={photos} shopName="Fika Taipei" onBack={onBack} />
+    );
     await userEvent.click(screen.getByRole('button', { name: /back/i }));
     expect(onBack).toHaveBeenCalledOnce();
   });
@@ -163,9 +180,11 @@ describe('ShopHero multi-photo carousel', () => {
 **Step 2: Run test to verify it fails**
 
 Run:
+
 ```bash
 pnpm test shop-hero
 ```
+
 Expected: FAIL on "renders all photo slides", "shows a slide indicator", "does not render prev/next when single photo". Existing passing tests stay green.
 
 **Step 3: Write the implementation**
@@ -320,17 +339,21 @@ export function ShopHero({
 **Step 4: Run test to verify it passes**
 
 Run:
+
 ```bash
 pnpm test shop-hero
 ```
+
 Expected: PASS — all new and existing tests green.
 
 **Step 5: Run full frontend suite**
 
 Run:
+
 ```bash
 pnpm test
 ```
+
 Expected: PASS — no regressions elsewhere.
 
 **Step 6: Commit**
@@ -345,6 +368,7 @@ git commit -m "feat(DEV-301): add photo carousel to ShopHero with slide indicato
 ### Task 3: Fix desktop Mapbox pin (TDD)
 
 **Files:**
+
 - Modify: `components/shops/shop-map-thumbnail.tsx`
 - Test: `components/shops/shop-map-thumbnail.test.tsx`
 
@@ -362,7 +386,7 @@ describe('ShopMapThumbnail source contract', () => {
   it("imports 'mapbox-gl/dist/mapbox-gl.css' so the desktop marker renders", () => {
     const source = readFileSync(
       new URL('./shop-map-thumbnail.tsx', import.meta.url),
-      'utf8',
+      'utf8'
     );
     expect(source).toContain("import 'mapbox-gl/dist/mapbox-gl.css'");
   });
@@ -372,9 +396,11 @@ describe('ShopMapThumbnail source contract', () => {
 **Step 2: Run test to verify it fails**
 
 Run:
+
 ```bash
 pnpm test shop-map-thumbnail
 ```
+
 Expected: FAIL — the import is absent.
 
 **Step 3: Write the implementation**
@@ -394,9 +420,11 @@ No other changes to this file.
 **Step 4: Run test to verify it passes**
 
 Run:
+
 ```bash
 pnpm test shop-map-thumbnail
 ```
+
 Expected: PASS.
 
 **Step 5: Commit**
@@ -411,6 +439,7 @@ git commit -m "fix(DEV-301): import mapbox-gl css in ShopMapThumbnail so desktop
 ### Task 4: Unify maps links placement on shop detail (TDD)
 
 **Files:**
+
 - Modify: `app/shops/[shopId]/[slug]/shop-detail-client.tsx`
 - Test: `app/shops/[shopId]/[slug]/shop-detail-client.test.tsx`
 
@@ -441,9 +470,11 @@ it('renders the Apple Maps link exactly once in the DOM', () => {
 **Step 2: Run test to verify it fails**
 
 Run:
+
 ```bash
 pnpm test shop-detail-client
 ```
+
 Expected: FAIL with `getAllByRole` returning 2 elements before the fix is applied.
 
 **Step 3: Write the implementation**
@@ -451,14 +482,18 @@ Expected: FAIL with `getAllByRole` returning 2 elements before the fix is applie
 Edit `app/shops/[shopId]/[slug]/shop-detail-client.tsx`:
 
 **Change A** — delete the orphaned desktop block. Remove these lines (currently 250-253):
+
 ```tsx
-        {/* Inline directions — desktop only */}
-        {hasMap && (
-          <div className="hidden gap-2 lg:flex">{navigationLinks}</div>
-        )}
+{
+  /* Inline directions — desktop only */
+}
+{
+  hasMap && <div className="hidden gap-2 lg:flex">{navigationLinks}</div>;
+}
 ```
 
 **Change B** — drop `lg:hidden` from the mobile block inside the Location section (currently line 366):
+
 ```tsx
 // Before:
             <div className="flex gap-2 px-5 py-3 lg:hidden">
@@ -476,9 +511,11 @@ No other changes. The `navigationLinks` JSX constant and the `{hasMap}` wrapping
 **Step 4: Run test to verify it passes**
 
 Run:
+
 ```bash
 pnpm test shop-detail-client
 ```
+
 Expected: PASS.
 
 **Step 5: Commit**
@@ -493,6 +530,7 @@ git commit -m "fix(DEV-301): unify maps links placement inside Location section"
 ### Task 5: Run e2e drift check and patch affected specs
 
 **Files:**
+
 - Potentially modify: `e2e/discovery.spec.ts` (J28 line 332-340, J36 line 450-475)
 - Potentially modify: `e2e/checkin.spec.ts` (line 213)
 - Potentially modify: `e2e/lists.spec.ts` (line 306, 326)
@@ -513,6 +551,7 @@ sed -n '300,335p' e2e/lists.spec.ts
 ```
 
 Specifically look for:
+
 - `a[href*='google.com/maps']` / `a[href*='maps.apple.com']` — may have previously matched duplicates
 - References to `{N} photos` badge text — the badge is replaced by the slide indicator; any text match on "N photos" will fail
 - Hero image selectors that target the direct child structure (carousel adds wrapper divs)
@@ -543,6 +582,7 @@ Do NOT broaden the test scope. The goal is to preserve the original assertion's 
 ```bash
 pnpm exec playwright test e2e/discovery.spec.ts e2e/checkin.spec.ts e2e/lists.spec.ts
 ```
+
 Expected: PASS.
 
 **Step 5: Commit**
@@ -565,11 +605,13 @@ git commit -m "test(DEV-301): update e2e specs for shop detail carousel + unifie
 **Step 1: Lint + type-check + full test suite**
 
 Run:
+
 ```bash
 pnpm lint
 pnpm type-check
 pnpm test
 ```
+
 Expected: PASS on all three.
 
 **Step 2: Backend tests (sanity check — nothing should have changed)**
@@ -577,6 +619,7 @@ Expected: PASS on all three.
 ```bash
 cd backend && uv run pytest -q
 ```
+
 Expected: PASS.
 
 **Step 3: Manual verification — start dev server and verify each bug is fixed**
@@ -651,17 +694,21 @@ graph TD
 ```
 
 **Wave 1** (parallel — no dependencies, no file overlap):
+
 - Task 1: Install embla-carousel-react + shadcn Carousel primitive
 - Task 3: Add Mapbox CSS import to shop-map-thumbnail.tsx
 - Task 4: Unify maps links placement in shop-detail-client.tsx
 
 **Wave 2** (sequential — depends on Task 1):
+
 - Task 2: ShopHero carousel implementation ← Task 1 (needs `components/ui/carousel.tsx`)
 
 **Wave 3** (depends on all DOM-changing tasks):
+
 - Task 5: E2E drift check ← Tasks 2, 3, 4
 
 **Wave 4** (final gate):
+
 - Task 6: Full verification + manual QA ← Task 5
 
 > **Note:** Wave 1 parallelism is optional — a single engineer can run them sequentially. The waves are correct dependency-wise and file-wise (no overlap), so parallel execution is safe if desired.

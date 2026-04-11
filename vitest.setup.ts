@@ -8,7 +8,6 @@ process.env.NEXT_PUBLIC_MAPBOX_TOKEN = 'pk.test_placeholder';
 // jsdom doesn't implement scrollIntoView - mock it globally for Radix UI Select
 window.HTMLElement.prototype.scrollIntoView = function () {};
 
-
 beforeAll(() => {
   Object.defineProperty(window, 'matchMedia', {
     configurable: true,

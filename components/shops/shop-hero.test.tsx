@@ -99,8 +99,12 @@ describe('ShopHero multi-photo carousel', () => {
 
   it('does not render prev/next buttons when there is only one photo', () => {
     render(<ShopHero photoUrls={[photos[0]]} shopName="Fika Taipei" />);
-    expect(screen.queryByRole('button', { name: /previous slide/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /next slide/i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /previous slide/i })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /next slide/i })
+    ).not.toBeInTheDocument();
   });
 
   it('does not render the slide indicator when there is only one photo', () => {
@@ -115,7 +119,9 @@ describe('ShopHero multi-photo carousel', () => {
 
   it('calls onBack when the back button is tapped', async () => {
     const onBack = vi.fn();
-    render(<ShopHero photoUrls={photos} shopName="Fika Taipei" onBack={onBack} />);
+    render(
+      <ShopHero photoUrls={photos} shopName="Fika Taipei" onBack={onBack} />
+    );
     await userEvent.click(screen.getByRole('button', { name: /back/i }));
     expect(onBack).toHaveBeenCalledOnce();
   });

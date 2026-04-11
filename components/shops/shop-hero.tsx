@@ -74,12 +74,8 @@ export function ShopHero({
           </CarouselContent>
           {isMulti && (
             <>
-              <CarouselPrevious
-                className="absolute top-1/2 left-4 hidden -translate-y-1/2 lg:flex"
-              />
-              <CarouselNext
-                className="absolute top-1/2 right-4 hidden -translate-y-1/2 lg:flex"
-              />
+              <CarouselPrevious className="absolute top-1/2 left-4 hidden -translate-y-1/2 lg:flex" />
+              <CarouselNext className="absolute top-1/2 right-4 hidden -translate-y-1/2 lg:flex" />
             </>
           )}
         </Carousel>

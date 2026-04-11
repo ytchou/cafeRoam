@@ -33,12 +33,7 @@
       "status": "debatable"
     }
   ],
-  "active_agents": [
-    "Bug Hunter",
-    "Test Philosophy",
-    "Design Quality",
-    "Adversarial Review (Codex)"
-  ],
+  "active_agents": [],
   "skipped": [],
   "head_sha": "159f44173eee862988dda10c68635c0a79766d4e",
   "review_log_path": "docs/reviews/2026-04-12-fix-dev-301-shop-detail-fixes.md"
