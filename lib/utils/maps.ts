@@ -7,7 +7,10 @@ interface MapsShop {
 }
 
 export function getGoogleMapsUrl(shop: MapsShop): string {
-  return `https://www.google.com/maps/search/?api=1&query=${shop.latitude},${shop.longitude}`;
+  if (shop.googlePlaceId) {
+    return `https://www.google.com/maps/place/?q=place_id:${shop.googlePlaceId}`;
+  }
+  return `https://www.google.com/maps?q=${shop.latitude},${shop.longitude}`;
 }
 
 export function getAppleMapsUrl(

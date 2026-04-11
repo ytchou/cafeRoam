@@ -262,30 +262,26 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
         {tags.length > 0 && <AttributeChips tags={tags as TaxonomyTag[]} />}
 
         {/* Social Links + Google Maps */}
-        {(shop.instagramUrl || shop.facebookUrl || shop.threadsUrl || shop.website || shop.googlePlaceId || (shop.latitude && shop.longitude)) && (
-          <div className="border-t pt-4 pb-2 mx-5">
-            <div className="flex items-center gap-4">
-              {shop.googlePlaceId ? (
+        {(shop.instagramUrl || shop.facebookUrl || shop.threadsUrl || shop.website || shop.googlePlaceId || (shop.latitude != null && shop.longitude != null)) && (
+          <div className="border-t border-border-warm pt-4 pb-2 mx-5">
+            <div className="flex items-center gap-1">
+              {(shop.googlePlaceId || (shop.latitude != null && shop.longitude != null)) && (
                 <a
-                  href={`https://www.google.com/maps/place/?q=place_id:${shop.googlePlaceId}`}
+                  href={getGoogleMapsUrl({
+                    name: shop.name,
+                    latitude: shop.latitude ?? 0,
+                    longitude: shop.longitude ?? 0,
+                    googlePlaceId: shop.googlePlaceId ?? null,
+                    address: shop.address ?? null,
+                  })}
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="在 Google Maps 查看"
-                  className="text-muted-foreground hover:text-foreground transition-colors"
+                  className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
                   <MapPin className="h-5 w-5" />
                 </a>
-              ) : shop.latitude && shop.longitude ? (
-                <a
-                  href={`https://www.google.com/maps?q=${shop.latitude},${shop.longitude}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="在 Google Maps 查看"
-                  className="text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <MapPin className="h-5 w-5" />
-                </a>
-              ) : null}
+              )}
 
               {shop.instagramUrl && (
                 <a
@@ -293,7 +289,7 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="Instagram"
-                  className="text-muted-foreground hover:text-foreground transition-colors"
+                  className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
                   <InstagramIcon className="h-5 w-5" />
                 </a>
@@ -305,7 +301,7 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="Facebook"
-                  className="text-muted-foreground hover:text-foreground transition-colors"
+                  className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
                   <FacebookIcon className="h-5 w-5" />
                 </a>
@@ -317,7 +313,7 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="Threads"
-                  className="text-muted-foreground hover:text-foreground transition-colors"
+                  className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
                   <ThreadsIcon className="h-5 w-5" />
                 </a>
@@ -329,7 +325,7 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="官方網站"
-                  className="text-muted-foreground hover:text-foreground transition-colors"
+                  className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
                   <Globe className="h-5 w-5" />
                 </a>
