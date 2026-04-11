@@ -141,7 +141,7 @@ describe('navigation links', () => {
 });
 
 describe('Links section', () => {
-  it('renders Instagram link when instagramUrl is set', () => {
+  it('a user can click through to Instagram when the shop has an Instagram URL', () => {
     render(
       <ShopDetailClient
         shop={{ ...mockShop, instagramUrl: 'https://www.instagram.com/rufous_coffee' }}
@@ -152,7 +152,7 @@ describe('Links section', () => {
     ).toHaveAttribute('href', 'https://www.instagram.com/rufous_coffee');
   });
 
-  it('does not render Instagram link when instagramUrl is null', () => {
+  it('a user does not see an Instagram link when the shop has no Instagram URL', () => {
     render(<ShopDetailClient shop={{ ...mockShop, instagramUrl: null }} />);
     expect(screen.queryByRole('link', { name: 'Instagram' })).not.toBeInTheDocument();
   });
