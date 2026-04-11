@@ -365,7 +365,7 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
               longitude={shop.longitude!}
               shopName={shop.name}
             />
-            <div className="flex gap-2 px-5 py-3 lg:hidden">
+            <div className="flex gap-2 px-5 py-3">
               {navigationLinks}
             </div>
             <div className="hidden gap-2 px-5 py-3 lg:flex">

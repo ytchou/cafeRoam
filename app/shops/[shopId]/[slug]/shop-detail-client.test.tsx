@@ -138,6 +138,20 @@ describe('navigation links', () => {
     );
     expect(links[0]).toHaveAttribute('target', '_blank');
   });
+
+  it('renders the Google Maps navigation button exactly once in the DOM', () => {
+    // Render without googlePlaceId so the icon link in the Links section is hidden,
+    // isolating just the navigationLinks in the Location section.
+    render(<ShopDetailClient shop={mockShop} />);
+    const googleLinks = screen.getAllByRole('link', { name: /^google maps$/i });
+    expect(googleLinks).toHaveLength(1);
+  });
+
+  it('renders the Apple Maps navigation button exactly once in the DOM', () => {
+    render(<ShopDetailClient shop={mockShop} />);
+    const appleLinks = screen.getAllByRole('link', { name: /^apple maps$/i });
+    expect(appleLinks).toHaveLength(1);
+  });
 });
 
 describe('Links section', () => {
