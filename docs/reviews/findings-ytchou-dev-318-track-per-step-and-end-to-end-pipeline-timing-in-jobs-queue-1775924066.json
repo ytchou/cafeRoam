@@ -49,9 +49,16 @@
       "status": "resolved"
     }
   ],
-  "active_agents": ["Bug Hunter", "Standards & Conventions", "Architecture & Design", "Plan Alignment"],
+  "active_agents": [],
   "skipped": [],
   "head_sha": "4ba9f9df2d7e94863018300d397b25275a56da58",
   "review_log_path": "docs/reviews/2026-04-12-ytchou-dev-318-track-per-step-and-end-to-end-pipeline-timing-in-jobs-queue.md",
-  "notes": "Task tool unavailable in this session — discovery agents executed inline. Codex adversarial review also unavailable (disable-model-invocation on Skill). Test Philosophy and Design Quality gates passed with no findings."
+  "notes": "Task tool unavailable in this session — discovery agents executed inline. Codex adversarial review also unavailable (disable-model-invocation on Skill). Test Philosophy and Design Quality gates passed with no findings.",
+  "re_verify_pass_2": {
+    "iteration": 1,
+    "resolved": 6,
+    "new_issues": 0,
+    "active_agents_with_new_findings": [],
+    "summary": "All 4 Important (finally: blocks) and 2 Minor (RawJobsList options, enrich_shop cast annotation) issues confirmed resolved. No regressions introduced. classify_shop_photos uses try/finally without except (correct pattern for this handler). The generate_embedding cancellation test correctly mocks job_queue at the DB boundary and asserts the step_timings write via job_queue_table.update.assert_called_once(). job_id is 'job-cancelled-2' (non-None) so the finally guard fires correctly."
+  }
 }
