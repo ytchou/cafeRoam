@@ -362,25 +362,17 @@ async def reject_submissions_bulk(
 
     valid_ids = [sub["id"] for sub in valid_subs]
 
-    # Bulk UPDATE shop_submissions — .select("id") required so supabase-py returns updated rows
-    updated_res = (
-        db.table("shop_submissions")
-        .update(
-            {
-                "status": "rejected",
-                "rejection_reason": body.rejection_reason,
-                "reviewed_at": now,
-            }
-        )
-        .in_("id", valid_ids)
-        .not_.in_("status", ["live", "rejected"])
-        .select("id")
-        .execute()
-    )
-    updated_ids = {row["id"] for row in cast("list[dict[str, Any]]", updated_res.data or [])}
-    updated_subs = [sub for sub in valid_subs if sub["id"] in updated_ids]
+    # Bulk UPDATE shop_submissions
+    db.table("shop_submissions").update(
+        {
+            "status": "rejected",
+            "rejection_reason": body.rejection_reason,
+            "reviewed_at": now,
+        }
+    ).in_("id", valid_ids).execute()
+    updated_subs = valid_subs
     updated_shop_ids = [sub["shop_id"] for sub in updated_subs]
-    rejected = len(updated_ids)
+    rejected = len(valid_ids)
     skipped = len(body.submission_ids) - rejected
 
     # Bulk UPDATE shops processing_status
