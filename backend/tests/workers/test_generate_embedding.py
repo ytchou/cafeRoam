@@ -95,3 +95,66 @@ async def test_embedding_failure_does_not_fail_live_shop():
         if c.args and c.args[0].get("processing_status") == "failed"
     ]
     assert not failed_updates, "Live shop must not be marked failed on embedding error"
+
+
+@pytest.mark.asyncio
+async def test_generate_embedding_writes_step_timings_to_db():
+    shop_id = "shop-id-001"
+    job_id = "job-id-001"
+
+    from models.types import JobStatus
+
+    mock_embeddings = AsyncMock()
+    mock_embeddings.embed.return_value = [0.1] * 1536
+
+    shop_data = {
+        "name": "測試咖啡館",
+        "description": "舒適的咖啡廳，適合工作。",
+        "processing_status": "embedding",
+        "community_summary": "社區評語：咖啡好喝。",
+    }
+
+    shops_table = MagicMock()
+    shops_table.select.return_value.eq.return_value.single.return_value.execute.return_value = (
+        MagicMock(data=shop_data)
+    )
+    shops_table.update.return_value.eq.return_value.execute.return_value = MagicMock()
+
+    menu_table = MagicMock()
+    menu_table.select.return_value.eq.return_value.execute.return_value = MagicMock(data=[])
+
+    job_queue_table = MagicMock()
+    job_queue_table.update.return_value.eq.return_value.execute.return_value = MagicMock()
+
+    def table_router(name: str) -> MagicMock:
+        if name == "shops":
+            return shops_table
+        if name == "shop_menu_items":
+            return menu_table
+        if name == "job_queue":
+            return job_queue_table
+        return MagicMock()
+
+    db = MagicMock()
+    db.table.side_effect = table_router
+
+    queue = AsyncMock()
+    queue.get_status.return_value = JobStatus.CLAIMED
+
+    await handle_generate_embedding(
+        payload={"shop_id": shop_id},
+        db=db,
+        embeddings=mock_embeddings,
+        queue=queue,
+        job_id=job_id,
+    )
+
+    job_queue_updates = [
+        call for call in job_queue_table.update.call_args_list if "step_timings" in call[0][0]
+    ]
+    assert len(job_queue_updates) == 1
+    timings = job_queue_updates[0][0][0]["step_timings"]
+    assert set(timings.keys()) == {"fetch_text", "embed_call", "db_write"}
+    for v in timings.values():
+        assert isinstance(v["duration_ms"], int)
+        assert v["duration_ms"] >= 0

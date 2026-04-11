@@ -212,8 +212,15 @@ class TestGenerateEmbeddingHandler:
             data=checkin_texts if checkin_texts is not None else []
         )
 
+        job_queue_table = MagicMock()
+        job_queue_table.update.return_value.eq.return_value.execute.return_value = MagicMock()
+
         def table_side_effect(name: str):
-            return menu_table if name == "shop_menu_items" else shop_table
+            if name == "shop_menu_items":
+                return menu_table
+            if name == "job_queue":
+                return job_queue_table
+            return shop_table
 
         db.table.side_effect = table_side_effect
         return db, shop_table, menu_table
