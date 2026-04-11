@@ -185,15 +185,6 @@ async def handle_enrich_shop(
             priority=5,
         )
 
-        if job_id is not None:
-            with contextlib.suppress(Exception):
-                (
-                    db.table("job_queue")
-                    .update({"step_timings": step_timings})
-                    .eq("id", str(job_id))
-                    .execute()
-                )
-
         logger.info("Shop enriched", shop_id=shop_id, tag_count=len(result.tags))
         await log_job_event(db, job_id, "info", "job.end", status="ok")
 
@@ -208,3 +199,12 @@ async def handle_enrich_shop(
                 }
             ).eq("id", shop_id).execute()
         raise
+    finally:
+        if job_id is not None:
+            with contextlib.suppress(Exception):
+                (
+                    db.table("job_queue")
+                    .update({"step_timings": step_timings})
+                    .eq("id", str(job_id))
+                    .execute()
+                )
