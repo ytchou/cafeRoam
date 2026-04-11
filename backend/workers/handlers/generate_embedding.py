@@ -155,15 +155,6 @@ async def handle_generate_embedding(
                 priority=5,
             )
 
-        if job_id is not None:
-            with contextlib.suppress(Exception):
-                (
-                    db.table("job_queue")
-                    .update({"step_timings": step_timings})
-                    .eq("id", str(job_id))
-                    .execute()
-                )
-
         await log_job_event(db, job_id, "info", "job.end", status="ok")
 
     except Exception as exc:
@@ -177,3 +168,12 @@ async def handle_generate_embedding(
                 }
             ).eq("id", shop_id).execute()
         raise
+    finally:
+        if job_id is not None:
+            with contextlib.suppress(Exception):
+                (
+                    db.table("job_queue")
+                    .update({"step_timings": step_timings})
+                    .eq("id", str(job_id))
+                    .execute()
+                )
