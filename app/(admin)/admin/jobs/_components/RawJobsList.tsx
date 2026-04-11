@@ -31,6 +31,9 @@ interface Job {
   priority: number;
   attempts: number;
   created_at: string;
+  claimed_at: string | null;
+  completed_at: string | null;
+  step_timings: Record<string, { duration_ms: number }> | null;
   last_error: string | null;
   payload: Record<string, unknown>;
 }
@@ -58,6 +61,62 @@ const JOB_TYPE_OPTIONS = [
 ] as const;
 
 const PAGE_SIZE = 20;
+
+function formatDuration(ms: number): string {
+  if (ms >= 1000) return `${(ms / 1000).toFixed(1)}s`;
+  return `${ms}ms`;
+}
+
+function TimingSection({
+  claimedAt,
+  completedAt,
+  stepTimings,
+}: {
+  claimedAt: string | null;
+  completedAt: string | null;
+  stepTimings: Record<string, { duration_ms: number }> | null;
+}) {
+  if (!stepTimings || !completedAt) return null;
+
+  const totalMs = claimedAt
+    ? Date.parse(completedAt) - Date.parse(claimedAt)
+    : null;
+
+  const steps = Object.entries(stepTimings);
+  const maxMs = Math.max(...steps.map(([, v]) => v.duration_ms), 1);
+
+  return (
+    <div className="mb-4">
+      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        Timing
+      </p>
+      {totalMs !== null && (
+        <p className="mb-2 text-sm text-foreground">
+          Total: {formatDuration(totalMs)}{' '}
+          <span className="text-muted-foreground">(claimed → completed)</span>
+        </p>
+      )}
+      <div className="space-y-1">
+        {steps.map(([step, { duration_ms }]) => (
+          <div key={step} className="flex items-center gap-2 text-xs">
+            <span className="w-28 shrink-0 font-mono text-muted-foreground">
+              {step}
+            </span>
+            <span className="w-14 shrink-0 text-right text-foreground">
+              {formatDuration(duration_ms)}
+            </span>
+            <div className="h-2 flex-1 rounded-sm bg-muted">
+              <div
+                className="h-2 rounded-sm bg-primary"
+                style={{ width: `${(duration_ms / maxMs) * 100}%` }}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export function RawJobsList({ initialStatus }: { initialStatus?: string }) {
   const { getToken } = useAdminAuth();
@@ -335,6 +394,11 @@ export function RawJobsList({ initialStatus }: { initialStatus?: string }) {
                 <TableRow className="border-b bg-gray-50">
                   <TableCell colSpan={7} className="px-4 py-3">
                     <div className="space-y-2">
+                      <TimingSection
+                        claimedAt={job.claimed_at}
+                        completedAt={job.completed_at}
+                        stepTimings={job.step_timings}
+                      />
                       <div>
                         <p className="text-xs font-semibold text-gray-500">
                           Payload
