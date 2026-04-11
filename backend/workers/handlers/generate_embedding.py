@@ -18,7 +18,7 @@ async def handle_generate_embedding(
     db: Client,
     embeddings: EmbeddingsProvider,
     queue: JobQueue,
-    job_id: str,
+    job_id: str | None = None,
 ) -> None:
     """Generate vector embedding for a shop, enriched with menu items and community texts.
 
@@ -27,6 +27,7 @@ async def handle_generate_embedding(
     This prevents live shops from temporarily disappearing from search during re-embedding.
     """
     shop_id = payload["shop_id"]
+    job_id = cast("str", job_id)
     logger.info("Generating embedding", shop_id=shop_id)
 
     # Load shop data including processing_status for the live-shop guard
@@ -110,7 +111,7 @@ async def handle_generate_embedding(
         if should_advance:
             update_data["processing_status"] = "publishing"
 
-        if not await check_job_still_claimed(queue, job_id):
+        if job_id and not await check_job_still_claimed(queue, job_id):
             logger.warning("job.aborted_midflight job_id=%s handler=generate_embedding", job_id)
             await log_job_event(db, job_id, "warn", "job.aborted_midflight", shop_id=str(shop_id))
             return
@@ -149,7 +150,7 @@ async def handle_generate_embedding(
 
     except Exception as exc:
         await log_job_event(db, job_id, "error", "job.error", error=str(exc))
-        if should_advance and await check_job_still_claimed(queue, job_id):
+        if should_advance and (not job_id or await check_job_still_claimed(queue, job_id)):
             db.table("shops").update(
                 {
                     "processing_status": "failed",
