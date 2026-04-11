@@ -75,11 +75,9 @@ export function ShopHero({
           {isMulti && (
             <>
               <CarouselPrevious
-                aria-label="Previous slide"
                 className="absolute top-1/2 left-4 hidden -translate-y-1/2 lg:flex"
               />
               <CarouselNext
-                aria-label="Next slide"
                 className="absolute top-1/2 right-4 hidden -translate-y-1/2 lg:flex"
               />
             </>
