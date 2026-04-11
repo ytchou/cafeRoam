@@ -19,10 +19,11 @@ async def handle_enrich_shop(
     db: Client,
     llm: LLMProvider,
     queue: JobQueue,
-    job_id: str,
+    job_id: str | None = None,
 ) -> None:
     """Enrich a shop with AI-generated tags and summary."""
     shop_id = payload["shop_id"]
+    job_id = cast("str", job_id)
     logger.info("Enriching shop", shop_id=shop_id)
 
     _failure_recorded = False
@@ -88,7 +89,7 @@ async def handle_enrich_shop(
 
         result = await llm.enrich_shop(enrichment_input)
 
-        if not await check_job_still_claimed(queue, job_id):
+        if job_id and not await check_job_still_claimed(queue, job_id):
             await log_job_event(db, job_id, "warn", "job.aborted_midflight", shop_id=str(shop_id))
             return
 
@@ -109,7 +110,7 @@ async def handle_enrich_shop(
             raise ValueError(f"Enrichment summary for shop {shop_id} is not in Traditional Chinese")
 
         mode = result.mode_scores
-        if not await check_job_still_claimed(queue, job_id):
+        if job_id and not await check_job_still_claimed(queue, job_id):
             logger.warning("job.aborted_midflight job_id=%s handler=enrich_shop", job_id)
             await log_job_event(db, job_id, "warn", "job.aborted_midflight", shop_id=str(shop_id))
             return
@@ -135,7 +136,7 @@ async def handle_enrich_shop(
         )
 
         # Re-enrichment replaces tags, not appends
-        if not await check_job_still_claimed(queue, job_id):
+        if job_id and not await check_job_still_claimed(queue, job_id):
             logger.warning("job.aborted_midflight job_id=%s handler=enrich_shop", job_id)
             await log_job_event(db, job_id, "warn", "job.aborted_midflight", shop_id=str(shop_id))
             return
@@ -180,7 +181,7 @@ async def handle_enrich_shop(
 
     except Exception as exc:
         await log_job_event(db, job_id, "error", "job.error", error=str(exc))
-        if not _failure_recorded and await check_job_still_claimed(queue, job_id):
+        if not _failure_recorded and (not job_id or await check_job_still_claimed(queue, job_id)):
             db.table("shops").update(
                 {
                     "processing_status": "failed",
