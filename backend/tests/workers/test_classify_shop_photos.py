@@ -3,6 +3,7 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from models.types import PhotoCategory
+from workers.handlers.classify_shop_photos import handle_classify_shop_photos
 
 
 class TestThumbnailUrl:
@@ -334,3 +335,64 @@ class TestClassifyShopPhotosHandler:
             if c.kwargs.get("job_type") == JobType.ENRICH_SHOP
         ]
         assert len(enrich_enqueue_calls) == 1
+
+
+@pytest.mark.asyncio
+async def test_classify_shop_photos_writes_step_timings_to_db():
+    shop_id = "shop-id-001"
+    job_id = "job-id-001"
+
+    mock_llm = AsyncMock()
+    mock_llm.classify_photo.return_value = PhotoCategory.VIBE
+
+    tables: dict = {}
+
+    def table_router(name: str):
+        if name not in tables:
+            t = MagicMock()
+            if name == "shop_photos":
+                # unclassified photos fetch
+                t.select.return_value.eq.return_value.is_.return_value.execute.return_value = (
+                    MagicMock(
+                        data=[
+                            {
+                                "id": "photo-1",
+                                "url": "https://example.com/1.jpg",
+                                "category": None,
+                            }
+                        ]
+                    )
+                )
+                # existing counts fetch (no existing classified photos)
+                t.select.return_value.eq.return_value.not_.return_value.is_.return_value.execute.return_value = MagicMock(
+                    data=[]
+                )
+                # batch update
+                t.update.return_value.in_.return_value.execute.return_value = MagicMock()
+            elif name == "job_queue":
+                t.update.return_value.eq.return_value.execute.return_value = MagicMock()
+            tables[name] = t
+        return tables[name]
+
+    db = MagicMock()
+    db.table.side_effect = table_router
+    queue = AsyncMock()
+
+    await handle_classify_shop_photos(
+        payload={"shop_id": shop_id},
+        db=db,
+        llm=mock_llm,
+        queue=queue,
+        job_id=job_id,
+    )
+
+    assert "job_queue" in tables, "job_queue table was never accessed"
+    update_calls = tables["job_queue"].update.call_args_list
+    assert len(update_calls) == 1, "Expected exactly one job_queue update for step_timings"
+    written = update_calls[0][0][0]
+    assert "step_timings" in written
+    timings = written["step_timings"]
+    assert set(timings.keys()) == {"fetch_photos", "classify", "db_write"}
+    for v in timings.values():
+        assert isinstance(v["duration_ms"], int)
+        assert v["duration_ms"] >= 0

@@ -1,4 +1,6 @@
+import contextlib
 import re
+import time
 from typing import Any, cast
 
 import structlog
@@ -28,10 +30,13 @@ async def handle_classify_shop_photos(
     db: Client,
     llm: LLMProvider,
     queue: JobQueue,
+    job_id: str | None = None,
 ) -> None:
     """Classify unclassified shop photos as MENU/VIBE/SKIP via Claude Haiku Vision."""
+    step_timings: dict[str, dict[str, int]] = {}
     shop_id = payload["shop_id"]
 
+    t0 = time.monotonic()
     # Fetch unclassified photos
     response = (
         db.table("shop_photos")
@@ -46,7 +51,9 @@ async def handle_classify_shop_photos(
 
     # Query already-classified counts to enforce global caps across runs
     existing_counts = _get_existing_category_counts(db, shop_id)
+    step_timings["fetch_photos"] = {"duration_ms": int((time.monotonic() - t0) * 1000)}
 
+    t0 = time.monotonic()
     logger.info("Classifying photos", shop_id=shop_id, count=len(photos))
 
     # Classify each photo individually (for fault isolation); accumulate in memory
@@ -72,9 +79,21 @@ async def handle_classify_shop_photos(
     vibe_slots = max(0, _VIBE_CAP - existing_counts.get(PhotoCategory.VIBE, 0))
     _enforce_cap(classified, PhotoCategory.MENU, menu_slots)
     _enforce_cap(classified, PhotoCategory.VIBE, vibe_slots)
+    step_timings["classify"] = {"duration_ms": int((time.monotonic() - t0) * 1000)}
 
     # Batch write: one update call per final category
+    t0 = time.monotonic()
     _batch_write(db, classified)
+    step_timings["db_write"] = {"duration_ms": int((time.monotonic() - t0) * 1000)}
+
+    if job_id is not None:
+        with contextlib.suppress(Exception):
+            (
+                db.table("job_queue")
+                .update({"step_timings": step_timings})
+                .eq("id", str(job_id))
+                .execute()
+            )
 
     logger.info(
         "Photo classification complete",
