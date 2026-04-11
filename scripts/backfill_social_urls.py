@@ -3,10 +3,12 @@
 Backfill social URLs from the website field for shops where Apify returned nothing.
 
 Run with:
-    cd backend && uv run python ../scripts/backfill_social_urls.py
+    cd backend && uv run python ../scripts/backfill_social_urls.py          # dry-run (default)
+    cd backend && uv run python ../scripts/backfill_social_urls.py --apply  # write changes
 
 Requires SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in backend/.env
 """
+import argparse
 import os
 import sys
 from pathlib import Path
@@ -25,6 +27,21 @@ SUPABASE_SERVICE_ROLE_KEY = os.environ["SUPABASE_SERVICE_ROLE_KEY"]
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description="Backfill social URLs from website field")
+    parser.add_argument(
+        "--apply",
+        action="store_true",
+        default=False,
+        help="Write changes to the database (default: dry-run, prints only)",
+    )
+    args = parser.parse_args()
+    dry_run = not args.apply
+
+    if dry_run:
+        print("DRY-RUN mode — no writes will be made. Pass --apply to write.")
+    else:
+        print("APPLY mode — changes will be written to the database.")
+
     client = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
     # Fetch all shops that have a website but are missing at least one social URL
@@ -54,6 +71,13 @@ def main() -> None:
             updates.append(patch)
 
     print(f"Shops to update: {len(updates)}")
+
+    if dry_run:
+        for update in updates:
+            print(f"  [dry-run] would update shop {update['id']}: {update}")
+        print("Dry-run complete. No changes written.")
+        return
+
     for i, update in enumerate(updates):
         shop_id = update.pop("id")
         client.table("shops").update(update).eq("id", shop_id).execute()
