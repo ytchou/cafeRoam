@@ -76,30 +76,18 @@ authedTest.describe(
 
         // Allow up to 10s for the page to settle into one of: cards, empty state, or error
         const tarotCards = page.locator('[data-testid="tarot-card"]');
-        const emptyState = page.getByText(
-          /enable location|expand radius|no caf/i
-        );
-        const apiError = page.getByText(/couldn't load your draw/i);
-
         const hasCards = await tarotCards
           .first()
           .isVisible({ timeout: 10_000 })
           .catch(() => false);
 
-        if (!hasCards) {
-          const isEmpty = await emptyState
-            .isVisible({ timeout: 3_000 })
-            .catch(() => false);
-          const hasError = await apiError
-            .isVisible({ timeout: 3_000 })
-            .catch(() => false);
+        const count = await tarotCards.count();
+        if (!hasCards || count < 3) {
           authedTest.skip(
             true,
-            isEmpty
-              ? 'No shops available in tarot draw radius'
-              : hasError
-                ? 'Tarot draw API unavailable — Python backend may not be running'
-                : 'Tarot cards did not load within timeout'
+            count === 0
+              ? 'Tarot cards did not load within timeout'
+              : `Only ${count} card(s) available in tarot draw radius`
           );
         }
 

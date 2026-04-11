@@ -3,6 +3,7 @@ import { Suspense } from 'react';
 import { Locate, SlidersHorizontal } from 'lucide-react';
 import { ShopCarousel } from '@/components/map/shop-carousel';
 import { FilterSheet } from '@/components/filters/filter-sheet';
+import { ViewToggle } from '@/components/discovery/view-toggle';
 import { BottomNav } from '@/components/navigation/bottom-nav';
 import { MapViewDynamic as MapView } from '@/components/map/map-view-dynamic';
 import type { MappableLayoutShop } from '@/lib/types';
@@ -12,6 +13,8 @@ interface MapMobileLayoutProps {
   shops: MappableLayoutShop[];
   selectedShopId: string | null;
   onShopClick: (id: string) => void;
+  view: 'map' | 'list';
+  onViewChange: (view: 'map' | 'list') => void;
   activeFilters: string[];
   filterSheetOpen: boolean;
   onFilterClose: () => void;
@@ -26,6 +29,8 @@ export function MapMobileLayout({
   shops,
   selectedShopId,
   onShopClick,
+  view,
+  onViewChange,
   activeFilters,
   filterSheetOpen,
   onFilterClose,
@@ -54,14 +59,17 @@ export function MapMobileLayout({
         </Suspense>
       </div>
 
-      <button
-        type="button"
-        aria-label="篩選"
-        onClick={onFilterClick}
-        className="absolute top-4 right-4 z-20 flex h-11 w-11 items-center justify-center rounded-full bg-white text-[var(--text-secondary)] shadow-lg"
-      >
-        <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
-      </button>
+      <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
+        <ViewToggle view={view} onChange={onViewChange} />
+        <button
+          type="button"
+          aria-label="篩選"
+          onClick={onFilterClick}
+          className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-[var(--text-secondary)] shadow-lg"
+        >
+          <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
+        </button>
+      </div>
 
       {onLocationRequest && (
         <button
