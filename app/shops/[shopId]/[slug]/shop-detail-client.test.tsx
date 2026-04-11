@@ -109,7 +109,7 @@ describe('navigation links', () => {
     expect(links.length).toBeGreaterThanOrEqual(1);
     expect(links[0]).toHaveAttribute(
       'href',
-      expect.stringContaining('maps/search')
+      expect.stringContaining('maps/place')
     );
     expect(links[0]).toHaveAttribute('target', '_blank');
     expect(links[0]).toHaveAttribute(
@@ -124,7 +124,7 @@ describe('navigation links', () => {
     expect(links.length).toBeGreaterThanOrEqual(1);
     expect(links[0]).toHaveAttribute(
       'href',
-      expect.stringContaining('maps/search')
+      expect.stringContaining('google.com/maps')
     );
   });
 
