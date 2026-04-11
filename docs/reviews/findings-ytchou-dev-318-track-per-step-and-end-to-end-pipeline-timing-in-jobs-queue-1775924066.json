@@ -1,0 +1,57 @@
+{
+  "findings": [
+    {
+      "severity": "Important",
+      "file": "backend/workers/handlers/enrich_shop.py",
+      "line": "188",
+      "description": "step_timings is only written on the success path, inside the try: block after all operations succeed. Any exception earlier (LLM call, zh-TW guard, DB write, shop_tags write) discards the partial timings collected up to that point. Plan acceptance criterion #3 explicitly requires: 'Handlers that fail mid-run write partial step timings without affecting the failure outcome.' Fix: move the job_queue.update({'step_timings': step_timings}) call into a finally: block (keep contextlib.suppress(Exception) wrapper), or mirror it in the except branch before raise.",
+      "flagged_by": "Plan Alignment",
+      "status": "resolved"
+    },
+    {
+      "severity": "Important",
+      "file": "backend/workers/handlers/generate_embedding.py",
+      "line": "158",
+      "description": "Same acceptance-criterion violation as enrich_shop: step_timings write is happy-path only; exception branch persists nothing. Move the update into a finally: block wrapped in contextlib.suppress.",
+      "flagged_by": "Plan Alignment",
+      "status": "resolved"
+    },
+    {
+      "severity": "Important",
+      "file": "backend/workers/handlers/summarize_reviews.py",
+      "line": "137",
+      "description": "Same acceptance-criterion violation: partial timings on exception are not persisted. Move to finally:.",
+      "flagged_by": "Plan Alignment",
+      "status": "resolved"
+    },
+    {
+      "severity": "Important",
+      "file": "backend/workers/handlers/classify_shop_photos.py",
+      "line": "89",
+      "description": "Same acceptance-criterion violation: step_timings write only runs after _batch_write succeeds. If fetch_photos, classify, or _batch_write raises, partial timings are lost. This handler has no try/except, so wrapping in a try/finally is the cleanest fix.",
+      "flagged_by": "Plan Alignment",
+      "status": "resolved"
+    },
+    {
+      "severity": "Minor",
+      "file": "app/(admin)/admin/jobs/_components/RawJobsList.tsx",
+      "line": "56",
+      "description": "JOB_TYPE_OPTIONS dropdown still lists only ['all','enrich_shop','generate_embedding','scrape_shop']. This PR instruments four handlers including summarize_reviews and classify_shop_photos, but admins cannot filter to those job types to inspect the new timing UI. Pre-existing omission, but touching this file is the natural moment to fix.",
+      "flagged_by": "Standards",
+      "status": "resolved"
+    },
+    {
+      "severity": "Minor",
+      "file": "backend/workers/handlers/enrich_shop.py",
+      "line": "28",
+      "description": "job_id = cast('str', job_id) erases the str|None type. Later guard at line 188 (if job_id is not None) is dead to mypy but still meaningful at runtime. Pre-existing pattern in this file; noting for awareness only.",
+      "flagged_by": "Standards",
+      "status": "resolved"
+    }
+  ],
+  "active_agents": ["Bug Hunter", "Standards & Conventions", "Architecture & Design", "Plan Alignment"],
+  "skipped": [],
+  "head_sha": "4ba9f9df2d7e94863018300d397b25275a56da58",
+  "review_log_path": "docs/reviews/2026-04-12-ytchou-dev-318-track-per-step-and-end-to-end-pipeline-timing-in-jobs-queue.md",
+  "notes": "Task tool unavailable in this session — discovery agents executed inline. Codex adversarial review also unavailable (disable-model-invocation on Skill). Test Philosophy and Design Quality gates passed with no findings."
+}
