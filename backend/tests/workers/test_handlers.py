@@ -708,8 +708,17 @@ class TestGenerateEmbeddingHandlerGuard:
         menu_table = MagicMock()
         menu_table.select.return_value.eq.return_value.execute.return_value = MagicMock(data=[])
 
+        job_queue_table = MagicMock()
+        job_queue_table.update.return_value.eq.return_value.execute.return_value = MagicMock(
+            data=[]
+        )
+
         def table_side_effect(name: str):
-            return menu_table if name == "shop_menu_items" else shop_table
+            if name == "shop_menu_items":
+                return menu_table
+            if name == "job_queue":
+                return job_queue_table
+            return shop_table
 
         db.table.side_effect = table_side_effect
         db.rpc.return_value.execute.return_value = MagicMock(data=[])
@@ -729,8 +738,10 @@ class TestGenerateEmbeddingHandlerGuard:
                 job_id="job-cancelled-2",
             )
 
-        # The shops.update with embedding must NOT be called
+        # The shops.update with embedding must NOT be called (cancellation aborts the shop write)
         shop_table.update.assert_not_called()
+        # But step_timings ARE written to job_queue via the finally: block — that's the intended behaviour
+        job_queue_table.update.assert_called_once()
 
 
 class TestSummarizeReviewsHandlerGuard:
