@@ -1,7 +1,9 @@
 from urllib.parse import urlparse
 
 _INSTAGRAM_HOSTS = frozenset({"instagram.com", "www.instagram.com", "instagr.am"})
-_FACEBOOK_HOSTS = frozenset({"facebook.com", "fb.com", "m.facebook.com", "www.facebook.com", "fb.me"})
+_FACEBOOK_HOSTS = frozenset(
+    {"facebook.com", "fb.com", "m.facebook.com", "www.facebook.com", "fb.me"}
+)
 _THREADS_HOSTS = frozenset({"threads.net", "www.threads.net"})
 
 

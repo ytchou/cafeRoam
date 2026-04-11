@@ -1,4 +1,3 @@
-import pytest
 from utils.url_classifier import classify_social_url
 
 
