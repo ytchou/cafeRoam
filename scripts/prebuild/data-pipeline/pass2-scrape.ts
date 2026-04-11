@@ -1,5 +1,6 @@
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { scrapePlaces } from './utils/apify-client';
+import { classifySocialUrl } from './utils/url-classifier';
 import type {
   Pass1Shop,
   Pass2Shop,
@@ -89,6 +90,7 @@ export function mergeFullData(
     limited_time: shop.limited_time,
     socket: shop.socket,
     social_url: shop.social_url,
+    ...classifySocialUrl(shop.website),
     reviews,
     photos: categorizePhotos(result.imageUrls),
   };

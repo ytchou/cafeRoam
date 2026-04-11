@@ -68,7 +68,8 @@ _SHOP_LIST_COLUMNS = (
 )
 
 _SHOP_DETAIL_COLUMNS = (
-    f"{_SHOP_LIST_COLUMNS}, phone, website, price_range, google_place_id, updated_at, district"
+    f"{_SHOP_LIST_COLUMNS}, phone, website, price_range, google_place_id, "
+    f"updated_at, district, instagram_url, facebook_url, threads_url"
 )
 
 

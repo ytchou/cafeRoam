@@ -13,6 +13,7 @@ from providers.scraper.interface import (
     ScrapedPhotoData,
     ScrapedShopData,
 )
+from utils.url_classifier import classify_social_url
 
 logger = structlog.get_logger()
 
@@ -89,6 +90,10 @@ class ApifyScraperAdapter:
     def _parse_place(self, place: dict[str, Any]) -> ScrapedShopData:
         """Parse a raw Apify place dict into ScrapedShopData."""
         location = place.get("location") or {}
+        website = place.get("website")
+        social = classify_social_url(website)
+        instagram_from_apify = next(iter(place.get("instagrams") or []), None)
+        facebook_from_apify = next(iter(place.get("facebooks") or []), None)
         return ScrapedShopData(
             name=place.get("title", ""),
             address=place.get("address", ""),
@@ -101,8 +106,9 @@ class ApifyScraperAdapter:
             phone=place.get("phone"),
             website=place.get("website"),
             menu_url=place.get("menu"),
-            instagram_url=next(iter(place.get("instagrams") or []), None),
-            facebook_url=next(iter(place.get("facebooks") or []), None),
+            instagram_url=instagram_from_apify or social["instagram_url"],
+            facebook_url=facebook_from_apify or social["facebook_url"],
+            threads_url=social["threads_url"],
             country_code=place.get("countryCode"),
             price_range=place.get("price"),
             permanently_closed=bool(place.get("permanentlyClosed", False)),

@@ -143,6 +143,57 @@ async def test_parse_place_maps_all_fields(adapter):
 
 
 # ---------------------------------------------------------------------------
+# _parse_place — social URL fallback from website field
+# ---------------------------------------------------------------------------
+
+
+def test_apify_adapter_falls_back_to_website_for_instagram_when_apify_returns_nothing(adapter):
+    """When Apify returns no instagrams array, instagram_url is classified from website."""
+    raw_place = _place(
+        {
+            "website": "https://www.instagram.com/testcafe",
+            # No "instagrams" key
+        }
+    )
+    result = adapter._parse_place(raw_place)
+    assert result.instagram_url == "https://www.instagram.com/testcafe"
+
+
+def test_apify_adapter_prefers_apify_instagram_over_website_fallback(adapter):
+    """When Apify returns instagrams, use that value even if website is also instagram."""
+    raw_place = _place(
+        {
+            "website": "https://www.instagram.com/website_handle",
+            "instagrams": ["https://www.instagram.com/apify_handle"],
+        }
+    )
+    result = adapter._parse_place(raw_place)
+    assert result.instagram_url == "https://www.instagram.com/apify_handle"
+
+
+def test_apify_adapter_extracts_threads_url_from_website(adapter):
+    """threads_url is always classified from website since Apify doesn't extract Threads."""
+    raw_place = _place(
+        {
+            "website": "https://www.threads.net/@testcafe",
+        }
+    )
+    result = adapter._parse_place(raw_place)
+    assert result.threads_url == "https://www.threads.net/@testcafe"
+
+
+def test_apify_adapter_threads_url_is_none_when_website_is_not_threads(adapter):
+    """threads_url is None when website is not a Threads URL."""
+    raw_place = _place(
+        {
+            "website": "https://www.somecafe.com",
+        }
+    )
+    result = adapter._parse_place(raw_place)
+    assert result.threads_url is None
+
+
+# ---------------------------------------------------------------------------
 # _normalize_opening_hours
 # ---------------------------------------------------------------------------
 

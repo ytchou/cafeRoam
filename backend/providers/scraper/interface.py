@@ -27,6 +27,7 @@ class ScrapedShopData(BaseModel):
     menu_url: str | None = None
     instagram_url: str | None = None
     facebook_url: str | None = None
+    threads_url: str | None = None
     country_code: str | None = None
     price_range: str | None = None
     permanently_closed: bool = False

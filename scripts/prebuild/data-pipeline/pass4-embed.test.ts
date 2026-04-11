@@ -38,6 +38,9 @@ function makeProcessedShop(
     limited_time: 'no',
     socket: 'yes',
     social_url: '',
+    instagram_url: null,
+    facebook_url: null,
+    threads_url: null,
     reviews: [],
     photos: [],
     enrichment: {

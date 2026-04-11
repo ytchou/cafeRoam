@@ -64,6 +64,9 @@ const mockShop = {
   longitude: 121.565,
   googlePlaceId: null as string | null,
   address: '台北市大安區復興南路一段107巷5弄6號' as string | null,
+  instagramUrl: null as string | null,
+  facebookUrl: null as string | null,
+  threadsUrl: null as string | null,
 };
 
 describe('ShopDetailClient — new layout components', () => {
@@ -106,7 +109,7 @@ describe('navigation links', () => {
     expect(links.length).toBeGreaterThanOrEqual(1);
     expect(links[0]).toHaveAttribute(
       'href',
-      expect.stringContaining('maps/search')
+      expect.stringContaining('maps/place')
     );
     expect(links[0]).toHaveAttribute('target', '_blank');
     expect(links[0]).toHaveAttribute(
@@ -121,7 +124,7 @@ describe('navigation links', () => {
     expect(links.length).toBeGreaterThanOrEqual(1);
     expect(links[0]).toHaveAttribute(
       'href',
-      expect.stringContaining('maps/search')
+      expect.stringContaining('google.com/maps')
     );
   });
 
@@ -134,5 +137,84 @@ describe('navigation links', () => {
       expect.stringContaining('maps.apple.com')
     );
     expect(links[0]).toHaveAttribute('target', '_blank');
+  });
+});
+
+describe('Links section', () => {
+  it('a user can click through to Instagram when the shop has an Instagram URL', () => {
+    render(
+      <ShopDetailClient
+        shop={{
+          ...mockShop,
+          instagramUrl: 'https://www.instagram.com/rufous_coffee',
+        }}
+      />
+    );
+    expect(screen.getByRole('link', { name: 'Instagram' })).toHaveAttribute(
+      'href',
+      'https://www.instagram.com/rufous_coffee'
+    );
+  });
+
+  it('a user does not see an Instagram link when the shop has no Instagram URL', () => {
+    render(<ShopDetailClient shop={{ ...mockShop, instagramUrl: null }} />);
+    expect(
+      screen.queryByRole('link', { name: 'Instagram' })
+    ).not.toBeInTheDocument();
+  });
+
+  it('renders Google Maps link using googlePlaceId when available', () => {
+    render(
+      <ShopDetailClient shop={{ ...mockShop, googlePlaceId: 'ChIJ_test123' }} />
+    );
+    expect(
+      screen.getByRole('link', { name: '在 Google Maps 查看' })
+    ).toHaveAttribute(
+      'href',
+      'https://www.google.com/maps/place/?q=place_id:ChIJ_test123'
+    );
+  });
+
+  it('renders Google Maps link using lat/lng when no googlePlaceId', () => {
+    render(
+      <ShopDetailClient
+        shop={{
+          ...mockShop,
+          googlePlaceId: null,
+          latitude: 25.04,
+          longitude: 121.53,
+        }}
+      />
+    );
+    expect(
+      screen.getByRole('link', { name: '在 Google Maps 查看' })
+    ).toHaveAttribute('href', 'https://www.google.com/maps?q=25.04,121.53');
+  });
+
+  it('hides website link when website is already shown as Instagram icon', () => {
+    render(
+      <ShopDetailClient
+        shop={{
+          ...mockShop,
+          website: 'https://www.instagram.com/rufous_coffee',
+          instagramUrl: 'https://www.instagram.com/rufous_coffee',
+        }}
+      />
+    );
+    expect(
+      screen.queryByRole('link', { name: '官方網站' })
+    ).not.toBeInTheDocument();
+  });
+
+  it('shows website link when website is a non-social URL', () => {
+    render(
+      <ShopDetailClient
+        shop={{ ...mockShop, website: 'https://www.rufous.com.tw' }}
+      />
+    );
+    expect(screen.getByRole('link', { name: '官方網站' })).toHaveAttribute(
+      'href',
+      'https://www.rufous.com.tw'
+    );
   });
 });

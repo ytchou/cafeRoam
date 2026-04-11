@@ -241,6 +241,50 @@ class TestShopsAPI:
         data = response.json()
         assert data["communitySummary"] is None
 
+    def test_shop_detail_includes_social_url_fields_when_set(self):
+        """GET /shops/{id} response includes instagramUrl, facebookUrl, threadsUrl when populated."""
+        shop_data = {
+            **SHOP_ROW,
+            "shop_photos": [],
+            "shop_tags": [],
+            "instagram_url": "https://www.instagram.com/testcafe",
+            "facebook_url": None,
+            "threads_url": None,
+        }
+        shop_chain = _simple_select_chain([shop_data])
+
+        with patch("api.shops.get_anon_client") as mock_sb:
+            mock_sb.return_value = MagicMock(table=MagicMock(return_value=shop_chain))
+            response = client.get("/shops/shop-001")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["instagramUrl"] == "https://www.instagram.com/testcafe"
+        assert data["facebookUrl"] is None
+        assert data["threadsUrl"] is None
+
+    def test_shop_detail_social_url_fields_present_when_all_set(self):
+        """GET /shops/{id} returns all three social URL fields when all are populated."""
+        shop_data = {
+            **SHOP_ROW,
+            "shop_photos": [],
+            "shop_tags": [],
+            "instagram_url": "https://www.instagram.com/cafe",
+            "facebook_url": "https://www.facebook.com/cafe",
+            "threads_url": "https://www.threads.net/@cafe",
+        }
+        shop_chain = _simple_select_chain([shop_data])
+
+        with patch("api.shops.get_anon_client") as mock_sb:
+            mock_sb.return_value = MagicMock(table=MagicMock(return_value=shop_chain))
+            response = client.get("/shops/shop-001")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["instagramUrl"] == "https://www.instagram.com/cafe"
+        assert data["facebookUrl"] == "https://www.facebook.com/cafe"
+        assert data["threadsUrl"] == "https://www.threads.net/@cafe"
+
     def test_list_shops_is_open_null_when_no_hours(self):
         """GET /shops returns isOpen: null when opening_hours is absent."""
         shop_row = {

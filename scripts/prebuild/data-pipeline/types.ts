@@ -116,6 +116,9 @@ export interface Pass2Shop {
   limited_time: string;
   socket: string;
   social_url: string;
+  instagram_url: string | null;
+  facebook_url: string | null;
+  threads_url: string | null;
   reviews: ReviewData[];
   photos: PhotoData[];
 }
