@@ -537,6 +537,7 @@ class Job(BaseModel):
     claimed_at: datetime | None = None
     completed_at: datetime | None = None
     created_at: datetime
+    step_timings: dict[str, dict[str, Any]] | None = None
 
 
 # --- Pipeline types ---
