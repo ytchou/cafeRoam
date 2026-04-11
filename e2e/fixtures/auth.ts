@@ -1,4 +1,9 @@
-import { test as base, type Page, type TestInfo } from '@playwright/test';
+import {
+  test as base,
+  expect,
+  type Page,
+  type TestInfo,
+} from '@playwright/test';
 import { fileURLToPath } from 'node:url';
 import { renameSync, mkdirSync } from 'node:fs';
 import { randomBytes } from 'node:crypto';
@@ -128,6 +133,13 @@ export const test = base.extend<{ authedPage: Page; deletionPage: Page }>({
     );
 
     const page = await context.newPage();
+    await page.goto('/');
+    await page.waitForLoadState('networkidle');
+    const modalDialog = page.getByRole('dialog');
+    if (await modalDialog.isVisible({ timeout: 2_000 }).catch(() => false)) {
+      await page.keyboard.press('Escape');
+      await expect(modalDialog).toBeHidden({ timeout: 3_000 });
+    }
     await use(page);
     await context.close();
   },
@@ -217,4 +229,4 @@ export const test = base.extend<{ authedPage: Page; deletionPage: Page }>({
   },
 });
 
-export { expect } from '@playwright/test';
+export { expect };

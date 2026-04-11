@@ -130,6 +130,8 @@ export function MapWithFallback({
         <div data-testid="map-container">
           <MapMobileLayout
             {...layoutProps}
+            view={view}
+            onViewChange={layoutProps.onViewChange}
             onCardClick={onCardClick}
             onFilterClick={layoutProps.onFilterOpen}
           />
