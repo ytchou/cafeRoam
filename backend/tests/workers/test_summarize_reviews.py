@@ -3,6 +3,7 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from models.types import ReviewSummaryResult, ReviewTopic
+from workers.handlers.summarize_reviews import handle_summarize_reviews
 
 
 class TestSummarizeReviewsHandler:
@@ -24,9 +25,18 @@ class TestSummarizeReviewsHandler:
         shops_table = MagicMock()
         shops_table.update.return_value.eq.return_value.execute.return_value = MagicMock(data=[])
 
-        db.table.side_effect = lambda name: (
-            shop_reviews_table if name == "shop_reviews" else shops_table
-        )
+        # job_queue table — isolated so its updates don't pollute shops_table.call_args
+        job_queue_table = MagicMock()
+        job_queue_table.update.return_value.eq.return_value.execute.return_value = MagicMock()
+
+        def _route(name: str) -> MagicMock:
+            if name == "shop_reviews":
+                return shop_reviews_table
+            if name == "job_queue":
+                return job_queue_table
+            return shops_table
+
+        db.table.side_effect = _route
         db._shops_table = shops_table
 
         # RPC: get_ranked_checkin_texts
@@ -191,3 +201,62 @@ class TestSummarizeReviewsHandler:
         assert rpc_name == "get_ranked_checkin_texts"
         assert rpc_params["p_shop_id"] == "shop-d4e5f6"
         assert rpc_params["p_min_length"] == 15
+
+
+@pytest.mark.asyncio
+async def test_summarize_reviews_writes_step_timings_to_db():
+    shop_id = "shop-id-001"
+    job_id = "job-id-001"
+
+    from models.types import JobStatus
+
+    mock_llm = AsyncMock()
+    mock_llm.summarize_reviews.return_value = ReviewSummaryResult(
+        summary_zh_tw="好喝的咖啡，推薦拿鐵。",
+        review_topics=[],
+    )
+
+    shop_reviews_table = MagicMock()
+    shop_reviews_table.select.return_value.eq.return_value.order.return_value.limit.return_value.execute.return_value = MagicMock(
+        data=[{"text": "讚讚讚，非常好喝。"}]
+    )
+
+    shops_table = MagicMock()
+    shops_table.update.return_value.eq.return_value.execute.return_value = MagicMock()
+
+    job_queue_table = MagicMock()
+    job_queue_table.update.return_value.eq.return_value.execute.return_value = MagicMock()
+
+    def table_router(name: str) -> MagicMock:
+        if name == "shop_reviews":
+            return shop_reviews_table
+        if name == "shops":
+            return shops_table
+        if name == "job_queue":
+            return job_queue_table
+        return MagicMock()
+
+    db = MagicMock()
+    db.table.side_effect = table_router
+    db.rpc.return_value.execute.return_value = MagicMock(data=[])
+
+    queue = AsyncMock()
+    queue.get_status.return_value = JobStatus.CLAIMED
+
+    await handle_summarize_reviews(
+        payload={"shop_id": shop_id},
+        db=db,
+        llm=mock_llm,
+        queue=queue,
+        job_id=job_id,
+    )
+
+    job_queue_updates = [
+        call for call in job_queue_table.update.call_args_list if "step_timings" in call[0][0]
+    ]
+    assert len(job_queue_updates) == 1
+    timings = job_queue_updates[0][0][0]["step_timings"]
+    assert set(timings.keys()) == {"fetch_reviews", "llm_call", "db_write"}
+    for v in timings.values():
+        assert isinstance(v["duration_ms"], int)
+        assert v["duration_ms"] >= 0
