@@ -55,9 +55,12 @@ const STATUS_OPTIONS = [
 
 const JOB_TYPE_OPTIONS = [
   'all',
+  'classify_shop_photos',
   'enrich_shop',
   'generate_embedding',
+  'publish_shop',
   'scrape_shop',
+  'summarize_reviews',
 ] as const;
 
 const PAGE_SIZE = 20;
