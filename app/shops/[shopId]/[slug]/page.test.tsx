@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
+import { beforeAll, describe, it, expect, vi } from 'vitest';
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn() }),
@@ -90,6 +90,31 @@ const MOCK_SHOP = {
   ],
   modeScores: { work: 0.8, rest: 0.6, social: 0.3 },
 };
+
+beforeAll(() => {
+  // embla-carousel needs these jsdom stubs — scoped here to avoid breaking other tests
+  if (!globalThis.IntersectionObserver) {
+    class MockIntersectionObserver {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+      takeRecords(): IntersectionObserverEntry[] {
+        return [];
+      }
+    }
+    globalThis.IntersectionObserver =
+      MockIntersectionObserver as unknown as typeof IntersectionObserver;
+  }
+  if (!globalThis.ResizeObserver) {
+    class MockResizeObserver {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    }
+    globalThis.ResizeObserver =
+      MockResizeObserver as unknown as typeof ResizeObserver;
+  }
+});
 
 describe('ShopDetailClient', () => {
   it('a visitor can see the shop name and rating', () => {

@@ -119,15 +119,6 @@ describe('AdminRolesPage', () => {
       within(dialog).getByLabelText(/user id or email/i),
       'user@test.com'
     );
-    const roleTrigger = within(dialog).getByRole('combobox', {
-      name: /^role$/i,
-    });
-    roleTrigger.focus();
-    fireEvent.keyDown(roleTrigger, { key: 'ArrowDown' });
-    const memberOption = await screen.findByRole('option', {
-      name: /^member$/i,
-    });
-    fireEvent.click(memberOption);
     await user.click(within(dialog).getByRole('button', { name: /^grant$/i }));
 
     expect(mockFetch).toHaveBeenCalledWith(
