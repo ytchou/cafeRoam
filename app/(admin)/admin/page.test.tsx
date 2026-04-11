@@ -215,7 +215,7 @@ describe('AdminDashboard', () => {
     await user.click(screen.getByRole('button', { name: /reject/i }));
 
     await waitFor(() => {
-      expect(screen.getByRole('combobox')).toBeInTheDocument();
+      expect(screen.getByRole('combobox', { name: /rejection reason/i })).toBeInTheDocument();
       expect(
         screen.getByRole('button', { name: /confirm/i })
       ).toBeInTheDocument();
@@ -296,7 +296,7 @@ describe('AdminDashboard', () => {
     await user.click(screen.getByRole('button', { name: /reject/i }));
 
     await waitFor(() => {
-      expect(screen.getByRole('combobox')).toBeInTheDocument();
+      expect(screen.getByRole('combobox', { name: /rejection reason/i })).toBeInTheDocument();
       expect(
         screen.getByRole('button', { name: /confirm/i })
       ).toBeInTheDocument();
