@@ -31,6 +31,7 @@ async def handle_summarize_reviews(
     If no qualifying texts exist from either source, skips the LLM and enqueues embedding directly.
     """
     shop_id = payload["shop_id"]
+    job_id = cast("str", job_id)
     step_timings: dict[str, dict[str, int]] = {}
     logger.info("Summarizing reviews", shop_id=shop_id)
 
