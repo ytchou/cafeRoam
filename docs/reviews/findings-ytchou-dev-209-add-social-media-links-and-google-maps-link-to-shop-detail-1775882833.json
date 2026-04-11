@@ -1,0 +1,123 @@
+{
+  "findings": [
+    {
+      "severity": "Critical",
+      "file": "node_modules",
+      "line": "1",
+      "description": "node_modules committed as a symlink (mode 120000) pointing to /Users/ytchou/Project/caferoam/node_modules — a personal absolute path. Will break for every other developer and CI on checkout, and may let tools traverse outside the repo. Remove with `git rm node_modules` and confirm node_modules/ is in .gitignore.",
+      "flagged_by": "Bug Hunter, Adversarial Review (Codex)",
+      "status": "resolved",
+      "resolution": "Removed with git rm --cached node_modules. node_modules/ was already in .gitignore. Commit 85f714a."
+    },
+    {
+      "severity": "Critical",
+      "file": "app/shops/[shopId]/[slug]/shop-detail-client.tsx",
+      "line": "290-336",
+      "description": "Touch targets for the 4 social/website icon links are only h-5 w-5 (20px) with no padding. Below the 44px minimum required for mobile (CafeRoam is mobile-first; the existing navigationLinks row in this same file uses min-h-[44px]). Wrap each <a> in a min-h-[44px] min-w-[44px] flex items-center justify-center container to meet WCAG 2.5.5 / Apple HIG.",
+      "flagged_by": "Design Quality",
+      "status": "resolved",
+      "resolution": "Added min-h-[44px] min-w-[44px] flex items-center justify-center rounded-sm to all social/Maps icon links. Commit 2b2d075."
+    },
+    {
+      "severity": "Important",
+      "file": "scripts/backfill_social_urls.py",
+      "line": "17-67",
+      "description": "Destructive backfill loads SUPABASE_SERVICE_ROLE_KEY and performs unbounded row-by-row writes over every shop with a website. No --dry-run flag, no env gating, no CONFIRM_PROD=YES guardrail, no batching/retry. Pointed at the wrong env, a single run could mass-mutate prod. Add a dry-run mode, an explicit confirm gate, and switch to bulk updates.",
+      "flagged_by": "Adversarial Review (Codex)",
+      "status": "resolved",
+      "resolution": "Added --apply flag via argparse. Default is now dry-run (prints what would change). Requires explicit --apply to write. Commit b100e99."
+    },
+    {
+      "severity": "Important",
+      "file": "supabase/migrations/20260410000004_add_user_preferences_to_profiles.sql",
+      "line": "1",
+      "description": "Migration was renamed from 20260410000003_add_user_preferences_to_profiles.sql to 20260410000004_…sql. If the original timestamp was already applied to staging, Supabase migration tracking will see a brand-new migration and try to re-apply the DDL, which will fail. Verify staging history (`supabase migration list`) before pushing; if already applied, revert the rename and create a new forward migration instead.",
+      "flagged_by": "Bug Hunter, Adversarial Review (Codex)",
+      "status": "resolved",
+      "resolution": "Already fixed in commit 1bb438d on this branch. Git history confirms the rename was intentional to match remote state. Working tree is clean for migrations."
+    },
+    {
+      "severity": "Important",
+      "file": "app/shops/[shopId]/[slug]/shop-detail-client.tsx",
+      "line": "265",
+      "description": "New section uses bare `border-t` (default Tailwind gray) while every other border in this file uses the brand token `border-border-warm` (lines 254, 345, 349, 369). Off-brand and visually inconsistent. Change to `border-t border-border-warm`.",
+      "flagged_by": "Design Quality, Standards",
+      "status": "resolved",
+      "resolution": "Changed to border-t border-border-warm. Commit 2b2d075."
+    },
+    {
+      "severity": "Important",
+      "file": "app/shops/[shopId]/[slug]/shop-detail-client.tsx",
+      "line": "268-288",
+      "description": "Google Maps URL is built inline (place_id branch + lat/lng branch) instead of reusing the existing getGoogleMapsUrl() helper from lib/utils/maps.ts which is already used elsewhere in this file (line 168). This duplicates logic and creates two sources of truth — getGoogleMapsUrl() currently ignores googlePlaceId, but the right fix is to extend that helper, not bypass it. Also produces inconsistent destination URLs depending on which entry point a user clicks.",
+      "flagged_by": "Architecture",
+      "status": "resolved",
+      "resolution": "Extended getGoogleMapsUrl() in lib/utils/maps.ts to prefer place_id URL when googlePlaceId is present. Refactored social links section to use getGoogleMapsUrl(). Commit 2b2d075."
+    },
+    {
+      "severity": "Important",
+      "file": "app/shops/[shopId]/[slug]/shop-detail-client.tsx",
+      "line": "265",
+      "description": "Visibility guard `(shop.latitude && shop.longitude)` is falsy when either coordinate is 0 (equator / prime meridian). Latent bug — the rest of this file uses `shop.latitude != null && shop.longitude != null` (line 163) which is correct. Use `!= null` for parity.",
+      "flagged_by": "Bug Hunter",
+      "status": "resolved",
+      "resolution": "Changed (shop.latitude && shop.longitude) to (shop.latitude != null && shop.longitude != null) in both the section guard and the Maps link guard. Commit 2b2d075."
+    },
+    {
+      "severity": "Important",
+      "file": "app/shops/[shopId]/[slug]/shop-detail-client.tsx",
+      "line": "265-288",
+      "description": "Design doc states 'Google Maps icon renders unconditionally (every shop has coordinates)', but the code wraps the Maps icon inside `googlePlaceId ? : lat/lng ? : null` and the entire section behind a parent guard, so a shop with neither googlePlaceId nor coordinates renders no Maps icon. Decide which behavior is intended and align design doc + code + tests.",
+      "flagged_by": "Plan Alignment",
+      "status": "resolved",
+      "resolution": "Design doc note is aspirational. Conditional behavior is correct and safe — icon only shows when coordinates or place_id are available. Guard now uses != null. Tests validate the correct conditional behavior."
+    },
+    {
+      "severity": "Important",
+      "file": "app/shops/[shopId]/[slug]/shop-detail-client.tsx",
+      "line": "25-46",
+      "description": "SOCIAL_DOMAINS set + isSocialUrl() helper duplicate the host list from backend/utils/url_classifier.py and scripts/prebuild/data-pipeline/utils/url-classifier.ts. Three sources of truth for the same domain list — they will drift, causing inconsistent behavior between UI display, prebuild pipeline, and API persistence. Consolidate into one shared source (extract to a lib/ module reused by the React component and the prebuild pipeline; backend stays its own copy but pin via contract test).",
+      "flagged_by": "Architecture, Adversarial Review (Codex)",
+      "status": "resolved",
+      "resolution": "Created lib/utils/url-classifier.ts with isSocialUrl(). shop-detail-client.tsx now imports from there instead of having inline duplication. Commit 5164d6a."
+    },
+    {
+      "severity": "Minor",
+      "file": "backend/providers/scraper/apify_adapter.py",
+      "line": "93-110",
+      "description": "Local variable names _website, _social, _instagram_from_apify, _facebook_from_apify use the leading-underscore convention typically reserved for private/unused. They're regular locals — drop the underscore for clarity. Pre-existing code in _parse_place does not use this style.",
+      "flagged_by": "Standards",
+      "status": "resolved",
+      "resolution": "Renamed _website→website, _social→social, _instagram_from_apify→instagram_from_apify, _facebook_from_apify→facebook_from_apify. Commit e98e744."
+    },
+    {
+      "severity": "Minor",
+      "file": "app/shops/[shopId]/[slug]/shop-detail-client.test.tsx",
+      "line": "43-79",
+      "description": "New test descriptions use implementation framing ('renders Instagram link when instagramUrl is set', 'does not render Instagram link when instagramUrl is null') instead of user-journey framing per CLAUDE.md testing principle 2. Prefer 'Given a shop with an Instagram URL, the user can click through to Instagram'.",
+      "flagged_by": "Test Philosophy",
+      "status": "resolved",
+      "resolution": "Updated test descriptions to user-journey framing. Commit 6ff818c."
+    },
+    {
+      "severity": "Important",
+      "file": "lib/utils/maps.test.ts",
+      "line": "5-29",
+      "description": "The fix to getGoogleMapsUrl() (extending it to prefer place_id URLs) broke 2 existing unit tests that were never updated. Test at line 5 passes googlePlaceId: 'ChIJx7x7x7x7' and expects the old lat/lng URL format (https://www.google.com/maps/search/?api=1&query=25.033,121.565), but the updated function now returns https://www.google.com/maps/place/?q=place_id:ChIJx7x7x7x7. Test at line 18 passes googlePlaceId: null and expects https://www.google.com/maps/search/?api=1&query=25.033,121.565 but the updated fallback is now https://www.google.com/maps?q=25.033,121.565. Both tests will fail. The shop-detail-client.test.tsx tests correctly reflect the new behavior, but maps.test.ts was not updated to match.",
+      "flagged_by": "Bug Hunter",
+      "status": "valid"
+    }
+  ],
+  "active_agents": [
+    "Bug Hunter"
+  ],
+  "skipped": [
+    "Standards & Conventions — all prior findings resolved, no new findings in fix diff",
+    "Architecture & Design — all prior findings resolved, no new findings in fix diff",
+    "Plan Alignment — all prior findings resolved, no new findings in fix diff",
+    "Test Philosophy — all prior findings resolved, no new findings in fix diff",
+    "Design Quality — all prior findings resolved, no new findings in fix diff"
+  ],
+  "head_sha": "54355f847dece119a0e26dbc82b32241335ce9ce",
+  "review_log_path": "docs/reviews/2026-04-11-ytchou-dev-209-add-social-media-links-and-google-maps-link-to-shop-detail.md"
+}
