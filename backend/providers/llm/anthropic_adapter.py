@@ -150,7 +150,11 @@ def _parse_enrichment_payload(payload: dict, taxonomy_by_id: dict) -> Enrichment
     )
 
     raw_menu_items = payload.get("menu_items") or []
-    menu_items = [item for item in raw_menu_items if item.get("name")]
+    menu_items = [
+        {**item, "name": _to_vocab_term(item["name"], _ITEM_VOCAB) or item["name"]}
+        for item in raw_menu_items
+        if item.get("name")
+    ]
 
     return EnrichmentResult(
         tags=valid_tags,

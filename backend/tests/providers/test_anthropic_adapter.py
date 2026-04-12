@@ -606,3 +606,46 @@ class TestParseEnrichmentPayloadMenuItems:
         }
         result = _parse_enrichment_payload(payload, taxonomy_by_id)
         assert result.menu_items == []
+
+    def test_parse_enrichment_payload_menu_items_normalized(self, taxonomy_by_id):
+        """Known item names are normalized to their canonical vocabulary terms."""
+        from providers.llm.anthropic_adapter import _parse_enrichment_payload
+
+        payload = {
+            "tags": [],
+            "summary": "咖啡館",
+            "mode": "mixed",
+            "menu_highlights": [],
+            "coffee_origins": [],
+            "menu_items": [
+                {"name": "Basque Cheesecake", "category": "dessert"},
+                {"name": "SCONE", "category": "dessert"},
+            ],
+        }
+
+        result = _parse_enrichment_payload(payload, taxonomy_by_id)
+
+        assert result.menu_items == [
+            {"name": "basque cheesecake", "category": "dessert"},
+            {"name": "scone", "category": "dessert"},
+        ]
+
+    def test_parse_enrichment_payload_menu_items_skips_missing_name(self, taxonomy_by_id):
+        """Items without a name are dropped from parsed menu_items."""
+        from providers.llm.anthropic_adapter import _parse_enrichment_payload
+
+        payload = {
+            "tags": [],
+            "summary": "咖啡館",
+            "mode": "mixed",
+            "menu_highlights": [],
+            "coffee_origins": [],
+            "menu_items": [
+                {"category": "dessert"},
+                {"name": "巴斯克蛋糕", "category": "dessert"},
+            ],
+        }
+
+        result = _parse_enrichment_payload(payload, taxonomy_by_id)
+
+        assert result.menu_items == [{"name": "巴斯克蛋糕", "category": "dessert"}]

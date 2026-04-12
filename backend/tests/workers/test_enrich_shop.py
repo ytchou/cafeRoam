@@ -665,6 +665,157 @@ class TestEnrichShopPipelineChain:
         assert JobType.GENERATE_EMBEDDING not in enqueued_types
 
 
+class TestEnrichShopReviewMenuItems:
+    def _make_db(self, photo_items: list[dict] | None = None) -> MagicMock:
+        db = MagicMock()
+
+        shop_data = {
+            "id": "shop-menu-test",
+            "name": "菜單測試咖啡",
+            "description": None,
+            "categories": ["cafe"],
+            "price_range": "$$",
+            "socket": "yes",
+            "limited_time": "no",
+            "rating": 4.4,
+            "review_count": 40,
+            "google_maps_features": None,
+        }
+        reviews_data = [{"text": "手沖咖啡和甜點都不錯"}]
+
+        shops_table = MagicMock()
+        shops_table.select.return_value.eq.return_value.single.return_value.execute.return_value = (
+            MagicMock(data=shop_data)
+        )
+        shops_table.update.return_value.eq.return_value.execute.return_value = MagicMock(data=[])
+
+        shop_tags_table = MagicMock()
+        shop_tags_table.delete.return_value.eq.return_value.execute.return_value = MagicMock(
+            data=[]
+        )
+        shop_tags_table.insert.return_value.execute.return_value = MagicMock(data=[])
+
+        shop_reviews_table = MagicMock()
+        shop_reviews_table.select.return_value.eq.return_value.execute.return_value = MagicMock(
+            data=reviews_data
+        )
+
+        shop_photos_table = MagicMock()
+        shop_photos_table.select.return_value.eq.return_value.eq.return_value.limit.return_value.execute.return_value = MagicMock(
+            data=[]
+        )
+
+        shop_menu_items_table = MagicMock()
+        shop_menu_items_table.delete.return_value.eq.return_value.eq.return_value.execute.return_value = MagicMock(
+            data=[]
+        )
+        shop_menu_items_table.select.return_value.eq.return_value.eq.return_value.execute.return_value = MagicMock(
+            data=photo_items or []
+        )
+        shop_menu_items_table.insert.return_value.execute.return_value = MagicMock(data=[])
+
+        def table_router(name: str) -> MagicMock:
+            if name == "shops":
+                return shops_table
+            if name == "shop_tags":
+                return shop_tags_table
+            if name == "shop_reviews":
+                return shop_reviews_table
+            if name == "shop_photos":
+                return shop_photos_table
+            if name == "shop_menu_items":
+                return shop_menu_items_table
+            return MagicMock()
+
+        db.table.side_effect = table_router
+        db._shop_menu_items_table = shop_menu_items_table
+        return db
+
+    def _make_enrichment_result(self, menu_items: list[dict]) -> EnrichmentResult:
+        return EnrichmentResult(
+            tags=[],
+            tag_confidences={},
+            summary="安靜的咖啡館，適合午後小坐。",
+            confidence=0.8,
+            mode_scores=ShopModeScores(work=0.5, rest=0.5, social=0.1),
+            menu_highlights=[],
+            coffee_origins=[],
+            menu_items=menu_items,
+        )
+
+    @pytest.mark.asyncio
+    async def test_handle_enrich_shop_writes_review_sourced_menu_items(self):
+        db = self._make_db()
+        llm = AsyncMock()
+        llm.enrich_shop = AsyncMock(
+            return_value=self._make_enrichment_result([{"name": "手沖咖啡", "category": "coffee"}])
+        )
+        llm.assign_tarot = AsyncMock(
+            return_value=TarotEnrichmentResult(tarot_title=None, flavor_text="")
+        )
+        queue = AsyncMock()
+        queue.get_status.return_value = "claimed"
+
+        await handle_enrich_shop(
+            payload={"shop_id": "shop-menu-test"},
+            db=db,
+            llm=llm,
+            queue=queue,
+            job_id="job-menu-test-01",
+        )
+
+        insert_rows = db._shop_menu_items_table.insert.call_args[0][0]
+        assert len(insert_rows) == 1
+        assert insert_rows[0]["item_name"] == "手沖咖啡"
+        assert insert_rows[0]["category"] == "coffee"
+        assert insert_rows[0]["source"] == "review"
+        assert insert_rows[0]["source_photo_id"] is None
+
+    @pytest.mark.asyncio
+    async def test_handle_enrich_shop_photo_wins_dedup(self):
+        db = self._make_db(photo_items=[{"item_name": "巴斯克蛋糕"}])
+        llm = AsyncMock()
+        llm.enrich_shop = AsyncMock(
+            return_value=self._make_enrichment_result([{"name": "巴斯克蛋糕"}])
+        )
+        llm.assign_tarot = AsyncMock(
+            return_value=TarotEnrichmentResult(tarot_title=None, flavor_text="")
+        )
+        queue = AsyncMock()
+        queue.get_status.return_value = "claimed"
+
+        await handle_enrich_shop(
+            payload={"shop_id": "shop-menu-test"},
+            db=db,
+            llm=llm,
+            queue=queue,
+            job_id="job-menu-test-02",
+        )
+
+        db._shop_menu_items_table.insert.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_handle_enrich_shop_empty_menu_items_noop(self):
+        db = self._make_db()
+        llm = AsyncMock()
+        llm.enrich_shop = AsyncMock(return_value=self._make_enrichment_result([]))
+        llm.assign_tarot = AsyncMock(
+            return_value=TarotEnrichmentResult(tarot_title=None, flavor_text="")
+        )
+        queue = AsyncMock()
+        queue.get_status.return_value = "claimed"
+
+        await handle_enrich_shop(
+            payload={"shop_id": "shop-menu-test"},
+            db=db,
+            llm=llm,
+            queue=queue,
+            job_id="job-menu-test-03",
+        )
+
+        db._shop_menu_items_table.insert.assert_not_called()
+
+
 @pytest.mark.asyncio
 async def test_enrich_shop_writes_step_timings_to_db():
     shop_id = "shop-id-001"
