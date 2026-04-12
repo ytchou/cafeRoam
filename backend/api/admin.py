@@ -64,7 +64,10 @@ async def pipeline_overview(
 
     # Pending submission count
     pending_subs_response = (
-        db.table("shop_submissions").select("id", count="exact").eq("status", "pending_review").execute()
+        db.table("shop_submissions")
+        .select("id", count="exact")
+        .eq("status", "pending_review")
+        .execute()
     )
     pending_review_count: int = pending_subs_response.count or 0
 
@@ -971,10 +974,7 @@ async def get_pipeline_spend_history(
         provider = str(row.get("provider") or "unknown")
         cost_usd = float(row.get("cost_usd") or 0.0)
         if provider == "apify":
-            cost_usd = (
-                float(row.get("compute_units") or 0.0)
-                * settings.apify_cost_per_cu
-            )
+            cost_usd = float(row.get("compute_units") or 0.0) * settings.apify_cost_per_cu
 
         daily[date_str][provider] += cost_usd
 
