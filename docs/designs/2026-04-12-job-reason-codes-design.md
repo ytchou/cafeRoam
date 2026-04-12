@@ -19,15 +19,15 @@ Also completes unfinished DEV-307 wiring: the backend Job Pydantic model and fro
 | Code | Terminal Status | Written By |
 |------|----------------|-----------|
 | `operator_cancelled` | cancelled | admin cancel endpoint (`admin.py`) |
-| `retry_exhausted` | dead_letter | `queue.fail()` when `attempts >= max_attempts` |
+| `retry_exhausted` | failed | `queue.fail()` when `attempts >= max_attempts` |
 | `bad_input` | failed | scheduler (payload validation) |
-| `timeout` | pending/dead_letter | `reclaim_stuck_jobs` RPC |
+| `timeout` | pending/failed | `reclaim_stuck_jobs` RPC |
 | `dependency_failed` | failed | scheduler (upstream step failed) |
 | `provider_error` | failed | scheduler (LLM/embedding exception) |
 
 ### Scope
 
-`reason_code` applies to ALL terminal statuses (failed, dead_letter, cancelled), not just operator cancellations. This provides full observability across all failure modes.
+`reason_code` applies to ALL terminal statuses (failed, cancelled), not just operator cancellations. This provides full observability across all failure modes.
 
 ### API Changes
 
@@ -60,7 +60,7 @@ job_queue
 
 Best-effort migration backfill:
 - `status = 'cancelled'` → `reason_code = 'operator_cancelled'`
-- `status = 'dead_letter'` → `reason_code = 'retry_exhausted'`
+- `status = 'failed'` (retry-exhausted) → `reason_code = 'retry_exhausted'`
 
 ## Decisions
 
