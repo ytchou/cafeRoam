@@ -18,8 +18,8 @@ from models.types import (
     TarotEnrichmentResult,
     TaxonomyTag,
 )
-from providers.cost import compute_llm_cost
 from providers.api_usage_logger import log_api_usage
+from providers.cost import compute_llm_cost
 from providers.llm._tool_schemas import (
     ASSIGN_TAROT_SCHEMA,
     CLASSIFY_PHOTO_SCHEMA,

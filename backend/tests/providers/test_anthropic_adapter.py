@@ -525,9 +525,9 @@ class TestAnthropicUsageLogging:
     @pytest.fixture
     def adapter(self):
         return AnthropicLLMAdapter(
-            api_key='test-key',
-            model='claude-sonnet-4-6',
-            classify_model='claude-haiku-4-5-20251001',
+            api_key="test-key",
+            model="claude-sonnet-4-6",
+            classify_model="claude-haiku-4-5-20251001",
             taxonomy=SAMPLE_TAXONOMY,
         )
 
@@ -537,10 +537,10 @@ class TestAnthropicUsageLogging:
 
         mock_response = _make_tool_use_response(
             {
-                'tags': [{'id': 'quiet', 'confidence': 0.9}],
-                'summary': 'A quiet cafe.',
-                'topReviews': [],
-                'mode': 'work',
+                "tags": [{"id": "quiet", "confidence": 0.9}],
+                "summary": "A quiet cafe.",
+                "topReviews": [],
+                "mode": "work",
             }
         )
         mock_response.usage = MagicMock()
@@ -552,13 +552,13 @@ class TestAnthropicUsageLogging:
         adapter._client = AsyncMock()
         adapter._client.messages.create = AsyncMock(return_value=mock_response)
 
-        with patch('providers.llm.anthropic_adapter.log_api_usage') as mock_log:
+        with patch("providers.llm.anthropic_adapter.log_api_usage") as mock_log:
             await adapter.enrich_shop(SAMPLE_SHOP)
 
         mock_log.assert_called_once()
         call_kwargs = mock_log.call_args.kwargs
-        assert call_kwargs['provider'] == 'anthropic'
-        assert call_kwargs['task'] == 'enrich_shop'
-        assert call_kwargs['tokens_input'] == 500
-        assert call_kwargs['tokens_output'] == 100
-        assert call_kwargs['cost_usd'] > 0
+        assert call_kwargs["provider"] == "anthropic"
+        assert call_kwargs["task"] == "enrich_shop"
+        assert call_kwargs["tokens_input"] == 500
+        assert call_kwargs["tokens_output"] == 100
+        assert call_kwargs["cost_usd"] > 0
