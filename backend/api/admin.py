@@ -62,6 +62,18 @@ async def pipeline_overview(
     counts_data = cast("list[dict[str, Any]]", counts_response.data or [])
     job_counts: dict[str, int] = {row["status"]: int(row["count"]) for row in counts_data}
 
+    # Pending submission count
+    pending_subs_response = (
+        db.table("shop_submissions").select("id", count="exact").eq("status", "pending_review").execute()
+    )
+    pending_review_count: int = pending_subs_response.count or 0
+
+    # Pending claims count
+    pending_claims_response = (
+        db.table("shop_claims").select("id", count="exact").eq("status", "pending").execute()
+    )
+    pending_claims_count: int = pending_claims_response.count or 0
+
     # Recent submissions
     subs_response = (
         db.table("shop_submissions").select("*").order("created_at", desc=True).limit(20).execute()
@@ -70,6 +82,8 @@ async def pipeline_overview(
     return {
         "job_counts": job_counts,
         "recent_submissions": subs_response.data,
+        "pending_review_count": pending_review_count,
+        "pending_claims_count": pending_claims_count,
     }
 
 
@@ -945,8 +959,6 @@ async def get_pipeline_spend_history(
     # date_str -> provider -> total_usd
     daily: dict[str, dict[str, float]] = defaultdict(lambda: defaultdict(float))
 
-    import api.deps as _spend_history_deps  # noqa: PLC0415
-
     for row in rows:
         created_at_raw = row.get("created_at")
         if not created_at_raw:
@@ -961,7 +973,7 @@ async def get_pipeline_spend_history(
         if provider == "apify":
             cost_usd = (
                 float(row.get("compute_units") or 0.0)
-                * _spend_history_deps.settings.apify_cost_per_cu
+                * settings.apify_cost_per_cu
             )
 
         daily[date_str][provider] += cost_usd

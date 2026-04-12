@@ -1,5 +1,5 @@
-import { render } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
+import { render, screen } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import SubmissionsPage from './page';
 
 // Mock the auth hook
@@ -16,9 +16,8 @@ beforeEach(() => {
 });
 
 describe('SubmissionsPage', () => {
-  it('renders without crashing', () => {
+  it('shows a loading indicator while fetching overview data', () => {
     render(<SubmissionsPage />);
-    // Page renders — SubmissionsTab content will show loading state
-    expect(document.body).toBeTruthy();
+    expect(screen.getByText('Loading...')).toBeTruthy();
   });
 });
