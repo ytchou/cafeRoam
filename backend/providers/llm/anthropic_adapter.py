@@ -229,6 +229,8 @@ class AnthropicLLMAdapter:
                                 "Extract all menu items from this coffee shop menu photo. "
                                 "Return structured data with item names, prices (as numbers), "
                                 "descriptions, and categories where visible."
+                                f"\n\nReference — menu item names (prefer exact terms): {_MENU_VOCAB_REF}"
+                                "\n\nFor item names, prefer the Traditional Chinese term from the list above where applicable (e.g. 手沖 not 'pour over', 可頌 not 'croissant')."
                             ),
                         },
                     ],
