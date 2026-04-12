@@ -3,7 +3,7 @@
 -- source_photo_id: FK to shop_photos for photo-sourced items (NULL for review-sourced)
 
 ALTER TABLE shop_menu_items
-  ADD COLUMN source text NOT NULL DEFAULT 'photo',
+  ADD COLUMN source text NOT NULL DEFAULT 'photo' CHECK (source IN ('photo', 'review')),
   ADD COLUMN source_photo_id uuid REFERENCES shop_photos(id) ON DELETE SET NULL;
 
 -- Index for dedup guard queries (check if photo already extracted)
