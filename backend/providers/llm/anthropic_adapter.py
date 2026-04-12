@@ -18,6 +18,8 @@ from models.types import (
     TarotEnrichmentResult,
     TaxonomyTag,
 )
+from providers.api_usage_logger import log_api_usage
+from providers.cost import compute_llm_cost
 from providers.llm._tool_schemas import (
     ASSIGN_TAROT_SCHEMA as ASSIGN_TAROT_TOOL,
 )
@@ -182,6 +184,24 @@ class AnthropicLLMAdapter:
             messages=messages,
             tools=[CLASSIFY_SHOP_TOOL],
             tool_choice={"type": "tool", "name": "classify_shop"},
+        )
+
+        usage = response.usage
+        log_api_usage(
+            provider="anthropic",
+            task="enrich_shop",
+            model=self._model,
+            tokens_input=usage.input_tokens,
+            tokens_output=usage.output_tokens,
+            tokens_cache_write=getattr(usage, "cache_creation_input_tokens", 0) or 0,
+            tokens_cache_read=getattr(usage, "cache_read_input_tokens", 0) or 0,
+            cost_usd=compute_llm_cost(
+                self._model,
+                usage.input_tokens,
+                usage.output_tokens,
+                getattr(usage, "cache_creation_input_tokens", 0) or 0,
+                getattr(usage, "cache_read_input_tokens", 0) or 0,
+            ),
         )
 
         tool_input = self._extract_tool_input(response, "classify_shop")
