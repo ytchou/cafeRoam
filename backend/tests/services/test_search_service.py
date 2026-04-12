@@ -432,7 +432,7 @@ class TestOptionCPlusScoring:
         return db
 
     async def test_item_specific_query_uses_keyword_weights(self, mock_embeddings):
-        """When query_type is item_specific, scoring uses 0.5/0.2/0.3 weights."""
+        """When query_type is item_specific, scoring uses 0.3/0.2/0.5 weights."""
         row = make_shop_row(
             similarity=0.8,
             menu_highlights=["巴斯克蛋糕"],
@@ -445,11 +445,11 @@ class TestOptionCPlusScoring:
 
         result = response.results[0]
         # keyword_score = 1.0 (exact match), taxonomy_boost = 0.0 (no filters)
-        expected = 0.8 * 0.5 + 0.0 * 0.2 + 1.0 * 0.3
+        expected = 0.8 * 0.3 + 0.0 * 0.2 + 1.0 * 0.5
         assert result.total_score == pytest.approx(expected, rel=1e-4)
 
     async def test_specialty_coffee_query_uses_keyword_weights(self, mock_embeddings):
-        """When query_type is specialty_coffee, scoring uses 0.5/0.2/0.3 weights."""
+        """When query_type is specialty_coffee, scoring uses 0.3/0.2/0.5 weights."""
         row = make_shop_row(
             similarity=0.75,
             menu_highlights=[],
@@ -461,7 +461,7 @@ class TestOptionCPlusScoring:
         response = await service.search(query, query_type="specialty_coffee")
 
         result = response.results[0]
-        expected = 0.75 * 0.5 + 0.0 * 0.2 + 1.0 * 0.3
+        expected = 0.75 * 0.3 + 0.0 * 0.2 + 1.0 * 0.5
         assert result.total_score == pytest.approx(expected, rel=1e-4)
 
     async def test_generic_query_uses_original_weights(self, mock_embeddings):
@@ -497,8 +497,8 @@ class TestOptionCPlusScoring:
         query = SearchQuery(text="巴斯克蛋糕")
         response = await service.search(query, query_type="item_specific")
 
-        # shop_with_item: 0.6*0.5 + 0*0.2 + 1.0*0.3 = 0.60
-        # shop_without:   0.9*0.5 + 0*0.2 + 0.0*0.3 = 0.45
+        # shop_with_item: 0.6*0.3 + 0*0.2 + 1.0*0.5 = 0.68
+        # shop_without:   0.9*0.3 + 0*0.2 + 0.0*0.5 = 0.27
         assert response.results[0].shop.id == "shop-with-item"
         assert response.results[1].shop.id == "shop-without"
 
@@ -522,8 +522,8 @@ class TestOptionCPlusScoring:
         query = SearchQuery(text="巴斯克蛋糕")
         response = await service.search(query, query_type="item_specific")
 
-        # shop_highlights: 0.8*0.5 + 0*0.2 + 1.0*0.3 = 0.70
-        # shop_desc_only:  0.8*0.5 + 0*0.2 + 0.5*0.3 = 0.55
+        # shop_highlights: 0.8*0.3 + 0*0.2 + 1.0*0.5 = 0.74
+        # shop_desc_only:  0.8*0.3 + 0*0.2 + 0.5*0.5 = 0.49
         assert response.results[0].shop.id == "shop-highlights"
         assert response.results[1].shop.id == "shop-desc"
 
@@ -541,9 +541,9 @@ class TestOptionCPlusScoring:
         query = SearchQuery(text="耶加雪菲")
         response = await service.search(query, query_type="specialty_coffee")
 
-        # keyword_score = 0.0 (no fields to match), total = 0.7*0.5 + 0*0.2 + 0*0.3 = 0.35
+        # keyword_score = 0.0 (no fields to match), total = 0.7*0.3 + 0*0.2 + 0*0.5 = 0.21
         assert len(response.results) == 1
-        assert response.results[0].total_score == pytest.approx(0.7 * 0.5, rel=1e-4)
+        assert response.results[0].total_score == pytest.approx(0.7 * 0.3, rel=1e-4)
 
     async def test_fullwidth_query_normalizes_before_keyword_match(self, mock_embeddings):
         """Full-width input '巴斯克蛋糕？' normalizes to '巴斯克蛋糕' and matches menu_highlights."""
@@ -559,7 +559,7 @@ class TestOptionCPlusScoring:
         response = await service.search(query, query_type="item_specific")
 
         # Normalization strips trailing ？, exact match → keyword_score 1.0
-        expected = 0.8 * 0.5 + 0.0 * 0.2 + 1.0 * 0.3
+        expected = 0.8 * 0.3 + 0.0 * 0.2 + 1.0 * 0.5
         assert response.results[0].total_score == pytest.approx(expected, rel=1e-4)
 
 
