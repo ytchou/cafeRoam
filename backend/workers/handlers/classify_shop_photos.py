@@ -1,6 +1,7 @@
 import contextlib
 import re
 import time
+from datetime import datetime
 from typing import Any, cast
 
 import structlog
@@ -16,6 +17,11 @@ logger = structlog.get_logger()
 _SIZE_SUFFIX_RE = re.compile(r"=[wsh]\d+[^/]*(?=/|$)")
 _MENU_CAP = 5
 _VIBE_CAP = 10
+
+
+def _parse_ts(ts: str) -> datetime:
+    """Parse an ISO-8601 timestamp that may use 'Z' or '+00:00' as UTC suffix."""
+    return datetime.fromisoformat(ts.replace("Z", "+00:00"))
 
 
 def to_thumbnail_url(url: str, width: int = 400, height: int = 225) -> str:
@@ -129,6 +135,53 @@ async def handle_classify_shop_photos(
                     .eq("id", str(job_id))
                     .execute()
                 )
+
+    # --- ENRICH_MENU_PHOTO trigger (DEV-315) ---
+    menu_photos = cast(
+        "list[dict[str, Any]]",
+        db.table("shop_photos")
+        .select("id,url,uploaded_at")
+        .eq("shop_id", shop_id)
+        .eq("category", "MENU")
+        .execute()
+        .data
+        or [],
+    )
+
+    if menu_photos:
+        # Dedup guard: check which photos already have fresher extractions
+        existing = cast(
+            "list[dict[str, Any]]",
+            db.table("shop_menu_items")
+            .select("source_photo_id,extracted_at")
+            .eq("shop_id", shop_id)
+            .eq("source", "photo")
+            .execute()
+            .data
+            or [],
+        )
+        extracted_map = {
+            row["source_photo_id"]: row["extracted_at"]
+            for row in existing
+            if row.get("source_photo_id")
+        }
+
+        stale_photos = []
+        for photo in menu_photos:
+            photo_id = photo["id"]
+            extracted_at = extracted_map.get(photo_id)
+            if not extracted_at or (
+                photo.get("uploaded_at")
+                and _parse_ts(extracted_at) < _parse_ts(photo["uploaded_at"])
+            ):
+                stale_photos.append({"photo_id": photo_id, "image_url": photo["url"]})
+
+        if stale_photos:
+            await queue.enqueue(
+                job_type=JobType.ENRICH_MENU_PHOTO,
+                payload={"shop_id": shop_id, "photos": stale_photos},
+                priority=3,
+            )
 
 
 def _get_existing_category_counts(db: Client, shop_id: str) -> dict[PhotoCategory, int]:

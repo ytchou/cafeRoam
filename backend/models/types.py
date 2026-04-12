@@ -445,6 +445,7 @@ class EnrichmentResult(BaseModel):
     mode_scores: ShopModeScores | None = None
     menu_highlights: list[str] = []
     coffee_origins: list[str] = []
+    menu_items: list[dict[str, Any]] = []
 
 
 class MenuExtractionResult(BaseModel):

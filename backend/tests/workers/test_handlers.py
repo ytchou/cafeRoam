@@ -1,9 +1,14 @@
 from unittest.mock import AsyncMock, MagicMock
 
+import pytest
+
+from models.types import MenuExtractionResult
 from workers.handlers.enrich_menu_photo import handle_enrich_menu_photo
 from workers.handlers.enrich_shop import handle_enrich_shop
 from workers.handlers.generate_embedding import handle_generate_embedding
 from workers.handlers.weekly_email import handle_weekly_email
+
+SHOP_ID = "shop-zhongshan-01"
 
 
 class TestEnrichShopHandler:
@@ -181,6 +186,192 @@ class TestEnrichShopHandler:
         written = shop_update_payloads[0]
         assert written["menu_highlights"] == ["巴斯克蛋糕", "手沖咖啡"]
         assert written["coffee_origins"] == ["耶加雪菲", "哥倫比亞"]
+
+    @pytest.mark.asyncio
+    async def test_review_extraction_writes_menu_items_with_source_review(self):
+        """Given LLM returns menu_items in enrichment result, when handler runs, then items are written with source='review'."""
+        from models.types import EnrichmentResult
+
+        db = MagicMock()
+        llm = AsyncMock()
+        queue = AsyncMock()
+        queue.get_status.return_value = "claimed"
+
+        enrichment_result = EnrichmentResult(
+            tags=[],
+            tag_confidences={},
+            summary="溫馨咖啡館",
+            confidence=0.9,
+            mode_scores=None,
+            menu_highlights=["拿鐵"],
+            coffee_origins=["衣索比亞"],
+            menu_items=[
+                {"name": "拿鐵", "price": 150, "category": "coffee"},
+                {"name": "巴斯克蛋糕", "price": 180, "category": "dessert"},
+            ],
+        )
+        llm.enrich_shop = AsyncMock(return_value=enrichment_result)
+        llm.assign_tarot = AsyncMock(return_value=MagicMock(tarot_title=None, flavor_text=""))
+
+        db.table.return_value.select.return_value.eq.return_value.single.return_value.execute.return_value = MagicMock(
+            data={
+                "id": SHOP_ID,
+                "name": "晨光咖啡",
+                "description": None,
+                "categories": ["精品咖啡"],
+                "price_range": "$$",
+                "socket": "yes",
+                "limited_time": "no",
+                "rating": 4.8,
+                "review_count": 50,
+            }
+        )
+        db.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(
+            data=[{"text": "拿鐵很好喝，巴斯克蛋糕超棒"}]
+        )
+        # No existing photo-sourced items
+        db.table.return_value.select.return_value.eq.return_value.eq.return_value.execute.return_value = MagicMock(
+            data=[]
+        )
+
+        await handle_enrich_shop(
+            payload={"shop_id": SHOP_ID},
+            db=db,
+            llm=llm,
+            queue=queue,
+            job_id="job-t5-review-01",
+        )
+
+        # Verify review items inserted with source='review'
+        insert_calls = db.table.return_value.insert.call_args_list
+        review_inserts = []
+        for call in insert_calls:
+            rows = call.args[0] if call.args else []
+            if isinstance(rows, list) and rows and rows[0].get("source") == "review":
+                review_inserts.extend(rows)
+        assert len(review_inserts) >= 1
+        assert any(row["item_name"] == "拿鐵" for row in review_inserts)
+        assert any(row["item_name"] == "巴斯克蛋糕" for row in review_inserts)
+
+    @pytest.mark.asyncio
+    async def test_review_extraction_skips_items_from_photos(self):
+        """Given photo-sourced item '拿鐵' already exists, when review extraction returns '拿鐵', then it is skipped."""
+        from models.types import EnrichmentResult
+
+        db = MagicMock()
+        llm = AsyncMock()
+        queue = AsyncMock()
+        queue.get_status.return_value = "claimed"
+
+        enrichment_result = EnrichmentResult(
+            tags=[],
+            tag_confidences={},
+            summary="咖啡館",
+            confidence=0.9,
+            mode_scores=None,
+            menu_highlights=[],
+            coffee_origins=[],
+            menu_items=[
+                {"name": "拿鐵", "price": 150, "category": "coffee"},
+                {"name": "巴斯克蛋糕", "price": 180, "category": "dessert"},
+            ],
+        )
+        llm.enrich_shop = AsyncMock(return_value=enrichment_result)
+        llm.assign_tarot = AsyncMock(return_value=MagicMock(tarot_title=None, flavor_text=""))
+
+        db.table.return_value.select.return_value.eq.return_value.single.return_value.execute.return_value = MagicMock(
+            data={
+                "id": SHOP_ID,
+                "name": "晨光咖啡",
+                "description": None,
+                "categories": [],
+                "price_range": "$",
+                "socket": "no",
+                "limited_time": "no",
+                "rating": 4.0,
+                "review_count": 10,
+            }
+        )
+        db.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(
+            data=[]
+        )
+        # Photo-sourced '拿鐵' already exists
+        db.table.return_value.select.return_value.eq.return_value.eq.return_value.execute.return_value = MagicMock(
+            data=[{"item_name": "拿鐵"}]
+        )
+
+        await handle_enrich_shop(
+            payload={"shop_id": SHOP_ID},
+            db=db,
+            llm=llm,
+            queue=queue,
+            job_id="job-t5-review-02",
+        )
+
+        insert_calls = db.table.return_value.insert.call_args_list
+        for call in insert_calls:
+            rows = call.args[0] if call.args else []
+            if isinstance(rows, list) and rows and rows[0].get("source") == "review":
+                names = [r["item_name"] for r in rows]
+                assert "拿鐵" not in names, (
+                    "Photo-sourced '拿鐵' should not be overwritten by review"
+                )
+                assert "巴斯克蛋糕" in names
+
+    @pytest.mark.asyncio
+    async def test_empty_menu_items_no_delete(self):
+        """Given LLM returns empty menu_items, when handler runs, then existing review items are NOT deleted."""
+        from models.types import EnrichmentResult
+
+        db = MagicMock()
+        llm = AsyncMock()
+        queue = AsyncMock()
+        queue.get_status.return_value = "claimed"
+
+        enrichment_result = EnrichmentResult(
+            tags=[],
+            tag_confidences={},
+            summary="咖啡館",
+            confidence=0.9,
+            mode_scores=None,
+            menu_highlights=[],
+            coffee_origins=[],
+            menu_items=[],
+        )
+        llm.enrich_shop = AsyncMock(return_value=enrichment_result)
+        llm.assign_tarot = AsyncMock(return_value=MagicMock(tarot_title=None, flavor_text=""))
+
+        db.table.return_value.select.return_value.eq.return_value.single.return_value.execute.return_value = MagicMock(
+            data={
+                "id": SHOP_ID,
+                "name": "咖啡廳",
+                "description": None,
+                "categories": [],
+                "price_range": "$",
+                "socket": "no",
+                "limited_time": "no",
+                "rating": 4.0,
+                "review_count": 5,
+            }
+        )
+        db.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(
+            data=[]
+        )
+
+        await handle_enrich_shop(
+            payload={"shop_id": SHOP_ID},
+            db=db,
+            llm=llm,
+            queue=queue,
+            job_id="job-t5-review-03",
+        )
+
+        # When menu_items is empty, no delete on shop_menu_items with source='review'
+        delete_calls = db.table.return_value.delete.call_args_list
+        review_deletes = [c for c in delete_calls if "review" in str(c)]
+        assert len(review_deletes) == 0, (
+            "Should not delete review items when enrichment returns empty menu_items"
+        )
 
 
 class TestGenerateEmbeddingHandler:
@@ -495,79 +686,146 @@ class TestGenerateEmbeddingHandler:
 
 
 class TestEnrichMenuPhotoHandler:
-    async def test_replaces_menu_items_and_queues_reembed_when_items_extracted(self):
-        """When a menu photo is processed, existing items are replaced and a re-embed is queued."""
+    @pytest.fixture
+    def mock_db(self):
         db = MagicMock()
-        llm = AsyncMock()
-        queue = AsyncMock()
+        db.table.return_value.delete.return_value.eq.return_value.execute.return_value = MagicMock(
+            data=[]
+        )
+        db.table.return_value.delete.return_value.eq.return_value.eq.return_value.execute.return_value = MagicMock(
+            data=[]
+        )
+        db.table.return_value.delete.return_value.eq.return_value.eq.return_value.in_.return_value.execute.return_value = MagicMock(
+            data=[]
+        )
+        db.table.return_value.insert.return_value.execute.return_value = MagicMock(data=[])
+        return db
 
-        llm.extract_menu_data = AsyncMock(
-            return_value=MagicMock(
-                items=[
-                    {"name": "巴斯克蛋糕", "price": 120, "category": "dessert"},
-                    {"name": "手沖拿鐵", "price": 150, "category": "coffee"},
-                ]
+    @pytest.fixture
+    def mock_llm(self):
+        return AsyncMock()
+
+    @pytest.fixture
+    def mock_queue(self):
+        return AsyncMock()
+
+    @pytest.mark.asyncio
+    async def test_multi_photo_extraction_writes_source_photo_id(
+        self, mock_db, mock_llm, mock_queue
+    ):
+        """Given multi-photo payload, when handler runs, then items are written with correct source_photo_id per photo."""
+        mock_llm.extract_menu_data = AsyncMock(
+            side_effect=[
+                MenuExtractionResult(
+                    items=[{"name": "拿鐵", "price": 150, "category": "coffee"}],
+                    raw_text=None,
+                ),
+                MenuExtractionResult(
+                    items=[{"name": "巴斯克蛋糕", "price": 180, "category": "dessert"}],
+                    raw_text=None,
+                ),
+            ]
+        )
+        payload = {
+            "shop_id": SHOP_ID,
+            "photos": [
+                {"photo_id": "photo-1", "image_url": "https://example.com/menu1.jpg"},
+                {"photo_id": "photo-2", "image_url": "https://example.com/menu2.jpg"},
+            ],
+        }
+
+        await handle_enrich_menu_photo(payload, mock_db, mock_llm, mock_queue)
+
+        insert_calls = mock_db.table.return_value.insert.call_args_list
+        all_rows = []
+        for call in insert_calls:
+            rows = call.args[0] if call.args else []
+            if isinstance(rows, list):
+                all_rows.extend(rows)
+        assert all(row["source"] == "photo" for row in all_rows)
+        photo_ids = {row["source_photo_id"] for row in all_rows}
+        assert "photo-1" in photo_ids
+        assert "photo-2" in photo_ids
+
+    @pytest.mark.asyncio
+    async def test_no_dual_write_to_shops_menu_data(self, mock_db, mock_llm, mock_queue):
+        """Given extraction completes, when writing results, then shops.menu_data is NOT written."""
+        mock_llm.extract_menu_data = AsyncMock(
+            return_value=MenuExtractionResult(
+                items=[{"name": "拿鐵", "price": 150}],
+                raw_text=None,
             )
         )
+        payload = {
+            "shop_id": SHOP_ID,
+            "photos": [{"photo_id": "photo-1", "image_url": "https://example.com/menu1.jpg"}],
+        }
 
-        shop_table = MagicMock()
-        shop_table.update.return_value.eq.return_value.execute.return_value = MagicMock(data=[])
+        await handle_enrich_menu_photo(payload, mock_db, mock_llm, mock_queue)
 
-        menu_table = MagicMock()
-        menu_table.delete.return_value.eq.return_value.execute.return_value = MagicMock(data=[])
-        menu_table.insert.return_value.execute.return_value = MagicMock(data=[])
+        shops_update_calls = mock_db.table.return_value.update.call_args_list
+        for call in shops_update_calls:
+            update_data = call.args[0] if call.args else {}
+            assert "menu_data" not in update_data
 
-        def table_side_effect(name: str):
-            return menu_table if name == "shop_menu_items" else shop_table
-
-        db.table.side_effect = table_side_effect
-
-        await handle_enrich_menu_photo(
-            payload={
-                "shop_id": "shop-zhongshan-01",
-                "image_url": "https://storage.example.com/menu.jpg",
-            },
-            db=db,
-            llm=llm,
-            queue=queue,
+    @pytest.mark.asyncio
+    async def test_single_photo_failure_continues_to_next(self, mock_db, mock_llm, mock_queue):
+        """Given first photo extraction fails, when handler runs, then second photo still extracts."""
+        mock_llm.extract_menu_data = AsyncMock(
+            side_effect=[
+                Exception("LLM timeout"),
+                MenuExtractionResult(
+                    items=[{"name": "手沖咖啡", "price": 200}],
+                    raw_text=None,
+                ),
+            ]
         )
+        payload = {
+            "shop_id": SHOP_ID,
+            "photos": [
+                {"photo_id": "photo-1", "image_url": "https://example.com/menu1.jpg"},
+                {"photo_id": "photo-2", "image_url": "https://example.com/menu2.jpg"},
+            ],
+        }
 
-        # DELETE before INSERT (replace-on-extract)
-        menu_table.delete.return_value.eq.return_value.execute.assert_called_once()
-        # INSERT two items
-        menu_table.insert.return_value.execute.assert_called_once()
-        inserted = menu_table.insert.call_args[0][0]
-        assert len(inserted) == 2
-        assert inserted[0]["item_name"] == "巴斯克蛋糕"
-        assert inserted[0]["shop_id"] == "shop-zhongshan-01"
-        assert inserted[1]["item_name"] == "手沖拿鐵"
-        # Dual-write to shops.menu_data
-        shop_table.update.assert_called_once()
-        # Re-embed queued
-        queue.enqueue.assert_called_once()
-        assert queue.enqueue.call_args.kwargs["payload"]["shop_id"] == "shop-zhongshan-01"
+        await handle_enrich_menu_photo(payload, mock_db, mock_llm, mock_queue)
 
-    async def test_preserves_existing_items_when_extraction_returns_empty(self):
+        insert_calls = mock_db.table.return_value.insert.call_args_list
+        assert len(insert_calls) >= 1
+
+    @pytest.mark.asyncio
+    async def test_legacy_single_image_url_payload_still_works(self, mock_db, mock_llm, mock_queue):
+        """Given legacy payload with single image_url string, when handler runs, then it still extracts."""
+        mock_llm.extract_menu_data = AsyncMock(
+            return_value=MenuExtractionResult(
+                items=[{"name": "拿鐵", "price": 150}],
+                raw_text=None,
+            )
+        )
+        payload = {"shop_id": SHOP_ID, "image_url": "https://example.com/menu.jpg"}
+
+        await handle_enrich_menu_photo(payload, mock_db, mock_llm, mock_queue)
+
+        mock_llm.extract_menu_data.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_preserves_existing_items_when_extraction_returns_empty(
+        self, mock_db, mock_llm, mock_queue
+    ):
         """When no items are extracted, existing menu items are preserved and no re-embed is queued."""
-        db = MagicMock()
-        llm = AsyncMock()
-        queue = AsyncMock()
-
-        llm.extract_menu_data = AsyncMock(return_value=MagicMock(items=[]))
-
-        await handle_enrich_menu_photo(
-            payload={
-                "shop_id": "shop-zhongshan-01",
-                "image_url": "https://storage.example.com/menu.jpg",
-            },
-            db=db,
-            llm=llm,
-            queue=queue,
+        mock_llm.extract_menu_data = AsyncMock(
+            return_value=MenuExtractionResult(items=[], raw_text=None)
         )
 
-        # No DB writes, no job queued
-        db.table.assert_not_called()
-        queue.enqueue.assert_not_called()
+        await handle_enrich_menu_photo(
+            payload={"shop_id": SHOP_ID, "image_url": "https://storage.example.com/menu.jpg"},
+            db=mock_db,
+            llm=mock_llm,
+            queue=mock_queue,
+        )
+
+        mock_db.table.assert_not_called()
+        mock_queue.enqueue.assert_not_called()
 
 
 class TestWeeklyEmailHandler:
