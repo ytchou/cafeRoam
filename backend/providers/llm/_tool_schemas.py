@@ -65,6 +65,32 @@ CLASSIFY_SHOP_SCHEMA: dict[str, Any] = {
                     "Use Traditional Chinese names. Max 5."
                 ),
             },
+            "menu_items": {
+                "type": "array",
+                "description": (
+                    "Structured menu items extracted from reviews. "
+                    "Include specific drinks, food, and desserts mentioned by name."
+                ),
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "name": {
+                            "type": "string",
+                            "description": "Item name in original language",
+                        },
+                        "price": {
+                            "type": "number",
+                            "description": "Price in TWD if mentioned",
+                        },
+                        "category": {
+                            "type": "string",
+                            "description": "One of: coffee, tea, drink, food, dessert, other",
+                        },
+                    },
+                    "required": ["name"],
+                },
+                "maxItems": 20,
+            },
         },
         "required": ["tags", "summary", "mode"],
     },

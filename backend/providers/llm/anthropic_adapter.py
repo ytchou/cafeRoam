@@ -149,6 +149,9 @@ def _parse_enrichment_payload(payload: dict, taxonomy_by_id: dict) -> Enrichment
         dict.fromkeys(t for raw in raw_origins if (t := _to_vocab_term(raw, _SPECIALTY_VOCAB)))
     )
 
+    raw_menu_items = payload.get("menu_items") or []
+    menu_items = [item for item in raw_menu_items if item.get("name")]
+
     return EnrichmentResult(
         tags=valid_tags,
         tag_confidences=tag_confidences,
@@ -157,6 +160,7 @@ def _parse_enrichment_payload(payload: dict, taxonomy_by_id: dict) -> Enrichment
         mode_scores=mode_scores,
         menu_highlights=menu_highlights,
         coffee_origins=coffee_origins,
+        menu_items=menu_items,
     )
 
 

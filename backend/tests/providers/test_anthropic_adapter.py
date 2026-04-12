@@ -562,3 +562,47 @@ class TestAnthropicUsageLogging:
         assert call_kwargs["tokens_input"] == 500
         assert call_kwargs["tokens_output"] == 100
         assert call_kwargs["cost_usd"] > 0
+
+
+class TestParseEnrichmentPayloadMenuItems:
+    @pytest.fixture
+    def taxonomy_by_id(self):
+        return {tag.id: tag for tag in SAMPLE_TAXONOMY}
+
+    def test_parse_enrichment_payload_extracts_menu_items(self, taxonomy_by_id):
+        """Given enrichment result with menu_items, when parsed, then menu_items are included in result."""
+        from providers.llm.anthropic_adapter import _parse_enrichment_payload
+
+        payload = {
+            "tags": [{"id": "quiet", "confidence": 0.9}],
+            "summary": "溫馨的咖啡館，提供手沖咖啡和自製甜點",
+            "mode": "rest",
+            "mode_scores": {"work": 7, "rest": 8, "social": 6},
+            "menu_highlights": [],
+            "coffee_origins": [],
+            "menu_items": [
+                {"name": "拿鐵", "price": 150, "category": "coffee"},
+                {"name": "巴斯克蛋糕", "price": 180, "category": "dessert"},
+                {"name": "手沖咖啡", "category": "coffee"},
+            ],
+        }
+        result = _parse_enrichment_payload(payload, taxonomy_by_id)
+        assert len(result.menu_items) == 3
+        assert result.menu_items[0]["name"] == "拿鐵"
+        assert result.menu_items[0]["price"] == 150
+        assert result.menu_items[1]["name"] == "巴斯克蛋糕"
+        assert result.menu_items[2].get("price") is None
+
+    def test_parse_enrichment_payload_empty_menu_items(self, taxonomy_by_id):
+        """Given enrichment result without menu_items, when parsed, then menu_items defaults to empty list."""
+        from providers.llm.anthropic_adapter import _parse_enrichment_payload
+
+        payload = {
+            "tags": [],
+            "summary": "咖啡館",
+            "mode": "mixed",
+            "menu_highlights": [],
+            "coffee_origins": [],
+        }
+        result = _parse_enrichment_payload(payload, taxonomy_by_id)
+        assert result.menu_items == []
