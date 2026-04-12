@@ -57,11 +57,19 @@ test.describe('Mapbox GL JS performance under throttling', () => {
       });
       await cdp.send('Network.emulateNetworkConditions', SLOW_4G);
 
-      await page.route('**api.mapbox.com/v4/**', route =>
-        route.fulfill({ status: 200, contentType: 'application/x-protobuf', body: Buffer.alloc(0) })
+      await page.route('**api.mapbox.com/v4/**', (route) =>
+        route.fulfill({
+          status: 200,
+          contentType: 'application/x-protobuf',
+          body: Buffer.alloc(0),
+        })
       );
-      await page.route('**api.mapbox.com/styles/*/tiles/**', route =>
-        route.fulfill({ status: 200, contentType: 'application/x-protobuf', body: Buffer.alloc(0) })
+      await page.route('**api.mapbox.com/styles/*/tiles/**', (route) =>
+        route.fulfill({
+          status: 200,
+          contentType: 'application/x-protobuf',
+          body: Buffer.alloc(0),
+        })
       );
 
       // Inject a timing tracker before navigation — monkey-patches Map construction
