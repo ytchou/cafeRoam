@@ -1,8 +1,8 @@
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, call
 
 import pytest
 
-from models.types import MenuExtractionResult
+from models.types import JobType, MenuExtractionResult
 from workers.handlers.enrich_menu_photo import handle_enrich_menu_photo
 from workers.handlers.enrich_shop import handle_enrich_shop
 from workers.handlers.generate_embedding import handle_generate_embedding
@@ -133,7 +133,18 @@ class TestEnrichShopHandler:
             job_id="job-handlers-enrich-02",
         )
         llm.enrich_shop.assert_called_once()
-        queue.enqueue.assert_called_once()  # Should queue embedding generation
+        assert queue.enqueue.call_args_list == [
+            call(
+                job_type=JobType.SUMMARIZE_REVIEWS,
+                payload={"shop_id": "shop-1"},
+                priority=5,
+            ),
+            call(
+                job_type=JobType.SYNC_MENU_HIGHLIGHTS,
+                payload={"shop_id": "shop-1"},
+                priority=5,
+            ),
+        ]
 
     async def test_menu_highlights_and_coffee_origins_written_to_db(self):
         """When enrichment extracts menu items and origins, both are persisted to the shops table."""
@@ -181,10 +192,9 @@ class TestEnrichShopHandler:
         )
 
         update_calls = db.table.return_value.update.call_args_list
-        shop_update_payloads = [c.args[0] for c in update_calls if "menu_highlights" in c.args[0]]
-        assert len(shop_update_payloads) >= 1, "Expected shops.update to include menu_highlights"
+        shop_update_payloads = [c.args[0] for c in update_calls if "coffee_origins" in c.args[0]]
+        assert len(shop_update_payloads) >= 1, "Expected shops.update to include coffee_origins"
         written = shop_update_payloads[0]
-        assert written["menu_highlights"] == ["巴斯克蛋糕", "手沖咖啡"]
         assert written["coffee_origins"] == ["耶加雪菲", "哥倫比亞"]
 
     @pytest.mark.asyncio

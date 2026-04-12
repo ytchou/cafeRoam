@@ -28,6 +28,7 @@ from workers.handlers.reembed_reviewed_shops import handle_reembed_reviewed_shop
 from workers.handlers.scrape_batch import handle_scrape_batch
 from workers.handlers.shop_data_report import handle_shop_data_report
 from workers.handlers.summarize_reviews import handle_summarize_reviews
+from workers.handlers.sync_menu_highlights import handle_sync_menu_highlights
 from workers.handlers.weekly_email import handle_weekly_email
 from workers.queue import JobQueue
 
@@ -146,6 +147,8 @@ async def _dispatch_job(job: Job, db: Client, queue: JobQueue) -> None:
                 queue=queue,
                 job_id=job.id,
             )
+        case JobType.SYNC_MENU_HIGHLIGHTS:
+            await handle_sync_menu_highlights(payload=job.payload, db=db, queue=queue)
         case JobType.WEEKLY_EMAIL:
             email = get_email_provider()
             await handle_weekly_email(db=db, email=email)
