@@ -370,3 +370,40 @@ def test_actor_base_input_max_reviews_is_50():
     from providers.scraper.apify_adapter import _ACTOR_BASE_INPUT
 
     assert _ACTOR_BASE_INPUT["maxReviews"] == 50
+
+
+@pytest.mark.asyncio
+async def test_scrape_batch_logs_compute_units(adapter):
+    """After scrape_batch() completes, api_usage_log is inserted with provider=apify and compute_units from actor run stats."""
+    shops = [
+        BatchScrapeInput(shop_id='shop-cu-1', google_maps_url='https://maps.google.com/?cid=99'),
+    ]
+
+    place_data = _place({
+        'inputStartUrl': 'https://maps.google.com/?cid=99',
+        'title': 'Compute Units Cafe',
+    })
+
+    mock_run_dict = {
+        'defaultDatasetId': 'dataset-123',
+        'stats': {'computeUnits': 4.75},
+    }
+    mock_actor = MagicMock()
+    mock_actor.call.return_value = mock_run_dict
+    mock_dataset = MagicMock()
+    mock_dataset.iterate_items.return_value = iter([place_data])
+
+    adapter._client = MagicMock()
+    adapter._client.actor.return_value = mock_actor
+    adapter._client.dataset.return_value = mock_dataset
+
+    with patch('providers.scraper.apify_adapter.log_api_usage') as mock_log:
+        results = await adapter.scrape_batch(shops)
+
+    assert len(results) == 1
+    mock_log.assert_called_once()
+    call_kwargs = mock_log.call_args.kwargs
+    assert call_kwargs['provider'] == 'apify'
+    assert call_kwargs['task'] == 'scrape_batch'
+    assert call_kwargs['compute_units'] == pytest.approx(4.75, abs=0.01)
+    assert call_kwargs['cost_usd'] is None

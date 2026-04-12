@@ -7,6 +7,7 @@ import structlog
 from apify_client import ApifyClient
 
 from core.opening_hours import parse_to_structured
+from providers.api_usage_logger import log_api_usage
 from providers.scraper.interface import (
     BatchScrapeInput,
     BatchScrapeResult,
@@ -189,14 +190,22 @@ class ApifyScraperAdapter:
     async def _run_actor(self, run_input: dict[str, Any]) -> list[dict[str, Any]]:
         """Run Apify actor synchronously in a thread pool (client is sync)."""
 
-        def _sync_run() -> list[dict[str, Any]]:
+        def _sync_run() -> tuple[list[dict[str, Any]], float]:
             run = self._client.actor(_ACTOR_ID).call(run_input=run_input)
             if run is None:
-                return []
+                return [], 0.0
+            _cu = run.get("stats", {}).get("computeUnits", 0.0) if isinstance(run, dict) else 0.0
             items = list(self._client.dataset(run["defaultDatasetId"]).iterate_items())
-            return items
+            return items, float(_cu)
 
-        return await asyncio.to_thread(_sync_run)
+        items, compute_units = await asyncio.to_thread(_sync_run)
+        log_api_usage(
+            provider="apify",
+            task="scrape_batch",
+            compute_units=compute_units,
+            cost_usd=None,
+        )
+        return items
 
     async def close(self) -> None:
         pass
