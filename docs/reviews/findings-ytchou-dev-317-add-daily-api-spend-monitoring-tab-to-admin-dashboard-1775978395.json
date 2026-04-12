@@ -1,0 +1,67 @@
+{
+  "findings": [
+    {
+      "severity": "Important",
+      "file": "backend/providers/llm/anthropic_adapter.py",
+      "line": "210-330",
+      "description": "Missing api_usage_logger instrumentation on extract_menu_data, assign_tarot, classify_photo, and summarize_reviews. Only enrich_shop logs usage. The plan acceptance criteria requires per-task cost breakdown (enrich_shop, classify_photo, embed), but 4 of 5 Anthropic LLM call sites are uninstrumented — their costs will be invisible in the spend dashboard.",
+      "flagged_by": "Bug Hunter, Plan Alignment",
+      "status": "resolved"
+    },
+    {
+      "severity": "Important",
+      "file": "backend/providers/llm/openai_adapter.py",
+      "line": "201-299",
+      "description": "Missing api_usage_logger instrumentation on extract_menu_data, classify_photo, and summarize_reviews. Only enrich_shop logs usage. Same gap as the Anthropic adapter — 3 of 4 OpenAI LLM call sites are uninstrumented.",
+      "flagged_by": "Bug Hunter, Plan Alignment",
+      "status": "resolved"
+    },
+    {
+      "severity": "Important",
+      "file": "backend/providers/embeddings/openai_adapter.py",
+      "line": "18-24",
+      "description": "Missing api_usage_logger instrumentation on embed() and embed_batch(). These are OpenAI API calls that incur cost (text-embedding-3-small pricing is in cost.py). The plan acceptance criteria lists 'embed' as an expected task in the spend breakdown, but embedding calls are never logged.",
+      "flagged_by": "Bug Hunter, Plan Alignment",
+      "status": "resolved"
+    },
+    {
+      "severity": "Important",
+      "file": "backend/providers/llm/openai_adapter.py",
+      "line": "185-196",
+      "description": "OpenAI usage fields prompt_tokens and completion_tokens can individually be None per the SDK types (Optional[int]). compute_llm_cost expects int arguments. If either is None, the multiplication in compute_llm_cost will TypeError. Should default to 0: tokens_input=_usage.prompt_tokens or 0.",
+      "flagged_by": "Bug Hunter",
+      "status": "resolved"
+    },
+    {
+      "severity": "Minor",
+      "file": "backend/tests/api/test_admin_spend.py",
+      "line": "29-51",
+      "description": "Mock rows in test_spend_returns_aggregated_totals omit tokens_input and tokens_output fields. The endpoint aggregates these into today_tokens_in/mtd_tokens_in per task, but this path is completely untested. Adding token fields to mock data and asserting on the task-level token aggregation would improve coverage of the aggregation logic.",
+      "flagged_by": "Test Philosophy",
+      "status": "valid"
+    },
+    {
+      "severity": "Minor",
+      "file": "backend/providers/scraper/apify_adapter.py",
+      "line": "202-207",
+      "description": "Apify log_api_usage passes cost_usd=None, which is correct per the design (Apify cost computed at query time from CU). However, the task is hardcoded as 'scrape_batch' even though _run_actor is a general-purpose method. If _run_actor is called from other tasks in the future, all usage will be attributed to scrape_batch. Minor because currently all Apify calls are scrape_batch.",
+      "flagged_by": "Architecture & Design",
+      "status": "debatable"
+    }
+  ],
+  "active_agents": ["Bug Hunter", "Plan Alignment", "Architecture & Design", "Test Philosophy"],
+  "skipped": [
+    {
+      "file": "backend/api/admin.py",
+      "line": "855",
+      "reason": "datetime.fromisoformat in loop: each row has a unique timestamp — parsing must be per-row, not hoistable. CLAUDE.md performance rule does not apply here."
+    },
+    {
+      "file": "app/(admin)/admin/_components/SpendTab.tsx",
+      "line": "all",
+      "reason": "Design quality review: SpendTab is an admin-only internal tool component using standard shadcn/ui Table components. No consumer-facing design violations. Spacing uses Tailwind utility classes mapped to design tokens."
+    }
+  ],
+  "head_sha": "2d5e2a3377c3e27a40e99940ca67265ce61459a2",
+  "review_log_path": "docs/reviews/2026-04-12-ytchou-dev-317-add-daily-api-spend-monitoring-tab-to-admin-dashboard.md"
+}
