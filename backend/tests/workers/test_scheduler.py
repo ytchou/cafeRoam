@@ -1,9 +1,11 @@
-from unittest.mock import MagicMock, patch
+import asyncio
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from models.types import JobType
+from models.types import JobReasonCode, JobType
 from workers.scheduler import (
+    _run_job,
     create_scheduler,
     get_scheduler_status,
     run_sweep_timed_out,
@@ -134,3 +136,56 @@ def test_sweep_timed_out_registered_in_scheduler():
         call.kwargs.get("id") or call[1].get("id") for call in mock_instance.add_job.call_args_list
     ]
     assert "sweep_timed_out" in job_ids
+
+
+class TestRunJobReasonCodes:
+    """_run_job passes the correct reason_code to queue.fail()."""
+
+    async def test_cancelled_error_uses_provider_error(self):
+        """CancelledError during job execution writes reason_code=provider_error."""
+        mock_queue = MagicMock()
+        mock_queue.fail = AsyncMock()
+
+        mock_job = MagicMock()
+        mock_job.id = "job-1"
+        mock_job.job_type = JobType.ENRICH_SHOP
+        mock_job.payload = {}
+
+        with (
+            patch("workers.scheduler.get_service_role_client"),
+            patch("workers.scheduler.JobQueue", return_value=mock_queue),
+            patch("workers.scheduler._dispatch_job", side_effect=asyncio.CancelledError()),
+            patch("workers.scheduler._in_flight", {JobType.ENRICH_SHOP: 1}),
+            patch("workers.scheduler.sentry_sdk"),
+        ):
+            with pytest.raises(asyncio.CancelledError):
+                await _run_job(mock_job)
+
+        mock_queue.fail.assert_called_once()
+        call_kwargs = mock_queue.fail.call_args
+        assert call_kwargs[1].get("reason_code") == JobReasonCode.PROVIDER_ERROR or \
+               (len(call_kwargs[0]) >= 3 and call_kwargs[0][2] == JobReasonCode.PROVIDER_ERROR)
+
+    async def test_general_exception_uses_provider_error(self):
+        """Unhandled exception during job execution writes reason_code=provider_error."""
+        mock_queue = MagicMock()
+        mock_queue.fail = AsyncMock()
+
+        mock_job = MagicMock()
+        mock_job.id = "job-1"
+        mock_job.job_type = JobType.ENRICH_SHOP
+        mock_job.payload = {}
+
+        with (
+            patch("workers.scheduler.get_service_role_client"),
+            patch("workers.scheduler.JobQueue", return_value=mock_queue),
+            patch("workers.scheduler._dispatch_job", side_effect=RuntimeError("boom")),
+            patch("workers.scheduler._in_flight", {JobType.ENRICH_SHOP: 1}),
+            patch("workers.scheduler.sentry_sdk"),
+        ):
+            await _run_job(mock_job)
+
+        mock_queue.fail.assert_called_once()
+        call_kwargs = mock_queue.fail.call_args
+        assert call_kwargs[1].get("reason_code") == JobReasonCode.PROVIDER_ERROR or \
+               (len(call_kwargs[0]) >= 3 and call_kwargs[0][2] == JobReasonCode.PROVIDER_ERROR)
