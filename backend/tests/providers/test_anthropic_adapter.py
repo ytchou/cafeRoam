@@ -519,3 +519,46 @@ class TestAnthropicSummarizeReviews:
         user_message = adapter._client.messages.create.call_args[1]["messages"][0]["content"]
         assert "社群筆記" in user_message
         assert "Google 評論" in user_message
+
+
+class TestAnthropicUsageLogging:
+    @pytest.fixture
+    def adapter(self):
+        return AnthropicLLMAdapter(
+            api_key="test-key",
+            model="claude-sonnet-4-6",
+            classify_model="claude-haiku-4-5-20251001",
+            taxonomy=SAMPLE_TAXONOMY,
+        )
+
+    async def test_enrich_shop_logs_api_usage(self, adapter):
+        """After enrich_shop() succeeds, api_usage_log is inserted with provider=anthropic."""
+        from unittest.mock import patch
+
+        mock_response = _make_tool_use_response(
+            {
+                "tags": [{"id": "quiet", "confidence": 0.9}],
+                "summary": "A quiet cafe.",
+                "topReviews": [],
+                "mode": "work",
+            }
+        )
+        mock_response.usage = MagicMock()
+        mock_response.usage.input_tokens = 500
+        mock_response.usage.output_tokens = 100
+        mock_response.usage.cache_creation_input_tokens = 0
+        mock_response.usage.cache_read_input_tokens = 0
+
+        adapter._client = AsyncMock()
+        adapter._client.messages.create = AsyncMock(return_value=mock_response)
+
+        with patch("providers.llm.anthropic_adapter.log_api_usage") as mock_log:
+            await adapter.enrich_shop(SAMPLE_SHOP)
+
+        mock_log.assert_called_once()
+        call_kwargs = mock_log.call_args.kwargs
+        assert call_kwargs["provider"] == "anthropic"
+        assert call_kwargs["task"] == "enrich_shop"
+        assert call_kwargs["tokens_input"] == 500
+        assert call_kwargs["tokens_output"] == 100
+        assert call_kwargs["cost_usd"] > 0

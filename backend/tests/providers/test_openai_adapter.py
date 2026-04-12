@@ -316,3 +316,52 @@ async def test_openai_summarize_reviews_uses_function_calling(adapter):
 
     call_kwargs = adapter._client.chat.completions.create.call_args[1]
     assert call_kwargs["tool_choice"]["function"]["name"] == "summarize_reviews"
+
+
+class TestOpenAIUsageLogging:
+    async def test_enrich_shop_logs_api_usage(self, adapter):
+        """After enrich_shop() succeeds, api_usage_log is inserted with provider=openai."""
+        from unittest.mock import patch
+
+        from models.types import ShopEnrichmentInput
+
+        shop = ShopEnrichmentInput(
+            name="光景咖啡",
+            reviews=["手沖咖啡超棒", "環境很安靜"],
+            description="A specialty coffee shop in Taipei",
+            categories=["咖啡廳"],
+            price_range="$150-350",
+            socket="yes",
+            limited_time="no",
+            rating=4.7,
+            review_count=25,
+        )
+
+        mock_response = MagicMock()
+        mock_response.usage = MagicMock()
+        mock_response.usage.prompt_tokens = 600
+        mock_response.usage.completion_tokens = 120
+        mock_choice = MagicMock()
+        mock_tool_call = MagicMock()
+        mock_tool_call.function.arguments = json.dumps(
+            {
+                "tags": [{"id": "quiet", "confidence": 0.9}],
+                "summary": "A quiet specialty cafe.",
+                "mode": "work",
+            }
+        )
+        mock_choice.message.tool_calls = [mock_tool_call]
+        mock_response.choices = [mock_choice]
+
+        adapter._client = AsyncMock()
+        adapter._client.chat.completions.create = AsyncMock(return_value=mock_response)
+
+        with patch("providers.llm.openai_adapter.log_api_usage") as mock_log:
+            await adapter.enrich_shop(shop)
+
+        mock_log.assert_called_once()
+        call_kwargs = mock_log.call_args.kwargs
+        assert call_kwargs["provider"] == "openai"
+        assert call_kwargs["task"] == "enrich_shop"
+        assert call_kwargs["tokens_input"] == 600
+        assert call_kwargs["tokens_output"] == 120

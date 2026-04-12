@@ -18,6 +18,8 @@ from models.types import (
     TarotEnrichmentResult,
     TaxonomyTag,
 )
+from providers.api_usage_logger import log_api_usage
+from providers.cost import compute_llm_cost
 from providers.llm._tool_schemas import (
     ASSIGN_TAROT_SCHEMA as ASSIGN_TAROT_TOOL,
 )
@@ -184,6 +186,24 @@ class AnthropicLLMAdapter:
             tool_choice={"type": "tool", "name": "classify_shop"},
         )
 
+        usage = response.usage
+        log_api_usage(
+            provider="anthropic",
+            task="enrich_shop",
+            model=self._model,
+            tokens_input=usage.input_tokens,
+            tokens_output=usage.output_tokens,
+            tokens_cache_write=getattr(usage, "cache_creation_input_tokens", 0) or 0,
+            tokens_cache_read=getattr(usage, "cache_read_input_tokens", 0) or 0,
+            cost_usd=compute_llm_cost(
+                self._model,
+                usage.input_tokens,
+                usage.output_tokens,
+                getattr(usage, "cache_creation_input_tokens", 0) or 0,
+                getattr(usage, "cache_read_input_tokens", 0) or 0,
+            ),
+        )
+
         tool_input = self._extract_tool_input(response, "classify_shop")
         return self._parse_enrichment(tool_input)
 
@@ -214,6 +234,23 @@ class AnthropicLLMAdapter:
             tool_choice={"type": "tool", "name": "extract_menu"},
         )
 
+        usage = response.usage
+        log_api_usage(
+            provider="anthropic",
+            task="extract_menu_data",
+            model=self._model,
+            tokens_input=usage.input_tokens,
+            tokens_output=usage.output_tokens,
+            tokens_cache_write=getattr(usage, "cache_creation_input_tokens", 0) or 0,
+            tokens_cache_read=getattr(usage, "cache_read_input_tokens", 0) or 0,
+            cost_usd=compute_llm_cost(
+                self._model,
+                usage.input_tokens,
+                usage.output_tokens,
+                getattr(usage, "cache_creation_input_tokens", 0) or 0,
+                getattr(usage, "cache_read_input_tokens", 0) or 0,
+            ),
+        )
         tool_input = self._extract_tool_input(response, "extract_menu")
         return MenuExtractionResult(
             items=tool_input.get("items", []),
@@ -241,6 +278,23 @@ class AnthropicLLMAdapter:
             tool_choice={"type": "tool", "name": "assign_tarot"},
         )
 
+        usage = response.usage
+        log_api_usage(
+            provider="anthropic",
+            task="assign_tarot",
+            model=self._model,
+            tokens_input=usage.input_tokens,
+            tokens_output=usage.output_tokens,
+            tokens_cache_write=getattr(usage, "cache_creation_input_tokens", 0) or 0,
+            tokens_cache_read=getattr(usage, "cache_read_input_tokens", 0) or 0,
+            cost_usd=compute_llm_cost(
+                self._model,
+                usage.input_tokens,
+                usage.output_tokens,
+                getattr(usage, "cache_creation_input_tokens", 0) or 0,
+                getattr(usage, "cache_read_input_tokens", 0) or 0,
+            ),
+        )
         tool_input = self._extract_tool_input(response, "assign_tarot")
         title = tool_input.get("tarot_title", "")
         flavor = tool_input.get("flavor_text", "")
@@ -274,6 +328,23 @@ class AnthropicLLMAdapter:
             tool_choice={"type": "tool", "name": "classify_photo"},
         )
 
+        usage = response.usage
+        log_api_usage(
+            provider="anthropic",
+            task="classify_photo",
+            model=self._classify_model,
+            tokens_input=usage.input_tokens,
+            tokens_output=usage.output_tokens,
+            tokens_cache_write=getattr(usage, "cache_creation_input_tokens", 0) or 0,
+            tokens_cache_read=getattr(usage, "cache_read_input_tokens", 0) or 0,
+            cost_usd=compute_llm_cost(
+                self._classify_model,
+                usage.input_tokens,
+                usage.output_tokens,
+                getattr(usage, "cache_creation_input_tokens", 0) or 0,
+                getattr(usage, "cache_read_input_tokens", 0) or 0,
+            ),
+        )
         tool_input = self._extract_tool_input(response, "classify_photo")
         raw_category = tool_input.get("category")
         if not raw_category:
@@ -302,6 +373,23 @@ class AnthropicLLMAdapter:
             messages=[{"role": "user", "content": user_content}],
             tools=[SUMMARIZE_REVIEWS_TOOL_SCHEMA],
             tool_choice={"type": "tool", "name": "summarize_reviews"},
+        )
+        usage = response.usage
+        log_api_usage(
+            provider="anthropic",
+            task="summarize_reviews",
+            model=self._classify_model,
+            tokens_input=usage.input_tokens,
+            tokens_output=usage.output_tokens,
+            tokens_cache_write=getattr(usage, "cache_creation_input_tokens", 0) or 0,
+            tokens_cache_read=getattr(usage, "cache_read_input_tokens", 0) or 0,
+            cost_usd=compute_llm_cost(
+                self._classify_model,
+                usage.input_tokens,
+                usage.output_tokens,
+                getattr(usage, "cache_creation_input_tokens", 0) or 0,
+                getattr(usage, "cache_read_input_tokens", 0) or 0,
+            ),
         )
         tool_input = self._extract_tool_input(response, "summarize_reviews")
         return ReviewSummaryResult(

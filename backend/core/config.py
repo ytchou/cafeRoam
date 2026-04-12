@@ -76,6 +76,8 @@ class Settings(BaseSettings):
     search_cache_provider: str = "supabase"
     search_cache_ttl_seconds: int = 14400  # 4 hours
     search_cache_similarity_threshold: float = 0.85
+    # Apify compute unit cost rate (USD per CU). Configurable via APIFY_COST_PER_CU env var.
+    apify_cost_per_cu: float = 0.004
 
     # Anti-crawling / rate limiting
     rate_limit_default: str = "60/minute"

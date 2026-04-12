@@ -18,6 +18,8 @@ from models.types import (
     TarotEnrichmentResult,
     TaxonomyTag,
 )
+from providers.api_usage_logger import log_api_usage
+from providers.cost import compute_llm_cost
 from providers.llm._tool_schemas import (
     ASSIGN_TAROT_SCHEMA,
     CLASSIFY_PHOTO_SCHEMA,
@@ -179,6 +181,20 @@ class OpenAILLMAdapter:
             ),
             max_completion_tokens=2048,
         )
+        _usage = response.usage
+        if _usage is not None:
+            log_api_usage(
+                provider="openai",
+                task="enrich_shop",
+                model=self._model,
+                tokens_input=_usage.prompt_tokens or 0,
+                tokens_output=_usage.completion_tokens or 0,
+                cost_usd=compute_llm_cost(
+                    self._model,
+                    _usage.prompt_tokens or 0,
+                    _usage.completion_tokens or 0,
+                ),
+            )
         payload = _extract_tool_input(response, "classify_shop")
         return _parse_enrichment_payload(payload, self._taxonomy_by_id)
 
@@ -212,6 +228,20 @@ class OpenAILLMAdapter:
             max_completion_tokens=4096,
             temperature=0,
         )
+        _usage = response.usage
+        if _usage is not None:
+            log_api_usage(
+                provider="openai",
+                task="extract_menu_data",
+                model=self._classify_model,
+                tokens_input=_usage.prompt_tokens or 0,
+                tokens_output=_usage.completion_tokens or 0,
+                cost_usd=compute_llm_cost(
+                    self._classify_model,
+                    _usage.prompt_tokens or 0,
+                    _usage.completion_tokens or 0,
+                ),
+            )
         payload = _extract_tool_input(response, "extract_menu")
         return MenuExtractionResult(
             items=payload.get("items", []) or [],
@@ -244,6 +274,20 @@ class OpenAILLMAdapter:
             ),
             max_completion_tokens=128,
         )
+        _usage = response.usage
+        if _usage is not None:
+            log_api_usage(
+                provider="openai",
+                task="classify_photo",
+                model=self._classify_model,
+                tokens_input=_usage.prompt_tokens or 0,
+                tokens_output=_usage.completion_tokens or 0,
+                cost_usd=compute_llm_cost(
+                    self._classify_model,
+                    _usage.prompt_tokens or 0,
+                    _usage.completion_tokens or 0,
+                ),
+            )
         payload = _extract_tool_input(response, "classify_photo")
         return PhotoCategory(payload["category"])
 
@@ -276,6 +320,20 @@ class OpenAILLMAdapter:
             ),
             max_completion_tokens=512,
         )
+        _usage = response.usage
+        if _usage is not None:
+            log_api_usage(
+                provider="openai",
+                task="summarize_reviews",
+                model=self._classify_model,
+                tokens_input=_usage.prompt_tokens or 0,
+                tokens_output=_usage.completion_tokens or 0,
+                cost_usd=compute_llm_cost(
+                    self._classify_model,
+                    _usage.prompt_tokens or 0,
+                    _usage.completion_tokens or 0,
+                ),
+            )
         tool_input = _extract_tool_input(response, "summarize_reviews")
         return ReviewSummaryResult(
             summary_zh_tw=tool_input["summary_zh_tw"],
@@ -310,6 +368,20 @@ class OpenAILLMAdapter:
             ),
             max_completion_tokens=256,
         )
+        _usage = response.usage
+        if _usage is not None:
+            log_api_usage(
+                provider="openai",
+                task="assign_tarot",
+                model=self._nano_model,
+                tokens_input=_usage.prompt_tokens or 0,
+                tokens_output=_usage.completion_tokens or 0,
+                cost_usd=compute_llm_cost(
+                    self._nano_model,
+                    _usage.prompt_tokens or 0,
+                    _usage.completion_tokens or 0,
+                ),
+            )
         payload = _extract_tool_input(response, "assign_tarot")
         title: str | None = payload.get("tarot_title")
         if title not in TAROT_TITLES:
