@@ -1,4 +1,3 @@
-from datetime import datetime, timezone
 from unittest.mock import MagicMock, patch
 
 from fastapi.testclient import TestClient
@@ -19,7 +18,9 @@ def test_spend_history_returns_empty_when_no_rows():
     app.dependency_overrides[get_current_user] = _admin_user
     try:
         mock_db = MagicMock()
-        mock_db.table.return_value.select.return_value.gte.return_value.execute.return_value = MagicMock(data=[])
+        mock_db.table.return_value.select.return_value.gte.return_value.execute.return_value = (
+            MagicMock(data=[])
+        )
         with (
             patch("api.admin.get_service_role_client", return_value=mock_db),
             patch("api.deps.settings") as mock_settings,
@@ -57,7 +58,9 @@ def test_spend_history_groups_by_date_and_provider():
             },
         ]
         mock_db = MagicMock()
-        mock_db.table.return_value.select.return_value.gte.return_value.execute.return_value = MagicMock(data=rows)
+        mock_db.table.return_value.select.return_value.gte.return_value.execute.return_value = (
+            MagicMock(data=rows)
+        )
         with (
             patch("api.admin.get_service_role_client", return_value=mock_db),
             patch("api.deps.settings") as mock_settings,
@@ -92,7 +95,9 @@ def test_spend_history_computes_apify_cost_from_compute_units():
             },
         ]
         mock_db = MagicMock()
-        mock_db.table.return_value.select.return_value.gte.return_value.execute.return_value = MagicMock(data=rows)
+        mock_db.table.return_value.select.return_value.gte.return_value.execute.return_value = (
+            MagicMock(data=rows)
+        )
         with (
             patch("api.admin.get_service_role_client", return_value=mock_db),
             patch("api.deps.settings") as mock_settings,
@@ -112,7 +117,9 @@ def test_spend_history_days_param_caps_at_90():
     app.dependency_overrides[get_current_user] = _admin_user
     try:
         mock_db = MagicMock()
-        mock_db.table.return_value.select.return_value.gte.return_value.execute.return_value = MagicMock(data=[])
+        mock_db.table.return_value.select.return_value.gte.return_value.execute.return_value = (
+            MagicMock(data=[])
+        )
         with (
             patch("api.admin.get_service_role_client", return_value=mock_db),
             patch("api.deps.settings") as mock_settings,
