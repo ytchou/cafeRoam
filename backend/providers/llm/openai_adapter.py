@@ -18,6 +18,8 @@ from models.types import (
     TarotEnrichmentResult,
     TaxonomyTag,
 )
+from providers.cost import compute_llm_cost
+from providers.api_usage_logger import log_api_usage
 from providers.llm._tool_schemas import (
     ASSIGN_TAROT_SCHEMA,
     CLASSIFY_PHOTO_SCHEMA,
@@ -179,6 +181,20 @@ class OpenAILLMAdapter:
             ),
             max_completion_tokens=2048,
         )
+        _usage = response.usage
+        if _usage is not None:
+            log_api_usage(
+                provider="openai",
+                task="enrich_shop",
+                model=self._model,
+                tokens_input=_usage.prompt_tokens,
+                tokens_output=_usage.completion_tokens,
+                cost_usd=compute_llm_cost(
+                    self._model,
+                    _usage.prompt_tokens,
+                    _usage.completion_tokens,
+                ),
+            )
         payload = _extract_tool_input(response, "classify_shop")
         return _parse_enrichment_payload(payload, self._taxonomy_by_id)
 
