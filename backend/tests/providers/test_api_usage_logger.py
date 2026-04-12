@@ -1,6 +1,7 @@
 # backend/tests/providers/test_api_usage_logger.py
-import providers.api_usage_logger as usage_logger
 from unittest.mock import MagicMock, patch
+
+import providers.api_usage_logger as usage_logger
 
 
 def test_log_inserts_correct_row():
@@ -51,10 +52,14 @@ def test_log_never_raises_on_db_error():
     mock_db.table.return_value.insert.return_value.execute.side_effect = Exception("DB down")
     with patch.object(usage_logger, "get_service_role_client", return_value=mock_db):
         # Must not raise despite DB failure
-        usage_logger.log_api_usage(provider="openai", task="embed", tokens_input=100, cost_usd=0.001)
+        usage_logger.log_api_usage(
+            provider="openai", task="embed", tokens_input=100, cost_usd=0.001
+        )
 
 
 def test_log_never_raises_on_client_error():
-    with patch.object(usage_logger, "get_service_role_client", side_effect=RuntimeError("No client")):
+    with patch.object(
+        usage_logger, "get_service_role_client", side_effect=RuntimeError("No client")
+    ):
         # Must not raise even if client construction fails
         usage_logger.log_api_usage(provider="openai", task="embed", tokens_input=100)
