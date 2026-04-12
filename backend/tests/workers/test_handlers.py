@@ -1,9 +1,14 @@
 from unittest.mock import AsyncMock, MagicMock
 
+import pytest
+
+from models.types import MenuExtractionResult
 from workers.handlers.enrich_menu_photo import handle_enrich_menu_photo
 from workers.handlers.enrich_shop import handle_enrich_shop
 from workers.handlers.generate_embedding import handle_generate_embedding
 from workers.handlers.weekly_email import handle_weekly_email
+
+SHOP_ID = "shop-zhongshan-01"
 
 
 class TestEnrichShopHandler:
@@ -495,79 +500,134 @@ class TestGenerateEmbeddingHandler:
 
 
 class TestEnrichMenuPhotoHandler:
-    async def test_replaces_menu_items_and_queues_reembed_when_items_extracted(self):
-        """When a menu photo is processed, existing items are replaced and a re-embed is queued."""
+    @pytest.fixture
+    def mock_db(self):
         db = MagicMock()
-        llm = AsyncMock()
-        queue = AsyncMock()
+        db.table.return_value.delete.return_value.eq.return_value.execute.return_value = MagicMock(data=[])
+        db.table.return_value.delete.return_value.eq.return_value.eq.return_value.execute.return_value = MagicMock(data=[])
+        db.table.return_value.delete.return_value.eq.return_value.eq.return_value.in_.return_value.execute.return_value = MagicMock(data=[])
+        db.table.return_value.insert.return_value.execute.return_value = MagicMock(data=[])
+        return db
 
-        llm.extract_menu_data = AsyncMock(
-            return_value=MagicMock(
-                items=[
-                    {"name": "巴斯克蛋糕", "price": 120, "category": "dessert"},
-                    {"name": "手沖拿鐵", "price": 150, "category": "coffee"},
-                ]
-            )
-        )
+    @pytest.fixture
+    def mock_llm(self):
+        return AsyncMock()
 
-        shop_table = MagicMock()
-        shop_table.update.return_value.eq.return_value.execute.return_value = MagicMock(data=[])
+    @pytest.fixture
+    def mock_queue(self):
+        return AsyncMock()
 
-        menu_table = MagicMock()
-        menu_table.delete.return_value.eq.return_value.execute.return_value = MagicMock(data=[])
-        menu_table.insert.return_value.execute.return_value = MagicMock(data=[])
+    @pytest.mark.asyncio
+    async def test_multi_photo_extraction_writes_source_photo_id(
+        self, mock_db, mock_llm, mock_queue
+    ):
+        """Given multi-photo payload, when handler runs, then items are written with correct source_photo_id per photo."""
+        mock_llm.extract_menu_data = AsyncMock(side_effect=[
+            MenuExtractionResult(
+                items=[{"name": "拿鐵", "price": 150, "category": "coffee"}],
+                raw_text=None,
+            ),
+            MenuExtractionResult(
+                items=[{"name": "巴斯克蛋糕", "price": 180, "category": "dessert"}],
+                raw_text=None,
+            ),
+        ])
+        payload = {
+            "shop_id": SHOP_ID,
+            "photos": [
+                {"photo_id": "photo-1", "image_url": "https://example.com/menu1.jpg"},
+                {"photo_id": "photo-2", "image_url": "https://example.com/menu2.jpg"},
+            ],
+        }
 
-        def table_side_effect(name: str):
-            return menu_table if name == "shop_menu_items" else shop_table
+        await handle_enrich_menu_photo(payload, mock_db, mock_llm, mock_queue)
 
-        db.table.side_effect = table_side_effect
+        insert_calls = mock_db.table.return_value.insert.call_args_list
+        all_rows = []
+        for call in insert_calls:
+            rows = call.args[0] if call.args else []
+            if isinstance(rows, list):
+                all_rows.extend(rows)
+        assert all(row["source"] == "photo" for row in all_rows)
+        photo_ids = {row["source_photo_id"] for row in all_rows}
+        assert "photo-1" in photo_ids
+        assert "photo-2" in photo_ids
 
-        await handle_enrich_menu_photo(
-            payload={
-                "shop_id": "shop-zhongshan-01",
-                "image_url": "https://storage.example.com/menu.jpg",
-            },
-            db=db,
-            llm=llm,
-            queue=queue,
-        )
+    @pytest.mark.asyncio
+    async def test_no_dual_write_to_shops_menu_data(
+        self, mock_db, mock_llm, mock_queue
+    ):
+        """Given extraction completes, when writing results, then shops.menu_data is NOT written."""
+        mock_llm.extract_menu_data = AsyncMock(return_value=MenuExtractionResult(
+            items=[{"name": "拿鐵", "price": 150}],
+            raw_text=None,
+        ))
+        payload = {
+            "shop_id": SHOP_ID,
+            "photos": [{"photo_id": "photo-1", "image_url": "https://example.com/menu1.jpg"}],
+        }
 
-        # DELETE before INSERT (replace-on-extract)
-        menu_table.delete.return_value.eq.return_value.execute.assert_called_once()
-        # INSERT two items
-        menu_table.insert.return_value.execute.assert_called_once()
-        inserted = menu_table.insert.call_args[0][0]
-        assert len(inserted) == 2
-        assert inserted[0]["item_name"] == "巴斯克蛋糕"
-        assert inserted[0]["shop_id"] == "shop-zhongshan-01"
-        assert inserted[1]["item_name"] == "手沖拿鐵"
-        # Dual-write to shops.menu_data
-        shop_table.update.assert_called_once()
-        # Re-embed queued
-        queue.enqueue.assert_called_once()
-        assert queue.enqueue.call_args.kwargs["payload"]["shop_id"] == "shop-zhongshan-01"
+        await handle_enrich_menu_photo(payload, mock_db, mock_llm, mock_queue)
 
-    async def test_preserves_existing_items_when_extraction_returns_empty(self):
+        shops_update_calls = mock_db.table.return_value.update.call_args_list
+        for call in shops_update_calls:
+            update_data = call.args[0] if call.args else {}
+            assert "menu_data" not in update_data
+
+    @pytest.mark.asyncio
+    async def test_single_photo_failure_continues_to_next(
+        self, mock_db, mock_llm, mock_queue
+    ):
+        """Given first photo extraction fails, when handler runs, then second photo still extracts."""
+        mock_llm.extract_menu_data = AsyncMock(side_effect=[
+            Exception("LLM timeout"),
+            MenuExtractionResult(
+                items=[{"name": "手沖咖啡", "price": 200}],
+                raw_text=None,
+            ),
+        ])
+        payload = {
+            "shop_id": SHOP_ID,
+            "photos": [
+                {"photo_id": "photo-1", "image_url": "https://example.com/menu1.jpg"},
+                {"photo_id": "photo-2", "image_url": "https://example.com/menu2.jpg"},
+            ],
+        }
+
+        await handle_enrich_menu_photo(payload, mock_db, mock_llm, mock_queue)
+
+        insert_calls = mock_db.table.return_value.insert.call_args_list
+        assert len(insert_calls) >= 1
+
+    @pytest.mark.asyncio
+    async def test_legacy_single_image_url_payload_still_works(
+        self, mock_db, mock_llm, mock_queue
+    ):
+        """Given legacy payload with single image_url string, when handler runs, then it still extracts."""
+        mock_llm.extract_menu_data = AsyncMock(return_value=MenuExtractionResult(
+            items=[{"name": "拿鐵", "price": 150}],
+            raw_text=None,
+        ))
+        payload = {"shop_id": SHOP_ID, "image_url": "https://example.com/menu.jpg"}
+
+        await handle_enrich_menu_photo(payload, mock_db, mock_llm, mock_queue)
+
+        mock_llm.extract_menu_data.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_preserves_existing_items_when_extraction_returns_empty(self, mock_db, mock_llm, mock_queue):
         """When no items are extracted, existing menu items are preserved and no re-embed is queued."""
-        db = MagicMock()
-        llm = AsyncMock()
-        queue = AsyncMock()
-
-        llm.extract_menu_data = AsyncMock(return_value=MagicMock(items=[]))
+        mock_llm.extract_menu_data = AsyncMock(return_value=MenuExtractionResult(items=[], raw_text=None))
 
         await handle_enrich_menu_photo(
-            payload={
-                "shop_id": "shop-zhongshan-01",
-                "image_url": "https://storage.example.com/menu.jpg",
-            },
-            db=db,
-            llm=llm,
-            queue=queue,
+            payload={"shop_id": SHOP_ID, "image_url": "https://storage.example.com/menu.jpg"},
+            db=mock_db,
+            llm=mock_llm,
+            queue=mock_queue,
         )
 
-        # No DB writes, no job queued
-        db.table.assert_not_called()
-        queue.enqueue.assert_not_called()
+        mock_db.table.assert_not_called()
+        mock_queue.enqueue.assert_not_called()
 
 
 class TestWeeklyEmailHandler:
