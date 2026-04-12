@@ -113,6 +113,7 @@ class JobQueue:
             {
                 "status": JobStatus.COMPLETED.value,
                 "completed_at": datetime.now(UTC).isoformat(),
+                "reason_code": None,
             }
         ).eq("id", job_id).execute()
 
