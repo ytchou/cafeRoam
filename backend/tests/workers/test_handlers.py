@@ -255,8 +255,8 @@ class TestEnrichShopHandler:
         # Verify review items inserted with source='review'
         insert_calls = db.table.return_value.insert.call_args_list
         review_inserts = []
-        for call in insert_calls:
-            rows = call.args[0] if call.args else []
+        for c in insert_calls:
+            rows = c.args[0] if c.args else []
             if isinstance(rows, list) and rows and rows[0].get("source") == "review":
                 review_inserts.extend(rows)
         assert len(review_inserts) >= 1
@@ -319,8 +319,8 @@ class TestEnrichShopHandler:
         )
 
         insert_calls = db.table.return_value.insert.call_args_list
-        for call in insert_calls:
-            rows = call.args[0] if call.args else []
+        for c in insert_calls:
+            rows = c.args[0] if c.args else []
             if isinstance(rows, list) and rows and rows[0].get("source") == "review":
                 names = [r["item_name"] for r in rows]
                 assert "拿鐵" not in names, (
@@ -748,8 +748,8 @@ class TestEnrichMenuPhotoHandler:
 
         insert_calls = mock_db.table.return_value.insert.call_args_list
         all_rows = []
-        for call in insert_calls:
-            rows = call.args[0] if call.args else []
+        for c in insert_calls:
+            rows = c.args[0] if c.args else []
             if isinstance(rows, list):
                 all_rows.extend(rows)
         assert all(row["source"] == "photo" for row in all_rows)
@@ -774,8 +774,8 @@ class TestEnrichMenuPhotoHandler:
         await handle_enrich_menu_photo(payload, mock_db, mock_llm, mock_queue)
 
         shops_update_calls = mock_db.table.return_value.update.call_args_list
-        for call in shops_update_calls:
-            update_data = call.args[0] if call.args else {}
+        for c in shops_update_calls:
+            update_data = c.args[0] if c.args else {}
             assert "menu_data" not in update_data
 
     @pytest.mark.asyncio
