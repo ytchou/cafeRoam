@@ -1,6 +1,6 @@
 import contextlib
 from collections import defaultdict
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Any, Literal, cast
 
 import structlog
@@ -36,6 +36,15 @@ class BulkRejectSubmissionsRequest(BaseModel):
     rejection_reason: RejectionReasonType
 
 
+class SpendHistoryEntry(BaseModel):
+    date: str  # "YYYY-MM-DD"
+    providers: dict[str, float]
+
+
+class SpendHistoryResponse(BaseModel):
+    history: list[SpendHistoryEntry]
+
+
 logger = structlog.get_logger()
 
 router = APIRouter(prefix="/admin/pipeline", tags=["admin"])
@@ -53,6 +62,21 @@ async def pipeline_overview(
     counts_data = cast("list[dict[str, Any]]", counts_response.data or [])
     job_counts: dict[str, int] = {row["status"]: int(row["count"]) for row in counts_data}
 
+    # Pending submission count
+    pending_subs_response = (
+        db.table("shop_submissions")
+        .select("id", count="exact")
+        .eq("status", "pending_review")
+        .execute()
+    )
+    pending_review_count: int = pending_subs_response.count or 0
+
+    # Pending claims count
+    pending_claims_response = (
+        db.table("shop_claims").select("id", count="exact").eq("status", "pending").execute()
+    )
+    pending_claims_count: int = pending_claims_response.count or 0
+
     # Recent submissions
     subs_response = (
         db.table("shop_submissions").select("*").order("created_at", desc=True).limit(20).execute()
@@ -61,6 +85,8 @@ async def pipeline_overview(
     return {
         "job_counts": job_counts,
         "recent_submissions": subs_response.data,
+        "pending_review_count": pending_review_count,
+        "pending_claims_count": pending_claims_count,
     }
 
 
@@ -914,3 +940,54 @@ async def get_pipeline_spend(
         "mtd_total_usd": round(mtd_total_usd, 6),
         "providers": providers,
     }
+
+
+@router.get("/spend/history", response_model=SpendHistoryResponse)
+async def get_pipeline_spend_history(
+    days: int = Query(default=14, ge=1),
+    user: dict[str, Any] = Depends(require_admin),  # noqa: B008
+) -> SpendHistoryResponse:
+    """Return daily spend totals per provider for the last N days (max 90)."""
+    del user
+    days = min(days, 90)
+
+    db = get_service_role_client()
+    now = datetime.now(UTC)
+    since = now - timedelta(days=days)
+
+    response = (
+        db.table("api_usage_log")
+        .select("provider, cost_usd, compute_units, created_at")
+        .gte("created_at", since.isoformat())
+        .execute()
+    )
+    rows = cast("list[dict[str, Any]]", response.data or [])
+
+    # date_str -> provider -> total_usd
+    daily: dict[str, dict[str, float]] = defaultdict(lambda: defaultdict(float))
+
+    for row in rows:
+        created_at_raw = row.get("created_at")
+        if not created_at_raw:
+            continue
+        created_at = datetime.fromisoformat(str(created_at_raw))
+        if created_at.tzinfo is None:
+            created_at = created_at.replace(tzinfo=UTC)
+        date_str = created_at.date().isoformat()
+
+        provider = str(row.get("provider") or "unknown")
+        cost_usd = float(row.get("cost_usd") or 0.0)
+        if provider == "apify":
+            cost_usd = float(row.get("compute_units") or 0.0) * settings.apify_cost_per_cu
+
+        daily[date_str][provider] += cost_usd
+
+    history = [
+        SpendHistoryEntry(
+            date=date_str,
+            providers={p: round(v, 6) for p, v in sorted(providers.items())},
+        )
+        for date_str, providers in sorted(daily.items())
+    ]
+
+    return SpendHistoryResponse(history=history)

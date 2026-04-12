@@ -6,16 +6,22 @@ import { usePathname } from 'next/navigation';
 import { Toaster } from 'sonner';
 import { createClient } from '@/lib/supabase/client';
 
-const NAV_ITEMS = [
-  { href: '/admin', label: 'Dashboard' },
-  { href: '/admin/shops', label: 'Shops' },
-  { href: '/admin/jobs', label: 'Jobs' },
-  { href: '/admin/taxonomy', label: 'Taxonomy' },
-  { href: '/admin/roles', label: 'Roles' },
+const NAV_ITEMS: { href: string; label: string; group: string }[] = [
+  { href: '/admin', label: 'Overview', group: 'meta' },
+  { href: '/admin/submissions', label: 'Submissions', group: 'ops' },
+  { href: '/admin/claims', label: 'Claims', group: 'ops' },
+  { href: '/admin/spend', label: 'Spend', group: 'ops' },
+  { href: '/admin/shops', label: 'Shops', group: 'data' },
+  { href: '/admin/jobs', label: 'Jobs', group: 'data' },
+  { href: '/admin/taxonomy', label: 'Taxonomy', group: 'data' },
+  { href: '/admin/roles', label: 'Roles', group: 'data' },
 ];
 
 const SEGMENT_LABELS: Record<string, string> = {
   admin: 'Admin',
+  submissions: 'Submissions',
+  claims: 'Claims',
+  spend: 'Spend',
   shops: 'Shops',
   jobs: 'Jobs',
   taxonomy: 'Taxonomy',
@@ -85,23 +91,27 @@ export default function AdminLayout({
         >
           <h2 className="mb-6 text-lg font-bold">Admin</h2>
           <nav className="space-y-1">
-            {NAV_ITEMS.map((item) => {
+            {NAV_ITEMS.map((item, i) => {
               const isActive =
                 item.href === '/admin'
                   ? pathname === '/admin'
                   : pathname.startsWith(item.href);
+              const showSeparator =
+                i > 0 && item.group !== NAV_ITEMS[i - 1].group;
               return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`block rounded-md px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-gray-400 focus-visible:outline-none ${
-                    isActive
-                      ? 'bg-gray-200 font-medium text-gray-900'
-                      : 'text-gray-600 hover:bg-gray-100'
-                  }`}
-                >
-                  {item.label}
-                </Link>
+                <div key={item.href}>
+                  {showSeparator && <hr className="my-2 border-gray-200" />}
+                  <Link
+                    href={item.href}
+                    className={`block rounded-md px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-gray-400 focus-visible:outline-none ${
+                      isActive
+                        ? 'bg-gray-200 font-medium text-gray-900'
+                        : 'text-gray-600 hover:bg-gray-100'
+                    }`}
+                  >
+                    {item.label}
+                  </Link>
+                </div>
               );
             })}
           </nav>

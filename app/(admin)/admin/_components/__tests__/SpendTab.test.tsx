@@ -93,3 +93,43 @@ describe('SpendTab', () => {
     });
   });
 });
+
+describe('formatUsd decimal formatting', () => {
+  it('shows exactly 2 decimal places for values >= $0.01', async () => {
+    // Render a SpendTab with a provider value of 0.040123
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        today_total_usd: 0.040123,
+        mtd_total_usd: 0.040123,
+        providers: [],
+      }),
+    } as unknown as Response);
+
+    const mockGetToken = vi.fn().mockResolvedValue('mock-token');
+    render(<SpendTab getToken={mockGetToken} />);
+
+    await waitFor(() => {
+      // Should show $0.04, not $0.040123 or $0.0401
+      expect(screen.getByText('Today: $0.04')).toBeInTheDocument();
+    });
+  });
+
+  it('preserves sub-cent precision for values < $0.01', async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        today_total_usd: 0.000123,
+        mtd_total_usd: 0.000123,
+        providers: [],
+      }),
+    } as unknown as Response);
+
+    const mockGetToken = vi.fn().mockResolvedValue('mock-token');
+    render(<SpendTab getToken={mockGetToken} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Today: $0.000123')).toBeInTheDocument();
+    });
+  });
+});

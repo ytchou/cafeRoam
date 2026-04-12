@@ -1,0 +1,64 @@
+{
+  "findings": [
+    {
+      "severity": "Important",
+      "file": "app/(admin)/admin/page.tsx",
+      "line": "39-40",
+      "description": "Overview page reads `overview.pending_review_count` and `overview.pending_claims_count` from the `/admin/pipeline/overview` API response, but the backend endpoint (`pipeline_overview` in backend/api/admin.py:54-73) only returns `job_counts` and `recent_submissions` — neither `pending_review_count` nor `pending_claims_count` exist in the response. Both values will always be `undefined`, falling back to `0` via `?? 0`. The Submissions and Claims stat cards will always show '0 pending'.",
+      "flagged_by": "Bug Hunter",
+      "status": "resolved",
+      "resolution": "Pass 2 verified: backend now queries pending counts and returns them in the response."
+    },
+    {
+      "severity": "Important",
+      "file": "backend/api/admin.py",
+      "line": "948",
+      "description": "Unnecessary deferred import inside function body: `import api.deps as _spend_history_deps` is used solely to access `settings.apify_cost_per_cu`. The `settings` object is already imported at module level (line 10: `from core.config import settings`) and is used directly in the existing spend endpoint (line 862: `settings.apify_cost_per_cu`). The deferred import adds indirection for no reason — use `settings.apify_cost_per_cu` directly, matching the pattern 10 lines above in the same file.",
+      "flagged_by": "Standards & Conventions",
+      "status": "resolved",
+      "resolution": "Pass 2 verified: deferred import removed, settings.apify_cost_per_cu used directly."
+    },
+    {
+      "severity": "Important",
+      "file": "app/(admin)/admin/_components/SpendTab.tsx",
+      "line": "54-57",
+      "description": "Broken indentation: the `return` statement and its arguments inside `formatUsd()` are at column 0 instead of being indented inside the function body. The code works because JavaScript doesn't care about indentation, but this is clearly a formatting error introduced by the diff. Lines 54-57 should be indented by 2 spaces to match the function's body indentation (lines 49-52).",
+      "flagged_by": "Standards & Conventions",
+      "status": "still_present",
+      "resolution": "Pass 2 verified: SpendTab.tsx was not touched in the fix diff. Lines 54-57 remain unindented."
+    },
+    {
+      "severity": "Minor",
+      "file": "app/(admin)/admin/submissions/page.test.tsx",
+      "line": "6-7",
+      "description": "Test mocks the internal `use-admin-auth` hook with `vi.mock()`, violating the project's 'mock at boundaries only' testing principle (CLAUDE.md). The hook is an internal module, not a system boundary. Other test files in this PR (e.g., SpendHistoryChart.test.tsx) correctly pass `getToken` as a prop instead of mocking the hook. This test should render SubmissionsPage with a mocked fetch (boundary) and let the real hook execute, or refactor to test the SubmissionsTab component directly.",
+      "flagged_by": "Test Philosophy",
+      "status": "still_present",
+      "resolution": "Pass 2 verified: vi.mock('../_hooks/use-admin-auth') still present at line 6. Not addressed in fix diff."
+    },
+    {
+      "severity": "Minor",
+      "file": "app/(admin)/admin/submissions/page.test.tsx",
+      "line": "19-23",
+      "description": "Test only asserts `expect(document.body).toBeTruthy()` which is always true regardless of whether the component rendered correctly. This is a no-op assertion — it provides zero regression protection. Should assert on actual rendered content (e.g., the 'Submissions' heading).",
+      "flagged_by": "Test Philosophy",
+      "status": "resolved",
+      "resolution": "Pass 2 verified: assertion changed to `screen.getByText('Loading...')` which validates actual rendered content."
+    },
+    {
+      "severity": "Minor",
+      "file": "app/(admin)/admin/submissions/page.test.tsx",
+      "line": "11",
+      "description": "`beforeEach` is used outside a `describe` block without being imported from vitest. It relies on the global `beforeEach` which may not be configured in all vitest setups. The import at line 2 includes `describe, it, expect, vi` but not `beforeEach`.",
+      "flagged_by": "Bug Hunter",
+      "status": "resolved",
+      "resolution": "Pass 2 verified: `beforeEach` added to vitest import on line 2."
+    }
+  ],
+  "active_agents": ["Standards & Conventions"],
+  "skipped": [],
+  "head_sha": "2927d90835228a47b80e68e0fe3689e51a931ce1",
+  "review_log_path": "docs/reviews/2026-04-12-feat-admin-dashboard-polish.md",
+  "re_verify_iteration": 1,
+  "re_verify_notes": "Test Philosophy Minor finding (mock at boundaries) remains. Standards & Conventions Important finding (SpendTab.tsx indentation) remains. No new issues introduced by fixes."
+}
