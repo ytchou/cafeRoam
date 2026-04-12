@@ -182,13 +182,15 @@ async def handle_enrich_shop(
             ).execute()
 
             # Photo-wins: check which items already exist from photos
-            photo_items = (
+            photo_items = cast(
+                "list[dict[str, Any]]",
                 db.table("shop_menu_items")
                 .select("item_name")
                 .eq("shop_id", shop_id)
                 .eq("source", "photo")
                 .execute()
                 .data
+                or [],
             )
             photo_names = {row["item_name"] for row in photo_items}
 
