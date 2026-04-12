@@ -3,7 +3,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from models.types import JobStatus, JobType
+from models.types import JobReasonCode, JobStatus, JobType
 from workers.queue import JobQueue
 
 
@@ -135,7 +135,11 @@ class TestJobQueue:
                 ),
             )
         )
-        await job_queue.fail("job-1", error="API timeout")
+        await job_queue.fail(
+            "job-1",
+            error="API timeout",
+            reason_code=JobReasonCode.PROVIDER_ERROR,
+        )
         update_call = mock_supabase.table.return_value.update.call_args[0][0]
         assert update_call["status"] == JobStatus.PENDING.value
         assert "scheduled_at" in update_call
@@ -254,7 +258,11 @@ class TestJobQueue:
                 ),
             )
         )
-        await job_queue.fail("job-1", error="Final failure")
+        await job_queue.fail(
+            "job-1",
+            error="Final failure",
+            reason_code=JobReasonCode.PROVIDER_ERROR,
+        )
         update_call = mock_supabase.table.return_value.update.call_args[0][0]
         assert update_call["status"] == JobStatus.FAILED.value
         assert "scheduled_at" not in update_call
@@ -278,3 +286,85 @@ def test_acquire_cron_lock_hour_window():
     assert window_start.minute == 0
     assert window_start.second == 0
     assert window_start.microsecond == 0
+
+
+class TestQueueFailReasonCode:
+    """queue.fail() writes reason_code to job_queue."""
+
+    async def test_fail_retry_eligible_writes_reason_code(self, job_queue, mock_supabase):
+        """Given a job with attempts < max_attempts, fail() writes reason_code and retries."""
+        select_response = MagicMock(data={"attempts": 1, "max_attempts": 3})
+        update_response = MagicMock(data=[])
+        mock_supabase.table = MagicMock(
+            return_value=MagicMock(
+                select=MagicMock(
+                    return_value=MagicMock(
+                        eq=MagicMock(
+                            return_value=MagicMock(
+                                single=MagicMock(
+                                    return_value=MagicMock(
+                                        execute=MagicMock(return_value=select_response)
+                                    )
+                                )
+                            )
+                        )
+                    )
+                ),
+                update=MagicMock(
+                    return_value=MagicMock(
+                        eq=MagicMock(
+                            return_value=MagicMock(execute=MagicMock(return_value=update_response))
+                        )
+                    )
+                ),
+            )
+        )
+
+        await job_queue.fail("job-1", "some error", JobReasonCode.PROVIDER_ERROR)
+
+        update_call = mock_supabase.table.return_value.update.call_args[0][0]
+        assert update_call["reason_code"] == "provider_error"
+        assert update_call["status"] == "pending"
+
+    async def test_fail_exhausted_writes_reason_code_and_failed_at(
+        self, job_queue, mock_supabase
+    ):
+        """Given a job at max_attempts, fail() writes reason_code + failed_at and sets failed."""
+        select_response = MagicMock(data={"attempts": 3, "max_attempts": 3})
+        update_response = MagicMock(data=[])
+        mock_supabase.table = MagicMock(
+            return_value=MagicMock(
+                select=MagicMock(
+                    return_value=MagicMock(
+                        eq=MagicMock(
+                            return_value=MagicMock(
+                                single=MagicMock(
+                                    return_value=MagicMock(
+                                        execute=MagicMock(return_value=select_response)
+                                    )
+                                )
+                            )
+                        )
+                    )
+                ),
+                update=MagicMock(
+                    return_value=MagicMock(
+                        eq=MagicMock(
+                            return_value=MagicMock(execute=MagicMock(return_value=update_response))
+                        )
+                    )
+                ),
+            )
+        )
+
+        await job_queue.fail("job-1", "final error", JobReasonCode.RETRY_EXHAUSTED)
+
+        update_call = mock_supabase.table.return_value.update.call_args[0][0]
+        assert update_call["reason_code"] == "retry_exhausted"
+        assert update_call["status"] == "failed"
+        assert "failed_at" in update_call
+
+    async def test_fail_requires_reason_code(self, job_queue):
+        """queue.fail() raises TypeError if reason_code is not provided."""
+        with pytest.raises(TypeError):
+            await job_queue.fail("job-1", "error")  # missing reason_code

@@ -7,7 +7,7 @@ from supabase import Client
 
 from core.config import settings
 from core.db import first
-from models.types import Job, JobStatus, JobType
+from models.types import Job, JobReasonCode, JobStatus, JobType
 
 logger = structlog.get_logger()
 
@@ -116,7 +116,7 @@ class JobQueue:
             }
         ).eq("id", job_id).execute()
 
-    async def fail(self, job_id: str, error: str) -> None:
+    async def fail(self, job_id: str, error: str, reason_code: JobReasonCode) -> None:
         response = (
             self._db.table("job_queue")
             .select("attempts, max_attempts")
@@ -135,6 +135,7 @@ class JobQueue:
                 {
                     "status": JobStatus.PENDING.value,
                     "last_error": error,
+                    "reason_code": reason_code.value,
                     "scheduled_at": scheduled_at,
                 }
             ).eq("id", job_id).execute()
@@ -143,6 +144,7 @@ class JobQueue:
                 {
                     "status": JobStatus.FAILED.value,
                     "last_error": error,
+                    "reason_code": reason_code.value,
                     "failed_at": datetime.now(UTC).isoformat(),
                 }
             ).eq("id", job_id).execute()
