@@ -47,3 +47,18 @@ async def test_dispatch_classify_shop_photos():
 
     mock_handler.assert_called_once()
     assert mock_handler.call_args.kwargs["payload"]["shop_id"] == "shop-01"
+
+
+@pytest.mark.asyncio
+async def test_dispatch_sync_menu_highlights():
+    """SYNC_MENU_HIGHLIGHTS jobs are dispatched to the sync handler."""
+    job = _make_job(JobType.SYNC_MENU_HIGHLIGHTS, {"shop_id": "s1"})
+    db = MagicMock()
+    queue = MagicMock()
+
+    with patch(
+        "workers.scheduler.handle_sync_menu_highlights", new_callable=AsyncMock
+    ) as mock_handler:
+        await _dispatch_job(job, db, queue)
+
+    mock_handler.assert_called_once_with(payload={"shop_id": "s1"}, db=db, queue=queue)

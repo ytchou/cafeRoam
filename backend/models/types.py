@@ -506,6 +506,7 @@ class JobType(StrEnum):
     ENRICH_SHOP = "enrich_shop"
     ENRICH_MENU_PHOTO = "enrich_menu_photo"
     GENERATE_EMBEDDING = "generate_embedding"
+    SYNC_MENU_HIGHLIGHTS = "SYNC_MENU_HIGHLIGHTS"
     REEMBED_REVIEWED_SHOPS = "reembed_reviewed_shops"
     WEEKLY_EMAIL = "weekly_email"
     SCRAPE_BATCH = "scrape_batch"

@@ -110,3 +110,8 @@ async def handle_enrich_menu_photo(
         payload={"shop_id": shop_id},
         priority=5,
     )
+    await queue.enqueue(
+        job_type=JobType.SYNC_MENU_HIGHLIGHTS,
+        payload={"shop_id": shop_id},
+        priority=5,
+    )

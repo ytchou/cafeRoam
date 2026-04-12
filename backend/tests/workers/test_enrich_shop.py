@@ -100,7 +100,9 @@ class TestEnrichShopLanguageGuard:
 
         update_data = db._shops_table.update.call_args[0][0]
         assert "隱身巷弄" in update_data["description"]
-        queue.enqueue.assert_called_once()
+        enqueued_types = [c[1]["job_type"] for c in queue.enqueue.call_args_list]
+        assert JobType.SUMMARIZE_REVIEWS in enqueued_types
+        assert JobType.SYNC_MENU_HIGHLIGHTS in enqueued_types
 
     async def test_english_summary_is_rejected_with_error(self):
         """Given an LLM that returns an English summary, the handler raises ValueError."""
@@ -654,8 +656,12 @@ class TestEnrichShopPipelineChain:
             job_id="job-chain-test-01",
         )
 
+        update_data = db._shops_table.update.call_args_list[0][0][0]
+        assert "menu_highlights" not in update_data
+
         enqueued_types = [c[1]["job_type"] for c in queue.enqueue.call_args_list]
         assert JobType.SUMMARIZE_REVIEWS in enqueued_types
+        assert JobType.SYNC_MENU_HIGHLIGHTS in enqueued_types
         assert JobType.GENERATE_EMBEDDING not in enqueued_types
 
 
