@@ -461,14 +461,20 @@ test.describe('@critical J36 — Shop detail: navigation links open Google Maps 
     await page.goto(`/shops/${shop.id}/${shop.slug || ''}`);
     await page.waitForLoadState('networkidle');
 
-    // The shop detail page renders nav links twice (desktop + mobile containers).
-    // Target the visible one for the current viewport.
-    const googleMapsLink = page.locator('a[href*="google.com/maps"]:visible');
+    // The Location section renders one "Google Maps" text link and one "Apple Maps" text link.
+    // Use exact name to avoid matching the icon link with aria-label="在 Google Maps 查看".
+    const googleMapsLink = page.getByRole('link', {
+      name: 'Google Maps',
+      exact: true,
+    });
     await expect(googleMapsLink).toBeVisible({ timeout: 10_000 });
     await expect(googleMapsLink).toHaveAttribute('target', '_blank');
 
     // Apple Maps link should be present and open in a new tab
-    const appleMapsLink = page.locator('a[href*="maps.apple.com"]:visible');
+    const appleMapsLink = page.getByRole('link', {
+      name: 'Apple Maps',
+      exact: true,
+    });
     await expect(appleMapsLink).toBeVisible({ timeout: 10_000 });
     await expect(appleMapsLink).toHaveAttribute('target', '_blank');
   });

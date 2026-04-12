@@ -2,6 +2,7 @@
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import { useIsDesktop } from '@/lib/hooks/use-media-query';
+import 'mapbox-gl/dist/mapbox-gl.css';
 
 const InteractiveMap = dynamic(
   () => import('react-map-gl/mapbox').then((m) => ({ default: m.default })),

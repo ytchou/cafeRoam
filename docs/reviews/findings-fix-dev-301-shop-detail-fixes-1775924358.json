@@ -1,0 +1,40 @@
+{
+  "findings": [
+    {
+      "severity": "Important",
+      "file": "components/shops/shop-hero.tsx",
+      "line": "38-47",
+      "description": "Slide indicator can go stale on client-side navigation between shops. Effect subscribes to Embla 'init' + 'select' events but Embla emits 'reInit' (not 'init') when slides change post-mount. If photoUrls shrinks on client-side nav from a many-photo shop to a few-photo shop, current can briefly read an impossible value like '5 / 2' until the user interacts. Fix: also subscribe to 'reInit', reset current when photoUrls changes, or call onSelect synchronously on subscription (same pattern used in components/ui/carousel.tsx line 98).",
+      "flagged_by": "Adversarial Review (Codex), Bug Hunter",
+      "status": "resolved"
+    },
+    {
+      "severity": "Minor",
+      "file": "components/ui/carousel.tsx",
+      "line": "96-105",
+      "description": "Effect subscribes to api.on('reInit', onSelect) but cleanup only calls api?.off('select', onSelect) — 'reInit' is never unsubscribed. Minor listener leak when the effect re-runs.",
+      "flagged_by": "Bug Hunter",
+      "status": "resolved"
+    },
+    {
+      "severity": "Minor",
+      "file": "components/ui/carousel.tsx",
+      "line": "177-196",
+      "description": "CarouselPrevious and CarouselNext render a <span className='sr-only'>Previous slide</span> inside the Button. When ShopHero passes aria-label='Previous slide' on the component, the aria-label overrides and the sr-only span becomes dead markup. Prefer dropping the aria-label from the caller (shop-hero.tsx:77,81) since sr-only text is the shadcn default.",
+      "flagged_by": "Design Quality",
+      "status": "resolved"
+    },
+    {
+      "severity": "Minor",
+      "file": "components/shops/shop-map-thumbnail.test.tsx",
+      "line": "6-14",
+      "description": "Rewritten test is a source-text regression guard (expect(source).toContain(\"import 'mapbox-gl/dist/mapbox-gl.css'\")) rather than a behavior test. Testing philosophy says 'test the behavior, not the implementation'. Debatable: jsdom can't load mapbox-gl, so the source-text guard is the only way to pin the CSS import. Pragmatic, accepted.",
+      "flagged_by": "Test Philosophy",
+      "status": "debatable"
+    }
+  ],
+  "active_agents": [],
+  "skipped": [],
+  "head_sha": "159f44173eee862988dda10c68635c0a79766d4e",
+  "review_log_path": "docs/reviews/2026-04-12-fix-dev-301-shop-detail-fixes.md"
+}
