@@ -1,444 +1,73 @@
-import {
-  render,
-  screen,
-  waitFor,
-  within,
-  fireEvent,
-} from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
-import {
-  createMockSupabaseAuth,
-  createMockRouter,
-} from '@/lib/test-utils/mocks';
-import { makeSession } from '@/lib/test-utils/factories';
+import { render, screen, waitFor } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { createMockSupabaseAuth } from '@/lib/test-utils/mocks';
 
 const mockAuth = createMockSupabaseAuth();
+
 vi.mock('@/lib/supabase/client', () => ({
   createClient: () => ({ auth: mockAuth }),
 }));
 
-const mockRouter = createMockRouter();
-vi.mock('next/navigation', () => ({
-  useRouter: () => mockRouter,
-  usePathname: () => '/admin',
-}));
-
-const mockFetch = vi.fn();
-global.fetch = mockFetch;
-
-const testSession = makeSession();
-
 import AdminDashboard from './page';
 
-describe('AdminDashboard', () => {
+describe('Admin overview page', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
     mockAuth.getSession.mockResolvedValue({
-      data: { session: testSession },
+      data: { session: null },
       error: null,
     });
   });
 
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
-  it('renders pipeline overview with job counts when API returns data', async () => {
-    const overviewData = {
-      job_counts: {
-        pending: 12,
-        claimed: 3,
-        completed: 45,
-        failed: 2,
-        dead_letter: 1,
-      },
-      recent_submissions: [
-        {
-          id: 'sub-abc123',
-          google_maps_url: 'https://maps.google.com/?cid=1234567890',
-          status: 'live',
-          created_at: '2026-03-01T08:30:00.000Z',
-        },
-        {
-          id: 'sub-def456',
-          google_maps_url: 'https://maps.google.com/?cid=9876543210',
-          status: 'failed',
-          created_at: '2026-02-28T14:00:00.000Z',
-        },
-      ],
-    };
-
-    mockFetch.mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve(overviewData),
-    });
-
-    render(<AdminDashboard />);
-
-    await waitFor(() => {
-      expect(screen.getByText('Pipeline Dashboard')).toBeInTheDocument();
-    });
-
-    expect(screen.getByText('12')).toBeInTheDocument();
-    expect(screen.getByText('3')).toBeInTheDocument();
-    expect(screen.getByText('45')).toBeInTheDocument();
-    expect(screen.getByText('2')).toBeInTheDocument();
-    expect(screen.getByText('1')).toBeInTheDocument();
-
-    expect(screen.getByText('pending')).toBeInTheDocument();
-    expect(screen.getByText('claimed')).toBeInTheDocument();
-    expect(screen.getByText('completed')).toBeInTheDocument();
-    expect(screen.getByText('dead_letter')).toBeInTheDocument();
-
-    // "failed" appears in both the job queue status label and a submission badge
-    const failedElements = screen.getAllByText('failed');
-    expect(failedElements.length).toBe(2);
-
-    expect(
-      screen.getByText('https://maps.google.com/?cid=1234567890')
-    ).toBeInTheDocument();
-    expect(screen.getByText('live')).toBeInTheDocument();
-
-    expect(
-      screen.getByRole('link', { name: /view 2 failed jobs/i })
-    ).toHaveAttribute('href', '/admin/jobs?status=failed');
-
-    expect(mockFetch).toHaveBeenCalledWith('/api/admin/pipeline/overview', {
-      headers: {
-        Authorization: `Bearer ${testSession.access_token}`,
-      },
-    });
-  });
-
-  it('shows error message when the pipeline API returns an error', async () => {
-    mockFetch.mockResolvedValue({
-      ok: false,
-      json: () => Promise.resolve({ detail: 'Forbidden: admin role required' }),
-    });
-
-    render(<AdminDashboard />);
-
-    await waitFor(() => {
-      expect(screen.getByRole('alert')).toBeInTheDocument();
-    });
-
-    expect(
-      screen.getByText('Forbidden: admin role required')
-    ).toBeInTheDocument();
-  });
-
-  it('approves a pending submission when the admin clicks Approve and confirms', async () => {
-    const overviewData = {
-      job_counts: {
-        pending: 0,
-        claimed: 0,
-        completed: 0,
-        failed: 0,
-        dead_letter: 0,
-      },
-      recent_submissions: [
-        {
-          id: 'sub-pending-001',
-          google_maps_url: 'https://maps.google.com/?cid=1111111111',
-          status: 'pending',
-          created_at: '2026-03-02T09:00:00.000Z',
-        },
-      ],
-    };
-
-    mockFetch.mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve(overviewData),
-    });
-
-    const user = userEvent.setup();
-    render(<AdminDashboard />);
-
-    await waitFor(() => {
-      expect(
-        screen.getByRole('button', { name: /approve/i })
-      ).toBeInTheDocument();
-    });
-
-    // Click Approve — opens confirmation dialog
-    await user.click(screen.getByRole('button', { name: /approve/i }));
-
-    // Confirm in dialog
-    const dialog = await screen.findByRole('alertdialog');
-    await user.click(within(dialog).getByRole('button', { name: /approve/i }));
-
-    await waitFor(() => {
-      expect(mockFetch).toHaveBeenCalledWith(
-        '/api/admin/pipeline/approve/sub-pending-001',
-        expect.objectContaining({
-          method: 'POST',
-          headers: { Authorization: `Bearer ${testSession.access_token}` },
-        })
-      );
-    });
-  });
-
-  it('shows inline rejection picker when the admin clicks Reject on a pending submission', async () => {
-    const overviewData = {
-      job_counts: {
-        pending: 0,
-        claimed: 0,
-        completed: 0,
-        failed: 0,
-        dead_letter: 0,
-      },
-      recent_submissions: [
-        {
-          id: 'sub-pending-002',
-          google_maps_url: 'https://maps.google.com/?cid=2222222222',
-          status: 'pending',
-          created_at: '2026-03-02T10:00:00.000Z',
-        },
-      ],
-    };
-
-    mockFetch.mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve(overviewData),
-    });
-
-    const user = userEvent.setup();
-    render(<AdminDashboard />);
-
-    await waitFor(() => {
-      expect(
-        screen.getByRole('button', { name: /reject/i })
-      ).toBeInTheDocument();
-    });
-
-    await user.click(screen.getByRole('button', { name: /reject/i }));
-
-    await waitFor(() => {
-      expect(
-        screen.getByRole('combobox', { name: /rejection reason/i })
-      ).toBeInTheDocument();
-      expect(
-        screen.getByRole('button', { name: /confirm/i })
-      ).toBeInTheDocument();
-    });
-  });
-
-  it('shows approve/reject buttons and pending_review badge for a pending_review submission', async () => {
-    const overviewData = {
-      job_counts: {
-        pending: 0,
-        claimed: 0,
-        completed: 0,
-        failed: 0,
-        dead_letter: 0,
-      },
-      recent_submissions: [
-        {
-          id: 'sub-review-001',
-          google_maps_url: 'https://maps.google.com/?cid=3333333333',
-          status: 'pending_review',
-          submitted_by: 'user-abc',
-          created_at: '2026-03-26T00:00:00.000Z',
-        },
-      ],
-    };
-
-    mockFetch.mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve(overviewData),
-    });
-
-    render(<AdminDashboard />);
-
-    await waitFor(() => {
-      expect(screen.getByText('pending_review')).toBeInTheDocument();
-    });
-
-    expect(
-      screen.getByRole('button', { name: /approve/i })
-    ).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /reject/i })).toBeInTheDocument();
-  });
-
-  it('shows rejection reason dropdown when admin clicks Reject on a pending_review submission', async () => {
-    const overviewData = {
-      job_counts: {
-        pending: 0,
-        claimed: 0,
-        completed: 0,
-        failed: 0,
-        dead_letter: 0,
-      },
-      recent_submissions: [
-        {
-          id: 'sub-review-002',
-          google_maps_url: 'https://maps.google.com/?cid=4444444444',
-          status: 'pending_review',
-          submitted_by: 'user-def',
-          created_at: '2026-03-26T01:00:00.000Z',
-        },
-      ],
-    };
-
-    mockFetch.mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve(overviewData),
-    });
-
-    const user = userEvent.setup();
-    render(<AdminDashboard />);
-
-    await waitFor(() => {
-      expect(
-        screen.getByRole('button', { name: /reject/i })
-      ).toBeInTheDocument();
-    });
-
-    await user.click(screen.getByRole('button', { name: /reject/i }));
-
-    await waitFor(() => {
-      expect(
-        screen.getByRole('combobox', { name: /rejection reason/i })
-      ).toBeInTheDocument();
-      expect(
-        screen.getByRole('button', { name: /confirm/i })
-      ).toBeInTheDocument();
-      expect(
-        screen.getByRole('button', { name: /cancel/i })
-      ).toBeInTheDocument();
-    });
-
-    await user.click(screen.getByRole('button', { name: /confirm/i }));
-
-    expect(mockFetch).toHaveBeenCalledWith(
-      '/api/admin/pipeline/reject/sub-review-002',
-      expect.objectContaining({
-        method: 'POST',
-        headers: expect.objectContaining({
-          Authorization: `Bearer ${testSession.access_token}`,
-          'Content-Type': 'application/json',
+  it('renders overview stat cards with pending submissions count', async () => {
+    global.fetch = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          job_counts: { pending: 3, completed: 10 },
+          recent_submissions: [],
+          pending_review_count: 3,
         }),
-        body: expect.stringContaining('"rejection_reason"'),
-      })
-    );
-  });
+      } as unknown as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          today_total_usd: 1.23,
+          mtd_total_usd: 15.0,
+          providers: [],
+        }),
+      } as unknown as Response);
 
-  it('filters claims by status when dropdown changes', async () => {
-    const overviewData = {
-      job_counts: {
-        pending: 0,
-        claimed: 0,
-        completed: 0,
-        failed: 0,
-        dead_letter: 0,
-      },
-      recent_submissions: [],
-    };
-
-    mockFetch.mockImplementation((url: string) => {
-      if (url.includes('/pipeline/overview')) {
-        return Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve(overviewData),
-        });
-      }
-      if (url.includes('/admin/claims?status=approved')) {
-        return Promise.resolve({
-          ok: true,
-          json: () =>
-            Promise.resolve([
-              {
-                id: 'claim-a',
-                shops: { name: 'Approved Shop' },
-                contact_name: 'Jane',
-                contact_email: 'jane@example.com',
-                role: 'owner',
-                status: 'approved',
-                created_at: '2026-01-01T00:00:00Z',
-              },
-            ]),
-        });
-      }
-      if (url.includes('/admin/claims')) {
-        return Promise.resolve({ ok: true, json: () => Promise.resolve([]) });
-      }
-      return Promise.resolve({ ok: true, json: () => Promise.resolve({}) });
-    });
-
-    const user = userEvent.setup();
-    render(<AdminDashboard />);
-
-    // Wait for page to finish loading
-    await waitFor(() => {
-      expect(screen.getByRole('tab', { name: /claims/i })).toBeInTheDocument();
-    });
-
-    // Switch to Claims tab
-    await user.click(screen.getByRole('tab', { name: /claims/i }));
-
-    // Change status filter to "approved"
-    const trigger = screen.getByRole('combobox', { name: /filter by status/i });
-    trigger.focus();
-    fireEvent.keyDown(trigger, { key: 'ArrowDown' });
-    const option = await screen.findByRole('option', { name: /^approved$/i });
-    fireEvent.click(option);
-
-    // Should fetch with status=approved and show approved claim
-    await screen.findByText('Approved Shop');
-    // Approve/Reject buttons should NOT be present for resolved claims
-    expect(
-      screen.queryByRole('button', { name: /^approve$/i })
-    ).not.toBeInTheDocument();
-  });
-
-  it('shows status badge column in claims table', async () => {
-    const overviewData = {
-      job_counts: {
-        pending: 0,
-        claimed: 0,
-        completed: 0,
-        failed: 0,
-        dead_letter: 0,
-      },
-      recent_submissions: [],
-    };
-
-    mockFetch.mockImplementation((url: string) => {
-      if (url.includes('/pipeline/overview')) {
-        return Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve(overviewData),
-        });
-      }
-      if (url.includes('/admin/claims')) {
-        return Promise.resolve({
-          ok: true,
-          json: () =>
-            Promise.resolve([
-              {
-                id: 'claim-1',
-                shops: { name: 'Test Shop' },
-                contact_name: 'John',
-                contact_email: 'john@example.com',
-                role: 'owner',
-                status: 'pending',
-                created_at: '2026-01-01T00:00:00Z',
-              },
-            ]),
-        });
-      }
-      return Promise.resolve({ ok: true, json: () => Promise.resolve({}) });
-    });
-
-    const user = userEvent.setup();
     render(<AdminDashboard />);
     await waitFor(() => {
-      expect(screen.getByRole('tab', { name: /claims/i })).toBeInTheDocument();
+      expect(screen.getByText(/submissions/i)).toBeInTheDocument();
+      expect(screen.getByText(/claims/i)).toBeInTheDocument();
+      expect(screen.getByText(/spend/i)).toBeInTheDocument();
     });
-    await user.click(screen.getByRole('tab', { name: /claims/i }));
-    await screen.findByText('Test Shop');
+  });
 
-    expect(screen.getByText('pending')).toBeInTheDocument();
+  it('overview cards link to their sub-routes', async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        job_counts: {},
+        recent_submissions: [],
+        pending_review_count: 0,
+        today_total_usd: 0,
+        mtd_total_usd: 0,
+        providers: [],
+        claims: [],
+        pending_count: 0,
+      }),
+    } as unknown as Response);
+
+    render(<AdminDashboard />);
+    await waitFor(() => {
+      const submissionsLink = screen.getByRole('link', {
+        name: /submissions/i,
+      });
+      expect(submissionsLink).toHaveAttribute('href', '/admin/submissions');
+    });
   });
 });
