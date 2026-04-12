@@ -706,11 +706,11 @@ class TestEnrichShopReviewMenuItems:
         )
 
         shop_menu_items_table = MagicMock()
-        shop_menu_items_table.delete.return_value.eq.return_value.eq.return_value.execute.return_value = (
-            MagicMock(data=[])
+        shop_menu_items_table.delete.return_value.eq.return_value.eq.return_value.execute.return_value = MagicMock(
+            data=[]
         )
-        shop_menu_items_table.select.return_value.eq.return_value.eq.return_value.execute.return_value = (
-            MagicMock(data=photo_items or [])
+        shop_menu_items_table.select.return_value.eq.return_value.eq.return_value.execute.return_value = MagicMock(
+            data=photo_items or []
         )
         shop_menu_items_table.insert.return_value.execute.return_value = MagicMock(data=[])
 
@@ -748,9 +748,7 @@ class TestEnrichShopReviewMenuItems:
         db = self._make_db()
         llm = AsyncMock()
         llm.enrich_shop = AsyncMock(
-            return_value=self._make_enrichment_result(
-                [{"name": "手沖咖啡", "category": "coffee"}]
-            )
+            return_value=self._make_enrichment_result([{"name": "手沖咖啡", "category": "coffee"}])
         )
         llm.assign_tarot = AsyncMock(
             return_value=TarotEnrichmentResult(tarot_title=None, flavor_text="")
