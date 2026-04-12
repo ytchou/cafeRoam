@@ -589,6 +589,7 @@ async def get_batch_detail(
 async def list_jobs(
     status: str | None = None,
     job_type: str | None = None,
+    reason_code: str | None = None,
     offset: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=200),
     user: dict[str, Any] = Depends(require_admin),  # noqa: B008
@@ -600,6 +601,8 @@ async def list_jobs(
         query = query.eq("status", status)
     if job_type:
         query = query.eq("job_type", job_type)
+    if reason_code:
+        query = query.eq("reason_code", reason_code)
     query = query.order("created_at", desc=True).range(offset, offset + limit - 1)
     response = query.execute()
     return {
@@ -644,6 +647,7 @@ async def cancel_job(
                 "status": "cancelled",
                 "cancelled_at": datetime.now(UTC).isoformat(),
                 "cancel_reason": effective_reason,
+                "reason_code": "operator_cancelled",
             }
         )
         .eq("id", job_id)

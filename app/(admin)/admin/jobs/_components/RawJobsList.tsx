@@ -20,6 +20,10 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { getStatusVariant } from '../../_lib/status-badge';
+import {
+  getReasonCodeVariant,
+  REASON_CODE_OPTIONS,
+} from '../../_lib/reason-code-badge';
 import { ConfirmDialog } from '../../_components/ConfirmDialog';
 import { useAdminAuth } from '../../_hooks/use-admin-auth';
 import { JobLogsPanel } from './JobLogsPanel';
@@ -35,6 +39,10 @@ interface Job {
   completed_at: string | null;
   step_timings: Record<string, { duration_ms: number }> | null;
   last_error: string | null;
+  reason_code: string | null;
+  cancel_reason: string | null;
+  cancelled_at: string | null;
+  failed_at: string | null;
   payload: Record<string, unknown>;
 }
 
@@ -137,11 +145,17 @@ export function RawJobsList({ initialStatus }: { initialStatus?: string }) {
   } | null>(null);
   const [cancelReason, setCancelReason] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
+  const [reasonCodeFilter, setReasonCodeFilter] = useState('all');
   const [page, setPage] = useState(1);
   const [expandedJobId, setExpandedJobId] = useState<string | null>(null);
 
   const fetchJobs = useCallback(
-    async (currentPage: number, status: string, jobType: string) => {
+    async (
+      currentPage: number,
+      status: string,
+      jobType: string,
+      reasonCode: string
+    ) => {
       setLoading(true);
       const token = await getToken();
       if (!token) {
@@ -155,6 +169,7 @@ export function RawJobsList({ initialStatus }: { initialStatus?: string }) {
       });
       if (status !== 'all') params.set('status', status);
       if (jobType !== 'all') params.set('job_type', jobType);
+      if (reasonCode !== 'all') params.set('reason_code', reasonCode);
 
       const res = await fetch(`/api/admin/pipeline/jobs?${params}`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -174,11 +189,11 @@ export function RawJobsList({ initialStatus }: { initialStatus?: string }) {
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      void fetchJobs(page, statusFilter, typeFilter);
+      void fetchJobs(page, statusFilter, typeFilter, reasonCodeFilter);
     }, 0);
 
     return () => clearTimeout(timeoutId);
-  }, [page, statusFilter, typeFilter, fetchJobs]);
+  }, [page, statusFilter, typeFilter, reasonCodeFilter, fetchJobs]);
 
   async function handleCancel(jobId: string, reason: string) {
     try {
@@ -198,7 +213,7 @@ export function RawJobsList({ initialStatus }: { initialStatus?: string }) {
         return;
       }
       toast.success('Job cancelled');
-      fetchJobs(page, statusFilter, typeFilter);
+      fetchJobs(page, statusFilter, typeFilter, reasonCodeFilter);
     } catch {
       toast.error('Network error');
     }
@@ -218,7 +233,7 @@ export function RawJobsList({ initialStatus }: { initialStatus?: string }) {
         return;
       }
       toast.success('Job queued for retry');
-      fetchJobs(page, statusFilter, typeFilter);
+      fetchJobs(page, statusFilter, typeFilter, reasonCodeFilter);
     } catch {
       toast.error('Network error');
     }
@@ -238,7 +253,7 @@ export function RawJobsList({ initialStatus }: { initialStatus?: string }) {
         return;
       }
       toast.success('Job acknowledged');
-      fetchJobs(page, statusFilter, typeFilter);
+      fetchJobs(page, statusFilter, typeFilter, reasonCodeFilter);
     } catch {
       toast.error('Network error');
     }
@@ -301,6 +316,28 @@ export function RawJobsList({ initialStatus }: { initialStatus?: string }) {
             </SelectContent>
           </Select>
         </label>
+
+        <label className="flex items-center gap-2 text-sm">
+          Reason:
+          <Select
+            value={reasonCodeFilter}
+            onValueChange={(value) => {
+              setReasonCodeFilter(value);
+              setPage(1);
+            }}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="All reason codes" />
+            </SelectTrigger>
+            <SelectContent>
+              {REASON_CODE_OPTIONS.map((r) => (
+                <SelectItem key={r} value={r}>
+                  {r === 'all' ? 'All reason codes' : r}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </label>
       </div>
 
       <Table className="w-full text-left text-sm">
@@ -337,6 +374,14 @@ export function RawJobsList({ initialStatus }: { initialStatus?: string }) {
                   <Badge variant={getStatusVariant(job.status)}>
                     {job.status}
                   </Badge>
+                  {job.reason_code && (
+                    <Badge
+                      variant={getReasonCodeVariant(job.reason_code)}
+                      className="ml-1 text-xs"
+                    >
+                      {job.reason_code}
+                    </Badge>
+                  )}
                 </TableCell>
                 <TableCell className="py-2">{job.priority}</TableCell>
                 <TableCell className="py-2">{job.attempts}</TableCell>
@@ -402,6 +447,25 @@ export function RawJobsList({ initialStatus }: { initialStatus?: string }) {
                         completedAt={job.completed_at}
                         stepTimings={job.step_timings}
                       />
+                      {job.reason_code && (
+                        <div>
+                          <p className="text-xs font-semibold text-gray-500">
+                            Reason Code
+                          </p>
+                          <div className="mt-1">
+                            <Badge
+                              variant={getReasonCodeVariant(job.reason_code)}
+                            >
+                              {job.reason_code}
+                            </Badge>
+                            {job.cancel_reason && (
+                              <span className="ml-2 text-xs text-gray-600">
+                                {job.cancel_reason}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      )}
                       <div>
                         <p className="text-xs font-semibold text-gray-500">
                           Payload

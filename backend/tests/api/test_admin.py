@@ -1117,3 +1117,71 @@ class TestAdminBatchListing:
             )
         finally:
             app.dependency_overrides.clear()
+
+
+class TestCancelJobReasonCode:
+    """cancel_job writes reason_code='operator_cancelled'."""
+
+    def test_cancel_writes_operator_cancelled_reason_code(self):
+        """POST /admin/pipeline/jobs/{id}/cancel sets reason_code='operator_cancelled' in the DB update."""
+        app.dependency_overrides[get_current_user] = _admin_user
+        try:
+            mock_db = MagicMock()
+            mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value = (
+                MagicMock(data=[{"id": _JOB_1_ID, "status": "pending", "payload": {}}])
+            )
+            mock_db.table.return_value.update.return_value.eq.return_value.in_.return_value.execute.return_value = MagicMock(
+                data=[{"id": _JOB_1_ID, "status": "cancelled"}]
+            )
+            update_payload_captured = {}
+
+            original_update = mock_db.table.return_value.update
+
+            def capture_update(payload):
+                update_payload_captured.update(payload)
+                return original_update(payload)
+
+            mock_db.table.return_value.update = capture_update
+
+            with (
+                patch("api.admin.get_service_role_client", return_value=mock_db),
+                patch("middleware.admin_audit.get_service_role_client", return_value=mock_db),
+                patch("api.deps.settings") as mock_settings,
+            ):
+                mock_settings.admin_user_ids = [_ADMIN_ID]
+                response = client.post(
+                    f"/admin/pipeline/jobs/{_JOB_1_ID}/cancel",
+                    json={"reason": "stuck"},
+                )
+            assert response.status_code == 200
+            assert update_payload_captured.get("reason_code") == "operator_cancelled"
+        finally:
+            app.dependency_overrides.clear()
+
+
+class TestListJobsReasonCodeFilter:
+    """GET /admin/pipeline/jobs supports reason_code filter."""
+
+    def test_filter_by_reason_code(self):
+        """GET /admin/pipeline/jobs?reason_code=timeout passes eq filter to the DB query."""
+        app.dependency_overrides[get_current_user] = _admin_user
+        try:
+            mock_db = MagicMock()
+            mock_db.table.return_value.select.return_value.eq.return_value.eq.return_value.order.return_value.range.return_value.execute.return_value = MagicMock(
+                data=[], count=0
+            )
+            with (
+                patch("api.admin.get_service_role_client", return_value=mock_db),
+                patch("api.deps.settings") as mock_settings,
+            ):
+                mock_settings.admin_user_ids = [_ADMIN_ID]
+                response = client.get("/admin/pipeline/jobs?reason_code=timeout")
+            assert response.status_code == 200
+            # Verify .eq("reason_code", "timeout") was called on the query chain
+            eq_calls = mock_db.table.return_value.select.return_value.eq.call_args_list
+            reason_code_filtered = any(call[0] == ("reason_code", "timeout") for call in eq_calls)
+            assert reason_code_filtered, (
+                f"Expected eq('reason_code', 'timeout') call, got: {eq_calls}"
+            )
+        finally:
+            app.dependency_overrides.clear()

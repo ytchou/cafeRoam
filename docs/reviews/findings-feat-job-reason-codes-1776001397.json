@@ -1,0 +1,62 @@
+{
+  "findings": [
+    {
+      "severity": "Important",
+      "file": "backend/workers/queue.py",
+      "line": "111-117",
+      "description": "complete() does not clear reason_code — a stuck-reclaimed job that later succeeds retains reason_code='timeout' on a completed job, misleading operators. The reclaim RPC writes reason_code='timeout' on retry-eligible jobs. If the retried job subsequently succeeds, queue.complete() only sets status and completed_at, leaving the stale reason_code. Fix: add reason_code=None to the complete() update payload.",
+      "flagged_by": "Bug Hunter",
+      "status": "resolved",
+      "resolution": "Added reason_code=None to queue.complete() update payload."
+    },
+    {
+      "severity": "Important",
+      "file": "supabase/migrations/20260412000004_reclaim_stuck_jobs_add_reason_code.sql",
+      "line": "21",
+      "description": "reclaim_stuck_jobs RPC does not set failed_at when moving exhausted jobs to failed status, unlike the Python queue.fail() path (queue.py:148) which writes failed_at. The plan doc (Task 2, line 109) also specifies failed_at should be set. Add: failed_at = CASE WHEN s.attempts >= s.max_attempts THEN now() ELSE failed_at END to the UPDATE SET clause.",
+      "flagged_by": "Bug Hunter, Plan Alignment",
+      "status": "resolved",
+      "resolution": "Added failed_at = CASE WHEN s.attempts >= s.max_attempts THEN now() ELSE failed_at END to UPDATE SET clause. Migration was branch-only (commit 87a08baa), so existing file was edited rather than creating a new migration."
+    },
+    {
+      "severity": "Important",
+      "file": "supabase/migrations/20260410000005_add_user_preferences_to_profiles.sql",
+      "line": "1",
+      "description": "Unrelated migration (DEV-297 user preferences) included in this branch. This file is tagged as DEV-297 cold-start preference onboarding and has no relation to DEV-312 reason codes. Should be removed from this branch to avoid shipping unrelated schema changes.",
+      "flagged_by": "Standards",
+      "status": "resolved",
+      "resolution": "Removed via git rm. File was introduced in the same branch-only commit (87a08baa) as the DEV-312 migrations."
+    },
+    {
+      "severity": "Minor",
+      "file": "backend/workers/scheduler.py",
+      "line": "206,219",
+      "description": "All scheduler exception types (CancelledError, generic Exception) map to PROVIDER_ERROR — no differentiation for bad_input or dependency_failed. The plan doc acknowledges this as intentional V1 behavior.",
+      "flagged_by": "Architecture",
+      "status": "resolved",
+      "resolution": "No code change. Intentional V1 behavior explicitly acknowledged in plan doc. Differentiated reason codes for CancelledError vs generic Exception deferred to post-V1 observability work."
+    },
+    {
+      "severity": "Minor",
+      "file": "docs/designs/2026-04-12-job-reason-codes-design.md",
+      "line": "28",
+      "description": "Design doc says retry_exhausted maps to terminal status dead_letter, but queue.fail() uses JobStatus.FAILED (not DEAD_LETTER). The backfill migration also targets status='failed'. Doc should be corrected to match implementation.",
+      "flagged_by": "Plan Alignment",
+      "status": "resolved",
+      "resolution": "Updated design doc: retry_exhausted maps to 'failed' (not 'dead_letter'), timeout maps to 'pending/failed' (not 'pending/dead_letter'), Scope section updated, backfill section updated."
+    },
+    {
+      "severity": "Minor",
+      "file": "docs/designs/2026-04-12-job-reason-codes-design.md",
+      "line": "40",
+      "description": "Incomplete dead_letter fix: line 40 prose description still reads 'moved to dead_letter' for retry_exhausted jobs: '**reclaim_stuck_jobs RPC:** Writes reason_code=\\'timeout\\' (reclaimed to pending) or reason_code=\\'retry_exhausted\\' (moved to dead_letter).' The table and Scope section were corrected by the fix but this sentence was missed. Should read 'moved to failed'.",
+      "flagged_by": "Plan Alignment",
+      "status": "open",
+      "resolution": null
+    }
+  ],
+  "active_agents": ["Plan Alignment"],
+  "skipped": ["Architecture"],
+  "head_sha": "fa333258aa292b35175a4f33b9acf6e35cfef04e",
+  "review_log_path": "docs/reviews/2026-04-12-main.md"
+}

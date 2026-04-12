@@ -12,7 +12,7 @@ from supabase import Client
 
 from core.config import settings
 from db.supabase_client import get_service_role_client
-from models.types import Job, JobType, TaxonomyTag
+from models.types import Job, JobReasonCode, JobType, TaxonomyTag
 from providers.email import get_email_provider
 from providers.embeddings import get_embeddings_provider
 from providers.issue_tracker import get_issue_tracker_provider
@@ -200,7 +200,11 @@ async def _run_job(job: Job) -> None:
     except asyncio.CancelledError:
         logger.warning("Job cancelled during shutdown", job_id=job.id)
         if queue is not None:
-            await queue.fail(job.id, error="Job cancelled during shutdown")
+            await queue.fail(
+                job.id,
+                error="Job cancelled during shutdown",
+                reason_code=JobReasonCode.PROVIDER_ERROR,
+            )
         raise
     except Exception as e:
         logger.error("Job failed", job_id=job.id, error=str(e))
@@ -209,7 +213,11 @@ async def _run_job(job: Job) -> None:
             _rate_limit_backoff_until[job_type] = datetime.now(UTC) + timedelta(seconds=30)
             logger.warning("Rate limited, backing off", job_type=job_type, seconds=30)
         if queue is not None:
-            await queue.fail(job.id, error=str(e))
+            await queue.fail(
+                job.id,
+                error=str(e),
+                reason_code=JobReasonCode.PROVIDER_ERROR,
+            )
     finally:
         _in_flight[job_type] -= 1
 

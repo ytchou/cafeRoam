@@ -525,6 +525,15 @@ class JobStatus(StrEnum):
     CANCELLED = "cancelled"
 
 
+class JobReasonCode(StrEnum):
+    OPERATOR_CANCELLED = "operator_cancelled"
+    RETRY_EXHAUSTED = "retry_exhausted"
+    BAD_INPUT = "bad_input"
+    TIMEOUT = "timeout"
+    DEPENDENCY_FAILED = "dependency_failed"
+    PROVIDER_ERROR = "provider_error"
+
+
 class Job(BaseModel):
     id: str
     job_type: JobType
@@ -539,6 +548,10 @@ class Job(BaseModel):
     completed_at: datetime | None = None
     created_at: datetime
     step_timings: dict[str, dict[str, Any]] | None = None
+    reason_code: JobReasonCode | None = None
+    cancel_reason: str | None = None
+    cancelled_at: datetime | None = None
+    failed_at: datetime | None = None
 
 
 # --- Pipeline types ---
