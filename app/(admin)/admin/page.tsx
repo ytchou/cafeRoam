@@ -18,7 +18,7 @@ export default function AdminDashboard() {
 
   const fetchStats = useCallback(async () => {
     const token = await getToken();
-    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    const headers: HeadersInit = token ? { Authorization: `Bearer ${token}` } : {};
 
     try {
       const [overviewRes, spendRes] = await Promise.all([

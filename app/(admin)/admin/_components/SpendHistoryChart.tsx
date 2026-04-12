@@ -99,9 +99,9 @@ export function SpendHistoryChart({ getToken }: SpendHistoryChartProps) {
             width={56}
           />
           <Tooltip
-            formatter={(value: number, name: string) => [
-              `$${value.toFixed(4)}`,
-              PROVIDER_LABELS[name] ?? name,
+            formatter={(value, name) => [
+              `$${(Number(value) || 0).toFixed(4)}`,
+              PROVIDER_LABELS[String(name)] ?? String(name),
             ]}
           />
           <Legend
