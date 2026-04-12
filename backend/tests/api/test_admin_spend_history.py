@@ -23,8 +23,10 @@ def test_spend_history_returns_empty_when_no_rows():
         )
         with (
             patch("api.admin.get_service_role_client", return_value=mock_db),
-            patch("api.deps.settings") as mock_settings,
+            patch("api.deps.settings") as mock_deps_settings,
+            patch("api.admin.settings") as mock_settings,
         ):
+            mock_deps_settings.admin_user_ids = [_ADMIN_ID]
             mock_settings.admin_user_ids = [_ADMIN_ID]
             response = client.get("/admin/pipeline/spend/history?days=14")
         assert response.status_code == 200
@@ -63,8 +65,10 @@ def test_spend_history_groups_by_date_and_provider():
         )
         with (
             patch("api.admin.get_service_role_client", return_value=mock_db),
-            patch("api.deps.settings") as mock_settings,
+            patch("api.deps.settings") as mock_deps_settings,
+            patch("api.admin.settings") as mock_settings,
         ):
+            mock_deps_settings.admin_user_ids = [_ADMIN_ID]
             mock_settings.admin_user_ids = [_ADMIN_ID]
             mock_settings.apify_cost_per_cu = 0.0003
             response = client.get("/admin/pipeline/spend/history?days=14")
@@ -100,8 +104,10 @@ def test_spend_history_computes_apify_cost_from_compute_units():
         )
         with (
             patch("api.admin.get_service_role_client", return_value=mock_db),
-            patch("api.deps.settings") as mock_settings,
+            patch("api.deps.settings") as mock_deps_settings,
+            patch("api.admin.settings") as mock_settings,
         ):
+            mock_deps_settings.admin_user_ids = [_ADMIN_ID]
             mock_settings.admin_user_ids = [_ADMIN_ID]
             mock_settings.apify_cost_per_cu = 0.0003
             response = client.get("/admin/pipeline/spend/history?days=14")
@@ -122,8 +128,10 @@ def test_spend_history_days_param_caps_at_90():
         )
         with (
             patch("api.admin.get_service_role_client", return_value=mock_db),
-            patch("api.deps.settings") as mock_settings,
+            patch("api.deps.settings") as mock_deps_settings,
+            patch("api.admin.settings") as mock_settings,
         ):
+            mock_deps_settings.admin_user_ids = [_ADMIN_ID]
             mock_settings.admin_user_ids = [_ADMIN_ID]
             response = client.get("/admin/pipeline/spend/history?days=999")
         assert response.status_code == 200
