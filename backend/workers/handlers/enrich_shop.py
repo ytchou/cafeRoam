@@ -174,6 +174,45 @@ async def handle_enrich_shop(
             logger.warning("Tarot enrichment failed — continuing", shop_id=shop_id, exc_info=True)
         step_timings["db_write"] = {"duration_ms": int((time.monotonic() - t0) * 1000)}
 
+        # --- Review-sourced menu items (DEV-313) ---
+        if result.menu_items:
+            # Delete existing review-sourced items for this shop
+            db.table("shop_menu_items").delete().eq("shop_id", shop_id).eq("source", "review").execute()
+
+            # Photo-wins: check which items already exist from photos
+            photo_items = (
+                db.table("shop_menu_items")
+                .select("item_name")
+                .eq("shop_id", shop_id)
+                .eq("source", "photo")
+                .execute()
+                .data
+            )
+            photo_names = {row["item_name"] for row in photo_items}
+
+            # Filter out items that already exist from photos
+            review_rows = [
+                {
+                    "shop_id": shop_id,
+                    "item_name": item["name"],
+                    "price": item.get("price"),
+                    "category": item.get("category"),
+                    "source": "review",
+                    "source_photo_id": None,
+                    "extracted_at": datetime.now(UTC).isoformat(),
+                }
+                for item in result.menu_items
+                if item.get("name") and item["name"] not in photo_names
+            ]
+
+            if review_rows:
+                db.table("shop_menu_items").insert(review_rows).execute()
+                logger.info(
+                    "Review-sourced menu items written",
+                    shop_id=shop_id,
+                    count=len(review_rows),
+                )
+
         enqueue_payload: dict[str, Any] = {"shop_id": shop_id}
         for key in ("submission_id", "submitted_by", "batch_id"):
             if payload.get(key):

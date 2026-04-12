@@ -188,6 +188,185 @@ class TestEnrichShopHandler:
         assert written["coffee_origins"] == ["耶加雪菲", "哥倫比亞"]
 
 
+    @pytest.mark.asyncio
+    async def test_review_extraction_writes_menu_items_with_source_review(self):
+        """Given LLM returns menu_items in enrichment result, when handler runs, then items are written with source='review'."""
+        from models.types import EnrichmentResult
+
+        db = MagicMock()
+        llm = AsyncMock()
+        queue = AsyncMock()
+        queue.get_status.return_value = "claimed"
+
+        enrichment_result = EnrichmentResult(
+            tags=[],
+            tag_confidences={},
+            summary="溫馨咖啡館",
+            confidence=0.9,
+            mode_scores=None,
+            menu_highlights=["拿鐵"],
+            coffee_origins=["衣索比亞"],
+            menu_items=[
+                {"name": "拿鐵", "price": 150, "category": "coffee"},
+                {"name": "巴斯克蛋糕", "price": 180, "category": "dessert"},
+            ],
+        )
+        llm.enrich_shop = AsyncMock(return_value=enrichment_result)
+        llm.assign_tarot = AsyncMock(return_value=MagicMock(tarot_title=None, flavor_text=""))
+
+        db.table.return_value.select.return_value.eq.return_value.single.return_value.execute.return_value = MagicMock(
+            data={
+                "id": SHOP_ID,
+                "name": "晨光咖啡",
+                "description": None,
+                "categories": ["精品咖啡"],
+                "price_range": "$$",
+                "socket": "yes",
+                "limited_time": "no",
+                "rating": 4.8,
+                "review_count": 50,
+            }
+        )
+        db.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(
+            data=[{"text": "拿鐵很好喝，巴斯克蛋糕超棒"}]
+        )
+        # No existing photo-sourced items
+        db.table.return_value.select.return_value.eq.return_value.eq.return_value.execute.return_value = MagicMock(
+            data=[]
+        )
+
+        await handle_enrich_shop(
+            payload={"shop_id": SHOP_ID},
+            db=db,
+            llm=llm,
+            queue=queue,
+            job_id="job-t5-review-01",
+        )
+
+        # Verify review items inserted with source='review'
+        insert_calls = db.table.return_value.insert.call_args_list
+        review_inserts = []
+        for call in insert_calls:
+            rows = call.args[0] if call.args else []
+            if isinstance(rows, list) and rows and rows[0].get("source") == "review":
+                review_inserts.extend(rows)
+        assert len(review_inserts) >= 1
+        assert any(row["item_name"] == "拿鐵" for row in review_inserts)
+        assert any(row["item_name"] == "巴斯克蛋糕" for row in review_inserts)
+
+    @pytest.mark.asyncio
+    async def test_review_extraction_skips_items_from_photos(self):
+        """Given photo-sourced item '拿鐵' already exists, when review extraction returns '拿鐵', then it is skipped."""
+        from models.types import EnrichmentResult
+
+        db = MagicMock()
+        llm = AsyncMock()
+        queue = AsyncMock()
+        queue.get_status.return_value = "claimed"
+
+        enrichment_result = EnrichmentResult(
+            tags=[],
+            tag_confidences={},
+            summary="咖啡館",
+            confidence=0.9,
+            mode_scores=None,
+            menu_highlights=[],
+            coffee_origins=[],
+            menu_items=[
+                {"name": "拿鐵", "price": 150, "category": "coffee"},
+                {"name": "巴斯克蛋糕", "price": 180, "category": "dessert"},
+            ],
+        )
+        llm.enrich_shop = AsyncMock(return_value=enrichment_result)
+        llm.assign_tarot = AsyncMock(return_value=MagicMock(tarot_title=None, flavor_text=""))
+
+        db.table.return_value.select.return_value.eq.return_value.single.return_value.execute.return_value = MagicMock(
+            data={
+                "id": SHOP_ID,
+                "name": "晨光咖啡",
+                "description": None,
+                "categories": [],
+                "price_range": "$",
+                "socket": "no",
+                "limited_time": "no",
+                "rating": 4.0,
+                "review_count": 10,
+            }
+        )
+        db.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(data=[])
+        # Photo-sourced '拿鐵' already exists
+        db.table.return_value.select.return_value.eq.return_value.eq.return_value.execute.return_value = MagicMock(
+            data=[{"item_name": "拿鐵"}]
+        )
+
+        await handle_enrich_shop(
+            payload={"shop_id": SHOP_ID},
+            db=db,
+            llm=llm,
+            queue=queue,
+            job_id="job-t5-review-02",
+        )
+
+        insert_calls = db.table.return_value.insert.call_args_list
+        for call in insert_calls:
+            rows = call.args[0] if call.args else []
+            if isinstance(rows, list) and rows and rows[0].get("source") == "review":
+                names = [r["item_name"] for r in rows]
+                assert "拿鐵" not in names, "Photo-sourced '拿鐵' should not be overwritten by review"
+                assert "巴斯克蛋糕" in names
+
+    @pytest.mark.asyncio
+    async def test_empty_menu_items_no_delete(self):
+        """Given LLM returns empty menu_items, when handler runs, then existing review items are NOT deleted."""
+        from models.types import EnrichmentResult
+
+        db = MagicMock()
+        llm = AsyncMock()
+        queue = AsyncMock()
+        queue.get_status.return_value = "claimed"
+
+        enrichment_result = EnrichmentResult(
+            tags=[],
+            tag_confidences={},
+            summary="咖啡館",
+            confidence=0.9,
+            mode_scores=None,
+            menu_highlights=[],
+            coffee_origins=[],
+            menu_items=[],
+        )
+        llm.enrich_shop = AsyncMock(return_value=enrichment_result)
+        llm.assign_tarot = AsyncMock(return_value=MagicMock(tarot_title=None, flavor_text=""))
+
+        db.table.return_value.select.return_value.eq.return_value.single.return_value.execute.return_value = MagicMock(
+            data={
+                "id": SHOP_ID,
+                "name": "咖啡廳",
+                "description": None,
+                "categories": [],
+                "price_range": "$",
+                "socket": "no",
+                "limited_time": "no",
+                "rating": 4.0,
+                "review_count": 5,
+            }
+        )
+        db.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(data=[])
+
+        await handle_enrich_shop(
+            payload={"shop_id": SHOP_ID},
+            db=db,
+            llm=llm,
+            queue=queue,
+            job_id="job-t5-review-03",
+        )
+
+        # When menu_items is empty, no delete on shop_menu_items with source='review'
+        delete_calls = db.table.return_value.delete.call_args_list
+        review_deletes = [c for c in delete_calls if "review" in str(c)]
+        assert len(review_deletes) == 0, "Should not delete review items when enrichment returns empty menu_items"
+
+
 class TestGenerateEmbeddingHandler:
     def _make_db(
         self,
