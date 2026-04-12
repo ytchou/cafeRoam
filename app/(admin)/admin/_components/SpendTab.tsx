@@ -51,10 +51,10 @@ function formatUsd(value: number): string {
     return `$${value.toFixed(6)}`;
   }
 
-return `$${value.toLocaleString('en-US', {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-})}`;
+  return `$${value.toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
 }
 
 function SpendAmountCell({ context, value }: SpendAmountCellProps) {
