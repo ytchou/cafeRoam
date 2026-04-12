@@ -1,4 +1,5 @@
 import contextlib
+from collections import defaultdict
 from datetime import UTC, datetime
 from typing import Any, Literal, cast
 
@@ -7,6 +8,7 @@ from fastapi import APIRouter, BackgroundTasks, Body, Depends, HTTPException, Qu
 from pydantic import BaseModel
 
 from api.deps import require_admin
+from core.config import settings
 from core.db import first
 from db.supabase_client import get_service_role_client
 from middleware.admin_audit import log_admin_action
@@ -798,3 +800,121 @@ async def run_pipeline_batch(
         payload={"shop_ids": body.shop_ids},
     )
     return {"message": "Pipeline batch run queued"}
+
+
+@router.get("/spend")
+async def get_pipeline_spend(
+    user: dict[str, Any] = Depends(require_admin),  # noqa: B008
+) -> dict[str, Any]:
+    """Aggregate spend for the current day and month-to-date by provider and task."""
+    del user
+
+    db = get_service_role_client()
+    now = datetime.now(UTC)
+    month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    today = now.date()
+
+    response = (
+        db.table("api_usage_log")
+        .select("provider, task, cost_usd, compute_units, tokens_input, tokens_output, created_at")
+        .gte("created_at", month_start.isoformat())
+        .execute()
+    )
+    rows = cast("list[dict[str, Any]]", response.data or [])
+
+    provider_totals: dict[str, dict[str, Any]] = defaultdict(
+        lambda: {
+            "today_usd": 0.0,
+            "mtd_usd": 0.0,
+            "today_calls": 0,
+            "mtd_calls": 0,
+            "tasks": defaultdict(
+                lambda: {
+                    "today_usd": 0.0,
+                    "mtd_usd": 0.0,
+                    "today_calls": 0,
+                    "mtd_calls": 0,
+                    "today_tokens_in": 0,
+                    "today_tokens_out": 0,
+                    "mtd_tokens_in": 0,
+                    "mtd_tokens_out": 0,
+                }
+            ),
+        }
+    )
+    today_total_usd = 0.0
+    mtd_total_usd = 0.0
+
+    for row in rows:
+        provider = str(row.get("provider") or "unknown")
+        task = str(row.get("task") or "unknown")
+        created_at_raw = row.get("created_at")
+        if not created_at_raw:
+            continue
+
+        created_at = datetime.fromisoformat(str(created_at_raw))
+        if created_at.tzinfo is None:
+            created_at = created_at.replace(tzinfo=UTC)
+
+        cost_usd = float(row.get("cost_usd") or 0.0)
+        if provider == "apify":
+            cost_usd = float(row.get("compute_units") or 0.0) * settings.apify_cost_per_cu
+
+        tokens_in = int(row.get("tokens_input") or 0)
+        tokens_out = int(row.get("tokens_output") or 0)
+        is_today = created_at.astimezone(UTC).date() == today
+
+        provider_bucket = provider_totals[provider]
+        task_bucket = cast("dict[str, Any]", provider_bucket["tasks"])[task]
+
+        provider_bucket["mtd_usd"] += cost_usd
+        provider_bucket["mtd_calls"] += 1
+        task_bucket["mtd_usd"] += cost_usd
+        task_bucket["mtd_calls"] += 1
+        task_bucket["mtd_tokens_in"] += tokens_in
+        task_bucket["mtd_tokens_out"] += tokens_out
+        mtd_total_usd += cost_usd
+
+        if is_today:
+            provider_bucket["today_usd"] += cost_usd
+            provider_bucket["today_calls"] += 1
+            task_bucket["today_usd"] += cost_usd
+            task_bucket["today_calls"] += 1
+            task_bucket["today_tokens_in"] += tokens_in
+            task_bucket["today_tokens_out"] += tokens_out
+            today_total_usd += cost_usd
+
+    providers: list[dict[str, Any]] = []
+    for provider_name in sorted(provider_totals):
+        provider_bucket = provider_totals[provider_name]
+        task_buckets = cast("dict[str, dict[str, Any]]", provider_bucket["tasks"])
+        tasks = [
+            {
+                "task": task_name,
+                "today_usd": round(task_bucket["today_usd"], 6),
+                "mtd_usd": round(task_bucket["mtd_usd"], 6),
+                "today_calls": task_bucket["today_calls"],
+                "mtd_calls": task_bucket["mtd_calls"],
+                "today_tokens_in": task_bucket["today_tokens_in"],
+                "today_tokens_out": task_bucket["today_tokens_out"],
+                "mtd_tokens_in": task_bucket["mtd_tokens_in"],
+                "mtd_tokens_out": task_bucket["mtd_tokens_out"],
+            }
+            for task_name, task_bucket in sorted(task_buckets.items())
+        ]
+        providers.append(
+            {
+                "provider": provider_name,
+                "today_usd": round(provider_bucket["today_usd"], 6),
+                "mtd_usd": round(provider_bucket["mtd_usd"], 6),
+                "today_calls": provider_bucket["today_calls"],
+                "mtd_calls": provider_bucket["mtd_calls"],
+                "tasks": tasks,
+            }
+        )
+
+    return {
+        "today_total_usd": round(today_total_usd, 6),
+        "mtd_total_usd": round(mtd_total_usd, 6),
+        "providers": providers,
+    }
