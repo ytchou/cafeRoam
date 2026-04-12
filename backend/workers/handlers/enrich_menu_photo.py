@@ -1,14 +1,14 @@
-import logging
 from datetime import UTC, datetime
 from typing import Any
 
+import structlog
 from supabase import Client
 
 from models.types import JobType
 from providers.llm.interface import LLMProvider
 from workers.queue import JobQueue
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger()
 
 
 async def handle_enrich_menu_photo(
@@ -26,12 +26,16 @@ async def handle_enrich_menu_photo(
         image_url = payload.get("image_url")
         if not image_url:
             logger.warning(
-                "enrich_menu_photo: no photos or image_url in payload for shop %s", shop_id
+                "enrich_menu_photo: no photos or image_url in payload",
+                shop_id=shop_id,
             )
             return
         photos = [{"photo_id": None, "image_url": image_url}]
 
-    any_items_written = False
+    # Accumulate all rows and photo-id deletes across photos before writing
+    all_rows: list[dict[str, Any]] = []
+    photo_ids_to_delete: list[str] = []
+    all_new_names: list[str] = []
 
     for photo in photos:
         photo_id = photo.get("photo_id")
@@ -41,13 +45,17 @@ async def handle_enrich_menu_photo(
             result = await llm.extract_menu_data(image_url=image_url)
         except Exception:
             logger.exception(
-                "enrich_menu_photo: LLM failed for photo %s (shop %s)", photo_id, shop_id
+                "LLM extraction failed",
+                shop_id=shop_id,
+                photo_id=photo_id,
             )
             continue
 
         if not result.items:
             logger.info(
-                "enrich_menu_photo: no items extracted from photo %s (shop %s)", photo_id, shop_id
+                "No items extracted",
+                shop_id=shop_id,
+                photo_id=photo_id,
             )
             continue
 
@@ -68,28 +76,37 @@ async def handle_enrich_menu_photo(
         if not rows:
             continue
 
-        # Delete existing items from this specific photo
         if photo_id:
-            db.table("shop_menu_items").delete().eq("source_photo_id", photo_id).execute()
+            photo_ids_to_delete.append(photo_id)
 
-        # Photo-wins: delete review-sourced items with colliding names
-        new_names = [row["item_name"] for row in rows]
+        all_new_names.extend(row["item_name"] for row in rows)
+        all_rows.extend(rows)
+
+    if not all_rows:
+        return
+
+    # Batch delete: existing items for each processed photo
+    if photo_ids_to_delete:
+        db.table("shop_menu_items").delete().in_("source_photo_id", photo_ids_to_delete).execute()
+
+    # Batch delete: photo-wins over review-sourced items with colliding names
+    if all_new_names:
         db.table("shop_menu_items").delete().eq("shop_id", shop_id).eq("source", "review").in_(
-            "item_name", new_names
+            "item_name", all_new_names
         ).execute()
 
-        db.table("shop_menu_items").insert(rows).execute()
-        any_items_written = True
-        logger.info(
-            "enrich_menu_photo: wrote %d items from photo %s (shop %s)",
-            len(rows),
-            photo_id,
-            shop_id,
-        )
+    # Batch insert all rows
+    db.table("shop_menu_items").insert(all_rows).execute()
 
-    if any_items_written:
-        await queue.enqueue(
-            job_type=JobType.GENERATE_EMBEDDING,
-            payload={"shop_id": shop_id},
-            priority=5,
-        )
+    logger.info(
+        "Menu items written",
+        shop_id=shop_id,
+        count=len(all_rows),
+        photos=len(photo_ids_to_delete),
+    )
+
+    await queue.enqueue(
+        job_type=JobType.GENERATE_EMBEDDING,
+        payload={"shop_id": shop_id},
+        priority=5,
+    )
