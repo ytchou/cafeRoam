@@ -18,7 +18,8 @@ RETURNS TABLE(reclaimed_count BIGINT, failed_count BIGINT) AS $$
       last_error   = CASE WHEN s.attempts >= s.max_attempts
                           THEN 'Reclaimed by stuck-job reaper: retries exhausted'
                           ELSE last_error END,
-      reason_code  = CASE WHEN s.attempts < s.max_attempts THEN 'timeout' ELSE 'retry_exhausted' END
+      reason_code  = CASE WHEN s.attempts < s.max_attempts THEN 'timeout' ELSE 'retry_exhausted' END,
+      failed_at    = CASE WHEN s.attempts >= s.max_attempts THEN now() ELSE failed_at END
     FROM stuck s
     WHERE job_queue.id = s.id
     RETURNING CASE WHEN s.attempts < s.max_attempts THEN 1 ELSE 0 END AS was_reclaimed
