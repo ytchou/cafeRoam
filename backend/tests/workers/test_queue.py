@@ -326,9 +326,7 @@ class TestQueueFailReasonCode:
         assert update_call["reason_code"] == "provider_error"
         assert update_call["status"] == "pending"
 
-    async def test_fail_exhausted_writes_reason_code_and_failed_at(
-        self, job_queue, mock_supabase
-    ):
+    async def test_fail_exhausted_writes_reason_code_and_failed_at(self, job_queue, mock_supabase):
         """Given a job at max_attempts, fail() writes reason_code + failed_at and sets failed."""
         select_response = MagicMock(data={"attempts": 3, "max_attempts": 3})
         update_response = MagicMock(data=[])

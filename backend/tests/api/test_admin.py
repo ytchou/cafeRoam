@@ -1127,8 +1127,8 @@ class TestCancelJobReasonCode:
         app.dependency_overrides[get_current_user] = _admin_user
         try:
             mock_db = MagicMock()
-            mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(
-                data=[{"id": _JOB_1_ID, "status": "pending", "payload": {}}]
+            mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value = (
+                MagicMock(data=[{"id": _JOB_1_ID, "status": "pending", "payload": {}}])
             )
             mock_db.table.return_value.update.return_value.eq.return_value.in_.return_value.execute.return_value = MagicMock(
                 data=[{"id": _JOB_1_ID, "status": "cancelled"}]
@@ -1179,9 +1179,9 @@ class TestListJobsReasonCodeFilter:
             assert response.status_code == 200
             # Verify .eq("reason_code", "timeout") was called on the query chain
             eq_calls = mock_db.table.return_value.select.return_value.eq.call_args_list
-            reason_code_filtered = any(
-                call[0] == ("reason_code", "timeout") for call in eq_calls
+            reason_code_filtered = any(call[0] == ("reason_code", "timeout") for call in eq_calls)
+            assert reason_code_filtered, (
+                f"Expected eq('reason_code', 'timeout') call, got: {eq_calls}"
             )
-            assert reason_code_filtered, f"Expected eq('reason_code', 'timeout') call, got: {eq_calls}"
         finally:
             app.dependency_overrides.clear()

@@ -157,14 +157,15 @@ class TestRunJobReasonCodes:
             patch("workers.scheduler._dispatch_job", side_effect=asyncio.CancelledError()),
             patch("workers.scheduler._in_flight", {JobType.ENRICH_SHOP: 1}),
             patch("workers.scheduler.sentry_sdk"),
+            pytest.raises(asyncio.CancelledError),
         ):
-            with pytest.raises(asyncio.CancelledError):
-                await _run_job(mock_job)
+            await _run_job(mock_job)
 
         mock_queue.fail.assert_called_once()
         call_kwargs = mock_queue.fail.call_args
-        assert call_kwargs[1].get("reason_code") == JobReasonCode.PROVIDER_ERROR or \
-               (len(call_kwargs[0]) >= 3 and call_kwargs[0][2] == JobReasonCode.PROVIDER_ERROR)
+        assert call_kwargs[1].get("reason_code") == JobReasonCode.PROVIDER_ERROR or (
+            len(call_kwargs[0]) >= 3 and call_kwargs[0][2] == JobReasonCode.PROVIDER_ERROR
+        )
 
     async def test_general_exception_uses_provider_error(self):
         """Unhandled exception during job execution writes reason_code=provider_error."""
@@ -187,5 +188,6 @@ class TestRunJobReasonCodes:
 
         mock_queue.fail.assert_called_once()
         call_kwargs = mock_queue.fail.call_args
-        assert call_kwargs[1].get("reason_code") == JobReasonCode.PROVIDER_ERROR or \
-               (len(call_kwargs[0]) >= 3 and call_kwargs[0][2] == JobReasonCode.PROVIDER_ERROR)
+        assert call_kwargs[1].get("reason_code") == JobReasonCode.PROVIDER_ERROR or (
+            len(call_kwargs[0]) >= 3 and call_kwargs[0][2] == JobReasonCode.PROVIDER_ERROR
+        )
