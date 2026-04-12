@@ -212,7 +212,7 @@ class SearchService:
 
             if use_keyword_scoring:
                 keyword_score = self._compute_keyword_score(row, normalized_query)
-                total = similarity * 0.5 + taxonomy_boost * 0.2 + keyword_score * 0.3
+                total = similarity * 0.3 + taxonomy_boost * 0.2 + keyword_score * 0.5
             else:
                 keyword_score = 0.0
                 total = similarity * 0.7 + taxonomy_boost * 0.3
