@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ClaimsTab } from './_components/ClaimsTab';
+import { SpendTab } from './_components/SpendTab';
 import { PipelineOverview, SubmissionsTab } from './_components/SubmissionsTab';
 import { useAdminAuth } from './_hooks/use-admin-auth';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -55,6 +56,7 @@ export default function AdminDashboard() {
         <TabsList>
           <TabsTrigger value="submissions">Submissions</TabsTrigger>
           <TabsTrigger value="claims">Claims</TabsTrigger>
+          <TabsTrigger value="spend">Spend</TabsTrigger>
         </TabsList>
         <TabsContent value="submissions" className="space-y-8">
           <section>
@@ -86,6 +88,9 @@ export default function AdminDashboard() {
         </TabsContent>
         <TabsContent value="claims">
           <ClaimsTab getToken={getToken} />
+        </TabsContent>
+        <TabsContent value="spend">
+          <SpendTab getToken={getToken} />
         </TabsContent>
       </Tabs>
     </div>
