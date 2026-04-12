@@ -38,7 +38,7 @@
       "line": "29-51",
       "description": "Mock rows in test_spend_returns_aggregated_totals omit tokens_input and tokens_output fields. The endpoint aggregates these into today_tokens_in/mtd_tokens_in per task, but this path is completely untested. Adding token fields to mock data and asserting on the task-level token aggregation would improve coverage of the aggregation logic.",
       "flagged_by": "Test Philosophy",
-      "status": "valid"
+      "status": "resolved"
     },
     {
       "severity": "Minor",
@@ -46,7 +46,7 @@
       "line": "202-207",
       "description": "Apify log_api_usage passes cost_usd=None, which is correct per the design (Apify cost computed at query time from CU). However, the task is hardcoded as 'scrape_batch' even though _run_actor is a general-purpose method. If _run_actor is called from other tasks in the future, all usage will be attributed to scrape_batch. Minor because currently all Apify calls are scrape_batch.",
       "flagged_by": "Architecture & Design",
-      "status": "debatable"
+      "status": "resolved"
     }
   ],
   "active_agents": ["Bug Hunter", "Plan Alignment", "Architecture & Design", "Test Philosophy"],

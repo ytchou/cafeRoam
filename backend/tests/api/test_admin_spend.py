@@ -32,6 +32,8 @@ class TestSpendEndpoint:
                 "task": "enrich_shop",
                 "cost_usd": 0.0150,
                 "compute_units": None,
+                "tokens_input": 1200,
+                "tokens_output": 150,
                 "created_at": f"{today}T10:00:00+00:00",
             },
             {
@@ -39,6 +41,8 @@ class TestSpendEndpoint:
                 "task": "embed",
                 "cost_usd": 0.0056,
                 "compute_units": None,
+                "tokens_input": 800,
+                "tokens_output": 0,
                 "created_at": f"{today}T10:01:00+00:00",
             },
             {
@@ -46,6 +50,8 @@ class TestSpendEndpoint:
                 "task": "scrape_batch",
                 "cost_usd": None,
                 "compute_units": 5.0,
+                "tokens_input": None,
+                "tokens_output": None,
                 "created_at": f"{today}T10:02:00+00:00",
             },
         ]
@@ -75,6 +81,37 @@ class TestSpendEndpoint:
         assert "anthropic" in provider_names
         assert "openai" in provider_names
         assert "apify" in provider_names
+
+        # Task-level token aggregation
+        anthropic_tasks = {
+            t["task"]: t
+            for p in data["providers"]
+            if p["provider"] == "anthropic"
+            for t in p["tasks"]
+        }
+        assert anthropic_tasks["enrich_shop"]["today_tokens_in"] == 1200
+        assert anthropic_tasks["enrich_shop"]["today_tokens_out"] == 150
+        assert anthropic_tasks["enrich_shop"]["mtd_tokens_in"] == 1200
+        assert anthropic_tasks["enrich_shop"]["mtd_tokens_out"] == 150
+
+        openai_tasks = {
+            t["task"]: t
+            for p in data["providers"]
+            if p["provider"] == "openai"
+            for t in p["tasks"]
+        }
+        assert openai_tasks["embed"]["today_tokens_in"] == 800
+        assert openai_tasks["embed"]["today_tokens_out"] == 0
+
+        # Apify has no tokens — should aggregate as zero
+        apify_tasks = {
+            t["task"]: t
+            for p in data["providers"]
+            if p["provider"] == "apify"
+            for t in p["tasks"]
+        }
+        assert apify_tasks["scrape_batch"]["today_tokens_in"] == 0
+        assert apify_tasks["scrape_batch"]["today_tokens_out"] == 0
 
     def test_spend_returns_403_for_non_admin(self):
         """A non-admin user receives 403 when accessing the spend endpoint."""

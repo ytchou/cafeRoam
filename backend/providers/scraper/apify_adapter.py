@@ -187,7 +187,11 @@ class ApifyScraperAdapter:
 
         return photos[:_PHOTO_CAP]
 
-    async def _run_actor(self, run_input: dict[str, Any]) -> list[dict[str, Any]]:
+    async def _run_actor(
+        self,
+        run_input: dict[str, Any],
+        task_name: str = "scrape_batch",
+    ) -> list[dict[str, Any]]:
         """Run Apify actor synchronously in a thread pool (client is sync)."""
 
         def _sync_run() -> tuple[list[dict[str, Any]], float]:
@@ -201,7 +205,7 @@ class ApifyScraperAdapter:
         items, compute_units = await asyncio.to_thread(_sync_run)
         log_api_usage(
             provider="apify",
-            task="scrape_batch",
+            task=task_name,
             compute_units=compute_units,
             cost_usd=None,
         )
