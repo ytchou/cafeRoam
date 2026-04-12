@@ -44,10 +44,19 @@
       "flagged_by": "Plan Alignment",
       "status": "resolved",
       "resolution": "Updated design doc: retry_exhausted maps to 'failed' (not 'dead_letter'), timeout maps to 'pending/failed' (not 'pending/dead_letter'), Scope section updated, backfill section updated."
+    },
+    {
+      "severity": "Minor",
+      "file": "docs/designs/2026-04-12-job-reason-codes-design.md",
+      "line": "40",
+      "description": "Incomplete dead_letter fix: line 40 prose description still reads 'moved to dead_letter' for retry_exhausted jobs: '**reclaim_stuck_jobs RPC:** Writes reason_code=\\'timeout\\' (reclaimed to pending) or reason_code=\\'retry_exhausted\\' (moved to dead_letter).' The table and Scope section were corrected by the fix but this sentence was missed. Should read 'moved to failed'.",
+      "flagged_by": "Plan Alignment",
+      "status": "open",
+      "resolution": null
     }
   ],
-  "active_agents": ["Bug Hunter", "Standards", "Architecture", "Plan Alignment"],
-  "skipped": [],
+  "active_agents": ["Plan Alignment"],
+  "skipped": ["Architecture"],
   "head_sha": "fa333258aa292b35175a4f33b9acf6e35cfef04e",
   "review_log_path": "docs/reviews/2026-04-12-main.md"
 }
