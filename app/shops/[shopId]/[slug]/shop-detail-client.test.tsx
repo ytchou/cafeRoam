@@ -167,12 +167,14 @@ describe('Links section', () => {
     render(
       <ShopDetailClient shop={{ ...mockShop, googlePlaceId: 'ChIJ_test123' }} />
     );
-    screen.getAllByRole('link', { name: /google maps/i }).forEach((link) =>
-      expect(link).toHaveAttribute(
-        'href',
-        'https://www.google.com/maps/place/?q=place_id:ChIJ_test123'
-      )
-    );
+    screen
+      .getAllByRole('link', { name: /google maps/i })
+      .forEach((link) =>
+        expect(link).toHaveAttribute(
+          'href',
+          'https://www.google.com/maps/place/?q=place_id:ChIJ_test123'
+        )
+      );
   });
 
   it('renders Google Maps link using lat/lng when no googlePlaceId', () => {
@@ -186,12 +188,14 @@ describe('Links section', () => {
         }}
       />
     );
-    screen.getAllByRole('link', { name: /google maps/i }).forEach((link) =>
-      expect(link).toHaveAttribute(
-        'href',
-        'https://www.google.com/maps?q=25.04,121.53'
-      )
-    );
+    screen
+      .getAllByRole('link', { name: /google maps/i })
+      .forEach((link) =>
+        expect(link).toHaveAttribute(
+          'href',
+          'https://www.google.com/maps?q=25.04,121.53'
+        )
+      );
   });
 
   it('hides website link when website is already shown as Instagram icon', () => {
