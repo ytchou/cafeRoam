@@ -167,11 +167,11 @@ describe('Links section', () => {
     render(
       <ShopDetailClient shop={{ ...mockShop, googlePlaceId: 'ChIJ_test123' }} />
     );
-    expect(
-      screen.getByRole('link', { name: '在 Google Maps 查看' })
-    ).toHaveAttribute(
-      'href',
-      'https://www.google.com/maps/place/?q=place_id:ChIJ_test123'
+    screen.getAllByRole('link', { name: /google maps/i }).forEach((link) =>
+      expect(link).toHaveAttribute(
+        'href',
+        'https://www.google.com/maps/place/?q=place_id:ChIJ_test123'
+      )
     );
   });
 
@@ -186,9 +186,12 @@ describe('Links section', () => {
         }}
       />
     );
-    expect(
-      screen.getByRole('link', { name: '在 Google Maps 查看' })
-    ).toHaveAttribute('href', 'https://www.google.com/maps?q=25.04,121.53');
+    screen.getAllByRole('link', { name: /google maps/i }).forEach((link) =>
+      expect(link).toHaveAttribute(
+        'href',
+        'https://www.google.com/maps?q=25.04,121.53'
+      )
+    );
   });
 
   it('hides website link when website is already shown as Instagram icon', () => {

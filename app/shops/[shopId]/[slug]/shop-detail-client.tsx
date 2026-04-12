@@ -247,11 +247,6 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
           shareUrl={shareUrl}
         />
 
-        {/* Inline directions — desktop only */}
-        {hasMap && (
-          <div className="hidden gap-2 lg:flex">{navigationLinks}</div>
-        )}
-
         <div className="border-border-warm mx-5 border-t" />
 
         {shop.description && <ShopDescription text={shop.description} />}
@@ -270,6 +265,9 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
           shop.googlePlaceId ||
           (shop.latitude != null && shop.longitude != null)) && (
           <div className="border-border-warm mx-5 border-t pt-4 pb-2">
+            <h2 className="text-text-primary mb-2 text-sm font-semibold">
+              Links
+            </h2>
             <div className="flex items-center gap-1">
               {(shop.googlePlaceId ||
                 (shop.latitude != null && shop.longitude != null)) && (
@@ -284,9 +282,10 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="在 Google Maps 查看"
-                  className="text-muted-foreground hover:text-foreground flex min-h-[44px] min-w-[44px] items-center justify-center rounded-sm transition-colors"
+                  className="border-border-warm text-text-body hover:bg-surface-section flex min-h-[44px] items-center gap-1.5 rounded-full border px-4 py-2 text-sm"
                 >
-                  <MapPin className="h-5 w-5" />
+                  <MapPin size={14} />
+                  Google Maps
                 </a>
               )}
 
@@ -357,6 +356,9 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
               <h2 className="text-text-primary mb-2 text-sm font-semibold">
                 Location
               </h2>
+              {shop.address && (
+                <p className="text-text-meta text-xs">{shop.address}</p>
+              )}
             </div>
             <ShopMapThumbnail
               latitude={shop.latitude!}
@@ -364,6 +366,9 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
               shopName={shop.name}
             />
             <div className="flex gap-2 px-5 py-3 lg:hidden">
+              {navigationLinks}
+            </div>
+            <div className="hidden gap-2 px-5 py-3 lg:flex">
               {navigationLinks}
             </div>
           </div>
