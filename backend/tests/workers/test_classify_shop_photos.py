@@ -2,8 +2,10 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from models.types import PhotoCategory
+from models.types import JobType, PhotoCategory
 from workers.handlers.classify_shop_photos import handle_classify_shop_photos
+
+SHOP_ID = "shop-menu-trigger-01"
 
 
 class TestThumbnailUrl:
@@ -37,6 +39,107 @@ class TestThumbnailUrl:
 
 
 class TestClassifyShopPhotosHandler:
+    @pytest.mark.asyncio
+    async def test_enqueues_enrich_menu_photo_when_menu_photos_exist(
+        self, mock_db, mock_llm, mock_queue
+    ):
+        """Given photos classified as MENU, when handler completes, then ENRICH_MENU_PHOTO is enqueued with photo details."""
+        from workers.handlers.classify_shop_photos import handle_classify_shop_photos
+
+        # Setup: unclassified photos that will be classified as MENU
+        mock_db.table.return_value.select.return_value.eq.return_value.is_.return_value.execute.return_value = MagicMock(
+            data=[
+                {"id": "photo-1", "url": "https://example.com/menu1.jpg", "uploaded_at": "2026-04-01T00:00:00Z"},
+                {"id": "photo-2", "url": "https://example.com/menu2.jpg", "uploaded_at": "2026-04-01T00:00:00Z"},
+            ]
+        )
+        mock_db.table.return_value.update.return_value.in_.return_value.execute.return_value = MagicMock()
+        mock_llm.classify_photo = AsyncMock(side_effect=[PhotoCategory.MENU, PhotoCategory.MENU])
+
+        # After classification, MENU photos query returns both
+        mock_db.table.return_value.select.return_value.eq.return_value.eq.return_value.execute.return_value = MagicMock(
+            data=[
+                {"id": "photo-1", "url": "https://example.com/menu1.jpg", "uploaded_at": "2026-04-01T00:00:00Z"},
+                {"id": "photo-2", "url": "https://example.com/menu2.jpg", "uploaded_at": "2026-04-01T00:00:00Z"},
+            ]
+        )
+        # Mock dedup query: no existing items
+        mock_db.table.return_value.select.return_value.eq.return_value.eq.return_value.eq.return_value.execute.return_value = MagicMock(
+            data=[]
+        )
+
+        await handle_classify_shop_photos(
+            payload={"shop_id": SHOP_ID}, db=mock_db, llm=mock_llm, queue=mock_queue
+        )
+
+        enqueue_calls = [
+            c for c in mock_queue.enqueue.call_args_list
+            if c.kwargs.get("job_type") == JobType.ENRICH_MENU_PHOTO
+        ]
+        assert len(enqueue_calls) == 1
+        payload = enqueue_calls[0].kwargs.get("payload")
+        assert payload["shop_id"] == SHOP_ID
+        assert len(payload["photos"]) == 2
+
+    @pytest.mark.asyncio
+    async def test_skips_enrich_menu_photo_when_no_menu_photos(
+        self, mock_db, mock_llm, mock_queue
+    ):
+        """Given no MENU photos classified, when handler completes, then ENRICH_MENU_PHOTO is NOT enqueued."""
+        from workers.handlers.classify_shop_photos import handle_classify_shop_photos
+
+        mock_db.table.return_value.select.return_value.eq.return_value.is_.return_value.execute.return_value = MagicMock(
+            data=[{"id": "p1", "url": "https://example.com/vibe.jpg", "uploaded_at": "2026-04-01T00:00:00Z"}]
+        )
+        mock_db.table.return_value.update.return_value.in_.return_value.execute.return_value = MagicMock()
+        mock_llm.classify_photo = AsyncMock(return_value=PhotoCategory.VIBE)
+
+        # MENU photos query returns empty
+        mock_db.table.return_value.select.return_value.eq.return_value.eq.return_value.execute.return_value = MagicMock(
+            data=[]
+        )
+
+        await handle_classify_shop_photos(
+            payload={"shop_id": SHOP_ID}, db=mock_db, llm=mock_llm, queue=mock_queue
+        )
+
+        enqueue_calls = [
+            c for c in mock_queue.enqueue.call_args_list
+            if c.kwargs.get("job_type") == JobType.ENRICH_MENU_PHOTO
+        ]
+        assert len(enqueue_calls) == 0
+
+    @pytest.mark.asyncio
+    async def test_dedup_skips_already_extracted_photos(
+        self, mock_db, mock_llm, mock_queue
+    ):
+        """Given all MENU photos already extracted (extracted_at > uploaded_at), then ENRICH_MENU_PHOTO is NOT enqueued."""
+        from workers.handlers.classify_shop_photos import handle_classify_shop_photos
+
+        mock_db.table.return_value.select.return_value.eq.return_value.is_.return_value.execute.return_value = MagicMock(
+            data=[{"id": "photo-1", "url": "https://example.com/menu1.jpg", "uploaded_at": "2026-04-01T00:00:00Z"}]
+        )
+        mock_db.table.return_value.update.return_value.in_.return_value.execute.return_value = MagicMock()
+        mock_llm.classify_photo = AsyncMock(return_value=PhotoCategory.MENU)
+
+        # MENU photos query returns 1 photo
+        mock_db.table.return_value.select.return_value.eq.return_value.eq.return_value.execute.return_value = MagicMock(
+            data=[{"id": "photo-1", "url": "https://example.com/menu1.jpg", "uploaded_at": "2026-04-01T00:00:00Z"}]
+        )
+        # Dedup query returns already-extracted item
+        mock_db.table.return_value.select.return_value.eq.return_value.eq.return_value.eq.return_value.execute.return_value = MagicMock(
+            data=[{"source_photo_id": "photo-1", "extracted_at": "2026-04-10T00:00:00Z"}]
+        )
+
+        await handle_classify_shop_photos(
+            payload={"shop_id": SHOP_ID}, db=mock_db, llm=mock_llm, queue=mock_queue
+        )
+
+        enqueue_calls = [
+            c for c in mock_queue.enqueue.call_args_list
+            if c.kwargs.get("job_type") == JobType.ENRICH_MENU_PHOTO
+        ]
+        assert len(enqueue_calls) == 0
     @pytest.fixture
     def mock_db(self):
         db = MagicMock()
@@ -335,6 +438,113 @@ class TestClassifyShopPhotosHandler:
             if c.kwargs.get("job_type") == JobType.ENRICH_SHOP
         ]
         assert len(enrich_enqueue_calls) == 1
+
+    @pytest.mark.asyncio
+    async def test_enqueues_enrich_menu_photo_when_menu_photos_exist(
+        self, mock_db, mock_llm, mock_queue
+    ):
+        """Given photos classified as MENU, when handler completes, then ENRICH_MENU_PHOTO is enqueued with photo details."""
+        mock_db.table.return_value.select.return_value.eq.return_value.is_.return_value.execute.return_value = MagicMock(
+            data=[
+                {"id": "photo-1", "url": "https://example.com/menu1.jpg", "uploaded_at": "2026-04-01T00:00:00Z"},
+                {"id": "photo-2", "url": "https://example.com/menu2.jpg", "uploaded_at": "2026-04-01T00:00:00Z"},
+            ]
+        )
+        mock_db.table.return_value.update.return_value.in_.return_value.execute.return_value = MagicMock()
+        mock_llm.classify_photo = AsyncMock(side_effect=[PhotoCategory.MENU, PhotoCategory.MENU])
+        mock_db.table.return_value.select.return_value.eq.return_value.eq.return_value.execute.return_value = MagicMock(
+            data=[
+                {"id": "photo-1", "url": "https://example.com/menu1.jpg", "uploaded_at": "2026-04-01T00:00:00Z"},
+                {"id": "photo-2", "url": "https://example.com/menu2.jpg", "uploaded_at": "2026-04-01T00:00:00Z"},
+            ]
+        )
+        mock_db.table.return_value.select.return_value.eq.return_value.eq.return_value.eq.return_value.execute.return_value = MagicMock(
+            data=[]
+        )
+
+        await handle_classify_shop_photos(
+            payload={"shop_id": SHOP_ID}, db=mock_db, llm=mock_llm, queue=mock_queue
+        )
+
+        enqueue_calls = [
+            c for c in mock_queue.enqueue.call_args_list
+            if c.kwargs.get("job_type") == JobType.ENRICH_MENU_PHOTO
+        ]
+        assert len(enqueue_calls) == 1
+        enqueue_payload = enqueue_calls[0].kwargs.get("payload")
+        assert enqueue_payload["shop_id"] == SHOP_ID
+        assert len(enqueue_payload["photos"]) == 2
+
+    @pytest.mark.asyncio
+    async def test_skips_enrich_menu_photo_when_no_menu_photos(
+        self, mock_db, mock_llm, mock_queue
+    ):
+        """Given no MENU photos classified, when handler completes, then ENRICH_MENU_PHOTO is NOT enqueued."""
+        mock_db.table.return_value.select.return_value.eq.return_value.is_.return_value.execute.return_value = MagicMock(
+            data=[{"id": "p1", "url": "https://example.com/vibe.jpg", "uploaded_at": "2026-04-01T00:00:00Z"}]
+        )
+        mock_db.table.return_value.update.return_value.in_.return_value.execute.return_value = MagicMock()
+        mock_llm.classify_photo = AsyncMock(return_value=PhotoCategory.VIBE)
+        mock_db.table.return_value.select.return_value.eq.return_value.eq.return_value.execute.return_value = MagicMock(
+            data=[]
+        )
+
+        await handle_classify_shop_photos(
+            payload={"shop_id": SHOP_ID}, db=mock_db, llm=mock_llm, queue=mock_queue
+        )
+
+        enqueue_calls = [
+            c for c in mock_queue.enqueue.call_args_list
+            if c.kwargs.get("job_type") == JobType.ENRICH_MENU_PHOTO
+        ]
+        assert len(enqueue_calls) == 0
+
+    @pytest.mark.asyncio
+    async def test_dedup_skips_already_extracted_photos(
+        self, mock_db, mock_llm, mock_queue
+    ):
+        """Given all MENU photos already extracted (extracted_at > uploaded_at), then ENRICH_MENU_PHOTO is NOT enqueued."""
+        menu_photos = [{"id": "photo-1", "url": "https://example.com/menu1.jpg", "uploaded_at": "2026-04-01T00:00:00Z"}]
+        dedup_items = [{"source_photo_id": "photo-1", "extracted_at": "2026-04-10T00:00:00Z"}]
+
+        # Use table-name-aware side_effect to return correct data per table
+        shop_photos_table = MagicMock()
+        shop_menu_items_table = MagicMock()
+
+        # shop_photos: unclassified photos query (NULL category)
+        shop_photos_table.select.return_value.eq.return_value.is_.return_value.execute.return_value = MagicMock(data=menu_photos)
+        # shop_photos: MENU photos query (after classification)
+        shop_photos_table.select.return_value.eq.return_value.eq.return_value.execute.return_value = MagicMock(data=menu_photos)
+        # shop_photos: existing category counts query
+        shop_photos_table.select.return_value.eq.return_value.not_.is_.return_value.neq.return_value.execute.return_value = MagicMock(data=[])
+        shop_photos_table.update.return_value.in_.return_value.execute.return_value = MagicMock()
+
+        # shop_menu_items: dedup query (source_photo_id, extracted_at)
+        shop_menu_items_table.select.return_value.eq.return_value.eq.return_value.execute.return_value = MagicMock(data=dedup_items)
+
+        # shop_submissions: submission context query
+        submissions_table = MagicMock()
+        submissions_table.select.return_value.eq.return_value.eq.return_value.limit.return_value.execute.return_value = MagicMock(data=[])
+
+        def table_side_effect(name):
+            if name == "shop_photos":
+                return shop_photos_table
+            if name == "shop_menu_items":
+                return shop_menu_items_table
+            return submissions_table
+
+        mock_db.table.side_effect = table_side_effect
+        mock_llm.classify_photo = AsyncMock(return_value=PhotoCategory.MENU)
+
+        await handle_classify_shop_photos(
+            payload={"shop_id": SHOP_ID}, db=mock_db, llm=mock_llm, queue=mock_queue
+        )
+
+        enqueue_calls = [
+            c for c in mock_queue.enqueue.call_args_list
+            if c.kwargs.get("job_type") == JobType.ENRICH_MENU_PHOTO
+        ]
+        assert len(enqueue_calls) == 0
 
 
 @pytest.mark.asyncio
