@@ -1,3 +1,5 @@
+import contextlib
+import time
 from datetime import UTC, datetime
 from typing import Any, cast
 
@@ -28,9 +30,11 @@ async def handle_generate_embedding(
     """
     shop_id = payload["shop_id"]
     job_id = cast("str", job_id)
+    step_timings: dict[str, dict[str, int]] = {}
     logger.info("Generating embedding", shop_id=shop_id)
 
     # Load shop data including processing_status for the live-shop guard
+    t0 = time.monotonic()
     response = (
         db.table("shops")
         .select("name, description, processing_status, community_summary")
@@ -89,6 +93,7 @@ async def handle_generate_embedding(
         text = f"{base_text} | {', '.join(item_names)}" if item_names else base_text
         if community_block:
             text = f"{text} || {community_block}"
+        step_timings["fetch_text"] = {"duration_ms": int((time.monotonic() - t0) * 1000)}
 
         # Warn if community text is unusually large (design budget: ~1300 tokens total).
         # OpenAI text-embedding-3-small supports 8191 tokens; ~4 chars/token as a rough heuristic.
@@ -102,7 +107,9 @@ async def handle_generate_embedding(
         # Generate embedding
         await log_job_event(db, job_id, "info", "llm.call", provider="openai", method="embed")
 
+        t0 = time.monotonic()
         embedding = await embeddings.embed(text)
+        step_timings["embed_call"] = {"duration_ms": int((time.monotonic() - t0) * 1000)}
 
         update_data: dict[str, Any] = {
             "embedding": embedding,
@@ -115,7 +122,9 @@ async def handle_generate_embedding(
             logger.warning("job.aborted_midflight job_id=%s handler=generate_embedding", job_id)
             await log_job_event(db, job_id, "warn", "job.aborted_midflight", shop_id=str(shop_id))
             return
+        t0 = time.monotonic()
         db.table("shops").update(update_data).eq("id", shop_id).execute()
+        step_timings["db_write"] = {"duration_ms": int((time.monotonic() - t0) * 1000)}
         await log_job_event(
             db,
             job_id,
@@ -159,3 +168,12 @@ async def handle_generate_embedding(
                 }
             ).eq("id", shop_id).execute()
         raise
+    finally:
+        if job_id is not None:
+            with contextlib.suppress(Exception):
+                (
+                    db.table("job_queue")
+                    .update({"step_timings": step_timings})
+                    .eq("id", str(job_id))
+                    .execute()
+                )

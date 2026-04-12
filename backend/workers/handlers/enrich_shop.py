@@ -1,3 +1,5 @@
+import contextlib
+import time
 from datetime import UTC, datetime
 from typing import Any, cast
 
@@ -24,6 +26,7 @@ async def handle_enrich_shop(
     """Enrich a shop with AI-generated tags and summary."""
     shop_id = payload["shop_id"]
     job_id = cast("str", job_id)
+    step_timings: dict[str, dict[str, int]] = {}
     logger.info("Enriching shop", shop_id=shop_id)
 
     _failure_recorded = False
@@ -37,6 +40,7 @@ async def handle_enrich_shop(
             shop_id=str(shop_id),
         )
 
+        t0 = time.monotonic()
         shop_response = (
             db.table("shops")
             .select(
@@ -77,6 +81,7 @@ async def handle_enrich_shop(
             google_maps_features=shop.get("google_maps_features") or {},
             vibe_photo_urls=vibe_photo_urls,
         )
+        step_timings["fetch_data"] = {"duration_ms": int((time.monotonic() - t0) * 1000)}
 
         await log_job_event(
             db,
@@ -87,7 +92,9 @@ async def handle_enrich_shop(
             method="enrich_shop",
         )
 
+        t0 = time.monotonic()
         result = await llm.enrich_shop(enrichment_input)
+        step_timings["llm_call"] = {"duration_ms": int((time.monotonic() - t0) * 1000)}
 
         if job_id and not await check_job_still_claimed(queue, job_id):
             await log_job_event(db, job_id, "warn", "job.aborted_midflight", shop_id=str(shop_id))
@@ -109,6 +116,7 @@ async def handle_enrich_shop(
             _failure_recorded = True
             raise ValueError(f"Enrichment summary for shop {shop_id} is not in Traditional Chinese")
 
+        t0 = time.monotonic()
         mode = result.mode_scores
         if job_id and not await check_job_still_claimed(queue, job_id):
             logger.warning("job.aborted_midflight job_id=%s handler=enrich_shop", job_id)
@@ -164,6 +172,7 @@ async def handle_enrich_shop(
                 logger.info("Tarot assigned", shop_id=shop_id, title=tarot.tarot_title)
         except Exception:
             logger.warning("Tarot enrichment failed — continuing", shop_id=shop_id, exc_info=True)
+        step_timings["db_write"] = {"duration_ms": int((time.monotonic() - t0) * 1000)}
 
         enqueue_payload: dict[str, Any] = {"shop_id": shop_id}
         for key in ("submission_id", "submitted_by", "batch_id"):
@@ -190,3 +199,12 @@ async def handle_enrich_shop(
                 }
             ).eq("id", shop_id).execute()
         raise
+    finally:
+        if job_id is not None:
+            with contextlib.suppress(Exception):
+                (
+                    db.table("job_queue")
+                    .update({"step_timings": step_timings})
+                    .eq("id", str(job_id))
+                    .execute()
+                )

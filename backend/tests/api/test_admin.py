@@ -195,6 +195,28 @@ class TestAdminJobsList:
         finally:
             app.dependency_overrides.clear()
 
+    def test_job_model_has_step_timings_field(self):
+        from models.types import Job
+
+        job = Job(
+            id="aaaaaaaa-0000-0000-0000-000000000001",
+            job_type="enrich_shop",
+            payload={"shop_id": "shop-001"},
+            status="completed",
+            scheduled_at="2026-04-11T00:00:00Z",
+            created_at="2026-04-11T00:00:00Z",
+            step_timings={
+                "fetch_data": {"duration_ms": 120},
+                "llm_call": {"duration_ms": 7800},
+                "db_write": {"duration_ms": 95},
+            },
+        )
+        assert job.step_timings == {
+            "fetch_data": {"duration_ms": 120},
+            "llm_call": {"duration_ms": 7800},
+            "db_write": {"duration_ms": 95},
+        }
+
     def test_admin_can_filter_jobs_by_status_and_type(self):
         """Admin can filter jobs by status and job_type."""
         app.dependency_overrides[get_current_user] = _admin_user

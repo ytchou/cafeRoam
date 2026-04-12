@@ -1,6 +1,6 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { RawJobsList } from './RawJobsList';
 
 const { mockGetSession, mockCreateClient } = vi.hoisted(() => {
@@ -262,5 +262,87 @@ describe('RawJobsList — force fail + logs panel', () => {
       );
       expect(logsFetch).toBeDefined();
     });
+  });
+});
+
+describe('TimingSection', () => {
+  const jobWithTimings = {
+    id: 'job-1',
+    job_type: 'enrich_shop',
+    status: 'completed',
+    priority: 0,
+    attempts: 1,
+    created_at: '2026-04-11T01:00:00Z',
+    last_error: null,
+    payload: { shop_id: 'shop-1' },
+    claimed_at: '2026-04-11T01:00:01Z',
+    completed_at: '2026-04-11T01:00:09.300Z',
+    step_timings: {
+      fetch_data: { duration_ms: 120 },
+      llm_call: { duration_ms: 7800 },
+      db_write: { duration_ms: 95 },
+    },
+  };
+
+  const jobWithoutTimings = {
+    ...jobWithTimings,
+    id: 'job-2',
+    claimed_at: null,
+    completed_at: null,
+    step_timings: null,
+  };
+
+  beforeEach(() => {
+    setupAuth();
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          jobs: [jobWithTimings, jobWithoutTimings],
+          total: 2,
+        }),
+      })
+    );
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('shows timing section with total and step bars when step_timings present', async () => {
+    render(<RawJobsList />);
+    await screen.findAllByText('enrich_shop');
+
+    // Expand the first job row
+    const rows = screen.getAllByRole('row');
+    const jobRow = rows.find((r) => r.textContent?.includes('enrich_shop'));
+    expect(jobRow).toBeDefined();
+    fireEvent.click(jobRow!);
+
+    // Timing section should be visible
+    expect(await screen.findByText(/Timing/i)).toBeInTheDocument();
+    expect(screen.getByText(/fetch_data/)).toBeInTheDocument();
+    expect(screen.getByText(/llm_call/)).toBeInTheDocument();
+    expect(screen.getByText(/db_write/)).toBeInTheDocument();
+    // Total duration (8300ms = 8.3s)
+    expect(screen.getByText(/8\.3s|8300ms/i)).toBeInTheDocument();
+  });
+
+  it('does not show timing section when step_timings is null', async () => {
+    render(<RawJobsList />);
+    await screen.findAllByText('enrich_shop');
+
+    // Expand the second job row (no timings)
+    screen.getAllByText('enrich_shop');
+    // Click the second row's toggle
+    const rows = screen.getAllByRole('row');
+    const secondJobRow = rows.filter((r) =>
+      r.textContent?.includes('job-2')
+    )[0];
+    if (secondJobRow) fireEvent.click(secondJobRow);
+
+    // Should not find a timing section
+    expect(screen.queryByText(/Timing/i)).not.toBeInTheDocument();
   });
 });

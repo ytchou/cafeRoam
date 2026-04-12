@@ -657,3 +657,95 @@ class TestEnrichShopPipelineChain:
         enqueued_types = [c[1]["job_type"] for c in queue.enqueue.call_args_list]
         assert JobType.SUMMARIZE_REVIEWS in enqueued_types
         assert JobType.GENERATE_EMBEDDING not in enqueued_types
+
+
+@pytest.mark.asyncio
+async def test_enrich_shop_writes_step_timings_to_db():
+    shop_id = "shop-id-001"
+    job_id = "job-id-001"
+
+    shop_data = {
+        "id": shop_id,
+        "name": "Test Cafe",
+        "description": None,
+        "categories": ["cafe"],
+        "price_range": "$",
+        "socket": None,
+        "limited_time": None,
+        "rating": 4.0,
+        "review_count": 10,
+        "google_maps_features": None,
+    }
+
+    shops_table = MagicMock()
+    shops_table.select.return_value.eq.return_value.single.return_value.execute.return_value = (
+        MagicMock(data=shop_data)
+    )
+    shops_table.update.return_value.eq.return_value.execute.return_value = MagicMock(data=[])
+
+    shop_tags_table = MagicMock()
+    shop_tags_table.delete.return_value.eq.return_value.execute.return_value = MagicMock(data=[])
+    shop_tags_table.insert.return_value.execute.return_value = MagicMock(data=[])
+
+    shop_reviews_table = MagicMock()
+    shop_reviews_table.select.return_value.eq.return_value.execute.return_value = MagicMock(
+        data=[{"text": "Great coffee", "rating": 5}]
+    )
+
+    shop_photos_table = MagicMock()
+    shop_photos_table.select.return_value.eq.return_value.eq.return_value.limit.return_value.execute.return_value = MagicMock(
+        data=[]
+    )
+
+    job_queue_table = MagicMock()
+    job_queue_table.update.return_value.eq.return_value.execute.return_value = MagicMock()
+
+    def table_router(name: str) -> MagicMock:
+        if name == "shops":
+            return shops_table
+        if name == "shop_tags":
+            return shop_tags_table
+        if name == "shop_reviews":
+            return shop_reviews_table
+        if name == "shop_photos":
+            return shop_photos_table
+        if name == "job_queue":
+            return job_queue_table
+        return MagicMock()
+
+    db = MagicMock()
+    db.table.side_effect = table_router
+
+    mock_llm = AsyncMock()
+    mock_llm.enrich_shop.return_value = EnrichmentResult(
+        tags=[],
+        tag_confidences={},
+        summary="好喝的咖啡廳，環境舒適，適合工作與休憩。",
+        confidence=0.9,
+        mode_scores=ShopModeScores(work=0.8, rest=0.2, social=0.1),
+        menu_highlights=[],
+        coffee_origins=[],
+    )
+    mock_llm.assign_tarot = AsyncMock(
+        return_value=TarotEnrichmentResult(tarot_title=None, flavor_text="")
+    )
+    queue = AsyncMock()
+    queue.get_status.return_value = "claimed"
+
+    await handle_enrich_shop(
+        payload={"shop_id": shop_id},
+        db=db,
+        llm=mock_llm,
+        queue=queue,
+        job_id=job_id,
+    )
+
+    job_queue_updates = [
+        call for call in job_queue_table.update.call_args_list if "step_timings" in call[0][0]
+    ]
+    assert len(job_queue_updates) == 1, "Expected one step_timings write to job_queue"
+    timings = job_queue_updates[0][0][0]["step_timings"]
+    assert set(timings.keys()) == {"fetch_data", "llm_call", "db_write"}
+    for v in timings.values():
+        assert isinstance(v["duration_ms"], int)
+        assert v["duration_ms"] >= 0

@@ -1,3 +1,5 @@
+import contextlib
+import time
 from datetime import UTC, datetime
 from typing import Any, cast
 
@@ -20,7 +22,7 @@ async def handle_summarize_reviews(
     db: Client,
     llm: LLMProvider,
     queue: JobQueue,
-    job_id: str,
+    job_id: str | None = None,
 ) -> None:
     """Generate a community summary for a shop from Google and check-in reviews.
 
@@ -29,6 +31,8 @@ async def handle_summarize_reviews(
     If no qualifying texts exist from either source, skips the LLM and enqueues embedding directly.
     """
     shop_id = payload["shop_id"]
+    job_id = cast("str", job_id)
+    step_timings: dict[str, dict[str, int]] = {}
     logger.info("Summarizing reviews", shop_id=shop_id)
 
     try:
@@ -41,6 +45,7 @@ async def handle_summarize_reviews(
             shop_id=str(shop_id),
         )
 
+        t0 = time.monotonic()
         reviews_result = (
             db.table("shop_reviews")
             .select("text")
@@ -67,6 +72,7 @@ async def handle_summarize_reviews(
 
         rows = cast("list[dict[str, Any]]", response.data or [])
         checkin_texts = [row["text"] for row in rows if row.get("text")]
+        step_timings["fetch_reviews"] = {"duration_ms": int((time.monotonic() - t0) * 1000)}
 
         if not google_reviews and not checkin_texts:
             logger.info("No qualifying review texts — skipping summarization", shop_id=shop_id)
@@ -82,10 +88,12 @@ async def handle_summarize_reviews(
             db, job_id, "info", "llm.call", provider="anthropic", method="summarize_reviews"
         )
 
+        t0 = time.monotonic()
         result = await llm.summarize_reviews(
             google_reviews=google_reviews,
             checkin_texts=checkin_texts,
         )
+        step_timings["llm_call"] = {"duration_ms": int((time.monotonic() - t0) * 1000)}
 
         if not result.summary_zh_tw:
             logger.warning("LLM returned empty summary — skipping DB write", shop_id=shop_id)
@@ -109,6 +117,7 @@ async def handle_summarize_reviews(
             raise ValueError(f"Community summary for shop {shop_id} is not in Traditional Chinese")
 
         # Persist summary to DB
+        t0 = time.monotonic()
         db.table("shops").update(
             {
                 "community_summary": result.summary_zh_tw,
@@ -116,6 +125,7 @@ async def handle_summarize_reviews(
                 "community_summary_updated_at": datetime.now(UTC).isoformat(),
             }
         ).eq("id", shop_id).execute()
+        step_timings["db_write"] = {"duration_ms": int((time.monotonic() - t0) * 1000)}
         await log_job_event(
             db,
             job_id,
@@ -144,3 +154,12 @@ async def handle_summarize_reviews(
     except Exception as exc:
         await log_job_event(db, job_id, "error", "job.error", error=str(exc))
         raise
+    finally:
+        if job_id is not None:
+            with contextlib.suppress(Exception):
+                (
+                    db.table("job_queue")
+                    .update({"step_timings": step_timings})
+                    .eq("id", str(job_id))
+                    .execute()
+                )
