@@ -177,7 +177,9 @@ async def handle_enrich_shop(
         # --- Review-sourced menu items (DEV-313) ---
         if result.menu_items:
             # Delete existing review-sourced items for this shop
-            db.table("shop_menu_items").delete().eq("shop_id", shop_id).eq("source", "review").execute()
+            db.table("shop_menu_items").delete().eq("shop_id", shop_id).eq(
+                "source", "review"
+            ).execute()
 
             # Photo-wins: check which items already exist from photos
             photo_items = (

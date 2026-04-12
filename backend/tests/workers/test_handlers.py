@@ -187,7 +187,6 @@ class TestEnrichShopHandler:
         assert written["menu_highlights"] == ["巴斯克蛋糕", "手沖咖啡"]
         assert written["coffee_origins"] == ["耶加雪菲", "哥倫比亞"]
 
-
     @pytest.mark.asyncio
     async def test_review_extraction_writes_menu_items_with_source_review(self):
         """Given LLM returns menu_items in enrichment result, when handler runs, then items are written with source='review'."""
@@ -293,7 +292,9 @@ class TestEnrichShopHandler:
                 "review_count": 10,
             }
         )
-        db.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(data=[])
+        db.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(
+            data=[]
+        )
         # Photo-sourced '拿鐵' already exists
         db.table.return_value.select.return_value.eq.return_value.eq.return_value.execute.return_value = MagicMock(
             data=[{"item_name": "拿鐵"}]
@@ -312,7 +313,9 @@ class TestEnrichShopHandler:
             rows = call.args[0] if call.args else []
             if isinstance(rows, list) and rows and rows[0].get("source") == "review":
                 names = [r["item_name"] for r in rows]
-                assert "拿鐵" not in names, "Photo-sourced '拿鐵' should not be overwritten by review"
+                assert "拿鐵" not in names, (
+                    "Photo-sourced '拿鐵' should not be overwritten by review"
+                )
                 assert "巴斯克蛋糕" in names
 
     @pytest.mark.asyncio
@@ -351,7 +354,9 @@ class TestEnrichShopHandler:
                 "review_count": 5,
             }
         )
-        db.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(data=[])
+        db.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(
+            data=[]
+        )
 
         await handle_enrich_shop(
             payload={"shop_id": SHOP_ID},
@@ -364,7 +369,9 @@ class TestEnrichShopHandler:
         # When menu_items is empty, no delete on shop_menu_items with source='review'
         delete_calls = db.table.return_value.delete.call_args_list
         review_deletes = [c for c in delete_calls if "review" in str(c)]
-        assert len(review_deletes) == 0, "Should not delete review items when enrichment returns empty menu_items"
+        assert len(review_deletes) == 0, (
+            "Should not delete review items when enrichment returns empty menu_items"
+        )
 
 
 class TestGenerateEmbeddingHandler:
@@ -682,9 +689,15 @@ class TestEnrichMenuPhotoHandler:
     @pytest.fixture
     def mock_db(self):
         db = MagicMock()
-        db.table.return_value.delete.return_value.eq.return_value.execute.return_value = MagicMock(data=[])
-        db.table.return_value.delete.return_value.eq.return_value.eq.return_value.execute.return_value = MagicMock(data=[])
-        db.table.return_value.delete.return_value.eq.return_value.eq.return_value.in_.return_value.execute.return_value = MagicMock(data=[])
+        db.table.return_value.delete.return_value.eq.return_value.execute.return_value = MagicMock(
+            data=[]
+        )
+        db.table.return_value.delete.return_value.eq.return_value.eq.return_value.execute.return_value = MagicMock(
+            data=[]
+        )
+        db.table.return_value.delete.return_value.eq.return_value.eq.return_value.in_.return_value.execute.return_value = MagicMock(
+            data=[]
+        )
         db.table.return_value.insert.return_value.execute.return_value = MagicMock(data=[])
         return db
 
@@ -701,16 +714,18 @@ class TestEnrichMenuPhotoHandler:
         self, mock_db, mock_llm, mock_queue
     ):
         """Given multi-photo payload, when handler runs, then items are written with correct source_photo_id per photo."""
-        mock_llm.extract_menu_data = AsyncMock(side_effect=[
-            MenuExtractionResult(
-                items=[{"name": "拿鐵", "price": 150, "category": "coffee"}],
-                raw_text=None,
-            ),
-            MenuExtractionResult(
-                items=[{"name": "巴斯克蛋糕", "price": 180, "category": "dessert"}],
-                raw_text=None,
-            ),
-        ])
+        mock_llm.extract_menu_data = AsyncMock(
+            side_effect=[
+                MenuExtractionResult(
+                    items=[{"name": "拿鐵", "price": 150, "category": "coffee"}],
+                    raw_text=None,
+                ),
+                MenuExtractionResult(
+                    items=[{"name": "巴斯克蛋糕", "price": 180, "category": "dessert"}],
+                    raw_text=None,
+                ),
+            ]
+        )
         payload = {
             "shop_id": SHOP_ID,
             "photos": [
@@ -733,14 +748,14 @@ class TestEnrichMenuPhotoHandler:
         assert "photo-2" in photo_ids
 
     @pytest.mark.asyncio
-    async def test_no_dual_write_to_shops_menu_data(
-        self, mock_db, mock_llm, mock_queue
-    ):
+    async def test_no_dual_write_to_shops_menu_data(self, mock_db, mock_llm, mock_queue):
         """Given extraction completes, when writing results, then shops.menu_data is NOT written."""
-        mock_llm.extract_menu_data = AsyncMock(return_value=MenuExtractionResult(
-            items=[{"name": "拿鐵", "price": 150}],
-            raw_text=None,
-        ))
+        mock_llm.extract_menu_data = AsyncMock(
+            return_value=MenuExtractionResult(
+                items=[{"name": "拿鐵", "price": 150}],
+                raw_text=None,
+            )
+        )
         payload = {
             "shop_id": SHOP_ID,
             "photos": [{"photo_id": "photo-1", "image_url": "https://example.com/menu1.jpg"}],
@@ -754,17 +769,17 @@ class TestEnrichMenuPhotoHandler:
             assert "menu_data" not in update_data
 
     @pytest.mark.asyncio
-    async def test_single_photo_failure_continues_to_next(
-        self, mock_db, mock_llm, mock_queue
-    ):
+    async def test_single_photo_failure_continues_to_next(self, mock_db, mock_llm, mock_queue):
         """Given first photo extraction fails, when handler runs, then second photo still extracts."""
-        mock_llm.extract_menu_data = AsyncMock(side_effect=[
-            Exception("LLM timeout"),
-            MenuExtractionResult(
-                items=[{"name": "手沖咖啡", "price": 200}],
-                raw_text=None,
-            ),
-        ])
+        mock_llm.extract_menu_data = AsyncMock(
+            side_effect=[
+                Exception("LLM timeout"),
+                MenuExtractionResult(
+                    items=[{"name": "手沖咖啡", "price": 200}],
+                    raw_text=None,
+                ),
+            ]
+        )
         payload = {
             "shop_id": SHOP_ID,
             "photos": [
@@ -779,14 +794,14 @@ class TestEnrichMenuPhotoHandler:
         assert len(insert_calls) >= 1
 
     @pytest.mark.asyncio
-    async def test_legacy_single_image_url_payload_still_works(
-        self, mock_db, mock_llm, mock_queue
-    ):
+    async def test_legacy_single_image_url_payload_still_works(self, mock_db, mock_llm, mock_queue):
         """Given legacy payload with single image_url string, when handler runs, then it still extracts."""
-        mock_llm.extract_menu_data = AsyncMock(return_value=MenuExtractionResult(
-            items=[{"name": "拿鐵", "price": 150}],
-            raw_text=None,
-        ))
+        mock_llm.extract_menu_data = AsyncMock(
+            return_value=MenuExtractionResult(
+                items=[{"name": "拿鐵", "price": 150}],
+                raw_text=None,
+            )
+        )
         payload = {"shop_id": SHOP_ID, "image_url": "https://example.com/menu.jpg"}
 
         await handle_enrich_menu_photo(payload, mock_db, mock_llm, mock_queue)
@@ -794,9 +809,13 @@ class TestEnrichMenuPhotoHandler:
         mock_llm.extract_menu_data.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_preserves_existing_items_when_extraction_returns_empty(self, mock_db, mock_llm, mock_queue):
+    async def test_preserves_existing_items_when_extraction_returns_empty(
+        self, mock_db, mock_llm, mock_queue
+    ):
         """When no items are extracted, existing menu items are preserved and no re-embed is queued."""
-        mock_llm.extract_menu_data = AsyncMock(return_value=MenuExtractionResult(items=[], raw_text=None))
+        mock_llm.extract_menu_data = AsyncMock(
+            return_value=MenuExtractionResult(items=[], raw_text=None)
+        )
 
         await handle_enrich_menu_photo(
             payload={"shop_id": SHOP_ID, "image_url": "https://storage.example.com/menu.jpg"},
