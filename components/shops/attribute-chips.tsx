@@ -26,7 +26,7 @@ interface TagGroupProps {
 }
 
 function TagGroup({ dimension, tags }: TagGroupProps) {
-  const [open, setOpen] = useState(tags.length > 2);
+  const [open, setOpen] = useState(true);
 
   return (
     <div className="mb-3">

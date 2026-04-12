@@ -15,6 +15,7 @@
 **Tech Stack:** Python 3.12+, FastAPI, Supabase (Postgres), Claude/OpenAI LLM via HybridLLMAdapter
 
 **Acceptance Criteria:**
+
 - [ ] After photo classification, shops with MENU photos get `ENRICH_MENU_PHOTO` enqueued automatically (dedup-guarded)
 - [ ] Shops enriched via reviews have structured menu items in `shop_menu_items` with `source='review'`
 - [ ] Re-scrape of an already-extracted shop does not trigger redundant re-extraction unless photos changed
@@ -26,6 +27,7 @@
 ### Task 1: Migration — add source attribution to shop_menu_items
 
 **Files:**
+
 - Create: `supabase/migrations/20260412000001_add_source_to_shop_menu_items.sql`
 - No test needed — pure DDL migration
 
@@ -66,9 +68,10 @@ git commit -m "feat(DEV-315): add source attribution columns to shop_menu_items"
 ### Task 2: Extend CLASSIFY_SHOP_TOOL schema + EnrichmentResult model + adapter parsing
 
 **Files:**
+
 - Modify: `backend/providers/llm/_tool_schemas.py:12-71` (CLASSIFY_SHOP_SCHEMA)
 - Modify: `backend/models/types.py:440-447` (EnrichmentResult)
-- Modify: `backend/providers/llm/anthropic_adapter.py:119-158` (_parse_enrichment_payload)
+- Modify: `backend/providers/llm/anthropic_adapter.py:119-158` (\_parse_enrichment_payload)
 - Test: `backend/tests/providers/test_anthropic_adapter.py`
 
 **Step 1: Write the failing test**
@@ -181,6 +184,7 @@ git commit -m "feat(DEV-313): extend CLASSIFY_SHOP_TOOL with menu_items extracti
 ### Task 3: Add ENRICH_MENU_PHOTO enqueue trigger in classify_shop_photos
 
 **Files:**
+
 - Modify: `backend/workers/handlers/classify_shop_photos.py:107-111` (add enqueue after existing ENRICH_SHOP enqueue)
 - Test: `backend/tests/workers/test_classify_shop_photos.py`
 
@@ -341,6 +345,7 @@ git commit -m "feat(DEV-315): add ENRICH_MENU_PHOTO enqueue trigger with dedup g
 ### Task 4: Rework enrich_menu_photo handler — multi-photo, source attribution, remove dual-write
 
 **Files:**
+
 - Modify: `backend/workers/handlers/enrich_menu_photo.py:14-60`
 - Test: `backend/tests/workers/test_handlers.py` (TestEnrichMenuPhotoHandler section)
 
@@ -590,6 +595,7 @@ git commit -m "feat(DEV-315): rework enrich_menu_photo for multi-photo, source a
 ### Task 5: Add review-sourced menu item extraction in enrich_shop
 
 **Files:**
+
 - Modify: `backend/workers/handlers/enrich_shop.py:117-130` (after existing enrichment writes)
 - Test: `backend/tests/workers/test_handlers.py` (TestEnrichShopHandler section) or `backend/tests/workers/test_enrich_shop.py`
 
@@ -773,10 +779,12 @@ graph TD
 ```
 
 **Wave 1** (parallel — no dependencies, no file overlap):
+
 - Task 1: Migration (SQL only)
 - Task 2: LLM schema + EnrichmentResult + adapter (providers/ + models/)
 
 **Wave 2** (parallel — all depend on Wave 1, no file overlap between T3/T4/T5):
+
 - Task 3: Classify trigger ← Task 1 (needs source columns)
 - Task 4: Enrich menu photo rework ← Task 1 (needs source columns)
 - Task 5: Review extraction in enrich_shop ← Task 1 + Task 2 (needs source columns + menu_items in EnrichmentResult)
