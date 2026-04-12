@@ -1,7 +1,10 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { PipelineOverview, SubmissionsTab } from '../_components/SubmissionsTab';
+import {
+  PipelineOverview,
+  SubmissionsTab,
+} from '../_components/SubmissionsTab';
 import { useAdminAuth } from '../_hooks/use-admin-auth';
 
 export default function SubmissionsPage() {
@@ -45,13 +48,22 @@ export default function SubmissionsPage() {
   const handleRefresh = useCallback(() => setRefreshKey((k) => k + 1), []);
 
   if (loading) return <p>Loading...</p>;
-  if (error) return <p role="alert" className="text-red-600">{error}</p>;
+  if (error)
+    return (
+      <p role="alert" className="text-red-600">
+        {error}
+      </p>
+    );
   if (!data) return null;
 
   return (
     <div className="space-y-8">
       <h1 className="text-2xl font-bold">Submissions</h1>
-      <SubmissionsTab data={data} getToken={getToken} onRefresh={handleRefresh} />
+      <SubmissionsTab
+        data={data}
+        getToken={getToken}
+        onRefresh={handleRefresh}
+      />
     </div>
   );
 }

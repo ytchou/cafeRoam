@@ -56,6 +56,7 @@ SCRAPE → persist.py upserts photos
 ### 1. Migration — shop_menu_items schema extension
 
 Add to `shop_menu_items`:
+
 - `source TEXT NOT NULL DEFAULT 'photo'` — values: 'photo', 'review'
 - `source_photo_id UUID REFERENCES shop_photos(id) ON DELETE SET NULL` — nullable
 
@@ -64,6 +65,7 @@ Drop from code: `shops.menu_data` dual-write (column doesn't exist in migrations
 ### 2. Enqueue trigger (classify_shop_photos.py)
 
 After classification completes, alongside existing ENRICH_SHOP enqueue:
+
 - Query shop_photos for category='MENU' rows
 - Dedup guard: compare shop_menu_items.extracted_at vs shop_photos.uploaded_at per photo
 - If any stale/new photos, enqueue one ENRICH_MENU_PHOTO with payload: {shop_id, photos: [{photo_id, image_url}]}
@@ -79,11 +81,12 @@ After classification completes, alongside existing ENRICH_SHOP enqueue:
 ### 4. Review extraction (enrich_shop.py)
 
 Extend CLASSIFY_SHOP_TOOL schema with menu_items structured array. After existing enrichment writes:
+
 - Delete shop_menu_items where source='review' for shop
 - Skip items where item_name already exists from source='photo' (photo-wins)
 - Insert remaining with source='review'
 
-### 5. LLM schema extension (_tool_schemas.py)
+### 5. LLM schema extension (\_tool_schemas.py)
 
 Add menu_items to CLASSIFY_SHOP_SCHEMA: array of {name (required), price, category}, maxItems 20.
 
@@ -116,13 +119,13 @@ enrich_menu_photo receives job (only if MENU photos exist + dedup passes)
 
 ## Decisions
 
-| Decision | Choice | Alternatives Rejected |
-|----------|--------|-----------------------|
-| Job granularity | One ENRICH_MENU_PHOTO per shop with all photo URLs | Per-photo jobs (unnecessary complexity), best-photo-only (wastes data) |
-| Source model | source enum + source_photo_id FK | source_photo_id only (implicit), separate tables (over-normalized) |
-| Review traceability | source='review' only (no FK) | source_review_id FK (batch extraction, no 1:1 mapping) |
-| Conflict resolution | Additive, photo-wins on item_name collision | Photo replaces all (loses review-only items), keep all duplicates (inflated data) |
-| Review extraction method | Extend CLASSIFY_SHOP_TOOL (no new LLM call) | Separate LLM call (added cost), new job type (heaviest) |
+| Decision                 | Choice                                             | Alternatives Rejected                                                             |
+| ------------------------ | -------------------------------------------------- | --------------------------------------------------------------------------------- |
+| Job granularity          | One ENRICH_MENU_PHOTO per shop with all photo URLs | Per-photo jobs (unnecessary complexity), best-photo-only (wastes data)            |
+| Source model             | source enum + source_photo_id FK                   | source_photo_id only (implicit), separate tables (over-normalized)                |
+| Review traceability      | source='review' only (no FK)                       | source_review_id FK (batch extraction, no 1:1 mapping)                            |
+| Conflict resolution      | Additive, photo-wins on item_name collision        | Photo replaces all (loses review-only items), keep all duplicates (inflated data) |
+| Review extraction method | Extend CLASSIFY_SHOP_TOOL (no new LLM call)        | Separate LLM call (added cost), new job type (heaviest)                           |
 
 ## Testing Classification
 

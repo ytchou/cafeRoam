@@ -6,8 +6,14 @@ const mockGetToken = vi.fn().mockResolvedValue('mock-token');
 
 const mockHistoryData = {
   history: [
-    { date: '2026-04-01', providers: { anthropic: 1.5, openai: 0.25, apify: 0.03 } },
-    { date: '2026-04-02', providers: { anthropic: 0.8, openai: 0.1, apify: 0.0 } },
+    {
+      date: '2026-04-01',
+      providers: { anthropic: 1.5, openai: 0.25, apify: 0.03 },
+    },
+    {
+      date: '2026-04-02',
+      providers: { anthropic: 0.8, openai: 0.1, apify: 0.0 },
+    },
   ],
 };
 

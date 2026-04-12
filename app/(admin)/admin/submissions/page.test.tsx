@@ -11,7 +11,11 @@ vi.mock('../_hooks/use-admin-auth', () => ({
 beforeEach(() => {
   global.fetch = vi.fn().mockResolvedValue({
     ok: true,
-    json: async () => ({ submissions: [], job_counts: {}, recent_submissions: [] }),
+    json: async () => ({
+      submissions: [],
+      job_counts: {},
+      recent_submissions: [],
+    }),
   } as unknown as Response);
 });
 

@@ -18,7 +18,9 @@ export default function AdminDashboard() {
 
   const fetchStats = useCallback(async () => {
     const token = await getToken();
-    const headers: HeadersInit = token ? { Authorization: `Bearer ${token}` } : {};
+    const headers: HeadersInit = token
+      ? { Authorization: `Bearer ${token}` }
+      : {};
 
     try {
       const [overviewRes, spendRes] = await Promise.all([
@@ -52,7 +54,12 @@ export default function AdminDashboard() {
   }, [fetchStats]);
 
   if (loading) return <p>Loading...</p>;
-  if (error) return <p role="alert" className="text-red-600">{error}</p>;
+  if (error)
+    return (
+      <p role="alert" className="text-red-600">
+        {error}
+      </p>
+    );
   if (!stats) return null;
 
   const cards = [
@@ -84,7 +91,9 @@ export default function AdminDashboard() {
             className="rounded-lg border p-4 hover:bg-gray-50"
           >
             <p className="text-sm font-medium text-gray-500">{card.label}</p>
-            <p className="mt-1 text-lg font-semibold text-gray-900">{card.value}</p>
+            <p className="mt-1 text-lg font-semibold text-gray-900">
+              {card.value}
+            </p>
           </Link>
         ))}
       </div>

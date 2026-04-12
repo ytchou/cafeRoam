@@ -7,6 +7,7 @@
 ## Goal
 
 Three improvements to the admin dashboard:
+
 1. Convert the tab-based `/admin` page into a proper left-nav structure with dedicated sub-routes
 2. Add a 14-day stacked bar chart to the Spend page
 3. Fix spend currency formatting to always show 2 decimal places
@@ -14,11 +15,13 @@ Three improvements to the admin dashboard:
 ## Architecture
 
 ### Current State
+
 - `/admin` — single page with `<Tabs>` component (Submissions, Claims, Spend tabs)
 - Left nav exists in `app/(admin)/layout.tsx` with 5 links: Dashboard, Shops, Jobs, Taxonomy, Roles
 - Spend data: today/MTD totals only via `GET /admin/pipeline/spend`
 
 ### Target State
+
 - `/admin` — summary overview (3 stat cards)
 - `/admin/submissions` — SubmissionsTab content
 - `/admin/claims` — ClaimsTab content
@@ -29,7 +32,9 @@ Three improvements to the admin dashboard:
 ## Components
 
 ### Backend
+
 **New endpoint:** `GET /admin/pipeline/spend/history` in `backend/api/admin.py`
+
 - Query param: `days: int = 14` (capped at 90)
 - Queries `api_usage_log` grouped by `DATE(created_at)` and `provider`
 - Handles Apify deferred cost: `compute_units × settings.apify_cost_per_cu`
@@ -38,25 +43,31 @@ Three improvements to the admin dashboard:
 **New Pydantic models:** `SpendHistoryEntry`, `SpendHistoryResponse`
 
 ### Frontend
+
 **New proxy:** `app/api/admin/pipeline/spend/history/route.ts`
+
 - Thin `proxyToBackend(request, '/admin/pipeline/spend/history')` — same pattern as existing spend proxy
 
 **New route pages:**
+
 - `app/(admin)/admin/submissions/page.tsx` — renders `<SubmissionsTab />`
 - `app/(admin)/admin/claims/page.tsx` — renders `<ClaimsTab />`
 - `app/(admin)/admin/spend/page.tsx` — renders `<SpendHistoryChart />` + `<SpendTab />`
 
 **Modified `app/(admin)/admin/page.tsx`:**
+
 - Remove `<Tabs>` structure
 - Replace with Admin Overview: 3 stat cards (pending submissions count, pending claims count, today's spend)
 - Each card links to its sub-route
 
 **Modified `app/(admin)/layout.tsx`:**
+
 - Add to NAV_ITEMS: Submissions (`/admin/submissions`), Claims (`/admin/claims`), Spend (`/admin/spend`)
 - Add visual separator between Operations group (Submissions/Claims/Spend) and Data group (Shops/Jobs/Taxonomy/Roles)
 - Update `SEGMENT_LABELS` to include the 3 new segments for breadcrumb rendering
 
 **New component `SpendHistoryChart.tsx`:**
+
 - Fetches `/api/admin/pipeline/spend/history?days=14`
 - Recharts `BarChart` with stacked bars (stackId="a")
 - Colors: Anthropic `#D97706`, OpenAI `#10A37F`, Apify `#FF5C35`
@@ -65,6 +76,7 @@ Three improvements to the admin dashboard:
 - Loading skeleton + error message states
 
 **Modified `SpendTab.tsx`:**
+
 - `formatUsd()`: change `maximumFractionDigits: 4` → `2`
 - Sub-cent values (< $0.01) keep `toFixed(6)` — `$0.00` would be misleading for micro-costs
 
@@ -86,12 +98,12 @@ Recharts is **not** currently installed. Add via `pnpm add recharts`.
 
 ## Testing Strategy
 
-| Layer | Tests |
-|---|---|
-| Backend | `test_admin_spend_history.py`: empty history, date grouping, Apify cost calc |
-| Frontend (SpendHistoryChart) | mocked fetch: chart renders, loading state, error state |
-| Frontend (formatUsd) | `$0.040123 → $0.04`, `$0.000001 → $0.000001` (sub-cent unchanged) |
-| Frontend (overview page) | stat cards render with correct links |
+| Layer                        | Tests                                                                        |
+| ---------------------------- | ---------------------------------------------------------------------------- |
+| Backend                      | `test_admin_spend_history.py`: empty history, date grouping, Apify cost calc |
+| Frontend (SpendHistoryChart) | mocked fetch: chart renders, loading state, error state                      |
+| Frontend (formatUsd)         | `$0.040123 → $0.04`, `$0.000001 → $0.000001` (sub-cent unchanged)            |
+| Frontend (overview page)     | stat cards render with correct links                                         |
 
 ## Testing Classification
 

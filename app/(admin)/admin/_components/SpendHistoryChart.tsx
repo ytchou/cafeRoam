@@ -58,7 +58,8 @@ export function SpendHistoryChart({ getToken }: SpendHistoryChartProps) {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
         if (!res.ok) {
-          if (!cancelled) setError(`Failed to load spend history (HTTP ${res.status})`);
+          if (!cancelled)
+            setError(`Failed to load spend history (HTTP ${res.status})`);
           return;
         }
         const payload = (await res.json()) as SpendHistoryResponse;
@@ -71,12 +72,15 @@ export function SpendHistoryChart({ getToken }: SpendHistoryChartProps) {
     }
 
     void load();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [getToken]);
 
   if (loading) return <p>Loading...</p>;
   if (error) return <p className="text-red-600">{error}</p>;
-  if (!data || data.length === 0) return <p className="text-gray-500">No spend data for the last 14 days.</p>;
+  if (!data || data.length === 0)
+    return <p className="text-gray-500">No spend data for the last 14 days.</p>;
 
   const allProviders = Array.from(
     new Set(data.flatMap((entry) => Object.keys(entry.providers)))
@@ -89,9 +93,14 @@ export function SpendHistoryChart({ getToken }: SpendHistoryChartProps) {
 
   return (
     <section className="space-y-2">
-      <h3 className="text-sm font-medium text-gray-700">Daily Spend (last 14 days)</h3>
+      <h3 className="text-sm font-medium text-gray-700">
+        Daily Spend (last 14 days)
+      </h3>
       <ResponsiveContainer width="100%" height={220}>
-        <BarChart data={chartData} margin={{ top: 4, right: 8, left: 0, bottom: 4 }}>
+        <BarChart
+          data={chartData}
+          margin={{ top: 4, right: 8, left: 0, bottom: 4 }}
+        >
           <XAxis dataKey="date" tick={{ fontSize: 11 }} />
           <YAxis
             tickFormatter={(v: number) => `$${v.toFixed(2)}`}

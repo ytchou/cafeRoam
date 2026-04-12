@@ -16,6 +16,7 @@
 **Tech Stack:** Next.js App Router, TypeScript, Recharts, FastAPI, Supabase Postgres (`api_usage_log` table), Vitest + React Testing Library, pytest
 
 **Acceptance Criteria:**
+
 - [ ] Admin can navigate to Submissions, Claims, and Spend via the left sidebar — each opens a dedicated URL (`/admin/submissions`, `/admin/claims`, `/admin/spend`)
 - [ ] The `/admin` root shows a summary with pending submission count, pending claim count, and today's spend — each card links to its section
 - [ ] The Spend page shows a 14-day stacked bar chart segmented by provider (Anthropic, OpenAI, Apify)
@@ -27,6 +28,7 @@
 ## Pre-flight
 
 Before starting any task, verify you are on a worktree branch (not `main`):
+
 ```bash
 git branch --show-current
 # Must NOT be main. If on main, stop and create a worktree:
@@ -41,6 +43,7 @@ git branch --show-current
 ## Task 1: Backend — spend history endpoint
 
 **Files:**
+
 - Modify: `backend/api/admin.py` (after `get_pipeline_spend`, ~line 912)
 - Test: `backend/tests/api/test_admin_spend_history.py` (new file)
 
@@ -180,6 +183,7 @@ def test_spend_history_days_param_caps_at_90():
 ```bash
 cd backend && uv run python -m pytest tests/api/test_admin_spend_history.py -v
 ```
+
 Expected: FAIL — endpoint does not exist yet (404)
 
 **Step 3: Write minimal implementation**
@@ -257,6 +261,7 @@ Also add `Query` to fastapi imports if not already imported: `from fastapi impor
 ```bash
 cd backend && uv run python -m pytest tests/api/test_admin_spend_history.py -v
 ```
+
 Expected: 4 tests PASS
 
 **Step 5: Commit**
@@ -271,6 +276,7 @@ git commit -m "feat(DEV-321): add GET /admin/pipeline/spend/history endpoint"
 ## Task 2: TypeScript proxy for spend history
 
 **Files:**
+
 - Create: `app/api/admin/pipeline/spend/history/route.ts`
 - No test needed — thin proxy with no logic; covered by integration pattern identical to existing `spend/route.ts`
 
@@ -313,6 +319,7 @@ pnpm add recharts
 ```bash
 pnpm list recharts
 ```
+
 Expected: recharts version printed
 
 **Step 3: Commit**
@@ -327,6 +334,7 @@ git commit -m "chore(DEV-321): add recharts dependency"
 ## Task 4: SpendHistoryChart component
 
 **Files:**
+
 - Create: `app/(admin)/admin/_components/SpendHistoryChart.tsx`
 - Test: `app/(admin)/admin/_components/__tests__/SpendHistoryChart.test.tsx` (new)
 
@@ -403,6 +411,7 @@ describe('SpendHistoryChart', () => {
 ```bash
 pnpm test app/\(admin\)/admin/_components/__tests__/SpendHistoryChart.test.tsx
 ```
+
 Expected: FAIL — module not found
 
 **Step 3: Write minimal implementation**
@@ -541,6 +550,7 @@ export function SpendHistoryChart({ getToken }: SpendHistoryChartProps) {
 ```bash
 pnpm test app/\(admin\)/admin/_components/__tests__/SpendHistoryChart.test.tsx
 ```
+
 Expected: 4 tests PASS
 
 **Step 5: Commit**
@@ -556,6 +566,7 @@ git commit -m "feat(DEV-321): add SpendHistoryChart component (14-day stacked ba
 ## Task 5: Decimal fix in formatUsd
 
 **Files:**
+
 - Modify: `app/(admin)/admin/_components/SpendTab.tsx`
 - Test: `app/(admin)/admin/_components/__tests__/SpendTab.test.tsx` (modify existing)
 
@@ -610,6 +621,7 @@ describe('formatUsd decimal formatting', () => {
 ```bash
 pnpm test app/\(admin\)/admin/_components/__tests__/SpendTab.test.tsx
 ```
+
 Expected: "shows exactly 2 decimal places" FAIL — currently renders `$0.040123` or similar
 
 **Step 3: Fix formatUsd**
@@ -635,6 +647,7 @@ return `$${value.toLocaleString('en-US', {
 ```bash
 pnpm test app/\(admin\)/admin/_components/__tests__/SpendTab.test.tsx
 ```
+
 Expected: all tests PASS
 
 **Step 5: Commit**
@@ -650,6 +663,7 @@ git commit -m "fix(DEV-321): fix spend currency formatting to 2 decimal places"
 ## Task 6: Left-nav update + new sub-route pages
 
 **Files:**
+
 - Modify: `app/(admin)/layout.tsx`
 - Create: `app/(admin)/admin/submissions/page.tsx`
 - Create: `app/(admin)/admin/claims/page.tsx`
@@ -692,11 +706,13 @@ describe('SubmissionsPage', () => {
 ```bash
 pnpm test app/\(admin\)/admin/submissions/page.test.tsx
 ```
+
 Expected: FAIL — module not found
 
 **Step 3: Create the new pages and update the nav**
 
 **`app/(admin)/admin/submissions/page.tsx`:**
+
 ```typescript
 'use client';
 
@@ -744,6 +760,7 @@ export default function SubmissionsPage() {
 ```
 
 **`app/(admin)/admin/claims/page.tsx`:**
+
 ```typescript
 'use client';
 
@@ -762,6 +779,7 @@ export default function ClaimsPage() {
 ```
 
 **`app/(admin)/admin/spend/page.tsx`:**
+
 ```typescript
 'use client';
 
@@ -845,6 +863,7 @@ Update the nav render in the aside to show a separator between ops and data grou
 ```bash
 pnpm test app/\(admin\)/admin/submissions/page.test.tsx
 ```
+
 Expected: PASS
 
 **Step 5: Commit**
@@ -863,6 +882,7 @@ git commit -m "feat(DEV-321): add submissions/claims/spend sub-routes + update l
 ## Task 7: Admin overview page
 
 **Files:**
+
 - Modify: `app/(admin)/admin/page.tsx`
 - Modify: `app/(admin)/admin/page.test.tsx`
 
@@ -934,6 +954,7 @@ describe('Admin overview page', () => {
 ```bash
 pnpm test app/\(admin\)/admin/page.test.tsx --reporter=verbose 2>&1 | head -40
 ```
+
 Expected: new tests FAIL
 
 **Step 3: Rewrite admin/page.tsx**
@@ -1039,6 +1060,7 @@ export default function AdminDashboard() {
 ```bash
 pnpm test app/\(admin\)/admin/page.test.tsx
 ```
+
 Expected: new tests PASS; old tab-switching tests removed
 
 **Step 5: Commit**
@@ -1059,6 +1081,7 @@ git commit -m "feat(DEV-321): replace tab dashboard with overview stat cards"
 ```bash
 pnpm test
 ```
+
 Expected: all pass (no regressions)
 
 **Step 2: Run backend tests**
@@ -1066,6 +1089,7 @@ Expected: all pass (no regressions)
 ```bash
 cd backend && uv run python -m pytest -v
 ```
+
 Expected: all pass
 
 **Step 3: Lint + type-check**
@@ -1073,6 +1097,7 @@ Expected: all pass
 ```bash
 pnpm lint && pnpm type-check
 ```
+
 Expected: no errors
 
 **Step 4: Fix any issues found**
@@ -1085,6 +1110,7 @@ Address linting or type errors before proceeding.
 git add -p
 git commit -m "fix(DEV-321): lint and type-check fixes"
 ```
+
 (Skip commit if no fixes needed.)
 
 ---
@@ -1124,21 +1150,26 @@ graph TD
 ```
 
 **Wave 1** (parallel — no dependencies):
+
 - Task 1: Backend history endpoint
 - Task 3: Install recharts
 - Task 5: Decimal fix in formatUsd
 
 **Wave 2** (parallel — depends on Wave 1):
+
 - Task 2: TypeScript proxy ← Task 1
 - Task 4: SpendHistoryChart ← Task 3 + Task 1
 
 **Wave 3** (depends on Wave 2):
+
 - Task 6: Left-nav update + sub-route pages ← Task 4
 
 **Wave 4** (depends on Wave 3):
+
 - Task 7: Admin overview page ← Task 6
 
 **Wave 5** (depends on all):
+
 - Task 8: Full test suite + lint + type-check
 
 ---
