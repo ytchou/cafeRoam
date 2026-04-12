@@ -95,20 +95,14 @@ class TestSpendEndpoint:
         assert anthropic_tasks["enrich_shop"]["mtd_tokens_out"] == 150
 
         openai_tasks = {
-            t["task"]: t
-            for p in data["providers"]
-            if p["provider"] == "openai"
-            for t in p["tasks"]
+            t["task"]: t for p in data["providers"] if p["provider"] == "openai" for t in p["tasks"]
         }
         assert openai_tasks["embed"]["today_tokens_in"] == 800
         assert openai_tasks["embed"]["today_tokens_out"] == 0
 
         # Apify has no tokens — should aggregate as zero
         apify_tasks = {
-            t["task"]: t
-            for p in data["providers"]
-            if p["provider"] == "apify"
-            for t in p["tasks"]
+            t["task"]: t for p in data["providers"] if p["provider"] == "apify" for t in p["tasks"]
         }
         assert apify_tasks["scrape_batch"]["today_tokens_in"] == 0
         assert apify_tasks["scrape_batch"]["today_tokens_out"] == 0

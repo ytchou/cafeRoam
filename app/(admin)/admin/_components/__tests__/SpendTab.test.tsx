@@ -14,9 +14,7 @@ const mockSpendData = {
       provider: 'anthropic',
       today_usd: 1.23,
       mtd_usd: 45.67,
-      tasks: [
-        { task: 'enrich_shop', today_usd: 1.23, mtd_usd: 45.67 },
-      ],
+      tasks: [{ task: 'enrich_shop', today_usd: 1.23, mtd_usd: 45.67 }],
     },
   ],
 };
@@ -57,7 +55,11 @@ describe('SpendTab', () => {
   it('shows "No spend data yet" when providers list is empty', async () => {
     vi.mocked(global.fetch).mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ today_total_usd: 0, mtd_total_usd: 0, providers: [] }),
+      json: async () => ({
+        today_total_usd: 0,
+        mtd_total_usd: 0,
+        providers: [],
+      }),
     } as Response);
 
     render(<SpendTab getToken={mockGetToken} />);
@@ -69,7 +71,7 @@ describe('SpendTab', () => {
 
   it('shows "Loading..." initially before data arrives', () => {
     vi.mocked(global.fetch).mockImplementationOnce(
-      () => new Promise(() => {})  // never resolves
+      () => new Promise(() => {}) // never resolves
     );
 
     render(<SpendTab getToken={mockGetToken} />);

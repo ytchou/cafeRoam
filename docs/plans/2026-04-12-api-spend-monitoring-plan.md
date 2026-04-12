@@ -15,6 +15,7 @@
 **Tech Stack:** FastAPI + supabase-py (backend), Next.js 16 App Router + shadcn/ui (frontend), Supabase Postgres (DB), Vitest + pytest
 
 **Acceptance Criteria:**
+
 - [ ] After running a batch enrichment job, new rows appear in `api_usage_log` for each provider call
 - [ ] Admin can visit `/admin` → Spend tab and see today's and MTD cost per provider (Anthropic, OpenAI, Apify)
 - [ ] Collapsing a provider row shows per-task cost breakdown (e.g., enrich_shop, classify_photo, embed)
@@ -26,6 +27,7 @@
 ### Task 1: DB Migration — `api_usage_log`
 
 **Files:**
+
 - Create: `supabase/migrations/20260412000000_api_usage_log.sql`
 
 No test needed — migration; verified by `supabase db push` succeeding and table appearing.
@@ -81,6 +83,7 @@ git commit -m "feat(DEV-317): add api_usage_log table for provider cost tracking
 ### Task 2: Cost Module
 
 **Files:**
+
 - Create: `backend/providers/cost.py`
 - Test: `backend/tests/providers/test_cost.py`
 
@@ -220,6 +223,7 @@ git commit -m "feat(DEV-317): add LLM cost pricing module"
 ### Task 3: Logger Utility
 
 **Files:**
+
 - Create: `backend/providers/api_usage_logger.py`
 - Test: `backend/tests/providers/test_api_usage_logger.py`
 
@@ -359,6 +363,7 @@ git commit -m "feat(DEV-317): add api_usage_logger utility"
 ### Task 4: Add `apify_cost_per_cu` to Config
 
 **Files:**
+
 - Modify: `backend/core/config.py`
 
 No test needed — trivial config field; pydantic BaseSettings validates type automatically.
@@ -392,6 +397,7 @@ git commit -m "feat(DEV-317): add apify_cost_per_cu config setting"
 ### Task 5: Instrument Anthropic Adapter
 
 **Files:**
+
 - Modify: `backend/providers/llm/anthropic_adapter.py`
 - Test: `backend/tests/providers/test_anthropic_adapter.py` (create if absent)
 
@@ -508,6 +514,7 @@ git commit -m "feat(DEV-317): instrument Anthropic adapter with usage logging"
 ### Task 6: Instrument OpenAI Adapter
 
 **Files:**
+
 - Modify: `backend/providers/llm/openai_adapter.py`
 - Modify: embedding call sites (found via grep in Step 1)
 - Test: `backend/tests/providers/test_openai_adapter.py` (create if absent)
@@ -633,6 +640,7 @@ git commit -m "feat(DEV-317): instrument OpenAI adapter with usage logging"
 ### Task 7: Instrument Apify Adapter
 
 **Files:**
+
 - Modify: `backend/providers/scraper/apify_adapter.py`
 - Test: `backend/tests/providers/test_apify_adapter.py` (create if absent)
 
@@ -726,6 +734,7 @@ git commit -m "feat(DEV-317): instrument Apify adapter with compute unit logging
 ### Task 8: Backend `/admin/pipeline/spend` Endpoint
 
 **Files:**
+
 - Modify: `backend/api/admin.py`
 - Test: `backend/tests/api/test_admin_spend.py`
 
@@ -738,7 +747,7 @@ response:
   today_total_usd: float
   mtd_total_usd: float
   providers:
-    - provider: string          # 'anthropic' | 'openai' | 'apify'
+    - provider: string # 'anthropic' | 'openai' | 'apify'
       today_usd: float
       mtd_usd: float
       today_calls: int
@@ -754,7 +763,7 @@ response:
           mtd_tokens_in: int
           mtd_tokens_out: int
 errors:
-  403: {"detail": "Not authorized"}
+  403: { 'detail': 'Not authorized' }
 ```
 
 **Step 1: Write failing tests**
@@ -1031,6 +1040,7 @@ git commit -m "feat(DEV-317): add GET /admin/pipeline/spend endpoint"
 ### Task 9: Next.js Proxy Route
 
 **Files:**
+
 - Create: `app/api/admin/pipeline/spend/route.ts`
 
 No test needed — one-line proxy matching the established pattern for all admin pipeline routes.
@@ -1043,11 +1053,11 @@ Read `app/api/admin/pipeline/overview/route.ts` to confirm the exact import for 
 
 ```typescript
 // app/api/admin/pipeline/spend/route.ts
-import { NextRequest } from 'next/server'
-import { proxyToBackend } from '@/lib/api/proxy'
+import { NextRequest } from 'next/server';
+import { proxyToBackend } from '@/lib/api/proxy';
 
 export async function GET(request: NextRequest) {
-  return proxyToBackend(request, '/admin/pipeline/spend')
+  return proxyToBackend(request, '/admin/pipeline/spend');
 }
 ```
 
@@ -1071,6 +1081,7 @@ git commit -m "feat(DEV-317): add Next.js proxy for /admin/pipeline/spend"
 ### Task 10: SpendTab Component
 
 **Files:**
+
 - Create: `app/(admin)/admin/_components/SpendTab.tsx`
 - Test: `app/(admin)/admin/_components/SpendTab.test.tsx`
 
@@ -1372,6 +1383,7 @@ git commit -m "feat(DEV-317): add SpendTab component"
 ### Task 11: Wire SpendTab into Admin Dashboard
 
 **Files:**
+
 - Modify: `app/(admin)/admin/page.tsx`
 
 No separate test — SpendTab is tested in Task 10; `pnpm type-check` confirms wiring.
@@ -1381,7 +1393,7 @@ No separate test — SpendTab is tested in Task 10; `pnpm type-check` confirms w
 In `app/(admin)/admin/page.tsx`, add import:
 
 ```typescript
-import { SpendTab } from './_components/SpendTab'
+import { SpendTab } from './_components/SpendTab';
 ```
 
 Inside `<TabsList>`, add after the last `<TabsTrigger>`:
@@ -1413,6 +1425,7 @@ pnpm dev
 ```
 
 Navigate to `http://localhost:3000/admin`. Verify:
+
 - "Spend" tab appears in the tab list
 - Clicking it shows the spend table (or "No spend data yet" if no rows yet)
 - Clicking a provider row expands/collapses task sub-rows
@@ -1430,6 +1443,7 @@ git commit -m "feat(DEV-317): wire SpendTab into admin dashboard"
 ### Task 12: ADRs
 
 **Files:**
+
 - Create: `docs/decisions/2026-04-12-api-spend-db-only-vs-external-billing.md`
 - Create: `docs/decisions/2026-04-12-api-usage-log-cost-computation-strategy.md`
 
@@ -1443,14 +1457,17 @@ No test needed — documentation.
 Date: 2026-04-12
 
 ## Decision
+
 Instrument provider adapters to write to a local `api_usage_log` table. Do NOT call
 external billing APIs (Anthropic `/v1/usage`, OpenAI `/dashboard/billing/usage`,
 Apify `/v2/users/me/usage/monthly`).
 
 ## Context
+
 DEV-317 requires a daily API spend view for operators before beta launch.
 
 ## Alternatives Considered
+
 - **External billing API fan-out**: Each provider exposes a billing/usage endpoint.
   Rejected: (1) requires separate billing-read API key scopes per provider;
   (2) adds external rate-limit and auth surface that can break cost visibility
@@ -1461,11 +1478,13 @@ DEV-317 requires a daily API spend view for operators before beta launch.
   accuracy benefit does not justify the complexity.
 
 ## Rationale
+
 DB-only gives richer task-level data, no external auth dependencies, and a single
 query path. The only risk is missed instrumentation points — mitigated by comprehensive
 adapter coverage in this PR.
 
 ## Consequences
+
 - Advantage: task-level cost breakdown from day one
 - Advantage: no external billing API auth to manage
 - Disadvantage: new provider call sites added without instrumentation create invisible costs
@@ -1479,25 +1498,30 @@ adapter coverage in this PR.
 Date: 2026-04-12
 
 ## Decision
+
 LLM (Anthropic, OpenAI) cost is computed at log time and stored as `cost_usd`.
 Apify cost is computed at query time: `compute_units * settings.apify_cost_per_cu`.
 
 ## Context
+
 DEV-317 api_usage_log stores provider call data. Two providers use fundamentally
 different billing models: tokens (LLM) vs compute units (Apify).
 
 ## Alternatives Considered
+
 - **All providers at log time**: Compute and store `cost_usd` for Apify too. Rejected:
   if Apify pricing changes, historical rows show incorrect costs and cannot be recalculated.
 - **All providers at query time**: Store raw usage everywhere. Rejected: LLM pricing is
   model-version-stable; computing at log time is simpler with no config dependency at read time.
 
 ## Rationale
+
 LLM pricing is tied to the model string (immutable once logged). Apify pricing is a
 business rate that may change. Raw `compute_units` + configurable rate allows operators to
 update `APIFY_COST_PER_CU` and immediately see corrected MTD figures.
 
 ## Consequences
+
 - Advantage: Apify pricing changes reflected retroactively
 - Advantage: LLM historical costs are exact and independent of current config
 - Disadvantage: endpoint must branch on provider when computing totals
@@ -1556,25 +1580,30 @@ graph TD
 ```
 
 **Wave 1** (parallel — no dependencies):
+
 - Task 1: DB migration
 - Task 2: `cost.py` pricing module
 - Task 4: `apify_cost_per_cu` config field
 - Task 12: ADRs
 
 **Wave 2** (depends on Wave 1):
+
 - Task 3: `api_usage_logger.py` ← Tasks 1, 2
 
 **Wave 3** (parallel — depends on Wave 2):
+
 - Task 5: Anthropic adapter instrumentation ← Task 3
 - Task 6: OpenAI adapter instrumentation ← Task 3
 - Task 7: Apify adapter instrumentation ← Task 3
 
 **Wave 4** (parallel — depends on Wave 3):
+
 - Task 8: Backend `/spend` endpoint ← Tasks 4, 5, 6, 7
 - Task 9: Next.js proxy route ← API contract defined in plan
 - Task 10: SpendTab component ← API contract defined in plan
 
 **Wave 5** (depends on Wave 4):
+
 - Task 11: Wire SpendTab into admin page ← Task 10
 
 ---

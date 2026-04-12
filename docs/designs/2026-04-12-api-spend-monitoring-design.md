@@ -1,4 +1,5 @@
 ---
+
 # API Spend Monitoring — Design Doc
 
 **Date:** 2026-04-12
@@ -19,14 +20,17 @@ Every external provider call logs one row to `api_usage_log`. The admin endpoint
 ## Components
 
 ### DB: `api_usage_log` table
+
 One row per external API call. Fields: `provider`, `task`, `model`, `tokens_input`, `tokens_output`, `tokens_cache_write`, `tokens_cache_read` (Anthropic cache tokens), `compute_units` (Apify), `cost_usd` (LLM only — null for Apify), `created_at`. Indexed on `created_at` and `(provider, task)`. RLS enabled; service role only.
 
-### `backend/providers/cost.py` *(new)*
+### `backend/providers/cost.py` _(new)_
+
 Pricing constants per LLM model (per 1M tokens, input/output/cache_write/cache_read).
 `compute_llm_cost(model, tokens_input, tokens_output, cache_write=0, cache_read=0) -> float`.
 Unknown models return 0.0 (cost logged as zero rather than erroring).
 
-### `backend/providers/api_usage_logger.py` *(new)*
+### `backend/providers/api_usage_logger.py` _(new)_
+
 `log_api_usage(**kwargs) -> None`. Inserts one row via service-role Supabase client.
 Wrapped in try/except — logging failure must never interrupt enrichment.
 
@@ -45,17 +49,20 @@ After each embedding call, extract token count. Call `log_api_usage`.
 extract `run.get('stats', {}).get('computeUnits', 0.0)`. Call
 `log_api_usage(provider='apify', task='scrape_batch', compute_units=cu)`.
 
-### `GET /admin/pipeline/spend` *(new endpoint in `backend/api/admin.py`)*
+### `GET /admin/pipeline/spend` _(new endpoint in `backend/api/admin.py`)_
+
 Queries current-month rows from `api_usage_log`. Aggregates in Python by provider/task.
 Apify cost computed as `compute_units * settings.apify_cost_per_cu`.
 Returns structured JSON (see response schema below).
 
-### SpendTab *(new component)*
+### SpendTab _(new component)_
+
 `app/(admin)/admin/_components/SpendTab.tsx`. Props: `{ getToken: () => Promise<string | null> }`.
 Manual fetch on mount + refresh button. No polling. Provider-level summary rows with collapsible
 task sub-rows. Same fetch + useState/useCallback pattern as existing admin tab components.
 
-### `app/api/admin/pipeline/spend/route.ts` *(new Next.js proxy)*
+### `app/api/admin/pipeline/spend/route.ts` _(new Next.js proxy)_
+
 One-line proxy following the established pattern for all admin pipeline routes.
 
 ## Data Flow
@@ -84,15 +91,15 @@ admin page loads
   "providers": [
     {
       "provider": "anthropic",
-      "today_usd": 1.20,
-      "mtd_usd": 40.00,
+      "today_usd": 1.2,
+      "mtd_usd": 40.0,
       "today_calls": 42,
       "mtd_calls": 1000,
       "tasks": [
         {
           "task": "enrich_shop",
-          "today_usd": 1.10,
-          "mtd_usd": 38.50,
+          "today_usd": 1.1,
+          "mtd_usd": 38.5,
           "today_calls": 35,
           "mtd_calls": 850,
           "today_tokens_in": 12000,
@@ -109,6 +116,7 @@ admin page loads
 ## Design Decisions
 
 ### DB-only (no external billing APIs)
+
 **Rejected alternative:** Fan out to Anthropic `/v1/usage`, OpenAI `/dashboard/billing/usage`,
 Apify `/v2/users/me/usage/monthly` for provider-level totals.
 **Why rejected:** Each provider requires a separate billing-read API key scope (different per
@@ -116,12 +124,14 @@ provider), adds external rate-limit risk, and offers no accuracy advantage once 
 instrumented. DB-only gives richer task-level data with no additional auth surface.
 
 ### Asymmetric cost computation
+
 LLM cost computed at **log time** (tokens × model pricing constant → stored as `cost_usd`).
 Apify cost computed at **query time** (`compute_units × apify_cost_per_cu` config setting).
 **Rationale:** LLM pricing is deterministic per model/token. Apify pricing may change;
 keeping raw compute units allows historical recalculation without re-scraping.
 
 ### No caching on /spend endpoint
+
 Admin endpoint queries own DB (fast aggregation, no rate limits). No TTL cache needed.
 
 ## Error Handling
@@ -140,6 +150,7 @@ Service role bypasses RLS for writes (adapter logging) and admin reads (endpoint
 ## Testing Strategy
 
 **Backend:**
+
 - Unit `test_cost.py`: pricing math for known models, unknown model → 0.0, cache token pricing
 - Integration `test_api_usage_logger.py`: mock DB, verify insert shape, verify no-raise on error
 - Adapter `test_*_adapter.py`: assert `log_api_usage` fires (via DB mock) with correct fields
@@ -147,6 +158,7 @@ Service role bypasses RLS for writes (adapter logging) and admin reads (endpoint
   Apify CU→USD; non-admin → 403; empty table → zeros
 
 **Frontend:**
+
 - Unit `SpendTab.test.tsx`: renders totals, loading state, empty state, error state
 
 ## Testing Classification

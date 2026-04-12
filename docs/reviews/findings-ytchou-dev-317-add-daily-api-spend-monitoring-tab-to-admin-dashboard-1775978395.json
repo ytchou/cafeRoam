@@ -49,7 +49,7 @@
       "status": "resolved"
     }
   ],
-  "active_agents": ["Bug Hunter", "Plan Alignment", "Architecture & Design", "Test Philosophy"],
+  "active_agents": [],
   "skipped": [
     {
       "file": "backend/api/admin.py",
