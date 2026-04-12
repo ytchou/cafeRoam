@@ -95,7 +95,9 @@ describe('ReasonCodeBadge', () => {
       ok: true,
       json: () =>
         Promise.resolve(
-          makeJobsResponse([makeJob({ reason_code: null, cancel_reason: null })])
+          makeJobsResponse([
+            makeJob({ reason_code: null, cancel_reason: null }),
+          ])
         ),
     });
 

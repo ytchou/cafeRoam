@@ -15,6 +15,7 @@
 **Tech Stack:** Postgres (Supabase), FastAPI, Pydantic, Next.js, shadcn/ui, Vitest, pytest
 
 **Acceptance Criteria:**
+
 - [ ] Cancelling a job via admin UI writes `reason_code='operator_cancelled'` alongside the free-text cancel_reason
 - [ ] A job exhausting retries shows `reason_code='retry_exhausted'` in the Raw Jobs table
 - [ ] Operators can filter the Raw Jobs table by reason_code to see only jobs with a specific failure category
@@ -25,6 +26,7 @@
 ## Task 1: DB Migration — add reason_code column + backfill
 
 **Files:**
+
 - Create: `supabase/migrations/20260412000001_add_reason_code_to_job_queue.sql`
 - No test needed — DDL migration, verified by `supabase db push`
 
@@ -70,6 +72,7 @@ git commit -m "feat(DEV-312): add reason_code column to job_queue with CHECK con
 ## Task 2: DB Migration — update reclaim_stuck_jobs RPC to write reason_code
 
 **Files:**
+
 - Create: `supabase/migrations/20260412000002_reclaim_stuck_jobs_add_reason_code.sql`
 - No test needed — DDL migration, verified by `supabase db push`
 
@@ -148,6 +151,7 @@ git commit -m "feat(DEV-312): update reclaim_stuck_jobs RPC to write reason_code
 ## Task 3: Backend — JobReasonCode enum + Job model update + queue.fail() + tests
 
 **Files:**
+
 - Modify: `backend/models/types.py` (add JobReasonCode enum, update Job model)
 - Modify: `backend/workers/queue.py` (update fail() signature to require reason_code)
 - Test: `backend/tests/workers/test_queue.py`
@@ -205,6 +209,7 @@ Expected: FAIL — `JobReasonCode` doesn't exist yet, `fail()` doesn't accept 3 
 **Step 3: Implement**
 
 In `backend/models/types.py`, add after `JobStatus`:
+
 ```python
 class JobReasonCode(StrEnum):
     OPERATOR_CANCELLED = "operator_cancelled"
@@ -216,6 +221,7 @@ class JobReasonCode(StrEnum):
 ```
 
 Update `Job` model to add fields:
+
 ```python
 reason_code: JobReasonCode | None = None
 cancel_reason: str | None = None
@@ -224,6 +230,7 @@ failed_at: datetime | None = None
 ```
 
 In `backend/workers/queue.py`, update `fail()`:
+
 ```python
 from models.types import JobReasonCode
 
@@ -255,6 +262,7 @@ git commit -m "feat(DEV-312): add JobReasonCode enum, update Job model, require 
 ## Task 4: Backend — Update scheduler.py call sites + tests
 
 **Files:**
+
 - Modify: `backend/workers/scheduler.py` (update queue.fail() calls with reason codes)
 - Test: `backend/tests/workers/test_scheduler.py` (or existing test file)
 
@@ -283,6 +291,7 @@ Expected: FAIL
 **Step 3: Implement**
 
 In `backend/workers/scheduler.py`, update `_run_job()` exception handlers:
+
 - Line ~205 (CancelledError): `await queue.fail(job.id, "Job cancelled during shutdown", JobReasonCode.PROVIDER_ERROR)`
 - Line ~212 (general Exception): `await queue.fail(job.id, str(e), JobReasonCode.PROVIDER_ERROR)`
 
@@ -307,6 +316,7 @@ git commit -m "feat(DEV-312): pass reason_code from scheduler exception handlers
 ## Task 5: Backend — Update cancel_job + jobs list filter + tests
 
 **Files:**
+
 - Modify: `backend/api/admin.py` (cancel_job writes reason_code; list_jobs accepts reason_code filter)
 - Test: `backend/tests/api/test_admin.py`
 
@@ -365,12 +375,14 @@ git commit -m "feat(DEV-312): cancel_job writes reason_code; list_jobs supports 
 ## Task 6: Frontend — Job interface + ReasonCodeBadge + filter + tests
 
 **Files:**
+
 - Modify: `app/(admin)/admin/jobs/_components/RawJobsList.tsx` (interface, badge, filter, expanded row)
 - Create: `app/(admin)/admin/_lib/reason-code-badge.ts` (color mapping, following status-badge.ts pattern)
 - Modify: `app/api/admin/pipeline/jobs/route.ts` (pass through reason_code query param)
 - Test: `app/(admin)/admin/jobs/_components/__tests__/RawJobsList.test.tsx` (or equivalent)
 
 **Existing patterns to follow:**
+
 - Status badges use `app/(admin)/admin/_lib/status-badge.ts` with a `STATUS_VARIANT` Record and `getStatusVariant()` function
 - Filters use shadcn `Select` with `SelectTrigger/SelectContent/SelectItem`, controlled state, and `URLSearchParams`
 - Backend filter: `.eq('field', value)` conditional
@@ -408,32 +420,39 @@ Expected: FAIL — ReasonCodeBadge doesn't exist yet
 **Step 3: Implement**
 
 1. Create `app/(admin)/admin/_lib/reason-code-badge.ts`:
+
 ```typescript
-const REASON_CODE_VARIANT: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-  operator_cancelled: "outline",       // amber/neutral — manual action
-  retry_exhausted: "destructive",      // red — terminal failure
-  bad_input: "secondary",              // yellow — data issue
-  timeout: "outline",                  // orange — transient
-  dependency_failed: "destructive",    // red — pipeline failure
-  provider_error: "destructive",       // red — external failure
+const REASON_CODE_VARIANT: Record<
+  string,
+  'default' | 'secondary' | 'destructive' | 'outline'
+> = {
+  operator_cancelled: 'outline', // amber/neutral — manual action
+  retry_exhausted: 'destructive', // red — terminal failure
+  bad_input: 'secondary', // yellow — data issue
+  timeout: 'outline', // orange — transient
+  dependency_failed: 'destructive', // red — pipeline failure
+  provider_error: 'destructive', // red — external failure
 };
 
-export function getReasonCodeVariant(code: string): "default" | "secondary" | "destructive" | "outline" {
-  return REASON_CODE_VARIANT[code] ?? "default";
+export function getReasonCodeVariant(
+  code: string
+): 'default' | 'secondary' | 'destructive' | 'outline' {
+  return REASON_CODE_VARIANT[code] ?? 'default';
 }
 
 export const REASON_CODE_OPTIONS = [
-  "all",
-  "operator_cancelled",
-  "retry_exhausted",
-  "bad_input",
-  "timeout",
-  "dependency_failed",
-  "provider_error",
+  'all',
+  'operator_cancelled',
+  'retry_exhausted',
+  'bad_input',
+  'timeout',
+  'dependency_failed',
+  'provider_error',
 ] as const;
 ```
 
 2. Update `RawJobsList.tsx`:
+
 - Add to `Job` interface: `reason_code: string | null`, `cancel_reason: string | null`, `cancelled_at: string | null`, `failed_at: string | null`
 - Add `reasonCodeFilter` state (`"all"` default)
 - Add reason_code to `URLSearchParams` in `fetchJobs` when not `"all"`
@@ -442,6 +461,7 @@ export const REASON_CODE_OPTIONS = [
 - In expanded row detail: show `reason_code` badge + `cancel_reason` text
 
 3. Update `app/api/admin/pipeline/jobs/route.ts`:
+
 - The proxy already forwards all query params via `proxyToBackend(request, '/admin/pipeline/jobs')` — verify it passes through `reason_code`. If it strips params, add it.
 
 **Step 4: Run tests to verify they pass**
@@ -485,15 +505,19 @@ graph TD
 ```
 
 **Wave 1** (parallel — no dependencies):
+
 - Task 1: reason_code column migration
 - Task 2: reclaim_stuck_jobs RPC migration
 
 **Wave 2** (depends on Wave 1):
+
 - Task 3: JobReasonCode enum + Job model + queue.fail() ← Task 1
 
 **Wave 3** (parallel — depends on Wave 2):
+
 - Task 4: scheduler.py call sites ← Task 3
 - Task 5: admin.py cancel + jobs list filter ← Task 3
 
 **Wave 4** (depends on Wave 3):
+
 - Task 6: Frontend badge + filter ← Task 5

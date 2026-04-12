@@ -16,14 +16,14 @@ Also completes unfinished DEV-307 wiring: the backend Job Pydantic model and fro
 
 ### Reason Codes (6 values)
 
-| Code | Terminal Status | Written By |
-|------|----------------|-----------|
-| `operator_cancelled` | cancelled | admin cancel endpoint (`admin.py`) |
-| `retry_exhausted` | failed | `queue.fail()` when `attempts >= max_attempts` |
-| `bad_input` | failed | scheduler (payload validation) |
-| `timeout` | pending/failed | `reclaim_stuck_jobs` RPC |
-| `dependency_failed` | failed | scheduler (upstream step failed) |
-| `provider_error` | failed | scheduler (LLM/embedding exception) |
+| Code                 | Terminal Status | Written By                                     |
+| -------------------- | --------------- | ---------------------------------------------- |
+| `operator_cancelled` | cancelled       | admin cancel endpoint (`admin.py`)             |
+| `retry_exhausted`    | failed          | `queue.fail()` when `attempts >= max_attempts` |
+| `bad_input`          | failed          | scheduler (payload validation)                 |
+| `timeout`            | pending/failed  | `reclaim_stuck_jobs` RPC                       |
+| `dependency_failed`  | failed          | scheduler (upstream step failed)               |
+| `provider_error`     | failed          | scheduler (LLM/embedding exception)            |
 
 ### Scope
 
@@ -59,6 +59,7 @@ job_queue
 ### Backfill
 
 Best-effort migration backfill:
+
 - `status = 'cancelled'` → `reason_code = 'operator_cancelled'`
 - `status = 'failed'` (retry-exhausted) → `reason_code = 'retry_exhausted'`
 
