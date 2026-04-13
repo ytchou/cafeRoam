@@ -15,6 +15,7 @@ import { SWRProvider } from '@/components/swr-provider';
 import { SessionTracker } from '@/components/session-tracker';
 import { AppShell } from '@/components/navigation/app-shell';
 import { Agentation } from 'agentation';
+import { AppProgressBar } from 'next-nprogress-bar';
 import { Toaster } from 'sonner';
 import './globals.css';
 
@@ -94,6 +95,12 @@ export default function RootLayout({ children }: RootLayoutProps) {
           <GA4Provider />
           <SWRProvider>
             <PostHogProvider>
+              <AppProgressBar
+                color="#2c1810"
+                height="3px"
+                options={{ showSpinner: false }}
+                shallowRouting={false}
+              />
               <SessionTracker />
               <AppShell>{children}</AppShell>
               {process.env.NEXT_PUBLIC_AGENTATION_ENABLED === 'true' && (
