@@ -92,9 +92,9 @@ describe('ShopHero multi-photo carousel', () => {
     expect(images).toHaveLength(3);
   });
 
-  it('shows a slide indicator with current / total format', () => {
+  it('shows a slide indicator with view all photos text', () => {
     render(<ShopHero photoUrls={photos} shopName="Fika Taipei" />);
-    expect(screen.getByText('1 / 3')).toBeInTheDocument();
+    expect(screen.getByText('View all 3 photos')).toBeInTheDocument();
   });
 
   it('does not render prev/next buttons when there is only one photo', () => {
@@ -109,7 +109,7 @@ describe('ShopHero multi-photo carousel', () => {
 
   it('does not render the slide indicator when there is only one photo', () => {
     render(<ShopHero photoUrls={[photos[0]]} shopName="Fika Taipei" />);
-    expect(screen.queryByText(/1 \/ 1/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/View all .* photos/)).not.toBeInTheDocument();
   });
 
   it('falls back to initials when photoUrls is empty', () => {
