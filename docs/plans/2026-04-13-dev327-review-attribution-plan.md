@@ -461,7 +461,7 @@ graph TD
 
 ## TODO
 
-- [ ] Task 1: Create laurel wreath SVG components
+- [x] Task 1: Create laurel wreath SVG components
 - [ ] Task 2: Create RatingBadge component with TDD
 - [ ] Task 3: Update ShopIdentity to use RatingBadge
 - [ ] Task 4: Update E2E tests for text matcher changes
