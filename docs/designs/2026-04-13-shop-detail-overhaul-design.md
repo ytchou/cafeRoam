@@ -26,6 +26,7 @@ The shop detail page has several UX issues discovered during a live review of `/
 **Decision:** Replace `ShopMapThumbnail` (Mapbox) with a new `GoogleMapsEmbed` component using the Google Maps Embed API in Place mode.
 
 **Rationale:**
+
 - Mapbox `interactive={false}` is a dead UX element — misleads users into expecting interaction
 - Enabling Mapbox interactivity (`interactive={true}`) works but adds no value over Google Embed, which includes a built-in place card (name, address, rating, hours, directions button)
 - Google Embed API is free (unlimited usage) vs. Mapbox free tier (50K loads/month)
@@ -33,6 +34,7 @@ The shop detail page has several UX issues discovered during a live review of `/
 - Fallback: View mode (`/maps/embed/v1/view`) if no `google_place_id` available
 
 **Alternatives rejected:**
+
 - **Remove map entirely:** Loses visual context that helps users orient before clicking through
 - **Enable Mapbox interactivity:** Works but doesn't add value over Google Embed
 - **View mode embed:** Less informative than Place mode (no place card)
@@ -45,6 +47,7 @@ The shop detail page has several UX issues discovered during a live review of `/
 **Decision:** Normalize at both enrichment time (backend) and display time (frontend fallback).
 
 **Pattern to strip:** Trailing parenthetical SEO noise:
+
 - `(完整菜單可點instagram)` → strip
 - `(wifi/插座/不限時)` → strip
 - `(菜單/menu/IG)` → strip
@@ -74,16 +77,16 @@ components/shops/google-maps-embed.tsx
 
 ### Modified Files
 
-| File | Change |
-|------|--------|
-| `components/shops/google-maps-embed.tsx` | **New** — Google Embed iframe component |
-| `components/shops/shop-map-thumbnail.tsx` | **Deleted** |
+| File                                               | Change                                                      |
+| -------------------------------------------------- | ----------------------------------------------------------- |
+| `components/shops/google-maps-embed.tsx`           | **New** — Google Embed iframe component                     |
+| `components/shops/shop-map-thumbnail.tsx`          | **Deleted**                                                 |
 | `app/shops/[shopId]/[slug]/shop-detail-client.tsx` | Replace map, fix links, add labels, use normalizeShopName() |
-| `components/shops/shop-description.tsx` | Remove useState + "更多" button |
-| `backend/utils/text.py` | **New** — normalize_shop_name() |
-| `backend/workers/persist.py` | Call normalize_shop_name() at line 88 |
-| `lib/utils/text.ts` | **New** — normalizeShopName() frontend util |
-| `.env.example` | Add NEXT_PUBLIC_GOOGLE_MAPS_API_KEY |
+| `components/shops/shop-description.tsx`            | Remove useState + "更多" button                             |
+| `backend/utils/text.py`                            | **New** — normalize_shop_name()                             |
+| `backend/workers/persist.py`                       | Call normalize_shop_name() at line 88                       |
+| `lib/utils/text.ts`                                | **New** — normalizeShopName() frontend util                 |
+| `.env.example`                                     | Add NEXT_PUBLIC_GOOGLE_MAPS_API_KEY                         |
 
 ---
 

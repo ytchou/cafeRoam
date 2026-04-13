@@ -1,9 +1,9 @@
-'use client'
+'use client';
 
 interface GoogleMapsEmbedProps {
-  latitude: number
-  longitude: number
-  googlePlaceId?: string | null
+  latitude: number;
+  longitude: number;
+  googlePlaceId?: string | null;
 }
 
 /**
@@ -15,29 +15,29 @@ export function GoogleMapsEmbed({
   longitude,
   googlePlaceId,
 }: GoogleMapsEmbedProps) {
-  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
+  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
   if (!apiKey) {
     return (
-      <div className="flex h-[200px] w-full items-center justify-center bg-muted rounded-lg">
+      <div className="bg-muted flex h-[200px] w-full items-center justify-center rounded-lg">
         <span className="text-muted-foreground text-sm">Map unavailable</span>
       </div>
-    )
+    );
   }
 
   const embedUrl = googlePlaceId
     ? `https://www.google.com/maps/embed/v1/place?key=${apiKey}&q=place_id:${googlePlaceId}`
-    : `https://www.google.com/maps/embed/v1/view?key=${apiKey}&center=${latitude},${longitude}&zoom=16`
+    : `https://www.google.com/maps/embed/v1/view?key=${apiKey}&center=${latitude},${longitude}&zoom=16`;
 
   return (
     <iframe
       title="Google Maps"
       src={embedUrl}
-      className="w-full h-[200px] rounded-lg"
+      className="h-[200px] w-full rounded-lg"
       style={{ border: 0 }}
       allowFullScreen
       loading="lazy"
       referrerPolicy="no-referrer-when-downgrade"
     />
-  )
+  );
 }

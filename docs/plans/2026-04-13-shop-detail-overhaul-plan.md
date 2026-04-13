@@ -15,6 +15,7 @@
 **Tech Stack:** Next.js 16, React, Google Maps Embed API, FastAPI, Supabase
 
 **Acceptance Criteria:**
+
 - [ ] User sees an interactive Google Maps embed (Place mode) on shop detail page
 - [ ] User can click Apple Maps link to navigate via Apple Maps app
 - [ ] User sees Instagram/website links when the shop has that data
@@ -26,6 +27,7 @@
 ## Task 1: Add NEXT_PUBLIC_GOOGLE_MAPS_API_KEY to env config
 
 **Files:**
+
 - Modify: `.env.example`
 - Modify: `.env.local` (manual step)
 
@@ -50,6 +52,7 @@ git commit -m "chore: add NEXT_PUBLIC_GOOGLE_MAPS_API_KEY to env config"
 ## Task 2: Create normalize_shop_name() in backend
 
 **Files:**
+
 - Create: `backend/utils/text.py`
 - Test: `backend/tests/utils/test_text.py`
 
@@ -168,6 +171,7 @@ git commit -m "feat(backend): add normalize_shop_name() utility"
 ## Task 3: Create normalizeShopName() in frontend
 
 **Files:**
+
 - Create: `lib/utils/text.ts`
 - Test: `lib/utils/text.test.ts`
 
@@ -277,6 +281,7 @@ git commit -m "feat(frontend): add normalizeShopName() utility"
 ## Task 4: Create GoogleMapsEmbed component
 
 **Files:**
+
 - Create: `components/shops/google-maps-embed.tsx`
 - Test: `components/shops/google-maps-embed.test.tsx`
 
@@ -297,7 +302,7 @@ describe('GoogleMapsEmbed', () => {
 
   it('renders iframe with Place mode when googlePlaceId provided', () => {
     render(<GoogleMapsEmbed {...defaultProps} googlePlaceId="ChIJ123abc" />)
-    
+
     const iframe = screen.getByTitle('Google Maps')
     expect(iframe).toBeInTheDocument()
     expect(iframe.getAttribute('src')).toContain('place?')
@@ -306,7 +311,7 @@ describe('GoogleMapsEmbed', () => {
 
   it('renders iframe with View mode when no googlePlaceId', () => {
     render(<GoogleMapsEmbed {...defaultProps} />)
-    
+
     const iframe = screen.getByTitle('Google Maps')
     expect(iframe).toBeInTheDocument()
     expect(iframe.getAttribute('src')).toContain('view?')
@@ -315,7 +320,7 @@ describe('GoogleMapsEmbed', () => {
 
   it('applies correct dimensions', () => {
     render(<GoogleMapsEmbed {...defaultProps} />)
-    
+
     const iframe = screen.getByTitle('Google Maps')
     expect(iframe).toHaveClass('w-full')
     expect(iframe).toHaveClass('h-[200px]')
@@ -323,7 +328,7 @@ describe('GoogleMapsEmbed', () => {
 
   it('has no border styling', () => {
     render(<GoogleMapsEmbed {...defaultProps} />)
-    
+
     const iframe = screen.getByTitle('Google Maps')
     expect(iframe).toHaveStyle({ border: '0' })
   })
@@ -403,6 +408,7 @@ git commit -m "feat: add GoogleMapsEmbed component with Place/View mode"
 ## Task 5: Remove "更多" toggle from ShopDescription
 
 **Files:**
+
 - Modify: `components/shops/shop-description.tsx`
 - Modify: `components/shops/shop-description.test.tsx`
 
@@ -475,6 +481,7 @@ git commit -m "fix: remove '更多' toggle from ShopDescription"
 ## Task 6: Update shop-detail-client.tsx — Replace map, fix links, add labels, apply name normalization
 
 **Files:**
+
 - Modify: `app/shops/[shopId]/[slug]/shop-detail-client.tsx`
 - Modify: `app/shops/[shopId]/[slug]/shop-detail-client.test.tsx`
 
@@ -549,6 +556,7 @@ Expected: FAIL
 **Step 3: Implementation changes**
 
 Key changes in `app/shops/[shopId]/[slug]/shop-detail-client.tsx`:
+
 1. Replace import: `ShopMapThumbnail` → `GoogleMapsEmbed` from `@/components/shops/google-maps-embed`
 2. Add import: `normalizeShopName` from `@/lib/utils/text`
 3. Add `const displayName = normalizeShopName(shop.name)` near top of component
@@ -574,6 +582,7 @@ git commit -m "feat: replace Mapbox with Google Embed, add link labels, normaliz
 ## Task 7: Delete ShopMapThumbnail component
 
 **Files:**
+
 - Delete: `components/shops/shop-map-thumbnail.tsx`
 - Delete: `components/shops/shop-map-thumbnail.test.tsx`
 
@@ -603,6 +612,7 @@ git commit -m "chore: remove deprecated ShopMapThumbnail component"
 ## Task 8: Call normalize_shop_name() in persist.py during enrichment
 
 **Files:**
+
 - Modify: `backend/workers/persist.py`
 - Test: `backend/tests/workers/test_persist.py`
 
@@ -622,10 +632,10 @@ class TestPersistShopNameNormalization:
 
         with patch('workers.persist.normalize_shop_name') as mock_normalize:
             mock_normalize.return_value = "日淬 Sun Drip Coffee"
-            
+
             # Call persist_scraped_data with a shop name containing SEO noise
             # (fill remaining required args from existing test fixtures)
-            
+
             mock_normalize.assert_called_once()
             # Verify first arg was the raw name with noise
             assert "(完整菜單" in mock_normalize.call_args[0][0]
@@ -665,6 +675,7 @@ git commit -m "feat(backend): normalize shop names during enrichment"
 ## Task 9: Update E2E tests for changed DOM structure
 
 **Files:**
+
 - Modify: `e2e/discovery.spec.ts`
 
 No separate test needed — this IS the test update.
@@ -672,6 +683,7 @@ No separate test needed — this IS the test update.
 **Step 1: Check affected selectors**
 
 Affected tests identified during research:
+
 - `e2e/discovery.spec.ts:131` — J04 uses `.mapboxgl-canvas` (may be on Find page, not shop detail — verify before changing)
 - `e2e/discovery.spec.ts:450` — J36 uses `getByRole('link', { name: 'Google Maps', exact: true })`
 - `e2e/discovery.spec.ts:474` — J36 uses `getByRole('link', { name: 'Apple Maps', exact: true })`
@@ -679,9 +691,11 @@ Affected tests identified during research:
 **Step 2: Update selectors**
 
 For `.mapboxgl-canvas` (line 131): Read the test context. If it tests the shop detail map, update to:
+
 ```typescript
 await expect(page.getByTitle('Google Maps')).toBeVisible()
 ```
+
 If it tests the Find page map (not shop detail), leave unchanged.
 
 For J36 navigation links (lines 450, 474): Labels should already match since Task 6 adds "Google Maps" and "Apple Maps" text. Verify these tests still pass — update only if needed.
@@ -703,6 +717,7 @@ git commit -m "test(e2e): update selectors for Google Maps embed"
 ## Task 10: Update SPEC.md and PRD.md
 
 **Files:**
+
 - Modify: `SPEC.md`
 - Modify: `PRD.md`
 - Modify: `SPEC_CHANGELOG.md`
@@ -713,6 +728,7 @@ No test needed — documentation only.
 **Step 1: Update SPEC.md §1 Tech Stack**
 
 Change Maps row to:
+
 ```
 | Maps | Mapbox GL JS (Find/Explore page) + Google Maps Embed API (Shop detail) | MapsProvider protocol |
 ```
@@ -720,6 +736,7 @@ Change Maps row to:
 **Step 2: Update SPEC.md §2 System Modules**
 
 In the Shop Detail section, add:
+
 ```
 Shop detail surfaces Google Maps Embed (Place mode) and deep links to Google/Apple Maps for navigation. Embedded Mapbox is used only on the /find page.
 ```
@@ -727,6 +744,7 @@ Shop detail surfaces Google Maps Embed (Place mode) and deep links to Google/App
 **Step 3: Update PRD.md §7 Design Handoff**
 
 Update map thumbnail reference:
+
 ```
 Google Maps embed (Place mode with place card) → external navigation links (Google Maps, Apple Maps)
 ```
@@ -734,11 +752,13 @@ Google Maps embed (Place mode with place card) → external navigation links (Go
 **Step 4: Add changelog entries**
 
 SPEC_CHANGELOG.md:
+
 ```
 2026-04-13 | §1 Tech Stack, §2 System Modules | Added Google Maps Embed API for shop detail; clarified Mapbox is /find-only | DEV-332
 ```
 
 PRD_CHANGELOG.md:
+
 ```
 2026-04-13 | §7 Design Handoff | Updated map thumbnail to Google Maps embed (Place mode) | DEV-332
 ```
@@ -790,23 +810,28 @@ graph TD
 ```
 
 **Wave 1** (parallel — no dependencies):
+
 - Task 1: Env config
 - Task 2: Backend normalize_shop_name()
 - Task 3: Frontend normalizeShopName()
 - Task 5: ShopDescription toggle removal
 
 **Wave 2** (parallel — depends on Wave 1):
+
 - Task 4: GoogleMapsEmbed component ← Task 1
 - Task 8: persist.py integration ← Task 2
 
 **Wave 3** (sequential — depends on Wave 2):
+
 - Task 6: shop-detail-client integration ← Tasks 3, 4, 5
 
 **Wave 4** (parallel — depends on Wave 3):
+
 - Task 7: Delete ShopMapThumbnail ← Task 6
 - Task 9: E2E updates ← Task 6
 
 **Wave 5** (sequential — depends on Wave 4):
+
 - Task 10: Documentation ← Tasks 7, 8, 9
 
 ---

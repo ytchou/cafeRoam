@@ -41,7 +41,9 @@ vi.mock('@/components/shops/recent-checkins-strip', () => ({
 }));
 vi.mock('@/components/shops/google-maps-embed', () => ({
   GoogleMapsEmbed: ({ googlePlaceId }: { googlePlaceId?: string }) => (
-    <div data-testid="google-maps-embed" data-place-id={googlePlaceId ?? ''}>Google Maps Embed</div>
+    <div data-testid="google-maps-embed" data-place-id={googlePlaceId ?? ''}>
+      Google Maps Embed
+    </div>
   ),
 }));
 vi.mock('@/components/shops/shop-reviews', () => ({ ShopReviews: () => null }));
@@ -296,17 +298,17 @@ describe('Wave 3 — GoogleMapsEmbed, Apple Maps label, name normalization', () 
     website: 'https://testcoffee.com' as string | null,
     facebookUrl: null as string | null,
     threadsUrl: null as string | null,
-  }
+  };
 
   it('renders GoogleMapsEmbed instead of ShopMapThumbnail', () => {
-    render(<ShopDetailClient shop={mockShopW3} />)
-    expect(screen.getByTestId('google-maps-embed')).toBeInTheDocument()
-  })
+    render(<ShopDetailClient shop={mockShopW3} />);
+    expect(screen.getByTestId('google-maps-embed')).toBeInTheDocument();
+  });
 
   it('displays normalized shop name without SEO noise', () => {
-    render(<ShopDetailClient shop={mockShopW3} />)
+    render(<ShopDetailClient shop={mockShopW3} />);
     // The raw name with SEO noise should NOT appear as text content
-    const allText = document.body.textContent ?? ''
-    expect(allText).not.toContain('(完整菜單可點instagram)')
-  })
-})
+    const allText = document.body.textContent ?? '';
+    expect(allText).not.toContain('(完整菜單可點instagram)');
+  });
+});
