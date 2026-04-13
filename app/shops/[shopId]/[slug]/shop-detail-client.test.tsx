@@ -47,7 +47,12 @@ vi.mock('@/components/shops/shop-actions-row', () => ({
     <>
       <button aria-label="Check In 打卡">Check In 打卡</button>
       {googleMapsUrl && (
-        <a href={googleMapsUrl} target="_blank" rel="noopener noreferrer" aria-label="Get Directions">
+        <a
+          href={googleMapsUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Get Directions"
+        >
           Get Directions
         </a>
       )}
@@ -260,7 +265,10 @@ describe('Get Directions integration', () => {
 
     const directionsBtn = screen.getByRole('link', { name: /get directions/i });
     expect(directionsBtn).toBeInTheDocument();
-    expect(directionsBtn).toHaveAttribute('href', expect.stringContaining('google.com/maps'));
+    expect(directionsBtn).toHaveAttribute(
+      'href',
+      expect.stringContaining('google.com/maps')
+    );
   });
 
   it('does not pass googleMapsUrl when shop lacks coordinates', () => {
@@ -272,6 +280,8 @@ describe('Get Directions integration', () => {
 
     render(<ShopDetailClient shop={shopWithoutCoords} />);
 
-    expect(screen.queryByRole('link', { name: /get directions/i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('link', { name: /get directions/i })
+    ).not.toBeInTheDocument();
   });
 });
