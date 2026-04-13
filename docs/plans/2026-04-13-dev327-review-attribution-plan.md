@@ -15,6 +15,7 @@
 **Tech Stack:** React, TypeScript, Tailwind CSS, Vitest + Testing Library
 
 **Acceptance Criteria:**
+
 - [ ] User sees rating number with stars and laurel wreath decorations on shop detail page
 - [ ] User sees "X reviews on Google Maps" attribution text next to the rating
 - [ ] Rating badge is hidden when there are no reviews (reviewCount is 0 or null)
@@ -25,6 +26,7 @@
 ## Task 1: Create Laurel Wreath SVG Components
 
 **Files:**
+
 - Create: `components/ui/icons/laurel-left.tsx`
 - Create: `components/ui/icons/laurel-right.tsx`
 - Test: `components/ui/icons/laurel.test.tsx`
@@ -89,6 +91,7 @@ git commit -m "feat(ui): add laurel wreath SVG icons for rating badge"
 ## Task 2: Create RatingBadge Component with TDD
 
 **Files:**
+
 - Create: `components/shops/rating-badge.tsx`
 - Test: `components/shops/rating-badge.test.tsx`
 
@@ -252,6 +255,7 @@ Handles edge cases (null rating, zero reviews)."
 ## Task 3: Update ShopIdentity to Use RatingBadge
 
 **Files:**
+
 - Modify: `components/shops/shop-identity.tsx`
 - Modify: `components/shops/shop-identity.test.tsx`
 
@@ -312,6 +316,7 @@ Expected: FAIL (RatingBadge not imported/used in ShopIdentity)
 **Step 3: Update ShopIdentity implementation**
 
 Modify `components/shops/shop-identity.tsx` to:
+
 1. Import RatingBadge
 2. Replace inline rating display with RatingBadge component
 
@@ -345,6 +350,7 @@ that shows laurel wreaths and Google Maps attribution."
 ## Task 4: Update E2E Tests for Text Matcher Changes
 
 **Files:**
+
 - Modify: `e2e/discovery.spec.ts`
 - No test needed — this IS the test update
 
@@ -355,6 +361,7 @@ Read `e2e/discovery.spec.ts` line 467 to see the current `getByText('Google Maps
 **Step 2: Update E2E test if needed**
 
 If the test uses `getByText('Google Maps')` exactly, it may now match the new attribution text. Options:
+
 - Use `getByRole('link', { name: /google maps/i })` for the navigation link specifically
 - Use `getByTestId` if we add a data-testid to the navigation link
 - The new attribution is not a link, so role-based selection should differentiate
@@ -381,6 +388,7 @@ attribution badge."
 ## Task 5: Visual Verification and Final Cleanup
 
 **Files:**
+
 - No file changes — verification task
 - No test needed — manual visual check
 
@@ -395,6 +403,7 @@ Open browser to `http://localhost:3000/shops/[any-shop-id]/[slug]`
 **Step 3: Verify visual appearance**
 
 Check:
+
 - [ ] Rating number displays correctly (e.g., "4.8")
 - [ ] 5 stars render with correct fill based on rating
 - [ ] Laurel wreaths appear on both sides
@@ -443,18 +452,23 @@ graph TD
 ```
 
 **Wave 1** (foundation):
+
 - Task 1: Create laurel wreath SVG components
 
 **Wave 2** (depends on Wave 1):
+
 - Task 2: Create RatingBadge component with TDD ← Task 1
 
 **Wave 3** (depends on Wave 2):
+
 - Task 3: Update ShopIdentity to use RatingBadge ← Task 2
 
 **Wave 4** (depends on Wave 3):
+
 - Task 4: Update E2E tests if needed ← Task 3
 
 **Wave 5** (depends on Wave 4):
+
 - Task 5: Visual verification and cleanup ← Task 4
 
 ---

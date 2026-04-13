@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { cn } from "@/lib/utils";
-import { LaurelLeft } from "@/components/ui/icons/laurel-left";
-import { LaurelRight } from "@/components/ui/icons/laurel-right";
-import { Star } from "lucide-react";
+import { cn } from '@/lib/utils';
+import { LaurelLeft } from '@/components/ui/icons/laurel-left';
+import { LaurelRight } from '@/components/ui/icons/laurel-right';
+import { Star } from 'lucide-react';
 
 interface RatingBadgeProps {
   rating: number | null;
@@ -15,11 +15,16 @@ interface RatingBadgeProps {
 export function RatingBadge({
   rating,
   reviewCount,
-  source = "Google Maps",
+  source = 'Google Maps',
   className,
 }: RatingBadgeProps) {
   // Return null if no meaningful data to display
-  if (rating === null || rating === undefined || !reviewCount || reviewCount === 0) {
+  if (
+    rating === null ||
+    rating === undefined ||
+    !reviewCount ||
+    reviewCount === 0
+  ) {
     return null;
   }
 
@@ -27,20 +32,15 @@ export function RatingBadge({
   const filledStars = Math.round(rating);
 
   return (
-    <div
-      className={cn(
-        "flex items-center gap-6 py-3",
-        className
-      )}
-    >
+    <div className={cn('flex items-center gap-6 py-3', className)}>
       {/* Rating with laurels */}
       <div className="flex items-center gap-1">
         <LaurelLeft
           data-testid="laurel-left"
-          className="h-10 w-5 text-text-meta"
+          className="text-text-meta h-10 w-5"
         />
         <div className="flex flex-col items-center">
-          <span className="text-3xl font-bold text-text-primary">
+          <span className="text-text-primary text-3xl font-bold">
             {displayRating}
           </span>
           <div className="flex gap-0.5">
@@ -50,10 +50,10 @@ export function RatingBadge({
                 data-testid="star-icon"
                 data-filled={star <= filledStars}
                 className={cn(
-                  "h-3 w-3",
+                  'h-3 w-3',
                   star <= filledStars
-                    ? "fill-rating-star text-rating-star"
-                    : "fill-text-meta text-text-meta"
+                    ? 'fill-rating-star text-rating-star'
+                    : 'fill-text-meta text-text-meta'
                 )}
               />
             ))}
@@ -61,12 +61,12 @@ export function RatingBadge({
         </div>
         <LaurelRight
           data-testid="laurel-right"
-          className="h-10 w-5 text-text-meta"
+          className="text-text-meta h-10 w-5"
         />
       </div>
 
       {/* Attribution text */}
-      <span className="text-sm text-text-secondary">
+      <span className="text-text-secondary text-sm">
         {reviewCount} reviews on {source}
       </span>
     </div>

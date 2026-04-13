@@ -47,8 +47,8 @@ describe('ShopIdentity', () => {
     const stars = screen.getAllByTestId('star-icon');
     expect(stars).toHaveLength(5);
     // 4.5 rounds to 5 filled stars
-    const filledStars = stars.filter((star) =>
-      star.getAttribute('data-filled') === 'true'
+    const filledStars = stars.filter(
+      (star) => star.getAttribute('data-filled') === 'true'
     );
     expect(filledStars).toHaveLength(5);
   });

@@ -9,6 +9,7 @@ Hardcode "Google Maps" as the review source label in the ShopIdentity/RatingBadg
 ## Context
 
 Users need to see where review counts come from to build trust (per DEV-327). Currently, all review data comes from a single source: Google Maps via Apify scraping. We need to display attribution (e.g., "120 reviews on Google Maps") but must decide whether to:
+
 1. Hardcode the source as "Google" in the UI
 2. Add a `review_source` database column for future flexibility
 3. Track separate counts for Google vs. community reviews now
@@ -29,16 +30,19 @@ Users need to see where review counts come from to build trust (per DEV-327). Cu
 ## Consequences
 
 **Advantages:**
+
 - Faster implementation (frontend-only, no migration)
 - Simpler codebase (no premature abstraction)
 - No risk of incorrect source labeling (single source = no ambiguity)
 
 **Disadvantages:**
+
 - When adding other review sources, we'll need a migration to add `review_source` column
 - UI component will need refactor to handle multiple sources dynamically
 - Temporary hardcode creates minor tech debt (flagged in DEV-331)
 
 **Migration path when adding sources:**
+
 1. Add `review_source ENUM('google', 'community', 'yelp', ...)` to shops table
 2. Backfill existing rows with `'google'`
 3. Update RatingBadge to accept `source` prop instead of hardcoding

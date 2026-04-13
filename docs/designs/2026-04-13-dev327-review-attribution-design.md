@@ -11,6 +11,7 @@ Add source attribution to review counts on the shop detail page. Users will see 
 ## Architecture
 
 **Approach:** Frontend-only change. Create a new `RatingBadge` component with horizontal layout:
+
 - Left side: Rating number + 5-star visualization + laurel wreath decorations
 - Right side: Attribution text ("X reviews on Google Maps")
 
@@ -23,12 +24,14 @@ Hardcode "Google Maps" as the source per ADR-2026-04-13 (all review data comes f
 **File:** `components/shops/rating-badge.tsx`
 
 **Props:**
+
 - `rating: number | null` — The rating value (e.g., 4.8)
 - `reviewCount: number | null` — Number of reviews
 - `source?: string` — Attribution source (default: "Google Maps")
 - `className?: string` — Additional CSS classes
 
 **Behavior:**
+
 - Returns `null` if `rating` or `reviewCount` is null/0
 - Rounds rating to 1 decimal place for display
 - Stars filled based on rounded rating (e.g., 4.2 → 4 filled stars)
@@ -36,6 +39,7 @@ Hardcode "Google Maps" as the source per ADR-2026-04-13 (all review data comes f
 ### New: Laurel Wreath SVGs
 
 **Files:**
+
 - `components/ui/icons/laurel-left.tsx`
 - `components/ui/icons/laurel-right.tsx`
 
@@ -59,15 +63,16 @@ shop-detail-client.tsx
 
 ## Error Handling
 
-| Condition | Behavior |
-|-----------|----------|
-| `reviewCount` is 0 or null | Hide entire badge |
-| `rating` is null | Hide entire badge |
+| Condition                    | Behavior             |
+| ---------------------------- | -------------------- |
+| `reviewCount` is 0 or null   | Hide entire badge    |
+| `rating` is null             | Hide entire badge    |
 | Invalid rating (outside 0-5) | Clamp to valid range |
 
 ## Testing Strategy
 
 **Unit tests** (`rating-badge.test.tsx`):
+
 1. Renders rating number and attribution text when reviewCount > 0
 2. Correct star fill based on rating value
 3. Returns null for edge cases (0 reviews, null rating)
@@ -75,6 +80,7 @@ shop-detail-client.tsx
 5. Rating clamped to 1 decimal place
 
 **Integration tests** (`shop-identity.test.tsx`):
+
 1. ShopIdentity passes props to RatingBadge
 2. RatingBadge renders within ShopIdentity layout
 
