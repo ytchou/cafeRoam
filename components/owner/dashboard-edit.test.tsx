@@ -50,9 +50,11 @@ describe('DashboardEdit', () => {
       body: story.body,
       is_published: true,
     });
-    await waitFor(() =>
-      expect(screen.getByRole('button', { name: '已儲存' })).toBeTruthy()
-    );
+    await waitFor(() => {
+      const button = screen.getByRole('button', { name: '發布' });
+      expect(button).toBeTruthy();
+      expect(button).toHaveTextContent('已儲存');
+    });
   });
 
   it('save button is disabled while saving', async () => {
@@ -72,10 +74,37 @@ describe('DashboardEdit', () => {
     );
     const button = screen.getByRole('button', { name: '發布' });
     await userEvent.click(button);
-    await waitFor(() =>
-      expect(screen.getByRole('button', { name: '儲存中...' })).toBeTruthy()
+    await waitFor(() => {
+      const saveButton = screen.getByRole('button', { name: '發布' });
+      expect(saveButton).toBeTruthy();
+      expect(saveButton).toHaveTextContent('儲存中...');
+    });
+    expect(screen.getByRole('button', { name: '發布' })).toBeDisabled();
+    resolve!();
+  });
+
+  it('given the owner is saving, the save button shows aria-busy and "儲存中..." loading text', async () => {
+    let resolve: () => void;
+    const slowSave = vi.fn().mockReturnValueOnce(
+      new Promise<void>((r) => {
+        resolve = r;
+      })
     );
-    expect(screen.getByRole('button', { name: '儲存中...' })).toBeDisabled();
+    render(
+      <DashboardEdit
+        story={story}
+        tags={[]}
+        onSaveStory={slowSave}
+        onSaveTags={vi.fn().mockResolvedValue(undefined)}
+      />
+    );
+    await userEvent.click(screen.getByRole('button', { name: '發布' }));
+    await waitFor(() => {
+      const btn = screen.getByRole('button', { name: '發布' });
+      expect(btn).toHaveAttribute('aria-busy', 'true');
+      expect(btn).toHaveTextContent('儲存中...');
+      expect(btn).toBeDisabled();
+    });
     resolve!();
   });
 
