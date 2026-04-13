@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { PhotoUploader } from '@/components/checkins/photo-uploader';
 import { StarRating } from '@/components/reviews/star-rating';
 import { useCheckIn } from '@/lib/hooks/use-check-in';
+import { Button } from '@/components/ui/button';
 import {
   Popover,
   PopoverContent,
@@ -109,14 +110,16 @@ export function CheckInPopover({
         </div>
 
         <div className="px-4 pb-4">
-          <button
+          <Button
             onClick={handleSubmit}
+            loading={busy}
+            loadingText="Checking in..."
             disabled={!canSubmit}
             aria-label="Check In 打卡"
             className="bg-espresso w-full rounded-lg py-2.5 text-sm font-semibold text-white disabled:opacity-40"
           >
-            {busy ? 'Checking in...' : 'Check In 打卡'}
-          </button>
+            Check In 打卡
+          </Button>
         </div>
       </PopoverContent>
     </Popover>
