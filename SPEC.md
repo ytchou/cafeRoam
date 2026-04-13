@@ -19,7 +19,7 @@
 | Styling          | Tailwind CSS + shadcn/ui          | Fast iteration, mobile-first design                  |
 | Frontend testing | Vitest + Testing Library          | Frontend unit + integration tests                    |
 | Backend testing  | pytest + pytest-asyncio           | API + service + worker tests                         |
-| Maps             | Mapbox GL JS                      | Abstracted behind MapsProvider protocol              |
+| Maps             | Mapbox GL JS (Find/Explore page) + Google Maps Embed API (Shop detail) | MapsProvider protocol |
 | Storage          | Supabase Storage                  | Check-in photos, menu photos; RLS enforced           |
 | Error tracking   | Sentry                            | Frontend + backend, free tier at launch              |
 | Analytics        | PostHog                           | Via AnalyticsProvider protocol abstraction           |
@@ -40,6 +40,7 @@
 | Admin/ops             | Internal data quality dashboard, manual enrichment and verification UI                                                                                                                                                                                                               | 1     |
 | Background workers    | FastAPI embedded workers (APScheduler): enrichment, embedding refresh, weekly email cron                                                                                                                                                                                             | 1     |
 | Shop directory        | Map + list directory view now lives at `/find`; mobile list view + mobile/desktop map view; responsive layouts at ≥1024px; geolocation; multi-dimension filters                                                                                                                      | 2     |
+| Shop detail           | Per-shop detail page at `/shops/[slug]`; surfaces Google Maps Embed (Place mode) and deep links to Google/Apple Maps for navigation. Embedded Mapbox is used only on the /find page. | 2     |
 | Semantic search       | pgvector similarity + taxonomy boost; AI search bar is the homepage hero at `/`; suggestion chips and mode chips (work/rest/social) on Home; name search also available                                                                                                              | 2     |
 | Explore               | `/explore/vibes/[slug]` — Vibe category page with collapsible map panel (expanded by default), multi-select district filter chips, and "Near Me" toggle. Shows all matching shops by default (no geo-gating). Map uses existing Mapbox integration with bidirectional pin-list sync. | 2     |
 | User lists            | Create/edit/delete (max 3), add/remove shops                                                                                                                                                                                                                                         | 2     |

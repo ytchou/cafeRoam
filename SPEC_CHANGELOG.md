@@ -4,6 +4,8 @@ Every change to SPEC.md must be logged here immediately after the edit is made.
 
 **Format:** `YYYY-MM-DD | Section changed | What changed | Why`
 
+2026-04-13 | §1 Tech Stack, §2 System Modules | Added Google Maps Embed API for shop detail; clarified Mapbox is /find-only | DEV-332
+
 2026-04-09 | §9 Responsive layouts, §2 System Modules | Bottom nav reduced from 5 to 4 tabs; Lists/收藏 tab removed; Lists content accessible via Profile page tabs | DEV-296 nav consolidation
 
 | 2026-04-06 | §2 Data pipeline, §9 Business Rules | Removed per-submission scraping; documented batch-only pipeline (daily cron 03:10 Asia/Taipei, completes within 24h) | DEV-276 |
