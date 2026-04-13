@@ -19,7 +19,7 @@ export function RatingBadge({
   className,
 }: RatingBadgeProps) {
   // Return null if no meaningful data to display
-  if (!rating || !reviewCount || reviewCount === 0) {
+  if (rating === null || rating === undefined || !reviewCount || reviewCount === 0) {
     return null;
   }
 
@@ -37,10 +37,10 @@ export function RatingBadge({
       <div className="flex items-center gap-1">
         <LaurelLeft
           data-testid="laurel-left"
-          className="h-10 w-5 text-gray-300"
+          className="h-10 w-5 text-text-meta"
         />
         <div className="flex flex-col items-center">
-          <span className="text-3xl font-bold text-gray-700">
+          <span className="text-3xl font-bold text-text-primary">
             {displayRating}
           </span>
           <div className="flex gap-0.5">
@@ -52,8 +52,8 @@ export function RatingBadge({
                 className={cn(
                   "h-3 w-3",
                   star <= filledStars
-                    ? "fill-yellow-400 text-yellow-400"
-                    : "fill-gray-200 text-gray-200"
+                    ? "fill-rating-star text-rating-star"
+                    : "fill-text-meta text-text-meta"
                 )}
               />
             ))}
@@ -61,12 +61,12 @@ export function RatingBadge({
         </div>
         <LaurelRight
           data-testid="laurel-right"
-          className="h-10 w-5 text-gray-300"
+          className="h-10 w-5 text-text-meta"
         />
       </div>
 
       {/* Attribution text */}
-      <span className="text-sm text-gray-600">
+      <span className="text-sm text-text-secondary">
         {reviewCount} reviews on {source}
       </span>
     </div>
