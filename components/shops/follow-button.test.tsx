@@ -195,7 +195,11 @@ describe('Shop follow button', () => {
     let resolveToggle: (value: unknown) => void;
     mockFetchWithAuth.mockImplementation((url: string) => {
       if (url.includes('/count')) {
-        return Promise.resolve({ count: 0, visible: false, isFollowing: false });
+        return Promise.resolve({
+          count: 0,
+          visible: false,
+          isFollowing: false,
+        });
       }
       return new Promise((resolve) => {
         resolveToggle = resolve;

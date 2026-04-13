@@ -62,7 +62,9 @@ describe('a user interacting with the SearchBar', () => {
         isSearching={true}
       />
     );
-    expect(screen.getByPlaceholderText('Search coffee shops...')).toBeDisabled();
+    expect(
+      screen.getByPlaceholderText('Search coffee shops...')
+    ).toBeDisabled();
     expect(screen.getByText('搜尋中…')).toBeVisible();
   });
 });

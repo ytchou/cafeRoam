@@ -17,6 +17,7 @@
 **Tech Stack:** Next.js 16.1, React 19.2 (useTransition), shadcn/ui + Radix Slot, SWR 2.4, Vitest + Testing Library, Playwright.
 
 **Acceptance Criteria:**
+
 - [ ] A user clicking a shop card sees a top progress bar within 100ms and the card visibly dims
 - [ ] A user submitting search sees the button show a spinner and "搜尋中…" until results return
 - [ ] A user toggling a list in save-popover sees the checkbox flip instantly (optimistic); on a server error it reverts with a toast
@@ -44,6 +45,7 @@
 ### Task 1: Install next-nprogress-bar and wire AppProgressProvider
 
 **Files:**
+
 - Modify: `package.json`
 - Modify: `app/layout.tsx`
 - No test needed — config wiring. Manual dev-server smoke in Task 9.
@@ -107,6 +109,7 @@ git commit -m "feat(DEV-326): add next-nprogress-bar for global route transition
 ### Task 2: Extend Button primitive with `loading` + `loadingText` props
 
 **Files:**
+
 - Modify: `components/ui/button.tsx`
 - Test: `components/ui/button.test.tsx`
 
@@ -275,6 +278,7 @@ git commit -m "feat(DEV-326): add loading + loadingText props to Button primitiv
 ### Task 3: Migrate check-in-popover to Button `loading` prop
 
 **Files:**
+
 - Modify: `components/shops/check-in-popover.tsx`
 - Test: existing check-in-popover test OR new assertion in an existing test file
 
@@ -344,6 +348,7 @@ git commit -m "feat(DEV-326): migrate check-in-popover to Button loading prop"
 ### Task 4: Migrate dashboard-edit save button to Button `loading` prop
 
 **Files:**
+
 - Modify: `components/owner/dashboard-edit.tsx`
 - Test: `components/owner/dashboard-edit.test.tsx` (extend)
 
@@ -401,6 +406,7 @@ git commit -m "feat(DEV-326): migrate dashboard-edit save button to Button loadi
 ### Task 5: Migrate follow-button to Button `loading` prop
 
 **Files:**
+
 - Modify: `components/shops/follow-button.tsx`
 - Test: `components/shops/follow-button.test.tsx` (extend)
 
@@ -457,6 +463,7 @@ git commit -m "feat(DEV-326): migrate follow-button to Button loading prop"
 ### Task 6: Refactor save-popover to optimistic SWR pattern
 
 **Files:**
+
 - Modify: `components/shops/save-popover.tsx`
 - Test: `components/shops/save-popover.test.tsx` (create if missing)
 
@@ -546,6 +553,7 @@ git commit -m "feat(DEV-326): optimistic SWR mutate with rollback in save-popove
 ### Task 7: Wrap shop-card router.push in useTransition
 
 **Files:**
+
 - Modify: `components/shops/shop-card.tsx`
 - Test: `components/shops/shop-card.test.tsx` (extend)
 
@@ -620,6 +628,7 @@ git commit -m "feat(DEV-326): wrap shop-card navigation in useTransition with ar
 ### Task 8: Add `isSearching` to search-bar and emit `搜尋中…` text
 
 **Files:**
+
 - Modify: `components/filters/search-bar.tsx`
 - Modify: parent page that renders search results (grep for `<SearchBar` consumers + `useSearch` to locate)
 - Test: `components/filters/search-bar.test.tsx` (create or extend)
@@ -647,6 +656,7 @@ Expected: FAIL.
 **Step 3: Implement**
 
 Add `isSearching?: boolean` to `SearchBarProps`. Wire it to:
+
 - Disable the input and filter button while searching
 - Render `<span>搜尋中…</span>` (or similar) inline visibly when `isSearching`
 - Use `<Button loading={isSearching}>` for the filter/search submit button
@@ -674,6 +684,7 @@ git commit -m "feat(DEV-326): surface 搜尋中… loading state in search bar"
 ### Task 9: E2E drift verification + manual dev-server smoke
 
 **Files:**
+
 - No code changes. Verification only.
 
 **Step 1: Full E2E drift grep**
@@ -710,6 +721,7 @@ pnpm dev
 ```
 
 In the browser:
+
 1. Click a shop card → top progress bar appears within 100ms; card dims via `data-pending`
 2. Tap bottom-nav tabs → global progress bar fires on each
 3. Submit search → "搜尋中…" appears + button spinner
@@ -773,21 +785,25 @@ graph TD
 ```
 
 **Wave 1** (parallel — no cross-task file overlap):
+
 - Task 1: next-nprogress-bar install + layout wiring (touches package.json, app/layout.tsx)
 - Task 2: Button primitive loading prop (touches components/ui/button.tsx, button.test.tsx)
 - Task 6: save-popover optimistic refactor (touches save-popover.tsx + test — does NOT use new Button prop for the checkbox itself)
 - Task 7: shop-card useTransition (touches shop-card.tsx + test)
 
 **Wave 2** (parallel — all depend on Task 2):
+
 - Task 3: check-in-popover migration
 - Task 4: dashboard-edit migration
 - Task 5: follow-button migration
 - Task 8: search-bar isSearching + 搜尋中… (uses new Button loading prop in filter button)
 
 **Wave 3** (single sequential):
+
 - Task 9: Full E2E drift verification + manual smoke
 
 **Wave 4** (single sequential):
+
 - Task 10: Open PR
 
 ---

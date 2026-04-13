@@ -65,12 +65,12 @@ Wrap the single `router.push()` in `components/shops/shop-card.tsx` with React 1
 
 ## E2E drift risk + mitigation
 
-| Risk | Mitigation |
-|---|---|
-| `checkin.spec.ts` matches `getByRole('button', { name: /打卡\|Check In/i })` | Task 3 sets `aria-label="Check In 打卡"` explicitly on the migrated button. |
-| `search.spec.ts` expects `搜尋中…` text — **which doesn't currently exist in source** | Task 8 adds the text to `search-bar.tsx`. This is a fix, not a drift. |
-| `discovery.spec.ts` and `search.spec.ts` use `locator('article').first()` | Task 7 keeps `<article>` as the outer element; only adds attributes, no DOM structure change. |
-| `following.spec.ts` checks `toBeEnabled()` waits | Task 5 preserves `aria-label` on follow-button; `toBeEnabled()` still detects the loading-to-ready transition. |
+| Risk                                                                                  | Mitigation                                                                                                     |
+| ------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `checkin.spec.ts` matches `getByRole('button', { name: /打卡\|Check In/i })`          | Task 3 sets `aria-label="Check In 打卡"` explicitly on the migrated button.                                    |
+| `search.spec.ts` expects `搜尋中…` text — **which doesn't currently exist in source** | Task 8 adds the text to `search-bar.tsx`. This is a fix, not a drift.                                          |
+| `discovery.spec.ts` and `search.spec.ts` use `locator('article').first()`             | Task 7 keeps `<article>` as the outer element; only adds attributes, no DOM structure change.                  |
+| `following.spec.ts` checks `toBeEnabled()` waits                                      | Task 5 preserves `aria-label` on follow-button; `toBeEnabled()` still detects the loading-to-ready transition. |
 
 ## Testing classification
 
@@ -82,13 +82,13 @@ Wrap the single `router.push()` in `components/shops/shop-card.tsx` with React 1
 
 See [docs/plans/2026-04-13-dev326-loading-states-plan.md](../plans/2026-04-13-dev326-loading-states-plan.md) for the task-by-task breakdown. Summary:
 
-| Layer | Files |
-|---|---|
-| Deps | `package.json` |
-| Layout | `app/layout.tsx` |
-| Primitive | `components/ui/button.tsx` + test |
+| Layer      | Files                                                                                                                                   |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Deps       | `package.json`                                                                                                                          |
+| Layout     | `app/layout.tsx`                                                                                                                        |
+| Primitive  | `components/ui/button.tsx` + test                                                                                                       |
 | Components | `shop-card.tsx`, `search-bar.tsx`, `save-popover.tsx`, `check-in-popover.tsx`, `dashboard-edit.tsx`, `follow-button.tsx` (+ tests each) |
-| Excluded | `bottom-nav.tsx`, `header-nav.tsx`, `loading.tsx` segments |
+| Excluded   | `bottom-nav.tsx`, `header-nav.tsx`, `loading.tsx` segments                                                                              |
 
 ## Out of scope
 

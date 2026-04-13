@@ -41,7 +41,7 @@ const buttonVariants = cva(
 function Spinner({ className }: { className?: string }) {
   return (
     <svg
-      className={cn('animate-spin h-4 w-4', className)}
+      className={cn('h-4 w-4 animate-spin', className)}
       xmlns="http://www.w3.org/2000/svg"
       fill="none"
       viewBox="0 0 24 24"
