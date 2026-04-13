@@ -6,8 +6,8 @@ from supabase import Client
 from models.types import JobType
 from providers.scraper.interface import ScrapedShopData
 from services.district_service import _parse_city_district
-from workers.queue import JobQueue
 from utils.text import normalize_shop_name
+from workers.queue import JobQueue
 
 logger = structlog.get_logger()
 
