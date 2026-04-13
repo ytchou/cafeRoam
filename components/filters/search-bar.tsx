@@ -1,12 +1,14 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { Search, SlidersHorizontal } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface SearchBarProps {
   onSearch: (query: string) => void;
   onFilterClick: () => void;
   defaultQuery?: string;
   placeholder?: string;
+  isSearching?: boolean;
 }
 
 export function SearchBar({
@@ -14,6 +16,7 @@ export function SearchBar({
   onFilterClick,
   defaultQuery = '',
   placeholder = 'Search coffee shops...',
+  isSearching = false,
 }: SearchBarProps) {
   const [value, setValue] = useState(defaultQuery);
 
@@ -39,16 +42,24 @@ export function SearchBar({
           value={value}
           onChange={(e) => setValue(e.target.value)}
           placeholder={placeholder}
+          disabled={isSearching}
           className="flex-1 bg-transparent font-[family-name:var(--font-body)] text-[15px] text-[var(--foreground)] outline-none placeholder:text-[var(--text-tertiary)]"
         />
-        <button
+        {isSearching && (
+          <span className="shrink-0 text-xs text-[var(--text-tertiary)]">
+            搜尋中…
+          </span>
+        )}
+        <Button
           type="button"
+          variant="default"
           aria-label="Open filters"
+          loading={isSearching}
           onClick={onFilterClick}
           className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--active-dark)] text-white"
         >
           <SlidersHorizontal className="h-[18px] w-[18px]" />
-        </button>
+        </Button>
       </div>
     </form>
   );

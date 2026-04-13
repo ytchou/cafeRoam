@@ -341,6 +341,7 @@ function HomePageContent() {
           onBoundsChange={handleBoundsChange}
           onCardClick={handleShopNavigate}
           isDesktop={isDesktop}
+          isSearching={searchLoading}
         />
       </section>
       {user && <PreferenceOnboardingModal />}

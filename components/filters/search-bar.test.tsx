@@ -53,4 +53,16 @@ describe('a user interacting with the SearchBar', () => {
     );
     expect(screen.getByDisplayValue('mocha')).toBeInTheDocument();
   });
+
+  it('given a search is in flight, the input is disabled and 搜尋中… text is visible', () => {
+    render(
+      <SearchBar
+        onSearch={() => {}}
+        onFilterClick={() => {}}
+        isSearching={true}
+      />
+    );
+    expect(screen.getByPlaceholderText('Search coffee shops...')).toBeDisabled();
+    expect(screen.getByText('搜尋中…')).toBeVisible();
+  });
 });
