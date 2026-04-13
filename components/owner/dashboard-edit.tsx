@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
 
 interface Story {
   id?: string;
@@ -73,13 +74,16 @@ export function DashboardEdit({
           公開發布
         </label>
       </div>
-      <button
+      <Button
         onClick={handleSave}
+        loading={saving}
+        loadingText="儲存中..."
         disabled={saving}
+        aria-label="發布"
         className="bg-primary text-primary-foreground w-full rounded-lg py-2 text-sm font-medium disabled:opacity-50"
       >
-        {saving ? '儲存中...' : saved ? '已儲存' : '發布'}
-      </button>
+        {saved ? '已儲存' : '發布'}
+      </Button>
     </div>
   );
 }

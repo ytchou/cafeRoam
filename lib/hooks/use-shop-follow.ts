@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import useSWR from 'swr';
 import { fetchWithAuth, fetchPublic } from '@/lib/api/fetch';
 import type { FollowerCountResponse, FollowResponse } from '@/lib/types';
@@ -15,12 +15,14 @@ export function useShopFollow(shopId: string, isAuthenticated: boolean) {
     isAuthenticated ? authFetcher : fetcher,
     { revalidateOnFocus: false }
   );
+  const [isToggling, setIsToggling] = useState(false);
 
   const isFollowing = data?.isFollowing ?? false;
   const followerCount = data?.count ?? 0;
   const showCount = data?.visible ?? false;
 
   const toggleFollow = useCallback(async () => {
+    setIsToggling(true);
     const wasFollowing = isFollowing;
     const prevData = data;
 
@@ -54,6 +56,8 @@ export function useShopFollow(shopId: string, isAuthenticated: boolean) {
       );
     } catch {
       mutate(prevData, false);
+    } finally {
+      setIsToggling(false);
     }
   }, [shopId, isFollowing, followerCount, data, mutate]);
 
@@ -61,7 +65,7 @@ export function useShopFollow(shopId: string, isAuthenticated: boolean) {
     isFollowing,
     followerCount,
     showCount,
-    isLoading,
+    isLoading: isLoading || isToggling,
     error,
     toggleFollow,
   };

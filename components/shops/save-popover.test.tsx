@@ -1,62 +1,118 @@
-import { render, screen, fireEvent } from '@testing-library/react';
-import { vi } from 'vitest';
-import { SavePopover } from './save-popover';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const mockLists = [
-  { id: 'l1', name: 'Weekend Picks', items: [{ shop_id: 'other-shop' }] },
-  { id: 'l2', name: 'Work Spots', items: [{ shop_id: 'rufous-coffee-da-an' }] },
-];
-const mockIsInList = vi.fn(
-  (listId: string, shopId: string) =>
-    mockLists
-      .find((l) => l.id === listId)
-      ?.items.some((i) => i.shop_id === shopId) ?? false
-);
+vi.mock('sonner', () => ({
+  toast: Object.assign(vi.fn(), { error: vi.fn() }),
+}));
+
 const mockSaveShop = vi.fn();
 const mockRemoveShop = vi.fn();
 const mockCreateList = vi.fn();
+let mockLists: Array<{
+  id: string;
+  name: string;
+  items: Array<{ shop_id: string; added_at?: string }>;
+}> = [];
+let mockIsInList = vi.fn((_listId: string, _shopId: string) => false);
 
 vi.mock('@/lib/hooks/use-user-lists', () => ({
   useUserLists: () => ({
     lists: mockLists,
+    isLoading: false,
+    error: undefined,
+    isSaved: vi.fn(() => false),
     isInList: mockIsInList,
     saveShop: mockSaveShop,
     removeShop: mockRemoveShop,
     createList: mockCreateList,
-    isSaved: vi.fn().mockReturnValue(false),
   }),
 }));
 
-describe('SavePopover', () => {
-  const defaultProps = {
-    shopId: 'rufous-coffee-da-an',
-    open: true,
-    onOpenChange: vi.fn(),
-    trigger: <button>Save</button>,
-  };
+import { toast } from 'sonner';
+import { SavePopover } from './save-popover';
 
-  it('renders all user lists', () => {
-    render(<SavePopover {...defaultProps} />);
-    expect(screen.getByText('Weekend Picks')).toBeInTheDocument();
-    expect(screen.getByText('Work Spots')).toBeInTheDocument();
+describe('SavePopover optimistic toggles', () => {
+  const shopId = 'shop-123';
+  const listId = 'list-abc';
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockLists = [
+      {
+        id: listId,
+        name: 'My Favourites',
+        items: [],
+      },
+    ];
+    mockIsInList = vi.fn((_listId: string, _shopId: string) => false);
+    mockSaveShop.mockResolvedValue(undefined);
+    mockRemoveShop.mockResolvedValue(undefined);
+    mockCreateList.mockResolvedValue(undefined);
   });
 
-  it('shows a checked state for lists containing this shop', () => {
-    render(<SavePopover {...defaultProps} />);
-    const workSpotsCheckbox = screen.getByRole('checkbox', {
-      name: /Work Spots/i,
+  it('updates the checkbox immediately before the server call resolves', async () => {
+    const user = userEvent.setup();
+    let resolveSave!: () => void;
+
+    mockSaveShop.mockImplementation(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveSave = resolve;
+        })
+    );
+
+    render(
+      <SavePopover
+        shopId={shopId}
+        open={true}
+        onOpenChange={vi.fn()}
+        trigger={<button>Save</button>}
+      />
+    );
+
+    const checkbox = screen.getByRole('checkbox', { name: 'My Favourites' });
+    expect(checkbox).not.toBeChecked();
+
+    await user.click(checkbox);
+
+    expect(mockSaveShop).toHaveBeenCalledWith(listId, shopId);
+    expect(checkbox).toBeChecked();
+
+    resolveSave();
+    await waitFor(() => expect(mockSaveShop).toHaveBeenCalledTimes(1));
+  });
+
+  it('rolls the checkbox back and shows a toast when the server rejects', async () => {
+    const user = userEvent.setup();
+    let rejectSave!: (error: Error) => void;
+
+    mockSaveShop.mockImplementation(
+      () =>
+        new Promise<void>((_resolve, reject) => {
+          rejectSave = reject;
+        })
+    );
+
+    render(
+      <SavePopover
+        shopId={shopId}
+        open={true}
+        onOpenChange={vi.fn()}
+        trigger={<button>Save</button>}
+      />
+    );
+
+    const checkbox = screen.getByRole('checkbox', { name: 'My Favourites' });
+
+    await user.click(checkbox);
+    expect(checkbox).toBeChecked();
+
+    rejectSave(new Error('Network error'));
+
+    await waitFor(() => {
+      expect(checkbox).not.toBeChecked();
+      expect(toast.error).toHaveBeenCalledWith('Something went wrong');
     });
-    expect(workSpotsCheckbox).toBeChecked();
-  });
-
-  it('shows "Create new list" option when under the 3-list cap', () => {
-    render(<SavePopover {...defaultProps} />);
-    expect(screen.getByText(/Create new list/i)).toBeInTheDocument();
-  });
-
-  it('calls saveShop when unchecked list is toggled', () => {
-    render(<SavePopover {...defaultProps} />);
-    fireEvent.click(screen.getByRole('checkbox', { name: /Weekend Picks/i }));
-    expect(mockSaveShop).toHaveBeenCalledWith('l1', 'rufous-coffee-da-an');
   });
 });

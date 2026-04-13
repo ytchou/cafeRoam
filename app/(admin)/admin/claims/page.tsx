@@ -3,6 +3,8 @@
 import { ClaimsTab } from '../_components/ClaimsTab';
 import { useAdminAuth } from '../_hooks/use-admin-auth';
 
+export const dynamic = 'force-dynamic';
+
 export default function ClaimsPage() {
   const { getToken } = useAdminAuth();
   return (

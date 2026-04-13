@@ -27,6 +27,7 @@ interface MapWithFallbackProps {
   onCardClick?: (id: string) => void;
   onBoundsChange?: (bounds: MapBounds) => void;
   isDesktop: boolean;
+  isSearching?: boolean;
 }
 
 const SESSION_KEY = 'mapWithFallback:forceMap';

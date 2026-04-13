@@ -1,6 +1,7 @@
 'use client';
 
 import { Heart } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { useShopFollow } from '@/lib/hooks/use-shop-follow';
 
 interface FollowButtonProps {
@@ -26,9 +27,10 @@ export function FollowButton({
   }
 
   return (
-    <button
+    <Button
+      variant="outline"
+      loading={isLoading}
       onClick={handleClick}
-      disabled={isLoading}
       aria-label={isFollowing ? 'Unfollow this shop' : 'Follow this shop'}
       className="border-border-warm flex h-11 items-center justify-center gap-1.5 rounded-full border bg-white px-3"
     >
@@ -45,6 +47,6 @@ export function FollowButton({
           {followerCount}
         </span>
       )}
-    </button>
+    </Button>
   );
 }

@@ -1,5 +1,7 @@
 'use client';
 
+export const dynamic = 'force-dynamic';
+
 import { SpendHistoryChart } from '../_components/SpendHistoryChart';
 import { SpendTab } from '../_components/SpendTab';
 import { useAdminAuth } from '../_hooks/use-admin-auth';

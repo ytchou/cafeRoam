@@ -26,6 +26,7 @@ interface ListDesktopLayoutProps {
   onFilterApply: (filters: string[]) => void;
   onLocationRequest?: () => void;
   onSort?: () => void;
+  isSearching?: boolean;
 }
 
 export function ListDesktopLayout({
@@ -43,6 +44,7 @@ export function ListDesktopLayout({
   onFilterClose,
   onFilterApply,
   onSort,
+  isSearching,
 }: ListDesktopLayoutProps) {
   const activeFilterSet = useMemo(
     () => new Set(activeFilters),
@@ -58,6 +60,7 @@ export function ListDesktopLayout({
           onSearch={onSearch}
           onFilterClick={onFilterOpen}
           defaultQuery={query}
+          isSearching={isSearching}
         />
         <div className="scrollbar-none flex gap-2 overflow-x-auto pl-1">
           {QUICK_FILTERS.map((f) => (
