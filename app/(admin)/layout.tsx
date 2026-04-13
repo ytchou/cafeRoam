@@ -6,6 +6,8 @@ import { usePathname } from 'next/navigation';
 import { Toaster } from 'sonner';
 import { createClient } from '@/lib/supabase/client';
 
+export const dynamic = 'force-dynamic';
+
 const NAV_ITEMS: { href: string; label: string; group: string }[] = [
   { href: '/admin', label: 'Overview', group: 'meta' },
   { href: '/admin/submissions', label: 'Submissions', group: 'ops' },
