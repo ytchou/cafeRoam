@@ -27,6 +27,9 @@ export function SavePopover({
   const [newListName, setNewListName] = useState('');
   const [showNewListInput, setShowNewListInput] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [localOverrides, setLocalOverrides] = useState<Map<string, boolean>>(
+    () => new Map()
+  );
 
   function handleClose(nextOpen: boolean) {
     if (!nextOpen) {
@@ -36,14 +39,32 @@ export function SavePopover({
     onOpenChange(nextOpen);
   }
 
+  function getIsChecked(listId: string): boolean {
+    if (localOverrides.has(listId)) {
+      return localOverrides.get(listId) ?? false;
+    }
+    return isInList(listId, shopId);
+  }
+
   async function handleToggle(listId: string) {
+    const wasInList = isInList(listId, shopId);
+    const optimistic = !wasInList;
+
+    setLocalOverrides((prev) => new Map(prev).set(listId, optimistic));
+
     try {
-      if (isInList(listId, shopId)) {
+      if (wasInList) {
         await removeShop(listId, shopId);
       } else {
         await saveShop(listId, shopId);
       }
+      setLocalOverrides((prev) => {
+        const next = new Map(prev);
+        next.delete(listId);
+        return next;
+      });
     } catch {
+      setLocalOverrides((prev) => new Map(prev).set(listId, wasInList));
       toast.error('Something went wrong');
     }
   }
@@ -109,7 +130,7 @@ export function SavePopover({
               <input
                 type="checkbox"
                 aria-label={list.name}
-                checked={isInList(list.id, shopId)}
+                checked={getIsChecked(list.id)}
                 onChange={() => handleToggle(list.id)}
                 className="accent-brand h-5 w-5 rounded border-gray-300"
               />
