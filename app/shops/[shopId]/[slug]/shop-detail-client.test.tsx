@@ -39,9 +39,6 @@ vi.mock('@/components/shops/menu-highlights', () => ({
 vi.mock('@/components/shops/recent-checkins-strip', () => ({
   RecentCheckinsStrip: () => null,
 }));
-vi.mock('@/components/shops/shop-map-thumbnail', () => ({
-  ShopMapThumbnail: () => null,
-}));
 vi.mock('@/components/shops/google-maps-embed', () => ({
   GoogleMapsEmbed: ({ googlePlaceId }: { googlePlaceId?: string }) => (
     <div data-testid="google-maps-embed" data-place-id={googlePlaceId ?? ''}>Google Maps Embed</div>
