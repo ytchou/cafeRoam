@@ -41,4 +41,18 @@ describe('ShopCard', () => {
       `/shops/${shop.id}/shan-xiao-hai-ka-fei`
     );
   });
+
+  it('given a user clicks a shop card, the article element gets aria-busy while navigation is pending', async () => {
+    mockPush.mockImplementation(() => new Promise(() => {}));
+
+    render(<ShopCard shop={shop} />);
+    const article = screen.getByRole('article');
+
+    expect(article).not.toHaveAttribute('aria-busy');
+
+    const user = userEvent.setup();
+    user.click(article);
+
+    await screen.findByRole('article', { busy: true });
+  });
 });

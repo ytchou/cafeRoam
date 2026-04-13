@@ -1,6 +1,7 @@
 'use client';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { useTransition } from 'react';
 import type { Shop } from '@/lib/types';
 import { VerifiedBadge } from './verified-badge';
 
@@ -19,13 +20,16 @@ interface ShopCardProps {
 
 export function ShopCard({ shop, searchQuery }: ShopCardProps) {
   const router = useRouter();
+  const [isPending, startTransition] = useTransition();
 
   function handleClick() {
     const base = `/shops/${shop.id}/${shop.slug ?? shop.id}`;
     const params = searchQuery
       ? `?ref=search&q=${encodeURIComponent(searchQuery)}`
       : '';
-    router.push(`${base}${params}`);
+    startTransition(async () => {
+      await router.push(`${base}${params}`);
+    });
   }
 
   const locationLabel = shop.mrt ?? '';
@@ -34,7 +38,9 @@ export function ShopCard({ shop, searchQuery }: ShopCardProps) {
   return (
     <article
       onClick={handleClick}
-      className="cursor-pointer overflow-hidden rounded-xl border border-gray-100 bg-white transition-shadow hover:shadow-md"
+      aria-busy={isPending || undefined}
+      data-pending={isPending || undefined}
+      className={`cursor-pointer overflow-hidden rounded-xl border border-gray-100 bg-white transition-all hover:shadow-md ${isPending ? 'opacity-60' : ''}`}
     >
       <div className="relative aspect-[4/3] bg-gray-100">
         {photoUrl ? (
