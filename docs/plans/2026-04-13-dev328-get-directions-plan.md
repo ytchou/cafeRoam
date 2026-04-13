@@ -15,6 +15,7 @@
 **Tech Stack:** React, TypeScript, lucide-react (Navigation icon), Tailwind CSS
 
 **Acceptance Criteria:**
+
 - [ ] A user viewing a shop detail page sees a navigation icon button in the actions row
 - [ ] Tapping the button opens Google Maps to the shop location in a new tab
 - [ ] The button only appears for shops that have coordinates (graceful degradation)
@@ -25,6 +26,7 @@
 ## Task 1: Add Get Directions button to ShopActionsRow
 
 **Files:**
+
 - Modify: `components/shops/shop-actions-row.tsx`
 - Test: `components/shops/shop-actions-row.test.tsx`
 
@@ -77,6 +79,7 @@ Expected: FAIL — `googleMapsUrl` prop doesn't exist, button not rendered
 Modify `shop-actions-row.tsx`:
 
 1. Update the interface:
+
 ```tsx
 interface ShopActionsRowProps {
   shopId: string;
@@ -87,11 +90,13 @@ interface ShopActionsRowProps {
 ```
 
 2. Add the Navigation import:
+
 ```tsx
 import { Navigation } from 'lucide-react';
 ```
 
 3. Add the button in the render (at the start of the flex row):
+
 ```tsx
 export function ShopActionsRow({ shopId, shopName, shareUrl, googleMapsUrl }: ShopActionsRowProps) {
   // ... existing code ...
@@ -134,6 +139,7 @@ git commit -m "feat(DEV-328): add Get Directions button to ShopActionsRow"
 ## Task 2: Pass googleMapsUrl from shop-detail-client
 
 **Files:**
+
 - Modify: `app/shops/[shopId]/[slug]/shop-detail-client.tsx:244-248`
 - Test: `app/shops/[shopId]/[slug]/shop-detail-client.test.tsx`
 
@@ -205,6 +211,7 @@ git commit -m "feat(DEV-328): wire googleMapsUrl to ShopActionsRow in shop detai
 ## Task 3: Manual verification
 
 **Files:**
+
 - No code changes
 
 **Step 1: Start dev server**
@@ -259,12 +266,15 @@ graph TD
 ```
 
 **Wave 1** (independent):
+
 - Task 1: Add Get Directions button to ShopActionsRow
 
 **Wave 2** (depends on Wave 1): ✅
+
 - Task 2: Pass googleMapsUrl from shop-detail-client
 
 **Wave 3** (depends on Wave 2):
+
 - Task 3: Manual verification
 
 ---
@@ -275,6 +285,6 @@ graph TD
 - [x] Type check passes: `pnpm type-check` - No TypeScript errors
 - [x] Lint passes: `pnpm lint` - No linting issues
 - [x] Manual test on mobile viewport shows button - Dev server running, implementation verified
-- [x] Button opens Google Maps in new tab - Verified via code review (target="_blank", rel="noopener noreferrer")
+- [x] Button opens Google Maps in new tab - Verified via code review (target="\_blank", rel="noopener noreferrer")
 - [x] Button hidden for shops without coordinates - Verified via conditional rendering and unit tests
 - [x] E2E tests checked - No existing e2e tests reference ShopActionsRow, no updates needed

@@ -15,42 +15,52 @@ As a user viewing a shop detail page, I want a prominent "Get Directions" button
 ## Design Decisions
 
 ### 1. Visual Hierarchy
+
 **Decision:** Icon button style (same as Save/Share)  
 **Alternatives rejected:**
+
 - Secondary outlined button — user preferred single-row layout with icons
 - Tertiary/link style — too minimal, doesn't feel like a CTA
 
 ### 2. Placement
+
 **Decision:** Inside ShopActionsRow alongside Check In  
 **Alternatives rejected:**
+
 - Standalone button below ShopIdentity — separates from other actions
 - Replace Links section — not "above the fold"
 
 ### 3. Interaction
+
 **Decision:** Direct link to Google Maps (opens in new tab)  
 **Alternatives rejected:**
+
 - Bottom sheet with Google Maps + Apple Maps options — extra tap, adds complexity
 - OS-native share/maps picker — inconsistent browser support
 
 ### 4. Layout
+
 **Decision:** Single horizontally scrollable row with all buttons  
 **Alternatives rejected:**
+
 - Two-row layout (Check In row + icon buttons row) — user preferred single row
 - Side-by-side primary buttons — requires more width
 
 ## UI Specification
 
 ### Button Spec
-| Property | Value |
-|----------|-------|
-| Icon | Navigation (lucide-react) |
-| Size | 44x44px (`h-11 w-11`) |
-| Style | `rounded-full border border-border-warm bg-white` |
-| Action | Opens `googleMapsUrl` in new tab |
-| Conditional | Only renders if shop has coordinates |
-| Accessibility | `aria-label="Get Directions"` |
+
+| Property      | Value                                             |
+| ------------- | ------------------------------------------------- |
+| Icon          | Navigation (lucide-react)                         |
+| Size          | 44x44px (`h-11 w-11`)                             |
+| Style         | `rounded-full border border-border-warm bg-white` |
+| Action        | Opens `googleMapsUrl` in new tab                  |
+| Conditional   | Only renders if shop has coordinates              |
+| Accessibility | `aria-label="Get Directions"`                     |
 
 ### Layout (Mobile)
+
 ```
 [Nav] [Check In] [Save] [Share] [Follow] [Report]
       └─── scrollable on narrow screens ───┘
