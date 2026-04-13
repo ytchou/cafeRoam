@@ -462,7 +462,7 @@ graph TD
 ## TODO
 
 - [x] Task 1: Create laurel wreath SVG components
-- [ ] Task 2: Create RatingBadge component with TDD
-- [ ] Task 3: Update ShopIdentity to use RatingBadge
-- [ ] Task 4: Update E2E tests for text matcher changes
-- [ ] Task 5: Visual verification and final cleanup
+- [x] Task 2: Create RatingBadge component with TDD
+- [x] Task 3: Update ShopIdentity to use RatingBadge
+- [x] Task 4: Update E2E tests for text matcher changes (NOT NEEDED — no E2E drift detected)
+- [x] Task 5: Visual verification and final cleanup (TEST SUITE PASSED — manual visual verification deferred to user)

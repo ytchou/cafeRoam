@@ -57,7 +57,8 @@ describe('ShopIdentity with RatingBadge', () => {
       <ShopIdentity name="Test Cafe" rating={4.5} reviewCount={100} />
     );
 
-    const callProps = (RatingBadge as any).mock.calls[0][0];
+    const mockedRatingBadge = vi.mocked(RatingBadge);
+    const callProps = mockedRatingBadge.mock.calls[0][0];
     expect(callProps.rating).toBe(4.5);
     expect(callProps.reviewCount).toBe(100);
     expect(screen.getByTestId('rating-badge')).toBeInTheDocument();
@@ -66,7 +67,8 @@ describe('ShopIdentity with RatingBadge', () => {
   it('passes null rating to RatingBadge when no rating provided', () => {
     render(<ShopIdentity name="Test Cafe" />);
 
-    const callProps = (RatingBadge as any).mock.calls[0][0];
+    const mockedRatingBadge = vi.mocked(RatingBadge);
+    const callProps = mockedRatingBadge.mock.calls[0][0];
     expect(callProps.rating).toBeUndefined();
     expect(callProps.reviewCount).toBeUndefined();
   });
