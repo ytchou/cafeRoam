@@ -168,7 +168,7 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
     () =>
       hasMap
         ? getGoogleMapsUrl({
-            name: shop.name,
+            name: displayName,
             latitude: shop.latitude!,
             longitude: shop.longitude!,
             googlePlaceId: shop.googlePlaceId ?? null,
@@ -177,7 +177,7 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
         : null,
     [
       hasMap,
-      shop.name,
+      displayName,
       shop.latitude,
       shop.longitude,
       shop.googlePlaceId,
@@ -189,12 +189,12 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
     () =>
       hasMap
         ? getAppleMapsUrl({
-            name: shop.name,
+            name: displayName,
             latitude: shop.latitude!,
             longitude: shop.longitude!,
           })
         : null,
-    [hasMap, shop.name, shop.latitude, shop.longitude]
+    [hasMap, displayName, shop.latitude, shop.longitude]
   );
 
   const navigationLinks =
@@ -276,7 +276,7 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
                 (shop.latitude != null && shop.longitude != null)) && (
                 <a
                   href={getGoogleMapsUrl({
-                    name: shop.name,
+                    name: displayName,
                     latitude: shop.latitude ?? 0,
                     longitude: shop.longitude ?? 0,
                     googlePlaceId: shop.googlePlaceId ?? null,
@@ -284,7 +284,7 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
                   })}
                   target="_blank"
                   rel="noopener noreferrer"
-                  aria-label="在 Google Maps 查看"
+                  aria-label={`${displayName} on Google Maps`}
                   className="border-border-warm text-text-body hover:bg-surface-section flex min-h-[44px] items-center gap-1.5 rounded-full border px-4 py-2 text-sm"
                 >
                   <MapPin size={14} />
@@ -298,9 +298,10 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="Instagram"
-                  className="text-muted-foreground hover:text-foreground flex min-h-[44px] min-w-[44px] items-center justify-center rounded-sm transition-colors"
+                  className="text-muted-foreground hover:text-foreground flex min-h-[44px] items-center gap-1.5 rounded-sm px-3 transition-colors"
                 >
                   <InstagramIcon className="h-5 w-5" />
+                  <span className="text-sm">Instagram</span>
                 </a>
               )}
 
@@ -310,9 +311,10 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="Facebook"
-                  className="text-muted-foreground hover:text-foreground flex min-h-[44px] min-w-[44px] items-center justify-center rounded-sm transition-colors"
+                  className="text-muted-foreground hover:text-foreground flex min-h-[44px] items-center gap-1.5 rounded-sm px-3 transition-colors"
                 >
                   <FacebookIcon className="h-5 w-5" />
+                  <span className="text-sm">Facebook</span>
                 </a>
               )}
 
@@ -322,9 +324,10 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="Threads"
-                  className="text-muted-foreground hover:text-foreground flex min-h-[44px] min-w-[44px] items-center justify-center rounded-sm transition-colors"
+                  className="text-muted-foreground hover:text-foreground flex min-h-[44px] items-center gap-1.5 rounded-sm px-3 transition-colors"
                 >
                   <ThreadsIcon className="h-5 w-5" />
+                  <span className="text-sm">Threads</span>
                 </a>
               )}
 
@@ -334,9 +337,10 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="官方網站"
-                  className="text-muted-foreground hover:text-foreground flex min-h-[44px] min-w-[44px] items-center justify-center rounded-sm transition-colors"
+                  className="text-muted-foreground hover:text-foreground flex min-h-[44px] items-center gap-1.5 rounded-sm px-3 transition-colors"
                 >
                   <Globe className="h-5 w-5" />
+                  <span className="text-sm">官方網站</span>
                 </a>
               )}
             </div>
@@ -366,7 +370,7 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
             <GoogleMapsEmbed
               latitude={shop.latitude!}
               longitude={shop.longitude!}
-              shopName={shop.name}
+              shopName={displayName}
               googlePlaceId={shop.googlePlaceId ?? null}
             />
             <div className="flex gap-2 px-5 py-3">{navigationLinks}</div>
