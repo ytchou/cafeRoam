@@ -24,7 +24,8 @@ vi.mock('next/navigation', () => ({
 // Render-only child components — not under test here
 vi.mock('@/components/shops/shop-hero', () => ({ ShopHero: () => null }));
 vi.mock('@/components/shops/shop-identity', () => ({
-  ShopIdentity: () => null,
+  ShopIdentity: ({ communitySummary }: { communitySummary?: string | null }) =>
+    communitySummary ? <p>{communitySummary}</p> : null,
 }));
 vi.mock('@/components/shops/attribute-chips', () => ({
   AttributeChips: () => null,
@@ -49,10 +50,6 @@ vi.mock('@/components/shops/shop-actions-row', () => ({
 }));
 vi.mock('@/components/shops/claim-banner', () => ({
   ClaimBanner: () => <p>Is this your café? Claim this page →</p>,
-}));
-vi.mock('@/components/shops/community-summary', () => ({
-  CommunitySummary: ({ summary }: { summary: string | null }) =>
-    summary ? <p data-testid="community-summary">{summary}</p> : null,
 }));
 
 import { ShopDetailClient } from './shop-detail-client';
@@ -90,13 +87,12 @@ describe('ShopDetailClient — community summary', () => {
       communitySummary: '顧客推薦拿鐵和巴斯克蛋糕，環境安靜適合工作。',
     };
     render(<ShopDetailClient shop={shopWithSummary} />);
-    expect(screen.getByTestId('community-summary')).toBeInTheDocument();
     expect(screen.getByText(/顧客推薦拿鐵/)).toBeInTheDocument();
   });
 
   it('a user does not see a community summary section when the shop has none', () => {
     render(<ShopDetailClient shop={mockShop} />);
-    expect(screen.queryByTestId('community-summary')).not.toBeInTheDocument();
+    expect(screen.queryByText(/顧客推薦拿鐵/)).not.toBeInTheDocument();
   });
 });
 

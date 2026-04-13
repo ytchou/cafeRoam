@@ -18,7 +18,6 @@ import { PaymentMethodSection } from '@/components/shops/payment-method-section'
 import { RecentCheckinsStrip } from '@/components/shops/recent-checkins-strip';
 import { ShopMapThumbnail } from '@/components/shops/shop-map-thumbnail';
 import { ShopReviews } from '@/components/shops/shop-reviews';
-import { CommunitySummary } from '@/components/shops/community-summary';
 import { useShopReviews } from '@/lib/hooks/use-shop-reviews';
 import { useUser } from '@/lib/hooks/use-user';
 import { useSearchParams } from 'next/navigation';
@@ -239,6 +238,7 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
           openNow={shop.openNow}
           distance={shop.distance}
           address={shop.address ?? undefined}
+          communitySummary={shop.communitySummary}
         />
         {shop.claimStatus === 'approved' && <VerifiedBadge />}
         <ShopActionsRow
@@ -371,7 +371,6 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
 
         <div className="border-border-warm mx-5 border-t" />
 
-        <CommunitySummary summary={shop.communitySummary ?? null} />
         <ShopReviews
           reviews={reviews}
           totalCount={totalCount}
