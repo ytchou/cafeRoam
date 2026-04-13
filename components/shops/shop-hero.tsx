@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { ChevronLeft, Bookmark, Share2 } from 'lucide-react';
 import {
@@ -9,7 +8,6 @@ import {
   CarouselItem,
   CarouselPrevious,
   CarouselNext,
-  type CarouselApi,
 } from '@/components/ui/carousel';
 import { cn } from '@/lib/utils';
 
@@ -32,32 +30,13 @@ export function ShopHero({
   onShare,
   className,
 }: ShopHeroProps) {
-  const [api, setApi] = useState<CarouselApi>();
-  const [current, setCurrent] = useState(0);
-
-  useEffect(() => {
-    if (!api) return;
-    const onSelect = () => setCurrent(api.selectedScrollSnap());
-    onSelect();
-    api.on('reInit', onSelect);
-    api.on('select', onSelect);
-    return () => {
-      api.off('reInit', onSelect);
-      api.off('select', onSelect);
-    };
-  }, [api, photoUrls]);
-
   const hasPhotos = photoUrls.length > 0;
   const isMulti = photoUrls.length > 1;
 
   return (
     <div className={cn('relative h-[260px] w-full bg-gray-100', className)}>
       {hasPhotos ? (
-        <Carousel
-          setApi={setApi}
-          opts={{ loop: false }}
-          className="h-full w-full"
-        >
+        <Carousel opts={{ loop: false }} className="h-full w-full">
           <CarouselContent className="h-full">
             {photoUrls.map((url, idx) => (
               <CarouselItem key={url} className="relative h-full">
@@ -125,9 +104,9 @@ export function ShopHero({
 
       {/* Slide indicator (replaces the old "N photos" badge) */}
       {isMulti && (
-        <div className="absolute bottom-3 left-4 rounded-full bg-black/50 px-2.5 py-1">
-          <span className="text-xs text-white tabular-nums">
-            {current + 1} / {photoUrls.length}
+        <div className="absolute bottom-3 left-4 rounded-full bg-white/90 px-3 py-1.5 shadow-sm backdrop-blur-sm">
+          <span className="text-xs font-medium text-gray-700">
+            View all {photoUrls.length} photos
           </span>
         </div>
       )}

@@ -7,6 +7,7 @@ interface ShopIdentityProps {
   openNow?: boolean;
   distance?: string;
   address?: string;
+  communitySummary?: string | null;
 }
 
 export function ShopIdentity({
@@ -16,10 +17,17 @@ export function ShopIdentity({
   openNow,
   distance,
   address,
+  communitySummary,
 }: ShopIdentityProps) {
   return (
     <div className="px-5 py-3">
       <h1 className="text-text-primary text-xl font-bold">{name}</h1>
+
+      {communitySummary && (
+        <p className="mt-2 font-[family-name:var(--font-body)] text-lg text-slate-600 italic">
+          {communitySummary}
+        </p>
+      )}
 
       <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
         <RatingBadge
