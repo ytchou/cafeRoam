@@ -16,7 +16,7 @@ import { ShopDescription } from '@/components/shops/shop-description';
 import { MenuHighlights } from '@/components/shops/menu-highlights';
 import { PaymentMethodSection } from '@/components/shops/payment-method-section';
 import { RecentCheckinsStrip } from '@/components/shops/recent-checkins-strip';
-import { ShopMapThumbnail } from '@/components/shops/shop-map-thumbnail';
+import { GoogleMapsEmbed } from '@/components/shops/google-maps-embed';
 import { ShopReviews } from '@/components/shops/shop-reviews';
 import { useShopReviews } from '@/lib/hooks/use-shop-reviews';
 import { useUser } from '@/lib/hooks/use-user';
@@ -24,6 +24,7 @@ import { useSearchParams } from 'next/navigation';
 import { useAnalytics } from '@/lib/posthog/use-analytics';
 import { trackShopDetailView } from '@/lib/analytics/ga4-events';
 import { isSocialUrl } from '@/lib/utils/url-classifier';
+import { normalizeShopName } from '@/lib/utils/text';
 
 function InstagramIcon({ className }: { className?: string }) {
   return (
@@ -123,6 +124,7 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
   const photos = shop.photoUrls ?? [];
   const tags = shop.taxonomyTags ?? [];
   const shopPath = `/shops/${shop.id}/${shop.slug ?? shop.id}`;
+  const displayName = normalizeShopName(shop.name);
 
   const { reviews, totalCount, averageRating, isLoading } = useShopReviews(
     shop.id
@@ -224,7 +226,7 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
       {/* Hero — full width, taller on desktop */}
       <ShopHero
         photoUrls={photos}
-        shopName={shop.name}
+        shopName={displayName}
         onBack={() => router.back()}
         className="lg:h-[480px]"
       />
@@ -232,7 +234,7 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
       {/* Shop info */}
       <div>
         <ShopIdentity
-          name={shop.name}
+          name={displayName}
           rating={shop.rating}
           reviewCount={shop.reviewCount}
           openNow={shop.openNow}
@@ -243,7 +245,7 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
         {shop.claimStatus === 'approved' && <VerifiedBadge />}
         <ShopActionsRow
           shopId={shop.id}
-          shopName={shop.name}
+          shopName={displayName}
           shareUrl={shareUrl}
           googleMapsUrl={googleMapsUrl ?? undefined}
         />
@@ -361,10 +363,11 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
                 <p className="text-text-meta text-xs">{shop.address}</p>
               )}
             </div>
-            <ShopMapThumbnail
+            <GoogleMapsEmbed
               latitude={shop.latitude!}
               longitude={shop.longitude!}
               shopName={shop.name}
+              googlePlaceId={shop.googlePlaceId ?? null}
             />
             <div className="flex gap-2 px-5 py-3">{navigationLinks}</div>
           </div>
@@ -404,7 +407,7 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
         )}
         <ClaimBanner
           shopId={shop.id}
-          shopName={shop.name}
+          shopName={displayName}
           claimStatus={shop.claimStatus ?? null}
         />
       </div>

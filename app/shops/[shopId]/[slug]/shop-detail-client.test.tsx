@@ -42,6 +42,11 @@ vi.mock('@/components/shops/recent-checkins-strip', () => ({
 vi.mock('@/components/shops/shop-map-thumbnail', () => ({
   ShopMapThumbnail: () => null,
 }));
+vi.mock('@/components/shops/google-maps-embed', () => ({
+  GoogleMapsEmbed: ({ googlePlaceId }: { googlePlaceId?: string }) => (
+    <div data-testid="google-maps-embed" data-place-id={googlePlaceId ?? ''}>Google Maps Embed</div>
+  ),
+}));
 vi.mock('@/components/shops/shop-reviews', () => ({ ShopReviews: () => null }));
 vi.mock('@/components/shops/shop-actions-row', () => ({
   ShopActionsRow: ({ googleMapsUrl }: { googleMapsUrl?: string }) => (
@@ -281,3 +286,30 @@ describe('Get Directions integration', () => {
     ).not.toBeInTheDocument();
   });
 });
+
+describe('Wave 3 — GoogleMapsEmbed, Apple Maps label, name normalization', () => {
+  const mockShopW3 = {
+    id: 'test-w3',
+    name: 'Test Coffee (完整菜單可點instagram)',
+    latitude: 25.0478,
+    longitude: 121.517,
+    googlePlaceId: 'ChIJ123' as string | null,
+    address: '123 Test St' as string | null,
+    instagramUrl: 'https://instagram.com/testcoffee' as string | null,
+    website: 'https://testcoffee.com' as string | null,
+    facebookUrl: null as string | null,
+    threadsUrl: null as string | null,
+  }
+
+  it('renders GoogleMapsEmbed instead of ShopMapThumbnail', () => {
+    render(<ShopDetailClient shop={mockShopW3} />)
+    expect(screen.getByTestId('google-maps-embed')).toBeInTheDocument()
+  })
+
+  it('displays normalized shop name without SEO noise', () => {
+    render(<ShopDetailClient shop={mockShopW3} />)
+    // The raw name with SEO noise should NOT appear as text content
+    const allText = document.body.textContent ?? ''
+    expect(allText).not.toContain('(完整菜單可點instagram)')
+  })
+})
