@@ -104,7 +104,7 @@ export function ShopHero({
 
       {/* Slide indicator (replaces the old "N photos" badge) */}
       {isMulti && (
-        <div className="absolute bottom-3 left-4 rounded-full bg-white/90 shadow-sm backdrop-blur-sm px-3 py-1.5">
+        <div className="absolute bottom-3 left-4 rounded-full bg-white/90 px-3 py-1.5 shadow-sm backdrop-blur-sm">
           <span className="text-xs font-medium text-gray-700">
             View all {photoUrls.length} photos
           </span>
