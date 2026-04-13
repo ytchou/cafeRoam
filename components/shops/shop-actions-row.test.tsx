@@ -80,4 +80,42 @@ describe('ShopActionsRow', () => {
 
     expect(screen.getByTestId('report-dialog')).toBeInTheDocument();
   });
+
+  describe('Get Directions button', () => {
+    const googleMapsUrl =
+      'https://www.google.com/maps/place/?q=place_id:ChIJtest123';
+
+    it('renders directions button when googleMapsUrl is provided', () => {
+      render(
+        <ShopActionsRow
+          shopId="shop-1"
+          shopName="Test Cafe"
+          shareUrl="https://caferoam.com/shops/shop-1/test-cafe"
+          googleMapsUrl={googleMapsUrl}
+        />
+      );
+
+      const directionsBtn = screen.getByRole('link', {
+        name: /get directions/i,
+      });
+      expect(directionsBtn).toBeInTheDocument();
+      expect(directionsBtn).toHaveAttribute('href', googleMapsUrl);
+      expect(directionsBtn).toHaveAttribute('target', '_blank');
+      expect(directionsBtn).toHaveAttribute('rel', 'noopener noreferrer');
+    });
+
+    it('does not render directions button when googleMapsUrl is not provided', () => {
+      render(
+        <ShopActionsRow
+          shopId="shop-1"
+          shopName="Test Cafe"
+          shareUrl="https://caferoam.com/shops/shop-1/test-cafe"
+        />
+      );
+
+      expect(
+        screen.queryByRole('link', { name: /get directions/i })
+      ).not.toBeInTheDocument();
+    });
+  });
 });
