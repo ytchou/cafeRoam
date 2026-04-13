@@ -1,3 +1,5 @@
+import { RatingBadge } from './rating-badge';
+
 interface ShopIdentityProps {
   name: string;
   rating?: number | null;
@@ -20,17 +22,7 @@ export function ShopIdentity({
       <h1 className="text-text-primary text-xl font-bold">{name}</h1>
 
       <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
-        {rating != null && (
-          <div className="flex items-center gap-1">
-            <span className="text-brand text-sm">★</span>
-            <span className="text-text-primary text-sm font-medium">
-              {rating.toFixed(1)}
-            </span>
-            {reviewCount != null && (
-              <span className="text-text-meta text-xs">({reviewCount})</span>
-            )}
-          </div>
-        )}
+        <RatingBadge rating={rating} reviewCount={reviewCount} />
         {openNow != null && (
           <span
             className={`rounded-full px-2 py-0.5 text-xs font-medium ${

@@ -1,5 +1,15 @@
 import { render, screen } from '@testing-library/react';
 import { ShopIdentity } from './shop-identity';
+import { RatingBadge } from './rating-badge';
+import { vi } from 'vitest';
+
+vi.mock('./rating-badge', () => ({
+  RatingBadge: vi.fn(({ rating, reviewCount }) => (
+    <div data-testid="rating-badge">
+      {rating} ({reviewCount})
+    </div>
+  )),
+}));
 
 describe('ShopIdentity', () => {
   const base = { name: 'The Brew House', rating: 4.8, reviewCount: 1263 };
@@ -13,8 +23,7 @@ describe('ShopIdentity', () => {
 
   it('shows rating and review count', () => {
     render(<ShopIdentity {...base} />);
-    expect(screen.getByText('4.8')).toBeInTheDocument();
-    expect(screen.getByText(/1263/)).toBeInTheDocument();
+    expect(screen.getByTestId('rating-badge')).toBeInTheDocument();
   });
 
   it('shows "Open" badge when openNow is true', () => {
@@ -35,5 +44,30 @@ describe('ShopIdentity', () => {
   it('shows address when provided', () => {
     render(<ShopIdentity {...base} address="Yongkang St, Da'an District" />);
     expect(screen.getByText(/Yongkang St/i)).toBeInTheDocument();
+  });
+});
+
+describe('ShopIdentity with RatingBadge', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('renders RatingBadge with rating and reviewCount props', () => {
+    render(
+      <ShopIdentity name="Test Cafe" rating={4.5} reviewCount={100} />
+    );
+
+    const callProps = (RatingBadge as any).mock.calls[0][0];
+    expect(callProps.rating).toBe(4.5);
+    expect(callProps.reviewCount).toBe(100);
+    expect(screen.getByTestId('rating-badge')).toBeInTheDocument();
+  });
+
+  it('passes null rating to RatingBadge when no rating provided', () => {
+    render(<ShopIdentity name="Test Cafe" />);
+
+    const callProps = (RatingBadge as any).mock.calls[0][0];
+    expect(callProps.rating).toBeUndefined();
+    expect(callProps.reviewCount).toBeUndefined();
   });
 });
