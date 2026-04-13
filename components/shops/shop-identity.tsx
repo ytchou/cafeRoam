@@ -22,7 +22,7 @@ export function ShopIdentity({
       <h1 className="text-text-primary text-xl font-bold">{name}</h1>
 
       {communitySummary && (
-        <p className="font-[family-name:var(--font-body)] text-lg italic text-slate-600 mt-2">
+        <p className="mt-2 font-[family-name:var(--font-body)] text-lg text-slate-600 italic">
           {communitySummary}
         </p>
       )}
