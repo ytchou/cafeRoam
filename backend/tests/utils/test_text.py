@@ -1,4 +1,3 @@
-import pytest
 from utils.text import normalize_shop_name
 
 
@@ -7,7 +6,10 @@ class TestNormalizeShopName:
 
     def test_strips_trailing_parenthetical_seo_noise(self) -> None:
         """Strip common SEO noise in parentheses."""
-        assert normalize_shop_name("日淬 Sun Drip Coffee (完整菜單可點instagram)") == "日淬 Sun Drip Coffee"
+        assert (
+            normalize_shop_name("日淬 Sun Drip Coffee (完整菜單可點instagram)")
+            == "日淬 Sun Drip Coffee"
+        )
 
     def test_strips_multiple_seo_patterns(self) -> None:
         """Strip multiple common SEO patterns."""
