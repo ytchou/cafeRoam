@@ -6,7 +6,6 @@ describe('GoogleMapsEmbed', () => {
   const defaultProps = {
     latitude: 25.0478,
     longitude: 121.5170,
-    shopName: 'Test Coffee Shop',
   }
 
   beforeEach(() => {

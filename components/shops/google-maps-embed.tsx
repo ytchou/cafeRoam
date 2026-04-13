@@ -3,7 +3,6 @@
 interface GoogleMapsEmbedProps {
   latitude: number
   longitude: number
-  shopName: string
   googlePlaceId?: string | null
 }
 
@@ -14,7 +13,6 @@ interface GoogleMapsEmbedProps {
 export function GoogleMapsEmbed({
   latitude,
   longitude,
-  shopName,
   googlePlaceId,
 }: GoogleMapsEmbedProps) {
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY

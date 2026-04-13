@@ -370,7 +370,6 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
             <GoogleMapsEmbed
               latitude={shop.latitude!}
               longitude={shop.longitude!}
-              shopName={displayName}
               googlePlaceId={shop.googlePlaceId ?? null}
             />
             <div className="flex gap-2 px-5 py-3">{navigationLinks}</div>
