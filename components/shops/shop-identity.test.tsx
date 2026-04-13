@@ -36,4 +36,19 @@ describe('ShopIdentity', () => {
     render(<ShopIdentity {...base} address="Yongkang St, Da'an District" />);
     expect(screen.getByText(/Yongkang St/i)).toBeInTheDocument();
   });
+
+  it('shows community summary tagline when provided', () => {
+    render(
+      <ShopIdentity
+        {...base}
+        communitySummary="顧客推薦拿鐵和巴斯克蛋糕，環境安靜適合工作。"
+      />
+    );
+    expect(screen.getByText(/顧客推薦拿鐵/)).toBeInTheDocument();
+  });
+
+  it('does not show community summary when not provided', () => {
+    render(<ShopIdentity {...base} />);
+    expect(screen.queryByText(/顧客推薦/)).not.toBeInTheDocument();
+  });
 });
