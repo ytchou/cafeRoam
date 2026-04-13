@@ -1,0 +1,15 @@
+{
+  "findings": [],
+  "active_agents": [],
+  "skipped": [
+    "Plan Alignment",
+    "Design Quality",
+    "Test Philosophy",
+    "Architecture",
+    "Adversarial Review (Codex)"
+  ],
+  "head_sha": "c3ab068c621c4b29527e9117cc4b8f41e6a4a040",
+  "review_log_path": "docs/reviews/2026-04-13-feat-dev328-get-directions.md",
+  "mode": "pre-PR",
+  "review_type": "inline"
+}

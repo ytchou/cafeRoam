@@ -44,8 +44,20 @@ vi.mock('@/components/shops/shop-map-thumbnail', () => ({
 }));
 vi.mock('@/components/shops/shop-reviews', () => ({ ShopReviews: () => null }));
 vi.mock('@/components/shops/shop-actions-row', () => ({
-  ShopActionsRow: () => (
-    <button aria-label="Check In 打卡">Check In 打卡</button>
+  ShopActionsRow: ({ googleMapsUrl }: { googleMapsUrl?: string }) => (
+    <>
+      <button aria-label="Check In 打卡">Check In 打卡</button>
+      {googleMapsUrl && (
+        <a
+          href={googleMapsUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Get Directions"
+        >
+          Get Directions
+        </a>
+      )}
+    </>
   ),
 }));
 vi.mock('@/components/shops/claim-banner', () => ({
@@ -233,5 +245,39 @@ describe('Links section', () => {
       'href',
       'https://www.rufous.com.tw'
     );
+  });
+});
+
+describe('Get Directions integration', () => {
+  it('passes googleMapsUrl to ShopActionsRow when shop has coordinates', () => {
+    const shopWithCoords = {
+      ...mockShop,
+      latitude: 25.033,
+      longitude: 121.5654,
+      googlePlaceId: 'ChIJtest123',
+    };
+
+    render(<ShopDetailClient shop={shopWithCoords} />);
+
+    const directionsBtn = screen.getByRole('link', { name: /get directions/i });
+    expect(directionsBtn).toBeInTheDocument();
+    expect(directionsBtn).toHaveAttribute(
+      'href',
+      expect.stringContaining('google.com/maps')
+    );
+  });
+
+  it('does not pass googleMapsUrl when shop lacks coordinates', () => {
+    const shopWithoutCoords = {
+      ...mockShop,
+      latitude: undefined,
+      longitude: undefined,
+    };
+
+    render(<ShopDetailClient shop={shopWithoutCoords} />);
+
+    expect(
+      screen.queryByRole('link', { name: /get directions/i })
+    ).not.toBeInTheDocument();
   });
 });

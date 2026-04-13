@@ -245,6 +245,7 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
           shopId={shop.id}
           shopName={shop.name}
           shareUrl={shareUrl}
+          googleMapsUrl={googleMapsUrl ?? undefined}
         />
 
         <div className="border-border-warm mx-5 border-t" />

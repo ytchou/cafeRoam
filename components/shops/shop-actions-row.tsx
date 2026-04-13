@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Bookmark, Flag, Share2 } from 'lucide-react';
+import { Bookmark, Flag, Navigation, Share2 } from 'lucide-react';
 import { useIsDesktop } from '@/lib/hooks/use-media-query';
 import { useUser } from '@/lib/hooks/use-user';
 import { useUserLists } from '@/lib/hooks/use-user-lists';
@@ -19,12 +19,14 @@ interface ShopActionsRowProps {
   shopId: string;
   shopName: string;
   shareUrl: string;
+  googleMapsUrl?: string;
 }
 
 export function ShopActionsRow({
   shopId,
   shopName,
   shareUrl,
+  googleMapsUrl,
 }: ShopActionsRowProps) {
   const isDesktop = useIsDesktop();
   const router = useRouter();
@@ -90,10 +92,23 @@ export function ShopActionsRow({
     </button>
   );
 
+  const directionsBtn = googleMapsUrl ? (
+    <a
+      href={googleMapsUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label="Get Directions"
+      className="border-border-warm flex h-11 w-11 items-center justify-center rounded-full border bg-white"
+    >
+      <Navigation className="h-4 w-4" />
+    </a>
+  ) : null;
+
   return (
-    <div className="flex items-center gap-2 px-5 py-3">
+    <div className="flex items-center gap-2 overflow-x-auto px-5 py-3">
       {isDesktop ? (
         <>
+          {directionsBtn}
           <CheckInPopover
             shopId={shopId}
             shopName={shopName}
@@ -129,6 +144,7 @@ export function ShopActionsRow({
         </>
       ) : (
         <>
+          {directionsBtn}
           {checkInBtn}
           {saveBtn}
           <SharePopover
