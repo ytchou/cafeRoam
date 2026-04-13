@@ -190,30 +190,4 @@ describe('Shop follow button', () => {
     );
     expect(screen.queryByText('3')).not.toBeInTheDocument();
   });
-
-  it('given a user is toggling follow, the button shows aria-busy while the request is in-flight', async () => {
-    let resolveToggle: (value: unknown) => void;
-    mockFetchWithAuth.mockImplementation((url: string) => {
-      if (url.includes('/count')) {
-        return Promise.resolve({
-          count: 0,
-          visible: false,
-          isFollowing: false,
-        });
-      }
-      return new Promise((resolve) => {
-        resolveToggle = resolve;
-      });
-    });
-    renderButton({ isAuthenticated: true });
-    const button = await waitFor(() =>
-      screen.getByRole('button', { name: /follow this shop/i })
-    );
-    fireEvent.click(button);
-    await waitFor(() => {
-      const btn = screen.getByRole('button', { name: /follow this shop/i });
-      expect(btn).toHaveAttribute('aria-busy', 'true');
-    });
-    resolveToggle!({ following: true, followerCount: 1, visible: false });
-  });
 });

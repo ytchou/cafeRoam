@@ -1,0 +1,16 @@
+{
+  "findings": [
+    {
+      "severity": "Minor",
+      "file": "components/shops/follow-button.test.tsx",
+      "line": "194",
+      "description": "Duplicate test: 'given a user is toggling follow, the button shows aria-busy while the request is in-flight' appears twice (lines 114 and 194). The second test is an exact duplicate and should be removed.",
+      "flagged_by": "Test Philosophy",
+      "status": "resolved"
+    }
+  ],
+  "active_agents": ["Test Philosophy"],
+  "skipped": [],
+  "head_sha": "779c13db283f240fe3b4a69d630053fb292a9991",
+  "review_log_path": "docs/reviews/2026-04-13-fix-dev-326-loading-states.md"
+}
