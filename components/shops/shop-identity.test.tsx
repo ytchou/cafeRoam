@@ -11,10 +11,10 @@ describe('ShopIdentity', () => {
     ).toBeInTheDocument();
   });
 
-  it('shows rating and review count', () => {
+  it('shows rating and review count when provided', () => {
     render(<ShopIdentity {...base} />);
     expect(screen.getByText('4.8')).toBeInTheDocument();
-    expect(screen.getByText(/1263/)).toBeInTheDocument();
+    expect(screen.getByText(/1263 reviews/i)).toBeInTheDocument();
   });
 
   it('shows "Open" badge when openNow is true', () => {
@@ -50,5 +50,21 @@ describe('ShopIdentity', () => {
   it('does not show community summary when not provided', () => {
     render(<ShopIdentity {...base} />);
     expect(screen.queryByText(/顧客推薦/)).not.toBeInTheDocument();
+  });
+
+  it('hides rating badge when no rating or review count provided', () => {
+    render(<ShopIdentity name="Test Cafe" />);
+    expect(screen.queryByText(/reviews/i)).not.toBeInTheDocument();
+  });
+
+  it('shows rating badge with correct stars for 4.5 rating', () => {
+    render(<ShopIdentity name="Test Cafe" rating={4.5} reviewCount={100} />);
+    const stars = screen.getAllByTestId('star-icon');
+    expect(stars).toHaveLength(5);
+    // 4.5 rounds to 5 filled stars
+    const filledStars = stars.filter(
+      (star) => star.getAttribute('data-filled') === 'true'
+    );
+    expect(filledStars).toHaveLength(5);
   });
 });
