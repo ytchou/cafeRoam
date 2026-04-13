@@ -39,11 +39,7 @@ function useBreadcrumbs(pathname: string) {
   return crumbs;
 }
 
-export function AdminLayoutClient({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export function AdminLayoutClient({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const crumbs = useBreadcrumbs(pathname);
   const [userEmail, setUserEmail] = useState<string | null>(null);

@@ -53,7 +53,7 @@ const sentryOptions = {
   telemetry: false,
   widenClientFileUpload: true,
   tunnelRoute: '/monitoring',
-  errorHandler: (err: Error) => {
+  errorHandler: () => {
     // Suppress all Sentry CLI errors during build - they're non-blocking
     // and Sentry runtime tracking still works via sentry.client.config.ts
   },
