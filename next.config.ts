@@ -48,11 +48,14 @@ const nextConfig: NextConfig = {
 const sentryOptions = {
   org: process.env.SENTRY_ORG,
   project: process.env.SENTRY_PROJECT,
-  silent: !process.env.SENTRY_AUTH_TOKEN,
+  silent: true,
+  disableLogger: true,
+  telemetry: false,
   widenClientFileUpload: true,
   tunnelRoute: '/monitoring',
   errorHandler: (err: Error) => {
-    console.warn('Sentry CLI error (non-blocking):', err.message);
+    // Suppress all Sentry CLI errors during build - they're non-blocking
+    // and Sentry runtime tracking still works via sentry.client.config.ts
   },
 };
 

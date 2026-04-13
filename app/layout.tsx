@@ -19,6 +19,8 @@ import { AppProgressBar } from 'next-nprogress-bar';
 import { Toaster } from 'sonner';
 import './globals.css';
 
+export const dynamic = 'force-dynamic';
+
 const dmSans = DM_Sans({
   variable: '--font-dm-sans',
   subsets: ['latin'],
