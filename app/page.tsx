@@ -214,9 +214,10 @@ function HomePageContent() {
       const trimmedQuery = nextQuery.trim();
       if (!trimmedQuery) return;
       setQuery(trimmedQuery);
+      setInputValue(trimmedQuery);
       setSelectedShopId(null);
     },
-    [setQuery]
+    [setQuery, setInputValue]
   );
 
   const handleSuggestionSelect = useCallback(
