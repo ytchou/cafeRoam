@@ -61,7 +61,7 @@ CafeRoam is a mobile-first web directory for Taiwan's independent coffee shop sc
 
 ### In Scope
 
-- Shop directory with **list view + map view toggle** (Mapbox)
+- Shop directory with **list view + map view toggle** (Mapbox on /find); shop detail page uses Google Maps embed (Place mode with place card) → external navigation links (Google Maps, Apple Maps)
 - **Geolocation** — "nearby me" search with location permission
 - **Multi-dimension filters:** functionality (outlet, WiFi), time (late night, no time limit, early bird), ambience (quiet, lively, chit-chat), mode (work/rest/social)
 - **Semantic search** — ChatGPT-style chatbox on landing page, auth-gated, powered by pgvector + taxonomy boost

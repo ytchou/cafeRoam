@@ -1,5 +1,5 @@
 from datetime import UTC, datetime
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -159,3 +159,25 @@ async def test_persist_writes_threads_url(mock_db, mock_queue):
     shop_updates = [c for c in update_calls if "threads_url" in (c.args[0] if c.args else {})]
     assert len(shop_updates) == 1
     assert shop_updates[0].args[0]["threads_url"] == "https://www.threads.net/@rufous"
+
+
+class TestPersistShopNameNormalization:
+    """Test that shop names are normalized during persistence."""
+
+    @pytest.mark.asyncio
+    async def test_normalizes_shop_name_during_persist(self, mock_db, mock_queue) -> None:
+        """Shop name should be normalized before saving to DB."""
+        noisy_name = "日淬 Sun Drip Coffee (完整菜單可點instagram)"
+        data = _make_shop_data(name=noisy_name)
+
+        with patch("workers.persist.normalize_shop_name") as mock_normalize:
+            mock_normalize.return_value = "日淬 Sun Drip Coffee"
+            await persist_scraped_data(
+                shop_id="shop-norm-01",
+                data=data,
+                db=mock_db,
+                queue=mock_queue,
+            )
+
+        mock_normalize.assert_called_once()
+        assert "(完整菜單" in mock_normalize.call_args[0][0]

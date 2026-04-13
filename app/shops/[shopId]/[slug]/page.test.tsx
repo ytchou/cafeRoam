@@ -37,9 +37,7 @@ vi.mock('@/lib/hooks/use-geolocation', () => ({
 vi.mock('@/lib/hooks/use-user-lists', () => ({
   useUserLists: () => ({ isSaved: () => false }),
 }));
-vi.mock('@/components/shops/shop-map-thumbnail', () => ({
-  ShopMapThumbnail: () => <div data-testid="shop-map-thumbnail" />,
-}));
+
 vi.mock('@/lib/hooks/use-user', () => ({
   useUser: () => ({ user: null, isLoading: false }),
 }));

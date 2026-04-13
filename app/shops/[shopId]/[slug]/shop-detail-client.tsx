@@ -16,7 +16,7 @@ import { ShopDescription } from '@/components/shops/shop-description';
 import { MenuHighlights } from '@/components/shops/menu-highlights';
 import { PaymentMethodSection } from '@/components/shops/payment-method-section';
 import { RecentCheckinsStrip } from '@/components/shops/recent-checkins-strip';
-import { ShopMapThumbnail } from '@/components/shops/shop-map-thumbnail';
+import { GoogleMapsEmbed } from '@/components/shops/google-maps-embed';
 import { ShopReviews } from '@/components/shops/shop-reviews';
 import { useShopReviews } from '@/lib/hooks/use-shop-reviews';
 import { useUser } from '@/lib/hooks/use-user';
@@ -24,6 +24,7 @@ import { useSearchParams } from 'next/navigation';
 import { useAnalytics } from '@/lib/posthog/use-analytics';
 import { trackShopDetailView } from '@/lib/analytics/ga4-events';
 import { isSocialUrl } from '@/lib/utils/url-classifier';
+import { normalizeShopName } from '@/lib/utils/text';
 
 function InstagramIcon({ className }: { className?: string }) {
   return (
@@ -123,6 +124,7 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
   const photos = shop.photoUrls ?? [];
   const tags = shop.taxonomyTags ?? [];
   const shopPath = `/shops/${shop.id}/${shop.slug ?? shop.id}`;
+  const displayName = normalizeShopName(shop.name);
 
   const { reviews, totalCount, averageRating, isLoading } = useShopReviews(
     shop.id
@@ -166,7 +168,7 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
     () =>
       hasMap
         ? getGoogleMapsUrl({
-            name: shop.name,
+            name: displayName,
             latitude: shop.latitude!,
             longitude: shop.longitude!,
             googlePlaceId: shop.googlePlaceId ?? null,
@@ -175,7 +177,7 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
         : null,
     [
       hasMap,
-      shop.name,
+      displayName,
       shop.latitude,
       shop.longitude,
       shop.googlePlaceId,
@@ -187,12 +189,12 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
     () =>
       hasMap
         ? getAppleMapsUrl({
-            name: shop.name,
+            name: displayName,
             latitude: shop.latitude!,
             longitude: shop.longitude!,
           })
         : null,
-    [hasMap, shop.name, shop.latitude, shop.longitude]
+    [hasMap, displayName, shop.latitude, shop.longitude]
   );
 
   const navigationLinks =
@@ -224,7 +226,7 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
       {/* Hero — full width, taller on desktop */}
       <ShopHero
         photoUrls={photos}
-        shopName={shop.name}
+        shopName={displayName}
         onBack={() => router.back()}
         className="lg:h-[480px]"
       />
@@ -232,7 +234,7 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
       {/* Shop info */}
       <div>
         <ShopIdentity
-          name={shop.name}
+          name={displayName}
           rating={shop.rating}
           reviewCount={shop.reviewCount}
           openNow={shop.openNow}
@@ -243,7 +245,7 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
         {shop.claimStatus === 'approved' && <VerifiedBadge />}
         <ShopActionsRow
           shopId={shop.id}
-          shopName={shop.name}
+          shopName={displayName}
           shareUrl={shareUrl}
           googleMapsUrl={googleMapsUrl ?? undefined}
         />
@@ -274,7 +276,7 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
                 (shop.latitude != null && shop.longitude != null)) && (
                 <a
                   href={getGoogleMapsUrl({
-                    name: shop.name,
+                    name: displayName,
                     latitude: shop.latitude ?? 0,
                     longitude: shop.longitude ?? 0,
                     googlePlaceId: shop.googlePlaceId ?? null,
@@ -282,7 +284,7 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
                   })}
                   target="_blank"
                   rel="noopener noreferrer"
-                  aria-label="在 Google Maps 查看"
+                  aria-label={`${displayName} on Google Maps`}
                   className="border-border-warm text-text-body hover:bg-surface-section flex min-h-[44px] items-center gap-1.5 rounded-full border px-4 py-2 text-sm"
                 >
                   <MapPin size={14} />
@@ -296,9 +298,10 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="Instagram"
-                  className="text-muted-foreground hover:text-foreground flex min-h-[44px] min-w-[44px] items-center justify-center rounded-sm transition-colors"
+                  className="text-muted-foreground hover:text-foreground flex min-h-[44px] items-center gap-1.5 rounded-sm px-3 transition-colors"
                 >
                   <InstagramIcon className="h-5 w-5" />
+                  <span className="text-sm">Instagram</span>
                 </a>
               )}
 
@@ -308,9 +311,10 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="Facebook"
-                  className="text-muted-foreground hover:text-foreground flex min-h-[44px] min-w-[44px] items-center justify-center rounded-sm transition-colors"
+                  className="text-muted-foreground hover:text-foreground flex min-h-[44px] items-center gap-1.5 rounded-sm px-3 transition-colors"
                 >
                   <FacebookIcon className="h-5 w-5" />
+                  <span className="text-sm">Facebook</span>
                 </a>
               )}
 
@@ -320,9 +324,10 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="Threads"
-                  className="text-muted-foreground hover:text-foreground flex min-h-[44px] min-w-[44px] items-center justify-center rounded-sm transition-colors"
+                  className="text-muted-foreground hover:text-foreground flex min-h-[44px] items-center gap-1.5 rounded-sm px-3 transition-colors"
                 >
                   <ThreadsIcon className="h-5 w-5" />
+                  <span className="text-sm">Threads</span>
                 </a>
               )}
 
@@ -332,9 +337,10 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="官方網站"
-                  className="text-muted-foreground hover:text-foreground flex min-h-[44px] min-w-[44px] items-center justify-center rounded-sm transition-colors"
+                  className="text-muted-foreground hover:text-foreground flex min-h-[44px] items-center gap-1.5 rounded-sm px-3 transition-colors"
                 >
                   <Globe className="h-5 w-5" />
+                  <span className="text-sm">官方網站</span>
                 </a>
               )}
             </div>
@@ -361,10 +367,10 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
                 <p className="text-text-meta text-xs">{shop.address}</p>
               )}
             </div>
-            <ShopMapThumbnail
+            <GoogleMapsEmbed
               latitude={shop.latitude!}
               longitude={shop.longitude!}
-              shopName={shop.name}
+              googlePlaceId={shop.googlePlaceId ?? null}
             />
             <div className="flex gap-2 px-5 py-3">{navigationLinks}</div>
           </div>
@@ -404,7 +410,7 @@ export function ShopDetailClient({ shop }: ShopDetailClientProps) {
         )}
         <ClaimBanner
           shopId={shop.id}
-          shopName={shop.name}
+          shopName={displayName}
           claimStatus={shop.claimStatus ?? null}
         />
       </div>

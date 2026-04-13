@@ -6,6 +6,7 @@ from supabase import Client
 from models.types import JobType
 from providers.scraper.interface import ScrapedShopData
 from services.district_service import _parse_city_district
+from utils.text import normalize_shop_name
 from workers.queue import JobQueue
 
 logger = structlog.get_logger()
@@ -85,7 +86,7 @@ async def persist_scraped_data(
 
     # Update shop with scraped data; advance status to enriching
     shop_payload: dict[str, object] = {
-        "name": data.name,
+        "name": normalize_shop_name(data.name),
         "address": data.address,
         "latitude": data.latitude,
         "longitude": data.longitude,
